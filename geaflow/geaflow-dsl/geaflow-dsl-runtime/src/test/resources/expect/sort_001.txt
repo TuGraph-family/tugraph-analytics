@@ -1,0 +1,10 @@
+hello,19,10
+penys,10,1
+中国,21,14
+中国,22,15
+mills,20,14
+jacks,7,2
+jacks,5,3
+mills,2,1
+mills,4,4
+jacks,8,12

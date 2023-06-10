@@ -1,0 +1,5 @@
+same,3
+kate,4
+jim,5
+lucy,2
+brown,1

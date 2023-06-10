@@ -1,0 +1,23 @@
+kubernetes.master.url: https://kubernetes.default.svc
+output.dir: ./target/tmp/data/result/incr_graph
+kubernetes.driver.node.port: 32761
+geaflow.container.heap.size.mb: 128
+geaflow.work.path: /home/admin/geaflow/tmp/e03d5e91-1596-4f09-bfec-ff27c5bf318e
+geaflow.master.memory.mb: 512
+kubernetes.client.master.url: http://127.0.0.1:49834/
+kubernetes.geaflow.cluster.timeout.ms: 300000
+geaflow.job.cluster.id: e03d5e91-1596-4f09-bfec-ff27c5bf318e
+geaflow.master.address: e03d5e91-1596-4f09-bfec-ff27c5bf318e-service.default
+kubernetes.service.exposed.type: NODE_PORT
+geaflow.job.unique.id: f687c927-d3ec-4189-942f-6f5ce3744f86
+geaflow.master.jvm.options: -Xmx256m,-Xms256m,-Xmn64m,-XX:MaxDirectMemorySize=158m
+geaflow.metric.reporters:slf4j
+geaflow.container.memory.mb:512
+kubernetes.container.image:{your contain image address}
+kubernetes.cluster.start-time:1670225332978
+geaflow.store.redis.host:host.minikube.internal
+geaflow.driver.memory.mb:512
+geaflow.store.redis.port:6379
+geaflow.container.jvm.options:-Xmx128m,-Xms128m,-Xmn32m,-XX:MaxDirectMemorySize=128m
+geaflow.job.runtime.name:geaflowf687c927-d3ec-4189-942f-6f5ce3744f86
+geaflow.driver.jvm.options:-Xmx128m,-Xms128m,-Xmn32m,-XX:MaxDirectMemorySize=128m

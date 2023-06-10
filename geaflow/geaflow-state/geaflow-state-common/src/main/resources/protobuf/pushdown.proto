@@ -1,0 +1,43 @@
+// protoc --java_out=./ --proto_path=`pwd` manifest.proto
+syntax = "proto3";
+
+option java_outer_classname = "PushDownPb";
+
+message PushDown {
+    FilterNode filterNode = 1;
+    EdgeLimit edgeLimit = 2;
+    uint32 sortType = 3;
+}
+
+message EdgeLimit {
+    uint64 in = 1;
+    uint64 out = 2;
+    uint32 limitType = 3;
+}
+
+message FilterNode {
+    uint32 filterOrdinal = 1;
+    repeated FilterNode filters = 2;
+    oneof content {
+        IntList intContent = 3;
+        LongList longContent = 4;
+        StringList strContent = 5;
+        BytesList bytesContent = 6;
+    }
+}
+
+message IntList {
+    repeated int32 int = 1;
+}
+
+message LongList {
+    repeated int64 long = 1;
+}
+
+message StringList {
+    repeated string str = 1;
+}
+
+message BytesList {
+    repeated bytes bytes = 1;
+}

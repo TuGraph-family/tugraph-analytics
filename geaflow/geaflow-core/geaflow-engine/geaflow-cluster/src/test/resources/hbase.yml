@@ -1,0 +1,3 @@
+hbase.zookeeper.quorum: hbase-v51-nn-10001.eu95sqa.tbsite.net,hbase-v51-nn-10002.eu95sqa.tbsite.net,hbase-v51-nn-10003.eu95sqa.tbsite.net
+zookeeper.znode.parent: /hbase-eu95sqa-perf-test-ssd
+hbase.zookeeper.property.clientPort: 2181

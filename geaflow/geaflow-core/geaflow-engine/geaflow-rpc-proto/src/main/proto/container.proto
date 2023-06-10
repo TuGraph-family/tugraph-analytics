@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = false;
+option java_package = "com.antgroup.gryphon.rpc.proto";
+
+service ContainerService {
+
+    //接收master/driver发送过来的消息，异步处理
+    rpc process(Request) returns (Response) {
+    }
+
+    // 关闭结束container
+    rpc close(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    }
+
+}
+
+message Request {
+    bytes payload = 1;
+}
+
+message Response {
+    bytes payload = 1;
+}

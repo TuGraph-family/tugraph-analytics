@@ -1,0 +1,74 @@
+package com.antgroup.geaflow.state.pushdown.filter.inner;
+
+import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
+import com.antgroup.geaflow.model.graph.IGraphElementWithLabelField;
+import com.antgroup.geaflow.state.data.DataType;
+import com.antgroup.geaflow.state.data.OneDegreeGraph;
+import com.antgroup.geaflow.state.pushdown.filter.FilterType;
+import com.antgroup.geaflow.state.pushdown.filter.IFilter;
+import com.antgroup.geaflow.state.pushdown.filter.AndFilter;
+import com.antgroup.geaflow.state.pushdown.filter.OrFilter;
+import com.antgroup.geaflow.state.pushdown.filter.inner.GeneratedQueryFilter;
+import java.util.List;
+import java.util.Set;
+
+public class %s extends BaseGraphFilter implements GeneratedQueryFilter {
+
+    private Object[] var;
+
+    public void initVariables(Object[] var){
+        this.var = var;
+    }
+
+    @Override
+    public IGraphFilter clone() {
+        return new %s();
+    }
+
+    @Override
+    public boolean filter(Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean filterVertex(IVertex vertex) {
+        %s
+        return %s;
+    }
+
+    @Override
+    public boolean filterEdge(IEdge edge) {
+        %s
+        return %s;
+    }
+
+
+    @Override
+    public boolean filterOneDegreeGraph(OneDegreeGraph oneDegreeGraph) {
+        return %s;
+    }
+
+    @Override
+    public DataType dateType() {
+        return DataType.OTHER;
+    }
+
+    @Override
+    public AndFilter and(IFilter filter) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public OrFilter or(IFilter filter) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FilterType getFilterType() {
+        return FilterType.GENERATED;
+    }
+
+}

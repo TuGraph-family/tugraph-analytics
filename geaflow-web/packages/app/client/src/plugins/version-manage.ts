@@ -1,0 +1,1 @@
+export { default } from '@tugraph/plugin-version-manage/client';

@@ -1,0 +1,14 @@
+site_name: GeaFlow Docs
+
+theme: readthedocs
+
+plugins:
+  - include-markdown
+
+markdown_extensions:
+  - toc:
+      toc_depth: 6
+
+python_version: 3.8 # use Python 3.8
+jinja2:
+  version: 3.0.0 # use Jinja2 3.0.0

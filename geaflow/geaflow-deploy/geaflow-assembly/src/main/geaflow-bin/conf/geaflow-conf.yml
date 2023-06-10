@@ -1,0 +1,74 @@
+################################
+## k8s cluster environment related configuration
+################################
+
+#This parameter must be configured. api server address for external access to the k8s cluster.
+#If there is no difference between inside and outside, you can configure it to be the same as master.url.
+#This dashboard is configured through minikube and can be modified according to the actual environment.
+kubernetes.client.master.url: http://127.0.0.1:49834/
+# Must be configured. api server address accessed within the k8s cluster.
+# Here is the default cluster access domain name of minikube, modified according to the actual environment.
+kubernetes.master.url: https://kubernetes.default.svc
+# Set the service type exposed by k8s to NodePort and CLUSTER_IP by default.
+# This is configured as NODE_PORT according to the minikube environment. Change the value based on the
+# actual environment.
+kubernetes.service.exposed.type: NODE_PORT
+# Set the address of the service port exposed by the driver. The default value is 0 (randomly generated).
+# If it is non-nodeport, you can leave this parameter blank.
+# The port configuration is based on the port configuration exposed when minikube is started. The configuration
+# should be based on the actual environment.
+kubernetes.driver.node.port: 32761
+# Set the image of the container pull.
+kubernetes.container.image:
+# Set the maximum timeout period for pulling up a job cluster. The default is 120000. The actual situation
+# can be adjusted.
+kubernetes.geaflow.cluster.timeout.ms: 300000
+
+################################
+## Job running-related configuration
+################################
+
+# Unique ID of the configuration job. If no configuration is performed, it will be randomly generated.
+#geaflow.job.unique.id:
+# Run time name of the configuration job, which is randomly generated if not configured.
+#geaflow.job.runtime.name:
+# Configure the run time cluster ID for the job. The ids of job clusters running at the same time cannot be the same.
+geaflow.job.cluster.id: testCluster1
+
+################################
+## Configure job cluster resources
+################################
+
+# Configure the ha service implementation for job running. Support [hbase, redis]. The default is redis.
+# geaflow.ha.service.type: redis
+# Must be configured. Configure the redis service host.
+# Here is the redis service pulled up by the local docker, configured with the host machine accessible by minikube.
+# This parameter must be configured based on the actual environment.
+geaflow.store.redis.host: host.minikube.internal
+#This parameter must be configured. Configure the redis service port.
+geaflow.store.redis.port: 6379
+
+#JVM parameters for the job cluster master.
+geaflow.master.jvm.options: -Xmx256m,-Xms256m,-Xmn64m,-XX:MaxDirectMemorySize=158m
+#The JVM parameters of the job cluster driver.
+geaflow.driver.jvm.options: -Xmx128m,-Xms128m,-Xmn32m,-XX:MaxDirectMemorySize=128m
+#JVM parameters of the job cluster container
+geaflow.container.jvm.options: -Xmx128m,-Xms128m,-Xmn32m,-XX:MaxDirectMemorySize=128m
+#Maximum memory of a container in the job cluster.
+geaflow.container.memory.mb: 512
+#Maximum memory of the job cluster driver.
+geaflow.driver.memory.mb: 512
+#Maximum memory of the job cluster master.
+geaflow.master.memory.mb: 512
+
+################################
+## metrics relate configuration
+################################
+
+#Multiple reporters can be configured, such as slf4j and influxdb. Multiple configurations are separated by commas.
+geaflow.metric.reporters: slf4j
+
+
+
+
+

@@ -1,0 +1,6 @@
+1,3,created,2
+1,2,knows,4
+1,4,knows,5
+4,3,created,3
+4,5,created,6
+6,3,created,1

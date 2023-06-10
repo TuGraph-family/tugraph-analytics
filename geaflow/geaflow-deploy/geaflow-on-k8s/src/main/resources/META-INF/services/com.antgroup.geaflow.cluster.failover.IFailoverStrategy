@@ -1,0 +1,2 @@
+com.antgroup.geaflow.cluster.k8s.failover.KubernetesClusterFailoverStrategy
+com.antgroup.geaflow.cluster.k8s.failover.KubernetesDisableFailoverStrategy

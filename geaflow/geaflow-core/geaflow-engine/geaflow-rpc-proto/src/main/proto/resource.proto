@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option java_multiple_files = false;
+option java_package = "com.antgroup.gryphon.rpc.proto";
+
+service ResourceService {
+
+  rpc requireResource(RequireResourceRequest) returns (RequireResourceResponse) {
+  }
+
+  rpc releaseResource(ReleaseResourceRequest) returns (ReleaseResourceResponse) {
+  }
+
+}
+
+enum AllocateStrategy
+{
+  ROUND_ROBIN = 0;
+}
+
+message RequireResourceRequest {
+  string requireId = 1;
+  int32 workersNum = 2;
+  AllocateStrategy allocStrategy = 3;
+}
+
+message RequireResourceResponse {
+  string requireId = 1;
+  bool success = 2;
+  string msg = 3;
+  repeated Worker worker = 4;
+}
+
+message ReleaseResourceRequest {
+  string releaseId = 1;
+  repeated Worker worker = 2;
+}
+
+message ReleaseResourceResponse {
+  string releaseId = 1;
+  bool success = 2;
+  string msg = 3;
+}
+
+message Worker {
+  string host = 1;
+  int32 processId = 2;
+  int32 rpcPort = 3;
+  int32 shufflePort = 4;
+  int32 workerId = 5;
+  string containerId = 6;
+}

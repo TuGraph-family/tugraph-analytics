@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = false;
+option java_package = "com.antgroup.gryphon.rpc.proto";
+
+service DriverService {
+
+    //接受client提交过来的pipelineTasks
+    rpc executePipeline(PipelineReq) returns (stream PipelineRes) {
+    }
+
+    // 关闭结束driver
+    rpc close(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    }
+
+}
+
+message PipelineReq {
+    bytes payload = 1;
+}
+
+message PipelineRes {
+    bytes payload = 1;
+}

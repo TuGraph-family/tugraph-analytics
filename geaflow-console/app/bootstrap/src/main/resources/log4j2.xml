@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ ~ Copyright 2023 AntGroup CO., Ltd.
+ ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");
+ ~ you may not use this file except in compliance with the License.
+ ~ You may obtain a copy of the License at
+ ~
+ ~ http://www.apache.org/licenses/LICENSE-2.0
+ ~
+ ~ Unless required by applicable law or agreed to in writing, software
+ ~ distributed under the License is distributed on an "AS IS" BASIS,
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ -->
+
+<Configuration>
+
+    <properties>
+        <property name="logging-path">${sys:LOG_PATH:-/tmp/logs}</property>
+    </properties>
+
+    <Appenders>
+        <Console name="STDOUT-APPENDER" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %-5p %t %c{4}:%-4L - %m%n" charset="UTF-8"/>
+        </Console>
+
+        <Console name="STDERR-APPENDER" target="SYSTEM_ERR">
+            <PatternLayout pattern="%d %-5p %t %c{4}:%-4L - %m%n" charset="UTF-8"/>
+        </Console>
+
+        <RollingFile name="ERROR-APPENDER"
+                     fileName="${logging-path}/geaflow/common-error.log"
+                     filePattern="${logging-path}/geaflow/common-error.log.%d{yyyy-MM-dd}"
+                     append="true">
+            <PatternLayout
+                pattern="%d %-5p %t %c{4} - %m%n"
+                charset="UTF-8"/>
+            <TimeBasedTriggeringPolicy/>
+            <DefaultRolloverStrategy/>
+            <ThresholdFilter level="ERROR"/>
+        </RollingFile>
+
+        <RollingFile name="APP-DEFAULT-APPENDER"
+                     fileName="${logging-path}/geaflow/app-default.log"
+                     filePattern="${logging-path}/geaflow/app-default.log.%d{yyyy-MM-dd}"
+                     append="true">
+            <PatternLayout
+                pattern="%d %-5p %t %c{4}:%-4L - %m%n"
+                charset="UTF-8"/>
+            <TimeBasedTriggeringPolicy/>
+            <DefaultRolloverStrategy/>
+        </RollingFile>
+
+        <RollingFile name="SPRING-APPENDER" fileName="${logging-path}/spring/spring.log"
+                     filePattern="${logging-path}/spring/spring.log.%d{yyyy-MM-dd}"
+                     append="true">
+            <PatternLayout
+                pattern="%d %-5p %t %c{4}:%-4L - %m%n"
+                charset="UTF-8"/>
+            <TimeBasedTriggeringPolicy/>
+            <DefaultRolloverStrategy/>
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+        <AsyncLogger name="STDOUT" additivity="false" level="info">
+            <AppenderRef ref="STDOUT-APPENDER"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="STDERR" additivity="false" level="info">
+            <AppenderRef ref="STDERR-APPENDER"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="org.springframework" additivity="false" level="info">
+            <AppenderRef ref="SPRING-APPENDER"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="com.antgroup.geaflow.console.web.mvc.GeaflowGlobalFilter"
+                     additivity="false" level="error">
+            <AppenderRef ref="ERROR-APPENDER"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="com.antgroup.geaflow.console" additivity="false" level="info">
+            <AppenderRef ref="APP-DEFAULT-APPENDER"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="com.antgroup.geaflow.console.common.dal.mapper" additivity="false"
+                     level="info">
+            <AppenderRef ref="APP-DEFAULT-APPENDER"/>
+        </AsyncLogger>
+
+    </Loggers>
+</Configuration>

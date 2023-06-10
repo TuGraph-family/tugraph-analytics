@@ -1,0 +1,149 @@
+/*
+ * Copyright 2023 AntGroup CO., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+
+package com.antgroup.geaflow.dsl.runtime.traversal.operator;
+
+import com.antgroup.geaflow.dsl.common.data.Path;
+import com.antgroup.geaflow.dsl.common.data.RowKey;
+import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.types.PathType;
+import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunction;
+import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.IdOnlyVertex;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.VertexRecord;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.JoinPathMessage;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageType;
+import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
+import com.antgroup.geaflow.dsl.runtime.traversal.path.TreePaths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+public class StepJoinOperator extends AbstractStepOperator<StepJoinFunction, VertexRecord, VertexRecord> {
+
+    private final PathType inputJoinPathSchema;
+
+    // requestId -> jonKey -> (leftTreePath, rightTreePath)
+    private Map<Object, Map<RowKey, JoinTree>> cachedLeftAndRightTreePaths;
+
+    private long leftInputOpId;
+
+    private long rightInputOpId;
+
+    public StepJoinOperator(long id, StepJoinFunction function, PathType inputJoinPathSchema) {
+        super(id, function);
+        this.inputJoinPathSchema = Objects.requireNonNull(inputJoinPathSchema);
+    }
+
+    @Override
+    public void open(TraversalRuntimeContext context) {
+        super.open(context);
+        this.cachedLeftAndRightTreePaths = new HashMap<>();
+        this.leftInputOpId = context.getTopology().getInputIds(id).get(0);
+        this.rightInputOpId = context.getTopology().getInputIds(id).get(1);
+    }
+
+    @Override
+    protected void processRecord(VertexRecord record) {
+        RowVertex vertex = record.getVertex();
+        RowKey joinKey = (RowKey) vertex.getId();
+        JoinPathMessage pathMessage = context.getMessage(MessageType.JOIN_PATH);
+
+        ITreePath leftTree = pathMessage.getTreePath(leftInputOpId);
+        ITreePath rightTree = pathMessage.getTreePath(rightInputOpId);
+
+        cachedLeftAndRightTreePaths
+            .computeIfAbsent(context.getRequestId(), k -> new HashMap<>())
+            .computeIfAbsent(joinKey, k -> new JoinTree())
+            .addLeftTree(leftTree)
+            .addRightTree(rightTree);
+    }
+
+    @Override
+    public void finish() {
+        Set<Object> requestIds = cachedLeftAndRightTreePaths.keySet();
+        for (Object requestId : requestIds) {
+            Map<RowKey, JoinTree> joinTreeMap = cachedLeftAndRightTreePaths.get(requestId);
+
+            for (Map.Entry<RowKey, JoinTree> entry : joinTreeMap.entrySet()) {
+                RowKey joinKey = entry.getKey();
+                JoinTree joinTree = entry.getValue();
+
+                List<Path> joinPaths = new ArrayList<>();
+                List<Path> leftPaths =
+                    joinTree.leftTree == null ? Collections.singletonList(null) : joinTree.leftTree.toList();
+                List<Path> rightPaths =
+                    joinTree.rightTree == null ? Collections.singletonList(null) : joinTree.rightTree.toList();
+
+                for (Path leftPath : leftPaths) {
+                    for (Path rightPath : rightPaths) {
+                        Path joinPath = function.join(leftPath, rightPath);
+                        if (joinPath != null) {
+                            joinPaths.add(joinPath);
+                        }
+                    }
+                }
+                for (Path joinPath : joinPaths) {
+                    ITreePath joinTreePath = TreePaths.singletonPath(joinPath);
+                    collect(VertexRecord.of(IdOnlyVertex.of(joinKey), joinTreePath));
+                }
+            }
+        }
+        cachedLeftAndRightTreePaths.clear();
+        super.finish();
+    }
+
+    @Override
+    public StepOperator<VertexRecord, VertexRecord> copyInternal() {
+        return new StepJoinOperator(id, function, inputJoinPathSchema);
+    }
+
+    @Override
+    protected PathType concatInputPathType() {
+        return inputJoinPathSchema;
+    }
+
+    private static class JoinTree {
+
+        public ITreePath leftTree;
+
+        public ITreePath rightTree;
+
+        public JoinTree addLeftTree(ITreePath leftTree) {
+            if (leftTree != null) {
+                if (this.leftTree == null) {
+                    this.leftTree = leftTree;
+                } else {
+                    this.leftTree = this.leftTree.merge(leftTree);
+                }
+            }
+            return this;
+        }
+
+        public JoinTree addRightTree(ITreePath rightTree) {
+            if (rightTree != null) {
+                if (this.rightTree == null) {
+                    this.rightTree = rightTree;
+                } else {
+                    this.rightTree = this.rightTree.merge(rightTree);
+                }
+            }
+            return this;
+        }
+    }
+}
