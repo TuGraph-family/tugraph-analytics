@@ -1,9 +1,10 @@
 # GeaFlow (品牌名TuGraph-Analytics)
 
 [English Document](README.md)
+
 <!--intro-start-->
 ## 介绍
-GeaFlow是蚂蚁集团开源的分布式实时图计算引擎，目前广泛应用于金融风控、社交网络、知识图谱以及数据应用等场景。GeaFlow的核心能力是流式图计算,
+GeaFlow(品牌名TuGraph-Analytics)是蚂蚁集团开源的分布式实时图计算引擎，目前广泛应用于金融风控、社交网络、知识图谱以及数据应用等场景。GeaFlow的核心能力是流式图计算,
 流式图计算相比离线图计算提供了一种高时效性低延迟的图计算模式。相比传统的流式计算引擎比如Flink、Storm这些面向表数据的实时处理系统而言，GeaFlow
 主要面向图数据的实时处理，支持更加复杂的关系分析计算，比如多度关系实时查找、环路检查等；同时也支持图表一体的实时分析处理，能同时处理表数据和图数据。关于GeaFlow使用场景更多介绍请参考：[GeaFlow介绍文档](docs/docs-cn/introduction.md)。
 

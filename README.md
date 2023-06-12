@@ -3,7 +3,7 @@
 [中文文档](README_cn.md)
 <!--intro-start-->
 ## Introduction
-TuGraph Analytics (the project name is GeaFlow) is an open-source distributed real-time graph computing engine 
+GeaFlow(the brand name is TuGraph-Analytics) is an open-source distributed real-time graph computing engine 
 developed by Ant Group. It is widely used in scenarios such as financial risk control, social networks, knowledge 
 graphs, and data applications. The core competence of GeaFlow is streaming graph computing, which provides a 
 high-time efficiency and low-latency graph computing mode compared to offline graph computing. Compared with 
