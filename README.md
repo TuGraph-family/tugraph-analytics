@@ -29,20 +29,20 @@ document](docs/docs-en/application-development/dsl/overview.md), and for the hig
 
 Here is the document list for GeaFlow:
 
-* [GeaFlow Introduction](docs/docs-en/introduction.md)
-* [Quick start](docs/docs-en/quick_start.md)
-* Concepts
-  * [Graph View](docs/docs-en/concepts/graph_view.md)
-  * [Streaming Graph](docs/docs-en/concepts/stream_graph.md)
-  * [Glossary](docs/docs-en/concepts/glossary.md)
-* GeaFlow Development
-  * [API Development](docs/docs-en/application-development/api/guid.md)
-  * [DSL Development](docs/docs-en/application-development/dsl/overview.md)
-* [Deployment](docs/docs-en/deploy/install_guid.md)
-* Principle introduction
-  * [Framework Principle](docs/docs-en/principle/framework_principle.md)
-  * [State Principle](docs/docs-en/principle/state_principle.md)
-  * [DSL Principle](docs/docs-en/principle/dsl_principle.md)
+- [GeaFlow Introduction](docs/docs-en/introduction.md)
+- [Quick start](docs/docs-en/quick_start.md)
+- Concepts:
+    - [Graph View](docs/docs-en/concepts/graph_view.md)
+    - [Streaming Graph](docs/docs-en/concepts/stream_graph.md)
+    - [Glossary](docs/docs-en/concepts/glossary.md)
+- GeaFlow Development:
+    - [API Development](docs/docs-en/application-development/api/guid.md)
+    - [DSL Development](docs/docs-en/application-development/dsl/overview.md)
+- [Deployment](docs/docs-en/deploy/install_guid.md)
+- Principle introduction:
+    - [Framework Principle](docs/docs-en/principle/framework_principle.md)
+    - [State Principle](docs/docs-en/principle/state_principle.md)
+    - [DSL Principle](docs/docs-en/principle/dsl_principle.md)
 
 ## Contributing to GeaFlow
 Thank you very much for contributing to GeaFlow, whether it's bug reporting, documentation improvement, or major 
