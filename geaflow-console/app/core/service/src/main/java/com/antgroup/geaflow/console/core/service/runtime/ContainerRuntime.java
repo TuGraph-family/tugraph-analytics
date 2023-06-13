@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.service.runtime;
 
 import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.common.util.ProcessUtil;
+import com.antgroup.geaflow.console.common.util.ThreadUtil;
 import com.antgroup.geaflow.console.common.util.ZipUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowLogException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
@@ -81,9 +82,7 @@ public class ContainerRuntime implements GeaflowRuntime {
     @Override
     public GeaflowTaskStatus queryStatus(GeaflowTask task) {
         try {
-            int pid = ((ContainerTaskHandle) task.getHandle()).getPid();
-            boolean exist = ProcessUtil.existPid(pid);
-            return exist ? GeaflowTaskStatus.RUNNING : GeaflowTaskStatus.FAILED;
+            return queryStatusWithRetry(task, 5);
 
         } catch (Exception e) {
             log.error("Query task {} status failed, handle={}", task.getId(), JSON.toJSONString(task.getHandle()), e);
@@ -96,6 +95,15 @@ public class ContainerRuntime implements GeaflowRuntime {
         taskParams.validateRuntimeTaskId(runtimeTaskId);
 
         try {
+            // kill last task process if exists
+            GeaflowTaskHandle handle = task.getHandle();
+            if (handle != null) {
+                int pid = ((ContainerTaskHandle) handle).getPid();
+                if (ProcessUtil.existPid(pid)) {
+                    ProcessUtil.killPid(pid);
+                }
+            }
+
             List<String> classPaths = new ArrayList<>();
 
             // add version jar
@@ -124,7 +132,7 @@ public class ContainerRuntime implements GeaflowRuntime {
             cmd.addArgument(mainClass);
             cmd.addArgument(args, false);
             String logFile = getLogFilePath(task.getId());
-            int pid = ProcessUtil.execAsyncCommand(cmd, 5, new File(logFile));
+            int pid = ProcessUtil.execAsyncCommand(cmd, 1000, new File(logFile));
 
             // save handle
             ContainerTaskHandle taskHandle = new ContainerTaskHandle();
@@ -138,6 +146,25 @@ public class ContainerRuntime implements GeaflowRuntime {
         } catch (Exception e) {
             throw new GeaflowLogException("Start task {} failed", task.getId(), e);
         }
+    }
+
+    private GeaflowTaskStatus queryStatusWithRetry(GeaflowTask task, int retryTimes) {
+        while (retryTimes > 0) {
+            try {
+                int pid = ((ContainerTaskHandle) task.getHandle()).getPid();
+                boolean exist = ProcessUtil.existPid(pid);
+                return exist ? GeaflowTaskStatus.RUNNING : GeaflowTaskStatus.FAILED;
+
+            } catch (Exception e) {
+                if (--retryTimes == 0) {
+                    throw e;
+                }
+
+                ThreadUtil.sleepMilliSeconds(500);
+            }
+        }
+
+        return task.getStatus();
     }
 
 }
