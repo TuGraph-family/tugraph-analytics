@@ -5,7 +5,7 @@
 
 - **通过SQL处理GQL结果**
 
-    ```sql
+```sql
     SELECT
     a.id,
     b.id,
@@ -18,7 +18,7 @@
     ) 
     Group By a.id, b.id
     Having AVG(e.amt) > 10
-    ```
+```
 
   GQL Match返回的Path可以通过SQL做进一步分析处理.
 
@@ -26,7 +26,7 @@
 
 - **通过SQL触发GQL图查询**
 
-    ```sql
+```sql
     SELECT *
     FROM (
       WITH p AS (
@@ -35,7 +35,7 @@
       MATCH (a:person where id = p.id) -[e where weight > p.weight]->(b)
       RETURN p.name as name, a.id as a_id, e.weight as weight, b.id as b_id
     )
-    ```
+```
 
   可以给GQL定义一个参数表，参数表的数据逐条触发GQL查询.GQL将分别返回每个参数对应的计算结果.
 

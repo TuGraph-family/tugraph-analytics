@@ -26,6 +26,7 @@ markdown==3.3.7
 markdown-include==0.6.0
     # via -r docs/requirements.in
 mkdocs-include-markdown-plugin==4.0.4
+mkdocs-bootswatch==1.1
 markupsafe==2.1.1
     # via
     #   jinja2
