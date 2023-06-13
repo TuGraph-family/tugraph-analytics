@@ -19,21 +19,22 @@ GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类
 应用开发的详细内容请参考：[DSL开发文档](docs/docs-cn/application-development/dsl/overview.md)，高阶API应用开发部分参考：[API应用开发](docs/docs-cn/application-development/api/guid.md)。
 
 ## 使用文档
-以下为GeaFlow使用文档列表:
-* [GeaFlow介绍](docs/docs-cn/introduction.md)
-* [快速上手](docs/docs-cn/quick_start.md)
-* 基本概念
-    * [Graph View](docs/docs-cn/concepts/graph_view.md)
-    * [Streaming Graph](docs/docs-cn/concepts/stream_graph.md)
-    * [名词解释](docs/docs-cn/concepts/glossary.md)
-* GeaFlow应用开发
-    * [API应用开发](docs/docs-cn/application-development/api/guid.md)
-    * [DSL应用开发](docs/docs-cn/application-development/dsl/overview.md)
-* [部署运行](docs/docs-cn/deploy/install_guid.md)
-* GeaFlow原理介绍
-    * [Framework原理介绍](docs/docs-cn/principle/framework_principle.md)
-    * [State原理介绍](docs/docs-cn/principle/state_principle.md)
-    * [DSL原理介绍](docs/docs-cn/principle/dsl_principle.md)
+以下为GeaFlow使用文档列表
+
+- [GeaFlow介绍](docs/docs-cn/introduction.md)
+- [快速上手](docs/docs-cn/quick_start.md)
+- 基本概念:
+    - [Graph View](docs/docs-cn/concepts/graph_view.md)
+    - [Streaming Graph](docs/docs-cn/concepts/stream_graph.md)
+    - [名词解释](docs/docs-cn/concepts/glossary.md)
+- GeaFlow应用开发:
+    - [API应用开发](docs/docs-cn/application-development/api/guid.md)
+    - [DSL应用开发](docs/docs-cn/application-development/dsl/overview.md)
+- [部署运行](docs/docs-cn/deploy/install_guid.md)
+- GeaFlow原理介绍:
+    - [Framework原理介绍](docs/docs-cn/principle/framework_principle.md)
+    - [State原理介绍](docs/docs-cn/principle/state_principle.md)
+    - [DSL原理介绍](docs/docs-cn/principle/dsl_principle.md)
 
 ## 参与贡献
 非常感谢您参与到GeaFlow的贡献中来，无论是bug反馈还是文档完善，或者是大的功能点贡献，我们都表示热烈的欢迎。关于如何参与贡献，请参考：[参与贡献文档](docs/docs-cn/contribution.md)。

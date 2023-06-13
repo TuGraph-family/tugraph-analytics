@@ -5,7 +5,7 @@ Hybrid-DSL is a data analysis language provided by GeaFlow, which supports stand
 
 - **Process GQL return results through SQL**
 
-    ```sql
+```sql
     SELECT
     a.id,
     b.id,
@@ -18,7 +18,7 @@ Hybrid-DSL is a data analysis language provided by GeaFlow, which supports stand
     ) 
     Group By a.id, b.id
     Having AVG(e.amt) > 10
-    ```
+```
 
   The path returned by GQL Match can be further analyzed and processed through SQL.
 
@@ -26,7 +26,7 @@ Hybrid-DSL is a data analysis language provided by GeaFlow, which supports stand
 
 - **Trigger GQL graph query through SQL**
 
-    ```sql
+```sql
     SELECT *
     FROM (
       WITH p AS (
@@ -35,7 +35,7 @@ Hybrid-DSL is a data analysis language provided by GeaFlow, which supports stand
       MATCH (a:person where id = p.id) -[e where weight > p.weight]->(b)
       RETURN p.name as name, a.id as a_id, e.weight as weight, b.id as b_id
     )
-    ```
+```
 
   It is possible to define a parameter table for GQL, where the data in the parameter table triggers GQL queries one by one. GQL will return the computation results corresponding to each parameter separately.
 
