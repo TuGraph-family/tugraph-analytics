@@ -2,7 +2,7 @@
 
 ## Just 5 steps to present 🎊
 
-### 1. Start the Tugraph Analytics service
+### 1. Start the GeaFlow calculating job and Socket service
 
 Reference [Quick Start](https://github.com/TuGraph-family/tugraph-analytics/blob/master/docs/docs-cn/quick_start.md)
 

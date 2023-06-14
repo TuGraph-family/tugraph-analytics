@@ -2,7 +2,7 @@
 
 ## 仅需 5 步，即可呈现 🎊
 
-### 1. 启动 Tugraph Analytics 服务
+### 1. 启动 GeaFlow 流图作业和 Socket 服务
 
 参考 [快速开始](https://github.com/TuGraph-family/tugraph-analytics/blob/master/docs/docs-cn/quick_start.md)
 
