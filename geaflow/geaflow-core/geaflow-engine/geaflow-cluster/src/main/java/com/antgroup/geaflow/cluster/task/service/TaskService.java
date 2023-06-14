@@ -28,7 +28,7 @@ public class TaskService extends AbstractTaskService<ICommand, TaskRunner> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskService.class);
 
-    private static final String WORKER_FORMAT = "gryphon-worker-%d";
+    private static final String WORKER_FORMAT = "geaflow-worker-%d";
 
     private int containerId;
     private int taskNum;

@@ -81,7 +81,7 @@ public class Split extends UDTF {
 ```
 
 ```sql
-CREATE Function my_split AS 'com.antgroup.gryphon.dsl.udf.Split';
+CREATE Function my_split AS 'com.antgroup.geaflow.dsl.udf.Split';
 
 SELECT t.id, u.name FROM users u, LATERAL table(my_split(u.ids)) as t(id);
 ```

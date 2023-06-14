@@ -190,7 +190,7 @@ CREATE FUNCTION <function name> AS <implementation class>
 
 **Example**
 ```sql
-CREATE FUNCTION mysssp AS 'com.antgroup.gryphon.dsl.udf.graph.SingleSourceShortestPath';
+CREATE FUNCTION mysssp AS 'com.antgroup.geaflow.dsl.udf.graph.SingleSourceShortestPath';
 ```
 
 The implementation class of the UDF needs to inherit the **UserDefinedFunction** class or its subclass, please refer to the **User Defined Function** section for details. 

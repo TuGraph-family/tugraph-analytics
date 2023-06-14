@@ -1,5 +1,5 @@
 set geaflow.dsl.window.size = -1;
-set geaflow.dsl.custom.sink.`function` = 'com.antgroup.gryphon.dsl.runtime.testenv.FoGeaFlowTableSinkFunction';
+set geaflow.dsl.custom.sink.`function` = 'com.antgroup.geaflow.dsl.runtime.testenv.FoGeaFlowTableSinkFunction';
 
 CREATE TABLE kafka_source (
 	id bigint,

@@ -171,7 +171,7 @@ public class ConsoleTableSink implements TableSink {
 }
 ```
 After implement the **ConsoleTableConnector**, you should put the full class name to
-the **resources/META-INF.services/com.antgroup.gryphon.dsl.connector.api.TableConnector**
+the **resources/META-INF.services/com.antgroup.geaflow.dsl.connector.api.TableConnector**
 
 ## Usage
 

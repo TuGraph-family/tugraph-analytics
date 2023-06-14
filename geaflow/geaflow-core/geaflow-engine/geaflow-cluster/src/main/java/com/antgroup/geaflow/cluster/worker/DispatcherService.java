@@ -19,7 +19,7 @@ import com.antgroup.geaflow.cluster.task.service.AbstractTaskService;
 
 public class DispatcherService extends AbstractTaskService<ICommand, Dispatcher> {
 
-    private static final String MESSAGE_FORMAT = "gryphon-message-%d";
+    private static final String MESSAGE_FORMAT = "geaflow-message-%d";
 
     private Dispatcher dispatcher;
 

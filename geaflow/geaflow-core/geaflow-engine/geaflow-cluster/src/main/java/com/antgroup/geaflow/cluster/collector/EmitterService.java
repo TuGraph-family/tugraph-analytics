@@ -24,7 +24,7 @@ public class EmitterService extends AbstractTaskService<IEmitterRequest, Emitter
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmitterService.class);
 
-    private static final String EMITTER_FORMAT = "gryphon-emitter-%d";
+    private static final String EMITTER_FORMAT = "geaflow-emitter-%d";
 
     private int slots;
 

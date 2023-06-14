@@ -170,7 +170,8 @@ public class ConsoleTableSink implements TableSink {
     }
 }
 ```
-在实现了 ConsoleTableConnector 后，您需要将完整的类名添加到 resources/META-INF.services/com.antgroup.gryphon.dsl.connector.api.TableConnector 文件中。该文件应列出所有实现了 TableConnector 接口的连接器类的全名，以便 GeaFlow 在启动时能够扫描到这些类，并将它们注册为可用的Connector。
+在实现了 ConsoleTableConnector 后，您需要将完整的类名添加到 resources/META-INF.services/com.antgroup.geaflow.dsl.connector.api.
+TableConnector 文件中。该文件应列出所有实现了 TableConnector 接口的连接器类的全名，以便 GeaFlow 在启动时能够扫描到这些类，并将它们注册为可用的Connector。
 
 ## 用法
 

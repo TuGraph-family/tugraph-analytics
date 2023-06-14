@@ -25,7 +25,7 @@ public class FetcherService extends AbstractTaskService<IFetchRequest, FetcherRu
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FetcherService.class);
 
-    private static final String FETCHER_FORMAT = "gryphon-fetcher-%d";
+    private static final String FETCHER_FORMAT = "geaflow-fetcher-%d";
 
     private int slots;
     private Configuration configuration;

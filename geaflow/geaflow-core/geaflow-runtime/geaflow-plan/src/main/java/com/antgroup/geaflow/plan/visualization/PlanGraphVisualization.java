@@ -79,9 +79,9 @@ public class PlanGraphVisualization {
     }
 
     public String getNodeInfo() {
-        Map<String, GryphonNodeInfo> id2Info = new HashMap<>();
+        Map<String, GeaFlowNodeInfo> id2Info = new HashMap<>();
         for (PipelineVertex vertex : pipelineVertexMap.values()) {
-            GryphonNodeInfo node = new GryphonNodeInfo(vertex.getVertexId(), vertex.getType().name(),
+            GeaFlowNodeInfo node = new GeaFlowNodeInfo(vertex.getVertexId(), vertex.getType().name(),
                 vertex.getOperator());
             id2Info.put(vertex.getVertexName(), node);
 

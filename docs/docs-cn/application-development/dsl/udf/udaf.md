@@ -97,7 +97,7 @@ public class AvgDouble extends UDAF<Double, Accumulator, Double> {
 ```
 
 ```sql
-CREATE Function my_avg AS 'com.antgroup.gryphon.dsl.udf.table.agg.AvgDouble';
+CREATE Function my_avg AS 'com.antgroup.geaflow.dsl.udf.table.agg.AvgDouble';
 
 SELECT my_avg(age) from user;
 ```
