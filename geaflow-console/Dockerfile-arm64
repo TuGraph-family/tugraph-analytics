@@ -23,10 +23,12 @@ RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
 
 # mysql
 RUN yum install -y libaio numactl net-tools
-RUN rpm -ivh https://dev.mysql.com/get/mysql-community-common-8.0.20-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-libs-8.0.20-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-client-8.0.20-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-server-8.0.20-1.el7.aarch64.rpm \
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-icu-data-files-8.0.30-1.el7.aarch64.rpm \
+    && rpm -ivh https://dev.mysql.com/get/mysql-community-client-plugins-8.0.30-1.el7.aarch64.rpm \
+    && rpm -ivh https://dev.mysql.com/get/mysql-community-common-8.0.30-1.el7.aarch64.rpm \
+    && rpm -ivh https://dev.mysql.com/get/mysql-community-libs-8.0.30-1.el7.aarch64.rpm \
+    && rpm -ivh https://dev.mysql.com/get/mysql-community-client-8.0.30-1.el7.aarch64.rpm \
+    && rpm -ivh https://dev.mysql.com/get/mysql-community-server-8.0.30-1.el7.aarch64.rpm \
     && mysqld  --initialize-insecure --user=mysql
 
 # redis

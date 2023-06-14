@@ -32,11 +32,13 @@ function checkMaven() {
 # prepare base images
 ARCH=$(uname -m)
 if [[ "$ARCH" = "x86_64" ]]; then
-  BASE_IMAGE="docker.io\/library\/centos:7@sha256:9d4bcbbb213dfd745b58be38b13b996ebb5ac315fe75711bd618426a630e0987"
   DOCKER_FILE="Dockerfile"
+  GEAFLOW_IMAGE_NAME="geaflow"
+  CONSOLE_IMAGE_NAME="geaflow-console"
 elif [[ "$ARCH" = "arm64" ]]; then
-  BASE_IMAGE="centos:7@sha256:dead07b4d8ed7e29e98de0f4504d87e8880d4347859d839686a31da35a3b532f"
   DOCKER_FILE="Dockerfile-arm64"
+  GEAFLOW_IMAGE_NAME="geaflow-arm"
+  CONSOLE_IMAGE_NAME="geaflow-console-arm"
 else
   echo -e "\033[31munknown arch $ARCH, only support x86_64,arm64\033[0m"
   exit 1
@@ -163,14 +165,12 @@ function buildGeaflowImage() {
   if [[ $MINIKUBE_INSTALLED = "0" ]]; then
     echo "build geaflow image in minikube env"
     eval $(minikube docker-env 2> /dev/null) &> /dev/null
-    cat Dockerfile | sed "s/FROM .*/FROM $BASE_IMAGE/g" | \
-        docker build -f - --network=host -t geaflow:0.1 .
+    docker build -f $DOCKER_FILE --network=host -t $GEAFLOW_IMAGE_NAME:0.1 .
     RETURN_CODE=$?
     eval $(minikube docker-env --unset 2> /dev/null) &> /dev/null
   else
     echo -e '\033[31mbuild geaflow image in local env\033[0m'
-    cat Dockerfile | sed "s/FROM .*/FROM $BASE_IMAGE/g" | \
-            docker build -f - --network=host -t geaflow:0.1 .
+    docker build -f $DOCKER_FILE --network=host -t $GEAFLOW_IMAGE_NAME:0.1 .
     RETURN_CODE=$?
   fi
 
@@ -196,7 +196,7 @@ function buildGeaflowConsoleImage() {
   checkDocker || return 1
 
   cd $BASE_DIR
-  docker build -f geaflow-console/$DOCKER_FILE --network=host -t geaflow-console:0.1 .
+  docker build -f geaflow-console/$DOCKER_FILE --network=host -t $CONSOLE_IMAGE_NAME:0.1 .
 }
 
 # build package

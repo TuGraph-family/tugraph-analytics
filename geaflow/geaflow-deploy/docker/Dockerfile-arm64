@@ -1,0 +1,38 @@
+# base image
+FROM docker.io/library/centos:7@sha256:9d4bcbbb213dfd745b58be38b13b996ebb5ac315fe75711bd618426a630e0987
+
+# base package
+RUN yum -y install epel-release wget ps vim curl gcc gcc-c++
+
+RUN yum -y install python-pip\
+   && pip install supervisor==3.4.0
+
+# java
+RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
+    && echo "export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk" >> /etc/profile \
+    && echo "export JRE_HOME=\${JAVA_HOME}/jre" >> /etc/profile \
+    && source /etc/profile
+
+# environment variables
+ENV GEAFLOW_INSTALL_PATH=/opt
+ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
+ENV GEAFLOW_LIB_DIR=$GEAFLOW_HOME/lib \
+    GEAFLOW_CONF_DIR=$GEAFLOW_HOME/conf/ LANG="en_US.UTF-8" \
+    PATH=$PATH:$GEAFLOW_HOME/bin JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+ENV PATH=$JAVA_HOME/bin:${PATH}
+
+RUN mkdir -p /home/admin/logs
+
+WORKDIR $GEAFLOW_HOME
+
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY start-process.sh $GEAFLOW_HOME/bin/
+COPY udf-downloader.py /tmp/
+COPY init-docker.sh /tmp/
+ADD geaflow-service.conf /etc/supervisor/conf.d/geaflow.conf
+
+RUN /bin/sh /tmp/init-docker.sh
+
+EXPOSE 8090 6123
+
+ENTRYPOINT ["/usr/bin/supervisord" , "-c" , "/etc/supervisor/supervisord.conf"]
