@@ -107,7 +107,7 @@ public class PageRank implements AlgorithmUserFunction {
 ```
 
 ```sql
-CREATE Function my_page_rank AS 'com.antgroup.gryphon.dsl.udf.graph.PageRank';
+CREATE Function my_page_rank AS 'com.antgroup.geaflow.dsl.udf.graph.PageRank';
 
 INSERT INTO tbl_result
 CALL my_page_rank(1) YIELD (vid, prValue)

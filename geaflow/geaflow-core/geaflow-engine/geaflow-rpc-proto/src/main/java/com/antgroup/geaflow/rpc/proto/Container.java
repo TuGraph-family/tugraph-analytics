@@ -1036,7 +1036,7 @@ public final class Container {
       "sponse\022\017\n\007payload\030\001 \001(\0142o\n\020ContainerServ" +
       "ice\022 \n\007process\022\010.Request\032\t.Response\"\000\0229\n" +
       "\005close\022\026.google.protobuf.Empty\032\026.google." +
-      "protobuf.Empty\"\000B\"\n\036com.antgroup.gryphon" +
+      "protobuf.Empty\"\000B\"\n\036com.antgroup.geaflow" +
       ".rpc.protoP\000b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor

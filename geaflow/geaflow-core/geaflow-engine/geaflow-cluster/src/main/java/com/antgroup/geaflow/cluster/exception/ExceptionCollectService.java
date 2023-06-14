@@ -24,7 +24,7 @@ public class ExceptionCollectService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionCollectService.class);
 
-    private static final String EXCEPTION_COLLECT_FORMAT = "gryphon-exception-collect-%d";
+    private static final String EXCEPTION_COLLECT_FORMAT = "geaflow-exception-collect-%d";
     private static final int EXCEPTION_COLLECTOR_THREAD_NUM = 1;
 
     private ExecutorService exceptionCollectService;

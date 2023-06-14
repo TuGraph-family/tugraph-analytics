@@ -41,7 +41,7 @@ public class ConcatWS extends UDF {
 ```
 
 ```sql
-Create Function my_cancat as 'com.antgroup.gryphon.dsl.udf.table.string.ConcatWS'; 
+Create Function my_cancat as 'com.antgroup.geaflow.dsl.udf.table.string.ConcatWS'; 
 
 select my_cancat(',', '1', '2', '3');
 ```

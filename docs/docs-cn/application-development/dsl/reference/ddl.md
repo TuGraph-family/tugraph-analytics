@@ -160,5 +160,5 @@ CREATE FUNCTION <function name> AS <implementation class>
 
 **Example**
 ```sql
-CREATE FUNCTION mysssp AS 'com.antgroup.gryphon.dsl.udf.graph.SingleSourceShortestPath';
+CREATE FUNCTION mysssp AS 'com.antgroup.geaflow.dsl.udf.graph.SingleSourceShortestPath';
 ```

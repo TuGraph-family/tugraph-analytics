@@ -17,14 +17,14 @@ package com.antgroup.geaflow.plan.visualization;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 
-public class GryphonNodeInfo {
+public class GeaFlowNodeInfo {
 
     private int vertexId;
     private String type;
     private OpDesc operator;
     private int parallelism;
 
-    public GryphonNodeInfo(int vertexId, String type, Operator operator) {
+    public GeaFlowNodeInfo(int vertexId, String type, Operator operator) {
         this.vertexId = vertexId;
         this.type = type;
         this.operator = new OpDesc(operator);
