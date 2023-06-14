@@ -27,6 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.version>3.6.3</maven.version>
+        <mysql.version>8.0.30</mysql.version>
     </properties>
 
     <modules>
