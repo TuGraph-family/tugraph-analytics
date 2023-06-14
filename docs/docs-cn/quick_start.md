@@ -1,13 +1,17 @@
 # 快速上手(本地运行)
 
 ## 准备工作
-### 编译GeaFlow源码
-编译GeaFlow依赖以下环境：
-* JDK8
-* Maven(推荐3.6.3及以上版本)
-* Git
 
-执行以下命令来编译GeaFlow源码：
+### 编译 GeaFlow 源码
+
+编译 GeaFlow 依赖以下环境：
+
+- JDK8
+- Maven(推荐 3.6.3 及以上版本)
+- Git
+
+执行以下命令来编译 GeaFlow 源码：
+
 ```shell
 git clone https://github.com/TuGraph-family/tugraph-analytics.git
 cd tugraph-analytics/
@@ -20,13 +24,13 @@ mvn clean package -DskipTests
 
 1. 启动流图作业
 
-在编译完geaflow代码后，在工程目录下执行以下命令，启动实时环路查找的计算作业：
+在编译完 geaflow 代码后，在工程目录下执行以下命令，启动实时环路查找的计算作业：
 
 ```shell
 bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql
 ```
 
-其中loop_detection.sql是一段实时查询图中所有四度环路的DSL计算作业，其内容如下：
+其中 loop_detection.sql 是一段实时查询图中所有四度环路的 DSL 计算作业，其内容如下：
 
 ```sql
 set geaflow.dsl.window.size = 1;
@@ -105,15 +109,18 @@ FROM (
   RETURN a.id as a_id, b.id as b_id, c.id as c_id, d.id as d_id, a.id as a1_id
 );
 ```
-该DSL实时读取socket服务 9003端口数据，实时构图，然后计算图中所有的4度的环路, 并将环路上的点id输出到socket服务9003端口，然后显示在socket控制台。
 
-2. 启动SocketServer
+该 DSL 实时读取 socket 服务 9003 端口数据，实时构图，然后计算图中所有的 4 度的环路, 并将环路上的点 id 输出到 socket 服务 9003 端口，然后显示在 socket 控制台。
 
-执行以下命令，启动socket server程序:
+2. 启动 SocketServer
+
+执行以下命令，启动 socket server 程序:
+
 ```shell
-bin/socket.sh 
+bin/socket.sh
 ```
-socket服务启动后，控制台显示如下信息：
+
+socket 服务启动后，控制台显示如下信息：
 
 ![socket_start](../static/img/socket_start.png)
 
@@ -138,7 +145,8 @@ socket服务启动后，控制台显示如下信息：
 - 5,6,0.1
 - 6,7,0.1
 ```
-可以看到socket控制台上显示计算出来的环路数据：
+
+可以看到 socket 控制台上显示计算出来的环路数据：
 
 ![ide_socket_server](../static/img/ide_socket_server.png)
 
@@ -148,10 +156,16 @@ socket服务启动后，控制台显示如下信息：
 - 6,3,0.1
 ```
 
-可以看到新的环路3-4-5-6-3被检查出来：
+可以看到新的环路 3-4-5-6-3 被检查出来：
 
 ![ide_socket_server_more](../static/img/ide_socket_server_more.png)
 
-## GeaFlow Console快速上手
-GeaFlow Console是GeaFlow提供的图计算研发平台，我们将介绍如何在Docker容器里面启动GeaFlow Console平台，提交流图计算作业。文档地址：
+## GeaFlow Console 快速上手
+
+GeaFlow Console 是 GeaFlow 提供的图计算研发平台，我们将介绍如何在 Docker 容器里面启动 GeaFlow Console 平台，提交流图计算作业。文档地址：
 [文档](quick_start_docker.md)
+
+## 使用 G6VP 进行流图计算作业可视化
+
+G6VP 是一个可扩展的图可视分析平台，包括数据源管理、构图、图元素个性化配置、图可视分析等功能模块。使用 G6VP 能够很方便的对 Geaflow 计算结果进行可视化分析。文档地址：
+[文档](visualization/collaborate_with_g6vp.md)
