@@ -51,7 +51,7 @@ public class CreateGraphCommand implements IQueryCommand {
         GeaFlowGraph graph = gContext.convertToGraph(createGraph);
         gContext.registerGraph(graph);
         processUsing(graph, context);
-        LOGGER.info("Succeed to register graph: {} to catalog.", graph.getName());
+        LOGGER.info("Succeed to create graph: {}.", graph);
         return new QueryResult(true);
     }
 
