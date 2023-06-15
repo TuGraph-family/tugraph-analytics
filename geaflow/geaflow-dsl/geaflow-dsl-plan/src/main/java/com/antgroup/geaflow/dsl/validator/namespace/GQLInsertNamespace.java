@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.Objects;
 import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlInsert;
@@ -59,7 +60,12 @@ public class GQLInsertNamespace extends GQLBaseNamespace {
             if (targetTable.names.size() == 2) { // insert instance.g
                 return type;
             } else if (targetTable.names.size() == 3) { // insert instance.g.v
-                type = type.getField(targetTable.names.get(2), isCaseSensitive(), false).getType();
+                String vertexTableName = targetTable.names.get(2);
+                RelDataTypeField field = type.getField(vertexTableName, isCaseSensitive(), false);
+                if (field == null) {
+                    throw new GeaFlowDSLException("Field:{} is not found, graph type is:{}", vertexTableName, type);
+                }
+                type = field.getType();
             } else {
                 throw new GeaFlowDSLException(targetTable.getParserPosition().toString(),
                     "Illegal target table name size: {}", targetTable.names.size());
