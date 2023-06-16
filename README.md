@@ -1,6 +1,8 @@
 # GeaFlow(The brand name is TuGraph-Analytics)
 
-[中文文档](README_cn.md)
+[中文文档](README_cn.md) 
+
+[ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
 <!--intro-start-->
 ## Introduction
 GeaFlow(the brand name is TuGraph-Analytics) is an open-source distributed real-time graph computing engine 
