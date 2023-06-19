@@ -57,7 +57,7 @@ RUN tar -vxzf geaflow-web.tar.gz \
     && npm config set registry http://registry.npmmirror.com \
     && npm install -g yarn \
     && yarn config set registry http://registry.npmmirror.com \
-    && yarn config get registry
+
 RUN yarn install
 RUN yarn build
 

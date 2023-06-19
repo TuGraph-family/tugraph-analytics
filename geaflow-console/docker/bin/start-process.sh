@@ -117,9 +117,8 @@ function startGeaflowWeb() {
   if [[ "$(ps aux | grep 'yarn start' | grep -v 'grep' | wc -l)" = "0" ]]; then
     cd $GEAFLOW_WEB_HOME/
     SED_GEAFLOW_WEB_GATEWAY_URL=$(echo $GEAFLOW_WEB_GATEWAY_URL | sed 's/\//\\\//g')
-    SED_ACTION=$(echo "s/export const HTTP_SERVICE_URL.*;/export const HTTP_SERVICE_URL = '$SED_GEAFLOW_WEB_GATEWAY_URL';/g")
-    sed -i "$SED_ACTION" packages/app/client/src/components/@@plugins/src/components/console/geaflow/constants/index.ts
-    sed -i "$SED_ACTION" packages/app/client/src/components/@@plugins/src/components/studio/geaflow/constants/index.ts
+    SED_ACTION=$(echo "s/window.GEAFLOW_HTTP_SERVICE_URL.*;/window.GEAFLOW_HTTP_SERVICE_URL = '$SED_GEAFLOW_WEB_GATEWAY_URL';/g")
+    sed -i "$SED_ACTION" packages/app/client/dist/index.html
     yarn start > $GEAFLOW_WEB_LOG_DIR/stdout.log 2>$GEAFLOW_WEB_LOG_DIR/stderr.log &
     echo "start geaflow-web success"
   else
