@@ -196,7 +196,7 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
 
     protected void recover() {
         long latestVersionId = graphViewDesc.getCurrentVersion();
-        if (latestVersionId >= 0) {
+        if (latestVersionId > 0 ) {
             LOGGER.info("opName: {} do recover to latestVersionId: {}", this.opArgs.getOpName(),
                 latestVersionId);
             graphState.manage().operate().setCheckpointId(latestVersionId);

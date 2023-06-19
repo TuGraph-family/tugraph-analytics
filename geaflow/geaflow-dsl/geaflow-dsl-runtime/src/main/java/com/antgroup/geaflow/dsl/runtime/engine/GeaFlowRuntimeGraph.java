@@ -50,6 +50,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.Pa
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.StartId;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ParameterizedTreePath;
+import com.antgroup.geaflow.dsl.runtime.util.SchemaUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
@@ -270,17 +271,19 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         PWindowStream<RowVertex> vertexStream = queryContext.getGraphVertexStream(graph.getName());
         PWindowStream<RowEdge> edgeStream = queryContext.getGraphEdgeStream(graph.getName());
         PWindowStream<ITraversalResponse<Row>> responsePWindow;
-        if (graph.isStatic()) { // traversal on static graph.
-            PGraphWindow<Object, Row, Row> staticGraph = context.buildWindowStreamGraph(
-                (PWindowStream) vertexStream, (PWindowStream) edgeStream, graphViewDesc);
-            responsePWindow = staticGraph.traversal(
-                new GeaFlowAlgorithmTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema)).start();
-        } else {
-            throw new GeaFlowDSLException("Graph algorithm on dynamic graph has not support.");
-        }
+        // TODO Currently only support static graph algorithm, need support dynamic graph algorithm.
+        graph.setStatic(true);
+        queryContext.addMaterializedGraph(graph.getName());
+
+        GraphViewDesc graphViewDesc = SchemaUtil.buildGraphViewDesc(graph, queryContext.getGlobalConf());
+        PGraphWindow<Object, Row, Row> staticGraph = context.buildWindowStreamGraph(
+            (PWindowStream) vertexStream, (PWindowStream) edgeStream, graphViewDesc);
+        responsePWindow = staticGraph.traversal(
+            new GeaFlowAlgorithmTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema)).start();
 
         PWindowStream<Row> resultPWindow = responsePWindow.flatMap(
-            (FlatMapFunction<ITraversalResponse<Row>, Row>) (value, collector) -> collector.partition(value.getResponse()));
+            (FlatMapFunction<ITraversalResponse<Row>, Row>) (value, collector) -> collector.partition(
+                value.getResponse()));
         return new GeaFlowRuntimeTable(queryContext, context, resultPWindow);
     }
 
