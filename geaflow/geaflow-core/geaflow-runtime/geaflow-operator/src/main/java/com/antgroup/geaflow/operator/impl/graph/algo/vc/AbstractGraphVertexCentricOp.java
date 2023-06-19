@@ -42,7 +42,9 @@ import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignerFactory;
 import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
 import com.antgroup.geaflow.view.IViewDesc.BackendType;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
+import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -195,11 +197,22 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
     }
 
     protected void recover() {
-        long latestVersionId = graphViewDesc.getCurrentVersion();
-        if (latestVersionId > 0 ) {
-            LOGGER.info("opName: {} do recover to latestVersionId: {}", this.opArgs.getOpName(),
-                latestVersionId);
-            graphState.manage().operate().setCheckpointId(latestVersionId);
+        LOGGER.info("opName: {} will do recover, windowId: {}", this.opArgs.getOpName(),
+            this.windowId);
+        long lastCheckPointId;
+        try {
+            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graphViewDesc.getName(),
+                this.runtimeContext.getConfiguration());
+            lastCheckPointId = keeper.getLatestViewVersion(graphViewDesc.getName());
+            LOGGER.info("opName: {} will do recover, ViewMetaBookKeeper version: {}",
+                this.opArgs.getOpName(), lastCheckPointId);
+        } catch (IOException e) {
+            throw new GeaflowRuntimeException(e);
+        }
+        if (lastCheckPointId >= 0) {
+            LOGGER.info("opName: {} do recover to state VersionId: {}", this.opArgs.getOpName(),
+                lastCheckPointId);
+            graphState.manage().operate().setCheckpointId(lastCheckPointId);
             graphState.manage().operate().recover();
         }
     }

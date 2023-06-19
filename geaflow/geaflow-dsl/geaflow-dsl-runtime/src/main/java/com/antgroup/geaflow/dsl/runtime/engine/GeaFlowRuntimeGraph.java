@@ -50,7 +50,6 @@ import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.Pa
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.StartId;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ParameterizedTreePath;
-import com.antgroup.geaflow.dsl.runtime.util.SchemaUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
@@ -271,19 +270,38 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         PWindowStream<RowVertex> vertexStream = queryContext.getGraphVertexStream(graph.getName());
         PWindowStream<RowEdge> edgeStream = queryContext.getGraphEdgeStream(graph.getName());
         PWindowStream<ITraversalResponse<Row>> responsePWindow;
-        // TODO Currently only support static graph algorithm, need support dynamic graph algorithm.
-        graph.setStatic(true);
-        queryContext.addMaterializedGraph(graph.getName());
+        if (graph.isStatic()) { // traversal on static graph.
+            queryContext.addMaterializedGraph(graph.getName());
+            PGraphWindow<Object, Row, Row> staticGraph = context.buildWindowStreamGraph(
+                (PWindowStream) vertexStream, (PWindowStream) edgeStream, graphViewDesc);
+            responsePWindow = staticGraph.traversal(
+                new GeaFlowAlgorithmTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema)).start();
+        } else {
+            assert graphView instanceof PIncGraphView : "Illegal graph view";
+            queryContext.addMaterializedGraph(graph.getName());
+            if (vertexStream == null && edgeStream == null) { // traversal on snapshot of the dynamic graph
+                PGraphWindow<Object, Row, Row> staticGraph = graphView.snapshot(graphViewDesc.getCurrentVersion());
+                responsePWindow = staticGraph.traversal(
+                    new GeaFlowAlgorithmTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema)).start();
+            } else { // traversal on dynamic graph
+                vertexStream = vertexStream != null ? vertexStream :
+                               queryContext.getEngineContext().createRuntimeTable(queryContext, Collections.emptyList())
+                                   .getPlan();
+                edgeStream = edgeStream != null ? edgeStream :
+                             queryContext.getEngineContext().createRuntimeTable(queryContext, Collections.emptyList())
+                                 .getPlan();
 
-        GraphViewDesc graphViewDesc = SchemaUtil.buildGraphViewDesc(graph, queryContext.getGlobalConf());
-        PGraphWindow<Object, Row, Row> staticGraph = context.buildWindowStreamGraph(
-            (PWindowStream) vertexStream, (PWindowStream) edgeStream, graphViewDesc);
-        responsePWindow = staticGraph.traversal(
-            new GeaFlowAlgorithmTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema)).start();
+                PIncGraphView<Object, Row, Row> dynamicGraph = graphView.appendGraph((PWindowStream) vertexStream,
+                    (PWindowStream) edgeStream);
+                responsePWindow = dynamicGraph.incrementalTraversal(
+                        new GeaFlowAlgorithmDynamicTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema))
+                    .start();
+            }
+
+        }
 
         PWindowStream<Row> resultPWindow = responsePWindow.flatMap(
-            (FlatMapFunction<ITraversalResponse<Row>, Row>) (value, collector) -> collector.partition(
-                value.getResponse()));
+            (FlatMapFunction<ITraversalResponse<Row>, Row>) (value, collector) -> collector.partition(value.getResponse()));
         return new GeaFlowRuntimeTable(queryContext, context, resultPWindow);
     }
 
