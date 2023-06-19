@@ -49,7 +49,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
     private final List<VertexTable> vertexTables;
     private final List<EdgeTable> edgeTables;
     private final Map<String, String> config;
-    private final boolean isStatic;
+    private boolean isStatic;
     private final boolean ifNotExists;
 
     public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
@@ -137,6 +137,10 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
     public boolean isStatic() {
         return isStatic;
+    }
+
+    public void setStatic(boolean aStatic) {
+        isStatic = aStatic;
     }
 
     public IType<?> getIdType() {
