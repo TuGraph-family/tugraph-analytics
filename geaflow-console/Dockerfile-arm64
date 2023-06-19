@@ -51,11 +51,6 @@ RUN echo '[influxdata]' >> /etc/yum.repos.d/influxdata.repo \
     && rm -rf /usr/lib/influxdb2-client-2.7.3-linux-amd64
 
 # install web
-COPY target/geaflow-web.tar.gz $GEAFLOW_WEB_HOME/
-WORKDIR $GEAFLOW_WEB_HOME/
-RUN tar -vxzf geaflow-web.tar.gz \
-    && rm geaflow-web.tar.gz
-
 RUN mkdir /usr/local/nodejs \
     && cd  /usr/local/nodejs \
     && wget https://nodejs.org/dist/v14.21.3/node-v14.21.3-linux-arm64.tar.xz \
@@ -67,10 +62,14 @@ RUN mkdir /usr/local/nodejs \
 
 RUN yum -y install gcc gcc-c++ automake autoconf libtool make
 
+COPY target/geaflow-web.tar.gz $GEAFLOW_WEB_HOME/
+WORKDIR $GEAFLOW_WEB_HOME/
+RUN tar -vxzf geaflow-web.tar.gz \
+    && rm geaflow-web.tar.gz
+
 RUN npm install -g yarn --registry=https://registry.npm.taobao.org \
     && ln -s /usr/local/nodejs/bin/yarn /usr/local/bin \
     && yarn config set registry https://registry.npm.taobao.org \
-    && yarn config get registry \
     && yarn install \
     && yarn build
 
