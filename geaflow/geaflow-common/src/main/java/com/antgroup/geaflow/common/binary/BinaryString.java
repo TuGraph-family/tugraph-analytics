@@ -226,6 +226,33 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return false;
     }
 
+    public int indexOf(BinaryString v, int start) {
+        if (v.numBytes == 0) {
+            return 0;
+        }
+
+        // locate to the start position.
+        int i = 0; // position in byte
+        int c = 0; // position in character
+        while (i < numBytes && c < start) {
+            i += numBytesForFirstByte(getByte(i));
+            c += 1;
+        }
+
+        do {
+            if (i + v.numBytes > numBytes) {
+                return -1;
+            }
+            if (BinaryOperations.arrayEquals(binaryObject, offset + i, v.binaryObject, v.offset, v.numBytes)) {
+                return c;
+            }
+            i += numBytesForFirstByte(getByte(i));
+            c += 1;
+        } while (i < numBytes);
+
+        return -1;
+    }
+
     public boolean matchAt(final BinaryString s, int pos) {
         if (s.numBytes + pos > numBytes || pos < 0) {
             return false;
