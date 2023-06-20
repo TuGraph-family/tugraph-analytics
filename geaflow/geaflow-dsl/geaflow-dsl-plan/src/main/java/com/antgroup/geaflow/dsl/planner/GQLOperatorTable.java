@@ -14,6 +14,9 @@
 
 package com.antgroup.geaflow.dsl.planner;
 
+import com.antgroup.geaflow.dsl.catalog.Catalog;
+import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
+import com.antgroup.geaflow.dsl.util.FunctionUtil;
 import com.google.common.collect.Lists;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperator;
@@ -26,19 +29,32 @@ import org.apache.calcite.sql.util.ListSqlOperatorTable;
  */
 public class GQLOperatorTable extends ChainedSqlOperatorTable {
 
+    private final Catalog catalog;
+
+    private final GQLJavaTypeFactory typeFactory;
+
+    public GQLOperatorTable(Catalog catalog, GQLJavaTypeFactory typeFactory, SqlOperatorTable... tables) {
+        super(Lists.newArrayList(tables));
+        this.catalog = catalog;
+        this.typeFactory = typeFactory;
+    }
+
     /**
      * Add a {@code SqlFunction} to operator table.
      */
-    public void registerSqlFunction(SqlFunction function) {
+    public void registerSqlFunction(String instance, GeaFlowFunction function) {
+        catalog.createFunction(instance, function);
+
+        SqlFunction sqlFunction = FunctionUtil.createSqlFunction(function, typeFactory);
         for (SqlOperatorTable operatorTable : tableList) {
             if (operatorTable instanceof ListSqlOperatorTable) {
-                ((ListSqlOperatorTable) operatorTable).add(function);
+                ((ListSqlOperatorTable) operatorTable).add(sqlFunction);
                 return;
             }
         }
     }
 
-    public SqlFunction getSqlFunction(String name) {
+    public SqlFunction getSqlFunction(String instance, String name) {
         for (SqlOperator operator : getOperatorList()) {
             if (operator.getName().equalsIgnoreCase(name)) {
                 if (operator instanceof SqlFunction) {
@@ -46,11 +62,10 @@ public class GQLOperatorTable extends ChainedSqlOperatorTable {
                 }
             }
         }
-        return null;
+        GeaFlowFunction function = catalog.getFunction(instance, name);
+        if (function == null) {
+            return null;
+        }
+        return FunctionUtil.createSqlFunction(function, typeFactory);
     }
-
-    public GQLOperatorTable(SqlOperatorTable... tables) {
-        super(Lists.newArrayList(tables));
-    }
-
 }

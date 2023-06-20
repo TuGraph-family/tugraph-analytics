@@ -42,7 +42,6 @@ import com.antgroup.geaflow.dsl.sqlnode.SqlEdge;
 import com.antgroup.geaflow.dsl.sqlnode.SqlTableColumn;
 import com.antgroup.geaflow.dsl.sqlnode.SqlTableProperty;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertex;
-import com.antgroup.geaflow.dsl.util.FunctionUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import com.antgroup.geaflow.dsl.validator.GQLValidatorImpl;
 import com.antgroup.geaflow.dsl.validator.QueryNodeContext;
@@ -145,6 +144,8 @@ public class GQLContext {
         }
         this.defaultSchema = new GeaFlowRootCalciteSchema(this.catalog).plus();
         this.sqlOperatorTable = new GQLOperatorTable(
+            catalog,
+            typeFactory,
             new BuildInSqlOperatorTable(),
             new BuildInSqlFunctionTable(typeFactory));
 
@@ -397,8 +398,7 @@ public class GQLContext {
     }
 
     public void registerFunction(GeaFlowFunction function) {
-        SqlFunction sqlFunction = FunctionUtil.createSqlFunction(function, typeFactory);
-        sqlOperatorTable.registerSqlFunction(sqlFunction);
+        sqlOperatorTable.registerSqlFunction(currentInstance, function);
         LOG.info("register Function : {} to catlog", function);
     }
 
@@ -409,8 +409,8 @@ public class GQLContext {
     /**
      * Find the {@link SqlFunction}.
      */
-    public SqlFunction findSqlFunction(String name) {
-        return sqlOperatorTable.getSqlFunction(name);
+    public SqlFunction findSqlFunction(String instance, String name) {
+        return sqlOperatorTable.getSqlFunction(instance == null ? currentInstance : instance, name);
     }
 
     // ~ convert SqlNode to RelNode ----------------------------------------------------------
