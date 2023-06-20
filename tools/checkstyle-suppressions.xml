@@ -18,7 +18,7 @@
          production code. -->
     <!--<suppress files="[\/]src[\\/]\test[\\/].*" id="TestScope"/>-->
     <suppress checks=".*" files=".*Test.java"/>
-    <suppress checks=".*" files="target/.*"/>
+    <suppress checks=".*" files="target[\\/].*"/>
     <suppress checks=".*" files="PushDownPb.java"/>
     <suppress checks=".*" files="ViewMetaPb"/>
     <suppress checks="MethodName" files="GremlinGraph"/>
