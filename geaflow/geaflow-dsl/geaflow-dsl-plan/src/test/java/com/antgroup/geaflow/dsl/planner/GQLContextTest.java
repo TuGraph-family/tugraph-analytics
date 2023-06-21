@@ -43,7 +43,7 @@ public class GQLContextTest {
         GQLContext gqlContext = GQLContext.create(new Configuration(), false);
         GeaFlowGraph graph = gqlContext.convertToGraph(sqlCreateGraph);
         gqlContext.registerGraph(graph);
-        assertNull(gqlContext.findSqlFunction("function"));
+        assertNull(gqlContext.findSqlFunction(null,"function"));
         assertTrue(gqlContext.getTypeFactory() instanceof GQLJavaTypeFactory);
         assertTrue(gqlContext.getRelBuilder() instanceof GQLRelBuilder);
         assertTrue(gqlContext.getValidator() instanceof GQLValidatorImpl);
