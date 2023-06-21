@@ -1,16 +1,58 @@
 # 安装指南
+## 准备K8S环境
+
+这里以minikube为例，单机模拟K8S集群。如果已有K8S集群可以直接使用，跳过该部分。
+
+
+下载安装minikube
+```
+# arm架构
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-arm64
+sudo install minikube-darwin-arm64 /usr/local/bin/minikube
+
+# x86架构
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
+sudo install minikube-darwin-amd64 /usr/local/bin/minikube
+```
+
+启动minikube和dashboard
+```
+# 以docker为driver启动minikube
+minikube start --driver=docker --ports=32761:32761 —image-mirror-country='cn'
+# 启动minikube dashboard，会自动在浏览器中打开dashboard页面，如未打开复制终端给出的dashboard地址到浏览器打开
+minikube dashboard
+```
+
+**注意：**
+注意不要关闭dashboard所属的terminal进程，后续操作请另起终端进行，否则api server进程会退出
+
+如果希望在本地minikube环境使用GeaFlow，请确保minikube正常启动，GeaFlow引擎镜像会自动构建到minikube环境，否则构建到本地Docker环境，需要手工自行push到镜像仓库使用。
+```shell
+# confirm host、kubelet、apiserver is running
+minikube status
+```
+
+创建geaflow服务账号，否则程序无权限新建k8s资源（只有第一次需要）
+```shell
+# 创建服务账号
+kubectl create serviceaccount geaflow
+kubectl create clusterrolebinding geaflow-role-binding --clusterrole=edit --serviceaccount=default:geaflow --namespace=default
+```
+
+最后，为了使docker内的容器可以访问minikube api，需要将minikube代理到${your_local_ip}:8000，使得其他容器可以通过此端口直接访问minikube。
+
+注意不要关闭proxy所属的terminal进程，后续操作请另起终端进行。
+```shell
+# 创建端口号8000的代理
+kubectl proxy --port=8000 --address='${your_local_ip}' --accept-hosts='^.*' &
+```
+
 ## 构建镜像
 下载GeaFlow源码，构建GeaFlow引擎镜像和GeaFlow Console平台镜像。
 ```shell
 git clone https://github.com/TuGraph-family/tugraph-analytics.git
 cd tugraph-analytics/
 bash ./build.sh --all
-```
-**注意：**
-如果希望在本地minikube环境使用GeaFlow，请确保minikube正常启动，GeaFlow引擎镜像会自动构建到minikube环境，否则构建到本地Docker环境，需要手工自行push到镜像仓库使用。
-```shell
-# confirm host、kubelet、apiserver is running
-minikube status
 ```
 
 镜像编译成功后，通过以下命令查看镜像：
@@ -27,10 +69,15 @@ docker images
 
 ## 启动容器
 
-本地启动GeaFlow Console平台服务。（需要将${your.host.name}替换为本机对外IP地址）
+本地启动GeaFlow Console平台服务，适用于minikube环境。（需要将${your.host.name}替换为本机对外IP地址）
 
 ```shell
 docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
+```
+
+启动对外GeaFlow Console平台服务，适用于K8S真实集群环境。（需要将${your.host.name}替换为本机内网IP地址，例如172.xx.xxx.xx；${your.public.ip} 替换为外部公网IP地址，才能从外部访问GeaFlow Console）
+```shell
+docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} -e geaflow.web.gateway.url=http://${your.public.ip}:8080 geaflow-console:0.1
 ```
 
 容器默认以本地模式（local）启动，默认拉起本地的MySQL、Redis、InfluxDB。
@@ -51,6 +98,7 @@ spring.datasource.password=geaflow
 ```
 
 进入容器等待geaflow-web进程启动完成后，访问[localhost:8888](http://localhost:8888)进入GeaFlow Console平台页面。
+K8S集群环境这里为访问对外IP地址的8888端口。
 ```shell
 > docker exec -it geaflow-console tailf /tmp/logs/geaflow/app-default.log
 
@@ -82,6 +130,18 @@ geaflow-conosle:1.0
 配置GeaFlow作业的运行时集群，推荐使用Kubernates。本地模式下默认为本地的代理地址${your.host.name}:8000，请确保本地已经启动minikube并设置好代理地址。如果设置K8S集群地址，请确保集群地址的连通性正常。
 ![install_cluster_config](../../static/img/install_cluster_config.png)
 
+K8S集群模式添加以下配置
+```
+# 存储限制为10Gi
+"kubernetes.resource.storage.limit.size":"10Gi"
+# 服务API配置为K8S服务地址，一般为6443端口
+"kubernetes.master.url":"https://${your.host.name}:6443"
+# 在K8S集群找到 /etc/kubernetes/admin.conf 配置文件，从上到下分别配置以下三个字段
+"kubernetes.ca.data":""
+"kubernetes.cert.data":""
+"kubernetes.cert.key":""
+```
+
 ### 运行时配置
 配置GeaFlow作业运行时元数据的存储，运行时元数据包含了作业的Pipeline、Cycle、位点、异常等信息，推荐使用MySQL。
 配置GeaFlow作业运行时HA元数据的存储，HA元数据包含Master、Driver、Container等主要组件信息，推荐使用Redis。
@@ -89,6 +149,12 @@ geaflow-conosle:1.0
 ![undefined](../../static/img/install_meta_config.png)
 
 本地模式下，docker容器启动时会默认自动拉起MySQL、Redis和InfluxDB服务。
+
+K8S集群模式添加以下配置
+```
+# influshdb.token可配置为随机值
+"influxdb.token":"f5fb50a361f762a0af045c47d98f66e401f1b632b3133b3dc2680110262d1135"
+```
 
 ### 数据存储配置
 配置GeaFlow作业、图、表等数据的持久化存储，推荐使用HDFS。本地模式默认为容器内磁盘。
