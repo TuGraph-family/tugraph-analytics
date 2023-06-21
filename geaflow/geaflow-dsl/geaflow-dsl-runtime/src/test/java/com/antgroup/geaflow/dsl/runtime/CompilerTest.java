@@ -16,12 +16,15 @@ package com.antgroup.geaflow.dsl.runtime;
 
 import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
+import com.antgroup.geaflow.dsl.common.compile.FunctionInfo;
 import com.antgroup.geaflow.dsl.common.compile.QueryCompiler;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.testng.Assert;
@@ -69,5 +72,26 @@ public class CompilerTest {
                 + "\"parents\":[{\"id\":\"6-7\"}]},\"6-6\":{\"id\":\"6-6\",\"parallelism\":2,"
                 + "\"operator\":\"FlatMapOperator\",\"operatorName\":\"TraversalResponseToRow-0\","
                 + "\"parents\":[]}}}}}}");
+    }
+
+    @Test
+    public void testFindUnResolvedFunctions() {
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script = "create function f0 as 'com.antgroup.udf.TestUdf';"
+            + "select f1(name), substr(name, 1, 10) from t0;"
+            + "use instance instance0;"
+            + "select f2(id), max(id) from t0;"
+            + "create view v0(c0, c1) as select f3(id) as c0, c1 from t1";
+
+        Set<FunctionInfo> unResolvedFunctions = compiler.getUnResolvedFunctions(script, context);
+        Assert.assertEquals(unResolvedFunctions.size(), 4);
+        List<String> functions =
+            unResolvedFunctions.stream().map(FunctionInfo::toString).collect(Collectors.toList());
+        Assert.assertEquals(functions.get(0), "instance0.f3");
+        Assert.assertEquals(functions.get(1), "instance0.f2");
+        Assert.assertEquals(functions.get(2), "default.f1");
+        Assert.assertEquals(functions.get(3), "default.f0");
     }
 }

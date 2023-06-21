@@ -14,7 +14,17 @@
 
 package com.antgroup.geaflow.dsl.common.compile;
 
+import java.util.Set;
+
 public interface QueryCompiler {
 
+    /**
+     * Compile the dsl script to generate the {@link CompileResult}.
+     */
     CompileResult compile(String script, CompileContext context);
+
+    /**
+     * Get the UnResolved functions in the dsl script.
+     */
+    Set<FunctionInfo> getUnResolvedFunctions(String script, CompileContext context);
 }

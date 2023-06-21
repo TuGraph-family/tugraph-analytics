@@ -17,19 +17,28 @@ package com.antgroup.geaflow.dsl.runtime;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
+import com.antgroup.geaflow.dsl.common.compile.FunctionInfo;
 import com.antgroup.geaflow.dsl.common.compile.QueryCompiler;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.parser.GeaFlowDSLParser;
+import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.runtime.command.IQueryCommand;
 import com.antgroup.geaflow.dsl.runtime.engine.GeaFlowQueryEngine;
+import com.antgroup.geaflow.dsl.sqlnode.SqlCreateFunction;
+import com.antgroup.geaflow.dsl.sqlnode.SqlUseInstance;
+import com.antgroup.geaflow.dsl.util.SqlNodeUtil;
 import com.antgroup.geaflow.plan.PipelinePlanBuilder;
 import com.antgroup.geaflow.plan.graph.PipelineGraph;
 import com.antgroup.geaflow.plan.visualization.JsonPlanGraphVisualization;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskContext;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.parser.SqlParseException;
 
 public class QueryClient implements QueryCompiler {
@@ -114,5 +123,40 @@ public class QueryClient implements QueryCompiler {
         compileResult.setSourceGraphs(queryContext.getReferSourceGraphs());
         compileResult.setTargetGraphs(queryContext.getReferTargetGraphs());
         return compileResult;
+    }
+
+    @Override
+    public Set<FunctionInfo> getUnResolvedFunctions(String script, CompileContext context) {
+        try {
+            List<SqlNode> sqlNodes = parser.parseMultiStatement(script);
+            GQLContext gqlContext = GQLContext.create(new Configuration(context.getConfig()), true);
+            Set<FunctionInfo> functions = new HashSet<>();
+            for (SqlNode sqlNode : sqlNodes) {
+                if (sqlNode instanceof SqlCreateFunction) {
+                    SqlCreateFunction function = (SqlCreateFunction) sqlNode;
+                    String functionName = function.getFunctionName().toString();
+                    String instanceName = gqlContext.getCurrentInstance();
+                    FunctionInfo functionInfo = new FunctionInfo(instanceName, functionName);
+                    functions.add(functionInfo);
+                } else if (sqlNode instanceof SqlUseInstance) {
+                    SqlUseInstance useInstance = (SqlUseInstance) sqlNode;
+                    String instanceName = useInstance.getInstance().toString();
+                    gqlContext.setCurrentInstance(instanceName);
+                } else {
+                    List<SqlUnresolvedFunction> unresolvedFunctions = SqlNodeUtil.findUnresolvedFunctions(sqlNode);
+                    for (SqlUnresolvedFunction unresolvedFunction : unresolvedFunctions) {
+                        String name = unresolvedFunction.getName();
+                        SqlFunction sqlFunction = gqlContext.findSqlFunction(gqlContext.getCurrentInstance(), name);
+                        if (sqlFunction == null) {
+                            FunctionInfo functionInfo = new FunctionInfo(gqlContext.getCurrentInstance(), name);
+                            functions.add(functionInfo);
+                        }
+                    }
+                }
+            }
+            return functions;
+        } catch (Exception e) {
+            throw new GeaFlowDSLException("Error in parser dsl", e);
+        }
     }
 }
