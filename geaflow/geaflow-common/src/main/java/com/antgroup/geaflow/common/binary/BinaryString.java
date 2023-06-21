@@ -226,8 +226,8 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return false;
     }
 
-    public int indexOf(BinaryString v, int start) {
-        if (v.numBytes == 0) {
+    public int indexOf(BinaryString s, int start) {
+        if (s.numBytes == 0) {
             return 0;
         }
 
@@ -240,10 +240,10 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         }
 
         do {
-            if (i + v.numBytes > numBytes) {
+            if (i + s.numBytes > numBytes) {
                 return -1;
             }
-            if (BinaryOperations.arrayEquals(binaryObject, offset + i, v.binaryObject, v.offset, v.numBytes)) {
+            if (BinaryOperations.arrayEquals(binaryObject, offset + i, s.binaryObject, s.offset, s.numBytes)) {
                 return c;
             }
             i += numBytesForFirstByte(getByte(i));
