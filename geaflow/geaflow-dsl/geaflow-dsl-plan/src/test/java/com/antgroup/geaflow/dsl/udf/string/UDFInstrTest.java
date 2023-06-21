@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dsl.udf.string;
 
 import static org.testng.Assert.assertEquals;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.udf.table.string.Instr;
 import org.testng.annotations.Test;
 
@@ -44,5 +45,30 @@ public class UDFInstrTest {
         assertEquals(2, (long) udf.eval("s.taobao.com", ".", 1L));
 
         assertEquals(0, (long) udf.eval("s.taobao.com", "abc"));
+    }
+
+    @Test
+    public void testBinaryString() {
+
+        Instr udf = new Instr();
+
+        assertEquals(1L, (long) udf.eval(BinaryString.fromString("abc"), BinaryString.fromString("a")));
+
+        assertEquals(3L, (long) udf.eval(BinaryString.fromString("abc"), BinaryString.fromString("c")));
+
+        assertEquals(0L, (long) udf.eval(BinaryString.fromString("abc"), BinaryString.fromString("d")));
+
+        assertEquals(3L, (long) udf.eval(BinaryString.fromString("abc"), BinaryString.fromString("c"), 1L));
+
+        assertEquals(6L, (long) udf.eval(BinaryString.fromString("abcabc"), BinaryString.fromString("c"), 4L));
+
+        assertEquals(2L, (long) udf.eval(BinaryString.fromString("a\u0002abc\u0002c"), BinaryString.fromString("\u0002"), 2L));
+
+        assertEquals(2L, (long) udf.eval(BinaryString.fromString("a\002b\002c"), BinaryString.fromString("\002")));
+
+        assertEquals(9L, (long) udf.eval(BinaryString.fromString("s.taobao.com"), BinaryString.fromString("."), 3L));
+        assertEquals(2, (long) udf.eval(BinaryString.fromString("s.taobao.com"), BinaryString.fromString("."), 1L));
+
+        assertEquals(0, (long) udf.eval(BinaryString.fromString("s.taobao.com"), BinaryString.fromString("abc")));
     }
 }
