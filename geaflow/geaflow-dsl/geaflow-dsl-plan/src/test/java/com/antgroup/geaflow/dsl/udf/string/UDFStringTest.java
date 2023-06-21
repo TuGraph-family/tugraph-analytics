@@ -87,12 +87,20 @@ public class UDFStringTest {
     @Test
     public void testIndexOf() {
         String string = "ant group";
+        BinaryString binaryString = BinaryString.fromString("ant group");
         IndexOf test = new IndexOf();
         test.open(null);
         assertEquals((int)test.eval(string, "ant"), 0);
         assertEquals((int)test.eval(string, "group", 3), 4);
         assertEquals((int)test.eval(null, "ant"), -1);
         assertEquals((int)test.eval(string, "group", -1), 4);
+
+        assertEquals((int)test.eval(binaryString,  BinaryString.fromString("ant")), 0);
+        assertEquals((int)test.eval(binaryString, BinaryString.fromString("group"), 3), 4);
+        assertEquals((int)test.eval(null, BinaryString.fromString("ant")), -1);
+        assertEquals((int)test.eval(binaryString, BinaryString.fromString("group"), -1), 4);
+
+        assertEquals((int)test.eval(BinaryString.fromString("数据砖头"), BinaryString.fromString("砖"), -1), 2);
     }
 
     @Test
