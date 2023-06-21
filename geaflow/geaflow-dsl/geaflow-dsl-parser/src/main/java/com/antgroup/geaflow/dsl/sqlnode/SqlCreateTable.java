@@ -45,12 +45,13 @@ public class SqlCreateTable extends SqlCreate {
     private SqlNodeList properties;
     private SqlNodeList primaryKeys;
     private SqlNodeList partitionFields;
-    private boolean overWrite;
+    private final boolean isTemporary;
 
     /**
      * Creates a SqlCreateTable.
      */
     public SqlCreateTable(SqlParserPos pos,
+                          boolean isTemporary,
                           boolean ifNotExists,
                           SqlIdentifier name,
                           SqlNodeList columns,
@@ -63,11 +64,13 @@ public class SqlCreateTable extends SqlCreate {
         this.properties = properties;
         this.primaryKeys = primaryKeys;
         this.partitionFields = partitionFields;
+        this.isTemporary = isTemporary;
     }
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(getName(), getColumns(), getProperties(), getPrimaryKeys());
+        return ImmutableNullableList.of(getName(), getColumns(), getProperties(),
+            getPrimaryKeys(), getPartitionFields());
     }
 
     @Override
@@ -101,6 +104,9 @@ public class SqlCreateTable extends SqlCreate {
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         writer.keyword("CREATE");
+        if (isTemporary) {
+            writer.keyword("TEMPORARY");
+        }
         writer.keyword("TABLE");
         if (super.ifNotExists) {
             writer.keyword("IF");
@@ -216,8 +222,8 @@ public class SqlCreateTable extends SqlCreate {
         return partitionFields;
     }
 
-    public boolean isOverWrite() {
-        return overWrite;
+    public boolean isTemporary() {
+        return isTemporary;
     }
 
     public boolean ifNotExists() {

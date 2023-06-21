@@ -63,6 +63,7 @@ public class GraphViewConverter extends DataViewConverter<GeaflowGraph, GraphVie
             .collect(Collectors.toList());
         graphView.setVertices(vertexViews);
         graphView.setEdges(edgeViews);
+        graphView.setStaticGraph(model.isStaticGraph());
         return graphView;
     }
 
@@ -72,6 +73,7 @@ public class GraphViewConverter extends DataViewConverter<GeaflowGraph, GraphVie
         graph.addVertices(vertices);
         graph.addEdges(edges);
         graph.setPluginConfig(pluginConfig);
+        graph.setStaticGraph(view.isStaticGraph());
         return graph;
     }
 }

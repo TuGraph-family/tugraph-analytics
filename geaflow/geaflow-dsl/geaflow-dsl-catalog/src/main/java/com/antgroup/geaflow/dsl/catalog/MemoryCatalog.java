@@ -96,9 +96,6 @@ public class MemoryCatalog implements Catalog {
             }
             return;
         }
-        if (!allTables.containsKey(instanceName)) {
-            throw new ObjectNotExistException("instance: '" + instanceName + "' is not exists.");
-        }
         allTables.computeIfAbsent(instanceName, k -> new HashMap<>()).put(graph.getName(), graph);
     }
 
@@ -111,9 +108,6 @@ public class MemoryCatalog implements Catalog {
             // ignore if table exists.
             return;
         }
-        if (!allTables.containsKey(instanceName)) {
-            throw new ObjectNotExistException("instance: '" + instanceName + "' is not exists.");
-        }
         allTables.computeIfAbsent(instanceName, k -> new HashMap<>()).put(table.getName(), table);
     }
 
@@ -124,9 +118,6 @@ public class MemoryCatalog implements Catalog {
                 throw new ObjectAlreadyExistException(view.getName());
             }
             return;
-        }
-        if (!allTables.containsKey(instanceName)) {
-            throw new ObjectNotExistException("instance: '" + instanceName + "' is not exists.");
         }
         allTables.computeIfAbsent(instanceName, k -> new HashMap<>()).put(view.getName(), view);
     }

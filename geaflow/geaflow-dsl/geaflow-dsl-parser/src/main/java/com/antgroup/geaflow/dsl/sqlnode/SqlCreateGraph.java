@@ -25,7 +25,6 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.ImmutableNullableList;
 
 public class SqlCreateGraph extends SqlCreate {
@@ -37,14 +36,17 @@ public class SqlCreateGraph extends SqlCreate {
     private SqlNodeList vertices;
     private SqlNodeList edges;
     private SqlNodeList properties;
+    private final boolean isTemporary;
 
-    public SqlCreateGraph(SqlParserPos pos, boolean ifNotExists, SqlIdentifier name, SqlNodeList vertices,
+    public SqlCreateGraph(SqlParserPos pos, boolean isTemporary, boolean ifNotExists,
+                          SqlIdentifier name, SqlNodeList vertices,
                           SqlNodeList edges, SqlNodeList properties) {
         super(OPERATOR, pos, false, ifNotExists);
         this.name = name;
         this.vertices = vertices;
         this.edges = edges;
         this.properties = properties;
+        this.isTemporary = isTemporary;
     }
 
     @Override
@@ -75,6 +77,9 @@ public class SqlCreateGraph extends SqlCreate {
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         writer.keyword("CREATE");
+        if (isTemporary) {
+            writer.keyword("TEMPORARY");
+        }
         writer.keyword("GRAPH");
         if (super.ifNotExists) {
             writer.keyword("IF");
@@ -116,7 +121,8 @@ public class SqlCreateGraph extends SqlCreate {
         return properties;
     }
 
-    public void validate() throws ValidationException {
+    public boolean isTemporary() {
+        return isTemporary;
     }
 
     public boolean ifNotExists() {

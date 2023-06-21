@@ -40,6 +40,7 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithRequest_001() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_request_001.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +50,7 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithRequest_002() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_request_002.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +60,7 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithRequest_003() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_request_003.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +70,7 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithSubQuery_001() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_subquery_001.sql")
             .execute()
             .checkSinkResult();
@@ -76,6 +80,7 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithSubQuery_002() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_subquery_002.sql")
             .execute()
             .checkSinkResult();

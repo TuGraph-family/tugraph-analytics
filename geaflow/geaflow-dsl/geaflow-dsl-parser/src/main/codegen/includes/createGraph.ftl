@@ -1,6 +1,7 @@
 SqlCreate SqlCreateGraph(Span s, boolean replace):
 {
     boolean ifNotExists = false;
+    boolean isTemporary = false;
     final SqlIdentifier id;
     SqlNode vertex;
     final List<SqlNode> vertices = new ArrayList<SqlNode>();
@@ -9,6 +10,7 @@ SqlCreate SqlCreateGraph(Span s, boolean replace):
     List<SqlTableProperty> propertyList = new ArrayList<SqlTableProperty>();
 }
 {
+    [ <TEMPORARY> { isTemporary = true; } ]
     <GRAPH> [ <IF> <NOT> <EXISTS> { ifNotExists = true; } ]
     id = CompoundIdentifier()
     <LPAREN>
@@ -24,6 +26,7 @@ SqlCreate SqlCreateGraph(Span s, boolean replace):
     {
         return new SqlCreateGraph(
                         s.end(this),
+                        isTemporary,
                         ifNotExists,
                         id,
                         new SqlNodeList(vertices, s.addAll(vertices).pos()),

@@ -33,8 +33,12 @@ import java.util.Scanner;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NettyTerminalServer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NettyTerminalServer.class.getName());
 
     private PrintStream printer;
 
@@ -124,7 +128,7 @@ public class NettyTerminalServer {
                         String res = line + "\n";
                         this.ctx.writeAndFlush(res);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LOGGER.info(e.getMessage());
                     }
                 }
             }
