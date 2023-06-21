@@ -238,4 +238,4 @@ socket服务启动后，输入点边数据，计算结果会实时显示在屏�
 ![ide_socket_server](../static/img/ide_socket_server.png) 
 
 ## K8S部署
-GeaFlow支持K8S部署, 部署详细文档请参考文档：[K8S部署](deploy/install_guid.md)
+GeaFlow支持K8S部署, 部署详细文档请参考文档：[K8S部署](deploy/install_guide.md)

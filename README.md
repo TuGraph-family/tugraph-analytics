@@ -40,7 +40,7 @@ Here is the document list for GeaFlow:
 - GeaFlow Development:
     - [API Development](docs/docs-en/application-development/api/guid.md)
     - [DSL Development](docs/docs-en/application-development/dsl/overview.md)
-- [Deployment](docs/docs-en/deploy/install_guid.md)
+- [Deployment](docs/docs-en/deploy/install_guide.md)
 - Principle introduction:
     - [Framework Principle](docs/docs-en/principle/framework_principle.md)
     - [State Principle](docs/docs-en/principle/state_principle.md)

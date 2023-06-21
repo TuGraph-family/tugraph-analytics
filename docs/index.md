@@ -1,4 +1,4 @@
-# GeaFlow English Document Guid
+# GeaFlow English Document Guide
 
 {%
 include-markdown "../README.md"

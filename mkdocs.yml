@@ -58,7 +58,7 @@ nav:
                           - 'docs-cn/application-development/dsl/udf/udga.md'
                           - 'docs-cn/application-development/dsl/udf/udtf.md'
         - 部署:
-              - 'docs-cn/deploy/install_guid.md'
+              - 'docs-cn/deploy/install_guide.md'
         - 原理:
               - 'docs-cn/principle/dsl_principle.md'
               - 'docs-cn/principle/framework_principle.md'
@@ -115,7 +115,7 @@ nav:
                 - 'docs-en/application-development/dsl/udf/udga.md'
                 - 'docs-en/application-development/dsl/udf/udtf.md'
     - Deploy:
-        - 'docs-en/deploy/install_guid.md'
+        - 'docs-en/deploy/install_guide.md'
     - Principle:
         - 'docs-en/principle/dsl_principle.md'
         - 'docs-en/principle/framework_principle.md'

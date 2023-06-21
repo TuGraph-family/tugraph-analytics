@@ -32,7 +32,7 @@ GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类
 - GeaFlow应用开发:
     - [API应用开发](docs/docs-cn/application-development/api/guid.md)
     - [DSL应用开发](docs/docs-cn/application-development/dsl/overview.md)
-- [部署运行](docs/docs-cn/deploy/install_guid.md)
+- [部署运行](docs/docs-cn/deploy/install_guide.md)
 - GeaFlow原理介绍:
     - [Framework原理介绍](docs/docs-cn/principle/framework_principle.md)
     - [State原理介绍](docs/docs-cn/principle/state_principle.md)
