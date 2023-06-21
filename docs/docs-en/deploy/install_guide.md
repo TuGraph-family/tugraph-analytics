@@ -1,3 +1,57 @@
+# Install Guide
+## Prepare K8S environment
+
+Here we will use minikube as an example to simulate a K8S cluster on a single machine. 
+
+If you already have a K8S cluster, you can skip this part and use it directly.
+
+Download and install minikube.
+```
+# ARM architecture
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-arm64
+sudo install minikube-darwin-arm64 /usr/local/bin/minikube
+
+# x86 architecture
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
+sudo install minikube-darwin-amd64 /usr/local/bin/minikube
+```
+
+Start minikube and dashboard.
+```
+# Start minikube with docker as the driver
+minikube start --driver=docker --ports=32761:32761 —image-mirror-country='cn'
+# Starting minikube dashboard will automatically open the dashboard page in the browser. 
+# If it doesn't open, copy the dashboard address provided in the terminal and open it in the browser.
+minikube dashboard
+```
+
+**Note:**
+Do not to close the terminal process that the dashboard belongs to. For subsequent operations,
+please start a new terminal. Otherwise, the API server process will exit.
+
+If you want to use GeaFlow on the local minikube environment, please make sure that minikube is running properly. GeaFlow engine image will be automatically built into the minikube environment. Otherwise, it will be built into the local Docker environment and you need to manually push it to the image repository for use.
+
+```shell
+# confirm host、kubelet、apiserver is running
+minikube status
+```
+
+Create a geaflow service account, otherwise the program has no permission to create new K8S
+resources (only needed for the first time)
+```shell
+# Create a geaflow service account
+kubectl create serviceaccount geaflow
+kubectl create clusterrolebinding geaflow-role-binding --clusterrole=edit --serviceaccount=default:geaflow --namespace=default
+```
+
+Finally, in order to allow the containers inside Docker to access the Minikube API, it is necessary to proxy Minikube to ${your_local_ip}:8000, so that other containers can directly access Minikube through this port.
+
+Do not to close the terminal process that the proxy belongs to. For subsequent operations, please start a new terminal.
+```shell
+# Create a proxy for port 8000
+kubectl proxy --port=8000 --address='${your_local_ip}' --accept-hosts='^.*' &
+```
+
 ## Build Images
 
 Download GeaFlow source code, build GeaFlow engine image and GeaFlow Console image.
@@ -6,13 +60,6 @@ Download GeaFlow source code, build GeaFlow engine image and GeaFlow Console ima
 git clone https://github.com/TuGraph-family/tugraph-analytics.git
 cd tugraph-analytics/
 bash ./build.sh --all
-```
-**Note:**
-If you want to use GeaFlow on the local minikube environment, please make sure that minikube is running properly. GeaFlow engine image will be automatically built into the minikube environment. Otherwise, it will be built into the local Docker environment and you need to manually push it to the image repository for use.
-
-```shell
-# confirm host、kubelet、apiserver is running
-minikube status
 ```
 
 After the image compilation is successful, use the following command to view the images:
@@ -29,10 +76,16 @@ The default GeaFlow platform image name is "geaflow-console:0.1", and the engine
 
 ## Start Containers
 
-Start GeaFlow Console platform service locally. (Replace ${your.host.name} with your machine's public IP address)
+Start the GeaFlow Console platform service locally, suitable for Minikube environment. (Replace ${your.host.name} with the public IP address of your machine.)
 
 ```shell
 docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
+```
+
+Start the external GeaFlow Console platform service, suitable for a real K8S cluster environment. (Replace ${your.host.name} with the internal IP address of your machine, for example 172.xx.xxx.xx; replace ${your.public.ip} with the external public IP address, so that GEAFlow Console can be accessed from the outside.)
+
+```shell
+docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} -e geaflow.web.gateway.url=http://${your.public.ip}:8080 geaflow-console:0.1
 ```
 
 The container starts in "local" mode by default, and local MySQL, Redis, and InfluxDB are launched by default.
@@ -88,6 +141,18 @@ Configure the runtime cluster for GeaFlow jobs, and it is recommended to use Kub
 
 ![install_cluster_config](../../static/img/install_cluster_config.png)
 
+Add the following configuration for K8S cluster:
+```
+# Set storage limit to 10Gi
+"kubernetes.resource.storage.limit.size":"10Gi"
+# Configure service API to the K8S service address, usually on port 6443
+"kubernetes.master.url":"https://${your.host.name}:6443"
+# Find the configuration file '/etc/kubernetes/admin.conf' in the K8S cluster, and configure the following three fields from top to bottom
+"kubernetes.ca.data":""
+"kubernetes.cert.data":""
+"kubernetes.cert.key":""
+```
+
 ### Runtime Configuration
 Configure the storage of runtime metadata for GeaFlow jobs. Runtime metadata includes information such as the job's Pipeline, Cycle, checkpoint, and exceptions. It is recommended to use MySQL.
 
@@ -98,6 +163,12 @@ Configure the storage of metric data for GeaFlow job runtime, which is used for 
 ![undefined](../../static/img/install_meta_config.png)
 
 In local mode, when the docker container starts, MySQL, Redis, and InfluxDB services will be automatically pulled up by default.
+
+Add the following configuration for K8S cluster:
+```
+# Configure influshdb.token as a random value
+"influxdb.token":"f5fb50a361f762a0af045c47d98f66e401f1b632b3133b3dc2680110262d1135"
+```
 
 ### Data Storage Configuration
 Configure the persistent storage of GeaFlow job, graph, and table data, and it is recommended to use HDFS. In local mode, the default is the disk inside the container.

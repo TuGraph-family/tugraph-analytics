@@ -234,4 +234,4 @@ After the socket service is started, enter the vertex-edge data, and the calcula
 ![ide_socket_server](../static/img/ide_socket_server.png) 
 
 ## K8S Deployment
-GeaFlow supports K8S deployment. For details about the deployment mode, see the document: [K8S Deployment](deploy/install_guid.md).
+GeaFlow supports K8S deployment. For details about the deployment mode, see the document: [K8S Deployment](deploy/install_guide.md).
