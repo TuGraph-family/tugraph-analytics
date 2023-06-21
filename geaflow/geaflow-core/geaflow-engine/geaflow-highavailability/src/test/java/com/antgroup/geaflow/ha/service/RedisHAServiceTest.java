@@ -24,6 +24,7 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.github.fppt.jedismock.RedisServer;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.testng.Assert;
@@ -76,16 +77,18 @@ public class RedisHAServiceTest {
         configuration.put(FO_TIMEOUT_MS, "2000");
         haService.open(configuration);
 
+        CountDownLatch latch = new CountDownLatch(1);
         String resourceId = "test-multi-thread";
         executorService.execute(() -> {
             while (true) {
                 ResourceData resourceData = new ResourceData();
                 resourceData.setHost("abc");
                 haService.register(resourceId, resourceData);
+                latch.countDown();
             }
         });
 
-        Thread.sleep(1);
+        latch.await();
         ResourceData data = haService.getResourceData(resourceId);
         Assert.assertNotNull(data);
         executorService.shutdown();
