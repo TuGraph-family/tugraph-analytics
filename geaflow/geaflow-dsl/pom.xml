@@ -41,6 +41,7 @@
         <calcite.version>1.18.0-geaflow_1.0</calcite.version>
         <kafka.version>2.4.1</kafka.version>
         <kafka.scala.binary.version>2.11</kafka.scala.binary.version>
+        <h2.version>2.1.214</h2.version>
     </properties>
 
     <dependencyManagement>
@@ -126,6 +127,12 @@
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-dsl-connector-socket</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-dsl-connector-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

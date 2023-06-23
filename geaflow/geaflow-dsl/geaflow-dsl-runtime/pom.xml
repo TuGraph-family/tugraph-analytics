@@ -68,6 +68,11 @@
 
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dsl-connector-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-api</artifactId>
         </dependency>
 
@@ -109,6 +114,15 @@
             </exclusions>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <!-- include h2 database for tests  -->
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-view-meta</artifactId>
