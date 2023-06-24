@@ -95,8 +95,13 @@ public class JDBCTableSink implements TableSink {
     @Override
     public void close() {
         try {
+            if (this.statement != null) {
+                this.statement.close();
+                this.statement = null;
+            }
             if (this.connection != null) {
                 this.connection.close();
+                this.connection = null;
             }
             LOGGER.info("close");
         } catch (SQLException e) {
