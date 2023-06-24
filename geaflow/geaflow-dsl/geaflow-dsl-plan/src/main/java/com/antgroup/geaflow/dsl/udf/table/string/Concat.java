@@ -17,8 +17,9 @@ package com.antgroup.geaflow.dsl.udf.table.string;
 import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
+import java.util.Objects;
 
-@Description(name = "concat", description = "Concat object string to one string.")
+@Description(name = "concat", description = "Concat strings to one string.")
 public class Concat extends UDF {
 
     public String eval(String... args) {
@@ -32,12 +33,6 @@ public class Concat extends UDF {
     }
 
     public String eval(BinaryString... args) {
-        StringBuilder sb = new StringBuilder();
-        for (BinaryString arg : args) {
-            if (arg != null) {
-                sb.append(arg);
-            }
-        }
-        return sb.toString();
+        return Objects.requireNonNull(BinaryString.concat(args)).toString();
     }
 }

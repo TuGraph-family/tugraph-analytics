@@ -66,6 +66,8 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 0xF5..0xFF - disallowed in UTF-8
     };
 
+    public static final BinaryString EMPTY_UTF8 = BinaryString.fromString("");
+
     public BinaryString() {
 
     }
@@ -228,7 +230,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return false;
     }
 
-    public BinaryString concat(BinaryString... inputs) {
+    public static BinaryString concat(BinaryString... inputs) {
         long totalLength = 0;
         for (BinaryString input : inputs) {
             if (Objects.isNull(input)) {
@@ -241,8 +243,53 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         int offset = 0;
         for (BinaryString input : inputs) {
             int len = input.numBytes;
-            copyMemory(input.binaryObject, input.offset, result, BYTE_ARRAY_OFFSET + offset, len);
+            copyMemory(input.binaryObject, input.offset, result, offset, len);
             offset += len;
+        }
+        return fromBytes(result);
+    }
+
+    public static BinaryString concatWs(BinaryString separator, BinaryString... inputs) {
+        if (Objects.isNull(separator)) {
+            return null;
+        }
+
+        // total number of bytes from inputs
+        long numInputBytes = 0L;
+        // number of non-null inputs
+        int numInputs = 0;
+        for (BinaryString input : inputs) {
+            if (Objects.nonNull(input)) {
+                numInputBytes += input.numBytes;
+                numInputs++;
+            }
+        }
+
+        if (numInputs == 0) {
+            // Return an empty string if there is no input or all inputs are null.
+            return EMPTY_UTF8;
+        }
+
+        int resultSize =
+            Math.toIntExact(numInputBytes + (numInputs - 1) * (long)separator.numBytes);
+        byte[] result = new byte[resultSize];
+        int offset = 0;
+
+        for (int i = 0, j = 0; i < inputs.length; i++) {
+            if (Objects.nonNull(inputs[i])) {
+                int len = inputs[i].numBytes;
+                copyMemory(inputs[i].binaryObject, inputs[i].offset, result,
+                    offset, len);
+                offset += len;
+            }
+
+            j++;
+            // Add separator if this is not the last input.
+            if (j < numInputs) {
+                copyMemory(separator.binaryObject, separator.offset, result,
+                    offset, separator.numBytes);
+                offset += separator.numBytes;
+            }
         }
         return fromBytes(result);
     }
@@ -309,7 +356,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
     }
 
     /**
-     *  * This method is an adaptation of Spark's org.apache.spark.unsafe.hash.Murmur3_x86_32.
+     * * This method is an adaptation of Spark's org.apache.spark.unsafe.hash.Murmur3_x86_32.
      */
     private static int hashUnsafeBytes(IBinaryObject base, long offset, int lengthInBytes, int seed) {
         int lengthAligned = lengthInBytes - lengthInBytes % 4;
