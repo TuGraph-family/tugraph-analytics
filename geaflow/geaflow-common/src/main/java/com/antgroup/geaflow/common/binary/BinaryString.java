@@ -17,7 +17,6 @@
 
 package com.antgroup.geaflow.common.binary;
 
-import static com.antgroup.geaflow.common.binary.BinaryOperations.BYTE_ARRAY_OFFSET;
 import static com.antgroup.geaflow.common.binary.BinaryOperations.copyMemory;
 import static com.antgroup.geaflow.common.binary.BinaryOperations.getLong;
 
