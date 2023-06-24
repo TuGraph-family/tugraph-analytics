@@ -17,7 +17,6 @@ package com.antgroup.geaflow.dsl.udf.table.string;
 import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
-import java.util.Arrays;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
