@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.table.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 
@@ -23,6 +24,16 @@ public class Concat extends UDF {
     public String eval(String... args) {
         StringBuilder sb = new StringBuilder();
         for (String arg : args) {
+            if (arg != null) {
+                sb.append(arg);
+            }
+        }
+        return sb.toString();
+    }
+
+    public String eval(BinaryString... args) {
+        StringBuilder sb = new StringBuilder();
+        for (BinaryString arg : args) {
             if (arg != null) {
                 sb.append(arg);
             }

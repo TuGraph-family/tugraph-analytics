@@ -69,10 +69,12 @@ public class UDFStringTest {
     @Test
     public void testConcat() {
         String string = "ant group";
+        BinaryString binaryString = BinaryString.fromString(string);
         Concat test = new Concat();
         test.open(null);
         assertEquals(test.eval(string, string, string),
             "ant groupant groupant group");
+        assertEquals(test.eval(binaryString, binaryString, binaryString), "ant groupant groupant group");
     }
 
     @Test

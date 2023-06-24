@@ -17,6 +17,7 @@
 
 package com.antgroup.geaflow.common.binary;
 
+import static com.antgroup.geaflow.common.binary.BinaryOperations.BYTE_ARRAY_OFFSET;
 import static com.antgroup.geaflow.common.binary.BinaryOperations.copyMemory;
 import static com.antgroup.geaflow.common.binary.BinaryOperations.getLong;
 
@@ -27,6 +28,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * This class is an adaptation of Spark's org.apache.spark.unsafe.types.UTF8String.
@@ -224,6 +226,25 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
             }
         }
         return false;
+    }
+
+    public BinaryString concat(BinaryString... inputs) {
+        long totalLength = 0;
+        for (BinaryString input : inputs) {
+            if (Objects.isNull(input)) {
+                return null;
+            }
+            totalLength += input.numBytes;
+        }
+
+        byte[] result = new byte[Math.toIntExact(totalLength)];
+        int offset = 0;
+        for (BinaryString input : inputs) {
+            int len = input.numBytes;
+            copyMemory(input.binaryObject, input.offset, result, BYTE_ARRAY_OFFSET + offset, len);
+            offset += len;
+        }
+        return fromBytes(result);
     }
 
     public int indexOf(BinaryString s, int start) {
