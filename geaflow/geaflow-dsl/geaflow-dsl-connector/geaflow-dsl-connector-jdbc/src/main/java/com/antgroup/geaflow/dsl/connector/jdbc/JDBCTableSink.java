@@ -62,7 +62,7 @@ public class JDBCTableSink implements TableSink {
             Class.forName(this.driver);
             this.connection = DriverManager.getConnection(url, username, password);
             this.statement = connection.createStatement();
-            JDBCUtils.createTable(statement, this.tableName, this.schema.getFields());
+            JDBCUtils.createTemporaryTable(statement, this.tableName, this.schema.getFields());
         } catch (Exception e) {
             throw new GeaFlowDSLException("failed to connect to database", e);
         }
@@ -95,7 +95,9 @@ public class JDBCTableSink implements TableSink {
     @Override
     public void close() {
         try {
-            this.connection.close();
+            if (this.connection != null) {
+                this.connection.close();
+            }
             LOGGER.info("close");
         } catch (SQLException e) {
             throw new GeaFlowDSLException("failed to close");

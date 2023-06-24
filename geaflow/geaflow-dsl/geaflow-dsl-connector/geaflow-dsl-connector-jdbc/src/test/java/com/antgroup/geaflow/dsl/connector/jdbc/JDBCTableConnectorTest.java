@@ -69,7 +69,7 @@ public class JDBCTableConnectorTest {
         tableFieldList.add(new TableField("id", Types.INTEGER, false));
         tableFieldList.add(new TableField("v1", Types.DOUBLE, true));
         tableFieldList.add(new TableField("v2", Types.DOUBLE, true));
-        JDBCUtils.createTable(statement, "another_table", tableFieldList);
+        JDBCUtils.createTemporaryTable(statement, "another_table", tableFieldList);
     }
 
     @Test

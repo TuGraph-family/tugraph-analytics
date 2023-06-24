@@ -52,15 +52,15 @@ public class JDBCUtils {
             tableField.isNullable() ? "NULL" : "NOT " + "NULL");
     }
 
-    public static void createTable(Statement statement, String tableName,
-                                   List<TableField> fields) throws SQLException {
-        statement.execute("DROP TABLE IF EXISTS " + tableName);
+    public static void createTemporaryTable(Statement statement, String tableName,
+                                            List<TableField> fields) throws SQLException {
         StringBuilder tableFields = new StringBuilder();
         for (TableField field : fields) {
             tableFields.append(tableFieldToSQL(field)).append(",\n");
         }
         tableFields.deleteCharAt(tableFields.lastIndexOf(","));
-        String createTableQuery = String.format("CREATE TABLE %s (\n%s);", tableName, tableFields);
+        String createTableQuery = String.format("CREATE TEMPORARY TABLE %s (\n%s);", tableName,
+            tableFields);
         statement.execute(createTableQuery);
     }
 

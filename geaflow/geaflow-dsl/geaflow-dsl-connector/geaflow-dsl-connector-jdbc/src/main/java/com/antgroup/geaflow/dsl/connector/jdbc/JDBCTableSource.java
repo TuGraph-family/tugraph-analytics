@@ -24,6 +24,7 @@ import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
+import com.antgroup.geaflow.dsl.connector.api.Windows;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.serde.impl.RowTableDeserializer;
 import com.antgroup.geaflow.dsl.connector.jdbc.util.JDBCUtils;
@@ -34,6 +35,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,8 +104,9 @@ public class JDBCTableSource implements TableSource {
         } catch (SQLException e) {
             throw new GeaFlowDSLException("select rows form table failed.", e);
         }
-        JDBCOffset nextOffset = new JDBCOffset(offset + windowSize);
-        return (FetchData<T>) new FetchData<>(dataList, nextOffset, false);
+        JDBCOffset nextOffset = new JDBCOffset(offset + dataList.size());
+        boolean isFinish = windowSize == Windows.SIZE_OF_ALL_WINDOW || dataList.size() < windowSize;
+        return (FetchData<T>) new FetchData<>(dataList, nextOffset, isFinish);
     }
 
     @Override
@@ -133,6 +136,23 @@ public class JDBCTableSource implements TableSource {
         @Override
         public String getName() {
             return tableName;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tableName);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof JDBCPartition)) {
+                return false;
+            }
+            JDBCPartition that = (JDBCPartition) o;
+            return Objects.equals(tableName, that.tableName);
         }
     }
 
