@@ -1,4 +1,4 @@
-CREATE TABLE kafka_source (
+CREATE TABLE jdbc_source (
 	user_name varchar,
 	user_count bigint
 ) WITH (
@@ -20,4 +20,4 @@ CREATE TABLE tbl_result (
 
 INSERT INTO tbl_result
 SELECT DISTINCT *
-FROM kafka_source;
+FROM jdbc_source;
