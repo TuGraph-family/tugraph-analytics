@@ -251,9 +251,10 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return fromBytes(result);
     }
 
-    public static BinaryString concatWs(BinaryString separator, BinaryString... inputs) {
-        if (Objects.isNull(separator)) {
-            separator = EMPTY_UTF8;
+    public static BinaryString concatWs(String separator, BinaryString... inputs) {
+        BinaryString sep = EMPTY_UTF8;
+        if (Objects.nonNull(separator)) {
+            sep = BinaryString.fromString(separator);
         }
 
         // total number of bytes from inputs
@@ -266,7 +267,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         }
 
         int resultSize =
-            Math.toIntExact(numInputBytes + (numInputs - 1) * (long)separator.numBytes);
+            Math.toIntExact(numInputBytes + (numInputs - 1) * (long) sep.numBytes);
         byte[] result = new byte[resultSize];
         int offset = 0;
 
@@ -281,9 +282,9 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
             j++;
             // Add separator if this is not the last input.
             if (j < numInputs) {
-                copyMemory(separator.binaryObject, separator.offset, result,
-                    offset, separator.numBytes);
-                offset += separator.numBytes;
+                copyMemory(sep.binaryObject, sep.offset, result,
+                    offset, sep.numBytes);
+                offset += sep.numBytes;
             }
         }
         return fromBytes(result);
