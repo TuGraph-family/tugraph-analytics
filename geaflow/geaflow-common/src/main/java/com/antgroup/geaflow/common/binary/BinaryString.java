@@ -233,7 +233,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         long totalLength = 0;
         for (BinaryString input : inputs) {
             if (Objects.isNull(input)) {
-                return null;
+                continue;
             }
             totalLength += input.numBytes;
         }
@@ -241,6 +241,9 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         byte[] result = new byte[Math.toIntExact(totalLength)];
         int offset = 0;
         for (BinaryString input : inputs) {
+            if (Objects.isNull(input)) {
+                continue;
+            }
             int len = input.numBytes;
             copyMemory(input.binaryObject, input.offset, result, offset, len);
             offset += len;
@@ -250,23 +253,16 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
 
     public static BinaryString concatWs(BinaryString separator, BinaryString... inputs) {
         if (Objects.isNull(separator)) {
-            return null;
+            separator = EMPTY_UTF8;
         }
 
         // total number of bytes from inputs
         long numInputBytes = 0L;
-        // number of non-null inputs
-        int numInputs = 0;
+        int numInputs = inputs.length;
         for (BinaryString input : inputs) {
             if (Objects.nonNull(input)) {
                 numInputBytes += input.numBytes;
-                numInputs++;
             }
-        }
-
-        if (numInputs == 0) {
-            // Return an empty string if there is no input or all inputs are null.
-            return EMPTY_UTF8;
         }
 
         int resultSize =
