@@ -76,6 +76,7 @@ public class UDFStringTest {
         assertEquals(test.eval(string, string, string), "ant groupant groupant group");
         assertEquals(test.eval(string, null, string), "ant groupant group");
         assertEquals(test.eval(string, string, null), "ant groupant group");
+        assertEquals(test.eval((String) null, null, null), "");
 
         assertEquals(test.eval(binaryString, binaryString, binaryString),
             "ant groupant groupant group");
@@ -83,6 +84,7 @@ public class UDFStringTest {
         assertEquals(test.eval(binaryString, binaryString, null), "ant groupant group");
         assertEquals(test.eval(BinaryString.fromString("蚂蚁1"), BinaryString.fromString("蚂蚁2"),
             BinaryString.fromString("蚂蚁3")), "蚂蚁1蚂蚁2蚂蚁3");
+        assertEquals(test.eval((BinaryString) null, null, null), "");
     }
 
     @Test

@@ -23,6 +23,9 @@ import java.util.Objects;
 public class Concat extends UDF {
 
     public String eval(String... args) {
+        if (Objects.isNull(args)) {
+            return null;
+        }
         StringBuilder sb = new StringBuilder();
         for (String arg : args) {
             if (arg != null) {
@@ -33,6 +36,9 @@ public class Concat extends UDF {
     }
 
     public String eval(BinaryString... args) {
+        if (Objects.isNull(args)) {
+            return null;
+        }
         return Objects.requireNonNull(BinaryString.concat(args)).toString();
     }
 }
