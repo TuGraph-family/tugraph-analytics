@@ -302,9 +302,8 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
                         new GeaFlowAlgorithmDynamicTraversal(algorithm, maxTraversal, graphAlgorithm.getParams(), graphSchema))
                     .start();
             }
-
         }
-
+        responsePWindow = responsePWindow.withParallelism(graphViewDesc.getShardNum());
         PWindowStream<Row> resultPWindow = responsePWindow.flatMap(
             (FlatMapFunction<ITraversalResponse<Row>, Row>) (value, collector) -> collector.partition(value.getResponse()));
         return new GeaFlowRuntimeTable(queryContext, context, resultPWindow);
