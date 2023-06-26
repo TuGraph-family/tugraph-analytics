@@ -44,6 +44,8 @@ GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类
 # 联系我们
 您可以通过钉钉或者微信用户群联系我们。
 
+**If you feel GeaFlow useful or interesting, please ⭐️ Star it on github.**
+
 ![dingding](docs/static/img/dingding.png)
 
 ![wechat](docs/static/img/wechat.png)
