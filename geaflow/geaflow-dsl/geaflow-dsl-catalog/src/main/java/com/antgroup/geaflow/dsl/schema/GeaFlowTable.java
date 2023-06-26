@@ -19,6 +19,7 @@ import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
+import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import java.io.Serializable;
@@ -49,8 +50,11 @@ public class GeaFlowTable extends AbstractTable implements Serializable {
 
     private final boolean ifNotExists;
 
+    private final boolean isTemporary;
+
     public GeaFlowTable(String instanceName, String name, List<TableField> fields, List<String> primaryFields,
-                        List<String> partitionFields, Map<String, String> config, boolean ifNotExists) {
+                        List<String> partitionFields, Map<String, String> config,
+                        boolean ifNotExists, boolean isTemporaryTable) {
         this.instanceName = Objects.requireNonNull(instanceName);
         this.name = Objects.requireNonNull(name, "name is null");
         this.fields = Objects.requireNonNull(fields, "fields is null");
@@ -58,6 +62,13 @@ public class GeaFlowTable extends AbstractTable implements Serializable {
         this.partitionFields = Objects.requireNonNull(partitionFields, "partitionFields is null");
         this.config = Objects.requireNonNull(config, "config is null");
         this.ifNotExists = ifNotExists;
+        this.isTemporary = isTemporaryTable;
+    }
+
+    public boolean isAllWindow(Configuration globalConfig) {
+        return getConfigWithGlobal(globalConfig).getConfigMap().containsKey(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey())
+            && getConfigWithGlobal(globalConfig).getConfigMap().get(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey()).equals(String.valueOf(
+            Windows.SIZE_OF_ALL_WINDOW));
     }
 
     @Override
@@ -125,6 +136,10 @@ public class GeaFlowTable extends AbstractTable implements Serializable {
 
     public boolean isIfNotExists() {
         return ifNotExists;
+    }
+
+    public boolean isTemporary() {
+        return isTemporary;
     }
 
     public String getTableType() {

@@ -15,13 +15,12 @@
 package com.antgroup.geaflow.dsl.runtime.query;
 
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
-import com.antgroup.geaflow.common.utils.SleepUtils;
-import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.runtime.testenv.KafkaTestEnv;
 import com.antgroup.geaflow.dsl.runtime.testenv.SourceFunctionNoPartitionCheck;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -36,7 +35,6 @@ public class KafkaFoTest {
 
     @BeforeClass
     public void startKafkaServer() throws IOException {
-        SleepUtils.sleepSecond(60L);
         LOGGER.info("startKafkaServer");
         KafkaTestEnv.get().startKafkaServer();
         LOGGER.info("startKafkaServer done");
@@ -69,7 +67,7 @@ public class KafkaFoTest {
             .withTestTimeWaitSeconds(60);
         try {
             tester.execute();
-        } catch (GeaFlowDSLException e) {
+        } catch (TimeoutException e) {
             LOGGER.info("Kafka unbounded stream finish with timeout.");
         }
         tester.checkSinkResult();

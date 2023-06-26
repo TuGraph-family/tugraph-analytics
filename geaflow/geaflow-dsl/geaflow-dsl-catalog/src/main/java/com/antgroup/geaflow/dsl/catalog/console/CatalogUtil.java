@@ -18,21 +18,13 @@ import static com.antgroup.geaflow.dsl.util.SqlTypeUtil.convertTypeName;
 
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
-import com.antgroup.geaflow.dsl.catalog.console.EdgeModel;
-import com.antgroup.geaflow.dsl.catalog.console.FieldModel;
-import com.antgroup.geaflow.dsl.catalog.console.GeaFlowFieldCategory;
-import com.antgroup.geaflow.dsl.catalog.console.GeaFlowFieldType;
-import com.antgroup.geaflow.dsl.catalog.console.GeaFlowPluginType;
-import com.antgroup.geaflow.dsl.catalog.console.GraphModel;
-import com.antgroup.geaflow.dsl.catalog.console.PluginConfigModel;
-import com.antgroup.geaflow.dsl.catalog.console.TableModel;
-import com.antgroup.geaflow.dsl.catalog.console.VertexModel;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CatalogUtil {
@@ -57,7 +49,7 @@ public class CatalogUtil {
         List<FieldModel> fieldModels = model.getFields();
         List<TableField> fields = convertToTableField(fieldModels);
         return new GeaFlowTable(instanceName, model.getName(), fields, new ArrayList<>(),
-            new ArrayList<>(), model.getPluginConfig().getConfig(), true);
+            new ArrayList<>(), model.getPluginConfig().getConfig(), true, false);
     }
 
     public static VertexModel convertToVertexModel(VertexTable table) {
@@ -85,11 +77,8 @@ public class CatalogUtil {
         List<TableField> fields = new ArrayList<>(fieldModels.size());
         String idFieldName = null;
         for (FieldModel fieldModel : fieldModels) {
-            switch (fieldModel.getCategory()) {
-                case VERTEX_ID:
-                    idFieldName = fieldModel.getName();
-                    break;
-                default:
+            if (fieldModel.getCategory() == GeaFlowFieldCategory.VERTEX_ID) {
+                idFieldName = fieldModel.getName();
             }
             String typeName = convertTypeName(fieldModel.getType().name());
             IType<?> fieldType = Types.of(typeName);
@@ -155,9 +144,11 @@ public class CatalogUtil {
 
     public static GraphModel convertToGraphModel(GeaFlowGraph graph) {
         GraphModel graphModel = new GraphModel();
+        graphModel.setStaticGraph(graph.isStatic());
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
         pluginConfigModel.setType(GeaFlowPluginType.getPluginType(graph.getStoreType()));
         pluginConfigModel.setConfig(graph.getConfig().getConfigMap());
+
         graphModel.setPluginConfig(pluginConfigModel);
         List<VertexTable> vertexTables = graph.getVertexTables();
         List<VertexModel> vertexModels = new ArrayList<>(vertexTables.size());
@@ -189,8 +180,9 @@ public class CatalogUtil {
         for (EdgeModel edgeModel : edges) {
             edgeTables.add(convertToEdgeTable(edgeModel));
         }
+        boolean isStaticGraph = model.isStaticGraph();
         return new GeaFlowGraph(instanceName, model.getName(), vertexTables, edgeTables,
-            model.getPluginConfig().getConfig(), true);
+            model.getPluginConfig().getConfig(), Collections.emptyMap(), true, isStaticGraph, false);
     }
 
     private static List<FieldModel> convertToFieldModel(List<TableField> fields) {

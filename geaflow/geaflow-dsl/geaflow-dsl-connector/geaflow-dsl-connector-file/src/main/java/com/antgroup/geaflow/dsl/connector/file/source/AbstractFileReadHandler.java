@@ -14,8 +14,8 @@
 
 package com.antgroup.geaflow.dsl.connector.file.source;
 
+import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
-import com.antgroup.geaflow.dsl.connector.api.Windows;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.BufferedReader;

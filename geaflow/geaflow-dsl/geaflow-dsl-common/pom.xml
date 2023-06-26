@@ -48,6 +48,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>

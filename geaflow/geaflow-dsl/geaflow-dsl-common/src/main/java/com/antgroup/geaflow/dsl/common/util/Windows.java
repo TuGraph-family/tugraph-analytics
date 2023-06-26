@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dsl.connector.api;
+package com.antgroup.geaflow.dsl.common.util;
 
 import com.antgroup.geaflow.api.window.IWindow;
 import com.antgroup.geaflow.api.window.impl.AllWindow;

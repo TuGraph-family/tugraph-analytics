@@ -39,7 +39,7 @@ public class CatalogFactory {
 
     public static Catalog getCatalog(Configuration conf) {
         String catalogType = conf.getString(DSLConfigKeys.GEAFLOW_DSL_CATALOG_TYPE);
-        Catalog catalog = getCatalog(catalogType);
+        Catalog catalog = new CatalogImpl(getCatalog(catalogType));
         catalog.init(conf);
         return catalog;
     }

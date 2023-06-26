@@ -149,7 +149,12 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         PWindowStream<ITraversalResponse<ITreePath>> responsePWindow;
 
         if (graph.isStatic()) { // traversal on static graph.
-            queryContext.addMaterializedGraph(graph.getName());
+            vertexStream = vertexStream != null ? vertexStream :
+                           queryContext.getEngineContext().createRuntimeTable(queryContext, Collections.emptyList())
+                               .getPlan();
+            edgeStream = edgeStream != null ? edgeStream :
+                         queryContext.getEngineContext().createRuntimeTable(queryContext, Collections.emptyList())
+                             .getPlan();
             PGraphWindow<Object, Row, Row> staticGraph =
                 context.buildWindowStreamGraph((PWindowStream) vertexStream, (PWindowStream) edgeStream, graphViewDesc);
             responsePWindow = staticGraphTraversal(staticGraph, parameterStartIds,
