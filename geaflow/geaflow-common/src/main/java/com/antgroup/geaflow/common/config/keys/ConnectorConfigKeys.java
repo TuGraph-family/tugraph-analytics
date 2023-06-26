@@ -52,16 +52,6 @@ public class ConnectorConfigKeys implements Serializable {
     /*************************************************
      *  FILE Connector Parameters.
      *************************************************/
-    public static final ConfigKey GEAFLOW_DSL_USING_VERTEX_PATH = ConfigKeys
-        .key("geaflow.dsl.using.vertex.path")
-        .noDefaultValue()
-        .description("The vertex file path for the graph source.");
-
-    public static final ConfigKey GEAFLOW_DSL_USING_EDGE_PATH = ConfigKeys
-        .key("geaflow.dsl.using.edge.path")
-        .noDefaultValue()
-        .description("The edge file path for the graph source.");
-
     public static final ConfigKey GEAFLOW_DSL_FILE_PATH = ConfigKeys
         .key("geaflow.dsl.file.path")
         .noDefaultValue()

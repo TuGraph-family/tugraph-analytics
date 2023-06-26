@@ -176,7 +176,7 @@ public class StepPlanTest {
         TableField idField = new TableField("id", Types.of("Long"), false);
         VertexTable vTable = new VertexTable("testV", Collections.singletonList(idField),"id");
         GeaFlowGraph graph = new GeaFlowGraph("default", "test", Lists.newArrayList(vTable),
-            new ArrayList<>(), new HashMap<>(), false);
+            new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false, false);
         GraphRecordType graphRecordType = (GraphRecordType) graph.getRowType(GQLJavaTypeFactory.create());
         return (GraphSchema) SqlTypeUtil.convertType(graphRecordType);
     }

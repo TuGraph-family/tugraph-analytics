@@ -69,8 +69,8 @@ public class GeaFlowGraphTest {
             "g0",
             Lists.newArrayList(vertexTable),
             Lists.newArrayList(edgeTable),
-            config,
-            false
+            config, new HashMap<>(),
+            false, false, false
         );
 
         RelDataType relDataType = graph.getRowType(typeFactory);

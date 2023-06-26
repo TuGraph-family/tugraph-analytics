@@ -1,3 +1,29 @@
+CREATE GRAPH dy_modern (
+	Vertex person (
+	  id bigint ID,
+	  name varchar,
+	  age int
+	),
+	Vertex software (
+	  id bigint ID,
+	  name varchar,
+	  lang varchar
+	),
+	Edge knows (
+	  srcId bigint SOURCE ID,
+	  targetId bigint DESTINATION ID,
+	  weight double
+	),
+	Edge created (
+	  srcId bigint SOURCE ID,
+  	targetId bigint DESTINATION ID,
+  	weight double
+	)
+) WITH (
+	storeType='rocksdb',
+	shardCount = 2
+);
+
 CREATE TABLE tbl_result (
   vid int,
 	prValue double
@@ -5,7 +31,6 @@ CREATE TABLE tbl_result (
 	type='file',
 	geaflow.dsl.file.path='${target}'
 );
-
 
 USE GRAPH dy_modern;
 

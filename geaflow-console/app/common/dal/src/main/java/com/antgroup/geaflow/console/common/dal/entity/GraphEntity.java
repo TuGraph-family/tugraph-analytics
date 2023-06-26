@@ -25,4 +25,5 @@ public class GraphEntity extends DataEntity {
 
     private String pluginConfigId;
 
+    private boolean staticGraph;
 }
