@@ -252,9 +252,6 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
     }
 
     public static BinaryString concatWs(BinaryString separator, BinaryString... inputs) {
-        if (Objects.isNull(separator)) {
-            separator = EMPTY_UTF8;
-        }
 
         // total number of bytes from inputs
         long numInputBytes = 0L;

@@ -28,6 +28,8 @@ public class ConcatWS extends UDF {
     }
 
     public BinaryString eval(String separator, BinaryString... args) {
-        return Objects.requireNonNull(BinaryString.concatWs(BinaryString.fromString(separator), args));
+        BinaryString sep = separator == null ? BinaryString.EMPTY_UTF8 :
+                           BinaryString.fromString(separator);
+        return Objects.requireNonNull(BinaryString.concatWs(sep, args));
     }
 }
