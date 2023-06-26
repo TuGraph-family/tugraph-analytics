@@ -13,6 +13,39 @@ GeaFlow API是对高阶用户提供的开发接口，其支持Graph API和Stream
 * 对于批或静态图API来说，Window将采用AllWindow模式，一个窗口将读取全量数据，从而实现全量的计算。
 
 
+# Maven依赖
+开发GeaFlow API应用需要添加一下maven依赖：
+```xml
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-api</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-pdata</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-cluster</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-on-local</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-pipeline</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 
 # 功能概览
 ## Graph API
@@ -147,10 +180,6 @@ Stream API提供了一套通用计算的编程接口，包括source构建、流�
 		<td>将PWindowKeyStream作为动态streamView，默认keyby后生成IncstreamView</td>
 	</tr>
 </table>
-
-
-
-
 
 
 # 典型示例
