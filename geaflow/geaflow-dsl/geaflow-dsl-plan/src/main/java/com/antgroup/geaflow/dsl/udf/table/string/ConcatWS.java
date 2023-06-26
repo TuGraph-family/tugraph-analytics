@@ -27,7 +27,7 @@ public class ConcatWS extends UDF {
         return StringUtils.join(args, separator);
     }
 
-    public String eval(String separator, BinaryString... args) {
-        return Objects.requireNonNull(BinaryString.concatWs(separator, args)).toString();
+    public BinaryString eval(String separator, BinaryString... args) {
+        return Objects.requireNonNull(BinaryString.concatWs(BinaryString.fromString(separator), args));
     }
 }

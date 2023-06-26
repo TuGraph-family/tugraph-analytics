@@ -35,10 +35,10 @@ public class Concat extends UDF {
         return sb.toString();
     }
 
-    public String eval(BinaryString... args) {
+    public BinaryString eval(BinaryString... args) {
         if (Objects.isNull(args)) {
             return null;
         }
-        return Objects.requireNonNull(BinaryString.concat(args)).toString();
+        return Objects.requireNonNull(BinaryString.concat(args));
     }
 }

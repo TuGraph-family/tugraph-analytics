@@ -79,12 +79,14 @@ public class UDFStringTest {
         assertEquals(test.eval((String) null, null, null), "");
 
         assertEquals(test.eval(binaryString, binaryString, binaryString),
-            "ant groupant groupant group");
-        assertEquals(test.eval(binaryString, null, binaryString), "ant groupant group");
-        assertEquals(test.eval(binaryString, binaryString, null), "ant groupant group");
+            BinaryString.fromString("ant groupant groupant group"));
+        assertEquals(test.eval(binaryString, null, binaryString), BinaryString.fromString(
+            "ant groupant group"));
+        assertEquals(test.eval(binaryString, binaryString, null), BinaryString.fromString(
+            "ant groupant group"));
         assertEquals(test.eval(BinaryString.fromString("蚂蚁1"), BinaryString.fromString("蚂蚁2"),
-            BinaryString.fromString("蚂蚁3")), "蚂蚁1蚂蚁2蚂蚁3");
-        assertEquals(test.eval((BinaryString) null, null, null), "");
+            BinaryString.fromString("蚂蚁3")), BinaryString.fromString("蚂蚁1蚂蚁2蚂蚁3"));
+        assertEquals(test.eval((BinaryString) null, null, null), BinaryString.fromString(""));
     }
 
     @Test
@@ -110,25 +112,25 @@ public class UDFStringTest {
 
         assertEquals(
             test.eval(",", binaryString, binaryString, binaryString),
-            "ant group,ant group,ant group");
+            BinaryString.fromString("ant group,ant group,ant group"));
         assertEquals(
             test.eval("-", binaryString, binaryString, binaryString),
-            "ant group-ant group-ant group");
+            BinaryString.fromString("ant group-ant group-ant group"));
         assertEquals(
             test.eval("***", binaryString, binaryString, binaryString),
-            "ant group***ant group***ant group");
+            BinaryString.fromString("ant group***ant group***ant group"));
         assertEquals(test.eval(",", BinaryString.fromString("1"),
                 binaryString, BinaryString.fromString("23")),
-            "1,ant group,23");
+            BinaryString.fromString("1,ant group,23"));
         assertEquals(test.eval(",", binaryString, null, binaryString),
-            "ant group,,ant group");
+            BinaryString.fromString("ant group,,ant group"));
         assertEquals(test.eval(",", (BinaryString) null, null, null),
-            ",,");
+            BinaryString.fromString(",,"));
         assertEquals(test.eval(null, binaryString, binaryString, binaryString),
-            "ant groupant groupant group");
+            BinaryString.fromString("ant groupant groupant group"));
         assertEquals(test.eval(",", BinaryString.fromString("蚂蚁1"),
             BinaryString.fromString("蚂蚁2"),
-            BinaryString.fromString("蚂蚁3")), "蚂蚁1,蚂蚁2,蚂蚁3");
+            BinaryString.fromString("蚂蚁3")), BinaryString.fromString("蚂蚁1,蚂蚁2,蚂蚁3"));
     }
 
     @Test
