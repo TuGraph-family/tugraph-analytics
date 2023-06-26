@@ -21,7 +21,7 @@ CREATE GRAPH dy_modern (
 	)
 ) WITH (
 	storeType='rocksdb',
-	shardCount = 2
+	shardCount = 1
 );
 
 CREATE TABLE tbl_result (
