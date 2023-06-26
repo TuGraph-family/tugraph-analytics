@@ -39,6 +39,25 @@
 
   可以给GQL定义一个参数表，参数表的数据逐条触发GQL查询.GQL将分别返回每个参数对应的计算结果.
 
+# Maven依赖
+* 开发UDF/UDAF/UDTF/UDGA需要添加以下依赖：
+
+```xml
+ <dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-dsl-common</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+* 开发自定义Connector需添加以下依赖：
+
+```xml
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-dsl-connector-api</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 
 # DSL语法文档
 * DSL语法
@@ -68,4 +87,5 @@
   * [File Connector](connector/file.md)
   * [Kafka Connector](connector/kafka.md)
   * [用户自定义Connector](connector/udc.md)
+
    

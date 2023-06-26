@@ -39,6 +39,26 @@ Hybrid-DSL is a data analysis language provided by GeaFlow, which supports stand
 
   It is possible to define a parameter table for GQL, where the data in the parameter table triggers GQL queries one by one. GQL will return the computation results corresponding to each parameter separately.
 
+# Maven依赖
+* Developing UDF/UDAF/UDTF/UDGA requires adding the following dependencies:
+
+```xml
+ <dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-dsl-common</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+
+* To develop a custom Connector, add the following dependencies:
+
+```xml
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-dsl-connector-api</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 
 # DSL Syntax Documents
 * DSL Syntax
