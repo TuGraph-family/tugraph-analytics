@@ -54,6 +54,8 @@ our guidelines:[Contributing to GeaFlow](docs/docs-en/contribution.md).
 ## Contact Us
 You can contact us through DingTalk or WeChat group.
 
+**If you feel GeaFlow useful or interesting, please ⭐️ Star it on github.**
+
 ![dingding](docs/static/img/dingding.png)
 
 ![wechat](docs/static/img/wechat.png)
