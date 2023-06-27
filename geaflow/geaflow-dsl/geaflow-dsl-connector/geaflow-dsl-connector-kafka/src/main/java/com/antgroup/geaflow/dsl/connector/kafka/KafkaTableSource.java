@@ -87,7 +87,7 @@ public class KafkaTableSource implements TableSource {
         if (startTimeStr.equalsIgnoreCase(KafkaConstants.KAFKA_BEGIN)) {
             startTime = 0;
         } else {
-            startTime = DateTimeUtil.toUnixTime(ConnectorConstants.START_TIME_FORMAT, startTimeStr);
+            startTime = DateTimeUtil.toUnixTime(startTimeStr, ConnectorConstants.START_TIME_FORMAT);
         }
 
         this.props = new Properties();
