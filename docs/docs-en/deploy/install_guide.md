@@ -93,10 +93,11 @@ The container starts in "local" mode by default, and local MySQL, Redis, and Inf
 ```properties
 # /opt/geaflow/config/application.properties
 geaflow.deploy.mode=local
-geaflow.host=${your.host.name}
+geaflow.host=127.0.0.1
 geaflow.web.port=8888
 geaflow.gateway.port=8080
 geaflow.web.url=http://${geaflow.host}:${geaflow.web.port}
+geaflow.web.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
 geaflow.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
 
 # Datasource
@@ -120,12 +121,24 @@ If you want to start the container in "cluster" mode, you need to adjust the dat
 ```shell
 docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
 -e geaflow.deploy.mode="cluster" \
+-e geaflow.host=${your.host.name} \
+-e geaflow.web.port=8888 \
+-e geaflow.gateway.port=8080 \
+-e geaflow.web.url=${your.geaflow.web.url} \
+-e geaflow.web.gateway.url=${your.geaflow.web.gateway.url} \
+-e geaflow.gateway.url=${your.geaflow.gateway.url} \
 -e spring.datasource.url=${your.datasource.url} \
 -e spring.datasource.username=${your.datasource.username} \
 -e spring.datasource.password=${your.datasource.password} \
--e geaflow.web.url=${your.geaflow.web.url} \
--e geaflow.gateway.url=${your.geaflow.gateway.url} \
-geaflow-conosle:1.0
+geaflow-console:1.0
+```
+
+If you want to modify the port number of the front-end Node process or Java process, you only need to set the environment variables "geaflow.web.port" or "geaflow.gateway.port" and remap the port number. for example:
+```shell
+docker run -d --name geaflow-console -p 9090:9090 -p 9999:9999 \
+-e geaflow.web.port=9999 \
+-e geaflow.gateway.port=9090 \
+geaflow-console:1.0
 ```
 
 ## Register and Login
