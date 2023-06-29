@@ -36,6 +36,7 @@
         <module>geaflow-dsl-connector-console</module>
         <module>geaflow-dsl-connector-socket</module>
         <module>geaflow-dsl-connector-jdbc</module>
+        <module>geaflow-dsl-connector-hudi</module>
     </modules>
 
     <dependencyManagement>

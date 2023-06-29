@@ -14,63 +14,70 @@
 
 package com.antgroup.geaflow.dsl.connector.file.source;
 
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
+import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
-import java.io.BufferedReader;
+import com.antgroup.geaflow.dsl.connector.file.source.format.FileFormat;
+import com.antgroup.geaflow.dsl.connector.file.source.format.FileFormats;
+import com.antgroup.geaflow.dsl.connector.file.source.format.StreamFormat;
 import java.io.IOException;
-import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public abstract class AbstractFileReadHandler implements FileReadHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileReadHandler.class);
+    private String formatName;
+    private Configuration tableConf;
+    private TableSchema tableSchema;
 
-    protected abstract BufferedReader getPartitionReader(FileSplit split, FileOffset offset);
+    protected Map<FileSplit, FileFormat> fileFormats = new HashMap<>();
 
     @Override
-    public FetchData<String> readPartition(FileSplit split, FileOffset offset, long size) throws IOException {
-        BufferedReader reader = getPartitionReader(split, offset);
+    public void init(Configuration tableConf, TableSchema tableSchema, String path) throws IOException {
+        this.formatName = tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_FILE_FORMAT);
+        this.tableConf = tableConf;
+        this.tableSchema = tableSchema;
+    }
 
-        String readContent;
-        long nextOffset;
-        boolean isFinished;
-        if (size == Windows.SIZE_OF_ALL_WINDOW) { // read all data from file
-            StringBuilder content = new StringBuilder();
-            char[] buffer = new char[1024];
-            int readSize;
-            int totalRead = 0;
-            while ((readSize = reader.read(buffer)) != -1) {
-                content.append(buffer, 0, readSize);
-                totalRead += readSize;
-            }
-            readContent = content.toString();
-            nextOffset = totalRead;
-            isFinished = true;
+    @Override
+    public <T> FetchData<T> readPartition(FileSplit split, FileOffset offset, int windowSize) throws IOException {
+        FileFormat<T> format = getFileFormat(split, offset);
+        if (windowSize == Windows.SIZE_OF_ALL_WINDOW) { // read all data from file
+            Iterator<T> iterator = format.batchRead();
+            return FetchData.createBatchFetch(iterator, new FileOffset(-1));
         } else {
-            nextOffset = offset.getOffset();
-            StringBuilder lines = new StringBuilder();
-            int i;
-            for (i = 0; i < size; i++) {
-                String line = reader.readLine();
-                if (line == null ) {
-                    if (lines.length() > 0) {
-                        lines.deleteCharAt(lines.length() - 1);
-                    }
-                    break;
-                }
-                if (i != size - 1) {
-                    line = line + "\n";
-                }
-                lines.append(line);
-                nextOffset += line.length();
+            if (!(format instanceof StreamFormat)) {
+                throw new GeaFlowDSLException("Format '{}' is not a stream format, the window size should be -1",
+                    formatName);
             }
-            readContent = lines.toString();
-            isFinished = i < size;
+            StreamFormat<T> streamFormat = (StreamFormat<T>) format;
+            return streamFormat.streamRead(offset, windowSize);
         }
+    }
 
-        return new FetchData<>(Collections.singletonList(readContent), new FileOffset(nextOffset), isFinished);
+    private <T> FileFormat<T> getFileFormat(FileSplit split, FileOffset offset) throws IOException {
+        if (!fileFormats.containsKey(split)) {
+            FileFormat<T> fileFormat = FileFormats.loadFileFormat(formatName);
+            fileFormat.init(tableConf, tableSchema, split);
+            // skip pre offset for stream read.
+            if (fileFormat instanceof StreamFormat) {
+                ((StreamFormat) fileFormat).skip(offset.getOffset());
+            }
+            fileFormats.put(split, fileFormat);
+        }
+        return fileFormats.get(split);
+    }
+
+    @Override
+    public void close() throws IOException {
+        for (FileFormat format : fileFormats.values()) {
+            format.close();
+        }
     }
 }

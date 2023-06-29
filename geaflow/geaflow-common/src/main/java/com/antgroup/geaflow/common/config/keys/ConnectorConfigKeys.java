@@ -61,4 +61,9 @@ public class ConnectorConfigKeys implements Serializable {
         .key("geaflow.dsl.file.name.regex")
         .defaultValue("")
         .description("The regular expression for filtering the files in the path.");
+
+    public static final ConfigKey GEAFLOW_DSL_FILE_FORMAT = ConfigKeys
+        .key("geaflow.dsl.file.format")
+        .defaultValue("txt")
+        .description("The file format to read or write, default value is 'txt'. ");
 }

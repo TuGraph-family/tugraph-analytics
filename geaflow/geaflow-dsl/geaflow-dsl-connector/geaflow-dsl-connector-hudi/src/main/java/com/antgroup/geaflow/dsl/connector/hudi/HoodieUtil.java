@@ -12,16 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dsl.connector.file.source;
+package com.antgroup.geaflow.dsl.connector.hudi;
 
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_JAVA_RESOURCE;
+import java.util.Map;
+import org.apache.hudi.common.config.TypedProperties;
 
-public class FileReadHandlers {
+public class HoodieUtil {
 
-    public static FileReadHandler from(String path) {
-        if (path.startsWith(PREFIX_JAVA_RESOURCE)) {
-            return new JarFileReadHandler();
+    public static TypedProperties toTypeProperties(Map<String, String> config) {
+        TypedProperties typedProperties = new TypedProperties();
+        for (Map.Entry<String, String> entry : config.entrySet()) {
+            typedProperties.setProperty(entry.getKey(), entry.getValue());
         }
-        return new DfsFileReadHandler();
+        return typedProperties;
     }
 }

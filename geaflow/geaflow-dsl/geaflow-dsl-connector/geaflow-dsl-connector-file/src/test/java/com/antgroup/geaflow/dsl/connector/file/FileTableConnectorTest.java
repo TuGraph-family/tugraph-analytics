@@ -20,6 +20,7 @@ import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.common.type.primitive.StringType;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
+import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.function.OffsetStore.ConsoleOffset;
@@ -27,8 +28,7 @@ import com.antgroup.geaflow.dsl.connector.file.sink.FileTableSink;
 import com.antgroup.geaflow.dsl.connector.file.sink.HdfsFileWriteHandler;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
-import com.antgroup.geaflow.dsl.connector.file.source.HdfsFileReadHandler;
-import com.antgroup.geaflow.dsl.connector.file.source.LocalFileReadHandler;
+import com.antgroup.geaflow.dsl.connector.file.source.DfsFileReadHandler;
 import com.antgroup.geaflow.file.FileConfigKeys;
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,16 +44,15 @@ import org.testng.annotations.Test;
 public class FileTableConnectorTest {
 
     @Test
-    public void testLocalFileResource() {
-        LocalFileReadHandler resource = new LocalFileReadHandler();
-        resource.init(new Configuration(), "file:///data");
-        List<Partition> partitions = resource.listPartitions();
+    public void testLocalFileResource() throws IOException {
+        DfsFileReadHandler resource = new DfsFileReadHandler();
+        resource.init(new Configuration(), new TableSchema(), "file:///data");
 
         try {
             resource.readPartition(new FileSplit("/data", "test"),
                 new FileOffset(0L), 0);
         } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), "java.io.FileNotFoundException: /data/test (No such file or directory)");
+            Assert.assertEquals(e.getMessage(), "File /data/test does not exist");
         }
         resource.close();
         FileSplit fileSplit = new FileSplit("test_baseDir", "test_relativePath");
@@ -81,7 +80,7 @@ public class FileTableConnectorTest {
     }
 
     @Test
-    public void testHdfsFileWriteHandler() throws IOException {
+    public void testFileHandlerReandAndWrite() throws IOException {
         String testDir = "/tmp/testDirForHdfsFileWriteHandlerTest";
         FileUtils.deleteDirectory(new File(testDir));
         HdfsFileWriteHandler handler = new HdfsFileWriteHandler(testDir);
@@ -91,31 +90,20 @@ public class FileTableConnectorTest {
         handler.write("test");
         handler.flush();
         handler.close();
-        handler.init(testConf, StructType.singleValue(StringType.INSTANCE, true), 0);
-        handler.write("test");
-        handler.flush();
-        handler.close();
         FileInputStream inputStream = new FileInputStream(testDir + "/partition_0");
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line = reader.readLine();
         Assert.assertEquals(line, "test");
-    }
 
-    @Test(priority = 1)
-    public void testHdfsFileReadHandler() throws IOException {
-        String testDir = "hdfs://tmp/testDirForHdfsFileWriteHandlerTest";
-        HdfsFileReadHandler handler = new HdfsFileReadHandler();
-        Configuration testConf = new Configuration();
-        testConf.put(FileConfigKeys.JSON_CONFIG.getKey(), "{\"fs.defaultFS\":\"local\"}");
-        handler.init(testConf, testDir);
-        List<Partition> partitions = handler.listPartitions();
+
+        DfsFileReadHandler readHandler = new DfsFileReadHandler();
+        readHandler.init(testConf, new TableSchema(), testDir);
+        List<Partition> partitions = readHandler.listPartitions();
         Assert.assertEquals(partitions.size(), 1);
         FetchData<String> fetchData =
-            handler.readPartition(new FileSplit("/tmp/testDirForHdfsFileWriteHandlerTest",
-                    "partition_0"),
-                new FileOffset(0L), 10L);
-        Assert.assertEquals(fetchData.getDataList().size(), 1);
-        Assert.assertEquals(fetchData.getDataList().get(0), "test");
+            readHandler.readPartition((FileSplit) partitions.get(0), new FileOffset(0L), 10);
+        Assert.assertEquals(fetchData.getDataSize(), 1);
+        Assert.assertEquals(fetchData.getDataIterator().next(), "test");
         handler.close();
     }
 

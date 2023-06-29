@@ -12,16 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dsl.connector.file.source;
+package com.antgroup.geaflow.dsl.connector.file.source.format;
 
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_JAVA_RESOURCE;
+import com.antgroup.geaflow.dsl.connector.api.FetchData;
+import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
+import java.io.IOException;
 
-public class FileReadHandlers {
+public interface StreamFormat<T> {
 
-    public static FileReadHandler from(String path) {
-        if (path.startsWith(PREFIX_JAVA_RESOURCE)) {
-            return new JarFileReadHandler();
-        }
-        return new DfsFileReadHandler();
-    }
+    FetchData<T> streamRead(FileOffset offset, int windowSize) throws IOException;
+
+    void skip(long n) throws IOException;
 }

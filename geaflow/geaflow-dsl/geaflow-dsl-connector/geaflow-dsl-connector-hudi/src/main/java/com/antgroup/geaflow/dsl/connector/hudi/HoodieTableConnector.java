@@ -12,19 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dsl.connector.file.sink;
+package com.antgroup.geaflow.dsl.connector.hudi;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.dsl.common.types.StructType;
-import java.io.IOException;
+import com.antgroup.geaflow.dsl.connector.api.TableReadableConnector;
+import com.antgroup.geaflow.dsl.connector.api.TableSource;
 
-public interface FileWriteHandler {
+public class HoodieTableConnector implements TableReadableConnector {
 
-    void init(Configuration tableConf, StructType schema, int taskIndex);
+    private static final String HUDI = "HUDI";
 
-    void write(String text) throws IOException;
+    @Override
+    public String getType() {
+        return HUDI;
+    }
 
-    void flush() throws IOException;
-
-    void close() throws IOException;
+    @Override
+    public TableSource createSource(Configuration conf) {
+        return new HoodieTableSource();
+    }
 }

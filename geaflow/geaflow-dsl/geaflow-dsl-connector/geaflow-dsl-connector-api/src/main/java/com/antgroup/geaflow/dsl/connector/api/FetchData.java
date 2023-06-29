@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.connector.api;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,34 +24,41 @@ import java.util.Objects;
  */
 public class FetchData<T> implements Serializable {
 
-    private final List<T> dataList;
+    private final Iterator<T> dataIterator;
+
+    private final int size;
 
     private final Offset nextOffset;
 
     private final boolean isFinish;
 
-    public FetchData(List<T> data, Offset nextOffset, boolean isFinish) {
-        this.dataList = Objects.requireNonNull(data);
+    private FetchData(Iterator<T> dataIterator, int size, Offset nextOffset, boolean isFinish) {
+        this.dataIterator = Objects.requireNonNull(dataIterator);
+        this.size = size;
         this.nextOffset = Objects.requireNonNull(nextOffset);
         this.isFinish = isFinish;
     }
 
-    public FetchData(List<T> data, Offset nextOffset) {
-        this(data, nextOffset, false);
+    public static <T> FetchData<T> createStreamFetch(List<T> dataList, Offset nextOffset, boolean isFinish) {
+        return new FetchData<>(dataList.listIterator(), dataList.size(), nextOffset, isFinish);
+    }
+
+    public static <T> FetchData<T> createBatchFetch(Iterator<T> dataIterator, Offset nextOffset) {
+        return new FetchData<>(dataIterator, -1, nextOffset, true);
     }
 
     /**
      * Returns data list.
      */
-    public List<T> getDataList() {
-        return dataList;
+    public Iterator<T> getDataIterator() {
+        return dataIterator;
     }
 
     /**
      * Returns data size.
      */
     public int getDataSize() {
-        return dataList.size();
+        return size;
     }
 
     /**

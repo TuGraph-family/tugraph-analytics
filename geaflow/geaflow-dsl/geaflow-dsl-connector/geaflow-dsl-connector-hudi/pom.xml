@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  ~ Copyright 2023 AntGroup CO., Ltd.
@@ -19,52 +20,52 @@
     <parent>
         <artifactId>geaflow-dsl-connector</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>geaflow-dsl-connector-file</artifactId>
+    <artifactId>geaflow-dsl-connector-hudi</artifactId>
 
     <properties>
-        <parquet.version>1.10.1</parquet.version>
+        <hudi.version>0.13.0</hudi.version>
+        <fasterxml.version>2.10.0</fasterxml.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-dsl-common</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-dsl-connector-api</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-hadoop</artifactId>
-            <version>${parquet.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.xerial.snappy</groupId>
-                    <artifactId>snappy-java</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <!-- Parquet -->
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-avro</artifactId>
-            <version>${parquet.version}</version>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dsl-connector-file</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-common</artifactId>
+            <version>${hudi.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-java-client</artifactId>
+            <version>${hudi.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Fasterxml -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${fasterxml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${fasterxml.version}</version>
+        </dependency>
+
     </dependencies>
 </project>

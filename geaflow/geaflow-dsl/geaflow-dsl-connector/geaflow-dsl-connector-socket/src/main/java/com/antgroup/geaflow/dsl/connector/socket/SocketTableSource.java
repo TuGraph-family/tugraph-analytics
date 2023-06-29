@@ -90,7 +90,7 @@ public class SocketTableSource implements TableSource, ISkipOpenAndClose {
                     fetchData.add(dataQueue.take());
                 }
             }
-            return new FetchData(fetchData, new SocketOffset(), false);
+            return (FetchData<T>) FetchData.createStreamFetch(fetchData, new SocketOffset(), false);
         } catch (InterruptedException e) {
             throw new IOException(e);
         }

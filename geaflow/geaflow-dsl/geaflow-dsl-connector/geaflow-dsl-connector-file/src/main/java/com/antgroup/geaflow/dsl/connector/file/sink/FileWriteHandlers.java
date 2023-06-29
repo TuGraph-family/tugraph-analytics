@@ -14,14 +14,9 @@
 
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_LOCAL_FILE;
-
 public class FileWriteHandlers {
 
     public static FileWriteHandler from(String path) {
-        if (path.startsWith(PREFIX_LOCAL_FILE)) {
-            return new LocalFileWriteHandler(path);
-        }
         return new HdfsFileWriteHandler(path);
     }
 }

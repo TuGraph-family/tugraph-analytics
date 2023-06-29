@@ -12,19 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dsl.connector.file.sink;
+package com.antgroup.geaflow.dsl.connector.file.source.format;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.dsl.common.types.StructType;
+import com.antgroup.geaflow.dsl.common.types.TableSchema;
+import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.IOException;
+import java.util.Iterator;
 
-public interface FileWriteHandler {
+public interface FileFormat<T> {
 
-    void init(Configuration tableConf, StructType schema, int taskIndex);
+    String getFormat();
 
-    void write(String text) throws IOException;
+    void init(Configuration tableConf, TableSchema tableSchema, FileSplit split) throws IOException;
 
-    void flush() throws IOException;
+    Iterator<T> batchRead() throws IOException;
 
     void close() throws IOException;
 }
