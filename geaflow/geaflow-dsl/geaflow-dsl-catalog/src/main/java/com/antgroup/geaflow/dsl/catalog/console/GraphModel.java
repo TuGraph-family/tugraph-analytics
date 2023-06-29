@@ -24,8 +24,6 @@ public class GraphModel extends AbstractDataModel {
 
     private List<EdgeModel> edges;
 
-    private boolean staticGraph;
-
     public PluginConfigModel getPluginConfig() {
         return pluginConfig;
     }
@@ -50,11 +48,4 @@ public class GraphModel extends AbstractDataModel {
         this.edges = edges;
     }
 
-    public boolean isStaticGraph() {
-        return staticGraph;
-    }
-
-    public void setStaticGraph(boolean staticGraph) {
-        this.staticGraph = staticGraph;
-    }
 }

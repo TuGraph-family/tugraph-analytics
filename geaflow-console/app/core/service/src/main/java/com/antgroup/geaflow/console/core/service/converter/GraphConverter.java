@@ -30,7 +30,6 @@ public class GraphConverter extends DataConverter<GeaflowGraph, GraphEntity> {
         GraphEntity entity = super.modelToEntity(model);
         String configId = model.getPluginConfig().getId();
         entity.setPluginConfigId(configId);
-        entity.setStaticGraph(model.isStaticGraph());
         return entity;
     }
 
@@ -41,7 +40,6 @@ public class GraphConverter extends DataConverter<GeaflowGraph, GraphEntity> {
         graph.addVertices(vertices);
         graph.addEdges(edges);
         graph.setPluginConfig(pluginConfig);
-        graph.setStaticGraph(entity.isStaticGraph());
         return graph;
     }
 }

@@ -28,6 +28,4 @@ public class GraphView extends DataView {
 
     private PluginConfigView pluginConfig;
 
-    private boolean staticGraph;
-
 }

@@ -34,8 +34,6 @@ public class GeaflowGraph extends GeaflowData {
 
     private GeaflowPluginConfig pluginConfig;
 
-    private boolean staticGraph;
-
     public GeaflowGraph(String name, String comment) {
         super.name = name;
         super.comment = comment;

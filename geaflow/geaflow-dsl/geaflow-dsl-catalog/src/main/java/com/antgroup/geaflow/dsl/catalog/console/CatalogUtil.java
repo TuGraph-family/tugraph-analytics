@@ -144,7 +144,6 @@ public class CatalogUtil {
 
     public static GraphModel convertToGraphModel(GeaFlowGraph graph) {
         GraphModel graphModel = new GraphModel();
-        graphModel.setStaticGraph(graph.isStatic());
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
         pluginConfigModel.setType(GeaFlowPluginType.getPluginType(graph.getStoreType()));
         pluginConfigModel.setConfig(graph.getConfig().getConfigMap());
@@ -180,9 +179,8 @@ public class CatalogUtil {
         for (EdgeModel edgeModel : edges) {
             edgeTables.add(convertToEdgeTable(edgeModel));
         }
-        boolean isStaticGraph = model.isStaticGraph();
         return new GeaFlowGraph(instanceName, model.getName(), vertexTables, edgeTables,
-            model.getPluginConfig().getConfig(), Collections.emptyMap(), true, isStaticGraph, false);
+            model.getPluginConfig().getConfig(), Collections.emptyMap(), true, false, false);
     }
 
     private static List<FieldModel> convertToFieldModel(List<TableField> fields) {
