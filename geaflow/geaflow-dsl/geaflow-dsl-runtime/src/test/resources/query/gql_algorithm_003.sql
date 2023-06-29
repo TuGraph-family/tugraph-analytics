@@ -49,6 +49,6 @@ SELECT 3, 'jim', 3, 2
 ;
 
 INSERT INTO tbl_result
-CALL page_rank(1) YIELD (vid, prValue)
-RETURN vid, ROUND(prValue, 2)
+CALL page_rank(0.85, 0.01, 20) YIELD (vid, prValue)
+RETURN vid, ROUND(prValue, 3)
 ;
