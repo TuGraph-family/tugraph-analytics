@@ -151,9 +151,6 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
             Offset offset = offsetStore.readOffset(partition.getName(), batchId);
             FetchData<Object> fetchData = tableSource.fetch(partition, Optional.ofNullable(offset),
                 windowSize);
-            LOGGER.info("fetch data size: {}, isFinish: {}, table: {}, partition: {}, batchId: {}",
-                fetchData.getDataSize(), fetchData.isFinish(), table.getName(), partition.getName(),
-                batchId);
             for (Object record : fetchData.getDataList()) {
                 long startTime = System.nanoTime();
                 List<Row> rows = ((TableDeserializer<Object>) deserializer).deserialize(record);
@@ -169,6 +166,11 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
             }
             // store the next offset.
             offsetStore.writeOffset(partition.getName(), batchId + 1, fetchData.getNextOffset());
+
+            LOGGER.info("fetch data size: {}, isFinish: {}, table: {}, partition: {}, batchId: {},"
+                    + "nextOffset: {}",
+                fetchData.getDataSize(), fetchData.isFinish(), table.getName(), partition.getName(),
+                batchId, fetchData.getNextOffset().humanReadable());
 
             if (!fetchData.isFinish()) {
                 isFinish = false;

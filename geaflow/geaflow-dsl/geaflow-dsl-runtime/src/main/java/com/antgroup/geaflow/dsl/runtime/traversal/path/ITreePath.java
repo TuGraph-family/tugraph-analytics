@@ -83,7 +83,7 @@ public interface ITreePath extends IPathMessage {
 
     int getDepth();
 
-    boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth);
+    boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth, PathIdCounter pathId);
 
     boolean equalNode(ITreePath other);
 
@@ -121,5 +121,21 @@ public interface ITreePath extends IPathMessage {
     interface PathFlatMapFunction<O> {
 
         Collection<O> flatMap(Path path);
+    }
+
+    class PathIdCounter {
+        private long counter;
+
+        public PathIdCounter(long counter) {
+            this.counter = counter;
+        }
+
+        public PathIdCounter() {
+            this(0L);
+        }
+
+        public long getAndInc() {
+            return counter++;
+        }
     }
 }

@@ -28,11 +28,11 @@ public class DoubleEdge implements RowEdge {
 
     public static final Supplier<DoubleEdge> CONSTRUCTOR = new Constructor();
 
-    private double srcId;
+    public double srcId;
 
-    private double targetId;
+    public double targetId;
 
-    private EdgeDirection direction = EdgeDirection.OUT;
+    public EdgeDirection direction = EdgeDirection.OUT;
 
     private BinaryString label;
 
@@ -98,12 +98,18 @@ public class DoubleEdge implements RowEdge {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DoubleEdge)) {
+        if (!(o instanceof RowEdge)) {
             return false;
         }
-        DoubleEdge that = (DoubleEdge) o;
-        return Objects.equals(srcId, that.srcId) && Objects.equals(targetId,
-            that.targetId) && direction == that.direction && Objects.equals(label, that.label);
+        if (o instanceof DoubleEdge) {
+            DoubleEdge that = (DoubleEdge) o;
+            return Double.compare(srcId, that.srcId) == 0 && Double.compare(targetId,
+                that.targetId) == 0 && direction == that.direction && Objects.equals(label,
+                that.label);
+        } else {
+            RowEdge that = (RowEdge) o;
+            return that.equals(this);
+        }
     }
 
     @Override

@@ -29,17 +29,19 @@ import com.antgroup.geaflow.dsl.runtime.traversal.data.GlobalVariable;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class StepPathModifyFunction implements StepMapFunction {
 
-    private final int[] updatePathIndices;
+    protected final int[] updatePathIndices;
 
-    private final Expression[] modifyExpressions;
+    protected final Expression[] modifyExpressions;
 
-    private final IType<?>[] fieldTypes;
+    protected final IType<?>[] fieldTypes;
 
-    private TraversalRuntimeContext context;
+    protected TraversalRuntimeContext context;
 
+    private FunctionSchemas schemas;
 
     public StepPathModifyFunction(int[] updatePathIndices,
                                   Expression[] modifyExpressions,
@@ -55,6 +57,16 @@ public class StepPathModifyFunction implements StepMapFunction {
         this.context = context;
         for (Expression expression : modifyExpressions) {
             StepFunction.openExpression(expression, context);
+        }
+        this.schemas = schemas;
+        for (int i = 0; i < updatePathIndices.length; i++) {
+            if (modifyExpressions[i] instanceof VertexConstructExpression) {
+                VertexConstructExpression vertexConstruct = (VertexConstructExpression) modifyExpressions[i];
+                List<GlobalVariable> globalVariables = vertexConstruct.getGlobalVariables();
+                for (GlobalVariable gv : globalVariables) {
+                    gv.setAddFieldIndex(ArrayUtils.indexOf(schemas.getAddingVertexFieldNames(), gv.getName()));
+                }
+            }
         }
     }
 
@@ -83,16 +95,17 @@ public class StepPathModifyFunction implements StepMapFunction {
             VertexConstructExpression  vertexConstruct = (VertexConstructExpression) modifyExpression;
 
             List<GlobalVariable> globalVariables = vertexConstruct.getGlobalVariables();
-            for (int globalVarIndex = 0; globalVarIndex < globalVariables.size(); globalVarIndex++) {
-                GlobalVariable gv = globalVariables.get(globalVarIndex);
+            for (GlobalVariable gv : globalVariables) {
                 // index of the global variable
                 int index = gv.getIndex();
                 VertexType vertexType = ((VertexType) vertexConstruct.getOutputType());
                 IType<?> fieldType = vertexType.getType(index);
                 Object fieldValue = value.getField(index, fieldType);
                 // add field to vertex which will affect all the computing with this vertexId
-                context.addFieldToVertex(((RowVertex) value).getId(), globalVarIndex,
-                    globalVariables.size(), fieldValue);
+                int updateIndex = gv.getAddFieldIndex();
+                updateIndex = updateIndex >= 0 ? updateIndex : ArrayUtils.indexOf(
+                    schemas.getAddingVertexFieldNames(), gv.getName());
+                context.addFieldToVertex(((RowVertex) value).getId(), updateIndex, fieldValue);
             }
         }
     }

@@ -14,7 +14,9 @@
 
 package com.antgroup.geaflow.dsl.optimize.rule;
 
+import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.PathRecordType;
+import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rex.PathInputRef;
@@ -26,6 +28,8 @@ import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexCorrelVariable;
+import org.apache.calcite.rex.RexFieldAccess;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -92,6 +96,19 @@ public class PathInputReplaceRule extends RelOptRule {
             } else {
                 return super.visitCall(call);
             }
+        }
+
+        @Override
+        public RexNode visitFieldAccess(RexFieldAccess fieldAccess) {
+            if (fieldAccess.getReferenceExpr() instanceof RexCorrelVariable
+                && (fieldAccess.getType() instanceof VertexRecordType
+                || fieldAccess.getType() instanceof EdgeRecordType)) {
+                String pathFieldName = fieldAccess.getField().getName();
+                return new PathInputRef(fieldAccess.getField().getName(),
+                    pathRecordType.getField(pathFieldName, true, false).getIndex(),
+                    fieldAccess.getField().getType());
+            }
+            return super.visitFieldAccess(fieldAccess);
         }
     }
 }

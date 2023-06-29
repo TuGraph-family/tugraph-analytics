@@ -26,10 +26,17 @@ import java.util.Objects;
 
 public class DefaultPath implements Path {
 
+    private long id;
+
     private final List<Row> pathNodes;
 
-    public DefaultPath(List<Row> pathNodes) {
+    public DefaultPath(List<Row> pathNodes, long id) {
         this.pathNodes = Objects.requireNonNull(pathNodes);
+        this.id = id;
+    }
+
+    public DefaultPath(List<Row> pathNodes) {
+        this(pathNodes, -1L);
     }
 
     public DefaultPath(Row[] pathNodes) {
@@ -62,7 +69,7 @@ public class DefaultPath implements Path {
 
     @Override
     public Path copy() {
-        return new DefaultPath(Lists.newArrayList(pathNodes));
+        return new DefaultPath(Lists.newArrayList(pathNodes), id);
     }
 
     @Override
@@ -96,5 +103,15 @@ public class DefaultPath implements Path {
         return "DefaultPath{"
             + "pathNodes=" + pathNodes
             + '}';
+    }
+
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(long id) {
+        this.id = id;
     }
 }

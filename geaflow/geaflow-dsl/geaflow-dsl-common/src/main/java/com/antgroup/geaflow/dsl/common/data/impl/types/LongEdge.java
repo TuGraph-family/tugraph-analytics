@@ -28,11 +28,11 @@ public class LongEdge implements RowEdge {
 
     public static final Supplier<LongEdge> CONSTRUCTOR = new Constructor();
 
-    private long srcId;
+    public long srcId;
 
-    private long targetId;
+    public long targetId;
 
-    private EdgeDirection direction = EdgeDirection.OUT;
+    public EdgeDirection direction = EdgeDirection.OUT;
 
     private BinaryString label;
 
@@ -98,12 +98,17 @@ public class LongEdge implements RowEdge {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof LongEdge)) {
+        if (!(o instanceof RowEdge)) {
             return false;
         }
-        LongEdge that = (LongEdge) o;
-        return Objects.equals(srcId, that.srcId) && Objects.equals(targetId,
-            that.targetId) && direction == that.direction && Objects.equals(label, that.label);
+        if (o instanceof LongEdge) {
+            LongEdge that = (LongEdge) o;
+            return srcId == that.srcId && targetId == that.targetId
+                && direction == that.direction && Objects.equals(label, that.label);
+        } else {
+            RowEdge that = (RowEdge) o;
+            return that.equals(this);
+        }
     }
 
     @Override

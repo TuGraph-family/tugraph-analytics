@@ -29,7 +29,7 @@ public class DoubleVertex implements RowVertex {
 
     public static final Supplier<DoubleVertex> CONSTRUCTOR = new Constructor();
 
-    private double id;
+    public double id;
 
     private BinaryString label;
 
@@ -104,8 +104,13 @@ public class DoubleVertex implements RowVertex {
         if (!(o instanceof RowVertex)) {
             return false;
         }
-        RowVertex that = (RowVertex) o;
-        return id == (double) that.getId() && Objects.equals(label, that.getBinaryLabel());
+        if (o instanceof DoubleVertex) {
+            DoubleVertex that = (DoubleVertex) o;
+            return Double.compare(id, that.id) == 0 && Objects.equals(label, that.getBinaryLabel());
+        } else {
+            RowVertex that = (RowVertex) o;
+            return that.equals(this);
+        }
     }
 
     @Override

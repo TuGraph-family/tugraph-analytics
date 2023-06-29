@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.rel.match;
 import com.antgroup.geaflow.dsl.calcite.PathRecordType;
 import com.antgroup.geaflow.dsl.rel.MatchNodeVisitor;
 import com.antgroup.geaflow.dsl.util.GQLRelUtil;
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Objects;
 import org.apache.calcite.plan.RelOptCluster;
@@ -25,12 +26,13 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
 import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 
-public class LoopUtilMatch extends SingleRel implements SingleMatchNode {
+public class LoopUntilMatch extends SingleRel implements SingleMatchNode {
 
-    private final IMatchNode loopBody;
+    private final SingleMatchNode loopBody;
 
     private final int minLoopCount;
 
@@ -40,10 +42,10 @@ public class LoopUtilMatch extends SingleRel implements SingleMatchNode {
 
     private final PathRecordType pathType;
 
-    protected LoopUtilMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
-                            IMatchNode loopBody, RexNode utilCondition,
-                            int minLoopCount, int maxLoopCount,
-                            PathRecordType pathType) {
+    protected LoopUntilMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
+                             SingleMatchNode loopBody, RexNode utilCondition,
+                             int minLoopCount, int maxLoopCount,
+                             PathRecordType pathType) {
         super(cluster, traitSet, input);
         this.loopBody = Objects.requireNonNull(loopBody);
         this.utilCondition = Objects.requireNonNull(utilCondition);
@@ -68,7 +70,7 @@ public class LoopUtilMatch extends SingleRel implements SingleMatchNode {
         return visitor.visitLoopMatch(this);
     }
 
-    public IMatchNode getLoopBody() {
+    public SingleMatchNode getLoopBody() {
         return loopBody;
     }
 
@@ -95,13 +97,13 @@ public class LoopUtilMatch extends SingleRel implements SingleMatchNode {
 
     @Override
     public IMatchNode copy(List<RelNode> inputs, PathRecordType pathSchema) {
-        return new LoopUtilMatch(getCluster(), getTraitSet(), sole(inputs), loopBody,
+        return new LoopUntilMatch(getCluster(), getTraitSet(), sole(inputs), loopBody,
             utilCondition, minLoopCount, maxLoopCount, pathSchema);
     }
 
     @Override
-    public LoopUtilMatch copy(RelTraitSet traitSet, List<RelNode> inputs) {
-        return new LoopUtilMatch(getCluster(), traitSet, sole(inputs), loopBody, utilCondition,
+    public LoopUntilMatch copy(RelTraitSet traitSet, List<RelNode> inputs) {
+        return new LoopUntilMatch(getCluster(), traitSet, sole(inputs), loopBody, utilCondition,
             minLoopCount, maxLoopCount, pathType);
     }
 
@@ -109,15 +111,40 @@ public class LoopUtilMatch extends SingleRel implements SingleMatchNode {
     public RelNode accept(RexShuttle shuttle) {
         GQLRelUtil.applyRexShuffleToTree(loopBody, shuttle);
         RexNode newUtilCondition = utilCondition.accept(shuttle);
-        return new LoopUtilMatch(getCluster(), getTraitSet(), input, loopBody, newUtilCondition,
+        return new LoopUntilMatch(getCluster(), getTraitSet(), input, loopBody, newUtilCondition,
             minLoopCount, maxLoopCount, pathType);
     }
 
 
-    public static LoopUtilMatch create(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
-                                       IMatchNode loopBody, RexNode utilCondition, int minLoopCount,
-                                       int maxLoopCount, PathRecordType pathType) {
-        return new LoopUtilMatch(cluster, traitSet, input, loopBody, utilCondition, minLoopCount,
+    public static LoopUntilMatch create(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
+                                        SingleMatchNode loopBody, RexNode utilCondition, int minLoopCount,
+                                        int maxLoopCount, PathRecordType pathType) {
+        return new LoopUntilMatch(cluster, traitSet, input, loopBody, utilCondition, minLoopCount,
             maxLoopCount, pathType);
     }
+
+    public static SingleMatchNode copyWithSubQueryStartPathType(PathRecordType startPathType,
+                                                                SingleMatchNode node,
+                                                                boolean caseSensitive) {
+        if (node == null) {
+            return null;
+        }
+        if (node instanceof LoopUntilMatch) {
+            LoopUntilMatch loop = (LoopUntilMatch)node;
+            return LoopUntilMatch.create(loop.getCluster(), loop.getTraitSet(), loop.getInput(),
+                copyWithSubQueryStartPathType(startPathType, loop.getLoopBody(), caseSensitive),
+                loop.getUtilCondition(), loop.getMinLoopCount(),
+                loop.getMaxLoopCount(), loop.getPathSchema());
+        } else {
+            PathRecordType concatPathType = startPathType;
+            for (RelDataTypeField field : node.getPathSchema().getFieldList()) {
+                if (concatPathType.getField(field.getName(), caseSensitive, false) == null) {
+                    concatPathType = concatPathType.addField(field.getName(), field.getType(), caseSensitive);
+                }
+            }
+            return (SingleMatchNode) node.copy(Lists.newArrayList(copyWithSubQueryStartPathType(
+                startPathType, (SingleMatchNode)node.getInput(), caseSensitive)), concatPathType);
+        }
+    }
+
 }

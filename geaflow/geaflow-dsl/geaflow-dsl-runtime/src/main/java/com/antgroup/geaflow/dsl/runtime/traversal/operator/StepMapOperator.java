@@ -15,22 +15,53 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.operator;
 
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepMapFunction;
+import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.StepRecordWithPath;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StepMapOperator extends AbstractStepOperator<StepMapFunction, StepRecordWithPath, StepRecordWithPath> {
 
-    public StepMapOperator(long id, StepMapFunction function) {
+    private List<StepRecordWithPath> cacheRecords;
+    private final boolean isGlobal;
+
+    public StepMapOperator(long id, StepMapFunction function, boolean isGlobal) {
         super(id, function);
+        this.isGlobal = isGlobal;
+    }
+
+    @Override
+    public void open(TraversalRuntimeContext context) {
+        super.open(context);
+        if (isGlobal) {
+            cacheRecords = new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void finish() {
+        if (isGlobal) {
+            for (StepRecordWithPath record : cacheRecords) {
+                collect(record);
+            }
+            cacheRecords.clear();
+        }
+        super.finish();
     }
 
     @Override
     protected void processRecord(StepRecordWithPath record) {
-        StepRecordWithPath mapRecord = record.mapPath(path -> function.map(withParameter(path)), null);
-        collect(mapRecord);
+        StepRecordWithPath mapRecord = record.mapPath(path -> function.map(withParameter(path)),
+            null);
+        if (isGlobal) {
+            cacheRecords.add(mapRecord);
+        } else {
+            collect(mapRecord);
+        }
     }
 
     @Override
     public StepOperator<StepRecordWithPath, StepRecordWithPath> copyInternal() {
-        return new StepMapOperator(id, function);
+        return new StepMapOperator(id, function, isGlobal);
     }
 }

@@ -69,6 +69,16 @@ public class FieldAlignPath implements Path {
     }
 
     @Override
+    public long getId() {
+        return basePath.getId();
+    }
+
+    @Override
+    public void setId(long id) {
+        basePath.setId(id);
+    }
+
+    @Override
     public Row getField(int i, IType<?> type) {
         int mappingIndex = fieldMapping[i];
         if (mappingIndex < 0) {

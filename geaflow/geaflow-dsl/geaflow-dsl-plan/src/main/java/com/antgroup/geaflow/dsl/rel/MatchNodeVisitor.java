@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.dsl.rel;
 
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
-import com.antgroup.geaflow.dsl.rel.match.LoopUtilMatch;
+import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
 import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
@@ -43,7 +43,7 @@ public interface MatchNodeVisitor<T> {
 
     T visitUnion(MatchUnion union);
 
-    T visitLoopMatch(LoopUtilMatch loopMatch);
+    T visitLoopMatch(LoopUntilMatch loopMatch);
 
     T visitSubQueryStart(SubQueryStart subQueryStart);
 

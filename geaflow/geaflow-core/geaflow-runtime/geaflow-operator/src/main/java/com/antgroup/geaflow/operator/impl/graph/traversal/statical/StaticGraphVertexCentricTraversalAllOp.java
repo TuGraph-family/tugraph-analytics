@@ -35,7 +35,7 @@ public class StaticGraphVertexCentricTraversalAllOp<K, VV, EV, M, R> extends
     }
 
     @Override
-    protected void traversalByRequest() {
+    protected void traversalByRequest(long iterations) {
         Iterator<K> idIterator = graphVCTraversalCtx.vertex().loadIdIterator();
         while (idIterator.hasNext()) {
             K vertexId = idIterator.next();

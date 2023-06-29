@@ -53,7 +53,6 @@ import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSubQueryStartOper
 import com.antgroup.geaflow.dsl.schema.function.GeaFlowUserDefinedScalarFunction;
 import com.antgroup.geaflow.dsl.schema.function.GeaFlowUserDefinedTableFunction;
 import com.antgroup.geaflow.dsl.udf.table.string.Like;
-import com.antgroup.geaflow.dsl.util.GQLRelUtil;
 import com.antgroup.geaflow.dsl.util.GQLRexUtil;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.google.common.collect.Lists;
@@ -461,9 +460,7 @@ public class ExpressionTranslator implements RexVisitor<Expression> {
         logicalPlanSet.addSubLogicalPlan(returnPlan);
 
         // create call sub query expression.
-        String firstLabel = GQLRelUtil.getFirstMatchNode(matchNode).getLabel();
-        RelDataTypeField startField = inputType.getField(firstLabel, false, false);
-        assert startField != null;
+        RelDataTypeField startField = inputType.getFieldList().get(inputType.getFieldCount() - 1);
         int startVertexIndex = startField.getIndex();
         VertexType startVertexType = (VertexType) SqlTypeUtil.convertType(startField.getType());
         assert matchPlan.getHeadPlan().getOperator() instanceof StepSubQueryStartOperator;

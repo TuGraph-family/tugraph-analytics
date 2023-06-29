@@ -18,6 +18,9 @@ import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.types.DoubleVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.types.IntVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.types.LongVertex;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import java.util.Objects;
 
@@ -121,5 +124,16 @@ public class FieldAlignVertex implements RowVertex {
     @Override
     public String toString() {
         return getId() + "#" + getBinaryLabel() + "#" + getValue();
+    }
+
+    public static RowVertex createFieldAlignedVertex(RowVertex baseVertex, int[] fieldMapping) {
+        if (baseVertex instanceof LongVertex) {
+            return new FieldAlignLongVertex((LongVertex)baseVertex, fieldMapping);
+        } else if (baseVertex instanceof IntVertex) {
+            return new FieldAlignIntVertex((IntVertex)baseVertex, fieldMapping);
+        } else if (baseVertex instanceof DoubleVertex) {
+            return new FieldAlignDoubleVertex((DoubleVertex)baseVertex, fieldMapping);
+        }
+        return new FieldAlignVertex(baseVertex, fieldMapping);
     }
 }

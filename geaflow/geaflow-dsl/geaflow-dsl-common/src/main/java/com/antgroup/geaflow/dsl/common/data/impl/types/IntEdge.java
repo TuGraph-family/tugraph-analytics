@@ -28,11 +28,11 @@ public class IntEdge implements RowEdge {
 
     public static final Supplier<IntEdge> CONSTRUCTOR = new Constructor();
 
-    private int srcId;
+    public int srcId;
 
-    private int targetId;
+    public int targetId;
 
-    private EdgeDirection direction = EdgeDirection.OUT;
+    public EdgeDirection direction = EdgeDirection.OUT;
 
     private BinaryString label;
 
@@ -98,12 +98,17 @@ public class IntEdge implements RowEdge {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof IntEdge)) {
+        if (!(o instanceof RowEdge)) {
             return false;
         }
-        IntEdge that = (IntEdge) o;
-        return Objects.equals(srcId, that.srcId) && Objects.equals(targetId,
-            that.targetId) && direction == that.direction && Objects.equals(label, that.label);
+        if (o instanceof IntEdge) {
+            IntEdge that = (IntEdge) o;
+            return srcId == that.srcId && targetId == that.targetId
+                && direction == that.direction && Objects.equals(label, that.label);
+        } else {
+            RowEdge that = (RowEdge) o;
+            return that.equals(this);
+        }
     }
 
     @Override

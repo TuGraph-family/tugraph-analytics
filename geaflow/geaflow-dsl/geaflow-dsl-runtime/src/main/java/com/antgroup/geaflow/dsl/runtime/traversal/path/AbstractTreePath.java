@@ -22,6 +22,7 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.DefaultPath;
+import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignPath;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.IMessage;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageType;
@@ -66,8 +67,12 @@ public abstract class AbstractTreePath implements ITreePath {
         } else if (other.getNodeType() == NodeType.EMPTY_TREE) {
             return this;
         }
-        assert other.getNodeType() == getNodeType() :
-            "Merge with different tree kinds: " + getNodeType() + " and " + other.getNodeType();
+        if (other.getNodeType() != getNodeType()
+            && !(getNodeType() == NodeType.VERTEX_TREE && getVertex() == null)
+            && !(other.getNodeType() == NodeType.VERTEX_TREE && other.getVertex() == null)) {
+            throw new GeaFlowDSLException("Merge with different tree kinds: " + getNodeType()
+                + " and " + other.getNodeType());
+        }
 
         if (this.equalNode(other) && getDepth() == other.getDepth()) {
             for (ITreePath parent : other.getParents()) {
@@ -156,7 +161,7 @@ public abstract class AbstractTreePath implements ITreePath {
     public ITreePath filter(PathFilterFunction filterFunction, int[] refPathIndices) {
         int depth = getDepth();
         int[] mapping = createMappingIndices(refPathIndices, depth);
-        return filter(filterFunction, refPathIndices, mapping, new DefaultPath(), depth);
+        return filter(filterFunction, refPathIndices, mapping, new DefaultPath(), depth, new PathIdCounter());
     }
 
     /**
@@ -167,7 +172,8 @@ public abstract class AbstractTreePath implements ITreePath {
                                int[] refPathIndices,
                                int[] fieldMapping,
                                Path currentPath,
-                               int maxDepth) {
+                               int maxDepth,
+                               PathIdCounter pathId) {
         if (refPathIndices.length == 0) {
             // filter function has not referred any fields in the path.
             if (filterFunction.accept(null)) {
@@ -193,6 +199,7 @@ public abstract class AbstractTreePath implements ITreePath {
                         if (parentSize == 0 || pathIndex == refPathIndices[0]) {
                             // Align the field indices of the current path with the referred index in the function.
                             FieldAlignPath alignPath = new FieldAlignPath(currentPath, fieldMapping);
+                            alignPath.setId(pathId.getAndInc());
                             if (filterFunction.accept(alignPath)) {
                                 EdgeTreePath edgeTreePath = EdgeTreePath.of(null, edge);
                                 if (parentSize > 0) {
@@ -202,7 +209,7 @@ public abstract class AbstractTreePath implements ITreePath {
                             }
                         } else if (parentSize == 1) {
                             ITreePath filterTree = ((AbstractTreePath) getParents().get(0)).filter(filterFunction,
-                                refPathIndices, fieldMapping, currentPath, maxDepth);
+                                refPathIndices, fieldMapping, currentPath, maxDepth, pathId);
                             if (!filterTree.isEmpty()) {
                                 filterTrees.add(filterTree.extendTo(edge));
                             }
@@ -228,6 +235,7 @@ public abstract class AbstractTreePath implements ITreePath {
         if (pathIndex == refPathIndices[0]) {
             // Align the field indices of the current path with the referred index in the function.
             FieldAlignPath alignPath = new FieldAlignPath(currentPath, fieldMapping);
+            alignPath.setId(pathId.getAndInc());
             boolean accept = filterFunction.accept(alignPath);
             // remove current node before return.
             currentPath.remove(currentPath.size() - 1);
@@ -240,7 +248,7 @@ public abstract class AbstractTreePath implements ITreePath {
         List<ITreePath> filterParents = new ArrayList<>(parentSize);
         for (ITreePath parent : getParents()) {
             ITreePath filterTree = ((AbstractTreePath) parent).filter(filterFunction, refPathIndices,
-                fieldMapping, currentPath, maxDepth);
+                fieldMapping, currentPath, maxDepth, pathId);
             if (!filterTree.isEmpty()) {
                 filterParents.add(filterTree);
             }
@@ -312,7 +320,7 @@ public abstract class AbstractTreePath implements ITreePath {
             return new ArrayList<>();
         }
         int maxDepth = getDepth() - minIndex;
-        // adjust index
+        // 调整原来的index
         List<Integer> newIndices = new ArrayList<>();
         for (int index : pathIndices) {
             newIndices.add(index - minIndex);
@@ -342,15 +350,15 @@ public abstract class AbstractTreePath implements ITreePath {
     }
 
     protected void walkTree(WalkFunction walkFunction) {
-        walkTree(new ArrayList<>(), walkFunction, -1);
+        walkTree(walkFunction, -1);
     }
 
     protected void walkTree(WalkFunction walkFunction, int maxDepth) {
-        walkTree(new ArrayList<>(), walkFunction, maxDepth);
+        walkTree(new ArrayList<>(), walkFunction, maxDepth,  new PathIdCounter());
     }
 
     @SuppressWarnings("unchecked")
-    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth) {
+    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth, PathIdCounter pathId) {
         boolean isContinue = true;
         switch (getNodeType()) {
             case VERTEX_TREE:
@@ -362,6 +370,7 @@ public abstract class AbstractTreePath implements ITreePath {
             default:
                 throw new IllegalArgumentException("Cannot walk on this kind of tree:" + getNodeType());
         }
+        // Reach the last node
         if (getParents().isEmpty() || pathNodes.size() == maxDepth) {
             List<Path> paths = new ArrayList<>();
             paths.add(new DefaultPath());
@@ -391,10 +400,14 @@ public abstract class AbstractTreePath implements ITreePath {
                     throw new IllegalArgumentException("Illegal path node: " + pathNode);
                 }
             }
+            // set id to the path.
+            for (Path path : paths) {
+                path.setId(pathId.getAndInc());
+            }
             isContinue = walkFunction.onWalk(paths);
         } else {
             for (ITreePath parent : getParents()) {
-                isContinue = parent.walkTree(pathNodes, walkFunction, maxDepth);
+                isContinue = parent.walkTree(pathNodes, walkFunction, maxDepth, pathId);
                 if (!isContinue) {
                     break;
                 }

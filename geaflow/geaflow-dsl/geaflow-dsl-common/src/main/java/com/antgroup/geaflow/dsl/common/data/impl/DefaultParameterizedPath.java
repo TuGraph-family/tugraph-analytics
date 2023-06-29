@@ -99,4 +99,14 @@ public class DefaultParameterizedPath implements ParameterizedPath {
         return new DefaultParameterizedPath(basePath.subPath(indices), requestId,
             parameterRow, systemVariableRow);
     }
+
+    @Override
+    public long getId() {
+        return basePath.getId();
+    }
+
+    @Override
+    public void setId(long id) {
+        basePath.setId(id);
+    }
 }

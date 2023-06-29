@@ -35,8 +35,9 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
 
     private AlgorithmRuntimeContext<Object, Long> context;
     private Object sourceVertexId;
-    private final int maxIteration = 10;
+    private final int maxIteration = 30;
     private String edgeType = null;
+    private String vertexType = null;
 
     @Override
     public void init(AlgorithmRuntimeContext<Object, Long> context, Object[] parameters) {
@@ -48,10 +49,17 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
             assert parameters[1] instanceof String : "Edge type parameter should be string.";
             edgeType = (String) parameters[1];
         }
+        if (parameters.length >= 3) {
+            assert parameters[2] instanceof String : "Vertex type parameter should be string.";
+            vertexType = (String) parameters[2];
+        }
     }
 
     @Override
     public void process(RowVertex vertex, Iterator<Long> messages) {
+        if (vertexType != null && !vertex.getLabel().equals(vertexType)) {
+            return;
+        }
         long currentDistance;
         if (context.getCurrentIterationId() == 1L) {
             if (Objects.equals(vertex.getId(), sourceVertexId)) {
