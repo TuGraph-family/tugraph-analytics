@@ -15,6 +15,17 @@ and calculations, such as real-time search for multi-degree relationships and lo
 also supports real-time analysis and processing of graph-table integration and can handle both table data and graph 
 data at the same time. For more information on GeaFlow use cases, please refer to the [GeaFlow introduction document](docs/docs-en/introduction.md)
 
+## Features
+
+* Distribute streaming graph computing.
+* High availability and exactly once support.
+* Graph and table integrated processing.
+* Easy to develop with SQL + ISO/GQL.
+* Pluggable for UDF、graph algorithm and connector.
+* High level api support.
+* One-stop graph development platform
+* Cloud native deployment support.
+
 ## Quick start
 You need to first fork a copy of GeaFlow code on Github and then try to compile the source code. Compiling GeaFlow 
 requires mvn and JDK8 environment. You can then attempt to run a real-time graph computing job on your local machine 
