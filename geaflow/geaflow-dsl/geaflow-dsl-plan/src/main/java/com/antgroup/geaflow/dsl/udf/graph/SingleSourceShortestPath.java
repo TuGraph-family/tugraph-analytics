@@ -69,8 +69,10 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
             }
         } else {
             currentDistance = (long) vertex.getValue().getField(0, LongType.INSTANCE);
-            context.take(ObjectRow.create(BinaryString.fromString(
-                (String) TypeCastUtil.cast(vertex.getId(), StringType.INSTANCE)), currentDistance));
+            if (currentDistance < Long.MAX_VALUE) {
+                context.take(ObjectRow.create(BinaryString.fromString(
+                    (String) TypeCastUtil.cast(vertex.getId(), StringType.INSTANCE)), currentDistance));
+            }
             return;
         }
         context.updateVertexValue(ObjectRow.create(currentDistance));
@@ -78,11 +80,6 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
         long scatterDistance = currentDistance == Long.MAX_VALUE ? Long.MAX_VALUE :
                                currentDistance + 1;
         for (RowEdge edge : context.loadEdges(EdgeDirection.OUT)) {
-            if (edgeType == null || edge.getLabel().equals(edgeType)) {
-                context.sendMessage(edge.getTargetId(), scatterDistance);
-            }
-        }
-        for (RowEdge edge : context.loadEdges(EdgeDirection.BOTH)) {
             if (edgeType == null || edge.getLabel().equals(edgeType)) {
                 context.sendMessage(edge.getTargetId(), scatterDistance);
             }
