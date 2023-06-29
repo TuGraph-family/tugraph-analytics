@@ -59,13 +59,12 @@ public class PageRank implements AlgorithmUserFunction {
     @Override
     public void process(RowVertex vertex, Iterator messages) {
         List<RowEdge> outEdges = new ArrayList<>(context.loadEdges(EdgeDirection.OUT));
-        outEdges.addAll(context.loadEdges(EdgeDirection.BOTH));
         if (context.getCurrentIterationId() == 1L) {
             double initValue = 1.0;
             sendMessageToNeighbors(outEdges, 1.0 / outEdges.size());
-            sendMessageToNeighbors(outEdges, -1.0);
+            context.sendMessage(vertex.getId(), -1.0);
             context.updateVertexValue(ObjectRow.create(initValue));
-        } else if (context.getCurrentIterationId() <= iteration) {
+        } else if (context.getCurrentIterationId() < iteration) {
             double sum = 0.0;
             while (messages.hasNext()) {
                 double input = (double) messages.next();
@@ -75,14 +74,15 @@ public class PageRank implements AlgorithmUserFunction {
             double pr = (1 - alpha) + (sum * alpha);
             double currentPr = (double) vertex.getValue().getField(0, DoubleType.INSTANCE);
             if (Math.abs(currentPr - pr) > convergence) {
-                sendMessageToNeighbors(outEdges, pr / outEdges.size());
+                context.updateVertexValue(ObjectRow.create(pr));
+                currentPr = pr;
             }
-            sendMessageToNeighbors(outEdges, -1.0);
+            sendMessageToNeighbors(outEdges, currentPr / outEdges.size());
+            context.sendMessage(vertex.getId(), -1.0);
             context.updateVertexValue(ObjectRow.create(pr));
         } else {
             double currentPr = (double) vertex.getValue().getField(0, DoubleType.INSTANCE);
             context.take(ObjectRow.create(vertex.getId(), currentPr));
-            return;
         }
     }
 
