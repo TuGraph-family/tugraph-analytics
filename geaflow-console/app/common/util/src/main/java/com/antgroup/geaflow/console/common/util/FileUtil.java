@@ -14,9 +14,9 @@
 
 package com.antgroup.geaflow.console.common.util;
 
+import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.google.common.base.Preconditions;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -31,9 +31,24 @@ public class FileUtil {
         return new File(path).exists();
     }
 
-    public static void mkdir(String path) throws IOException {
+    public static void touch(String path) {
         Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
-        FileUtils.forceMkdir(new File(path));
+        try {
+            FileUtils.touch(new File(path));
+
+        } catch (Exception e) {
+            throw new GeaflowException("Create file {} failed", path, e);
+        }
+    }
+
+    public static void mkdir(String path) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
+        try {
+            FileUtils.forceMkdir(new File(path));
+
+        } catch (Exception e) {
+            throw new GeaflowException("Create directory {} failed", path, e);
+        }
     }
 
     public static boolean delete(String path) {
@@ -41,29 +56,45 @@ public class FileUtil {
         return FileUtils.deleteQuietly(new File(path));
     }
 
-    public static String readFileContent(String path) throws IOException {
+    public static String readFileContent(String path) {
         Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
-        return FileUtils.readFileToString(new File(path), StandardCharsets.UTF_8.name());
-    }
+        try {
+            return FileUtils.readFileToString(new File(path), StandardCharsets.UTF_8.name());
 
-    public static InputStream readFileStream(String path) throws IOException {
-        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
-        return FileUtils.openInputStream(new File(path));
-    }
-
-    public static void writeFile(String path, String content) throws IOException {
-        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
-        FileUtils.write(new File(path), content, StandardCharsets.UTF_8);
-    }
-
-    public static void writeFile(String path, InputStream stream) throws IOException {
-        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
-        File file = new File(path);
-
-        try (InputStream in = stream;
-            OutputStream out = FileUtils.openOutputStream(file)) {
-            IOUtils.copy(in, out, 1024 * 1024 * 8);
+        } catch (Exception e) {
+            throw new GeaflowException("Read file {} failed", path, e);
         }
     }
 
+    public static InputStream readFileStream(String path) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
+        try {
+            return FileUtils.openInputStream(new File(path));
+
+        } catch (Exception e) {
+            throw new GeaflowException("Read file {} failed", path, e);
+        }
+    }
+
+    public static void writeFile(String path, String content) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
+        try {
+            FileUtils.write(new File(path), content, StandardCharsets.UTF_8);
+
+        } catch (Exception e) {
+            throw new GeaflowException("Write file {} failed", path, e);
+        }
+    }
+
+    public static void writeFile(String path, InputStream stream) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(path), "Invalid path");
+        File file = new File(path);
+
+        try (InputStream in = stream; OutputStream out = FileUtils.openOutputStream(file)) {
+            IOUtils.copy(in, out, 1024 * 1024 * 8);
+
+        } catch (Exception e) {
+            throw new GeaflowException("Write file {} failed", path, e);
+        }
+    }
 }

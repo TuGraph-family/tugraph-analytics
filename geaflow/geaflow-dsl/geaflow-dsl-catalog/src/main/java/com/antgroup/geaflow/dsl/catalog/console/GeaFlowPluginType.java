@@ -43,7 +43,11 @@ public enum GeaFlowPluginType {
     /**
      * Socket plugin type for table.
      */
-    SOCKET;
+    SOCKET,
+    /**
+     * Console plugin type for table.
+     */
+    CONSOLE;
 
     public static GeaFlowPluginType getPluginType(String name) {
         for (GeaFlowPluginType type : values()) {
