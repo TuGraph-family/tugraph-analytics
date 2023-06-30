@@ -17,7 +17,6 @@ package com.antgroup.geaflow.console.core.service.file;
 import com.antgroup.geaflow.console.common.util.FileUtil;
 import com.antgroup.geaflow.console.common.util.Fmt;
 import com.antgroup.geaflow.console.common.util.Md5Util;
-import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import java.io.File;
@@ -75,7 +74,7 @@ public class VersionFileFactory {
             downloadFile(remotePath, localPath);
 
             // save file md5
-            saveFileMd5(localPath);
+            FileUtil.writeFile(getMd5FilePath(localPath), Md5Util.encodeFile(localPath));
         }
 
         return new File(localPath);
@@ -95,30 +94,12 @@ public class VersionFileFactory {
             return null;
         }
 
-        try {
-            return FileUtil.readFileContent(md5FilePath).trim();
-
-        } catch (Exception e) {
-            throw new GeaflowException("Load md5 for file {} failed", filePath, e);
-        }
+        return FileUtil.readFileContent(md5FilePath).trim();
     }
 
-    private void downloadFile(String path, String filePath) {
-        try {
-            InputStream stream = remoteFileStorage.download(path);
-            FileUtil.writeFile(filePath, stream);
-            log.info("Download success to {}", filePath);
-        } catch (Exception e) {
-            throw new GeaflowException("Download file {} from {} failed", filePath, path, e);
-        }
-    }
-
-    private void saveFileMd5(String filePath) {
-        try {
-            FileUtil.writeFile(getMd5FilePath(filePath), Md5Util.encodeFile(filePath));
-
-        } catch (Exception e) {
-            throw new GeaflowException("Save md5 for file {} failed", filePath, e);
-        }
+    private void downloadFile(String remotePath, String localPath) {
+        InputStream stream = remoteFileStorage.download(remotePath);
+        FileUtil.writeFile(localPath, stream);
+        log.info("Download file {} from {} success", localPath, remotePath);
     }
 }

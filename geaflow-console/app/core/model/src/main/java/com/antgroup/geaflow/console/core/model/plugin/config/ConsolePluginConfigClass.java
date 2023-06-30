@@ -12,38 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.common.util.type;
+package com.antgroup.geaflow.console.core.model.plugin.config;
 
-public enum GeaflowPluginType {
-    KAFKA,
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
+import lombok.Getter;
+import lombok.Setter;
 
-    HIVE,
+@Getter
+@Setter
+public class ConsolePluginConfigClass extends PluginConfigClass {
 
-    FILE,
+    public ConsolePluginConfigClass() {
+        super(GeaflowPluginType.CONSOLE);
+    }
 
-    SOCKET,
-
-    CONSOLE,
-
-    MEMORY,
-
-    ROCKSDB,
-
-    LOCAL,
-
-    DFS,
-
-    OSS,
-
-    JDBC,
-
-    REDIS,
-
-    INFLUXDB,
-
-    K8S,
-
-    CONTAINER,
-
-    RAY
 }

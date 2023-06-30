@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
@@ -114,13 +114,18 @@ public class ProcessUtil {
         execute(Fmt.as("kill -9 {}", pid));
     }
 
-    public static int execAsyncCommand(CommandLine command, long waitTime, File logFile) {
+    public static int execAsyncCommand(CommandLine command, long waitTime, String logFile, String finishFile) {
         ProcessExecutor executor = new ProcessExecutor();
 
         try {
             FileOutputStream outputStream = new FileOutputStream(logFile);
             executor.setStreamHandler(new PumpStreamHandler(outputStream, outputStream));
-            executor.execute(command, new AsyncExecuteResultHandler(command.toString(), outputStream, outputStream));
+            AsyncExecuteResultHandler handler = new AsyncExecuteResultHandler(command.toString(), outputStream,
+                outputStream);
+            handler.setFinishFile(finishFile);
+
+            // execute command
+            executor.execute(command, handler);
 
             // wait async process start at least 1s
             Thread.sleep(Math.max(waitTime, 1000));
@@ -192,7 +197,7 @@ public class ProcessUtil {
                 Field field = process.getClass().getDeclaredField("pid");
                 field.setAccessible(true);
                 this.pid = (int) field.get(process);
-                log.info("Start process `{}` with pid {}", command.toString(), pid);
+                log.debug("Start process `{}` with pid {}", command.toString(), pid);
 
             } catch (Exception e) {
                 throw new GeaflowException("Get process pid failed", e);
@@ -202,14 +207,22 @@ public class ProcessUtil {
         }
     }
 
-    @AllArgsConstructor
     private static class AsyncExecuteResultHandler implements ExecuteResultHandler {
 
         private final String command;
 
-        private OutputStream outputStream;
+        private final OutputStream outputStream;
 
-        private OutputStream errorStream;
+        private final OutputStream errorStream;
+
+        @Setter
+        private String finishFile;
+
+        public AsyncExecuteResultHandler(String command, OutputStream outputStream, OutputStream errorStream) {
+            this.command = command;
+            this.outputStream = outputStream;
+            this.errorStream = errorStream;
+        }
 
         @Override
         public void onProcessComplete(int exitValue) {
@@ -226,7 +239,7 @@ public class ProcessUtil {
                 }
 
             } else {
-                if (errorStream instanceof ByteArrayOutputStream) {
+                if (outputStream instanceof ByteArrayOutputStream) {
                     String output = StreamUtils.copyToString((ByteArrayOutputStream) outputStream,
                         StandardCharsets.UTF_8);
                     log.info("Execute async command `{}` success, output={}", command, JSON.toJSONString(output));
@@ -234,6 +247,10 @@ public class ProcessUtil {
                 } else {
                     String msg = Fmt.as("Execute async command `{}` success\n", command);
                     writeMessage(outputStream, msg);
+                }
+
+                if (finishFile != null) {
+                    FileUtil.touch(finishFile);
                 }
             }
         }
