@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.console.core.service.runtime;
 
 import com.alibaba.fastjson.JSON;
+import com.antgroup.geaflow.console.common.util.FileUtil;
 import com.antgroup.geaflow.console.common.util.ProcessUtil;
 import com.antgroup.geaflow.console.common.util.ThreadUtil;
 import com.antgroup.geaflow.console.common.util.ZipUtil;
@@ -45,6 +46,8 @@ public class ContainerRuntime implements GeaflowRuntime {
 
     private static final String GEAFLOW_ENGINE_LOG_FILE = "/tmp/logs/task/%s.log";
 
+    private static final String GEAFLOW_ENGINE_FINISH_FILE = "/tmp/logs/task/%s.finish";
+
     @Autowired
     private ContainerTaskParams taskParams;
 
@@ -56,6 +59,10 @@ public class ContainerRuntime implements GeaflowRuntime {
 
     public static String getLogFilePath(String taskId) {
         return String.format(GEAFLOW_ENGINE_LOG_FILE, TaskParams.getRuntimeTaskName(taskId));
+    }
+
+    public static String getFinishFilePath(String taskId) {
+        return String.format(GEAFLOW_ENGINE_FINISH_FILE, TaskParams.getRuntimeTaskName(taskId));
     }
 
     @Override
@@ -104,6 +111,10 @@ public class ContainerRuntime implements GeaflowRuntime {
                 }
             }
 
+            // clear finish file if exists
+            String finishFile = getFinishFilePath(task.getId());
+            FileUtil.delete(finishFile);
+
             List<String> classPaths = new ArrayList<>();
 
             // add version jar
@@ -121,7 +132,7 @@ public class ContainerRuntime implements GeaflowRuntime {
             ZipUtil.unzip(releaseFile);
             classPaths.add(releaseFile.getParent());
 
-            // start process
+            // start task process
             String java = System.getProperty("java.home") + "/bin/java";
             String classPathString = StringUtils.join(classPaths, ":");
             String mainClass = GeaflowTask.CODE_TASK_MAIN_CLASS;
@@ -131,8 +142,7 @@ public class ContainerRuntime implements GeaflowRuntime {
             cmd.addArgument(classPathString);
             cmd.addArgument(mainClass);
             cmd.addArgument(args, false);
-            String logFile = getLogFilePath(task.getId());
-            int pid = ProcessUtil.execAsyncCommand(cmd, 1000, new File(logFile));
+            int pid = ProcessUtil.execAsyncCommand(cmd, 1000, getLogFilePath(task.getId()), finishFile);
 
             // save handle
             ContainerTaskHandle taskHandle = new ContainerTaskHandle();
@@ -152,8 +162,15 @@ public class ContainerRuntime implements GeaflowRuntime {
         while (retryTimes > 0) {
             try {
                 int pid = ((ContainerTaskHandle) task.getHandle()).getPid();
-                boolean exist = ProcessUtil.existPid(pid);
-                return exist ? GeaflowTaskStatus.RUNNING : GeaflowTaskStatus.FAILED;
+                if (ProcessUtil.existPid(pid)) {
+                    return GeaflowTaskStatus.RUNNING;
+                }
+
+                if (FileUtil.exist(getFinishFilePath(task.getId()))) {
+                    return GeaflowTaskStatus.FINISHED;
+                }
+
+                return GeaflowTaskStatus.FAILED;
 
             } catch (Exception e) {
                 if (--retryTimes == 0) {
