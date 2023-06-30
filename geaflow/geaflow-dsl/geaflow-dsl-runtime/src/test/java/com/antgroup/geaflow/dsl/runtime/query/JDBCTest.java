@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.runtime.query;
 
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
-import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.runtime.testenv.SourceFunctionNoPartitionCheck;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,22 +46,17 @@ public class JDBCTest {
         config.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), String.valueOf(1L));
         config.put(DSLConfigKeys.GEAFLOW_DSL_CUSTOM_SOURCE_FUNCTION.getKey(),
             SourceFunctionNoPartitionCheck.class.getName());
-        QueryTester
+        QueryTester tester = QueryTester
             .build()
             .withQueryPath("/query/jdbc_write_001.sql")
             .withConfig(config)
             .withTestTimeWaitSeconds(60)
-            .execute();
-        QueryTester tester = QueryTester
-            .build()
+            .execute()
             .withQueryPath("/query/jdbc_scan_001.sql")
             .withConfig(config)
-            .withTestTimeWaitSeconds(60);
-        try {
-            tester.execute();
-        } catch (GeaFlowDSLException e) {
-            LOGGER.info("JDBC unbounded stream finish with timeout.");
-        }
+            .withTestTimeWaitSeconds(60)
+            .execute();
+
         tester.checkSinkResult();
     }
 }
