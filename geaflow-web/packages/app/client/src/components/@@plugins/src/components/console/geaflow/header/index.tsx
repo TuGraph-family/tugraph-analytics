@@ -9,6 +9,7 @@ import cls from "./index.less";
 import { useAuth } from "../hooks/useAuth";
 import { queryInstanceList } from "../services/instance";
 import { switchUserRole } from "../services/quickInstall";
+import { isNull } from "lodash";
 
 interface PluginPorps {
   redirectPath?: RedirectPath[];
@@ -33,9 +34,12 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
       ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
       : null,
   });
+  localStorage.setItem(
+    "IS_ADMIN_LOGIN",
+    isNull(state.isAdminLogin) ? "add" : ""
+  );
 
   const { onLogout } = useAuth();
-
   const handleLogout = () => {
     onLogout().then((res) => {
       if (res.code === "SUCCESS") {
@@ -69,7 +73,6 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
         "GEAFLOW_CURRENT_INSTANCE"
       );
       if (!defaultSelectInstance) {
-        console.log(defaultSelectInstance);
         const defaultInstance = resp.data?.list[0];
         if (defaultInstance) {
           localStorage.setItem(
@@ -127,8 +130,8 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
         });
       } else {
         localStorage.setItem("IS_GEAFLOW_ADMIN", "true");
-        const clusterURL = redirectPath?.find(d => d.pathName === '集群管理')
-        
+        const clusterURL = redirectPath?.find((d) => d.pathName === "集群管理");
+
         // Openpiece 角色切换为 admin
         switchRole("admin", clusterURL?.path || redirectUrl);
         setState({
@@ -151,7 +154,6 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
   );
 
   const onChangeInstance = (value) => {
-    console.log(value);
     const { key } = value;
     const [k, v] = key.split(",");
     const current = {

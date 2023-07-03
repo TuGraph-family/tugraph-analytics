@@ -48,10 +48,6 @@ export const getJobsEdit = async (params: any, id: string) => {
     data: params,
   });
 
-  if (!response.success) {
-    message.error(`编辑失败: ${response.message}`);
-    return [];
-  }
   return response;
 };
 

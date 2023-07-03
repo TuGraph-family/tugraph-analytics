@@ -9,6 +9,7 @@ import {
   message,
   Popconfirm,
   Breadcrumb,
+  Tooltip,
 } from "antd";
 import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
@@ -136,11 +137,22 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
       dataIndex: "graphs",
       key: "graphs",
       width: 150,
+      ellipsis: {
+        showTitle: false,
+      },
       render: (text: any) => {
         if (isEmpty(text)) {
           return "-";
         }
-        return <span>{text?.map((item) => item.name)}</span>;
+        return (
+          <Tooltip>
+            {text
+              .map((obj) => {
+                return obj.name;
+              })
+              .join(",")}
+          </Tooltip>
+        );
       },
     },
     {
@@ -148,23 +160,45 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
       dataIndex: "structs",
       key: "structs",
       width: 150,
+      ellipsis: {
+        showTitle: false,
+      },
       render: (text: any) => {
         if (isEmpty(text)) {
           return "-";
         }
-        return <span>{text[0]?.name}</span>;
+        return (
+          <Tooltip>
+            {text
+              .map((obj) => {
+                return obj.name;
+              })
+              .join(",")}
+          </Tooltip>
+        );
       },
     },
     {
       title: "函数列表",
-      dataIndex: "fucntions",
-      key: "fucntions",
+      dataIndex: "functions",
+      key: "functions",
       width: 150,
+      ellipsis: {
+        showTitle: false,
+      },
       render: (text: any) => {
         if (isEmpty(text)) {
           return "-";
         }
-        return <span>{text[0]?.name}</span>;
+        return (
+          <Tooltip>
+            {text
+              .map((obj) => {
+                return obj.name;
+              })
+              .join(",")}
+          </Tooltip>
+        );
       },
     },
     {

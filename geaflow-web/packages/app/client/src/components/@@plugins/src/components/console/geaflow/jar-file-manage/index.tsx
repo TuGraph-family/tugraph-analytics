@@ -22,7 +22,6 @@ export const GeaflowJarfileManage: React.FC<{}> = ({}) => {
   useEffect(() => {
     handelTemplata();
   }, [temeplateList.search]);
-  console.log(JSON.stringify({ username: "admin", password: "73@TuGraph" }));
   const columns = [
     {
       title: "文件名称",

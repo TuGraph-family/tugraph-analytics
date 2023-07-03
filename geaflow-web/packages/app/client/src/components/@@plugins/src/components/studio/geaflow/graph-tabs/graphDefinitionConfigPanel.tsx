@@ -16,6 +16,7 @@ import {
   getPluginCategoriesByType,
   getPluginCategoriesConfig,
 } from "../services/graphDefinition";
+import { isEmpty } from "lodash";
 import { useImmer } from "use-immer";
 
 interface IProps {
@@ -156,10 +157,12 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
   }, [DEFAULT_CATEGORY[prefixName]]);
 
   useEffect(() => {
+    const configList = form.getFieldValue(prefixName);
     if (
       DEFAULT_CATEGORY[prefixName] &&
       form.getFieldValue([prefixName, "type"]) &&
-      !typeValue
+      !typeValue &&
+      isEmpty(configList?.config)
     ) {
       getPluginConfigList(
         DEFAULT_CATEGORY[prefixName],

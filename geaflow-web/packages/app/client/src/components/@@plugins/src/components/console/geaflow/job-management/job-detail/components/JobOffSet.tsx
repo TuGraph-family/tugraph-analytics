@@ -51,7 +51,7 @@ export const JobOffSet: React.FC<JobMetricProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "Offset",
+      title: "Offset (数据源时间)",
       dataIndex: "offset",
       key: "offset",
       render: (text: number, record) => {

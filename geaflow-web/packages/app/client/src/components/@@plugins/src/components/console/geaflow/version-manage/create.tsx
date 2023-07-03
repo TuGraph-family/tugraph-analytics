@@ -17,11 +17,10 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
   const [form] = Form.useForm();
   const [state, setState] = useState({
     loading: false,
+    fileList: [],
   });
-
   const handleCreateVersion = async () => {
     const values = await form.validateFields();
-
     setState({
       ...state,
       loading: true,
@@ -31,17 +30,18 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
     const formData = new FormData();
     formData.append("name", name);
 
-    formData.append("comment", comment);
+    comment && formData.append("comment", comment);
 
-    engineJarFile.forEach((item) => {
-      formData.append("engineJarFile", item.originFileObj);
-    });
+    engineJarFile &&
+      engineJarFile.forEach((item) => {
+        formData.append("engineJarFile", item.originFileObj);
+      });
 
     const params = {
       // name,
       engineJarFile: formData,
     };
-    console.log(formData);
+
     const resp = await createVersion(formData);
 
     setState({
@@ -51,6 +51,8 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
     if (resp?.success) {
       message.success("创建版本成功");
       reload();
+    } else {
+      message.error(`创建失败${resp?.message}`);
     }
   };
 
@@ -59,6 +61,7 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
     if (Array.isArray(e)) {
       return e;
     }
+    setState({ ...state, fileList: e?.fileList });
     return e?.fileList.slice(-1);
   };
 
@@ -69,7 +72,10 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
       visible={visible}
       onOk={handleCreateVersion}
       confirmLoading={state.loading}
-      onCancel={close}
+      onCancel={() => {
+        close();
+        form.resetFields();
+      }}
       okText="确认"
       cancelText="取消"
     >
