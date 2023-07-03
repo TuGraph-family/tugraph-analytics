@@ -33,10 +33,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +54,12 @@ public class JDBCTableSource implements TableSource {
     private String username;
     private String password;
     private String tableName;
-    private Connection connection;
-    private Statement statement;
+    private long partitionNum;
+    private String partitionColumn;
+    private long lowerBound;
+    private long upperBound;
+    private Map<Partition, Connection> partitionConnectionMap = new HashMap<>();
+    private Map<Partition, Statement> partitionStatementMap = new HashMap<>();
 
     @Override
     public void init(Configuration tableConf, TableSchema tableSchema) {
@@ -64,22 +72,67 @@ public class JDBCTableSource implements TableSource {
         this.username = tableConf.getString(JDBCConfigKeys.GEAFLOW_DSL_JDBC_USERNAME);
         this.password = tableConf.getString(JDBCConfigKeys.GEAFLOW_DSL_JDBC_PASSWORD);
         this.tableName = tableConf.getString(JDBCConfigKeys.GEAFLOW_DSL_JDBC_TABLE_NAME);
+        this.partitionNum = tableConf.getLong(JDBCConfigKeys.GEAFLOW_DSL_JDBC_PARTITION_NUM);
+        if (this.partitionNum <= 0) {
+            throw new GeaFlowDSLException("Invalid partition number: {}", partitionNum);
+        }
+        this.partitionColumn =
+            tableConf.getString(JDBCConfigKeys.GEAFLOW_DSL_JDBC_PARTITION_COLUMN);
+        this.lowerBound = tableConf.getLong(JDBCConfigKeys.GEAFLOW_DSL_JDBC_PARTITION_LOWERBOUND);
+        this.upperBound = tableConf.getLong(JDBCConfigKeys.GEAFLOW_DSL_JDBC_PARTITION_UPPERBOUND);
+        // PartitionColumn, lowerbound and upperbound must all be specified. Otherwise, ignore.
+        if (Stream.of(partitionColumn, lowerBound, upperBound).allMatch(Objects::nonNull)) {
+            if (partitionNum == 1) {
+                // create one connection and ignore partitionColumn, lowerbound, upperbound.
+            } else if (partitionNum > 1 && lowerBound >= upperBound) {
+                throw new GeaFlowDSLException("Upperbound must greater than lowerbound"
+                    + "(lowerbound:%d upperbound:%d).", lowerBound, upperBound);
+            } else {
+                partitionNum = Math.min(upperBound - lowerBound, partitionNum);
+            }
+        }
     }
 
     @Override
     public void open(RuntimeContext context) {
         try {
             Class.forName(this.driver);
-            this.connection = DriverManager.getConnection(url, username, password);
-            this.statement = connection.createStatement();
-        } catch (Exception e) {
-            throw new GeaFlowDSLException("failed to connect to database", e);
+        } catch (ClassNotFoundException e) {
+            throw new GeaFlowDSLException("failed to load driver: {}.", this.driver);
         }
     }
 
     @Override
     public List<Partition> listPartitions() {
-        return Collections.singletonList(new JDBCPartition(this.tableName));
+        if (partitionNum <= 0) {
+            throw new GeaFlowDSLException("Invalid partition number: {}", partitionNum);
+        }
+
+        if (partitionNum == 1) {
+            return Collections.singletonList(new JDBCPartition(tableName, ""));
+        }
+
+        long stride = upperBound / partitionNum - lowerBound / partitionNum;
+        long currentValue = lowerBound;
+        List<Partition> partitions = new ArrayList<>();
+        for (long i = 0; i < partitionNum; ++i) {
+            String lBound = i != 0 ? String.format("%s >= %d", partitionColumn, currentValue) :
+                            null;
+            currentValue += stride;
+            String uBound = i != partitionNum - 1 ? String.format("%s < %d", partitionColumn,
+                currentValue) : null;
+            String whereClause;
+            if (uBound == null) {
+                whereClause = lBound;
+            } else if (lBound == null) {
+                whereClause = String.format("%s OR %s IS NULL", uBound, partitionColumn);
+            } else {
+                whereClause = String.format("%s AND %s", lBound, uBound);
+            }
+            whereClause = "WHERE " + whereClause;
+            partitions.add(new JDBCPartition(tableName, whereClause));
+        }
+        return partitions;
     }
 
     @Override
@@ -90,17 +143,30 @@ public class JDBCTableSource implements TableSource {
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
                                   long windowSize) throws IOException {
-        if (!partition.getName().equals(this.tableName)) {
+        JDBCPartition jdbcPartition = (JDBCPartition) partition;
+        if (!jdbcPartition.getTableName().equals(this.tableName)) {
             throw new GeaFlowDSLException("wrong partition");
         }
+        Statement statement = partitionStatementMap.get(partition);
+        if (statement == null) {
+            try {
+                Connection connection = DriverManager.getConnection(url, username, password);
+                statement = connection.createStatement();
+                partitionConnectionMap.put(partition, connection);
+                partitionStatementMap.put(partition, statement);
+            } catch (SQLException e) {
+                throw new GeaFlowDSLException("failed to connect.");
+            }
+        }
+
         long offset = 0;
         if (startOffset.isPresent()) {
             offset = startOffset.get().getOffset();
         }
         List<Row> dataList;
         try {
-            dataList = JDBCUtils.selectRowsFromTable(this.statement, this.tableName,
-                this.schema.size(), offset, windowSize);
+            dataList = JDBCUtils.selectRowsFromTable(statement, this.tableName,
+                jdbcPartition.getWhereClause(), this.schema.size(), offset, windowSize);
         } catch (SQLException e) {
             throw new GeaFlowDSLException("select rows form table failed.", e);
         }
@@ -112,14 +178,18 @@ public class JDBCTableSource implements TableSource {
     @Override
     public void close() {
         try {
-            if (statement != null) {
-                statement.close();
-                statement = null;
+            for (Statement statement : this.partitionStatementMap.values()) {
+                if (statement != null) {
+                    statement.close();
+                }
             }
-            if (connection != null) {
-                connection.close();
-                connection = null;
+            this.partitionStatementMap.clear();
+            for (Connection connection : this.partitionConnectionMap.values()) {
+                if (connection != null) {
+                    connection.close();
+                }
             }
+            this.partitionConnectionMap.clear();
         } catch (SQLException e) {
             throw new GeaFlowDSLException("failed to close connection.");
         }
@@ -128,19 +198,33 @@ public class JDBCTableSource implements TableSource {
     public static class JDBCPartition implements Partition {
 
         String tableName;
+        String whereClause;
 
-        public JDBCPartition(String tableName) {
+        public JDBCPartition(String tableName, String whereClause) {
             this.tableName = tableName;
+            this.whereClause = whereClause;
+        }
+
+        public String getTableName() {
+            return tableName;
+        }
+
+        public String getWhereClause() {
+            return whereClause;
         }
 
         @Override
         public String getName() {
-            return tableName;
+            if (whereClause == null || whereClause.isEmpty()) {
+                return tableName;
+            } else {
+                return tableName + "-" + whereClause;
+            }
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(tableName);
+            return Objects.hash(tableName, whereClause);
         }
 
         @Override
@@ -152,7 +236,8 @@ public class JDBCTableSource implements TableSource {
                 return false;
             }
             JDBCPartition that = (JDBCPartition) o;
-            return Objects.equals(tableName, that.tableName);
+            return Objects.equals(tableName, that.tableName) && Objects.equals(whereClause,
+                that.whereClause);
         }
     }
 

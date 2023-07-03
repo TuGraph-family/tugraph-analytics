@@ -79,15 +79,15 @@ public class JDBCUtils {
     }
 
     public static List<Row> selectRowsFromTable(Statement statement, String tableName,
-                                                int columnNum, long startOffset,
+                                                String whereClause, int columnNum, long startOffset,
                                                 long windowSize) throws SQLException {
         if (windowSize == Windows.SIZE_OF_ALL_WINDOW) {
             windowSize = Integer.MAX_VALUE;
         } else if (windowSize <= 0) {
             throw new GeaFlowDSLException("wrong windowSize");
         }
-        String selectRowsFromTableQuery = String.format("SELECT * FROM %s OFFSET %d ROWS\n"
-            + "FETCH NEXT (%d) ROWS ONLY;", tableName, startOffset, windowSize);
+        String selectRowsFromTableQuery = String.format("SELECT * FROM %s %s OFFSET %d ROWS\n"
+            + "FETCH NEXT (%d) ROWS ONLY;", tableName, whereClause, startOffset, windowSize);
         ResultSet resultSet = statement.executeQuery(selectRowsFromTableQuery);
         List<Row> rowList = new ArrayList<>();
         while (resultSet.next()) {

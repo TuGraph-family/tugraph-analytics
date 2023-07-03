@@ -55,6 +55,8 @@ public class JDBCTableConnectorTest {
         statement.execute("CREATE TABLE test_table (id INT PRIMARY KEY, name VARCHAR(255))");
         statement.execute("INSERT INTO test_table (id, name) VALUES (1, 'Test1')");
         statement.execute("INSERT INTO test_table (id, name) VALUES (2, 'Test2')");
+        statement.execute("INSERT INTO test_table (id, name) VALUES (3, 'Test3')");
+        statement.execute("INSERT INTO test_table (id, name) VALUES (4, 'Test4')");
     }
 
     @AfterClass
@@ -77,13 +79,27 @@ public class JDBCTableConnectorTest {
         List<TableField> tableFieldList = new ArrayList<>();
         tableFieldList.add(new TableField("id", Types.INTEGER, false));
         tableFieldList.add(new TableField("name", Types.BINARY_STRING, false));
-        Row row = ObjectRow.create(new Object[]{3, "Test3"});
+        Row row = ObjectRow.create(new Object[]{5, "Test5"});
         JDBCUtils.insertIntoTable(statement, "test_table", tableFieldList, row);
     }
 
     @Test
-    public void testSelectRowsFromTable() throws SQLException {
-        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table", 2, 0, 2);
+    public void testSelectRowsFromTable1() throws SQLException {
+        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table", "", 2, 0, 2);
         assert rowList.size() == 2;
+    }
+
+    @Test
+    public void testSelectRowsFromTable2() throws SQLException {
+        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table",
+            "WHERE id < 2", 2, 0, 3);
+        assert rowList.size() == 1;
+    }
+
+    @Test
+    public void testSelectRowsFromTable3() throws SQLException {
+        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table",
+            "WHERE id < 4", 2, 0, 1);
+        assert rowList.size() == 1;
     }
 }

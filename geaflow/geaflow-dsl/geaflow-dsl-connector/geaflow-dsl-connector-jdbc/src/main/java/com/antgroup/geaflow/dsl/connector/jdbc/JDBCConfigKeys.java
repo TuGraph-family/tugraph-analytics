@@ -42,4 +42,26 @@ public class JDBCConfigKeys {
         .key("geaflow.dsl.jdbc.table.name")
         .noDefaultValue()
         .description("The table name.");
+
+    public static final ConfigKey GEAFLOW_DSL_JDBC_PARTITION_NUM = ConfigKeys
+        .key("geaflow.dsl.jdbc.partition.num")
+        .defaultValue(1L)
+        .description("The JDBC partition number, default 1.");
+
+    public static final ConfigKey GEAFLOW_DSL_JDBC_PARTITION_COLUMN = ConfigKeys
+        .key("geaflow.dsl.jdbc.partition.column")
+        .defaultValue("id")
+        .description("The JDBC partition column.");
+
+    public static final ConfigKey GEAFLOW_DSL_JDBC_PARTITION_LOWERBOUND = ConfigKeys
+        .key("geaflow.dsl.jdbc.partition.lowerbound")
+        .defaultValue(0L)
+        .description("The lowerbound of JDBC partition, just used to decide the partition stride, "
+            + "not for filtering the rows in table.");
+
+    public static final ConfigKey GEAFLOW_DSL_JDBC_PARTITION_UPPERBOUND = ConfigKeys
+        .key("geaflow.dsl.jdbc.partition.upperbound")
+        .defaultValue(0L)
+        .description("The upperbound of JDBC partition, just used to decide the partition stride, "
+            + "not for filtering the rows in table.");
 }

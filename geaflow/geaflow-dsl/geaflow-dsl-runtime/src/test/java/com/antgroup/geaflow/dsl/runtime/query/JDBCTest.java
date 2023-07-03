@@ -59,4 +59,17 @@ public class JDBCTest {
 
         tester.checkSinkResult();
     }
+
+    @Test
+    public void testJDBC_002() throws Exception {
+        QueryTester tester = QueryTester
+            .build()
+            .withQueryPath("/query/jdbc_write_002.sql")
+            .withTestTimeWaitSeconds(60)
+            .execute()
+            .withQueryPath("/query/jdbc_scan_002.sql")
+            .withTestTimeWaitSeconds(60)
+            .execute();
+        tester.checkSinkResult();
+    }
 }
