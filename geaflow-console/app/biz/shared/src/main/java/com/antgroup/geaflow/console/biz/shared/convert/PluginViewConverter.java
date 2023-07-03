@@ -16,7 +16,7 @@ package com.antgroup.geaflow.console.biz.shared.convert;
 
 import com.antgroup.geaflow.console.biz.shared.view.PluginView;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +36,7 @@ public class PluginViewConverter extends NameViewConverter<GeaflowPlugin, Plugin
         Optional.ofNullable(updateView.getVersion()).ifPresent(view::setVersion);
         Optional.ofNullable(updateView.getType()).ifPresent(view::setType);
         Optional.ofNullable(updateView.getCategory()).ifPresent(view::setCategory);
+        Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
     }
 
     @Override
@@ -44,7 +45,7 @@ public class PluginViewConverter extends NameViewConverter<GeaflowPlugin, Plugin
         view.setType(model.getType());
         view.setCategory(model.getCategory());
         view.setVersion(model.getVersion());
-
+        view.setEntryClass(model.getEntryClass());
         view.setJarPackage(Optional.ofNullable(model.getJarPackage()).map(e -> remoteFileViewConverter.convert(e)).orElse(null));
         view.setDataPluginId(Optional.ofNullable(model.getDataPlugin()).map(GeaflowId::getId).orElse(null));
 
@@ -57,10 +58,11 @@ public class PluginViewConverter extends NameViewConverter<GeaflowPlugin, Plugin
         model.setType(view.getType());
         model.setCategory(view.getCategory());
         model.setVersion(view.getVersion());
+        model.setEntryClass(view.getEntryClass());
         return model;
     }
 
-    public GeaflowPlugin convert(PluginView view, GeaflowPlugin dataPlugin, GeaflowJarPackage jarPackage) {
+    public GeaflowPlugin convert(PluginView view, GeaflowPlugin dataPlugin, GeaflowRemoteFile jarPackage) {
         GeaflowPlugin model = viewToModel(view);
         model.setDataPlugin(dataPlugin);
         model.setJarPackage(jarPackage);

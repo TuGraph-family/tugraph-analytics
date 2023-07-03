@@ -34,6 +34,4 @@ public class RemoteFileView extends NameView {
 
     private String md5;
 
-    private String entryClass;
-
 }

@@ -12,19 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.core.model.file;
+package com.antgroup.geaflow.dsl.catalog.console;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class GeaflowJarPackage extends GeaflowRemoteFile {
+public class FunctionModel extends AbstractDataModel {
 
     private String entryClass;
 
-    public GeaflowJarPackage() {
-        super(GeaflowFileType.JAR);
+    public String getEntryClass() {
+        return entryClass;
+    }
+
+    public void setEntryClass(String entryClass) {
+        this.entryClass = entryClass;
     }
 }

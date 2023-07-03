@@ -156,6 +156,7 @@ public class GQLContext {
         this.sqlOperatorTable = new GQLOperatorTable(
             catalog,
             typeFactory,
+            this,
             new BuildInSqlOperatorTable(),
             new BuildInSqlFunctionTable(typeFactory));
 

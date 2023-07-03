@@ -26,8 +26,11 @@ import com.antgroup.geaflow.console.common.util.Md5Util;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.service.FunctionService;
+import com.antgroup.geaflow.console.core.service.JobService;
 import com.antgroup.geaflow.console.core.service.NameService;
 import com.antgroup.geaflow.console.core.service.RemoteFileService;
+import com.antgroup.geaflow.console.core.service.VersionService;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import com.google.common.base.Preconditions;
 import java.io.InputStream;
@@ -53,6 +56,15 @@ public class RemoteFileManagerImpl extends
 
     @Autowired
     private RemoteFileStorage remoteFileStorage;
+
+    @Autowired
+    private FunctionService functionService;
+
+    @Autowired
+    private VersionService versionService;
+
+    @Autowired
+    private JobService jobService;
 
     @Override
     protected NameViewConverter<GeaflowRemoteFile, RemoteFileView> getConverter() {
@@ -156,6 +168,80 @@ public class RemoteFileManagerImpl extends
     @Override
     public boolean delete(String remoteFileId) {
         remoteFileService.validateUpdateIds(Collections.singletonList(remoteFileId));
+        // throw exception if file is used by others
+        checkFileUsed(remoteFileId);
+        return deleteFile(remoteFileId);
+    }
+
+    @Override
+    public List<RemoteFileView> get(List<String> ids) {
+        remoteFileService.validateGetIds(ids);
+        return super.get(ids);
+    }
+
+    @Override
+    public void deleteFunctionJar(String jarId, String functionId) {
+        if (jarId == null) {
+            return;
+        }
+
+        long functionCount = functionService.getFileRefCount(jarId, functionId);
+        if (functionCount > 0) {
+            return;
+        }
+
+        long jobCount = jobService.getFileRefCount(jarId, null);
+        if (jobCount > 0) {
+            return;
+        }
+
+        deleteFile(jarId);
+    }
+
+    @Override
+    public void deleteJobJar(String jarId, String jobId) {
+        if (jarId == null) {
+            return;
+        }
+
+        long functionCount = functionService.getFileRefCount(jarId, null);
+        if (functionCount > 0) {
+            return;
+        }
+
+        long jobCount = jobService.getFileRefCount(jarId, jobId);
+        if (jobCount > 0) {
+            return;
+        }
+
+        deleteFile(jarId);
+    }
+
+    @Override
+    public void deleteVersionJar(String jarId) {
+        // version jar is only used by a version
+        deleteFile(jarId);
+    }
+
+
+    private void checkFileUsed(String remoteFileId) {
+        long functionCount = functionService.getFileRefCount(remoteFileId, null);
+        if (functionCount > 0) {
+            throw new GeaflowException("file is used by functions, count:{}", remoteFileId, functionCount);
+        }
+
+        long jobCount = jobService.getFileRefCount(remoteFileId, null);
+        if (jobCount > 0) {
+            throw new GeaflowException("file is used by jobs, count:{}", remoteFileId, jobCount);
+        }
+
+        long versionCount = versionService.getFileRefCount(remoteFileId, null);
+        if (versionCount > 0) {
+            throw new GeaflowException("file is used by versions, count:{}", remoteFileId, versionCount);
+        }
+    }
+
+    private boolean deleteFile(String remoteFileId) {
         GeaflowRemoteFile remoteFile = remoteFileService.get(remoteFileId);
         if (remoteFile == null) {
             return false;
@@ -176,9 +262,4 @@ public class RemoteFileManagerImpl extends
         return true;
     }
 
-    @Override
-    public List<RemoteFileView> get(List<String> ids) {
-        remoteFileService.validateGetIds(ids);
-        return super.get(ids);
-    }
 }

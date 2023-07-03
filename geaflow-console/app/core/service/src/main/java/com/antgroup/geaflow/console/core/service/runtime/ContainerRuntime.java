@@ -29,7 +29,7 @@ import com.antgroup.geaflow.console.core.model.task.ContainerTaskHandle;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTaskHandle;
 import com.antgroup.geaflow.console.core.service.InstanceService;
-import com.antgroup.geaflow.console.core.service.file.VersionFileFactory;
+import com.antgroup.geaflow.console.core.service.file.LocalFileFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,7 @@ public class ContainerRuntime implements GeaflowRuntime {
     private ContainerTaskParams taskParams;
 
     @Autowired
-    protected VersionFileFactory versionFileFactory;
+    protected LocalFileFactory localFileFactory;
 
     @Autowired
     private InstanceService instanceService;
@@ -121,14 +121,14 @@ public class ContainerRuntime implements GeaflowRuntime {
             GeaflowRelease release = task.getRelease();
             String versionName = release.getVersion().getName();
             task.getVersionJars()
-                .forEach(jar -> classPaths.add(versionFileFactory.getVersionFile(versionName, jar).getAbsolutePath()));
+                .forEach(jar -> classPaths.add(localFileFactory.getVersionFile(versionName, jar).getAbsolutePath()));
 
             // add user jar
             task.getUserJars().forEach(
-                jar -> classPaths.add(versionFileFactory.getTaskUserFile(runtimeTaskId, jar).getAbsolutePath()));
+                jar -> classPaths.add(localFileFactory.getTaskUserFile(runtimeTaskId, jar).getAbsolutePath()));
 
             // add release zip
-            File releaseFile = versionFileFactory.getTaskReleaseFile(runtimeTaskId, release.getJob().getId(), release);
+            File releaseFile = localFileFactory.getTaskReleaseFile(runtimeTaskId, release.getJob().getId(), release);
             ZipUtil.unzip(releaseFile);
             classPaths.add(releaseFile.getParent());
 

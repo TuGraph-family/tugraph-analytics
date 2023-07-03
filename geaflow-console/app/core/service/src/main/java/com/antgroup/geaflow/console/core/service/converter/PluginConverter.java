@@ -16,7 +16,7 @@ package com.antgroup.geaflow.console.core.service.converter;
 
 import com.antgroup.geaflow.console.common.dal.entity.PluginEntity;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -30,6 +30,7 @@ public class PluginConverter extends NameConverter<GeaflowPlugin, PluginEntity> 
         entity.setPluginType(model.getType());
         entity.setPluginCategory(model.getCategory());
         entity.setVersion(model.getVersion());
+        entity.setEntryClass(model.getEntryClass());
         entity.setJarPackageId(Optional.ofNullable(model.getJarPackage()).map(GeaflowId::getId).orElse(null));
         entity.setDataPluginId(Optional.ofNullable(model.getDataPlugin()).map(GeaflowId::getId).orElse(null));
         return entity;
@@ -41,10 +42,11 @@ public class PluginConverter extends NameConverter<GeaflowPlugin, PluginEntity> 
         model.setVersion(entity.getVersion());
         model.setType(entity.getPluginType());
         model.setCategory(entity.getPluginCategory());
+        model.setEntryClass(entity.getEntryClass());
         return model;
     }
 
-    public GeaflowPlugin convert(PluginEntity entity, GeaflowPlugin dataPlugin, GeaflowJarPackage jarPackage) {
+    public GeaflowPlugin convert(PluginEntity entity, GeaflowPlugin dataPlugin, GeaflowRemoteFile jarPackage) {
         GeaflowPlugin model = entityToModel(entity);
         model.setDataPlugin(dataPlugin);
         model.setJarPackage(jarPackage);

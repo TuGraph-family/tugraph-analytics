@@ -29,4 +29,9 @@ public interface RemoteFileManager extends NameManager<RemoteFileView, RemoteFil
 
     boolean delete(String remoteFileId);
 
+    void deleteFunctionJar(String jarId, String functionId);
+
+    void deleteJobJar(String jarId, String jobId);
+
+    void deleteVersionJar(String id);
 }

@@ -34,4 +34,6 @@ public class PluginView extends NameView {
     private RemoteFileView jarPackage;
 
     private String dataPluginId;
+
+    private String entryClass;
 }

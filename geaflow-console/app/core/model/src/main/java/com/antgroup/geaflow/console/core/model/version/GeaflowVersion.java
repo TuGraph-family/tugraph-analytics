@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.core.model.version;
 
 import com.antgroup.geaflow.console.core.model.GeaflowName;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -25,9 +24,9 @@ import lombok.Setter;
 @Setter
 public class GeaflowVersion extends GeaflowName {
 
-    private GeaflowJarPackage engineJarPackage;
+    private GeaflowRemoteFile engineJarPackage;
 
-    private GeaflowJarPackage langJarPackage;
+    private GeaflowRemoteFile langJarPackage;
 
     private boolean publish;
 

@@ -16,7 +16,7 @@ package com.antgroup.geaflow.console.core.service.converter;
 
 import com.antgroup.geaflow.console.common.dal.entity.VersionEntity;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -41,7 +41,7 @@ public class VersionConverter extends NameConverter<GeaflowVersion, VersionEntit
         return geaflowVersion;
     }
 
-    public GeaflowVersion convert(VersionEntity entity, GeaflowJarPackage engineJar, GeaflowJarPackage langJar) {
+    public GeaflowVersion convert(VersionEntity entity, GeaflowRemoteFile engineJar, GeaflowRemoteFile langJar) {
         GeaflowVersion version = entityToModel(entity);
         version.setEngineJarPackage(engineJar);
         version.setLangJarPackage(langJar);

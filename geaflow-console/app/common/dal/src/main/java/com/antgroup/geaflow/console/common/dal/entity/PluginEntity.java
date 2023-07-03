@@ -34,4 +34,6 @@ public class PluginEntity extends UserLevelEntity {
     private String version;
 
     private String dataPluginId;
+
+    private String entryClass;
 }

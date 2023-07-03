@@ -57,7 +57,7 @@ public class GeaflowCompilerTest {
                 Method method = compiler.getClass().getMethod("compile", String.class, context.getClass());
                 Object result = method.invoke(compiler, SCRIPT, context);
 
-                String physicPlan = (String) result.getClass().getMethod("getPhysicPlan").invoke(result);
+                String physicPlan = result.getClass().getMethod("getPhysicPlan").invoke(result).toString();
                 log.info(physicPlan);
             });
         }

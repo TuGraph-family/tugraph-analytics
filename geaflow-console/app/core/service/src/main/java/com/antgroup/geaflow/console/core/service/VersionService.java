@@ -18,7 +18,7 @@ import com.antgroup.geaflow.console.common.dal.dao.NameDao;
 import com.antgroup.geaflow.console.common.dal.dao.VersionDao;
 import com.antgroup.geaflow.console.common.dal.entity.VersionEntity;
 import com.antgroup.geaflow.console.common.dal.model.VersionSearch;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.converter.NameConverter;
 import com.antgroup.geaflow.console.core.service.converter.VersionConverter;
@@ -52,8 +52,8 @@ public class VersionService extends NameService<GeaflowVersion, VersionEntity, V
     @Override
     protected List<GeaflowVersion> parse(List<VersionEntity> versionEntities) {
         return versionEntities.stream().map(e -> {
-            GeaflowJarPackage engineJar = (GeaflowJarPackage) remoteFileService.get(e.getEngineJarId());
-            GeaflowJarPackage langJar = (GeaflowJarPackage) remoteFileService.get(e.getLangJarId());
+            GeaflowRemoteFile engineJar = remoteFileService.get(e.getEngineJarId());
+            GeaflowRemoteFile langJar = remoteFileService.get(e.getLangJarId());
             return versionConverter.convert(e, engineJar, langJar);
         }).collect(Collectors.toList());
     }
@@ -65,6 +65,10 @@ public class VersionService extends NameService<GeaflowVersion, VersionEntity, V
 
     public GeaflowVersion getPublishVersionByName(String name) {
         return parse(versionDao.getPublishVersionByName(name));
+    }
+
+    public long getFileRefCount(String fileId, String versionId) {
+        return versionDao.getFileRefCount(fileId, versionId);
     }
 }
 

@@ -21,7 +21,6 @@ import com.antgroup.geaflow.console.common.dal.model.FunctionSearch;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.service.converter.DataConverter;
 import com.antgroup.geaflow.console.core.service.converter.FunctionConverter;
@@ -63,9 +62,14 @@ public class FunctionService extends DataService<GeaflowFunction, FunctionEntity
         Map<String, GeaflowRemoteFile> map = ListUtil.toMap(jarPackages, GeaflowId::getId);
 
         return functionEntities.stream().map(e -> {
-            GeaflowJarPackage jarPackage = (GeaflowJarPackage) map.get(e.getId());
+            GeaflowRemoteFile jarPackage = map.get(e.getJarPackageId());
             return functionConverter.convert(e, jarPackage);
         }).collect(Collectors.toList());
     }
+
+    public long getFileRefCount(String fileId, String excludeFunctionId) {
+        return functionDao.getFileRefCount(fileId, excludeFunctionId);
+    }
+
 }
 

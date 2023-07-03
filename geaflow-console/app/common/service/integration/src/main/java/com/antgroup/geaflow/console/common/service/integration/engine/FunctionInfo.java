@@ -12,14 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.common.util.type;
+package com.antgroup.geaflow.console.common.service.integration.engine;
 
-public enum GeaflowFunctionType {
+import com.antgroup.geaflow.console.common.util.proxy.ProxyClass;
 
-    UDF,
+@ProxyClass("com.antgroup.geaflow.dsl.common.compile.FunctionInfo")
+public interface FunctionInfo {
 
-    UDTF,
+    String getInstanceName();
 
-    UDAF
+    String getFunctionName();
 
 }

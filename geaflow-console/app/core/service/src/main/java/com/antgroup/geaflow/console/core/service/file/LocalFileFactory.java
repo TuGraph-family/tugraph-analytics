@@ -27,11 +27,13 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class VersionFileFactory {
+public class LocalFileFactory {
 
     public static final String LOCAL_VERSION_FILE_DIRECTORY = "/tmp/geaflow/local/versions";
 
     public static final String LOCAL_TASK_FILE_DIRECTORY = "/tmp/geaflow/local/tasks";
+
+    public static final String LOCAL_USER_FILE_DIRECTORY = "/tmp/geaflow/local/users";
 
     @Autowired
     private RemoteFileStorage remoteFileStorage;
@@ -41,11 +43,9 @@ public class VersionFileFactory {
         return downloadFileWithMd5(remoteFile.getPath(), filePath, remoteFile.getMd5());
     }
 
-    public void deleteVersionFile(String versionName, GeaflowRemoteFile remoteFile) {
-        String filePath = getVersionFilePath(versionName, remoteFile.getName());
-        String md5 = getMd5FilePath(filePath);
-        FileUtil.delete(filePath);
-        FileUtil.delete(md5);
+    public File getUserFile(String userId, GeaflowRemoteFile remoteFile) {
+        String filePath = getUserFilePath(userId, remoteFile.getName());
+        return downloadFileWithMd5(remoteFile.getPath(), filePath, remoteFile.getMd5());
     }
 
     public File getTaskUserFile(String runtimeTaskId, GeaflowRemoteFile remoteFile) {
@@ -67,9 +67,17 @@ public class VersionFileFactory {
         return Fmt.as("{}/{}/{}", LOCAL_TASK_FILE_DIRECTORY, runtimeTaskId, fileName);
     }
 
+    private String getUserFilePath(String userId, String fileName) {
+        return Fmt.as("{}/{}/{}", LOCAL_USER_FILE_DIRECTORY, userId, fileName);
+    }
+
     private File downloadFileWithMd5(String remotePath, String localPath, String md5) {
         // check file md5
         if (!md5.equals(loadFileMd5(localPath))) {
+            // delete local files
+            FileUtil.delete(getMd5FilePath(localPath));
+            FileUtil.delete(localPath);
+
             // download file
             downloadFile(remotePath, localPath);
 

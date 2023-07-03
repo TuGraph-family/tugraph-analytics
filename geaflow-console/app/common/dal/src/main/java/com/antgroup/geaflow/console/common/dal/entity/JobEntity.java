@@ -34,4 +34,7 @@ public class JobEntity extends NameEntity {
 
     private String slaId;
 
+    private String jarPackageId;
+
+    private String entryClass;
 }
