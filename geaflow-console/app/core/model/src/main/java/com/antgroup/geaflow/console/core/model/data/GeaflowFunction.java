@@ -14,21 +14,30 @@
 
 package com.antgroup.geaflow.console.core.model.data;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFunctionType;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class GeaflowFunction extends GeaflowData {
 
-    private GeaflowFunctionType type;
+    private GeaflowRemoteFile jarPackage;
 
-    private GeaflowJarPackage jarPackage;
+    private String entryClass;
 
     public GeaflowFunction(String name, String comment) {
         super.name = name;
         super.comment = comment;
+    }
+
+    @Override
+    public void validate() {
+        super.validate();
+        Preconditions.checkNotNull(jarPackage, "Invalid jarPackage");
+        Preconditions.checkNotNull(entryClass, "Invalid entryClass");
     }
 }

@@ -32,6 +32,4 @@ public class RemoteFileEntity extends UserLevelEntity {
 
     protected String url;
 
-    private String entryClass;
-
 }

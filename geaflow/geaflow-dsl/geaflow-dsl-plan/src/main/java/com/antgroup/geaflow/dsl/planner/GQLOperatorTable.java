@@ -18,9 +18,13 @@ import com.antgroup.geaflow.dsl.catalog.Catalog;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.util.FunctionUtil;
 import com.google.common.collect.Lists;
+import java.util.List;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.util.ChainedSqlOperatorTable;
 import org.apache.calcite.sql.util.ListSqlOperatorTable;
 
@@ -33,9 +37,14 @@ public class GQLOperatorTable extends ChainedSqlOperatorTable {
 
     private final GQLJavaTypeFactory typeFactory;
 
-    public GQLOperatorTable(Catalog catalog, GQLJavaTypeFactory typeFactory, SqlOperatorTable... tables) {
+    private final GQLContext gqlContext;
+
+    public GQLOperatorTable(Catalog catalog, GQLJavaTypeFactory typeFactory,
+                            GQLContext gqlContext,
+                            SqlOperatorTable... tables) {
         super(Lists.newArrayList(tables));
         this.catalog = catalog;
+        this.gqlContext = gqlContext;
         this.typeFactory = typeFactory;
     }
 
@@ -67,5 +76,18 @@ public class GQLOperatorTable extends ChainedSqlOperatorTable {
             return null;
         }
         return FunctionUtil.createSqlFunction(function, typeFactory);
+    }
+
+    @Override
+    public void lookupOperatorOverloads(SqlIdentifier opName,
+                                        SqlFunctionCategory category, SqlSyntax syntax,
+                                        List<SqlOperator> operatorList) {
+        super.lookupOperatorOverloads(opName, category, syntax, operatorList);
+        if (operatorList.isEmpty() && category == SqlFunctionCategory.USER_DEFINED_FUNCTION) {
+            GeaFlowFunction function = catalog.getFunction(gqlContext.getCurrentInstance(), opName.getSimple());
+            if (function != null) {
+                operatorList.add(FunctionUtil.createSqlFunction(function, typeFactory));
+            }
+        }
     }
 }

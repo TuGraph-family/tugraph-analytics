@@ -11,15 +11,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
+package com.antgroup.geaflow.console.core.service.version;
 
-package com.antgroup.geaflow.console.common.util.type;
+public interface CompileClassLoader {
 
-public enum GeaflowFunctionType {
-
-    UDF,
-
-    UDTF,
-
-    UDAF
+    <T> T newInstance(Class<T> clazz, Object... parameters);
 
 }

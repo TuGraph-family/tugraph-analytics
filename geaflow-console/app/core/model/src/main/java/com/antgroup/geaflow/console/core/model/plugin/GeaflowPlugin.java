@@ -17,7 +17,7 @@ package com.antgroup.geaflow.console.core.model.plugin;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.GeaflowName;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,7 +33,9 @@ public class GeaflowPlugin extends GeaflowName {
 
     private String version;
 
-    private GeaflowJarPackage jarPackage;
+    private GeaflowRemoteFile jarPackage;
 
     private GeaflowPlugin dataPlugin;
+
+    private String entryClass;
 }

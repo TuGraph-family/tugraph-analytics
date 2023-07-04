@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.console.biz.shared.impl;
 
 import com.antgroup.geaflow.console.biz.shared.JobManager;
+import com.antgroup.geaflow.console.biz.shared.RemoteFileManager;
 import com.antgroup.geaflow.console.biz.shared.TaskManager;
 import com.antgroup.geaflow.console.biz.shared.convert.IdViewConverter;
 import com.antgroup.geaflow.console.biz.shared.convert.JobViewConverter;
@@ -44,12 +45,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch> implements JobManager {
 
     @Autowired
@@ -66,6 +69,9 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private RemoteFileManager remoteFileManager;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -92,12 +98,15 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
                     List<GeaflowStruct> structs = getResource(v.getStructs());
                     List<String> graphIds = ListUtil.convert(v.getGraphs(), IdView::getId);
                     List<GeaflowGraph> graphs = jobService.getResourceService(GeaflowResourceType.GRAPH).get(graphIds);
-                    return jobViewConverter.convert(v, structs, graphs, null);
+                    return jobViewConverter.convert(v, structs, graphs, null, null);
                 case PROCESS:
                     // get functions
                     List<String> functionIds = ListUtil.convert(v.getFunctions(), IdView::getId);
                     List<GeaflowFunction> functions = jobService.getResourceService(GeaflowResourceType.FUNCTION).get(functionIds);
-                    return jobViewConverter.convert(v, null, null, functions);
+                    return jobViewConverter.convert(v, null, null, functions, null);
+                case CUSTOM:
+                    //todo remoteFile
+                    return jobViewConverter.convert(v, null, null, null, null);
                 default:
                     throw new GeaflowException("Unsupported job Type: ", v.getType());
             }
@@ -124,13 +133,23 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
 
     @Override
     @Transactional
-    public boolean drop(List<String> ids) {
-        List<String> taskIds = taskService.getIdsByJob(ids);
+    public boolean drop(List<String> jobIds) {
+        List<String> taskIds = taskService.getIdsByJob(jobIds);
         taskManager.drop(taskIds);
-        releaseService.dropByJobIds(ids);
-        jobService.dropResources(ids);
-        authorizationService.dropByResources(ids, GeaflowResourceType.JOB);
-        return super.drop(ids);
+        releaseService.dropByJobIds(jobIds);
+        jobService.dropResources(jobIds);
+        authorizationService.dropByResources(jobIds, GeaflowResourceType.JOB);
+
+        try {
+            Map<String, String> jarIds = jobService.getJarIds(jobIds);
+            for (String jobId : jobIds) {
+                remoteFileManager.deleteJobJar(jarIds.get(jobId), jobId);
+            }
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
+
+        return super.drop(jobIds);
     }
 
 

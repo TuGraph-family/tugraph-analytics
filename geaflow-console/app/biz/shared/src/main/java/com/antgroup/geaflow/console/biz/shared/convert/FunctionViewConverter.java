@@ -16,7 +16,8 @@ package com.antgroup.geaflow.console.biz.shared.convert;
 
 import com.antgroup.geaflow.console.biz.shared.view.FunctionView;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,22 +28,27 @@ public class FunctionViewConverter extends DataViewConverter<GeaflowFunction, Fu
     private RemoteFileViewConverter remoteFileViewConverter;
 
     @Override
-    protected FunctionView modelToView(GeaflowFunction model) {
-        FunctionView view = super.convert(model);
-        view.setType(model.getType());
-        view.setJarPackage(remoteFileViewConverter.convert(model.getJarPackage()));
+    public void merge(FunctionView view, FunctionView updateView) {
+        super.merge(view, updateView);
+        Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
+    }
 
+    @Override
+    protected FunctionView modelToView(GeaflowFunction model) {
+        FunctionView view = super.modelToView(model);
+        view.setJarPackage(remoteFileViewConverter.convert(model.getJarPackage()));
+        view.setEntryClass(model.getEntryClass());
         return view;
     }
 
     @Override
     protected GeaflowFunction viewToModel(FunctionView view) {
         GeaflowFunction geaflowFunction = super.viewToModel(view);
-        geaflowFunction.setType(view.getType());
+        geaflowFunction.setEntryClass(view.getEntryClass());
         return geaflowFunction;
     }
 
-    public GeaflowFunction convert(FunctionView entity, GeaflowJarPackage jarPackage) {
+    public GeaflowFunction convert(FunctionView entity, GeaflowRemoteFile jarPackage) {
         GeaflowFunction model = viewToModel(entity);
         model.setJarPackage(jarPackage);
         return model;

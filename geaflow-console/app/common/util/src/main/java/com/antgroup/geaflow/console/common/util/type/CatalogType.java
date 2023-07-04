@@ -11,27 +11,19 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
+package com.antgroup.geaflow.console.common.util.type;
 
-package com.antgroup.geaflow.console.biz.shared.view;
+public enum CatalogType {
+    MEMORY("memory"),
+    CONSOLE("console");
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+    private String value;
 
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
-public class RemoteFileView extends NameView {
+    CatalogType(String value) {
+        this.value = value;
+    }
 
-    private GeaflowFileType type;
-
-    private String path;
-
-    protected String url;
-
-    private String md5;
-
+    public String getValue() {
+        return value;
+    }
 }

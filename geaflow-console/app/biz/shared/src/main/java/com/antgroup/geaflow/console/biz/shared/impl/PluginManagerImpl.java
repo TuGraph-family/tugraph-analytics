@@ -26,7 +26,7 @@ import com.antgroup.geaflow.console.biz.shared.view.RemoteFileView;
 import com.antgroup.geaflow.console.common.dal.model.PluginSearch;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.service.NameService;
 import com.antgroup.geaflow.console.core.service.PluginService;
@@ -68,7 +68,7 @@ public class PluginManagerImpl extends NameManagerImpl<GeaflowPlugin, PluginView
     @Override
     protected List<GeaflowPlugin> parse(List<PluginView> views) {
         return views.stream().map(e -> {
-            GeaflowJarPackage jarPackage = (GeaflowJarPackage) remoteFileService.get(
+            GeaflowRemoteFile jarPackage = remoteFileService.get(
                 Optional.ofNullable(e.getJarPackage()).map(IdView::getId).orElse(null));
             GeaflowPlugin dataPlugin = pluginService.get(e.getDataPluginId());
             return pluginViewConverter.convert(e, dataPlugin, jarPackage);
