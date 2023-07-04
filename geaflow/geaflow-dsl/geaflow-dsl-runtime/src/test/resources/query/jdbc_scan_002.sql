@@ -8,7 +8,7 @@ CREATE TABLE jdbc_source (
 	geaflow.dsl.jdbc.url = 'jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1',
 	geaflow.dsl.jdbc.username = 'h2_user',
 	geaflow.dsl.jdbc.password = 'h2_pwd',
-	geaflow.dsl.jdbc.table.name = 'test',
+	geaflow.dsl.jdbc.table.name = 'users',
 	geaflow.dsl.jdbc.`partition`.num = '4',
 	geaflow.dsl.jdbc.`partition`.column = 'id',
 	geaflow.dsl.jdbc.`partition`.lowerbound = '2',
