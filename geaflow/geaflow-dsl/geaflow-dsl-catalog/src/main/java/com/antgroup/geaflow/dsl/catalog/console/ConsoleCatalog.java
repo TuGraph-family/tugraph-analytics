@@ -33,6 +33,8 @@ public class ConsoleCatalog implements Catalog {
 
     private final Map<String, Map<String, Table>> allTables = new HashMap<>();
 
+    private final Map<String, Map<String, GeaFlowFunction>> allFunctions = new HashMap<>();
+
     private Set<String> allInstances;
 
     private Set<String> allGraphsAndTables;
@@ -79,7 +81,9 @@ public class ConsoleCatalog implements Catalog {
 
     @Override
     public GeaFlowFunction getFunction(String instanceName, String functionName) {
-        return null;
+        return allFunctions
+            .computeIfAbsent(instanceName, k -> new HashMap<>())
+            .computeIfAbsent(functionName, k -> client.getFunction(instanceName, functionName));
     }
 
     @Override

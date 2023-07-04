@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.service.runtime;
 
+import com.antgroup.geaflow.console.common.util.type.CatalogType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.data.GeaflowInstance;
 import com.antgroup.geaflow.console.core.model.job.config.ClusterArgsClass;
@@ -70,7 +71,7 @@ public abstract class TaskParams {
         systemArgs.setTaskToken(task.getToken());
         systemArgs.setStartupNotifyUrl(task.getStartupNotifyUrl(deployConfig.getGatewayUrl()));
         systemArgs.setInstanceName(instance.getName());
-        systemArgs.setCatalogType("console");
+        systemArgs.setCatalogType(CatalogType.CONSOLE.getValue());
 
         StateArgsClass stateArgs = new StateArgsClass();
         stateArgs.setRuntimeMetaArgs(new RuntimeMetaArgsClass(task.getRuntimeMetaPluginConfig()));

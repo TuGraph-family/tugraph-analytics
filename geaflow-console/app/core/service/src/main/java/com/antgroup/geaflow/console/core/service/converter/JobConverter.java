@@ -23,6 +23,8 @@ import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
@@ -42,11 +44,13 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
         entity.setUserCode(Optional.ofNullable(model.getUserCode()).map(GeaflowCode::getText).orElse(null));
         entity.setStructMappings(Optional.ofNullable(model.getStructMappings()).map(JSON::toJSONString).orElse(null));
         entity.setInstanceId(model.getInstanceId());
+        entity.setEntryClass(model.getEntryClass());
         return entity;
     }
 
 
-    public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions) {
+    public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions
+        , GeaflowRemoteFile jarPackage) {
         GeaflowJobType jobType = entity.getType();
         GeaflowJob job;
         switch (jobType) {
@@ -70,9 +74,16 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
                 processJob.setGraph(graphs);
                 job = processJob;
                 break;
+            case CUSTOM:
+                GeaflowCustomJob customJob = (GeaflowCustomJob) super.entityToModel(entity, GeaflowCustomJob.class);
+                customJob.setEntryClass(entity.getEntryClass());
+                customJob.setJarPackage(jarPackage);
+                job = customJob;
+                break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", jobType);
         }
+
         job.setType(entity.getType());
         job.setInstanceId(entity.getInstanceId());
         //TODO job.setSla(entity.getSlaId());

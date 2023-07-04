@@ -16,7 +16,13 @@ package com.antgroup.geaflow.console.biz.shared;
 
 import com.antgroup.geaflow.console.biz.shared.view.FunctionView;
 import com.antgroup.geaflow.console.common.dal.model.FunctionSearch;
+import org.springframework.web.multipart.MultipartFile;
 
-public interface FunctionManager extends NameManager<FunctionView, FunctionSearch> {
+public interface FunctionManager extends DataManager<FunctionView, FunctionSearch> {
 
+    String createFunction(String instanceName, FunctionView view, MultipartFile functionFile, String fileId);
+
+    boolean updateFunction(String instanceName, String functionName, FunctionView view, MultipartFile functionFile);
+
+    boolean deleteFunction(String instanceName, String functionName);
 }

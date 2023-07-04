@@ -24,6 +24,7 @@ import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalExceptio
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.service.converter.NameConverter;
 import com.antgroup.geaflow.console.core.service.converter.RemoteFileConverter;
+import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,9 @@ public class RemoteFileService extends NameService<GeaflowRemoteFile, RemoteFile
 
     @Autowired
     private RemoteFileConverter remoteFileConverter;
+
+    @Autowired
+    private RemoteFileStorage remoteFileStorage;
 
     @Override
     protected List<GeaflowRemoteFile> parse(List<RemoteFileEntity> entities) {

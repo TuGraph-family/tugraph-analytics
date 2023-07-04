@@ -38,4 +38,12 @@ public class VersionDao extends SystemLevelDao<VersionMapper, VersionEntity> imp
     public VersionEntity getPublishVersionByName(String name) {
         return lambdaQuery().eq(VersionEntity::isPublish, true).eq(VersionEntity::getName, name).last("limit 1").one();
     }
+
+    public long getFileRefCount(String fileId, String excludeFunctionId) {
+        return lambdaQuery()
+            .eq(VersionEntity::getEngineJarId, fileId)
+            .or().eq(VersionEntity::getLangJarId, fileId)
+            .ne(excludeFunctionId != null, IdEntity::getId, excludeFunctionId)
+            .count();
+    }
 }

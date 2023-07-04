@@ -15,8 +15,6 @@
 package com.antgroup.geaflow.console.biz.shared.convert;
 
 import com.antgroup.geaflow.console.biz.shared.view.RemoteFileView;
-import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import org.springframework.stereotype.Component;
 
@@ -30,39 +28,21 @@ public class RemoteFileViewConverter extends NameViewConverter<GeaflowRemoteFile
         view.setType(model.getType());
         view.setPath(model.getPath());
         view.setUrl(model.getUrl());
-        switch (model.getType()) {
-            case JAR:
-                view.setEntryClass(((GeaflowJarPackage) model).getEntryClass());
-                break;
-            default:
-                throw new GeaflowException("Unsupported file type {}", model.getType());
-
-        }
         return view;
     }
 
 
     @Override
-    protected GeaflowRemoteFile viewToModel(RemoteFileView view, Class<? extends GeaflowRemoteFile> clazz) {
-        GeaflowRemoteFile model = super.viewToModel(view, clazz);
+    protected GeaflowRemoteFile viewToModel(RemoteFileView view) {
+        GeaflowRemoteFile model = super.viewToModel(view);
         model.setPath(view.getPath());
         model.setMd5(view.getMd5());
         model.setUrl(view.getUrl());
+        model.setType(view.getType());
         return model;
     }
 
     public GeaflowRemoteFile convert(RemoteFileView view) {
-        GeaflowRemoteFile model = null;
-        switch (view.getType()) {
-            case JAR:
-                GeaflowJarPackage tmp = (GeaflowJarPackage) viewToModel(view, GeaflowJarPackage.class);
-                tmp.setEntryClass(view.getEntryClass());
-                model = tmp;
-                break;
-            default:
-                throw new GeaflowException("Unsupported file type {}", view.getType());
-        }
-
-        return model;
+        return viewToModel(view);
     }
 }

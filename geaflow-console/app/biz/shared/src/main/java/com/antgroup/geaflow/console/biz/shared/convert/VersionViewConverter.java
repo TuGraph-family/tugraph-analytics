@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.console.biz.shared.convert;
 
 import com.antgroup.geaflow.console.biz.shared.view.VersionView;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +51,8 @@ public class VersionViewConverter extends NameViewConverter<GeaflowVersion, Vers
         return model;
     }
 
-    public GeaflowVersion convert(VersionView view, GeaflowJarPackage engineJarPackage,
-                                  GeaflowJarPackage langJarPackage) {
+    public GeaflowVersion convert(VersionView view, GeaflowRemoteFile engineJarPackage,
+                                  GeaflowRemoteFile langJarPackage) {
         GeaflowVersion version = viewToModel(view);
         version.setEngineJarPackage(engineJarPackage);
         version.setLangJarPackage(langJarPackage);

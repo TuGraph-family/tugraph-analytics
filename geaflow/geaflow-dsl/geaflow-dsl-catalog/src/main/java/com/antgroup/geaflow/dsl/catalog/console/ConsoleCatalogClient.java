@@ -18,6 +18,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.GEAFLO
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.utils.HttpUtil;
@@ -66,6 +67,12 @@ public class ConsoleCatalogClient {
         String getUrl = endpoint + "/api/instances/" + instanceName + "/graphs/" + graphName;
         GraphModel graphModel = HttpUtil.get(getUrl, headers, GraphModel.class);
         return CatalogUtil.convertToGeaFlowGraph(graphModel, instanceName);
+    }
+
+    public GeaFlowFunction getFunction(String instanceName, String functionName) {
+        String getUrl = endpoint + "/api/instances/" + instanceName + "/functions/" + functionName;
+        FunctionModel functionModel = HttpUtil.get(getUrl, headers, FunctionModel.class);
+        return CatalogUtil.convertToGeaFlowFunction(functionModel);
     }
 
     public void deleteTable(String instanceName, String tableName) {

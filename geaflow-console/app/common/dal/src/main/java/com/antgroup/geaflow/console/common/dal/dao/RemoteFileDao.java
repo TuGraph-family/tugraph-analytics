@@ -36,7 +36,9 @@ public class RemoteFileDao extends UserLevelDao<RemoteFileMapper, RemoteFileEnti
     @Override
     public void configSearch(LambdaQueryWrapper<RemoteFileEntity> wrapper, RemoteFileSearch search) {
         boolean systemSession = ContextHolder.get().isSystemSession();
+        String userId = ContextHolder.get().getUserId();
         wrapper.eq(search.getType() != null, RemoteFileEntity::getType, search.getType())
+            .eq(!systemSession, RemoteFileEntity::getCreatorId, userId)
             .eq(RemoteFileEntity::isSystem, systemSession);
     }
 }

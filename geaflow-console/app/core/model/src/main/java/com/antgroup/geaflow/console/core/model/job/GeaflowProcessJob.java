@@ -18,7 +18,6 @@ import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
 import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ public class GeaflowProcessJob extends GeaflowCodeJob {
 
     protected GeaflowCode userCode;
 
-    private List<GeaflowFunction> functions = new ArrayList();
 
     public GeaflowProcessJob() {
         super(GeaflowJobType.PROCESS);
@@ -44,7 +42,7 @@ public class GeaflowProcessJob extends GeaflowCodeJob {
 
     @Override
     public List<GeaflowFunction> getFunctions() {
-        return new ArrayList<>();
+        return functions;
     }
 
     @Override
@@ -61,9 +59,5 @@ public class GeaflowProcessJob extends GeaflowCodeJob {
     public void validate() {
         super.validate();
         Preconditions.checkNotNull(userCode, "user code is null");
-    }
-
-    public void setFunctions(List<GeaflowFunction> functions) {
-        this.functions = functions;
     }
 }

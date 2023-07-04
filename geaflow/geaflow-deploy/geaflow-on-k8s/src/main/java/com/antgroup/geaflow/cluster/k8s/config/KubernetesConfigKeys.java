@@ -136,7 +136,7 @@ public class KubernetesConfigKeys {
 
     public static final ConfigKey DEFAULT_RESOURCE_EPHEMERAL_STORAGE_SIZE = ConfigKeys
         .key("kubernetes.resource.storage.limit.size")
-        .defaultValue("50Gi")
+        .defaultValue("15Gi")
         .description("default container storage size");
 
     public static final ConfigKey DOCKER_NETWORK_TYPE = ConfigKeys

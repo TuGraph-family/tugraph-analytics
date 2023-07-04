@@ -16,7 +16,7 @@ package com.antgroup.geaflow.console.core.service.converter;
 
 import com.antgroup.geaflow.console.common.dal.entity.FunctionEntity;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,19 +25,19 @@ public class FunctionConverter extends DataConverter<GeaflowFunction, FunctionEn
     @Override
     protected FunctionEntity modelToEntity(GeaflowFunction model) {
         FunctionEntity entity = super.modelToEntity(model);
-        entity.setType(model.getType());
         entity.setJarPackageId(model.getJarPackage().getId());
+        entity.setEntryClass(model.getEntryClass());
         return entity;
     }
 
     @Override
     protected GeaflowFunction entityToModel(FunctionEntity entity) {
         GeaflowFunction model = super.entityToModel(entity);
-        model.setType(entity.getType());
+        model.setEntryClass(entity.getEntryClass());
         return model;
     }
 
-    public GeaflowFunction convert(FunctionEntity entity, GeaflowJarPackage jarPackage) {
+    public GeaflowFunction convert(FunctionEntity entity, GeaflowRemoteFile jarPackage) {
         GeaflowFunction model = entityToModel(entity);
         model.setJarPackage(jarPackage);
         return model;

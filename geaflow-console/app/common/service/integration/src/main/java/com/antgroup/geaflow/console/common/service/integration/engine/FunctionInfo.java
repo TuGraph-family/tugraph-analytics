@@ -12,19 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.core.model.file;
+package com.antgroup.geaflow.console.common.service.integration.engine;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
-import lombok.Getter;
-import lombok.Setter;
+import com.antgroup.geaflow.console.common.util.proxy.ProxyClass;
 
-@Getter
-@Setter
-public class GeaflowJarPackage extends GeaflowRemoteFile {
+@ProxyClass("com.antgroup.geaflow.dsl.common.compile.FunctionInfo")
+public interface FunctionInfo {
 
-    private String entryClass;
+    String getInstanceName();
 
-    public GeaflowJarPackage() {
-        super(GeaflowFileType.JAR);
-    }
+    String getFunctionName();
+
 }

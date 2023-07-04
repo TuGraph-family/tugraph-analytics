@@ -20,10 +20,12 @@ import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
 import com.antgroup.geaflow.dsl.common.types.TableField;
+import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -185,6 +187,10 @@ public class CatalogUtil {
         return new GeaFlowGraph(instanceName, model.getName(), vertexTables, edgeTables,
             convertToGeaFlowGraphConfig(model.getPluginConfig()), Collections.emptyMap(), true,
             false, false);
+    }
+
+    public static GeaFlowFunction convertToGeaFlowFunction(FunctionModel model) {
+        return GeaFlowFunction.of(model.getName(), Lists.newArrayList(model.getEntryClass()));
     }
 
     private static List<FieldModel> convertToFieldModel(List<TableField> fields) {

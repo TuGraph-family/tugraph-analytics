@@ -20,7 +20,7 @@ import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -33,20 +33,33 @@ import lombok.Setter;
 public abstract class GeaflowJob extends GeaflowName {
 
     protected final Map<String, GeaflowStruct> structs = new LinkedHashMap<>();
+
     protected final Map<String, GeaflowGraph> graphs = new LinkedHashMap<>();
+
+    protected List<GeaflowFunction> functions = new ArrayList<>();
+
     @Setter
     protected GeaflowJobType type;
+
     @Setter
     protected GeaflowJobSla sla;
 
     @Setter
     protected String instanceId;
-    @Setter
-    protected GeaflowJarPackage jarPackage;
 
     public GeaflowJob(GeaflowJobType type) {
         this.type = type;
     }
+
+    public abstract GeaflowRemoteFile getJarPackage();
+
+    public abstract String getEntryClass();
+
+    public abstract List<GeaflowFunction> getFunctions();
+
+    public abstract Map<String, Map<String, Map<String, String>>> getStructMappings();
+
+    public abstract GeaflowCode getUserCode();
 
     public abstract GeaflowCode generateCode();
 
@@ -64,16 +77,15 @@ public abstract class GeaflowJob extends GeaflowName {
         }
     }
 
-    public abstract List<GeaflowFunction> getFunctions();
-
-    public abstract Map<String, Map<String, Map<String, String>>> getStructMappings();
-
-    public abstract GeaflowCode getUserCode();
 
     public void setGraph(List<GeaflowGraph> graphs) {
         for (GeaflowGraph graph : graphs) {
             this.graphs.put(graph.getName(), graph);
         }
+    }
+
+    public void setFunctions(List<GeaflowFunction> functions) {
+        this.functions = functions;
     }
 
     @Override

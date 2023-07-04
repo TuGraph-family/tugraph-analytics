@@ -21,7 +21,7 @@ import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskType;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
@@ -87,7 +87,7 @@ public class GeaflowTask extends GeaflowId {
             case CODE:
                 return CODE_TASK_MAIN_CLASS;
             case API:
-                return job.getJarPackage().getEntryClass();
+                return job.getEntryClass();
             default:
                 throw new GeaflowIllegalException("Task type {} not supported", type);
         }
@@ -107,12 +107,12 @@ public class GeaflowTask extends GeaflowId {
         return rewriteTaskFileUrl(files, gatewayUrl);
     }
 
-    public List<GeaflowJarPackage> getVersionJars() {
-        List<GeaflowJarPackage> jars = new ArrayList<>();
+    public List<GeaflowRemoteFile> getVersionJars() {
+        List<GeaflowRemoteFile> jars = new ArrayList<>();
 
         GeaflowVersion version = release.getVersion();
-        GeaflowJarPackage engineJarPackage = version.getEngineJarPackage();
-        GeaflowJarPackage langJarPackage = version.getLangJarPackage();
+        GeaflowRemoteFile engineJarPackage = version.getEngineJarPackage();
+        GeaflowRemoteFile langJarPackage = version.getLangJarPackage();
         Preconditions.checkNotNull(engineJarPackage, "Invalid engine jar of version %s", version.getName());
 
         jars.add(engineJarPackage);
@@ -123,11 +123,11 @@ public class GeaflowTask extends GeaflowId {
         return jars;
     }
 
-    public List<GeaflowJarPackage> getUserJars() {
-        List<GeaflowJarPackage> jars = new ArrayList<>();
+    public List<GeaflowRemoteFile> getUserJars() {
+        List<GeaflowRemoteFile> jars = new ArrayList<>();
 
         GeaflowJob job = release.getJob();
-        GeaflowJarPackage jarPackage = job.getJarPackage();
+        GeaflowRemoteFile jarPackage = job.getJarPackage();
         List<GeaflowFunction> functions = job.getFunctions();
 
         if (jarPackage != null) {
@@ -136,7 +136,7 @@ public class GeaflowTask extends GeaflowId {
 
         if (CollectionUtils.isNotEmpty(functions)) {
             functions.forEach(f -> {
-                GeaflowJarPackage functionJarPackage = f.getJarPackage();
+                GeaflowRemoteFile functionJarPackage = f.getJarPackage();
                 Preconditions.checkNotNull(functionJarPackage, "Invalid jar of function %s", f.getName());
                 jars.add(functionJarPackage);
             });

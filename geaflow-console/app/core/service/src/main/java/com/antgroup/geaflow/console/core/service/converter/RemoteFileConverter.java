@@ -15,8 +15,6 @@
 package com.antgroup.geaflow.console.core.service.converter;
 
 import com.antgroup.geaflow.console.common.dal.entity.RemoteFileEntity;
-import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import org.springframework.stereotype.Component;
 
@@ -30,38 +28,20 @@ public class RemoteFileConverter extends NameConverter<GeaflowRemoteFile, Remote
         entity.setType(model.getType());
         entity.setPath(model.getPath());
         entity.setUrl(model.getUrl());
-        switch (model.getType()) {
-            case JAR:
-                entity.setEntryClass(((GeaflowJarPackage) model).getEntryClass());
-                break;
-            default:
-                throw new GeaflowException("Unsupported file type {}", model.getType());
-
-        }
         return entity;
     }
 
     @Override
-    protected GeaflowRemoteFile entityToModel(RemoteFileEntity entity, Class<? extends GeaflowRemoteFile> clazz) {
-        GeaflowRemoteFile model = super.entityToModel(entity, clazz);
+    protected GeaflowRemoteFile entityToModel(RemoteFileEntity entity) {
+        GeaflowRemoteFile model = super.entityToModel(entity);
         model.setPath(entity.getPath());
         model.setMd5(entity.getMd5());
         model.setUrl(entity.getUrl());
+        model.setType(entity.getType());
         return model;
     }
 
     public GeaflowRemoteFile convert(RemoteFileEntity entity) {
-        GeaflowRemoteFile model = null;
-        switch (entity.getType()) {
-            case JAR:
-                GeaflowJarPackage tmp = (GeaflowJarPackage) entityToModel(entity, GeaflowJarPackage.class);
-                tmp.setEntryClass(entity.getEntryClass());
-                model = tmp;
-                break;
-            default:
-                throw new GeaflowException("Unsupported file type {}", entity.getType());
-        }
-
-        return model;
+        return entityToModel(entity);
     }
 }

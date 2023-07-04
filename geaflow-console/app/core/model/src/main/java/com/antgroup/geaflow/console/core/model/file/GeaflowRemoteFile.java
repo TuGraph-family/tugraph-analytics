@@ -18,14 +18,16 @@ import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
 import com.antgroup.geaflow.console.core.model.GeaflowName;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @Setter
-public abstract class GeaflowRemoteFile extends GeaflowName {
+@NoArgsConstructor
+public class GeaflowRemoteFile extends GeaflowName {
 
-    protected final GeaflowFileType type;
+    protected GeaflowFileType type;
 
     protected String path;
 

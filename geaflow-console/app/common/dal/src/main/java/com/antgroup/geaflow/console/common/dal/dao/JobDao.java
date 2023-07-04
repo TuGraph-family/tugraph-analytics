@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.common.dal.dao;
 
+import com.antgroup.geaflow.console.common.dal.entity.IdEntity;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.dal.mapper.JobMapper;
 import com.antgroup.geaflow.console.common.dal.model.JobSearch;
@@ -27,5 +28,11 @@ public class JobDao extends TenantLevelDao<JobMapper, JobEntity> implements Name
     public void configSearch(LambdaQueryWrapper<JobEntity> wrapper, JobSearch search) {
         wrapper.eq(search.getJobType() != null, JobEntity::getType, search.getJobType());
         wrapper.eq(search.getInstanceId() != null, JobEntity::getInstanceId, search.getInstanceId());
+    }
+
+    public long getFileRefCount(String fileId, String excludeJobId) {
+        return lambdaQuery().eq(JobEntity::getJarPackageId, fileId)
+            .ne(excludeJobId != null, IdEntity::getId, excludeJobId)
+            .count();
     }
 }

@@ -12,26 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.biz.shared.view;
+package com.antgroup.geaflow.dsl.catalog.console;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+public class FunctionModel extends AbstractDataModel {
 
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
-public class RemoteFileView extends NameView {
+    private String entryClass;
 
-    private GeaflowFileType type;
+    public String getEntryClass() {
+        return entryClass;
+    }
 
-    private String path;
-
-    protected String url;
-
-    private String md5;
-
+    public void setEntryClass(String entryClass) {
+        this.entryClass = entryClass;
+    }
 }
