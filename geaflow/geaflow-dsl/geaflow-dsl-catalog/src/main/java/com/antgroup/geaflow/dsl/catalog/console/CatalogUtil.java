@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dsl.catalog.console;
 
 import static com.antgroup.geaflow.dsl.util.SqlTypeUtil.convertTypeName;
 
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
 import com.antgroup.geaflow.dsl.common.types.TableField;
@@ -25,7 +26,9 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CatalogUtil {
 
@@ -33,7 +36,7 @@ public class CatalogUtil {
         TableModel tableModel = new TableModel();
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
         pluginConfigModel.setType(GeaFlowPluginType.getPluginType(table.getTableType()));
-        pluginConfigModel.setConfig(table.getConfig());
+        pluginConfigModel.setConfig(convertToTableModelConfig(table.getConfig()));
         tableModel.setPluginConfig(pluginConfigModel);
         tableModel.setName(table.getName());
         List<TableField> fields = table.getFields();
@@ -49,7 +52,7 @@ public class CatalogUtil {
         List<FieldModel> fieldModels = model.getFields();
         List<TableField> fields = convertToTableField(fieldModels);
         return new GeaFlowTable(instanceName, model.getName(), fields, new ArrayList<>(),
-            new ArrayList<>(), model.getPluginConfig().getConfig(), true, false);
+            new ArrayList<>(), convertToGeaFlowTableConfig(model.getPluginConfig()), true, false);
     }
 
     public static VertexModel convertToVertexModel(VertexTable table) {
@@ -146,7 +149,7 @@ public class CatalogUtil {
         GraphModel graphModel = new GraphModel();
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
         pluginConfigModel.setType(GeaFlowPluginType.getPluginType(graph.getStoreType()));
-        pluginConfigModel.setConfig(graph.getConfig().getConfigMap());
+        pluginConfigModel.setConfig(convertToGraphModelConfig(graph.getConfig().getConfigMap()));
 
         graphModel.setPluginConfig(pluginConfigModel);
         List<VertexTable> vertexTables = graph.getVertexTables();
@@ -180,7 +183,8 @@ public class CatalogUtil {
             edgeTables.add(convertToEdgeTable(edgeModel));
         }
         return new GeaFlowGraph(instanceName, model.getName(), vertexTables, edgeTables,
-            model.getPluginConfig().getConfig(), Collections.emptyMap(), true, false, false);
+            convertToGeaFlowGraphConfig(model.getPluginConfig()), Collections.emptyMap(), true,
+            false, false);
     }
 
     private static List<FieldModel> convertToFieldModel(List<TableField> fields) {
@@ -202,5 +206,31 @@ public class CatalogUtil {
             fields.add(field);
         }
         return fields;
+    }
+
+    private static Map<String, String> convertToTableModelConfig(Map<String, String> tableConfig) {
+        Map<String, String> modelConfig = new HashMap<>(tableConfig);
+        modelConfig.remove(DSLConfigKeys.GEAFLOW_DSL_TABLE_TYPE.getKey());
+        return modelConfig;
+    }
+
+    private static Map<String, String> convertToGeaFlowTableConfig(PluginConfigModel configModel) {
+        Map<String, String> tableConfig = new HashMap<>(configModel.getConfig());
+        tableConfig.put(DSLConfigKeys.GEAFLOW_DSL_TABLE_TYPE.getKey(),
+            configModel.getType().name());
+        return tableConfig;
+    }
+
+    private static Map<String, String> convertToGraphModelConfig(Map<String, String> graphConfig) {
+        Map<String, String> modelConfig = new HashMap<>(graphConfig);
+        modelConfig.remove(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey());
+        return modelConfig;
+    }
+
+    private static Map<String, String> convertToGeaFlowGraphConfig(PluginConfigModel configModel) {
+        Map<String, String> graphConfig = new HashMap<>(configModel.getConfig());
+        graphConfig.put(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey(),
+            configModel.getType().name());
+        return graphConfig;
     }
 }
