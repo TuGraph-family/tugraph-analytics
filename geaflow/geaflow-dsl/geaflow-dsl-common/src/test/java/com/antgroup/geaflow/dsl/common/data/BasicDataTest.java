@@ -20,8 +20,10 @@ import static com.antgroup.geaflow.dsl.common.util.TestSchemaUtil.getSrcId;
 import static com.antgroup.geaflow.dsl.common.util.TestSchemaUtil.getTargetId;
 import static com.antgroup.geaflow.dsl.common.util.TestSchemaUtil.getVertex;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.IType;
@@ -34,8 +36,10 @@ import com.antgroup.geaflow.dsl.common.data.impl.types.BinaryStringEdge;
 import com.antgroup.geaflow.dsl.common.data.impl.types.BinaryStringTsEdge;
 import com.antgroup.geaflow.dsl.common.data.impl.types.DoubleEdge;
 import com.antgroup.geaflow.dsl.common.data.impl.types.DoubleTsEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.types.DoubleVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.types.IntEdge;
 import com.antgroup.geaflow.dsl.common.data.impl.types.IntTsEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.types.IntVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.types.LongEdge;
 import com.antgroup.geaflow.dsl.common.data.impl.types.LongTsEdge;
 import com.antgroup.geaflow.dsl.common.data.impl.types.ObjectEdge;
@@ -197,6 +201,26 @@ public class BasicDataTest {
             assertEquals(rowVertex2.getField(2, null), "test");
             assertNotEquals(rowVertex2, rowVertex);
         }
+    }
+
+    @Test
+    public void testVertexEqual() {
+        IntVertex intVertex = new IntVertex(123);
+        assertEquals(intVertex.id, 123);
+        ObjectVertex objectVertex = new ObjectVertex(new Integer(123));
+        assertTrue(intVertex.equals(objectVertex));
+        DoubleVertex doubleVertex = new DoubleVertex(1.23);
+        assertTrue(doubleVertex.id > 1.22);
+    }
+
+    @Test
+    public void testEdgeEqual() {
+        LongEdge longEdge = new LongEdge(12L, 23L);
+        ObjectEdge objectEdge = new ObjectEdge(new Long(12L), new Long(23L));
+        assertFalse(longEdge.equals(objectEdge));
+        IntEdge intEdge = new IntEdge(12, 23);
+        ObjectEdge objectEdge2 = new ObjectEdge(new Integer(12), new Integer(23));
+        assertFalse(intEdge.equals(objectEdge2));
     }
 
     @Test

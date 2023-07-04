@@ -17,6 +17,8 @@ package com.antgroup.geaflow.dsl.udf.date;
 import static org.testng.Assert.assertEquals;
 
 import com.antgroup.geaflow.dsl.udf.table.date.UnixTimeStampMillis;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -51,6 +53,11 @@ public class UnixTimeStampMillisTest {
 
         assertEquals(udf.eval("1993-12-01 12:03:01.111", "yyyy-MM-dd HH:mm:ss.SSS"),
             new Long(754718581111L));
+
+        DateTimeFormatter millisFormatter = DateTimeFormat.forPattern(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS+00:00");
+        assertEquals(millisFormatter.parseMillis("2010-04-13T15:39:24.399+00:00"),
+            1271144364399L);
 
     }
 

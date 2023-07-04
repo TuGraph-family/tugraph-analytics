@@ -106,7 +106,6 @@ public class QueryTester implements Serializable {
 
         Environment environment = EnvironmentFactory.onLocalEnvironment(new String[]{});
         environment.getEnvironmentContext().withConfig(config);
-        environment.getEnvironmentContext().withConfig(this.config);
 
         GQLPipeLine gqlPipeLine = new GQLPipeLine(environment, testTimeWaitSeconds);
 

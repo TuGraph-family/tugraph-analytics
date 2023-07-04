@@ -107,4 +107,14 @@ public class GQLSubQueryTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testSubQuery_011() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_subquery_011.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
 }

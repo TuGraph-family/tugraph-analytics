@@ -35,7 +35,6 @@ import com.antgroup.geaflow.dsl.runtime.traversal.message.ReturnMessage;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.ReturnMessageImpl.ReturnKey;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.TreePaths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -95,29 +94,27 @@ public class CallQueryExpression extends AbstractExpression implements ICallQuer
     @Override
     public Object evaluate(Row row) {
         RowVertex startVertex = (RowVertex) row.getField(startVertexIndex, startVertexType);
+        Path path = (Path) row;
         if (callState == CallState.WAITING) {
             ParameterRequestMessage requestMessage = new ParameterRequestMessage();
             Row parameter = context.getParameters();
-            CallRequestId callRequestId = new CallRequestId(startVertex.getId(), context.getCurrentOpId());
+            long uniquePathId = context.createUniqueId(path.getId());
+            CallRequestId callRequestId = new CallRequestId(uniquePathId, context.getCurrentOpId(),
+                startVertex.getId());
             ParameterRequest request = new ParameterRequest(callRequestId, startVertex.getId(), parameter);
 
             requestMessage.addRequest(request);
             // send request message to sub query plan's start query operator id.
             context.sendMessage(startVertex.getId(), requestMessage, queryId);
-            // don't pass the start vertex to the sub query to avoid duplicate start vertex in the path
-            // for the sub query(The start vertex will traversal again in the sub query which will add
-            // the start vertex to path, so we should exclude it).
-            int[] refPathWithoutStartVertex =
-                Arrays.copyOf(refParentPathIndices, refParentPathIndices.length - 1);
-            Path pathMessage = ((Path) row).subPath(refPathWithoutStartVertex);
+            Path pathMessage = ((Path) row).subPath(refParentPathIndices);
             ITreePath treePath = TreePaths.createTreePath(Collections.singletonList(pathMessage));
-            treePath.addRequestIds(Collections.singletonList(callRequestId));
+            treePath.setRequestIdForTree(callRequestId);
             context.sendMessage(startVertex.getId(), treePath, queryId);
             return null;
         } else if (callState == CallState.RETURNING) {
             ReturnMessage returnMessage = context.getMessage(MessageType.RETURN_VALUE);
-            Object requestId = startVertex.getId();
-            ReturnKey returnKey = new ReturnKey(requestId, queryId);
+            long uniquePathId = context.createUniqueId(path.getId());
+            ReturnKey returnKey = new ReturnKey(uniquePathId, queryId);
             SingleValue singleValue = returnMessage.getValue(returnKey);
             if (singleValue == null) {
                 return defaultAggValue;

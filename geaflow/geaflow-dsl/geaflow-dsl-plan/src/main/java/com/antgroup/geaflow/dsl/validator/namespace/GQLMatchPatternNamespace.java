@@ -20,7 +20,6 @@ import com.antgroup.geaflow.dsl.calcite.GraphRecordType;
 import com.antgroup.geaflow.dsl.calcite.PathRecordType;
 import com.antgroup.geaflow.dsl.calcite.UnionPathRecordType;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
-import com.antgroup.geaflow.dsl.sqlnode.SqlLetStatement;
 import com.antgroup.geaflow.dsl.sqlnode.SqlMatchPattern;
 import com.antgroup.geaflow.dsl.sqlnode.SqlPathPattern;
 import com.antgroup.geaflow.dsl.sqlnode.SqlUnionPathPattern;
@@ -90,11 +89,7 @@ public class GQLMatchPatternNamespace extends GQLBaseNamespace {
         PathRecordType matchType = createMatchType(pathPatternTypes);
         // join from path with current match path for continue match.
         if (fromType instanceof PathRecordType) {
-            List<SqlMatchPattern> inputMatchPatterns = getInputMatchPatterns(matchPattern.getFrom());
-            assert inputMatchPatterns.size() > 0;
-            if (inputMatchPatterns.size() == 1
-                && inputMatchPatterns.get(0).isSinglePattern()
-                && matchPattern.isSinglePattern()
+            if (matchPattern.isSinglePattern()
                 && ((PathRecordType) fromType).canConcat(matchType)) {
                 matchType = ((PathRecordType) fromType).concat(matchType, isCaseSensitive());
             } else {
@@ -118,23 +113,6 @@ public class GQLMatchPatternNamespace extends GQLBaseNamespace {
         setType(matchType);
         validateOrderList();
         return matchType;
-    }
-
-    private List<SqlMatchPattern> getInputMatchPatterns(SqlNode from) {
-        List<SqlMatchPattern> patterns = new ArrayList<>();
-        if (from instanceof SqlMatchPattern) {
-            patterns.add((SqlMatchPattern) from);
-        }
-        SqlNode input = null;
-        if (from instanceof SqlLetStatement) {
-            input = ((SqlLetStatement) from).getFrom();
-        } else if (from instanceof SqlMatchPattern) {
-            input = ((SqlMatchPattern) from).getFrom();
-        }
-        if (input != null) {
-            patterns.addAll(getInputMatchPatterns(input));
-        }
-        return patterns;
     }
 
     private PathRecordType createMatchType(List<PathRecordType> pathPatternTypes) {

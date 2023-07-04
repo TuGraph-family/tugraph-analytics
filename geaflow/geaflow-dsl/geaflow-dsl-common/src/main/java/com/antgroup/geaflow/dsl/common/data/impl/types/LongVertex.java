@@ -29,7 +29,7 @@ public class LongVertex implements RowVertex {
 
     public static final Supplier<LongVertex> CONSTRUCTOR = new Constructor();
 
-    private long id;
+    public long id;
 
     private BinaryString label;
 
@@ -104,8 +104,13 @@ public class LongVertex implements RowVertex {
         if (!(o instanceof RowVertex)) {
             return false;
         }
-        RowVertex that = (RowVertex) o;
-        return id == (long) that.getId() && Objects.equals(label, that.getBinaryLabel());
+        if (o instanceof LongVertex) {
+            LongVertex that = (LongVertex) o;
+            return id == that.id && Objects.equals(label, that.getBinaryLabel());
+        } else {
+            RowVertex that = (RowVertex) o;
+            return that.equals(this);
+        }
     }
 
     @Override

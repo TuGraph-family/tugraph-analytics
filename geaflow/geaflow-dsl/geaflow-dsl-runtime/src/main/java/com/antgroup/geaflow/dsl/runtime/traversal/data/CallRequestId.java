@@ -19,21 +19,34 @@ import java.util.Objects;
 
 public class CallRequestId implements Serializable {
 
-    private final Object requestId;
+    /**
+     * The request id for sub query calling. It's the path id for each request path.
+     */
+    private final long pathId;
 
     private final long callOpId;
 
-    public CallRequestId(Object requestId, long callOpId) {
-        this.requestId = requestId;
+    private final Object vertexId;
+
+    public CallRequestId(long pathId, long callOpId, Object vertexId) {
+        if (pathId < 0) {
+            throw new IllegalArgumentException("Illegal pathId: " + pathId);
+        }
+        this.pathId = pathId;
         this.callOpId = callOpId;
+        this.vertexId = vertexId;
     }
 
-    public Object getRequestId() {
-        return requestId;
+    public long getPathId() {
+        return pathId;
     }
 
     public long getCallOpId() {
         return callOpId;
+    }
+
+    public Object getVertexId() {
+        return vertexId;
     }
 
     @Override
@@ -45,11 +58,20 @@ public class CallRequestId implements Serializable {
             return false;
         }
         CallRequestId that = (CallRequestId) o;
-        return callOpId == that.callOpId && Objects.equals(requestId, that.requestId);
+        return pathId == that.pathId && callOpId == that.callOpId && vertexId.equals(that.vertexId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(requestId, callOpId);
+        return Objects.hash(pathId, callOpId, vertexId);
+    }
+
+    @Override
+    public String toString() {
+        return "CallRequestId{"
+            + "pathId=" + pathId
+            + ", callOpId=" + callOpId
+            + ", vertexId=" + vertexId
+            + '}';
     }
 }

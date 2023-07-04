@@ -21,6 +21,7 @@ import com.antgroup.geaflow.dsl.runtime.function.graph.FunctionSchemas;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepFunction;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.collector.StepCollector;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.EndOfData;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.VertexRecord;
 import com.google.common.collect.Sets;
 import java.io.Serializable;
@@ -52,10 +53,10 @@ public class StepSourceOperator extends AbstractStepOperator<StepFunction, Verte
     }
 
     @Override
-    protected boolean hasReceivedAllEod(List<Long> receiveEodIds, List<Long> inputOpIds) {
+    protected boolean hasReceivedAllEod(List<EndOfData> receiveEods) {
         // For source operator, the input is empty, so if it has received eod,
         // it will trigger the onReceiveAllEOD.
-        return !receiveEodIds.isEmpty();
+        return !receiveEods.isEmpty();
     }
 
     @Override

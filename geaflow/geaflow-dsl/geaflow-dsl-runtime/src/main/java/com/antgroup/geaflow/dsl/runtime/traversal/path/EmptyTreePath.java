@@ -116,14 +116,14 @@ public class EmptyTreePath extends AbstractSingleTreePath {
     }
 
     @Override
-    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth) {
+    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth, PathIdCounter pathId) {
         return false;
     }
 
     @Override
     protected ITreePath filter(PathFilterFunction filterFunction,
                                int[] refPathIndices, int[] fieldMapping,
-                               Path currentPath, int maxDepth) {
+                               Path currentPath, int maxDepth, PathIdCounter pathId) {
         return EmptyTreePath.of();
     }
 

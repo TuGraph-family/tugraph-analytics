@@ -65,7 +65,8 @@ public class PathRecordType extends RelRecordType {
     }
 
     public boolean canConcat(PathRecordType other) {
-        return this.lastFieldName().equals(other.firstFieldName());
+        return (this.lastFieldName().equals(other.firstFieldName()))
+            && this.isSinglePath() && other.isSinglePath();
     }
 
     public PathRecordType concat(PathRecordType other, boolean caseSensitive) {
@@ -91,7 +92,7 @@ public class PathRecordType extends RelRecordType {
     public PathRecordType join(PathRecordType other, RelDataTypeFactory typeFactory) {
         RelDataType joinType = SqlValidatorUtil.deriveJoinRowType(this, other,
             JoinRelType.INNER, typeFactory, null, Collections.emptyList());
-        return new PathRecordType(joinType.getFieldList());
+        return new JoinPathRecordType(joinType.getFieldList());
     }
 
     public PathRecordType addField(String name, RelDataType type, boolean caseSensitive) {
@@ -131,5 +132,9 @@ public class PathRecordType extends RelRecordType {
             return Optional.empty();
         }
         return Optional.of(fieldList.get(fieldList.size() - 1));
+    }
+
+    public boolean isSinglePath() {
+        return true;
     }
 }

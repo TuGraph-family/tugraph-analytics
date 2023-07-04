@@ -18,7 +18,8 @@ import com.antgroup.geaflow.dsl.calcite.PathRecordType;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.rel.GraphMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
-import com.antgroup.geaflow.dsl.rel.match.LoopUtilMatch;
+import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
+import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.SingleMatchNode;
 import com.antgroup.geaflow.dsl.rex.PathInputRef;
 import com.antgroup.geaflow.dsl.rex.RexLambdaCall;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.BiRel;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -75,8 +77,8 @@ public class PathReferenceAnalyzer {
             subsequentNodes.put(pathPattern, Lists.newArrayList(node));
 
             refPathFields.addAll(subsequentNodeRefPathFields);
-        } else if (node instanceof LoopUtilMatch) {
-            LoopUtilMatch loopUtil = (LoopUtilMatch) node;
+        } else if (node instanceof LoopUntilMatch) {
+            LoopUntilMatch loopUtil = (LoopUntilMatch) node;
             PathReferenceCollector referenceCollector = new PathReferenceCollector(loopUtil.getUtilCondition());
             refPathFields.addAll(referenceCollector.getRefPathFields());
             refPathFields.addAll(subsequentNodeRefPathFields);
@@ -85,6 +87,39 @@ public class PathReferenceAnalyzer {
             List<RelNode> subNodes = subsequentNodes.get(node);
             subsequentNodes.put(loopUtil, subNodes);
             node2RefPathFields.put(node, refPathFields);
+        } else if (node instanceof MatchJoin) {
+            // analyze referred path fields by this node.
+            PathReferenceCollector referenceCollector = new PathReferenceCollector(node);
+            Set<String> joinRefPathFields = referenceCollector.getRefPathFields();
+            //Find the new fields created by join, and add the related field names to reference
+            List<String> joinCreatedFields = joinRefPathFields.stream().filter(
+                f -> !((MatchJoin)node).getLeft().getRowType().getFieldNames().contains(f)
+                    && !((MatchJoin)node).getRight().getRowType().getFieldNames().contains(f)
+            ).collect(Collectors.toList());
+            for (String createdField : joinCreatedFields) {
+                List<String> relatedFields = joinRefPathFields.stream().filter(
+                    f -> !f.equals(createdField) && createdField.indexOf(f) == 0).collect(Collectors.toList());
+                if (relatedFields.size() > 0) {
+                    String nameBase = relatedFields.get(0);
+                    for (String related : relatedFields) {
+                        nameBase = related.length() > nameBase.length() ? related : nameBase;
+                    }
+                    assert Integer.valueOf(createdField.substring(nameBase.length())) >= 0;
+                    for (int j = 0;; j++) {
+                        String name = nameBase + j;
+                        if (name.equals(createdField)) {
+                            break;
+                        }
+                        if (!joinRefPathFields.contains(name)) {
+                            joinRefPathFields.add(name);
+                        }
+                    }
+                }
+
+            }
+            refPathFields.addAll(joinRefPathFields);
+            // add referred path fields by the subsequent node.
+            refPathFields.addAll(subsequentNodeRefPathFields);
         } else {
             // analyze referred path fields by this node.
             PathReferenceCollector referenceCollector = new PathReferenceCollector(node);
@@ -124,8 +159,8 @@ public class PathReferenceAnalyzer {
         RelNode rewriteNode = node;
 
         //step2. adjust the index of the PathInputRef after the inputs has pruned.
-        if (rewriteNode instanceof LoopUtilMatch) { // Adjust loop-util
-            LoopUtilMatch loopUtil = (LoopUtilMatch) rewriteNode;
+        if (rewriteNode instanceof LoopUntilMatch) { // Adjust loop-util
+            LoopUntilMatch loopUtil = (LoopUntilMatch) rewriteNode;
             adjustPathRefIndex(loopUtil.getUtilCondition(), getPathType(rewriteInputs.get(0)));
             pruneAndAdjustPathInputRef(loopUtil.getLoopBody());
         } else if (rewriteNode instanceof BiRel) { // Adjust for join & correlate
@@ -145,41 +180,8 @@ public class PathReferenceAnalyzer {
         } else {
             rewriteNode = rewriteNode.copy(node.getTraitSet(), rewriteInputs);
         }
-        // step3 prune path type in sub query.
-        rewriteNode = rewriteNode.accept(new RexShuttle() {
-            @Override
-            public RexNode visitCall(RexCall call) {
-                if (call instanceof RexLambdaCall) {
-                    RexLambdaCall lambdaCall = (RexLambdaCall) call;
-                    RexSubQuery subQuery = lambdaCall.getInput();
-                    RexNode valueNode = lambdaCall.getValue();
 
-                    // prune sub query
-                    PathReferenceCollector referenceCollector = new PathReferenceCollector(valueNode);
-                    Set<String> refPathFields = new HashSet<>(referenceCollector.getRefPathFields());
-
-                    PathRecordType pathRecordType = (PathRecordType) subQuery.rel.getRowType();
-
-                    assert node.getRowType().getSqlTypeName() == SqlTypeName.PATH;
-                    int parentPathSize = node.getRowType().getFieldCount();
-                    // The first node of the sub query is the start vertex, it cannot be pruned.
-                    refPathFields.add(pathRecordType.getFieldList().get(parentPathSize - 1).getName());
-                    analyzePathRef(subQuery.rel, refPathFields);
-                    // In order to getSubsequentNodeRefPathFields for subQuery.rel when pruning it,
-                    // we attach subQuery.rel to itself as it has no real next node.
-                    subsequentNodes.put(subQuery.rel, Lists.newArrayList(subQuery.rel));
-                    // prune sub query
-                    RelNode newSubRel = pruneAndAdjustPathInputRef(subQuery.rel);
-                    RexSubQuery newSubQuery = subQuery.clone(newSubRel);
-                    // adjust path index for value node
-                    RexNode newValue = adjustPathRefIndex(valueNode, getPathType(newSubRel));
-                    return lambdaCall.clone(lambdaCall.type, Lists.newArrayList(newSubQuery, newValue));
-                }
-                return super.visitCall(call);
-            }
-        });
-
-        //step4. prune path type for single match node.
+        //step3. prune path type for single match node.
         Set<String> subsequentRefFields = getSubsequentNodeRefPathFields(node);
         if (node instanceof SingleMatchNode) {
             rewriteNode = pruneMatchNode((SingleMatchNode) rewriteNode, subsequentRefFields);
@@ -226,7 +228,28 @@ public class PathReferenceAnalyzer {
         @Override
         public RexNode visitCall(RexCall call) {
             if (call instanceof RexLambdaCall) {
-                return call;
+                RexLambdaCall lambdaCall = (RexLambdaCall) call;
+                RexSubQuery subQuery = lambdaCall.getInput();
+                RexNode valueNode = lambdaCall.getValue();
+
+                // prune sub query
+                PathReferenceCollector referenceCollector = new PathReferenceCollector(valueNode);
+                Set<String> refPathFields = new HashSet<>(referenceCollector.getRefPathFields());
+
+                assert inputPathType.lastFieldName().isPresent();
+                // The last field is the start vertex to request the sub query.
+                String startLabel = inputPathType.lastFieldName().get();
+                refPathFields.add(startLabel);
+                analyzePathRef(subQuery.rel, refPathFields);
+                // In order to getSubsequentNodeRefPathFields for subQuery.rel when pruning it,
+                // we attach subQuery.rel to itself as it has no real next node.
+                subsequentNodes.put(subQuery.rel, Lists.newArrayList(subQuery.rel));
+                // prune sub query
+                RelNode newSubRel = pruneAndAdjustPathInputRef(subQuery.rel);
+                RexSubQuery newSubQuery = subQuery.clone(newSubRel);
+                // adjust path index for value node
+                RexNode newValue = adjustPathRefIndex(valueNode, getPathType(newSubRel));
+                return lambdaCall.clone(lambdaCall.type, Lists.newArrayList(newSubQuery, newValue));
             }
             return super.visitCall(call);
         }
@@ -310,24 +333,32 @@ public class PathReferenceAnalyzer {
         @Override
         public RexNode visitCall(RexCall call) {
             if (call instanceof RexLambdaCall) {
-                RexLambdaCall lambdaCall = (RexLambdaCall) call;
-                RexSubQuery subQuery = lambdaCall.getInput();
                 // analyze path reference in sub query.
                 assert node != null : "node should not be null when analyze sub query.";
-                PathRecordType inputPathType = getPathType(node);
+                RelDataType inputPathType;
+                if (node instanceof SingleMatchNode) {
+                    inputPathType = ((SingleMatchNode) node).getInput().getRowType();
+                } else if (node instanceof MatchJoin) {
+                    inputPathType = node.getRowType();
+                } else {
+                    throw new IllegalArgumentException("Illegal node: " + node + " with sub-query");
+                }
                 assert inputPathType != null;
 
-                PathRecordType subQueryPathType = getPathType(subQuery.rel);
-                assert subQueryPathType != null;
-                List<String> subPathFields = subQueryPathType.getFieldNames();
-                inputPathType.getFieldNames().stream()
-                    .filter(subPathFields::contains)
-                    .forEach(refPathFields::add);
+                int parentPathSize = inputPathType.getFieldCount();
+                RexLambdaCall lambdaCall = (RexLambdaCall) call;
+                RexSubQuery subQuery = lambdaCall.getInput();
+                RelDataType subQueryPathType = subQuery.rel.getRowType();
+                // The first node of the sub query is the start vertex, it cannot be pruned.
+                refPathFields.add(subQueryPathType.getFieldList().get(parentPathSize - 1).getName());
 
-                return call;
-            } else {
-                return super.visitCall(call);
+                PathReferenceCollector subCollector = new PathReferenceCollector(subQuery.rel);
+                Set<String> subRefPathFields = subCollector.getRefPathFields();
+                inputPathType.getFieldNames().stream()
+                    .filter(subRefPathFields::contains)
+                    .forEach(refPathFields::add);
             }
+            return super.visitCall(call);
         }
 
         public Set<String> getRefPathFields() {
