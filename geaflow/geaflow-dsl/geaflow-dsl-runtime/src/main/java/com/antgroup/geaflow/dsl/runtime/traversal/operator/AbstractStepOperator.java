@@ -27,6 +27,7 @@ import com.antgroup.geaflow.dsl.common.data.StepRecord;
 import com.antgroup.geaflow.dsl.common.data.StepRecord.StepRecordType;
 import com.antgroup.geaflow.dsl.common.data.impl.DefaultParameterizedPath;
 import com.antgroup.geaflow.dsl.common.data.impl.DefaultParameterizedRow;
+import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.PathType;
@@ -82,8 +83,7 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     protected String name;
 
     protected final FUNC function;
-
-    private final Map<Long, List<Long>> caller2ReceiveEodIds = new HashMap<>();
+    private final Map<Long, List<EndOfData>> caller2ReceiveEods = new HashMap<>();
     protected List<PathType> inputPathSchemas;
     protected PathType outputPathSchema;
     protected IType<?> outputType;
@@ -109,8 +109,9 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     private CallState callState = null;
 
     protected int numTasks;
-
     private int numReceiveEods;
+    protected long numProcessRecords;
+    protected boolean isGlobalEmptyCycle;
 
     protected MetricGroup metricGroup;
     private Counter inputCounter;
@@ -164,6 +165,8 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
         this.context = context;
         this.numTasks = context.getNumTasks();
         this.numReceiveEods = getNumReceiveEods();
+        this.numProcessRecords = 0L;
+        this.isGlobalEmptyCycle = true;
         for (StepOperator<OUT, ?> nextOp : nextOperators) {
             nextOp.open(context);
         }
@@ -221,7 +224,8 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
             }
         }
         this.needAddToPath = this instanceof LabeledStepOperator
-            && outputPathSchema.contain(((LabeledStepOperator) this).getLabel());
+            && outputPathSchema.contain(((LabeledStepOperator) this).getLabel())
+            && !isSubQueryStartLabel();
 
         List<TableField> addingVertexFields = getModifyGraphSchema().getAddingFields(graphSchema);
         this.addingVertexFieldTypes = addingVertexFields.stream()
@@ -236,6 +240,19 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
 
         function.open(context, new FunctionSchemas(inputPathSchemas, outputPathSchema,
             outputType, graphSchema, modifyGraphSchema, addingVertexFieldTypes, addingVertexFieldNames));
+    }
+
+    private boolean isSubQueryStartLabel() {
+        boolean isSubDag = !context.getTopology().belongMainDag(id);
+        if (!isSubDag) {
+            return false;
+        }
+        if (!(this instanceof LabeledStepOperator)) {
+            return false;
+        }
+        List<Long> inputOpIds = context.getTopology().getInputIds(id);
+        return inputOpIds.size() == 1 && context.getTopology()
+            .getOperator(inputOpIds.get(0)) instanceof StepSubQueryStartOperator;
     }
 
     private int getNumReceiveEods() {
@@ -297,6 +314,7 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
             } else {
                 assert callContext == null : "Calling sub query on non-vertex record is not allowed.";
             }
+            numProcessRecords++;
             processRecord(record);
             processRt.update((System.nanoTime() - startTs) / 1000L);
             inputCounter.inc();
@@ -305,36 +323,48 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     }
 
     protected void processEod(EndOfData eod) {
-        caller2ReceiveEodIds.computeIfAbsent(eod.getCallOpId(), k -> new ArrayList<>())
-            .add(eod.getSenderId());
+        caller2ReceiveEods.computeIfAbsent(eod.getCallOpId(), k -> new ArrayList<>())
+            .add(eod);
+        boolean inputEmptyCycle = eod.isGlobalEmptyCycle;
+        this.isGlobalEmptyCycle &= inputEmptyCycle;
         // Receive all EOD from input operators.
-        List<Long> inputOpIds = context.getTopology().getInputIds(id);
-
-        for (Map.Entry<Long, List<Long>> entry : caller2ReceiveEodIds.entrySet()) {
+        for (Map.Entry<Long, List<EndOfData>> entry : caller2ReceiveEods.entrySet()) {
             long callerOpId = entry.getKey();
-            List<Long> receiveEodIds = entry.getValue();
-            if (hasReceivedAllEod(receiveEodIds, inputOpIds)) {
-                onReceiveAllEOD(callerOpId, receiveEodIds);
+            List<EndOfData> receiveEods = entry.getValue();
+            if (hasReceivedAllEod(receiveEods)) {
+                LOGGER.info("Step op: {} task: {} received all eods. Iterations: {}",
+                    this.getName(), context.getTaskIndex(), context.getIterationId());
+                onReceiveAllEOD(callerOpId, receiveEods);
             }
         }
     }
 
-    protected boolean hasReceivedAllEod(List<Long> receiveEodIds, List<Long> inputOpIds) {
-        if (callState == CallState.RETURNING || callState == CallState.WAITING) {
-            // When receiving all eod from the sub-query call, trigger the onReceiveAllEOD.
-            return numCallQueries * numTasks == receiveEodIds.size();
+    protected boolean hasReceivedAllEod(List<EndOfData> receiveEods) {
+        if (numCallQueries > 0) {
+            if (callQueryProxies.get(0).getCallState() == CallState.RETURNING
+                || callQueryProxies.get(0).getCallState() == CallState.WAITING) {
+                // When receiving all eod from the sub-query call, trigger the onReceiveAllEOD.
+                return (numTasks * numCallQueries) == receiveEods.size();
+            } else if (callQueryProxies.get(0).getCallState() == CallState.CALLING
+                || callQueryProxies.get(0).getCallState() == CallState.INIT) {
+                return numReceiveEods == receiveEods.size();
+            }
+            return false;
         } else {
-            return numReceiveEods == receiveEodIds.size();
+            // For source operator, the input is empty, so if it has received eod,
+            // it will trigger the onReceiveAllEOD. For other operator,
+            // the count of eod should equal to the input size.
+            return numReceiveEods == receiveEods.size();
         }
     }
 
     protected abstract void processRecord(IN record);
 
-    protected void onReceiveAllEOD(long callerOpId, List<Long> receiveEodIds) {
+    protected void onReceiveAllEOD(long callerOpId, List<EndOfData> receiveEods) {
         finish();
         // Send EOD to output operators.
         collectEOD(callerOpId);
-        receiveEodIds.clear();
+        receiveEods.clear();
 
         if (callState == CallState.FINISH) {
             LOGGER.info("step operator: {} finished, task id is: {}", getName(), context.getTaskIndex());
@@ -351,22 +381,32 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
 
     public void finish() {
         if (callQueryProxies.size() > 0) {
-            if (callState == CallState.CALLING || callState == CallState.INIT) {
-                this.setCallState(CallState.WAITING);
-                // push call context to the stack when finish calling.
-                context.push(id, callContext);
-            } else if (callState == CallState.RETURNING || callState == CallState.WAITING) {
-                this.setCallState(CallState.FINISH);
-                // pop call context from stack when all calling has returned from sub query
-                context.pop(id);
-                // reset call context after pop from the stack
-                callContext.reset();
+            switch (callState) {
+                case INIT:
+                case CALLING:
+                    this.setCallState(CallState.WAITING);
+                    // push call context to the stack when finish calling.
+                    context.push(id, callContext);
+                    break;
+                case WAITING:
+                case RETURNING:
+                    this.setCallState(CallState.FINISH);
+                    // pop call context from stack when all calling has returned from sub query
+                    context.pop(id);
+                    // reset call context after pop from the stack
+                    callContext.reset();
+                    break;
+                default:
+                    throw new GeaFlowDSLException("Illegal call state: {}", callState);
             }
             for (CallQueryProxy callQueryProxy : callQueryProxies) {
                 callQueryProxy.finishCall();
             }
         }
         function.finish((StepCollector) collector);
+
+        LOGGER.info("Step op: {} task: {} finished. Iterations: {}", this.getName(),
+            this.getContext().getTaskIndex(), context.getIterationId());
     }
 
     protected void collect(OUT record) {
@@ -377,7 +417,12 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
 
     @SuppressWarnings("unchecked")
     protected void collectEOD(long callerOpId) {
-        collector.collect((OUT) EndOfData.of(callerOpId, id));
+        this.isGlobalEmptyCycle &= numProcessRecords == 0L;
+        EndOfData eod = EndOfData.of(callerOpId, id);
+        eod.isGlobalEmptyCycle = isGlobalEmptyCycle;
+        collector.collect((OUT)eod);
+        this.isGlobalEmptyCycle = true;
+        this.numProcessRecords = 0L;
     }
 
     @Override

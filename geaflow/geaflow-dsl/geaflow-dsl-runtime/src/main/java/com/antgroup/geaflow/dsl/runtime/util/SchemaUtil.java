@@ -140,7 +140,7 @@ public class SchemaUtil {
             return vertex;
         }
         int[] mapping = getFieldMappingIndices(inputVertexType, outputVertexType);
-        return new FieldAlignVertex(vertex, mapping);
+        return FieldAlignVertex.createFieldAlignedVertex(vertex, mapping);
     }
 
     public static RowEdge alignToEdgeSchema(RowEdge edge, EdgeType inputEdgeType,
@@ -152,7 +152,7 @@ public class SchemaUtil {
             return edge;
         }
         int[] mapping = getFieldMappingIndices(inputEdgeType, outputEdgeType);
-        return new FieldAlignEdge(edge, mapping);
+        return FieldAlignEdge.createFieldAlignedEdge(edge, mapping);
     }
 
     public static Path alignToPathSchema(Path path, PathType inputPathType,

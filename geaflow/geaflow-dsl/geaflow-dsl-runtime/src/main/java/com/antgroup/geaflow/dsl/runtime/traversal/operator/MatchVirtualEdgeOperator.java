@@ -49,10 +49,10 @@ public class MatchVirtualEdgeOperator extends AbstractStepOperator<MatchVirtualE
                     if (targetPath != null && !treePath.isEmpty()) {
                         targetIdPaths.put(targetId, targetPath);
                     }
+                    EdgeGroup edgeGroup = EdgeGroup.of(edges);
+                    EdgeGroupRecord edgeGroupRecord = EdgeGroupRecord.of(edgeGroup, targetIdPaths);
+                    collect(edgeGroupRecord);
                 }
-                EdgeGroup edgeGroup = EdgeGroup.of(edges);
-                EdgeGroupRecord edgeGroupRecord = EdgeGroupRecord.of(edgeGroup, targetIdPaths);
-                collect(edgeGroupRecord);
             }
         }
     }

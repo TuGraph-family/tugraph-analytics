@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.rel.match;
 
+import com.antgroup.geaflow.dsl.calcite.JoinPathRecordType;
 import com.antgroup.geaflow.dsl.calcite.PathRecordType;
 import com.antgroup.geaflow.dsl.calcite.UnionPathRecordType;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType.VirtualVertexRecordType;
@@ -112,11 +113,11 @@ public class MatchJoin extends BiRel implements IMatchNode {
             || realRight.getRowType() instanceof UnionPathRecordType) {
             List<PathRecordType> leftUnionPaths =
                 realLeft.getRowType() instanceof UnionPathRecordType
-                ? ((UnionPathRecordType)realLeft.getRowType()).getOriginPathRecordTypes()
+                ? ((UnionPathRecordType)realLeft.getRowType()).getInputPathRecordTypes()
                 : Collections.singletonList(((IMatchNode) realLeft).getPathSchema());
             List<PathRecordType> rightUnionPaths =
                 realRight.getRowType() instanceof UnionPathRecordType
-                ? ((UnionPathRecordType)realRight.getRowType()).getOriginPathRecordTypes()
+                ? ((UnionPathRecordType)realRight.getRowType()).getInputPathRecordTypes()
                 : Collections.singletonList(((IMatchNode) realRight).getPathSchema());
             List<PathRecordType> unionPaths = new ArrayList<>();
             for (PathRecordType leftPath : leftUnionPaths) {
@@ -128,7 +129,7 @@ public class MatchJoin extends BiRel implements IMatchNode {
             }
             return new UnionPathRecordType(relRecordType.getFieldList(), unionPaths);
         } else {
-            return new PathRecordType(relRecordType.getFieldList());
+            return new JoinPathRecordType(relRecordType.getFieldList());
         }
     }
 
@@ -138,12 +139,11 @@ public class MatchJoin extends BiRel implements IMatchNode {
     }
 
     public JoinInfo analyzeCondition() {
-        JoinInfo joinInfo = JoinInfo.of(left, right, condition);
         RexBuilder rexBuilder = getCluster().getRexBuilder();
-        List<Integer> leftPathKeys = new ArrayList<>(joinInfo.leftKeys);
-        List<Integer> rightPathKeys = new ArrayList<>(joinInfo.rightKeys);
+        List<Integer> leftPathKeys = new ArrayList<>();
+        List<Integer> rightPathKeys = new ArrayList<>();
         List<RexNode> nonEquiList = new ArrayList<>();
-        this.splitJoinCondition(joinInfo.getRemaining(rexBuilder), leftPathKeys, rightPathKeys, nonEquiList);
+        this.splitJoinCondition(condition, leftPathKeys, rightPathKeys, nonEquiList);
         RexNode newRemaining = RexUtil.composeConjunction(rexBuilder, nonEquiList);
         return new PathJoinInfo(ImmutableIntList.copyOf(leftPathKeys),
             ImmutableIntList.copyOf(rightPathKeys), newRemaining);
@@ -193,7 +193,7 @@ public class MatchJoin extends BiRel implements IMatchNode {
                 }
                 return;
             }
-            int leftFieldCount = left.getRowType().getFieldCount();
+            int leftFieldCount = ((IMatchNode)left).getPathSchema().getFieldCount();
             if (kind == SqlKind.EQUALS) {
                 final List<RexNode> operands = call.getOperands();
                 if (GQLRexUtil.isVertexIdFieldAccess(operands.get(0))
@@ -202,16 +202,16 @@ public class MatchJoin extends BiRel implements IMatchNode {
                     RexFieldAccess op1 = (RexFieldAccess) operands.get(1);
                     String op0PathLabel = ((PathInputRef)op0.getReferenceExpr()).getLabel();
                     String op1PathLabel = ((PathInputRef)op1.getReferenceExpr()).getLabel();
-                    int op0Index = this.getRowType().getField(op0PathLabel, true, false).getIndex();
-                    int op1Index = this.getRowType().getField(op1PathLabel, true, false).getIndex();
+                    int op0Index = this.getPathSchema().getField(op0PathLabel, true, false).getIndex();
+                    int op1Index = this.getPathSchema().getField(op1PathLabel, true, false).getIndex();
                     RelDataTypeField leftField;
                     RelDataTypeField rightField;
                     if (op0Index < leftFieldCount && op1Index >= leftFieldCount) {
-                        leftField = left.getRowType().getFieldList().get(op0Index);
-                        rightField = right.getRowType().getFieldList().get(op1Index - leftFieldCount);
+                        leftField = ((IMatchNode)left).getPathSchema().getFieldList().get(op0Index);
+                        rightField = ((IMatchNode)right).getPathSchema().getFieldList().get(op1Index - leftFieldCount);
                     } else if (op1Index < leftFieldCount && op0Index >= leftFieldCount) {
-                        leftField = left.getRowType().getFieldList().get(op1Index);
-                        rightField = right.getRowType().getFieldList().get(op0Index - leftFieldCount);
+                        leftField = ((IMatchNode)left).getPathSchema().getFieldList().get(op1Index);
+                        rightField = ((IMatchNode)right).getPathSchema().getFieldList().get(op0Index - leftFieldCount);
                     } else {
                         nonEquiList.add(condition);
                         return;

@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.operator;
 
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
+import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.StepRecord;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepBoolFunction;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
@@ -81,20 +82,20 @@ public class StepLoopUntilOperator extends AbstractStepOperator<StepBoolFunction
                 collect(lastLoopPath);
             }
             if (loopCounter < maxLoopCount) {
-                loopStartCollector.collect(record);
+                loopStartCollector.collect(lastLoopPath);
             }
         }
     }
 
     private StepRecordWithPath selectLastLoopPath(StepRecordWithPath record, boolean fromZeroLoop) {
-        VertexRecord vertexRecord = (VertexRecord) record;
+        RowVertex vertexRecord = ((VertexRecord)record).getTreePath().getVertex();
         if (fromZeroLoop) {
             return record.mapTreePath(treePath -> {
                 ITreePath newTreePath = treePath;
                 for (int i = 0; i < loopBodyPathFieldCount - 1; i++) {
                     newTreePath = newTreePath.extendTo((RowEdge) null);
                 }
-                return newTreePath.extendTo(vertexRecord.getVertex());
+                return newTreePath.extendTo(vertexRecord);
             });
         } else {
             for (int i = 0; i < loopStartPathFieldCount; i++) {
@@ -109,16 +110,26 @@ public class StepLoopUntilOperator extends AbstractStepOperator<StepBoolFunction
     }
 
     @Override
-    protected void onReceiveAllEOD(long callerOpId, List<Long> receiveEodIds) {
-        if (loopCounter < maxLoopCount) {
-            // remove eod from the loop body.
-            receiveEodIds.remove(loopBodyOpId);
-            // send EOD to the loop start.
-            loopStartCollector.collect(EndOfData.of(id));
-        } else { // If no data in the loop or reach the max loop count,
-            // it means the whole loop has finished. Just send EOD to the next.
-            super.onReceiveAllEOD(callerOpId, receiveEodIds);
+    protected void onReceiveAllEOD(long callerOpId, List<EndOfData> receiveEods) {
+        boolean isGlobalEmptyCycle = true;
+        for (EndOfData eod : receiveEods) {
+            if (eod.getSenderId() == this.loopBodyOpId) {
+                isGlobalEmptyCycle &= eod.isGlobalEmptyCycle;
+            }
         }
-        loopCounter++;
+        if (loopCounter < maxLoopCount && !isGlobalEmptyCycle) {
+            // remove eod from the loop body.
+            receiveEods.removeIf(eod -> eod.getSenderId() == this.loopBodyOpId);
+            // send EOD to the loop start.
+            EndOfData eod = EndOfData.of(callerOpId, id);
+            eod.isGlobalEmptyCycle = numProcessRecords == 0;
+            loopStartCollector.collect(eod);
+        } else { // If no data in the loop, it means the whole loop has finished. Just send EOD to the next.
+            super.onReceiveAllEOD(callerOpId, receiveEods);
+            receiveEods.clear();
+        }
+        this.isGlobalEmptyCycle = true;
+        this.numProcessRecords = 0L;
+        this.loopCounter++;
     }
 }

@@ -28,6 +28,11 @@ public class EndOfData implements StepRecord {
      */
     private final long senderId;
 
+    /**
+     * No data been processed between two eod cycles.
+     */
+    public boolean isGlobalEmptyCycle;
+
     private EndOfData(long callOpId, long senderId) {
         this.callOpId = callOpId;
         this.senderId = senderId;
@@ -57,11 +62,7 @@ public class EndOfData implements StepRecord {
     public long getSenderId() {
         return senderId;
     }
-
-    public EndOfData copy(long senderId) {
-        return new EndOfData(callOpId, senderId);
-    }
-
+    
     @Override
     public String toString() {
         return "EndOfData{"

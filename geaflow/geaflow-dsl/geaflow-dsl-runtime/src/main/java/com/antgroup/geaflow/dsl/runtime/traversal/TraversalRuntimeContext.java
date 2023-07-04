@@ -22,7 +22,6 @@ import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.runtime.expression.subquery.CallContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestId;
-import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestWithStartVertexId;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.ParameterRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.IMessage;
@@ -94,13 +93,15 @@ public interface TraversalRuntimeContext {
 
     void pop(long opId);
 
-    void stashCallRequestId(CallRequestId requestId, Object startVertexId);
+    void stashCallRequestId(CallRequestId requestId);
 
-    Iterable<CallRequestWithStartVertexId> takeCallRequestIds();
+    Iterable<CallRequestId> takeCallRequestIds();
 
     void setInputOperatorId(long id);
 
     long getInputOperatorId();
 
-    void addFieldToVertex(Object vertexId, int valueIndex, int numAppendValue, Object value);
+    void addFieldToVertex(Object vertexId, int index, Object value);
+
+    long createUniqueId(long idInTask);
 }

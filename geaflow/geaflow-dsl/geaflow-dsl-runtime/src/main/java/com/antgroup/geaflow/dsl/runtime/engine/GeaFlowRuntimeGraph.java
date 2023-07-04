@@ -50,6 +50,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.Pa
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.StartId;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ParameterizedTreePath;
+import com.antgroup.geaflow.dsl.runtime.util.IDUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
@@ -354,7 +355,7 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
 
         @Override
         public InitParameterRequest map(Row row) {
-            long requestId = numTasks * rowCounter + taskIndex;
+            long requestId = IDUtil.uniqueId(numTasks, taskIndex, rowCounter);
             if (requestId < 0) {
                 throw new GeaFlowDSLException("Request id exceed the Long.MAX, numTasks: "
                     + numTasks + ", taskIndex: " + taskIndex + ", rowCounter: " + rowCounter);

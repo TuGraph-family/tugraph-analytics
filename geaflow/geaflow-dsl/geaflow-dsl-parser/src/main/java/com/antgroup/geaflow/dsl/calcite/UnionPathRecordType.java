@@ -16,31 +16,28 @@ package com.antgroup.geaflow.dsl.calcite;
 
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 
 public class UnionPathRecordType extends PathRecordType {
 
-    private final List<PathRecordType> originPathRecordTypes;
+    private final List<PathRecordType> inputPathRecordTypes;
 
     public UnionPathRecordType(List<PathRecordType> unionPaths, RelDataTypeFactory typeFactory) {
         super(createUnionTypeFields(unionPaths, typeFactory));
-        originPathRecordTypes = Objects.requireNonNull(unionPaths);
+        inputPathRecordTypes = Objects.requireNonNull(unionPaths);
     }
 
     public UnionPathRecordType(List<RelDataTypeField> fields, List<PathRecordType> unionPaths) {
         super(fields);
-        originPathRecordTypes = Objects.requireNonNull(unionPaths);
+        inputPathRecordTypes = Objects.requireNonNull(unionPaths);
     }
 
     @Override
@@ -49,7 +46,7 @@ public class UnionPathRecordType extends PathRecordType {
     }
 
     private static List<RelDataTypeField> createUnionTypeFields(Iterable<PathRecordType> unionPaths,
-                                                               RelDataTypeFactory typeFactory) {
+                                                                RelDataTypeFactory typeFactory) {
         List<RelDataTypeField> unionFields = new ArrayList<>();
         Map<String, Integer> presented = new HashMap<>();
         for (PathRecordType pathType : unionPaths) {
@@ -104,26 +101,8 @@ public class UnionPathRecordType extends PathRecordType {
     }
 
     @Override
-    public SqlTypeName getSqlTypeName() {
-        return SqlTypeName.PATH;
-    }
-
-    @Override
-    protected void generateTypeString(StringBuilder sb, boolean withDetail) {
-        super.generateTypeString(sb.append("Union Path:"), withDetail);
-    }
-
-    @Override
-    public PathRecordType concat(PathRecordType other, boolean caseSensitive) {
-        throw new GeaFlowDSLException("Illegal call.");
-    }
-
-    @Override
-    public PathRecordType join(PathRecordType other, RelDataTypeFactory typeFactory) {
-        RelDataType joinType = SqlValidatorUtil.deriveJoinRowType(this, other,
-            JoinRelType.INNER, typeFactory, null, Collections.emptyList());
-
-        return new PathRecordType(joinType.getFieldList());
+    public boolean isSinglePath() {
+        return false;
     }
 
     @Override
@@ -131,7 +110,7 @@ public class UnionPathRecordType extends PathRecordType {
         throw new GeaFlowDSLException("Illegal call.");
     }
 
-    public List<PathRecordType> getOriginPathRecordTypes() {
-        return originPathRecordTypes;
+    public List<PathRecordType> getInputPathRecordTypes() {
+        return inputPathRecordTypes;
     }
 }

@@ -35,4 +35,8 @@ public interface Path extends Row {
     Path subPath(Collection<Integer> indices);
 
     Path subPath(int[] indices);
+
+    long getId();
+
+    void setId(long id);
 }

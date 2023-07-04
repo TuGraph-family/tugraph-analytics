@@ -99,10 +99,10 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
     @Override
     public void checkpoint(long windowId) {
         long checkpointId = graphViewDesc.getCheckpoint(windowId);
-        LOGGER.info("do checkpoint, checkpointId: {}", checkpointId);
         this.graphState.manage().operate().setCheckpointId(checkpointId);
         this.graphState.manage().operate().finish();
         this.graphState.manage().operate().archive();
+        LOGGER.info("do checkpoint over, checkpointId: {}", checkpointId);
     }
 
     @Override

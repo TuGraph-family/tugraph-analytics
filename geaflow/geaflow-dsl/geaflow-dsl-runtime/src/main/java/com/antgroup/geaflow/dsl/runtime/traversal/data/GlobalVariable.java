@@ -24,6 +24,8 @@ public class GlobalVariable {
 
     private final IType<?> type;
 
+    private int addFieldIndex = -1;
+
     public GlobalVariable(String name, int index, IType<?> type) {
         this.name = name;
         this.index = index;
@@ -40,5 +42,13 @@ public class GlobalVariable {
 
     public IType<?> getType() {
         return type;
+    }
+
+    public int getAddFieldIndex() {
+        return addFieldIndex;
+    }
+
+    public void setAddFieldIndex(int addFieldIndex) {
+        this.addFieldIndex = addFieldIndex;
     }
 }

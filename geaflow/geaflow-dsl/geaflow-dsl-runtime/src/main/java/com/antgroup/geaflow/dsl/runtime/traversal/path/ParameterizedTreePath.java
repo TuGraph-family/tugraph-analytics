@@ -174,8 +174,8 @@ public class ParameterizedTreePath extends AbstractTreePath {
     }
 
     @Override
-    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth) {
-        return baseTreePath.walkTree(pathNodes, walkFunction, maxDepth);
+    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth, PathIdCounter pathId) {
+        return baseTreePath.walkTree(pathNodes, walkFunction, maxDepth, pathId);
     }
 
     @Override

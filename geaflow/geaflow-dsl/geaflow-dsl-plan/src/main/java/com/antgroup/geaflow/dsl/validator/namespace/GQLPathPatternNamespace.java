@@ -48,7 +48,7 @@ public class GQLPathPatternNamespace extends GQLBaseNamespace {
         GQLPathPatternScope scope = (GQLPathPatternScope) getValidator().getScopes(pathPattern);
         matchNodeContext.setPathPatternScope(scope);
 
-        // for match in sub-query, the parentPathType is the output type of prev-match.
+        // for match in sub-query, the parentPathType is the output type of the parent match.
         PathRecordType parentPathType = PathRecordType.EMPTY;
         if (scope.getParent() instanceof GQLSubQueryScope) {
             parentPathType = ((GQLSubQueryScope) scope.getParent()).getInputPathType();
@@ -76,7 +76,7 @@ public class GQLPathPatternNamespace extends GQLBaseNamespace {
             isFirstNode = false;
         }
         assert outputPathType != null;
-        // concat output path type with prev-match's path type.
+        // concat output path type with parent match's path type if current path pattern is in sub-query.
         return concatParentPathType(parentPathType, outputPathType);
     }
 

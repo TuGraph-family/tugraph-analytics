@@ -29,7 +29,7 @@ public class IntVertex implements RowVertex {
 
     public static final Supplier<IntVertex> CONSTRUCTOR = new Constructor();
 
-    private int id;
+    public int id;
 
     private BinaryString label;
 
@@ -104,8 +104,13 @@ public class IntVertex implements RowVertex {
         if (!(o instanceof RowVertex)) {
             return false;
         }
-        RowVertex that = (RowVertex) o;
-        return id == (int) that.getId() && Objects.equals(label, that.getBinaryLabel());
+        if (o instanceof IntVertex) {
+            IntVertex that = (IntVertex) o;
+            return id == that.id && Objects.equals(label, that.getBinaryLabel());
+        } else {
+            RowVertex that = (RowVertex) o;
+            return that.equals(this);
+        }
     }
 
     @Override

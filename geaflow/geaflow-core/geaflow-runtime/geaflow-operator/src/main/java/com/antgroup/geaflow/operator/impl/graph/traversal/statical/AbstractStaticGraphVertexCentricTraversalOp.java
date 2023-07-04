@@ -94,7 +94,7 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
 
         // Compute.
         if (iterations == 1L) {
-            traversalByRequest();
+            traversalByRequest(iterations);
         } else {
             this.graphMsgBox.processInMessage(new MsgProcessFunc<K, M>() {
                 @Override
@@ -124,7 +124,7 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
         this.graphMsgBox.clearOutBox();
     }
 
-    protected void traversalByRequest() {
+    protected void traversalByRequest(long iterations) {
         Iterator<ITraversalRequest<K>> iterator = getTraversalRequests();
         while (iterator.hasNext()) {
             ITraversalRequest<K> traversalRequest = iterator.next();
