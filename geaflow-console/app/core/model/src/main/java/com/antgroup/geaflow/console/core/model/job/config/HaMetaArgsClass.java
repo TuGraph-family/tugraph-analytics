@@ -32,11 +32,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class HaMetaArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.ha.service.type", comment = "类型")
+    @GeaflowConfigKey(value = "geaflow.ha.service.type", comment = "i18n.key.type")
     @GeaflowConfigValue(required = true, defaultValue = "REDIS")
     private GeaflowPluginType type;
 
-    @GeaflowConfigKey(value = "plugin", comment = "插件配置")
+    @GeaflowConfigKey(value = "plugin", comment = "i18n.key.plugin.config")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private PluginConfigClass plugin;
 

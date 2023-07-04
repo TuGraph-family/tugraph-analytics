@@ -32,7 +32,9 @@ import com.antgroup.geaflow.console.common.dal.entity.TaskEntity;
 import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.dal.model.TaskSearch;
 import com.antgroup.geaflow.console.common.util.FileUtil;
+import com.antgroup.geaflow.console.common.util.Fmt;
 import com.antgroup.geaflow.console.common.util.HTTPUtil;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.NetworkUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
@@ -282,9 +284,10 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
         GeaflowTask task = taskService.get(taskId);
         GeaflowPluginType type = task.getRelease().getCluster().getType();
         if (type.equals(GeaflowPluginType.CONTAINER)) {
-            return String.format("请前往GeaFlow Console容器内查看应用日志：%s", ContainerRuntime.getLogFilePath(taskId));
+            String logFilePath = ContainerRuntime.getLogFilePath(taskId);
+            return Fmt.as(I18nUtil.getMessage("i18n.key.container.task.log.tips"), logFilePath);
         } else {
-            return "请前往Kubernetes容器内查看应用日志：/home/admin/logs/geaflow";
+            return Fmt.as(I18nUtil.getMessage("i18n.key.k8s.task.log.tips"));
         }
     }
 

@@ -21,6 +21,8 @@ import com.antgroup.geaflow.console.common.dal.entity.AuthorizationEntity;
 import com.antgroup.geaflow.console.common.dal.entity.InstanceEntity;
 import com.antgroup.geaflow.console.common.dal.entity.ResourceCount;
 import com.antgroup.geaflow.console.common.dal.model.InstanceSearch;
+import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.type.GeaflowAuthorityType;
@@ -68,7 +70,8 @@ public class InstanceService extends NameService<GeaflowInstance, InstanceEntity
     @Override
     public List<String> create(List<GeaflowInstance> models) {
         List<String> ids = super.create(models);
-        authorizationService.addAuthorization(ids, ContextHolder.get().getUserId(), GeaflowAuthorityType.ALL, GeaflowResourceType.INSTANCE);
+        authorizationService.addAuthorization(ids, ContextHolder.get().getUserId(), GeaflowAuthorityType.ALL,
+            GeaflowResourceType.INSTANCE);
         return ids;
     }
 
@@ -91,8 +94,8 @@ public class InstanceService extends NameService<GeaflowInstance, InstanceEntity
         String userName = user.getName();
         String userComment = user.getComment();
         String instanceName = "instance_" + userName;
-        String instanceComment =
-            (StringUtils.isBlank(userComment) ? userName : userName + "【" + userComment + "】") + "的实例";
+        String userDisplayName = StringUtils.isBlank(userComment) ? userName : userComment;
+        String instanceComment = Fmt.as(I18nUtil.getMessage("i18n.key.default.instance.comment.format"), userDisplayName);
 
         // Need to set tenantId, using dao directly
         InstanceEntity entity = new InstanceEntity();

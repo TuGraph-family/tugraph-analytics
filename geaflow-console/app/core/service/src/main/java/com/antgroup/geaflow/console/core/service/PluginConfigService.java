@@ -19,6 +19,7 @@ import com.antgroup.geaflow.console.common.dal.dao.PluginConfigDao;
 import com.antgroup.geaflow.console.common.dal.entity.PluginConfigEntity;
 import com.antgroup.geaflow.console.common.dal.model.PluginConfigSearch;
 import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
@@ -134,7 +135,7 @@ public class PluginConfigService extends NameService<GeaflowPluginConfig, Plugin
         // create plugin
         GeaflowPlugin plugin = new GeaflowPlugin();
         plugin.setName(Fmt.as("plugin-{}-{}-default", category, type).toLowerCase());
-        plugin.setComment(Fmt.as("默认{} {}插件", category, type).toLowerCase());
+        plugin.setComment(Fmt.as(I18nUtil.getMessage("i18n.key.default.plugin.comment.format"), category, type).toLowerCase());
         plugin.setType(type);
         plugin.setCategory(category);
         pluginService.create(plugin);

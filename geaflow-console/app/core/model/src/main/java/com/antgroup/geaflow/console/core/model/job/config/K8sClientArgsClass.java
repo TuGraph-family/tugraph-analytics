@@ -28,26 +28,26 @@ import lombok.Setter;
 @NoArgsConstructor
 public class K8sClientArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "kubernetes.user.class.args", comment = "引擎参数JSON")
+    @GeaflowConfigKey(value = "kubernetes.user.class.args", comment = "i18n.key.engine.params.json")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.JSON)
     private GeaflowArgsClass geaflowArgs;
 
-    @GeaflowConfigKey(value = "kubernetes.user.main.class", comment = "Main Class")
+    @GeaflowConfigKey(value = "kubernetes.user.main.class", comment = "i18n.key.main.class")
     @GeaflowConfigValue(required = true)
     private String mainClass;
 
-    @GeaflowConfigKey(value = "geaflow.job.cluster.id", comment = "运行时作业ID")
+    @GeaflowConfigKey(value = "geaflow.job.cluster.id", comment = "i18n.key.running.job.id")
     @GeaflowConfigValue(required = true)
     private String runtimeTaskId;
 
-    @GeaflowConfigKey(value = "clusterArgs", comment = "集群参数")
+    @GeaflowConfigKey(value = "clusterArgs", comment = "i18n.key.cluster.args")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private K8SClusterArgsClass clusterArgs;
 
-    @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "API服务地址")
+    @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "i18n.key.k8s.server.url")
     private String gateway;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "API服务Token")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "i18n.key.api.token")
     private String token;
 
     public K8sClientArgsClass(GeaflowArgsClass geaflowArgs, String mainClass) {

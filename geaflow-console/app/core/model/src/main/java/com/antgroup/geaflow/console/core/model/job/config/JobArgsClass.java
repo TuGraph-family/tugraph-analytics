@@ -28,11 +28,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class JobArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.system.state.backend.type", comment = "系统State存储类型")
+    @GeaflowConfigKey(value = "geaflow.system.state.backend.type", comment = "i18n.key.state.storage.type")
     @GeaflowConfigValue(required = true, defaultValue = "ROCKSDB")
     private GeaflowPluginType systemStateType;
 
-    @GeaflowConfigKey(value = "jobConfig", comment = "作业用户参数")
+    @GeaflowConfigKey(value = "jobConfig", comment = "i18n.key.task.user.params")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private JobConfigClass jobConfig;
 

@@ -27,6 +27,7 @@ import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.dal.model.VersionSearch;
 import com.antgroup.geaflow.console.common.util.FileUtil;
 import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
@@ -129,7 +130,7 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
 
         VersionView versionView = new VersionView();
         versionView.setName("0.1");
-        versionView.setComment("默认版本");
+        versionView.setComment(I18nUtil.getMessage("i18n.key.default.version"));
         versionView.setPublish(true);
 
         return createVersion(versionView, new LocalMultipartFile(new File(path)), null);

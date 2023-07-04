@@ -25,19 +25,19 @@ import lombok.Setter;
 @Setter
 public class HivePluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.dsl.hive.metastore.uris", comment = "Metastore地址")
+    @GeaflowConfigKey(value = "geaflow.dsl.hive.metastore.uris", comment = "i18n.key.metastore.address")
     @GeaflowConfigValue(required = true, defaultValue = "thrift://localhost:9083")
     private String metastore;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.hive.database.name", comment = "库名")
+    @GeaflowConfigKey(value = "geaflow.dsl.hive.database.name", comment = "i18n.key.database.name")
     @GeaflowConfigValue(required = true)
     private String database;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.hive.table.name", comment = "表名")
+    @GeaflowConfigKey(value = "geaflow.dsl.hive.table.name", comment = "i18n.key.table.name")
     @GeaflowConfigValue(required = true)
     private String table;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.hive.splits.per.partition", comment = "单分区读取文件分片数")
+    @GeaflowConfigKey(value = "geaflow.dsl.hive.splits.per.partition", comment = "i18n.key.read.splits.per.partition")
     @GeaflowConfigValue(defaultValue = "1")
     private Integer partition;
 

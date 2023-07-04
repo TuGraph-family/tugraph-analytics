@@ -27,57 +27,57 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 public class K8sPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "kubernetes.master.url", comment = "API服务地址")
+    @GeaflowConfigKey(value = "kubernetes.master.url", comment = "i18n.key.k8s.server.url")
     @GeaflowConfigValue(required = true, defaultValue = "https://0.0.0.0:6443")
     private String masterUrl;
 
-    @GeaflowConfigKey(value = "kubernetes.container.image", comment = "GeaFlow镜像仓库地址")
+    @GeaflowConfigKey(value = "kubernetes.container.image", comment = "i18n.key.geaflow.registry.address")
     @GeaflowConfigValue(required = true, defaultValue = "tugraph/geaflow:0.1")
     private String imageUrl;
 
-    @GeaflowConfigKey(value = "kubernetes.service.account", comment = "API服务账户名")
+    @GeaflowConfigKey(value = "kubernetes.service.account", comment = "i18n.key.api.service.username")
     @GeaflowConfigValue(defaultValue = "geaflow")
     private String serviceAccount;
 
-    @GeaflowConfigKey(value = "kubernetes.service.exposed.type", comment = "API服务类型")
+    @GeaflowConfigKey(value = "kubernetes.service.exposed.type", comment = "i18n.key.api.service.type")
     @GeaflowConfigValue(defaultValue = "NODE_PORT")
     private String serviceType;
 
-    @GeaflowConfigKey(value = "kubernetes.namespace", comment = "Namespace")
+    @GeaflowConfigKey(value = "kubernetes.namespace", comment = "i18n.key.namespace")
     @GeaflowConfigValue(defaultValue = "default")
     private String namespace;
 
-    @GeaflowConfigKey(value = "kubernetes.cert.data", comment = "Client Cert Data")
+    @GeaflowConfigKey(value = "kubernetes.cert.data", comment = "i18n.key.client.cert.data")
     private String certData;
 
-    @GeaflowConfigKey(value = "kubernetes.cert.key", comment = "Client Cert key")
+    @GeaflowConfigKey(value = "kubernetes.cert.key", comment = "i18n.key.client.cert.key")
     private String certKey;
 
-    @GeaflowConfigKey(value = "kubernetes.ca.data", comment = "Cluster CA Data")
+    @GeaflowConfigKey(value = "kubernetes.ca.data", comment = "i18n.key.cluster.ca.data")
     private String caData;
 
-    @GeaflowConfigKey(value = "kubernetes.connection.retry.times", comment = "重试次数")
+    @GeaflowConfigKey(value = "kubernetes.connection.retry.times", comment = "i18n.key.retry.times")
     @GeaflowConfigValue(defaultValue = "100")
     private Integer retryTimes;
 
-    @GeaflowConfigKey(value = "kubernetes.cluster.name", comment = "集群名")
+    @GeaflowConfigKey(value = "kubernetes.cluster.name", comment = "i18n.key.cluster.name")
     private String clusterName;
 
-    @GeaflowConfigKey(value = "kubernetes.pod.user.labels", comment = "Pod用户标签")
+    @GeaflowConfigKey(value = "kubernetes.pod.user.labels", comment = "i18n.key.pod.user.labels")
     private String podUserLabels;
 
-    @GeaflowConfigKey(value = "kubernetes.service.suffix", comment = "API服务后缀")
+    @GeaflowConfigKey(value = "kubernetes.service.suffix", comment = "i18n.key.api.service.suffix")
     private String serviceSuffix;
 
-    @GeaflowConfigKey(value = "kubernetes.resource.storage.limit.size", comment = "存储上限")
+    @GeaflowConfigKey(value = "kubernetes.resource.storage.limit.size", comment = "i18n.key.storage.limit")
     @GeaflowConfigValue(defaultValue = "10Gi")
     private String storageLimit;
 
-    @GeaflowConfigKey(value = "kubernetes.geaflow.cluster.timeout.ms", comment = "Client超时时间")
+    @GeaflowConfigKey(value = "kubernetes.geaflow.cluster.timeout.ms", comment = "i18n.key.client.timeout")
     @GeaflowConfigValue(defaultValue = "300000")
     private Integer clientTimeout;
 
-    @GeaflowConfigKey(value = "kubernetes.container.image.pullPolicy", comment = "镜像拉取策略")
+    @GeaflowConfigKey(value = "kubernetes.container.image.pullPolicy", comment = "i18n.key.image.pull.policy")
     @GeaflowConfigValue(defaultValue = "Always")
     private String pullPolicy;
 

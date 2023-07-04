@@ -19,6 +19,7 @@ import com.antgroup.geaflow.console.biz.shared.VersionManager;
 import com.antgroup.geaflow.console.biz.shared.convert.InstallViewConverter;
 import com.antgroup.geaflow.console.biz.shared.view.InstallView;
 import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.NetworkUtil;
 import com.antgroup.geaflow.console.common.util.ProcessUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
@@ -118,7 +119,7 @@ public class InstallManagerImpl implements InstallManager {
                 GeaflowPluginConfig runtimeClusterConfig = new GeaflowPluginConfig(
                     GeaflowPluginCategory.RUNTIME_CLUSTER, builder.configRuntimeCluster());
                 runtimeClusterConfig.setName("cluster-default");
-                runtimeClusterConfig.setComment("默认集群");
+                runtimeClusterConfig.setComment(I18nUtil.getMessage("i18n.key.default.cluster"));
                 install.setRuntimeClusterConfig(runtimeClusterConfig);
             }
 
@@ -126,7 +127,7 @@ public class InstallManagerImpl implements InstallManager {
                 GeaflowPluginConfig runtimeMetaConfig = new GeaflowPluginConfig(GeaflowPluginCategory.RUNTIME_META,
                     builder.configRuntimeMeta());
                 runtimeMetaConfig.setName("runtime-meta-store-default");
-                runtimeMetaConfig.setComment("默认运行时元数据存储");
+                runtimeMetaConfig.setComment(I18nUtil.getMessage("i18n.key.default.runtime.meta.store"));
                 install.setRuntimeMetaConfig(runtimeMetaConfig);
             }
 
@@ -134,7 +135,7 @@ public class InstallManagerImpl implements InstallManager {
                 GeaflowPluginConfig haMetaConfig = new GeaflowPluginConfig(GeaflowPluginCategory.HA_META,
                     builder.configHaMeta());
                 haMetaConfig.setName("ha-meta-store-default");
-                haMetaConfig.setComment("默认HA元数据存储");
+                haMetaConfig.setComment(I18nUtil.getMessage("i18n.key.default.ha.meta.store"));
                 install.setHaMetaConfig(haMetaConfig);
             }
 
@@ -142,7 +143,7 @@ public class InstallManagerImpl implements InstallManager {
                 GeaflowPluginConfig metricConfig = new GeaflowPluginConfig(GeaflowPluginCategory.METRIC,
                     builder.configMetric());
                 metricConfig.setName("metric-store-default");
-                metricConfig.setComment("默认指标存储");
+                metricConfig.setComment(I18nUtil.getMessage("i18n.key.default.metric.store"));
                 install.setMetricConfig(metricConfig);
             }
 
@@ -150,7 +151,7 @@ public class InstallManagerImpl implements InstallManager {
                 GeaflowPluginConfig remoteFileConfig = new GeaflowPluginConfig(GeaflowPluginCategory.REMOTE_FILE,
                     builder.configRemoteFile());
                 remoteFileConfig.setName("file-store-default");
-                remoteFileConfig.setComment("默认文件存储");
+                remoteFileConfig.setComment(I18nUtil.getMessage("i18n.key.default.file.store"));
                 install.setRemoteFileConfig(remoteFileConfig);
             }
 
@@ -158,7 +159,7 @@ public class InstallManagerImpl implements InstallManager {
                 GeaflowPluginConfig dataConfig = new GeaflowPluginConfig(GeaflowPluginCategory.DATA,
                     builder.configData());
                 dataConfig.setName("data-store-default");
-                dataConfig.setComment("默认数据存储");
+                dataConfig.setComment(I18nUtil.getMessage("i18n.key.default.data.store"));
                 install.setDataConfig(dataConfig);
             }
         }
@@ -180,7 +181,7 @@ public class InstallManagerImpl implements InstallManager {
         if (!systemConfigService.exist(null, SystemConfigKeys.GEAFLOW_INITIALIZED)) {
             GeaflowSystemConfig config = new GeaflowSystemConfig();
             config.setName(SystemConfigKeys.GEAFLOW_INITIALIZED);
-            config.setComment("GeaFlow系统初始化标记");
+            config.setComment(I18nUtil.getMessage("i18n.key.geaflow.system.inited.flag"));
             config.setValue("false");
             systemConfigService.create(config);
         }
