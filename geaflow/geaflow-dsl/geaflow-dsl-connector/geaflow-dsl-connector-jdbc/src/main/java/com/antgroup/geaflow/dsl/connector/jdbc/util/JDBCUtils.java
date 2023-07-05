@@ -19,7 +19,7 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableField;
-import com.antgroup.geaflow.dsl.connector.api.Windows;
+import com.antgroup.geaflow.dsl.common.util.Windows;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
