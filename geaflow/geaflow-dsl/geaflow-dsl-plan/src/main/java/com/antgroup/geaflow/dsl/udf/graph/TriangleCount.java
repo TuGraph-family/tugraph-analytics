@@ -21,18 +21,19 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
+import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
-import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Description(name = "triangle_count", description = "built-in udga for Triangle Count.")
 public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
@@ -43,12 +44,17 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
 
     private String vertexType = null;
 
+    private String edgeType = null;
+
     @Override
     public void init(AlgorithmRuntimeContext<Object, ObjectRow> context, Object[] params) {
         this.context = context;
         if (params.length >= 1) {
+            assert params.length != 2 : "Must include vertex type and edge type";
             assert params[0] instanceof String : "Vertex type parameter should be string.";
             vertexType = (String) params[0];
+            assert params[1] instanceof String : "Edge type parameter should be string.";
+            edgeType = (String) params[1];
         }
     }
 
@@ -60,12 +66,26 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
 
         if (context.getCurrentIterationId() == 1L) {
             List<RowEdge> rowEdges = context.loadEdges(EdgeDirection.BOTH);
-            List<Object> targetIds = rowEdges.stream().map(IEdge::getTargetId).collect(Collectors.toList());
-            targetIds.add(0, (long) targetIds.size());
-            ObjectRow msg = ObjectRow.create(targetIds.toArray());
-            for (int i = 1; i < targetIds.size(); i++) {
-                context.sendMessage(targetIds.get(i), msg);
+            List<RowEdge> filterEdges = rowEdges;
+            if (Objects.nonNull(edgeType)) {
+                filterEdges = Lists.newArrayList();
+                for (RowEdge rowEdge : rowEdges) {
+                    if (edgeType.equals(rowEdge.getLabel())) {
+                        filterEdges.add(rowEdge);
+                    }
+                }
             }
+
+            List<Object> neighborInfo = Lists.newArrayList();
+            neighborInfo.add((long) filterEdges.size());
+            for (RowEdge rowEdge : filterEdges) {
+                neighborInfo.add(rowEdge.getTargetId());
+            }
+            ObjectRow msg = ObjectRow.create(neighborInfo.toArray());
+            for (int i = 1; i < neighborInfo.size(); i++) {
+                context.sendMessage(neighborInfo.get(i), msg);
+            }
+            context.sendMessage(vertex.getId(), ObjectRow.create(0L));
             context.updateVertexValue(msg);
         } else if (context.getCurrentIterationId() <= maxIteration) {
             long count = 0;
@@ -75,6 +95,9 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
                 Set<Long> targetSet = row2Set(msg);
                 targetSet.retainAll(sourceSet);
                 count += targetSet.size();
+            }
+            if (count % 2 != 0) {
+                throw new GeaFlowDSLException("Triangle count resulted in an invalid number of triangles.");
             }
             context.take(ObjectRow.create(vertex.getId(), count / 2));
         }
@@ -94,6 +117,10 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
         for (int i = 0; i < len; i++) {
             ids[i] = row.getField(i + 1, LongType.INSTANCE);
         }
-        return Arrays.stream(ids).map(id -> (long) id).collect(Collectors.toSet());
+        Set<Long> set = Sets.newHashSet();
+        for (Object id : ids) {
+            set.add((long) id);
+        }
+        return set;
     }
 }
