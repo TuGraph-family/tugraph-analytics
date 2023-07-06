@@ -17,7 +17,6 @@ import {
   updateUser,
 } from "../services/use-manage";
 import styles from "./list.module.less";
-import { isEmpty } from "lodash";
 
 const { Search } = Input;
 
@@ -29,6 +28,7 @@ export const UserManage: React.FC<{}> = ({}) => {
     isAddMd: false,
     id: "",
   });
+  const isAdminLogin = localStorage.getItem("IS_ADMIN_LOGIN");
   const [form] = Form.useForm();
   const handelTemplata = async () => {
     const manageData = await getUsers({ name: temeplateList.search });
@@ -109,17 +109,19 @@ export const UserManage: React.FC<{}> = ({}) => {
             setTemplateList({ ...temeplateList, search: value });
           }}
         />
-        <Button
-          type="primary"
-          onClick={() => {
-            setTemplateList({
-              ...temeplateList,
-              isAddMd: true,
-            });
-          }}
-        >
-          添加
-        </Button>
+        {isAdminLogin && (
+          <Button
+            type="primary"
+            onClick={() => {
+              setTemplateList({
+                ...temeplateList,
+                isAddMd: true,
+              });
+            }}
+          >
+            添加
+          </Button>
+        )}
       </div>
       <Table
         dataSource={temeplateList.manageData}

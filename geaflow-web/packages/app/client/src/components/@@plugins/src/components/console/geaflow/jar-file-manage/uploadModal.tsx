@@ -3,6 +3,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import React, { useEffect, useState } from "react";
 import { createUpload } from "../services/file-manage";
 import { InboxOutlined } from "@ant-design/icons";
+import { isEmpty } from "lodash";
 
 const { Dragger } = Upload;
 interface AddTemplateProps {
@@ -37,10 +38,11 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
     const { file } = values;
 
     const formData = new FormData();
+    !isEmpty(file) &&
+      file.forEach((item) => {
+        formData.append("file", item.originFileObj);
+      });
 
-    file.forEach((item) => {
-      formData.append("file", item.originFileObj);
-    });
     const resp = await createUpload(id, formData);
 
     setState({
