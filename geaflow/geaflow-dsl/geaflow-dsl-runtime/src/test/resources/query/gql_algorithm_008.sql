@@ -9,6 +9,6 @@ CREATE TABLE console (
 USE GRAPH modern;
 
 INSERT INTO console
-CALL triangle_count("person", "knows") YIELD (vid, cnt)
+CALL triangle_count("person") YIELD (vid, cnt)
 RETURN cast (vid as int), cnt
 ;

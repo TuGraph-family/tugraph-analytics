@@ -43,41 +43,30 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
 
     private String vertexType = null;
 
-    private String edgeType = null;
+    private final Set<Long> excludeSet = Sets.newHashSet();
 
     @Override
     public void init(AlgorithmRuntimeContext<Object, ObjectRow> context, Object[] params) {
         this.context = context;
         if (params.length >= 1) {
-            assert params.length != 2 : "Must include vertex type and edge type";
             assert params[0] instanceof String : "Vertex type parameter should be string.";
             vertexType = (String) params[0];
-            assert params[1] instanceof String : "Edge type parameter should be string.";
-            edgeType = (String) params[1];
         }
+        assert params.length <= 1 : "Maximum parameter limit exceeded.";
     }
 
     @Override
     public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
-        if (Objects.nonNull(vertexType) && !vertexType.equals(vertex.getLabel())) {
-            return;
-        }
-
         if (context.getCurrentIterationId() == 1L) {
-            List<RowEdge> rowEdges = context.loadEdges(EdgeDirection.BOTH);
-            List<RowEdge> filterEdges = rowEdges;
-            if (Objects.nonNull(edgeType)) {
-                filterEdges = Lists.newArrayList();
-                for (RowEdge rowEdge : rowEdges) {
-                    if (edgeType.equals(rowEdge.getLabel())) {
-                        filterEdges.add(rowEdge);
-                    }
-                }
+            if (Objects.nonNull(vertexType) && !vertexType.equals(vertex.getLabel())) {
+                excludeSet.add((Long) vertex.getId());
+                return;
             }
 
+            List<RowEdge> rowEdges = context.loadEdges(EdgeDirection.BOTH);
             List<Object> neighborInfo = Lists.newArrayList();
-            neighborInfo.add((long) filterEdges.size());
-            for (RowEdge rowEdge : filterEdges) {
+            neighborInfo.add((long) rowEdges.size());
+            for (RowEdge rowEdge : rowEdges) {
                 neighborInfo.add(rowEdge.getTargetId());
             }
             ObjectRow msg = ObjectRow.create(neighborInfo.toArray());
@@ -87,6 +76,9 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
             context.sendMessage(vertex.getId(), ObjectRow.create(0L));
             context.updateVertexValue(msg);
         } else if (context.getCurrentIterationId() <= maxIteration) {
+            if (Objects.nonNull(vertexType) && !vertexType.equals(vertex.getLabel())) {
+                return;
+            }
             long count = 0;
             Set<Long> sourceSet = row2Set(vertex.getValue());
             while (messages.hasNext()) {
@@ -118,7 +110,9 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
         }
         Set<Long> set = Sets.newHashSet();
         for (Object id : ids) {
-            set.add((long) id);
+            if (!excludeSet.contains((long) id))  {
+                set.add((long) id);
+            }
         }
         return set;
     }
