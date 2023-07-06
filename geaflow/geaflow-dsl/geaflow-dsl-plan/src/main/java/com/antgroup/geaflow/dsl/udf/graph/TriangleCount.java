@@ -21,7 +21,6 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
-import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
@@ -86,9 +85,6 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
                 Set<Long> targetSet = row2Set(msg);
                 targetSet.retainAll(sourceSet);
                 count += targetSet.size();
-            }
-            if (count % 2 != 0) {
-                throw new GeaFlowDSLException("Triangle count resulted in an invalid number of triangles.");
             }
             context.take(ObjectRow.create(vertex.getId(), count / 2));
         }
