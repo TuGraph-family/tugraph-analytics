@@ -25,27 +25,27 @@ import lombok.Setter;
 @Setter
 public class InfluxdbPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.metric.influxdb.url", comment = "URL")
+    @GeaflowConfigKey(value = "geaflow.metric.influxdb.url", comment = "i18n.key.url")
     @GeaflowConfigValue(required = true, defaultValue = "http://0.0.0.0:8086")
     private String url;
 
-    @GeaflowConfigKey(value = "geaflow.metric.influxdb.token", comment = "Token")
+    @GeaflowConfigKey(value = "geaflow.metric.influxdb.token", comment = "i18n.key.token")
     @GeaflowConfigValue(required = true)
     private String token;
 
-    @GeaflowConfigKey(value = "geaflow.metric.influxdb.org", comment = "Organization")
+    @GeaflowConfigKey(value = "geaflow.metric.influxdb.org", comment = "i18n.key.organization")
     @GeaflowConfigValue(required = true, defaultValue = "geaflow")
     private String org;
 
-    @GeaflowConfigKey(value = "geaflow.metric.influxdb.bucket", comment = "Bucket")
+    @GeaflowConfigKey(value = "geaflow.metric.influxdb.bucket", comment = "i18n.key.bucket")
     @GeaflowConfigValue(required = true, defaultValue = "geaflow")
     private String bucket;
 
-    @GeaflowConfigKey(value = "geaflow.metric.influxdb.connect.timeout.ms", comment = "连接超时时间")
+    @GeaflowConfigKey(value = "geaflow.metric.influxdb.connect.timeout.ms", comment = "i18n.key.connect.timeout")
     @GeaflowConfigValue(defaultValue = "30000")
     private Integer connectTimeout;
 
-    @GeaflowConfigKey(value = "geaflow.metric.influxdb.write.timeout.ms", comment = "写超时时间")
+    @GeaflowConfigKey(value = "geaflow.metric.influxdb.write.timeout.ms", comment = "i18n.key.write.timeout")
     @GeaflowConfigValue(defaultValue = "30000")
     private Integer writeTimeout;
 

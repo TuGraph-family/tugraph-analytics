@@ -33,32 +33,32 @@ public class JdbcPluginConfigClass extends PluginConfigClass {
 
     public static final String MYSQL_DRIVER_CLASS = "com.mysql.jdbc.Driver";
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.driver.class", comment = "JDBC驱动")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.driver.class", comment = "i18n.key.jdbc.driver")
     @GeaflowConfigValue(defaultValue = MYSQL_DRIVER_CLASS)
     private String driverClass;
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.url", comment = "JDBC地址")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.url", comment = "i18n.key.jdbc.url")
     @GeaflowConfigValue(required = true, defaultValue = "jdbc:mysql://0.0.0.0:3306/geaflow?characterEncoding=utf8"
         + "&autoReconnect=true&useSSL=false")
     private String url;
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.user.name", comment = "用户名")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.user.name", comment = "i18n.key.username")
     @GeaflowConfigValue(required = true, defaultValue = "geaflow")
     private String username;
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.password", comment = "密码")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.password", comment = "i18n.key.password")
     @GeaflowConfigValue(required = true, defaultValue = "geaflow", masked = true)
     private String password;
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.max.retries", comment = "重试次数")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.max.retries", comment = "i18n.key.retry.times")
     @GeaflowConfigValue(defaultValue = "3")
     private Integer retryTimes;
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.connection.pool.size", comment = "连接池大小")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.connection.pool.size", comment = "i18n.key.connection.pool.size")
     @GeaflowConfigValue(defaultValue = "10")
     private Integer connectionPoolSize;
 
-    @GeaflowConfigKey(value = "geaflow.store.jdbc.connect.config.json", comment = "连接扩展配置JSON")
+    @GeaflowConfigKey(value = "geaflow.store.jdbc.connect.config.json", comment = "i18n.key.connection.ext.config.json")
     private String configJson;
 
     public JdbcPluginConfigClass() {

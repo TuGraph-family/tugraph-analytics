@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.model.config;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
@@ -81,5 +82,9 @@ public class ConfigDescItem {
         if (GeaflowConfigClass.class.isAssignableFrom(clazz)) {
             this.innerConfigDesc = ConfigDescFactory.getOrRegister((Class<? extends GeaflowConfigClass>) clazz);
         }
+    }
+
+    public String getComment() {
+        return I18nUtil.getMessage(comment);
     }
 }

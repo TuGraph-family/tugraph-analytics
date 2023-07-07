@@ -25,15 +25,15 @@ import lombok.Setter;
 @Setter
 public class StateArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "runtimeMetaArgs", comment = "运行时存储参数")
+    @GeaflowConfigKey(value = "runtimeMetaArgs", comment = "i18n.key.runtime.meta.params")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private RuntimeMetaArgsClass runtimeMetaArgs;
 
-    @GeaflowConfigKey(value = "haMetaArgs", comment = "HA存储参数")
+    @GeaflowConfigKey(value = "haMetaArgs", comment = "i18n.key.ha.storage.params")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private HaMetaArgsClass haMetaArgs;
 
-    @GeaflowConfigKey(value = "persistentArgs", comment = "持久化存储参数")
+    @GeaflowConfigKey(value = "persistentArgs", comment = "i18n.key.persistent.storage.params")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private PersistentArgsClass persistentArgs;
 

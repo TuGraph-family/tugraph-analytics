@@ -25,14 +25,14 @@ import lombok.Setter;
 @Setter
 public class K8SClusterArgsClass extends ClusterArgsClass {
 
-    @GeaflowConfigKey(value = "clusterConfig", comment = "K8S集群配置")
+    @GeaflowConfigKey(value = "clusterConfig", comment = "i18n.key.k8s.cluster.config")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private K8sPluginConfigClass clusterConfig;
 
-    @GeaflowConfigKey(value = "kubernetes.engine.jar.files", comment = "引擎JAR地址列表")
+    @GeaflowConfigKey(value = "kubernetes.engine.jar.files", comment = "i18n.key.engine.jar.list")
     private String engineJarUrls;
 
-    @GeaflowConfigKey(value = "kubernetes.user.jar.files", comment = "作业JAR地址列表")
+    @GeaflowConfigKey(value = "kubernetes.user.jar.files", comment = "i18n.key.task.jar.list")
     private String taskJarUrls;
 
 }

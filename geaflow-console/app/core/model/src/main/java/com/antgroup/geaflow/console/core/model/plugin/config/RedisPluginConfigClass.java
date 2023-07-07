@@ -26,15 +26,15 @@ import redis.clients.jedis.Jedis;
 @Setter
 public class RedisPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.store.redis.host", comment = "Redis主机")
+    @GeaflowConfigKey(value = "geaflow.store.redis.host", comment = "i18n.key.host")
     @GeaflowConfigValue(required = true, defaultValue = "0.0.0.0")
     private String host;
 
-    @GeaflowConfigKey(value = "geaflow.store.redis.port", comment = "Redis端口")
+    @GeaflowConfigKey(value = "geaflow.store.redis.port", comment = "i18n.key.port")
     @GeaflowConfigValue(required = true, defaultValue = "6379")
     private Integer port;
 
-    @GeaflowConfigKey(value = "geaflow.store.redis.retry.times", comment = "重试次数")
+    @GeaflowConfigKey(value = "geaflow.store.redis.retry.times", comment = "i18n.key.retry.times")
     @GeaflowConfigValue(defaultValue = "10")
     private Integer retryTimes;
 

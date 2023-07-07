@@ -25,15 +25,15 @@ import lombok.Setter;
 @Setter
 public class KafkaPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.dsl.kafka.servers", comment = "Servers")
+    @GeaflowConfigKey(value = "geaflow.dsl.kafka.servers", comment = "i18n.key.servers")
     @GeaflowConfigValue(required = true, defaultValue = "0.0.0.0:9092")
     private String servers;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.kafka.group.id", comment = "Group ID")
+    @GeaflowConfigKey(value = "geaflow.dsl.kafka.group.id", comment = "i18n.key.group.id")
     @GeaflowConfigValue(required = true)
     private String group;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.kafka.topic", comment = "Topic")
+    @GeaflowConfigKey(value = "geaflow.dsl.kafka.topic", comment = "i18n.key.topic")
     @GeaflowConfigValue(required = true)
     private String topic;
 
