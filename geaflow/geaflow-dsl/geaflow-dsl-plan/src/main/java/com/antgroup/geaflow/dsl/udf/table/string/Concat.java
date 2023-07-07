@@ -39,6 +39,6 @@ public class Concat extends UDF {
         if (Objects.isNull(args)) {
             return null;
         }
-        return Objects.requireNonNull(BinaryString.concat(args));
+        return BinaryString.concat(args);
     }
 }
