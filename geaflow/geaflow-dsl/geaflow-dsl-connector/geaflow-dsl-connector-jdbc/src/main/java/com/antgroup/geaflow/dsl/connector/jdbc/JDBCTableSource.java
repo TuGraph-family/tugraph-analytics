@@ -172,7 +172,7 @@ public class JDBCTableSource implements TableSource {
         }
         JDBCOffset nextOffset = new JDBCOffset(offset + dataList.size());
         boolean isFinish = windowSize == Windows.SIZE_OF_ALL_WINDOW || dataList.size() < windowSize;
-        return (FetchData<T>) new FetchData<>(dataList, nextOffset, isFinish);
+        return (FetchData<T>) FetchData.createStreamFetch(dataList, nextOffset, isFinish);
     }
 
     @Override
