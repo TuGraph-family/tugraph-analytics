@@ -25,12 +25,17 @@ import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
+import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +47,9 @@ public class FileTableSource implements TableSource {
 
     private Configuration tableConf;
 
-    private String fileNameRegex;
+    private TableSchema tableSchema;
+
+    private String nameFilterRegex;
 
     private transient FileReadHandler fileReadHandler;
 
@@ -50,28 +57,30 @@ public class FileTableSource implements TableSource {
     public void init(Configuration tableConf, TableSchema tableSchema) {
         this.path = tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_FILE_PATH);
         this.tableConf = tableConf;
-        if (!tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_FILE_NAME_REGEX).isEmpty()) {
-            this.fileNameRegex = tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_FILE_NAME_REGEX);
-            LOGGER.info("file source use regex: {}", fileNameRegex);
-        } else {
-            this.fileNameRegex = null;
-        }
+        this.tableSchema = tableSchema;
+        this.nameFilterRegex = tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_FILE_NAME_REGEX);
+        LOGGER.info("init table source with tableConf: {}", tableConf);
     }
 
     @Override
     public void open(RuntimeContext context) {
         this.fileReadHandler = FileReadHandlers.from(path);
-        this.fileReadHandler.init(tableConf, path);
+        try {
+            this.fileReadHandler.init(tableConf, tableSchema, path);
+        } catch (IOException e) {
+            throw new GeaFlowDSLException("Error in open file source", e);
+        }
+        LOGGER.info("open table source on path: {}", path);
     }
 
     @Override
     public List<Partition> listPartitions() {
         List<Partition> allPartitions = fileReadHandler.listPartitions();
-        if (this.fileNameRegex != null) {
+        if (StringUtils.isNotEmpty(this.nameFilterRegex)) {
             List<Partition> filterPartitions = new ArrayList<>();
             for (Partition partition : allPartitions) {
-                if (!partition.getName().startsWith(".") && Pattern.matches(this.fileNameRegex,
-                    partition.getName())) {
+                if (!partition.getName().startsWith(".")
+                    && Pattern.matches(this.nameFilterRegex, partition.getName())) {
                     filterPartitions.add(partition);
                 }
             }
@@ -91,12 +100,16 @@ public class FileTableSource implements TableSource {
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
                                   long windowSize) throws IOException {
         FileOffset offset = startOffset.map(value -> (FileOffset) value).orElseGet(() -> new FileOffset(0L));
-        return (FetchData<T>) fileReadHandler.readPartition((FileSplit) partition, offset, windowSize);
+        return fileReadHandler.readPartition((FileSplit) partition, offset, (int) windowSize);
     }
 
     @Override
     public void close() {
-        fileReadHandler.close();
+        try {
+            fileReadHandler.close();
+        } catch (IOException e) {
+            throw new GeaFlowDSLException("Error in close file read handler", e);
+        }
     }
 
     public static class FileSplit implements Partition {
@@ -151,6 +164,12 @@ public class FileTableSource implements TableSource {
         @Override
         public String toString() {
             return "FileSplit(path=" + getPath() + ")";
+        }
+
+        public InputStream openStream(Configuration conf) throws IOException {
+            FileSystem fs = FileConnectorUtil.getHdfsFileSystem(conf);
+            Path path = new Path(baseDir, relativePath);
+            return fs.open(path);
         }
     }
 

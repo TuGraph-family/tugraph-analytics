@@ -76,6 +76,7 @@ public class WindowSourceOperator<OUT> extends AbstractStreamOperator<SourceFunc
 
     @Override
     public void close() {
+        super.close();
         this.function.close();
     }
 

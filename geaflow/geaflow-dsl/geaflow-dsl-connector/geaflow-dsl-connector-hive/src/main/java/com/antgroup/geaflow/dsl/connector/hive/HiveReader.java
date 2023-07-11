@@ -23,9 +23,9 @@ import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.hive.HiveTableSource.HiveOffset;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -47,7 +47,6 @@ public class HiveReader {
     private final StructType readSchema;
     private final Deserializer deserializer;
 
-    private final Map<String, StructField> name2Fields = new HashMap<>();
 
     public HiveReader(RecordReader<Writable, Writable> recordReader, StructType readSchema,
                       StorageDescriptor sd, Properties tableProps) {
@@ -59,24 +58,69 @@ public class HiveReader {
         try {
             org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
             SerDeUtils.initializeSerDe(deserializer, conf, tableProps, null);
-            StructObjectInspector structObjectInspector = (StructObjectInspector) deserializer.getObjectInspector();
-            for (StructField field : structObjectInspector.getAllStructFieldRefs()) {
-                name2Fields.put(field.getFieldName(), field);
-            }
+
         } catch (SerDeException e) {
             throw new GeaFlowDSLException(e);
         }
     }
 
-    public FetchData<Row> read(long windowSize, String[] partitionValues) throws Exception {
-        Writable key = recordReader.createKey();
-        Writable value = recordReader.createValue();
-        StructObjectInspector structObjectInspector = (StructObjectInspector) deserializer.getObjectInspector();
-
-        List<Row> rows = new ArrayList<>();
+    public FetchData<Row> read(long windowSize, String[] partitionValues) {
         if (windowSize == Windows.SIZE_OF_ALL_WINDOW) {
-            while (recordReader.next(key, value)) {
+            Iterator<Row> hiveIterator = new HiveIterator(recordReader, deserializer, partitionValues, readSchema);
+            return FetchData.createBatchFetch(hiveIterator, new HiveOffset(-1L));
+        } else {
+            throw new GeaFlowDSLException("Cannot support stream read for hive");
+        }
+    }
+
+    private static class HiveIterator implements Iterator<Row> {
+
+        private final RecordReader<Writable, Writable> recordReader;
+        private final Deserializer deserializer;
+        private final String[] partitionValues;
+        private final StructType readSchema;
+
+        private final Map<String, StructField> name2Fields = new HashMap<>();
+
+        private final Writable key;
+        private final Writable value;
+
+
+        public HiveIterator(RecordReader<Writable, Writable> recordReader,
+                            Deserializer deserializer,
+                            String[] partitionValues,
+                            StructType readSchema) {
+            this.recordReader = recordReader;
+            this.deserializer = deserializer;
+            this.partitionValues = partitionValues;
+            this.readSchema = readSchema;
+            key = recordReader.createKey();
+            value = recordReader.createValue();
+
+            try {
+                StructObjectInspector structObjectInspector = (StructObjectInspector) deserializer.getObjectInspector();
+                for (StructField field : structObjectInspector.getAllStructFieldRefs()) {
+                    name2Fields.put(field.getFieldName(), field);
+                }
+            } catch (Exception e) {
+                throw new GeaFlowDSLException(e);
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                return recordReader.next(key, value);
+            } catch (IOException e) {
+                throw new GeaFlowDSLException(e);
+            }
+        }
+
+        @Override
+        public Row next() {
+            try {
                 Object hiveRowStruct = deserializer.deserialize(value);
+                StructObjectInspector structObjectInspector = (StructObjectInspector) deserializer.getObjectInspector();
                 Object[] values = convertHiveStructToRow(hiveRowStruct, structObjectInspector);
                 if (partitionValues.length > 0) { // append partition values.
                     Object[] valueWithPartitions = new Object[values.length + partitionValues.length];
@@ -85,36 +129,34 @@ public class HiveReader {
                         values.length, partitionValues.length);
                     values = valueWithPartitions;
                 }
-                rows.add(ObjectRow.create(values));
-            }
-        } else {
-            throw new GeaFlowDSLException("Cannot support stream read for hive");
-        }
-        return new FetchData<>(rows, new HiveOffset(recordReader.getPos()), true);
-    }
-
-    private Object[] convertHiveStructToRow(Object hiveRowStruct, StructObjectInspector structObjectInspector) {
-        Object[] values = new Object[readSchema.size()];
-        for (int i = 0; i < values.length; i++) {
-            String fieldName = readSchema.getField(i).getName();
-            StructField field = name2Fields.get(fieldName);
-            if (field != null) {
-                values[i] = toSqlValue(
-                    structObjectInspector.getStructFieldData(hiveRowStruct, field),
-                    field.getFieldObjectInspector());
-            } else {
-                values[i] = null;
+                return ObjectRow.create(values);
+            } catch (Exception e) {
+                throw new GeaFlowDSLException(e);
             }
         }
-        return values;
-    }
 
-
-    private Object toSqlValue(Object hiveValue, ObjectInspector fieldInspector) {
-        if (fieldInspector instanceof PrimitiveObjectInspector) {
-            PrimitiveObjectInspector primitiveObjectInspector = (PrimitiveObjectInspector) fieldInspector;
-            return primitiveObjectInspector.getPrimitiveJavaObject(hiveValue);
+        private Object[] convertHiveStructToRow(Object hiveRowStruct, StructObjectInspector structObjectInspector) {
+            Object[] values = new Object[readSchema.size()];
+            for (int i = 0; i < values.length; i++) {
+                String fieldName = readSchema.getField(i).getName();
+                StructField field = name2Fields.get(fieldName);
+                if (field != null) {
+                    values[i] = toSqlValue(
+                        structObjectInspector.getStructFieldData(hiveRowStruct, field),
+                        field.getFieldObjectInspector());
+                } else {
+                    values[i] = null;
+                }
+            }
+            return values;
         }
-        throw new GeaFlowDSLException("Complex type:{} have not support", fieldInspector.getTypeName());
+
+        private Object toSqlValue(Object hiveValue, ObjectInspector fieldInspector) {
+            if (fieldInspector instanceof PrimitiveObjectInspector) {
+                PrimitiveObjectInspector primitiveObjectInspector = (PrimitiveObjectInspector) fieldInspector;
+                return primitiveObjectInspector.getPrimitiveJavaObject(hiveValue);
+            }
+            throw new GeaFlowDSLException("Complex type:{} have not support", fieldInspector.getTypeName());
+        }
     }
 }

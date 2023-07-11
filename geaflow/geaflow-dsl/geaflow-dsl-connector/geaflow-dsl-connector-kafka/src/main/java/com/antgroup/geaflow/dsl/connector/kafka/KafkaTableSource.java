@@ -59,7 +59,6 @@ public class KafkaTableSource implements TableSource {
     private static final Duration POLL_TIMEOUT =
         Duration.ofSeconds(KafkaConstants.KAFKA_DATA_TIMEOUT_SECONDS);
 
-    private Configuration tableConf;
     private String topic;
     private long windowSize;
     private int startTime;
@@ -69,7 +68,6 @@ public class KafkaTableSource implements TableSource {
 
     @Override
     public void init(Configuration conf, TableSchema tableSchema) {
-        this.tableConf = conf;
 
         final String servers =
             conf.getString(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_SERVERS);
@@ -82,7 +80,7 @@ public class KafkaTableSource implements TableSource {
         } else if (windowSize <= 0) {
             throw new GeaFlowDSLException("Invalid window size: {}", windowSize);
         }
-        final String startTimeStr = tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_START_TIME,
+        final String startTimeStr = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_START_TIME,
             (String) ConnectorConfigKeys.GEAFLOW_DSL_START_TIME.getDefaultValue());
         if (startTimeStr.equalsIgnoreCase(KafkaConstants.KAFKA_BEGIN)) {
             startTime = 0;
@@ -178,7 +176,7 @@ public class KafkaTableSource implements TableSource {
         long responseMaxTimestamp = -1;
         while (recordIterator.hasNext()) {
             ConsumerRecord<String, String> record = recordIterator.next();
-            assert record.topic().equals(this.topic) : "Data topic wrong.";
+            assert record.topic().equals(this.topic) : "Illegal topic";
             dataList.add(record.value());
             if (record.timestamp() > responseMaxTimestamp) {
                 responseMaxTimestamp = record.timestamp();
@@ -186,12 +184,13 @@ public class KafkaTableSource implements TableSource {
         }
         //reload cursor
         long nextOffset = consumer.position(topicPartition, OPERATION_TIMEOUT);
+        KafkaOffset nextKafkaOffset;
         if (responseMaxTimestamp >= 0) {
-            reqKafkaOffset = new KafkaOffset(nextOffset, responseMaxTimestamp);
+            nextKafkaOffset = new KafkaOffset(nextOffset, responseMaxTimestamp);
         } else {
-            reqKafkaOffset = new KafkaOffset(nextOffset, System.currentTimeMillis());
+            nextKafkaOffset = new KafkaOffset(nextOffset, System.currentTimeMillis());
         }
-        return (FetchData<T>) new FetchData<>(dataList, reqKafkaOffset, false);
+        return (FetchData<T>) FetchData.createStreamFetch(dataList, nextKafkaOffset, false);
     }
 
     @Override

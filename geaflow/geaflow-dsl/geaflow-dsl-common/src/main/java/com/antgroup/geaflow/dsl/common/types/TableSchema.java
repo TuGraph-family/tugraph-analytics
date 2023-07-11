@@ -28,6 +28,10 @@ public class TableSchema extends StructType {
         this.partitionSchema = partitionSchema;
     }
 
+    public TableSchema(StructType dataSchema) {
+        this(dataSchema, new StructType());
+    }
+
     public TableSchema(List<TableField> fields) {
         super(fields);
         this.dataSchema = new StructType(fields);

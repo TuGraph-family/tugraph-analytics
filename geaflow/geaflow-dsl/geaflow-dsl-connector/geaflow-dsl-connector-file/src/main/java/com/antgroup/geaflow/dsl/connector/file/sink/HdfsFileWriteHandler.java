@@ -14,10 +14,7 @@
 
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_HDFS;
-
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.utils.FileUtil;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
@@ -41,36 +38,30 @@ public class HdfsFileWriteHandler implements FileWriteHandler {
     protected transient FSDataOutputStream writer;
 
     public HdfsFileWriteHandler(String baseDir) {
-        if (baseDir.startsWith(PREFIX_HDFS)) {
-            this.baseDir = baseDir.substring(PREFIX_HDFS.length());
-        } else {
-            this.baseDir = baseDir;
-        }
+        this.baseDir = baseDir;
     }
 
     @Override
-    public void init(Configuration conf, StructType schema, int taskIndex) {
-        this.conf = conf;
+    public void init(Configuration tableConf, StructType schema, int taskIndex) {
+        this.conf = tableConf;
         this.schema = schema;
         this.taskIndex = taskIndex;
         this.fileSystem = FileConnectorUtil.getHdfsFileSystem(conf);
 
-        open();
-    }
-
-    protected void open() {
-        String filePath = FileUtil.concatPath(baseDir, FileConnectorUtil.getPartitionFileName(taskIndex));
+        Path dirPath = new Path(baseDir);
+        Path filePath = new Path(dirPath, FileConnectorUtil.getPartitionFileName(taskIndex));
+        filePath = fileSystem.makeQualified(filePath);
         try {
             if (!fileSystem.exists(new Path(baseDir))) {
                 fileSystem.mkdirs(new Path(baseDir));
                 LOGGER.info("mkdirs {}", baseDir);
             }
-            if (fileSystem.exists(new Path(filePath))) {
+            if (fileSystem.exists(filePath)) {
                 String newPath = filePath + "_" + System.currentTimeMillis();
                 this.writer = fileSystem.create(new Path(newPath));
                 LOGGER.info("path {} exists, create new file path {}", filePath, newPath);
             } else {
-                this.writer = fileSystem.create(new Path(filePath));
+                this.writer = fileSystem.create(filePath);
                 LOGGER.info("create file path {}", filePath);
             }
         } catch (IOException e) {
@@ -86,6 +77,7 @@ public class HdfsFileWriteHandler implements FileWriteHandler {
     @Override
     public void flush() throws IOException {
         this.writer.hflush();
+        this.writer.flush();
     }
 
     @Override

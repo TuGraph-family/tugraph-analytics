@@ -1,0 +1,2 @@
+com.antgroup.geaflow.dsl.connector.file.source.format.TextFormat
+com.antgroup.geaflow.dsl.connector.file.source.format.ParquetFormat
