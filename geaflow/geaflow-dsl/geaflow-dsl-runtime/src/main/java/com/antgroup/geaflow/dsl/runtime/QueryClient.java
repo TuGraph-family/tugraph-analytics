@@ -107,6 +107,7 @@ public class QueryClient implements QueryCompiler {
         QueryContext queryContext = QueryContext.builder()
             .setEngineContext(engineContext)
             .setCompile(true)
+            .setTraversalParallelism(-1)
             .build();
         queryContext.putConfigParallelism(context.getParallelisms());
         executeQuery(script, queryContext);

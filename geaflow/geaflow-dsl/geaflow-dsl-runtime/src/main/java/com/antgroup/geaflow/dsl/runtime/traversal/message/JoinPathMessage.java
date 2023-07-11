@@ -15,6 +15,10 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.message;
 
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -86,5 +90,24 @@ public class JoinPathMessage implements IPathMessage {
 
     public Set<Long> getSenders() {
         return senderId2Paths.keySet();
+    }
+
+    public static class JoinPathMessageSerializer extends Serializer<JoinPathMessage> {
+
+        @Override
+        public void write(Kryo kryo, Output output, JoinPathMessage object) {
+            kryo.writeClassAndObject(output, object.senderId2Paths);
+        }
+
+        @Override
+        public JoinPathMessage read(Kryo kryo, Input input, Class<JoinPathMessage> type) {
+            Map<Long, ITreePath> senderId2Paths = (Map<Long, ITreePath>)kryo.readClassAndObject(input);
+            return new JoinPathMessage(senderId2Paths);
+        }
+
+        @Override
+        public JoinPathMessage copy(Kryo kryo, JoinPathMessage original) {
+            return original.copy();
+        }
     }
 }

@@ -15,6 +15,10 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.message;
 
 import com.antgroup.geaflow.dsl.runtime.traversal.data.ParameterRequest;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -66,4 +70,24 @@ public class ParameterRequestMessage implements IMessage {
     public boolean isEmpty() {
         return requests.isEmpty();
     }
+
+    public static class ParameterRequestMessageSerializer extends Serializer<ParameterRequestMessage> {
+
+        @Override
+        public void write(Kryo kryo, Output output, ParameterRequestMessage object) {
+            kryo.writeClassAndObject(output, object.requests);
+        }
+
+        @Override
+        public ParameterRequestMessage read(Kryo kryo, Input input, Class<ParameterRequestMessage> type) {
+            Set<ParameterRequest> requests = (Set<ParameterRequest>) kryo.readClassAndObject(input);
+            return new ParameterRequestMessage(requests);
+        }
+
+        @Override
+        public ParameterRequestMessage copy(Kryo kryo, ParameterRequestMessage original) {
+            return new ParameterRequestMessage(new HashSet<>(original.requests));
+        }
+    }
+
 }

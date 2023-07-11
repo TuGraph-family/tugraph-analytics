@@ -27,6 +27,8 @@ import com.antgroup.geaflow.dsl.sqlnode.SqlVertexUsing;
 import com.antgroup.geaflow.dsl.util.GQLNodeUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
+import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +66,10 @@ public class QueryUtil {
                         || createGraph.getEdges().getList().stream().anyMatch(node -> node instanceof SqlEdgeUsing)) {
                         GeaFlowGraph graph = gqlContext.convertToGraph(createGraph,
                             createTablesInScript, config);
-                        preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, config));
+                        Configuration globalConfig = graph.getConfigWithGlobal(config);
+                        if (!QueryUtil.isGraphExists(graph, globalConfig)) {
+                            preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, globalConfig));
+                        }
                     } else {
                         createGraphs.put(graphName.toString(), createGraph);
                     }
@@ -93,6 +98,17 @@ public class QueryUtil {
         }
     }
 
+    public static boolean isGraphExists(GeaFlowGraph graph, Configuration globalConfig) {
+        boolean graphExists;
+        try {
+            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graph.getUniqueName(), globalConfig);
+            long lastCheckPointId = keeper.getLatestViewVersion(graph.getUniqueName());
+            graphExists = lastCheckPointId >= 0;
+        } catch (IOException e) {
+            throw new GeaFlowDSLException(e);
+        }
+        return graphExists;
+    }
 
     public static class PreCompileResult implements Serializable {
 

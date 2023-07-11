@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.runtime.traversal.path;
 import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,4 +161,31 @@ public class EdgeTreePath extends AbstractSingleTreePath {
     public int hashCode() {
         return Objects.hash(parents, edges, requestIds);
     }
+
+
+    public static class EdgeTreePathSerializer extends Serializer<EdgeTreePath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, EdgeTreePath object) {
+            kryo.writeClassAndObject(output, object.getRequestIds());
+            kryo.writeClassAndObject(output, object.getParents());
+            kryo.writeClassAndObject(output, object.getEdgeSet());
+        }
+
+        @Override
+        public EdgeTreePath read(Kryo kryo, Input input, Class<EdgeTreePath> type) {
+            Set<Object> requestIds = (Set<Object>) kryo.readClassAndObject(input);
+            List<ITreePath> parents = (List<ITreePath>) kryo.readClassAndObject(input);
+            EdgeSet edges = (EdgeSet) kryo.readClassAndObject(input);
+            EdgeTreePath treePath = EdgeTreePath.of(requestIds, edges);
+            treePath.parents.addAll(parents);
+            return treePath;
+        }
+
+        @Override
+        public EdgeTreePath copy(Kryo kryo, EdgeTreePath original) {
+            return (EdgeTreePath)original.copy();
+        }
+    }
+
 }

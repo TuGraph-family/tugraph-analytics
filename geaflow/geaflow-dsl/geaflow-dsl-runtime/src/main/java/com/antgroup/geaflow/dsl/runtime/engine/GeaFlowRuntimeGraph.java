@@ -181,8 +181,12 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
                     executeDagGroup, maxTraversal);
             }
         }
-
-        responsePWindow = responsePWindow.withParallelism(graph.getShardCount());
+        if (queryContext.getTraversalParallelism() > 0
+            && queryContext.getTraversalParallelism() <= graph.getShardCount()) {
+            responsePWindow = responsePWindow.withParallelism(queryContext.getTraversalParallelism());
+        } else {
+            responsePWindow = responsePWindow.withParallelism(graph.getShardCount());
+        }
         PWindowStream<Row> resultPWindow = responsePWindow.flatMap(new ResponseToRowFunction())
             .withName(queryContext.createOperatorName("TraversalResponseToRow"));
 
@@ -304,7 +308,12 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
                     .start();
             }
         }
-        responsePWindow = responsePWindow.withParallelism(graphViewDesc.getShardNum());
+        if (queryContext.getTraversalParallelism() > 0
+            && queryContext.getTraversalParallelism() <= graph.getShardCount()) {
+            responsePWindow = responsePWindow.withParallelism(queryContext.getTraversalParallelism());
+        } else {
+            responsePWindow = responsePWindow.withParallelism(graph.getShardCount());
+        }
         PWindowStream<Row> resultPWindow = responsePWindow.flatMap(
             (FlatMapFunction<ITraversalResponse<Row>, Row>) (value, collector) -> collector.partition(value.getResponse()));
         return new GeaFlowRuntimeTable(queryContext, context, resultPWindow);

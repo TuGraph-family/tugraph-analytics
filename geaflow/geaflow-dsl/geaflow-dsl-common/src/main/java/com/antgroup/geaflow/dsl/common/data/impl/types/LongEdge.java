@@ -21,10 +21,14 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class LongEdge implements RowEdge {
+public class LongEdge implements RowEdge, KryoSerializable {
 
     public static final Supplier<LongEdge> CONSTRUCTOR = new Constructor();
 
@@ -194,4 +198,33 @@ public class LongEdge implements RowEdge {
             return new LongEdge();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize srcId, targetId, direction, label and value
+        output.writeLong(this.srcId);
+        output.writeLong(this.targetId);
+        kryo.writeClassAndObject(output, this.getDirect());
+        byte[] labelBytes = this.getBinaryLabel().getBytes();
+        output.writeInt(labelBytes.length);
+        output.writeBytes(labelBytes);
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize srcId, targetId, direction, label and value
+        long srcId = input.readLong();
+        this.srcId = srcId;
+        long targetId = input.readLong();
+        this.targetId = targetId;
+        EdgeDirection direction = (EdgeDirection) kryo.readClassAndObject(input);
+        this.setDirect(direction);
+        int labelLength = input.readInt();
+        BinaryString label = BinaryString.fromBytes(input.readBytes(labelLength));
+        this.setBinaryLabel(label);
+        Row value = (Row) kryo.readClassAndObject(input);
+        this.setValue(value);
+    }
+
 }

@@ -22,10 +22,14 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class BinaryStringVertex implements RowVertex {
+public class BinaryStringVertex implements RowVertex, KryoSerializable {
 
     public static final Supplier<BinaryStringVertex> CONSTRUCTOR = new Constructor();
 
@@ -152,4 +156,31 @@ public class BinaryStringVertex implements RowVertex {
             return new BinaryStringVertex();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize fields
+        byte[] idBytes = this.id.getBytes();
+        byte[] labelBytes = this.getBinaryLabel().getBytes();
+        output.writeInt(idBytes.length);
+        output.writeBytes(idBytes);
+        output.writeInt(labelBytes.length);
+        output.writeBytes(labelBytes);
+        // serialize value
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize fields
+        BinaryString id = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        BinaryString label = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        // deserialize value
+        Row value = (Row) kryo.readClassAndObject(input);
+        // create vertex object
+        this.id = id;
+        this.setValue(value);
+        this.setBinaryLabel(label);
+    }
+
 }
