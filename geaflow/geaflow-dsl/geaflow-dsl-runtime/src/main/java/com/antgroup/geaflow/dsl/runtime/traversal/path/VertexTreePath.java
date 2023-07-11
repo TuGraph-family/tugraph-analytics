@@ -16,6 +16,10 @@ package com.antgroup.geaflow.dsl.runtime.traversal.path;
 
 import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.List;
@@ -150,4 +154,30 @@ public class VertexTreePath extends AbstractSingleTreePath {
     public int hashCode() {
         return Objects.hash(parents, vertex, requestIds);
     }
+
+    public static class VertexTreePathSerializer extends Serializer<VertexTreePath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, VertexTreePath object) {
+            kryo.writeClassAndObject(output, object.getRequestIds());
+            kryo.writeClassAndObject(output, object.getParents());
+            kryo.writeClassAndObject(output, object.getVertex());
+        }
+
+        @Override
+        public VertexTreePath read(Kryo kryo, Input input, Class<VertexTreePath> type) {
+            Set<Object> requestIds = (Set<Object>) kryo.readClassAndObject(input);
+            List<ITreePath> parents = (List<ITreePath>) kryo.readClassAndObject(input);
+            RowVertex vertex = (RowVertex) kryo.readClassAndObject(input);
+            VertexTreePath vertexTreePath = VertexTreePath.of(requestIds, vertex);
+            vertexTreePath.parents.addAll(parents);
+            return vertexTreePath;
+        }
+
+        @Override
+        public VertexTreePath copy(Kryo kryo, VertexTreePath original) {
+            return original.copy();
+        }
+    }
+
 }

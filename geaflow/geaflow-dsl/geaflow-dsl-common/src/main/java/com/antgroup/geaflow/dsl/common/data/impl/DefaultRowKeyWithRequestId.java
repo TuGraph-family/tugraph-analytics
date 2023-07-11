@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.common.data.impl;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.RowKey;
 import com.antgroup.geaflow.dsl.common.data.RowKeyWithRequestId;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 
 public class DefaultRowKeyWithRequestId implements RowKeyWithRequestId {
@@ -61,4 +65,26 @@ public class DefaultRowKeyWithRequestId implements RowKeyWithRequestId {
     public int hashCode() {
         return Objects.hash(requestId, rowKey);
     }
+
+    public static class DefaultRowKeyWithRequestIdSerializer extends Serializer<DefaultRowKeyWithRequestId> {
+
+        @Override
+        public void write(Kryo kryo, Output output, DefaultRowKeyWithRequestId object) {
+            kryo.writeClassAndObject(output, object.getRequestId());
+            kryo.writeClassAndObject(output, object.rowKey);
+        }
+
+        @Override
+        public DefaultRowKeyWithRequestId read(Kryo kryo, Input input, Class<DefaultRowKeyWithRequestId> aClass) {
+            Object requestId = kryo.readClassAndObject(input);
+            RowKey rowKey = (RowKey) kryo.readClassAndObject(input);
+            return new DefaultRowKeyWithRequestId(requestId, rowKey);
+        }
+
+        @Override
+        public DefaultRowKeyWithRequestId copy(Kryo kryo, DefaultRowKeyWithRequestId original) {
+            return new DefaultRowKeyWithRequestId(original.requestId, original.rowKey);
+        }
+    }
+
 }

@@ -19,6 +19,10 @@ import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.impl.DefaultPath;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -95,4 +99,36 @@ public class FieldAlignPath implements Path {
         }
         return pathNodes;
     }
+
+    public static class FieldAlignPathSerializer extends Serializer<FieldAlignPath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, FieldAlignPath object) {
+            kryo.writeClassAndObject(output, object.basePath);
+            if (object.fieldMapping != null) {
+                output.writeInt(object.fieldMapping.length, true);
+                for (int i : object.fieldMapping) {
+                    output.writeInt(i);
+                }
+            } else {
+                output.writeInt(0, true);
+            }
+        }
+
+        @Override
+        public FieldAlignPath read(Kryo kryo, Input input, Class<FieldAlignPath> type) {
+            Path basePath = (Path) kryo.readClassAndObject(input);
+            int[] fieldMapping = new int[input.readInt(true)];
+            for (int i = 0; i < fieldMapping.length; i++) {
+                fieldMapping[i] = input.readInt();
+            }
+            return new FieldAlignPath(basePath, fieldMapping);
+        }
+
+        @Override
+        public FieldAlignPath copy(Kryo kryo, FieldAlignPath original) {
+            return (FieldAlignPath) original.copy();
+        }
+    }
+
 }

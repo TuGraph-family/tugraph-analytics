@@ -20,10 +20,18 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-public class IdOnlyVertex implements RowVertex {
+public class IdOnlyVertex implements RowVertex, KryoSerializable {
 
     private Object id;
+
+    private IdOnlyVertex() {
+
+    }
 
     private IdOnlyVertex(Object id) {
         this.id = id;
@@ -104,5 +112,15 @@ public class IdOnlyVertex implements RowVertex {
     @Override
     public void setBinaryLabel(BinaryString label) {
         throw new IllegalArgumentException("Illegal call on setBinaryLabel");
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeClassAndObject(output, this.id);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.setId(kryo.readClassAndObject(input));
     }
 }

@@ -14,16 +14,22 @@
 
 package com.antgroup.geaflow.dsl.common.data.impl.types;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class ObjectTsEdge extends ObjectEdge implements IGraphElementWithTimeField {
+public class ObjectTsEdge extends ObjectEdge implements IGraphElementWithTimeField,
+    KryoSerializable {
 
     public static final Supplier<ObjectTsEdge> CONSTRUCTOR = new Constructor();
 
@@ -134,4 +140,33 @@ public class ObjectTsEdge extends ObjectEdge implements IGraphElementWithTimeFie
             return new ObjectTsEdge();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize srcId, targetId, direction, label, value and time
+        kryo.writeClassAndObject(output, this.getSrcId());
+        kryo.writeClassAndObject(output, this.getTargetId());
+        kryo.writeClassAndObject(output, this.getDirect());
+        kryo.writeClassAndObject(output, this.getBinaryLabel());
+        kryo.writeClassAndObject(output, this.getValue());
+        output.writeLong(this.getTime());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize srcId, targetId, direction, label, value and time
+        Object srcId = kryo.readClassAndObject(input);
+        Object targetId = kryo.readClassAndObject(input);
+        EdgeDirection direction = (EdgeDirection) kryo.readClassAndObject(input);
+        BinaryString label = (BinaryString) kryo.readClassAndObject(input);
+        Row value = (Row) kryo.readClassAndObject(input);
+        long time = input.readLong();
+        this.setSrcId(srcId);
+        this.setTargetId(targetId);
+        this.setValue(value);
+        this.setBinaryLabel(label);
+        this.setDirect(direction);
+        this.setTime(time);
+    }
+
 }

@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.common.data.impl;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.ParameterizedRow;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class DefaultParameterizedRow implements ParameterizedRow {
 
@@ -58,4 +62,34 @@ public class DefaultParameterizedRow implements ParameterizedRow {
     public Object getRequestId() {
         return requestId;
     }
+
+    public static class DefaultParameterizedRowSerializer extends Serializer<DefaultParameterizedRow> {
+
+        @Override
+        public void write(Kryo kryo, Output output, DefaultParameterizedRow object) {
+            kryo.writeClassAndObject(output, object.baseRow);
+            kryo.writeClassAndObject(output, object.getRequestId());
+            kryo.writeClassAndObject(output, object.getParameter());
+            kryo.writeClassAndObject(output, object.getSystemVariables());
+        }
+
+        @Override
+        public DefaultParameterizedRow read(Kryo kryo, Input input, Class<DefaultParameterizedRow> aClass) {
+            Row baseRow = (Row) kryo.readClassAndObject(input);
+            Object requestId = kryo.readClassAndObject(input);
+            Row parameterRow = (Row) kryo.readClassAndObject(input);
+            Row systemVariableRow = (Row) kryo.readClassAndObject(input);
+            return new DefaultParameterizedRow(baseRow, requestId, parameterRow, systemVariableRow);
+        }
+
+        @Override
+        public DefaultParameterizedRow copy(Kryo kryo, DefaultParameterizedRow original) {
+            Row baseRow = kryo.copy(original.baseRow);
+            Object requestId = kryo.copy(original.getRequestId());
+            Row parameterRow = kryo.copy(original.getParameter());
+            Row systemVariableRow = kryo.copy(original.getSystemVariables());
+            return new DefaultParameterizedRow(baseRow, requestId, parameterRow, systemVariableRow);
+        }
+    }
+
 }

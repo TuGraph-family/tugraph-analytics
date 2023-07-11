@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.runtime.traversal.path;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -314,4 +318,24 @@ public class UnionTreePath extends AbstractTreePath {
         }
         return paths;
     }
+
+    public static class UnionTreePathSerializer extends Serializer<UnionTreePath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, UnionTreePath object) {
+            kryo.writeClassAndObject(output, object.getNodes());
+        }
+
+        @Override
+        public UnionTreePath read(Kryo kryo, Input input, Class<UnionTreePath> type) {
+            List<ITreePath> nodes = (List<ITreePath>) kryo.readClassAndObject(input);
+            return new UnionTreePath(nodes);
+        }
+
+        @Override
+        public UnionTreePath copy(Kryo kryo, UnionTreePath original) {
+            return (UnionTreePath) original.copy();
+        }
+    }
+
 }
