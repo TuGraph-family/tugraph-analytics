@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { PlusOutlined } from "@ant-design/icons";
-import { ProTable } from "@ant-design/pro-components";
-import { Input, Modal, Button, Form, message, Space, Popconfirm } from "antd";
+import { useTranslation } from "react-i18next";
+import {
+  Input,
+  Modal,
+  Button,
+  Form,
+  message,
+  Space,
+  Popconfirm,
+  Table,
+} from "antd";
 import { ClusterConfigPanel } from "./configPanel";
 import styles from "./list.module.less";
 import {
@@ -10,7 +18,7 @@ import {
   deleteClusters,
 } from "../services/cluster";
 import CreateCluster from "./create";
-import { isEmpty } from "lodash";
+import $i18n from "../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -28,6 +36,8 @@ export const ClusterManage: React.FC<{}> = ({}) => {
   const [createState, setCreateState] = useState({
     visible: false,
   });
+
+  const { t } = useTranslation();
   const handelResources = async () => {
     const respData = await getClustersList({ name: state.search });
     setState({
@@ -69,7 +79,7 @@ export const ClusterManage: React.FC<{}> = ({}) => {
 
   const columns = [
     {
-      title: "集群名称",
+      title: t("i18n.key.cluster.name"),
       dataIndex: "name",
       key: "name",
       render: (_, record: any) => (
@@ -86,61 +96,71 @@ export const ClusterManage: React.FC<{}> = ({}) => {
       ),
     },
 
+    // {
+    //   title: "集群名",
+    //   dataIndex: "name",
+    //   key: "name",
+    // },
     {
-      title: "集群名",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "集群类型",
+      title: t("i18n.key.cluster.type"),
       dataIndex: "type",
       key: "type",
     },
     {
-      title: "操作人",
+      title: t("i18n.key.operator"),
       key: "creatorName",
       width: 150,
       render: (_, record: any) => (
         <span>
-          创建人：{record.creatorName} <br />
-          {record?.modifierName && <span>修改人：{record.modifierName}</span>}
+          {t("i18n.key.creator")}{record.creatorName} <br />
+          {record?.modifierName && (
+            <span>
+              {t("i18n.key.modifier")}{record.modifierName}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作时间",
+      title: t("i18n.key.operation.time"),
       key: "createTime",
       width: 300,
       render: (_, record: any) => (
         <span>
-          创建时间：{record.createTime} <br />
-          {record?.modifyTime && <span>修改时间：{record.modifyTime}</span>}
+          {t("i18n.key.creation.time")}：{record.createTime} <br />
+          {record?.modifyTime && (
+            <span>
+              {t("i18n.key.modification.time")}：{record.modifyTime}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作",
+      title: t("i18n.key.Operation"),
       dataIndex: "container",
       key: "container",
       hideInSearch: true,
       render: (_, record) => {
         return (
           <Space>
-            <a onClick={() => showCurrentClusterConfigInfo(record)}>编辑</a>
+            <a onClick={() => showCurrentClusterConfigInfo(record)}>
+              {t("i18n.key.Edit")}
+            </a>
             <Popconfirm
-              title="确认删除？"
+              title={t("i18n.key.confirm.deletion")}
               onConfirm={() => {
                 deleteClusters(record?.name).then((res) => {
                   if (res?.success) {
-                    message.success("删除成功");
+                    message.success(t("i18n.key.deletion.succeeded"));
                     handelResources();
                   }
                 });
               }}
-              okText="确定"
-              cancelText="取消"
+              okText={t("i18n.key.confirm")}
+              cancelText={t("i18n.key.cancel")}
             >
-              <a>删除</a>
+              <a>{t("i18n.key.delete")}</a>
             </Popconfirm>
           </Space>
         );
@@ -169,7 +189,7 @@ export const ClusterManage: React.FC<{}> = ({}) => {
 
       updateClusters(state.name, configObj).then((res) => {
         if (res?.code) {
-          message.success("更新成功");
+          message.success(t("i18n.key.update.succeeded"));
           handelResources();
         } else {
           message.error(res?.message);
@@ -180,31 +200,31 @@ export const ClusterManage: React.FC<{}> = ({}) => {
 
   return (
     <div className={styles["example-table"]}>
-      <ProTable
-        columns={columns}
-        search={false}
-        cardBordered
-        scroll={{ x: 1000 }}
-        dataSource={state.list}
-        rowKey="key"
-        pagination={{
-          showQuickJumper: true,
-          hideOnSinglePage: true,
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
         }}
-        dateFormatter="string"
-        headerTitle="Geaflow集群"
-        options={false}
-        toolBarRender={() => [
+      >
+        <div style={{ fontWeight: 500, fontSize: 16 }}>
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.basicInfo.ClustersList",
+            dm: "集群列表",
+          })}
+        </div>
+        <div>
           <Search
-            placeholder="请输入搜索关键词"
+            placeholder={t("i18n.key.search.keywords")}
             onSearch={(value) => {
               setState({
                 ...state,
                 search: value,
               });
             }}
-            style={{ width: 250 }}
-          />,
+            style={{ width: 286, marginRight: 16 }}
+          />
           <Button
             key="button"
             onClick={() => {
@@ -215,18 +235,26 @@ export const ClusterManage: React.FC<{}> = ({}) => {
             }}
             type="primary"
           >
-            新增
-          </Button>,
-        ]}
+            {t("i18n.key.add")}
+          </Button>
+        </div>
+      </div>
+      <Table
+        columns={columns}
+        dataSource={state.list}
+        pagination={{
+          showQuickJumper: true,
+          hideOnSinglePage: true,
+        }}
       />
       <Modal
-        title="集群配置参数"
-        width={750}
+        title={t("i18n.key.configuration.parameters")}
+        width={800}
         visible={state.visible}
         onCancel={handleCloseModal}
         onOk={handleOkModal}
-        cancelText="取消"
-        okText="确定"
+        cancelText={t("i18n.key.cancel")}
+        okText={t("i18n.key.confirm")}
       >
         <Form form={form}>
           <ClusterConfigPanel

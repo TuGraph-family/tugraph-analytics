@@ -7,6 +7,7 @@ import {
 import { GraphDefintionTab } from "../graph-tabs";
 
 import styles from "./list.module.less";
+import $i18n from "../../../../../../i18n";
 
 const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
@@ -72,9 +73,22 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
       );
 
       if (result.code !== "SUCCESS") {
-        message.error(`更新表定义失败：${result.message}`);
+        message.error(
+          $i18n.get(
+            {
+              id: "openpiece-geaflow.geaflow.table-definition.create.FailedToUpdateTableDefinition",
+              dm: "更新表定义失败：{resultMessage}",
+            },
+            { resultMessage: result.message }
+          )
+        );
       } else {
-        message.success("更新表定义成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.table-definition.create.TheTableDefinitionHasBeen",
+            dm: "更新表定义成功",
+          })
+        );
         if (toBackList) {
           toBackList({
             visible: false,
@@ -99,9 +113,22 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
       const result = await createTableDefinition(instanceName, createParams);
       setIsLoading(false);
       if (result.code !== "SUCCESS") {
-        message.error(`创建表定义失败：${result.message}`);
+        message.error(
+          $i18n.get(
+            {
+              id: "openpiece-geaflow.geaflow.table-definition.create.FailedToCreateTableDefinition",
+              dm: "创建表定义失败：{resultMessage}",
+            },
+            { resultMessage: result.message }
+          )
+        );
       } else {
-        message.success("创建表定义成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.table-definition.create.TheTableDefinitionIsCreated",
+            dm: "创建表定义成功",
+          })
+        );
         if (toBackList) {
           toBackList({
             visible: false,
@@ -112,7 +139,12 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
         }
       }
     } else {
-      message.info("请输入参数配置");
+      message.info(
+        $i18n.get({
+          id: "openpiece-geaflow.geaflow.table-definition.create.EnterParameterConfiguration",
+          dm: "请输入参数配置",
+        })
+      );
     }
     setIsLoading(false);
   };
@@ -162,28 +194,71 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
   return (
     <div className={styles["graph-definition"]}>
       <p className={styles["add-title"]}>
-        {readonly ? "表定义详情" : currentItem ? "编辑表定义" : "新增表定义"}
+        {readonly
+          ? $i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.create.TableDefinitionDetails",
+              dm: "表定义详情",
+            })
+          : currentItem
+          ? $i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.create.EditTableDefinitions",
+              dm: "编辑表定义",
+            })
+          : $i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.create.AddTableDefinitions",
+              dm: "新增表定义",
+            })}
       </p>
       <Form form={form} layout="vertical" initialValues={defaultFormValues}>
-        <Card title="基本信息" className={styles["add-col"]} type="inner">
+        <Card
+          title={$i18n.get({
+            id: "openpiece-geaflow.geaflow.table-definition.create.BasicInformation",
+            dm: "基本信息",
+          })}
+          className={styles["add-col"]}
+          type="inner"
+        >
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
-                label="表名称"
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.table-definition.create.TableName",
+                  dm: "表名称",
+                })}
                 name="name"
-                rules={[{ required: true, message: "请输入表名称" }]}
+                rules={[
+                  {
+                    required: true,
+                    message: $i18n.get({
+                      id: "openpiece-geaflow.geaflow.table-definition.create.EnterATableName",
+                      dm: "请输入表名称",
+                    }),
+                  },
+                ]}
               >
                 <Input disabled={readonly} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="所属实例" name="instanceName">
+              <Form.Item
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.table-definition.create.Instance",
+                  dm: "所属实例",
+                })}
+                name="instanceName"
+              >
                 <p>{instanceName}</p>
               </Form.Item>
             </Col>
 
             <Col span={24}>
-              <Form.Item label="表描述" name="comment">
+              <Form.Item
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.table-definition.create.TableDescription",
+                  dm: "表描述",
+                })}
+                name="comment"
+              >
                 <Input.TextArea rows={1} disabled={readonly} />
               </Form.Item>
             </Col>
@@ -193,20 +268,34 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
         <GraphDefintionTab
           tabsList={[
             {
-              name: "表定义",
+              name: $i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.create.TableDefinition",
+                dm: "表定义",
+              }),
               type: "TABLE",
               editTables: currentItem ? [] : [{}],
             },
-            { name: "参数配置", type: "tableConfig", editTables: [] },
+            {
+              name: $i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.create.ParameterConfiguration",
+                dm: "参数配置",
+              }),
+              type: "tableConfig",
+              editTables: [],
+            },
           ]}
           form={form}
           currentItem={currentItem}
           readonly={readonly}
         />
+
         {!readonly && (
           <div className={styles["definition-bottom"]}>
             <Button className={styles["bottom-btn"]} onClick={handleCancel}>
-              取消
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.create.Cancel",
+                dm: "取消",
+              })}
             </Button>
             <Button
               className={styles["bottom-btn"]}
@@ -215,7 +304,10 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
               onClick={onSave}
               loading={isLoading}
             >
-              提交
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.create.Submit",
+                dm: "提交",
+              })}
             </Button>
           </div>
         )}
