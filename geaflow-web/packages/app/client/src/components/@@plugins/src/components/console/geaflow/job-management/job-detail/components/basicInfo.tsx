@@ -25,6 +25,7 @@ import {
 import BasicTabs from "./basicTabs";
 import OperationRecord from "./operationRecord";
 import { isEmpty } from "lodash";
+import $i18n from "../../../../../../../../i18n";
 
 interface BasicInfoProps {
   currentStage: string;
@@ -111,12 +112,30 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
   });
 
   const typeMean = {
-    INTEGRATE: "集成",
-    DISTRIBUTE: "分发",
-    PROCESS: "计算",
-    SERVE: "服务",
-    STAT: "统计",
-    CUSTOM: "自定义",
+    INTEGRATE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Integration",
+      dm: "集成",
+    }),
+    DISTRIBUTE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Distribution",
+      dm: "分发",
+    }),
+    PROCESS: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Calculation",
+      dm: "计算",
+    }),
+    SERVE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Service",
+      dm: "服务",
+    }),
+    STAT: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Statistics",
+      dm: "统计",
+    }),
+    CUSTOM: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Custom",
+      dm: "自定义",
+    }),
   };
 
   useEffect(() => {
@@ -157,7 +176,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
 
   const menus = (
     <Menu>
-      <Menu.Item onClick={handleClickMoreOperator}>操作记录</Menu.Item>
+      <Menu.Item onClick={handleClickMoreOperator}>
+        {$i18n.get({
+          id: "openpiece-geaflow.job-detail.components.basicInfo.OperationRecord",
+          dm: "操作记录",
+        })}
+      </Menu.Item>
     </Menu>
   );
 
@@ -170,13 +194,25 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
 
   const handleResetJob = () => {
     Modal.confirm({
-      title: "重置任务",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.basicInfo.ResetTask",
+        dm: "重置任务",
+      }),
       icon: <ExclamationCircleOutlined style={{ color: "orange" }} />,
       content: (
         <>
-          是否重置名称为 <Tag color="orange">{jobName}</Tag> 的作业？
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.basicInfo.WhetherToResetTheName",
+            dm: "是否重置名称为",
+          })}
+          <Tag color="orange">{jobName}</Tag>
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.basicInfo.Homework",
+            dm: "的作业？",
+          })}
         </>
       ),
+
       onOk: async () => {
         setLoading({
           ...loading,
@@ -188,11 +224,22 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           reset: false,
         });
         if (response) {
-          message.success("重置成功");
+          message.success(
+            $i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.ResetSucceeded",
+              dm: "重置成功",
+            })
+          );
         }
       },
-      okText: "确定",
-      cancelText: "取消",
+      okText: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.basicInfo.Ok",
+        dm: "确定",
+      }),
+      cancelText: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.basicInfo.Cancel",
+        dm: "取消",
+      }),
     });
   };
 
@@ -221,7 +268,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
     });
     getOperations(id, { action: "start" }).then((res) => {
       if (res.success) {
-        message.success("启动成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.job-detail.components.basicInfo.StartedSuccessfully",
+            dm: "启动成功",
+          })
+        );
         handleStatus();
       }
       setLoading({
@@ -251,7 +303,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
       versionName: versionData.version,
     }).then((res) => {
       if (res.success) {
-        message.success("保存成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.job-detail.components.basicInfo.SavedSuccessfully",
+            dm: "保存成功",
+          })
+        );
       }
     });
   };
@@ -283,7 +340,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
       if (res.success) {
         getOperations(id, { action: "start" }).then((res) => {
           if (res.success) {
-            message.success("提交成功");
+            message.success(
+              $i18n.get({
+                id: "openpiece-geaflow.job-detail.components.basicInfo.SubmittedSuccessfully",
+                dm: "提交成功",
+              })
+            );
             handleStatus();
           }
         });
@@ -311,7 +373,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
     });
     getOperations(id, { action: "stop" }).then((res) => {
       if (res.success) {
-        message.success("停止成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.job-detail.components.basicInfo.StoppedSuccessfully",
+            dm: "停止成功",
+          })
+        );
         getTaskIdStatus(id, { refresh: false }).then((res) => {
           setState({
             ...state,
@@ -341,12 +408,19 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
             onClick={handleSubmitDraft}
             loading={loading.start}
           >
-            提交
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.Submit",
+              dm: "提交",
+            })}
           </Button>
         )}
+
         {currentStatus === "CREATED" && (
           <Button type="primary" onClick={handleSubmit}>
-            保存
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.Save",
+              dm: "保存",
+            })}
           </Button>
         )}
 
@@ -356,18 +430,28 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
             onClick={handleSubmitStart}
             loading={loading.start}
           >
-            启动
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.Start",
+              dm: "启动",
+            })}
           </Button>
         )}
 
         {["WAITING", "RUNNING"].includes(currentStatus) && (
           <Button onClick={handleStopJob} loading={loading.del}>
-            停止
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.Stop",
+              dm: "停止",
+            })}
           </Button>
         )}
+
         <>
           <Button onClick={handleResetJob} disabled>
-            重置
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.Reset",
+              dm: "重置",
+            })}
           </Button>
         </>
         <Dropdown overlay={menus}>
@@ -379,13 +463,42 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
 
   return (
     <div>
-      <Card title="基本信息" extra={<OptionButtonGroup />}>
+      <Card
+        title={$i18n.get({
+          id: "openpiece-geaflow.job-detail.components.basicInfo.BasicInformation",
+          dm: "基本信息",
+        })}
+        extra={<OptionButtonGroup />}
+      >
         <Row style={{ marginBottom: 24 }}>
-          <Col span={6}>实例名称：{job?.instanceName}</Col>
-          <Col span={6}>作业ID：{id}</Col>
-          <Col span={6}>任务类型：{job?.type && typeMean[job.type]}</Col>
           <Col span={6}>
-            状态：
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.InstanceName",
+              dm: "实例名称：",
+            })}
+            {job?.instanceName}
+          </Col>
+          <Col span={6}>
+            {$i18n.get(
+              {
+                id: "openpiece-geaflow.job-detail.components.basicInfo.JobIdId",
+                dm: "作业ID：{id}",
+              },
+              { id: id }
+            )}
+          </Col>
+          <Col span={6}>
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.TaskType",
+              dm: "任务类型：",
+            })}
+            {job?.type && typeMean[job.type]}
+          </Col>
+          <Col span={6}>
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.Status",
+              dm: "状态：",
+            })}
             <Tag color={STATUS_COLOR_MAPPING[currentStatus] || currentStatus}>
               {currentStatus}
             </Tag>
@@ -393,11 +506,34 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           </Col>
         </Row>
         <Row style={{ marginBottom: 24 }}>
-          <Col span={6}>图名称：{job?.graphs[0]?.name}</Col>
-          <Col span={6}>任务名称：{job?.name}</Col>
-          <Col span={6}>集群名称：{clusterName}</Col>
           <Col span={6}>
-            引擎版本：
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.ImageName",
+              dm: "图名称：",
+            })}
+            {job?.graphs[0]?.name}
+          </Col>
+          <Col span={6}>
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.TaskName",
+              dm: "任务名称：",
+            })}
+            {job?.name}
+          </Col>
+          <Col span={6}>
+            {$i18n.get(
+              {
+                id: "openpiece-geaflow.job-detail.components.basicInfo.ClusterNameClustername",
+                dm: "集群名称：{clusterName}",
+              },
+              { clusterName: clusterName }
+            )}
+          </Col>
+          <Col span={6}>
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicInfo.EngineVersion",
+              dm: "引擎版本：",
+            })}
             <Select
               value={versionData.version}
               disabled={currentStatus !== "CREATED"}

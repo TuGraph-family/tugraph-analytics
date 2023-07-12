@@ -1,19 +1,24 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
+import $i18n from "../../../../../../i18n";
 
 export const getVersionList = async (params: any) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/versions`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     params: params,
   });
 
   if (!response?.success) {
-    message.error(`查询失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.version.QueryFailedResponsemessage",
+          dm: "查询失败：{responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response?.data.list;
@@ -22,9 +27,6 @@ export const getVersionList = async (params: any) => {
 export const createVersion = async (params) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/versions`, {
     method: "POST",
-    headers: {
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     requestType: "form",
     data: params,
   });
@@ -36,15 +38,19 @@ export const deleteVersion = async (versionName: string) => {
     `${HTTP_SERVICE_URL}/api/versions/${versionName}`,
     {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 
   if (response.code !== "SUCCESS") {
-    message.error(`查询失败：${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.version.QueryFailedResponsemessage",
+          dm: "查询失败：{responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return null;
   }
   return response;

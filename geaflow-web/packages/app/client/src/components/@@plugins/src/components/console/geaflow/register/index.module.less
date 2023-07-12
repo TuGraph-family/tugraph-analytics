@@ -11,22 +11,31 @@
     left: 54px;
   }
   .@{perfix-cls}-particles-container {
-    width: 860px;
+    width: calc(100% - 580px);
     height: 426px;
     font-size: 20px;
     color: #ffffff;
     top: 17.7%;
-    left: 60px;
     position: relative;
     .@{perfix-cls}-text {
       position: absolute;
+      width: 100%;
       transform: translate(-50%, -50%);
       left: 50%;
       top: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       text-align: center;
-      font-size: 60px;
+      font-size: 48px;
       color: #1890ff;
       font-weight: bold;
+      .@{perfix-cls}-title {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        font-weight: bold;
+      }
     }
   }
   .@{perfix-cls}-login-form {

@@ -5,3 +5,4 @@ es/
 .umi
 .umi-production
 dist/
+yarn.lock

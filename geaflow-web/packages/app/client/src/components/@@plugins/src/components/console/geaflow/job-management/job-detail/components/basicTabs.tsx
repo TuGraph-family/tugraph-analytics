@@ -5,6 +5,7 @@ import TaskDsl from "./taskDsl";
 import ClusterConfig from "./clusterConfig";
 import UserCode from "./userCode";
 import { isEmpty } from "lodash";
+import $i18n from "../../../../../../../../i18n";
 
 interface BasicTabsProps {
   record: any;
@@ -25,7 +26,10 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
 
   const items = [
     {
-      label: `用户代码`,
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.basicTabs.UserCode",
+        dm: "用户代码",
+      }),
       key: "1",
       children: (
         <TaskParams
@@ -36,7 +40,10 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
       ),
     },
     {
-      label: `任务参数`,
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.basicTabs.TaskParameters",
+        dm: "任务参数",
+      }),
       key: "2",
       children: (
         <UserCode
@@ -48,7 +55,10 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
       ),
     },
     {
-      label: `集群参数`,
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.basicTabs.ClusterParameters",
+        dm: "集群参数",
+      }),
       key: "3",
       children: (
         <ClusterConfig

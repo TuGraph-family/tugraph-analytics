@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Collapse, Button, Popconfirm } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
+import $i18n from "../../../../../../i18n";
 
 const { Panel } = Collapse;
 
@@ -17,12 +19,13 @@ interface ColProps {
 
 export const AddCollapse: React.FC<ColProps> = ({ colData, placeholder }) => {
   const [colList, setColList] = useState<colChild[]>(colData);
+  const { t } = useTranslation();
   // 新增
   const addPanel = (index: number) => {
     const { configList } = colList[index];
     const addData = colList;
     const dataItem = {
-      name: `任务${configList.length + 1}`,
+      name: `${t("i18n.key.task")}${configList.length + 1}`,
     };
     addData[index].configList.push(dataItem);
     setColList([...addData]);
@@ -31,19 +34,28 @@ export const AddCollapse: React.FC<ColProps> = ({ colData, placeholder }) => {
   // 删除
   const genExtra = (index: number, configIndex: Number) => (
     <Popconfirm
-      title="你确定要删除吗?"
+      title={$i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.add.AreYouSureYouWant",
+        dm: "你确定要删除吗?",
+      })}
       placement="topRight"
       onConfirm={(event) => {
         event.stopPropagation();
         const deleteData = [...colList];
         deleteData[index].configList.splice(configIndex, 1);
         deleteData[index].configList.forEach((item, i) => {
-          item.name = `任务${i + 1}`;
+          item.name = `${t("i18n.key.task")}${i + 1}`;
         });
         setColList([...deleteData]);
       }}
-      okText="确认"
-      cancelText="取消"
+      okText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.add.Confirm",
+        dm: "确认",
+      })}
+      cancelText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.add.Cancel",
+        dm: "取消",
+      })}
     >
       <DeleteOutlined
         onClick={(event) => {
@@ -63,7 +75,7 @@ export const AddCollapse: React.FC<ColProps> = ({ colData, placeholder }) => {
               {item.configList.map((e: any, configIndex: number) => {
                 return (
                   <Panel
-                    header={`任务${configIndex + 1}`}
+                    header={`${t("i18n.key.task")}${configIndex + 1}`}
                     key={e.code}
                     extra={genExtra(index, configIndex)}
                   ></Panel>

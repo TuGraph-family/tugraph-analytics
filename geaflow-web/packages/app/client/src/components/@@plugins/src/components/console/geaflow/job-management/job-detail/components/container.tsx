@@ -5,6 +5,7 @@ import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
 import moment from "moment";
 import styles from "../index.module.less";
+import $i18n from "../../../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -44,7 +45,10 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
 
   const columns = [
     {
-      title: "上报时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.container.ReportingTime",
+        dm: "上报时间",
+      }),
       key: "reportTime",
       width: 200,
       render: (_, record) => {
@@ -56,7 +60,10 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.container.Name",
+        dm: "名称",
+      }),
       dataIndex: "name",
       key: "name",
       width: 100,
@@ -153,15 +160,28 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
   return (
     <div className={styles["job-message"]}>
       <div className={styles["message-header"]}>
-        <span>Container健康指标：</span>
         <span>
-          运行中
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.container.ContainerHealthIndicators",
+            dm: "Container健康指标：",
+          })}
+        </span>
+        <span>
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.container.Running",
+            dm: "运行中",
+          })}
+
           <Tag color="success" style={{ marginLeft: 8 }}>
             {state.activeNum}
           </Tag>
         </span>
         <span style={{ marginLeft: 32 }}>
-          状态异常
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.container.AbnormalStatus",
+            dm: "状态异常",
+          })}
+
           <Tag color="error" style={{ marginLeft: 8 }}>
             {state.totalNum - state.activeNum}
           </Tag>
@@ -175,11 +195,22 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
             pageSize: 10,
           }}
         />
+
         <Modal
-          title="日志详情"
+          title={$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.container.LogDetails",
+            dm: "日志详情",
+          })}
           width={800}
           visible={visible}
-          footer={[<Button onClick={() => setVisible(false)}> 关闭</Button>]}
+          footer={[
+            <Button onClick={() => setVisible(false)}>
+              {$i18n.get({
+                id: "openpiece-geaflow.job-detail.components.container.Close",
+                dm: "关闭",
+              })}
+            </Button>,
+          ]}
           onCancel={() => setVisible(false)}
         >
           <CodeMirror value={currentMessage.message} extensions={[json()]} />

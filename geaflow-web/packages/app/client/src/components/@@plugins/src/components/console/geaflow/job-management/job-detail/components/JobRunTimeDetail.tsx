@@ -5,6 +5,7 @@ import { getJobRuntimeList } from "../../../services/job-detail";
 import { JobName } from "./JobName";
 import moment from "moment";
 import styles from "../index.module.less";
+import $i18n from "../../../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -35,7 +36,10 @@ export const JobRunTimeDetail: React.FC<JobDetailsProps> = ({ jobItem }) => {
 
   const columns = [
     {
-      title: "Job名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobRunTimeDetail.JobName",
+        dm: "Job名称",
+      }),
       dataIndex: "name",
       key: "name",
       render: (text: string, record) => {
@@ -51,7 +55,10 @@ export const JobRunTimeDetail: React.FC<JobDetailsProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "开始时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobRunTimeDetail.StartTime",
+        dm: "开始时间",
+      }),
       dataIndex: "startTime",
       key: "startTime",
       defaultSortOrder: "descend",
@@ -64,7 +71,10 @@ export const JobRunTimeDetail: React.FC<JobDetailsProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "总耗时",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobRunTimeDetail.TotalTimeConsumption",
+        dm: "总耗时",
+      }),
       dataIndex: "duration",
       key: "duration",
       defaultSortOrder: "descend",
@@ -78,7 +88,12 @@ export const JobRunTimeDetail: React.FC<JobDetailsProps> = ({ jobItem }) => {
         <>
           <Breadcrumb>
             <Breadcrumb.Item>
-              <a onClick={() => setAction(null)}>Pipeline 列表</a>
+              <a onClick={() => setAction(null)}>
+                {$i18n.get({
+                  id: "openpiece-geaflow.job-detail.components.JobRunTimeDetail.PipelineList",
+                  dm: "Pipeline 列表",
+                })}
+              </a>
             </Breadcrumb.Item>
             <Breadcrumb.Item>{action.name}</Breadcrumb.Item>
           </Breadcrumb>

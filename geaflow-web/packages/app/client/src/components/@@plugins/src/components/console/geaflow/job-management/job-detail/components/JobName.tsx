@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import moment from "moment";
 import { getPipleinesCyclesByName } from "../../../services/job-detail";
 import styles from "../index.module.less";
+import $i18n from "../../../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -52,7 +53,10 @@ export const JobName: React.FC<JobJournalProps> = ({
     },
 
     {
-      title: "开始时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobName.StartTime",
+        dm: "开始时间",
+      }),
       dataIndex: "startTime",
       key: "startTime",
       width: 120,
@@ -73,7 +77,10 @@ export const JobName: React.FC<JobJournalProps> = ({
       hideInSearch: true,
     },
     {
-      title: "总耗时",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobName.TotalTimeConsumption",
+        dm: "总耗时",
+      }),
       dataIndex: "duration",
       key: "duration",
       hideInSearch: true,
@@ -82,7 +89,10 @@ export const JobName: React.FC<JobJournalProps> = ({
       sorter: (a, b) => a.duration - b.duration,
     },
     {
-      title: "平均耗时",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobName.AverageTimeConsumption",
+        dm: "平均耗时",
+      }),
       dataIndex: "avgExecuteTime",
       key: "avgExecuteTime",
       hideInSearch: true,
@@ -91,14 +101,20 @@ export const JobName: React.FC<JobJournalProps> = ({
       sorter: (a, b) => a.avgExecuteTime - b.avgExecuteTime,
     },
     {
-      title: "平均GC时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobName.AverageGcTime",
+        dm: "平均GC时间",
+      }),
       dataIndex: "avgGcTime",
       key: "avgGcTime",
       hideInSearch: true,
       width: 80,
     },
     {
-      title: "task个数",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobName.NumberOfTasks",
+        dm: "task个数",
+      }),
       dataIndex: "totalTasks",
       key: "totalTasks",
       width: 80,
@@ -123,7 +139,10 @@ export const JobName: React.FC<JobJournalProps> = ({
       ),
     },
     {
-      title: "最慢task(id/耗时)",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobName.SlowestTaskIdTimeConsuming",
+        dm: "最慢task(id/耗时)",
+      }),
       key: "avgExecuteTime",
       hideInSearch: true,
       width: 80,

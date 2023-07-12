@@ -6,6 +6,7 @@ import {
 } from "@ant-design/icons";
 import { Steps, Button, message, Form, Spin, Alert } from "antd";
 import { useOpenpieceUserAuth } from "@tugraph/openpiece-client";
+import { useTranslation } from "react-i18next";
 import { RuntimeConfig } from "./RuntimeConfig";
 import { CommonConfig } from "./CommonConfig";
 import {
@@ -39,58 +40,6 @@ const transformDataToArr = (configData: any = {}) => {
   return obj;
 };
 
-const transformDataToObject = (key: string, arrData: any) => {
-  const dataConfigObj = {};
-  for (const d of arrData.config) {
-    dataConfigObj[d.key] = d.type === "LONG" ? parseInt(d.value) : d.value;
-  }
-  const obj = {
-    ...defaultValues[key],
-    ...arrData,
-    config: dataConfigObj,
-  };
-  return obj;
-};
-
-const defaultValues = {
-  dataConfig: {
-    config: [],
-    category: "DATA",
-    name: "data-store-default",
-    comment: "默认数据存储",
-  },
-  runtimeClusterConfig: {
-    config: [],
-    category: "RUNTIME_CLUSTER",
-    name: "cluster-default",
-    comment: "默认集群",
-  },
-  runtimeMetaConfig: {
-    config: [],
-    category: "RUNTIME_META",
-    name: "runtime-meta-store-default",
-    comment: "默认运行时元数据存储",
-  },
-  remoteFileConfig: {
-    config: [],
-    category: "REMOTE_FILE",
-    name: "file-store-default",
-    comment: "默认文件存储",
-  },
-  metricConfig: {
-    config: [],
-    category: "METRIC",
-    name: "metric-store-default",
-    comment: "默认指标存储",
-  },
-  haMetaConfig: {
-    config: [],
-    category: "HA_META",
-    name: "ha-meta-store-default",
-    comment: "默认HA元数据存储",
-  },
-};
-
 interface RedirectPath {
   path: string;
   pathName: string;
@@ -104,6 +53,8 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
   const { switchRole, redirectLoginURL } = useOpenpieceUserAuth();
   const redirectUrl = redirectPath?.[0]?.path || "/";
 
+  const { t } = useTranslation();
+
   const cacheInstallValues = JSON.parse(
     localStorage.getItem("QUICK_INSTALL_PARAMS")
   );
@@ -113,6 +64,58 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
   const [deployMode, setDeployMode] = useState("LOCAL");
   const [configs, setConfigs] = useImmer({} as any);
   const [form] = Form.useForm();
+
+  const defaultValues = {
+    dataConfig: {
+      config: [],
+      category: "DATA",
+      name: "data-store-default",
+      comment: t("i18n.key.default.storage"),
+    },
+    runtimeClusterConfig: {
+      config: [],
+      category: "RUNTIME_CLUSTER",
+      name: "cluster-default",
+      comment: t("i18n.key.default.cluster"),
+    },
+    runtimeMetaConfig: {
+      config: [],
+      category: "RUNTIME_META",
+      name: "runtime-meta-store-default",
+      comment: t("i18n.key.runtime.storage"),
+    },
+    remoteFileConfig: {
+      config: [],
+      category: "REMOTE_FILE",
+      name: "file-store-default",
+      comment: t("i18n.key.file.storage"),
+    },
+    metricConfig: {
+      config: [],
+      category: "METRIC",
+      name: "metric-store-default",
+      comment: t("i18n.key.metric.storage"),
+    },
+    haMetaConfig: {
+      config: [],
+      category: "HA_META",
+      name: "ha-meta-store-default",
+      comment: t("i18n.key.metadata.storage"),
+    },
+  };
+
+  const transformDataToObject = (key: string, arrData: any) => {
+    const dataConfigObj = {};
+    for (const d of arrData.config) {
+      dataConfigObj[d.key] = d.type === "LONG" ? parseInt(d.value) : d.value;
+    }
+    const obj = {
+      ...defaultValues[key],
+      ...arrData,
+      config: dataConfigObj,
+    };
+    return obj;
+  };
 
   const getDefaultPluginCategoriesValue = async () => {
     const result = await getQuickInstallParams();
@@ -179,7 +182,7 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
 
   const steps = [
     {
-      title: "集群配置",
+      title: t("i18n.key.cluster.configuration"),
       status: "finish",
       icon: <UserOutlined />,
       content: (
@@ -187,18 +190,18 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
           prefixName="runtimeClusterConfig"
           values={runtimeClusterConfig}
           form={form}
-          tipsInfo="配置GeaFlow作业的默认运行时环境，推荐使用Kubernetes集群。单机部署模式下，你也可以选择Container模式体验本地运行环境。"
+          tipsInfo={t("i18n.key.cluster.config.tips")}
         />
       ),
     },
     {
-      title: "运行时配置",
+      title: t("Runtime Configuration"),
       status: "finish",
       icon: <SolutionOutlined />,
       content: <RuntimeConfig values={runtimeConfigData} form={form} />,
     },
     {
-      title: "数据存储配置",
+      title: t("i18n.key.storage.configuration"),
       status: "process",
       icon: <LoadingOutlined />,
       content: (
@@ -206,12 +209,12 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
           prefixName="dataConfig"
           values={dataConfig}
           form={form}
-          tipsInfo="配置GeaFLow作业默认数据存储，用于保存图数据信息。单机部署模式下，你可以选择Local模式使用本地磁盘存储数据。"
+          tipsInfo={t("i18n.key.data.store.config.tips")}
         />
       ),
     },
     {
-      title: "文件存储配置",
+      title: t("i18n.key.file.configuration"),
       status: "process",
       icon: <LoadingOutlined />,
       content: (
@@ -219,7 +222,7 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
           prefixName="remoteFileConfig"
           values={remoteFileConfig}
           form={form}
-          tipsInfo="配置GeaFlow作业默认文件存储，用于保存GeaFlow引擎版本JAR包、用户JAR包等。单机部署模式下，你可以选择Local模式使用本地磁盘存储文件。"
+          tipsInfo={t("i18n.key.file.store.config.tips")}
         />
       ),
     },
@@ -319,11 +322,11 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
     const result = await quickInstallInstance(installParams);
     setLoading(false);
     if (result.code !== "SUCCESS") {
-      message.error(`安装失败：${result.message}`);
+      message.error(`${t("i18n.key.installation.failed")}：${result.message}`);
       return;
     }
     // 安装成功，则后端会切换角色，前端隐藏掉一键安装的页面
-    message.success("安装成功");
+    message.success(t("i18n.key.installation.succeeded"));
     // 安装成功后删除缓存
     localStorage.removeItem("QUICK_INSTALL_PARAMS");
 
@@ -332,7 +335,7 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
 
     if (resp.code !== "SUCCESS") {
       // 切换用户角色失败
-      message.error(`切换用户角色失败: ${resp.message}`);
+      message.error(`${t("i18n.key.switch.roles")}: ${resp.message}`);
       return;
     }
 
@@ -349,8 +352,8 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
       <Alert
         message={
           deployMode === "CLUSTER"
-            ? "当前为集群部署模式。"
-            : "当前为单机部署模式。"
+            ? t("i18n.key.cluster.deploy.tips")
+            : t("i18n.key.local.deploy.tips")
         }
         type="info"
         style={{ marginBottom: 24 }}
@@ -366,17 +369,17 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
         <div className="steps-action">
           {current > 0 && (
             <Button style={{ margin: "0 8px" }} onClick={() => prev()}>
-              上一步
+              {t("i18n.key.previous")}
             </Button>
           )}
           {current < steps.length - 1 && (
             <Button type="primary" onClick={() => next()}>
-              下一步
+              {t("i18n.key.next")}
             </Button>
           )}
           {current === steps.length - 1 && !hasExecQuickInstall && (
             <Button type="primary" onClick={startInstall} loading={loading}>
-              一键安装
+              {t("i18n.key.install")}
             </Button>
           )}
         </div>

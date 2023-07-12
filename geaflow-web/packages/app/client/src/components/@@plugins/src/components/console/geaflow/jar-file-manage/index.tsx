@@ -3,6 +3,7 @@ import { Tooltip, Input, Space, Table } from "antd";
 import { getRemoteFiles, getRemoteFileId } from "../services/file-manage";
 import { AddTemplateModal } from "./uploadModal";
 import styles from "./list.module.less";
+import $i18n from "../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -24,7 +25,10 @@ export const GeaflowJarfileManage: React.FC<{}> = ({}) => {
   }, [temeplateList.search]);
   const columns = [
     {
-      title: "文件名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.FileName",
+        dm: "文件名称",
+      }),
       dataIndex: "name",
       key: "name",
       width: 150,
@@ -76,31 +80,68 @@ export const GeaflowJarfileManage: React.FC<{}> = ({}) => {
       ),
     },
     {
-      title: "操作人",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.Operator",
+        dm: "操作人",
+      }),
       key: "creatorName",
       width: 150,
       render: (_, record: any) => (
         <span>
-          创建人：{record.creatorName} <br />
-          {record?.modifierName && <span>修改人：{record.modifierName}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.jar-file-manage.Creator",
+            dm: "创建人：",
+          })}
+          {record.creatorName} <br />
+          {record?.modifierName && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.jar-file-manage.ModifiedByRecordmodifiername",
+                  dm: "修改人：{recordModifierName}",
+                },
+                { recordModifierName: record.modifierName }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.OperationTime",
+        dm: "操作时间",
+      }),
       key: "createTime",
-      width: 300,
+      width: 250,
       render: (_, record: any) => (
         <span>
-          创建时间：{record.createTime} <br />
-          {record?.modifyTime && <span>修改时间：{record.modifyTime}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.jar-file-manage.CreationTime",
+            dm: "创建时间：",
+          })}
+          {record.createTime} <br />
+          {record?.modifyTime && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.jar-file-manage.ModificationTimeRecordmodifytime",
+                  dm: "修改时间：{recordModifyTime}",
+                },
+                { recordModifyTime: record.modifyTime }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.Operation",
+        dm: "操作",
+      }),
       key: "action",
-      width: 80,
+      width: 130,
       render: (_, record) => (
         <Space>
           <a
@@ -108,7 +149,10 @@ export const GeaflowJarfileManage: React.FC<{}> = ({}) => {
               getRemoteFileId(record?.id);
             }}
           >
-            下载
+            {$i18n.get({
+              id: "openpiece-geaflow.geaflow.jar-file-manage.Download",
+              dm: "下载",
+            })}
           </a>
           <a
             onClick={() => {
@@ -119,22 +163,44 @@ export const GeaflowJarfileManage: React.FC<{}> = ({}) => {
               });
             }}
           >
-            上传
+            {$i18n.get({
+              id: "openpiece-geaflow.geaflow.jar-file-manage.Upload",
+              dm: "上传",
+            })}
           </a>
         </Space>
       ),
     },
   ];
+
   return (
     <div className={styles["file-manage"]}>
-      <div className={styles["file-search"]}>
-        <Search
-          style={{ width: 286, marginRight: 16 }}
-          placeholder="请输入搜索关键词"
-          onSearch={(value) => {
-            setTemplateList({ ...temeplateList, search: value });
-          }}
-        />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ fontWeight: 500, fontSize: 16 }}>
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.jar-file-manage.FilesList",
+            dm: "文件列表",
+          })}
+        </div>
+        <div>
+          <Search
+            style={{ width: 286, marginRight: 16 }}
+            placeholder={$i18n.get({
+              id: "openpiece-geaflow.geaflow.jar-file-manage.EnterASearchKeyword",
+              dm: "请输入搜索关键词",
+            })}
+            onSearch={(value) => {
+              setTemplateList({ ...temeplateList, search: value });
+            }}
+          />
+        </div>
       </div>
       <Table
         dataSource={temeplateList.manageData}
@@ -145,6 +211,7 @@ export const GeaflowJarfileManage: React.FC<{}> = ({}) => {
           size: "small",
         }}
       />
+
       {/* 新增 */}
       <AddTemplateModal
         isAddMd={temeplateList.isAddMd}

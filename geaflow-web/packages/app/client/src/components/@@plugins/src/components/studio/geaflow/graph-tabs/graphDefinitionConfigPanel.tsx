@@ -18,6 +18,7 @@ import {
 } from "../services/graphDefinition";
 import { isEmpty } from "lodash";
 import { useImmer } from "use-immer";
+import $i18n from "../../../../../../i18n";
 
 interface IProps {
   prefixName: string;
@@ -48,6 +49,7 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
 
   const [typeValue, setTypeValue] = useState<string>("");
   const inputRef = useRef<InputRef>(null);
+  const inputType = form.getFieldValue([prefixName, "type"]);
 
   const getPluginCategoriesValue = async (value: string) => {
     const result = await getPluginCategoriesByType(value);
@@ -156,24 +158,44 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     }
   }, [DEFAULT_CATEGORY[prefixName]]);
 
+  const handleType = async (name, value) => {
+    const result = await getPluginCategoriesConfig(name, value);
+    if (result.code === "SUCCESS") {
+      const currentConfigList = result.data.map((d) => {
+        return {
+          label: d.comment,
+          value: d.key,
+          required: d.required,
+          type: d.type,
+          defaultValue: d.defaultValue,
+          masked: d.masked,
+        };
+      });
+      setState((draft) => {
+        draft.configList = currentConfigList;
+        draft.originConfigList = currentConfigList;
+      });
+    }
+  };
+
   useEffect(() => {
     const configList = form.getFieldValue(prefixName);
     if (
       DEFAULT_CATEGORY[prefixName] &&
-      form.getFieldValue([prefixName, "type"]) &&
+      inputType &&
+      !isEmpty(configList?.config)
+    ) {
+      handleType(DEFAULT_CATEGORY[prefixName], inputType);
+    }
+    if (
+      DEFAULT_CATEGORY[prefixName] &&
+      inputType &&
       !typeValue &&
       isEmpty(configList?.config)
     ) {
-      getPluginConfigList(
-        DEFAULT_CATEGORY[prefixName],
-        form.getFieldValue([prefixName, "type"])
-      );
+      getPluginConfigList(DEFAULT_CATEGORY[prefixName], inputType);
     }
-  }, [
-    DEFAULT_CATEGORY[prefixName],
-    form.getFieldValue([prefixName, "type"]),
-    typeValue,
-  ]);
+  }, [DEFAULT_CATEGORY[prefixName], inputType, typeValue]);
 
   const handleChangeConfig = (value: string) => {
     const currentConfig = state.configList.find((d) => d.value === value);
@@ -227,7 +249,12 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
       (d) => d.value === state.customItemName
     );
     if (hasItem) {
-      message.error("不允许添加重复的key");
+      message.error(
+        $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.DuplicateKeysAreNotAllowed",
+          dm: "不允许添加重复的key",
+        })
+      );
       return;
     }
     setState((draft) => {
@@ -238,6 +265,7 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
           value: state.customItemName,
         },
       ];
+
       draft.customItemName = "";
     });
     setTimeout(() => {
@@ -282,7 +310,14 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
 
   return (
     <>
-      <Form.Item name={[prefixName, "type"]} label="类型" required={true}>
+      <Form.Item
+        name={[prefixName, "type"]}
+        label={$i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.Type",
+          dm: "类型",
+        })}
+        required={true}
+      >
         <Select
           style={{ width: 450 }}
           disabled={readonly}
@@ -293,7 +328,12 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
           })}
         </Select>
       </Form.Item>
-      <Form.Item label="配置">
+      <Form.Item
+        label={$i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.Configuration",
+          dm: "配置",
+        })}
+      >
         <Form.List name={[prefixName, "config"]}>
           {(fields, { add, remove }) => (
             <>
@@ -306,7 +346,15 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                   <Form.Item
                     {...restField}
                     name={[name, "key"]}
-                    rules={[{ required: true, message: "该参数必选" }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: $i18n.get({
+                          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.Required",
+                          dm: "该参数必选",
+                        }),
+                      },
+                    ]}
                   >
                     <Select
                       style={{ width: 450 }}
@@ -318,17 +366,24 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                           <Divider style={{ margin: "8px 0" }} />
                           <Space style={{ padding: "0 8px 4px" }}>
                             <Input
-                              placeholder="请输入自定义key"
+                              placeholder={$i18n.get({
+                                id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.EnterACustomKey",
+                                dm: "请输入自定义key",
+                              })}
                               ref={inputRef}
                               value={state.customItemName}
                               onChange={onNameChange}
                             />
+
                             <Button
                               type="text"
                               icon={<PlusOutlined />}
                               onClick={addItem}
                             >
-                              自定义
+                              {$i18n.get({
+                                id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.Custom",
+                                dm: "自定义",
+                              })}
                             </Button>
                           </Space>
                         </>
@@ -357,7 +412,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                         required:
                           form.getFieldsValue()[prefixName]?.config[index]
                             .required,
-                        message: "请输入参数值",
+                        message: $i18n.get({
+                          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.EnterAParameterValue",
+                          dm: "请输入参数值",
+                        }),
                       },
                     ]}
                   >
@@ -370,7 +428,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                     ) : (
                       <Input
                         disabled={readonly}
-                        placeholder="请输入属性值"
+                        placeholder={$i18n.get({
+                          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.EnterAnAttributeValue",
+                          dm: "请输入属性值",
+                        })}
                         style={{ width: 350 }}
                       />
                     )}
@@ -391,7 +452,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                     block
                     icon={<PlusOutlined />}
                   >
-                    添加配置项
+                    {$i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefinitionConfigPanel.AddAConfigurationItem",
+                      dm: "添加配置项",
+                    })}
                   </Button>
                 </Form.Item>
               )}

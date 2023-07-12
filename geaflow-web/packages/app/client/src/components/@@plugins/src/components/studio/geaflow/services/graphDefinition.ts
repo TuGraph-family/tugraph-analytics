@@ -1,6 +1,7 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
+import $i18n from "../../../../../../i18n";
 
 interface GraphDefinitionParams {
   instanceName: string;
@@ -18,9 +19,6 @@ export const getGraphDefinitionList = async (params: GraphDefinitionParams) => {
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs`,
     {
       method: "get",
-      headers: {
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       params: others,
     }
   );
@@ -43,14 +41,19 @@ export const deleteGraphDefinition = async (
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs/${graphName}`,
     {
       method: "delete",
-      headers: {
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 
   if (!response?.success) {
-    message.error(`删除失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.function-manage.FailedToDeleteResponsemessage",
+          dm: "删除失败：{responseMessage}",
+        },
+        { responseMessage: response?.message }
+      )
+    );
     return [];
   }
   return response;
@@ -66,10 +69,6 @@ export const getPluginCategoriesByType = (type: string) => {
     `${HTTP_SERVICE_URL}/api/config/plugin/categories/${type}/types`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 };
@@ -79,10 +78,6 @@ export const getPluginCategoriesConfig = (type: string, value: string) => {
     `${HTTP_SERVICE_URL}/api/config/plugin/categories/${type}/types/${value}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 };
@@ -120,10 +115,6 @@ export const createGraphDefinition = (
 ) => {
   return request(`${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     data: params,
   });
 };
@@ -143,10 +134,6 @@ export const updateGraphDefinition = (
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs/${graphName}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       data: params,
     }
   );

@@ -6,6 +6,7 @@ import {
 } from "../services/graphDefinition";
 import { GraphDefintionTab } from "../graph-tabs";
 import styles from "./list.module.less";
+import $i18n from "../../../../../../i18n";
 
 const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
@@ -103,9 +104,22 @@ const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
       setIsLoading(false);
 
       if (updateResult.code !== "SUCCESS") {
-        message.error(`更新图定义失败：${updateResult.message}`);
+        message.error(
+          $i18n.get(
+            {
+              id: "openpiece-geaflow.geaflow.graph-definition.create.FailedToUpdateTheGraph",
+              dm: "更新图定义失败：{updateResultMessage}",
+            },
+            { updateResultMessage: updateResult.message }
+          )
+        );
       } else {
-        message.success("更新图定义成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.graph-definition.create.TheGraphDefinitionHasBeen",
+            dm: "更新图定义成功",
+          })
+        );
         if (toBackList) {
           toBackList({
             visible: false,
@@ -130,9 +144,22 @@ const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
     setIsLoading(false);
 
     if (result.code !== "SUCCESS") {
-      message.error(`创建图定义失败：${result.message}`);
+      message.error(
+        $i18n.get(
+          {
+            id: "openpiece-geaflow.geaflow.graph-definition.create.FailedToCreateAGraph",
+            dm: "创建图定义失败：{resultMessage}",
+          },
+          { resultMessage: result.message }
+        )
+      );
     } else {
-      message.success("创建图定义成功");
+      message.success(
+        $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-definition.create.TheGraphIsDefined",
+          dm: "创建图定义成功",
+        })
+      );
       if (toBackList) {
         toBackList({
           visible: false,
@@ -187,28 +214,71 @@ const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
   return (
     <div className={styles["graph-definition"]}>
       <p className={styles["add-title"]}>
-        {editable ? "编辑图定义" : readonly ? "图定义详情" : "新增图定义"}
+        {editable
+          ? $i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.create.EditGraphDefinition",
+              dm: "编辑图定义",
+            })
+          : readonly
+          ? $i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.create.FigureDefinitionDetails",
+              dm: "图定义详情",
+            })
+          : $i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.create.AddAGraphDefinition",
+              dm: "新增图定义",
+            })}
       </p>
       <Form form={form} layout="vertical" initialValues={defaultFormValues}>
-        <Card title="基本信息" className={styles["add-col"]} type="inner">
+        <Card
+          title={$i18n.get({
+            id: "openpiece-geaflow.geaflow.graph-definition.create.BasicInformation",
+            dm: "基本信息",
+          })}
+          className={styles["add-col"]}
+          type="inner"
+        >
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
-                label="图名称"
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-definition.create.GraphName",
+                  dm: "图名称",
+                })}
                 name="name"
-                rules={[{ required: true, message: "请输入图名称" }]}
+                rules={[
+                  {
+                    required: true,
+                    message: $i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-definition.create.EnterAMapName",
+                      dm: "请输入图名称",
+                    }),
+                  },
+                ]}
               >
                 <Input disabled={readonly} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="所属实例" name="instanceName">
+              <Form.Item
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-definition.create.Instance",
+                  dm: "所属实例",
+                })}
+                name="instanceName"
+              >
                 <p>{instanceName}</p>
               </Form.Item>
             </Col>
 
             <Col span={24}>
-              <Form.Item label="图描述" name="comment">
+              <Form.Item
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-definition.create.FigureDescription",
+                  dm: "图描述",
+                })}
+                name="comment"
+              >
                 <Input.TextArea rows={1} disabled={readonly} />
               </Form.Item>
             </Col>
@@ -217,9 +287,30 @@ const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
 
         <GraphDefintionTab
           tabsList={[
-            { name: "点定义", type: "VERTEX", editTables: [] },
-            { name: "边定义", type: "EDGE", editTables: [] },
-            { name: "参数配置", type: "paramConfig", editTables: [] },
+            {
+              name: $i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.create.PointDefinition",
+                dm: "点定义",
+              }),
+              type: "VERTEX",
+              editTables: [],
+            },
+            {
+              name: $i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.create.EdgeDefinition",
+                dm: "边定义",
+              }),
+              type: "EDGE",
+              editTables: [],
+            },
+            {
+              name: $i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.create.ParameterConfiguration",
+                dm: "参数配置",
+              }),
+              type: "paramConfig",
+              editTables: [],
+            },
           ]}
           form={form}
           currentItem={currentItem}
@@ -230,7 +321,10 @@ const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
         {(!readonly || editable) && (
           <div className={styles["definition-bottom"]}>
             <Button className={styles["bottom-btn"]} onClick={handleCancel}>
-              取消
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.create.Cancel",
+                dm: "取消",
+              })}
             </Button>
             <Button
               className={styles["bottom-btn"]}
@@ -239,7 +333,10 @@ const GraphDefinition = ({ currentItem, toBackList, readonly, editable }) => {
               onClick={onSave}
               loading={isLoading}
             >
-              提交
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.create.Submit",
+                dm: "提交",
+              })}
             </Button>
           </div>
         )}

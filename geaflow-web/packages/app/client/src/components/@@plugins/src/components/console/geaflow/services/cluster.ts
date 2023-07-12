@@ -1,19 +1,24 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
+import $i18n from "../../../../../../i18n";
 
 export const getClustersList = async (params: any) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/clusters`, {
     method: "get",
-    headers: {
-      "Content-Type": "application/json",
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     params: params,
   });
 
   if (!response?.success) {
-    message.error(`查询失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.file-manage.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response?.message }
+      )
+    );
     return [];
   }
   return response?.data.list;
@@ -22,10 +27,6 @@ export const getClustersList = async (params: any) => {
 export const updateClusters = (clusterName: string, params: any) => {
   return request(`${HTTP_SERVICE_URL}/api/clusters/${clusterName}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     data: params,
   });
 };
@@ -35,14 +36,19 @@ export const deleteClusters = async (clusterName: string) => {
     `${HTTP_SERVICE_URL}/api/clusters/${clusterName}`,
     {
       method: "delete",
-      headers: {
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 
   if (!response?.success) {
-    message.error(`删除失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.function-manage.FailedToDeleteResponsemessage",
+          dm: "删除失败：{responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -51,15 +57,19 @@ export const deleteClusters = async (clusterName: string) => {
 export const createCluster = async (params) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/clusters`, {
     method: "post",
-    headers: {
-      "Content-Type": "application/json",
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     data: params,
   });
 
   if (!response?.success) {
-    message.error(`创建集群失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.use-manage.FailedToAddResponsemessage",
+          dm: "新增失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return null;
   }
   return response?.data;

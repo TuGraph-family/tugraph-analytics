@@ -119,6 +119,7 @@ bazel-*
 upload.sh
 lib
 venv
+/files
 
 *.log
 version.txt

@@ -5,6 +5,7 @@ import moment from "moment";
 import { getJobOffsetList } from "../../../services/job-detail";
 import { convertMillisecondsToHMS } from "../../../util";
 import styles from "../index.module.less";
+import $i18n from "../../../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -36,12 +37,18 @@ export const JobOffSet: React.FC<JobMetricProps> = ({ jobItem }) => {
 
   const columns = [
     {
-      title: "Partition名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobOffSet.PartitionName",
+        dm: "Partition名称",
+      }),
       dataIndex: "partitionName",
       key: "partitionName",
     },
     {
-      title: "延时",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobOffSet.Latency",
+        dm: "延时",
+      }),
       dataIndex: "offsetDiff",
       render: (text: number, record) => {
         if (record.type === "TIMESTAMP") {
@@ -51,7 +58,10 @@ export const JobOffSet: React.FC<JobMetricProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "Offset (数据源时间)",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobOffSet.OffsetDataSourceTime",
+        dm: "Offset (数据源时间)",
+      }),
       dataIndex: "offset",
       key: "offset",
       render: (text: number, record) => {
@@ -62,7 +72,10 @@ export const JobOffSet: React.FC<JobMetricProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "更新时间 (服务器时间)",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobOffSet.UpdateTimeServerTime",
+        dm: "更新时间 (服务器时间)",
+      }),
       dataIndex: "writeTime",
       render: (text: number) => {
         if (!text) {

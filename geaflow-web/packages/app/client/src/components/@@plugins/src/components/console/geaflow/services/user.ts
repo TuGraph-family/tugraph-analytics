@@ -1,4 +1,4 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from '../constants'
 
 /**

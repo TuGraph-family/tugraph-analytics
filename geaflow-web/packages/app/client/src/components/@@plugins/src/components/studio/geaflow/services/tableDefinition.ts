@@ -1,6 +1,7 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
+import $i18n from "../../../../../../i18n";
 
 interface GraphDefinitionParams {
   instanceName: string;
@@ -17,9 +18,6 @@ export const getTableDefinitionList = async (params: GraphDefinitionParams) => {
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/tables`,
     {
       method: "get",
-      headers: {
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       params: others,
     }
   );
@@ -42,14 +40,19 @@ export const deleteTableDefinition = async (
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/tables/${tableName}`,
     {
       method: "delete",
-      headers: {
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 
   if (!response?.success) {
-    message.error(`删除失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.function-manage.FailedToDeleteResponsemessage",
+          dm: "删除失败：{responseMessage}",
+        },
+        { responseMessage: response?.message }
+      )
+    );
     return [];
   }
   return response;
@@ -64,10 +67,6 @@ export const deleteTableDefinition = async (
 export const createTableDefinition = (instanceName: string, params: any) => {
   return request(`${HTTP_SERVICE_URL}/api/instances/${instanceName}/tables`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
     data: params,
   });
 };
@@ -87,10 +86,6 @@ export const updateTableDefinition = (
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/tables/${tableName}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       data: params,
     }
   );
