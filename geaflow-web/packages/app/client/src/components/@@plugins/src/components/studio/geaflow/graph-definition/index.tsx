@@ -14,6 +14,7 @@ import {
 } from "../services/graphDefinition";
 import CreateGraphDefinition from "./create";
 import styles from "./list.module.less";
+import $i18n from "../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -59,7 +60,10 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
 
   const columns = [
     {
-      title: "图名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-definition.GraphName",
+        dm: "图名称",
+      }),
       dataIndex: "name",
       key: "name",
       render: (_, record: any) => (
@@ -88,27 +92,64 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
       ),
     },
     {
-      title: "操作人",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-definition.Operator",
+        dm: "操作人",
+      }),
       key: "creatorName",
       render: (_, record: any) => (
         <span>
-          创建人：{record.creatorName} <br />
-          {record?.modifierName && <span>修改人：{record.modifierName}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.graph-definition.Creator",
+            dm: "创建人：",
+          })}
+          {record.creatorName} <br />
+          {record?.modifierName && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.graph-definition.ModifiedByRecordmodifiername",
+                  dm: "修改人：{recordModifierName}",
+                },
+                { recordModifierName: record.modifierName }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-definition.OperationTime",
+        dm: "操作时间",
+      }),
       key: "createTime",
       render: (_, record: any) => (
         <span>
-          创建时间：{record.createTime} <br />
-          {record?.modifyTime && <span>修改时间：{record.modifyTime}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.graph-definition.CreationTime",
+            dm: "创建时间：",
+          })}
+          {record.createTime} <br />
+          {record?.modifyTime && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.graph-definition.ModificationTimeRecordmodifytime",
+                  dm: "修改时间：{recordModifyTime}",
+                },
+                { recordModifyTime: record.modifyTime }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-definition.Operation",
+        dm: "操作",
+      }),
 
       render: (_, record) => (
         <Space>
@@ -123,22 +164,44 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
               })
             }
           >
-            编辑
+            {$i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.Edit",
+              dm: "编辑",
+            })}
           </a>
           <Popconfirm
-            title="确认删除？"
+            title={$i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.AreYouSureYouWant",
+              dm: "确认删除？",
+            })}
             onConfirm={() => {
               deleteGraphDefinition(instanceName, record?.name).then((res) => {
                 if (res?.success) {
-                  message.success("删除成功");
+                  message.success(
+                    $i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-definition.DeletedSuccessfully",
+                      dm: "删除成功",
+                    })
+                  );
                   handelTemplata();
                 }
               });
             }}
-            okText="确定"
-            cancelText="取消"
+            okText={$i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.Ok",
+              dm: "确定",
+            })}
+            cancelText={$i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-definition.Cancel",
+              dm: "取消",
+            })}
           >
-            <a>删除</a>
+            <a>
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.Delete",
+                dm: "删除",
+              })}
+            </a>
           </Popconfirm>
         </Space>
       ),
@@ -168,15 +231,27 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
                   })
                 }
               >
-                图定义
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-definition.Graphs",
+                  dm: "图定义",
+                })}
               </a>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
               {showCreatePage.editable
-                ? "编辑图定义"
+                ? $i18n.get({
+                    id: "openpiece-geaflow.geaflow.graph-definition.EditGraphDefinition",
+                    dm: "编辑图定义",
+                  })
                 : showCreatePage.readonly
-                ? "图定义详情"
-                : "新增图定义"}
+                ? $i18n.get({
+                    id: "openpiece-geaflow.geaflow.graph-definition.FigureDefinitionDetails",
+                    dm: "图定义详情",
+                  })
+                : $i18n.get({
+                    id: "openpiece-geaflow.geaflow.graph-definition.AddAGraphDefinition",
+                    dm: "新增图定义",
+                  })}
             </Breadcrumb.Item>
           </Breadcrumb>
           <CreateGraphDefinition
@@ -189,20 +264,37 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
       ) : (
         <div className={styles["definition"]}>
           <p>
-            <span className={styles["definition-title"]}>图定义</span>
+            <span className={styles["definition-title"]}>
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.GraphDefinition",
+                dm: "图定义",
+              })}
+            </span>
             <span className={styles["meaing"]}>
-              定义图计算任务依赖的图结构。
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.DefinesTheGraphStructureOn",
+                dm: "定义图计算任务依赖的图结构。",
+              })}
             </span>
           </p>
           <div className={styles["definition-table"]}>
             <div className={styles["definition-header"]}>
-              <div className={styles["title"]}>图定义列表</div>
+              <div className={styles["title"]}>
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-definition.GraphDefinitionList",
+                  dm: "图定义列表",
+                })}
+              </div>
               <div>
                 <Search
                   style={{ width: 286, marginRight: 16 }}
-                  placeholder="请输入搜索关键词"
+                  placeholder={$i18n.get({
+                    id: "openpiece-geaflow.geaflow.graph-definition.EnterASearchKeyword",
+                    dm: "请输入搜索关键词",
+                  })}
                   onSearch={handleSearch}
                 />
+
                 <Button
                   type="primary"
                   onClick={() =>
@@ -215,7 +307,10 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
                     })
                   }
                 >
-                  新增
+                  {$i18n.get({
+                    id: "openpiece-geaflow.geaflow.graph-definition.Add",
+                    dm: "新增",
+                  })}
                 </Button>
               </div>
             </div>

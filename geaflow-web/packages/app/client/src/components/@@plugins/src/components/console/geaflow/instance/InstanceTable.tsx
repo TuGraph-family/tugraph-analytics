@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Button, message, Input } from "antd";
+import { Button, message, Input, Table } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import type { ActionType } from "@ant-design/pro-components";
 import { ProTable } from "@ant-design/pro-components";
 import { queryInstanceList } from "../services/instance";
 import { AddInstanceModal } from "./InstanceModals";
 import type { InstanceTableProps } from "./interface";
-import { isEmpty } from "lodash";
 import styles from "./list.module.less";
+import $i18n from "../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -30,7 +30,15 @@ export const InstanceTable: React.FC<InstanceTableProps> = ({ form }) => {
     });
 
     if (result.code !== "SUCCESS") {
-      message.error(`查询实例失败：${result.message}`);
+      message.error(
+        $i18n.get(
+          {
+            id: "openpiece-geaflow.geaflow.instance.InstanceTable.FailedToQueryTheInstance",
+            dm: "查询实例失败：{resultMessage}",
+          },
+          { resultMessage: result.message }
+        )
+      );
       return;
     }
 
@@ -52,7 +60,10 @@ export const InstanceTable: React.FC<InstanceTableProps> = ({ form }) => {
 
   const columns = [
     {
-      title: "实例名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.instance.InstanceTable.InstanceName",
+        dm: "实例名称",
+      }),
       dataIndex: "name",
       key: "name",
       render: (_, record: any) => (
@@ -69,27 +80,64 @@ export const InstanceTable: React.FC<InstanceTableProps> = ({ form }) => {
       ),
     },
     {
-      title: "操作人",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.instance.InstanceTable.Operator",
+        dm: "操作人",
+      }),
       key: "creatorName",
       render: (_, record: any) => (
         <span>
-          创建人：{record.creatorName} <br />
-          {record?.modifierName && <span>修改人：{record.modifierName}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.instance.InstanceTable.Creator",
+            dm: "创建人：",
+          })}
+          {record.creatorName} <br />
+          {record?.modifierName && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.instance.InstanceTable.ModifiedByRecordmodifiername",
+                  dm: "修改人：{recordModifierName}",
+                },
+                { recordModifierName: record.modifierName }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.instance.InstanceTable.OperationTime",
+        dm: "操作时间",
+      }),
       key: "createTime",
       render: (_, record: any) => (
         <span>
-          创建时间：{record.createTime} <br />
-          {record?.modifyTime && <span>修改时间：{record.modifyTime}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.instance.InstanceTable.CreationTime",
+            dm: "创建时间：",
+          })}
+          {record.createTime} <br />
+          {record?.modifyTime && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.instance.InstanceTable.ModificationTimeRecordmodifytime",
+                  dm: "修改时间：{recordModifyTime}",
+                },
+                { recordModifyTime: record.modifyTime }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.instance.InstanceTable.Operation",
+        dm: "操作",
+      }),
       key: "action",
       hideInSearch: true,
       render: (_, record) => {
@@ -100,48 +148,60 @@ export const InstanceTable: React.FC<InstanceTableProps> = ({ form }) => {
               setItemData(record);
             }}
           >
-            编辑
+            {$i18n.get({
+              id: "openpiece-geaflow.geaflow.instance.InstanceTable.Edit",
+              dm: "编辑",
+            })}
           </a>
         );
       },
     },
   ];
+
   return (
     <div className={styles["example-table"]}>
-      <ProTable
-        columns={columns}
-        actionRef={actionRef}
-        cardBordered
-        dataSource={instanceData.list}
-        rowKey="id"
-        search={false}
-        scroll={{ x: 1000 }}
-        pagination={{
-          showQuickJumper: true,
-          hideOnSinglePage: true,
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
         }}
-        dateFormatter="string"
-        options={false}
-        toolBarRender={() => [
-          <p
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+      >
+        <div style={{ fontWeight: 500, fontSize: 16 }}>
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.instance.InstanceTable.InstancesList",
+            dm: "实例列表",
+          })}
+        </div>
+        <div>
+          <Search
+            style={{ width: 286, marginRight: 16 }}
+            placeholder={$i18n.get({
+              id: "openpiece-geaflow.geaflow.instance.InstanceTable.EnterASearchKeyword",
+              dm: "请输入搜索关键词",
+            })}
+            onSearch={(value) => {
+              setInstanceData({ ...instanceData, name: value });
             }}
-          >
-            <Search
-              style={{ width: 286, marginRight: 16 }}
-              placeholder="请输入搜索关键词"
-              onSearch={(value) => {
-                setInstanceData({ ...instanceData, name: value });
-              }}
-            />
-            <Button key="button" type="primary" onClick={showCreateModal}>
-              新增
-            </Button>
-          </p>,
-        ]}
+          />
+
+          <Button key="button" type="primary" onClick={showCreateModal}>
+            {$i18n.get({
+              id: "openpiece-geaflow.geaflow.instance.InstancesTable.Add",
+              dm: "新增",
+            })}
+          </Button>
+        </div>
+      </div>
+      <Table
+        columns={columns}
+        dataSource={instanceData.list}
+        pagination={{
+          hideOnSinglePage: true,
+          showQuickJumper: true,
+          size: "small",
+        }}
       />
 
       {/* 编辑 */}

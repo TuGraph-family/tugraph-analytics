@@ -1,15 +1,22 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from "react";
-import { DownOutlined } from "@ant-design/icons";
+import {
+  DownOutlined,
+  GlobalOutlined,
+  UserSwitchOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import { Button, Dropdown, Space, Menu, Tag } from "antd";
 import cx from "classnames";
+import { useTranslation } from "react-i18next";
 import { useOpenpieceUserAuth } from "@tugraph/openpiece-client";
 import cls from "./index.less";
 import { useAuth } from "../hooks/useAuth";
 import { queryInstanceList } from "../services/instance";
 import { switchUserRole } from "../services/quickInstall";
 import { isNull } from "lodash";
+import i18n from "../../../../../../i18n";
 
 interface PluginPorps {
   redirectPath?: RedirectPath[];
@@ -23,6 +30,8 @@ interface RedirectPath {
 export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
   const { redirectLoginURL, switchRole } = useOpenpieceUserAuth();
   const redirectUrl = "/";
+
+  const { t } = useTranslation();
 
   const isAdminLogin = localStorage.getItem("IS_GEAFLOW_ADMIN");
   const [state, setState] = useState({
@@ -130,7 +139,9 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
         });
       } else {
         localStorage.setItem("IS_GEAFLOW_ADMIN", "true");
-        const clusterURL = redirectPath?.find((d) => d.pathName === "集群管理");
+        const clusterURL = redirectPath?.find(
+          (d) => d.pathName === '"集群管理"'
+        );
 
         // Openpiece 角色切换为 admin
         switchRole("admin", clusterURL?.path || redirectUrl);
@@ -142,14 +153,56 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
     }
   };
 
+  useEffect(() => {
+    // 首次进入页面，如果没有设置过语言，则默认设置为中文
+    const currentLanguage = localStorage.getItem("i18nextLng");
+    if (!currentLanguage) {
+      const defaultLanguage =
+        navigator.language === ("en" || "en-US") ? "en-US" : "zh-CN";
+      handleSwitchLanguage(defaultLanguage);
+    }
+  }, []);
+
+  const handleSwitchLanguage = (value: string) => {
+    // 切换语言
+    localStorage.setItem("i18nextLng", value);
+    i18n.change(value);
+    location.reload();
+  };
+
   const items = (
     <Menu>
       {state.isAdminLogin ? (
-        <Menu.Item onClick={handleSwitchRole}>进入租户模式</Menu.Item>
+        <Menu.Item onClick={handleSwitchRole}>
+          <UserSwitchOutlined style={{ marginRight: 8 }} />
+          {t("i18n.key.tenant.mode")}
+        </Menu.Item>
       ) : (
-        <Menu.Item onClick={handleSwitchRole}>进入系统模式</Menu.Item>
+        <Menu.Item onClick={handleSwitchRole}>
+          <UserSwitchOutlined style={{ marginRight: 8 }} />
+          {t("i18n.key.system.mode")}
+        </Menu.Item>
       )}
-      <Menu.Item onClick={handleLogout}>注销</Menu.Item>
+
+      <Menu.SubMenu
+        title={
+          <>
+            <GlobalOutlined style={{ marginRight: 8 }} />
+            {t("i18n.key.switch.language")}
+          </>
+        }
+      >
+        <Menu.Item onClick={() => handleSwitchLanguage("zh-CN")}>
+          {t("i18n.key.chinese")}
+        </Menu.Item>
+        <Menu.Item onClick={() => handleSwitchLanguage("en-US")}>
+          {t("i18n.key.English")}
+        </Menu.Item>
+      </Menu.SubMenu>
+      <Menu.Item onClick={handleLogout}>
+        <LogoutOutlined style={{ marginRight: 8 }} />
+        {t("i18n.key.logout")}
+      </Menu.Item>
     </Menu>
   );
 
@@ -189,14 +242,15 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
               {state.instanceList.length === 0 ? (
                 <Button type="text" onClick={(e) => e.preventDefault()}>
                   <Space>
-                    <Tag color="red">请先创建实例</Tag>
+                    <Tag color="red">{t("i18n.key.instance.first")}</Tag>
                   </Space>
                 </Button>
               ) : (
                 <Dropdown overlay={instanceItems}>
                   <Button type="text" onClick={(e) => e.preventDefault()}>
                     <Space>
-                      {state.currentInstance?.value || "请选择实例"}
+                      {state.currentInstance?.value ||
+                        t("i18n.key.select.instance")}
                       <DownOutlined />
                     </Space>
                   </Button>
@@ -208,7 +262,8 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
           <Dropdown overlay={items}>
             <Button type="text" onClick={(e) => e.preventDefault()}>
               <Space>
-                欢迎你，{localStorage.getItem("GEAFLOW_LOGIN_USERNAME")}
+                {t("i18n.key.welcome")}
+                {localStorage.getItem("GEAFLOW_LOGIN_USERNAME")}
                 <DownOutlined />
               </Space>
             </Button>

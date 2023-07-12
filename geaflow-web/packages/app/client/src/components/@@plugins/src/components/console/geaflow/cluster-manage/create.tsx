@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Form, Input, message } from "antd";
+import { useTranslation } from "react-i18next";
 import { ClusterConfigPanel } from "./configPanel";
 import { createCluster } from "../services/cluster";
 
@@ -19,9 +20,10 @@ const CreateCluster: React.FC<CreateClusterProps> = ({
     loading: false,
   });
 
+  const { t } = useTranslation();
+
   const handleCreateCluster = async () => {
     const values = await form.validateFields();
-    console.log("创建", values);
     setState({
       ...state,
       loading: true,
@@ -47,34 +49,34 @@ const CreateCluster: React.FC<CreateClusterProps> = ({
       loading: false,
     });
     if (resp) {
-      message.success("创建集群成功");
+      message.success(t("i18n.key.created.successfully"));
       reload();
     }
   };
 
   return (
     <Modal
-      title="创建集群"
-      width={700}
+      title={t("i18n.key.create.cluster")}
+      width={780}
       visible={visible}
       onOk={handleCreateCluster}
       confirmLoading={state.loading}
       onCancel={() => {
         close();
       }}
-      okText="确认"
-      cancelText="取消"
+      okText={t("i18n.key.confirm")}
+      cancelText={t("i18n.key.cancel")}
     >
       <Form form={form}>
         <Form.Item
-          label="名称"
+          label={t("i18n.key.name")}
           name="name"
-          rules={[{ required: true, message: "请输入任务名称" }]}
+          rules={[{ required: true, message: t("i18n.key.task.name") }]}
           initialValue=""
         >
           <Input />
         </Form.Item>
-        <Form.Item label="集群描述" name="comment">
+        <Form.Item label={t("i18n.key.cluster.description")} name="comment">
           <Input.TextArea rows={1} />
         </Form.Item>
         <ClusterConfigPanel
