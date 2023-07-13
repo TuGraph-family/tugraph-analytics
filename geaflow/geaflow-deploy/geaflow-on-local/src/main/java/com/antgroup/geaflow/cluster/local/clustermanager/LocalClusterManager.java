@@ -18,8 +18,8 @@ import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.container.ContainerContext;
 import com.antgroup.geaflow.cluster.driver.DriverContext;
+import com.antgroup.geaflow.cluster.failover.FailoverStrategyFactory;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
-import com.antgroup.geaflow.cluster.failover.FoStrategyFactory;
 import com.antgroup.geaflow.cluster.failover.IFailoverStrategy;
 import com.antgroup.geaflow.cluster.local.context.LocalContainerContext;
 import com.antgroup.geaflow.cluster.local.context.LocalDriverContext;
@@ -43,8 +43,8 @@ public class LocalClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    protected IFailoverStrategy buildFoStrategy() {
-        return FoStrategyFactory.loadFoStrategy(IEnvironment.EnvType.LOCAL, FailoverStrategyType.disable_fo.name());
+    protected IFailoverStrategy buildFailoverStrategy() {
+        return FailoverStrategyFactory.loadFailoverStrategy(IEnvironment.EnvType.LOCAL, FailoverStrategyType.disable_fo.name());
     }
 
     @Override
