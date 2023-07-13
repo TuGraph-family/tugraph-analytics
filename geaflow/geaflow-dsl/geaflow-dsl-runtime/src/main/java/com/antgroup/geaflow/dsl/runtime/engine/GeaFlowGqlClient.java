@@ -86,8 +86,8 @@ public class GeaFlowGqlClient {
         switch (clusterType) {
             case K8S:
                 return EnvironmentFactory.onK8SEnvironment(args);
-            case RAY:
-                return EnvironmentFactory.onAntEnvironment(args);
+            case RAY_COMMUNITY:
+                return EnvironmentFactory.onRayCommunityEnvironment(args);
             default:
                 return EnvironmentFactory.onLocalEnvironment(args);
         }

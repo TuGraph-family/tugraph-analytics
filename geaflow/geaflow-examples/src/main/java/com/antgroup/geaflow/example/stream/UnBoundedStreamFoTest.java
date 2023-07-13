@@ -32,7 +32,7 @@ public class UnBoundedStreamFoTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(UnBoundedStreamFoTest.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, TimeoutException {
-        Environment environment = EnvironmentFactory.onAntEnvironment(args);
+        Environment environment = EnvironmentFactory.onRayCommunityEnvironment(args);
         Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();

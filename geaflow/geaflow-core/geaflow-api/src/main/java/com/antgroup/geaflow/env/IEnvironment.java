@@ -42,9 +42,9 @@ public interface IEnvironment extends Serializable {
     enum EnvType {
 
         /**
-         * Ray cluster.
+         * Community ray cluster.
          */
-        RAY,
+        RAY_COMMUNITY,
 
         /**
          * K8s cluster.

@@ -24,7 +24,7 @@ public class UnBoundedStreamWordPrint {
     private static final Logger LOGGER = LoggerFactory.getLogger(UnBoundedStreamWordPrint.class);
 
     public static void main(String[] args) {
-        Environment environment = EnvironmentFactory.onAntEnvironment();
+        Environment environment = EnvironmentFactory.onRayCommunityEnvironment();
 
         StreamWordPrintPipeline pipeline = new StreamWordPrintPipeline();
         pipeline.submit(environment);
