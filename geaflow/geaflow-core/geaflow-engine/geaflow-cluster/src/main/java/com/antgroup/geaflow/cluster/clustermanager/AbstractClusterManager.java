@@ -74,7 +74,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
         this.driverFuture = new CompletableFuture<>();
         this.containerIds = new HashSet<>();
         this.driverIds = new HashSet<>();
-        this.foStrategy = buildFoStrategy();
+        this.foStrategy = buildFailoverStrategy();
         Preconditions.checkNotNull(masterId, "masterId is not set");
     }
 
@@ -82,7 +82,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
         return clusterContext;
     }
 
-    protected abstract IFailoverStrategy buildFoStrategy();
+    protected abstract IFailoverStrategy buildFailoverStrategy();
 
     @Override
     public void allocateWorkers(int workerNum) {

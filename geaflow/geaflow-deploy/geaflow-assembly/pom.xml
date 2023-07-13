@@ -26,6 +26,7 @@
     <artifactId>geaflow-assembly</artifactId>
 
     <dependencies>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -58,10 +59,6 @@
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-on-ray</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-examples</artifactId>
         </dependency>
         <dependency>
@@ -71,6 +68,10 @@
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-dsl-runtime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-on-ray-community</artifactId>
         </dependency>
     </dependencies>
 

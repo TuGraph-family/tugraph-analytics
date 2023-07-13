@@ -30,7 +30,7 @@ import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
-import com.antgroup.geaflow.cluster.failover.FoStrategyFactory;
+import com.antgroup.geaflow.cluster.failover.FailoverStrategyFactory;
 import com.antgroup.geaflow.cluster.failover.IFailoverStrategy;
 import com.antgroup.geaflow.cluster.k8s.config.AbstractKubernetesParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
@@ -118,8 +118,8 @@ public class KubernetesClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    protected IFailoverStrategy buildFoStrategy() {
-        IFailoverStrategy foStrategy = FoStrategyFactory.loadFoStrategy(EnvType.K8S,
+    protected IFailoverStrategy buildFailoverStrategy() {
+        IFailoverStrategy foStrategy = FailoverStrategyFactory.loadFailoverStrategy(EnvType.K8S,
             super.clusterConfig.getConfig().getString(FO_STRATEGY));
         foStrategy.init(clusterContext);
         ((AbstractKubernetesFailoverStrategy) foStrategy).setClusterManager(this);

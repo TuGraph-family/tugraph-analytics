@@ -1,2 +1,0 @@
-com.antgroup.geaflow.cluster.ray.failover.RayClusterFailoverStrategy
-com.antgroup.geaflow.cluster.ray.failover.RayDisableFailoverStrategy

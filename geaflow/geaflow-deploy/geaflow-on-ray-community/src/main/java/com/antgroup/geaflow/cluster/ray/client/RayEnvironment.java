@@ -12,17 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.failover;
+package com.antgroup.geaflow.cluster.ray.client;
 
-import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.env.IEnvironment.EnvType;
-import org.testng.annotations.Test;
+import com.antgroup.geaflow.cluster.client.AbstractEnvironment;
+import com.antgroup.geaflow.cluster.client.IClusterClient;
 
-public class FoStrategyFactoryTest {
+public class RayEnvironment extends AbstractEnvironment {
 
-    @Test(expectedExceptions = GeaflowRuntimeException.class)
-    public void testLoad() {
-        FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY_COMMUNITY, "");
+    @Override
+    protected IClusterClient getClusterClient() {
+        return new RayClusterClient();
     }
 
+    @Override
+    public EnvType getEnvType() {
+        return EnvType.RAY_COMMUNITY;
+    }
 }
