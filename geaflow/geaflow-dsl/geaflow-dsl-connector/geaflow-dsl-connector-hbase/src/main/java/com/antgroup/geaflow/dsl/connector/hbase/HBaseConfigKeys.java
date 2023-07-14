@@ -25,37 +25,37 @@ import com.antgroup.geaflow.common.config.ConfigKeys;
 public class HBaseConfigKeys {
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_ZOOKEEPER_QUORUM = ConfigKeys
-        .key("geaflow.dsl.hbase.zookeeper_quorum")
+        .key("geaflow.dsl.hbase.zookeeper.quorum")
         .noDefaultValue()
         .description("HBase zookeeper quorum servers list.");
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_NAME_SPACE = ConfigKeys
-        .key("geaflow.dsl.hbase.name_space")
+        .key("geaflow.dsl.hbase.namespace")
         .defaultValue(DEFAULT_NAMESPACE)
         .description("HBase namespace.");
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_TABLE_NAME = ConfigKeys
-        .key("geaflow.dsl.hbase.table_name")
+        .key("geaflow.dsl.hbase.tablename")
         .noDefaultValue()
         .description("HBase table name.");
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_ROWKEY_COLUMNS = ConfigKeys
-        .key("geaflow.dsl.hbase.rowkey_column")
+        .key("geaflow.dsl.hbase.rowkey.column")
         .noDefaultValue()
         .description("HBase rowkey columns.");
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_ROWKEY_SEPARATOR = ConfigKeys
-        .key("geaflow.dsl.hbase.rowkey_separator")
+        .key("geaflow.dsl.hbase.rowkey.separator")
         .defaultValue(DEFAULT_SEPARATOR)
         .description("HBase rowkey join serapator.");
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_FAMILY_NAME = ConfigKeys
-        .key("geaflow.dsl.hbase.family_name")
+        .key("geaflow.dsl.hbase.familyname.mapping")
         .defaultValue(DEFAULT_FAMILY_MAPPING)
         .description("HBase column family name mapping.");
 
     public static final ConfigKey GEAFLOW_DSL_HBASE_BUFFER_SIZE = ConfigKeys
-        .key("geaflow.dsl.hbase.buffer_size")
+        .key("geaflow.dsl.hbase.buffersize")
         .defaultValue(DEFAULT_BUFFER_SIZE)
         .description("HBase writer buffer size.");
 }
