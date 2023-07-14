@@ -177,8 +177,9 @@ public class HBaseTableSink implements TableSink {
             case Types.TYPE_NAME_DOUBLE:
                 return Bytes.toBytes((Double) field);
             case Types.TYPE_NAME_STRING:
-            case Types.TYPE_NAME_BINARY_STRING:
                 return field.toString().getBytes(StandardCharsets.UTF_8);
+            case Types.TYPE_NAME_BINARY_STRING:
+                return field.toString().getBytes();
             default:
                 throw new GeaFlowDSLException(String.format("Type: %s is not supported.",
                     typeName));
