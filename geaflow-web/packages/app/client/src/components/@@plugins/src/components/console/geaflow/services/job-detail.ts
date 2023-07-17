@@ -1,21 +1,29 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
+import $i18n from "../../../../../../i18n";
 
 /**
  * 获取指定作业
- */
+ */ 
 export const getJobsTasks = async (jobId: string) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/tasks`, {
     method: "get",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
     params: { jobId },
   });
 
   if (!response.success) {
-    message.error(`查询失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response?.data?.list[0];
@@ -25,14 +33,21 @@ export const getApiTasks = async (taskId: string) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/logs`,
     {
       method: "get",
-      headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
       credentials: "include",
       withCredentials: true,
     }
   );
 
   if (!response.success) {
-    message.error(`查询失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response?.data;
@@ -46,7 +61,6 @@ export const getOperations = async (taskId: string, params: any) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/operations`,
     {
       method: "post",
-      headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
       credentials: "include",
       withCredentials: true,
       data: params,
@@ -54,7 +68,15 @@ export const getOperations = async (taskId: string, params: any) => {
   );
 
   if (!response.success) {
-    message.error(`提交失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.SubmissionFailedResponsemessage",
+          dm: "提交失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -67,7 +89,6 @@ export const getReleases = async (jobId: string, params: any) => {
     `${HTTP_SERVICE_URL}/api/jobs/${jobId}/releases `,
     {
       method: "put",
-      headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
       credentials: "include",
       withCredentials: true,
       data: params,
@@ -75,7 +96,15 @@ export const getReleases = async (jobId: string, params: any) => {
   );
 
   if (!response.success) {
-    message.error(`保存失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.SaveFailedResponsemessage",
+          dm: "保存失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -86,13 +115,20 @@ export const getReleases = async (jobId: string, params: any) => {
 export const getApiVersions = async () => {
   const response = await request(`${HTTP_SERVICE_URL}/api/versions`, {
     method: "get",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
   });
 
   if (!response.success) {
-    message.error(`查询集群失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.FailedToQueryTheCluster",
+          dm: "查询集群失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response?.data?.list;
@@ -105,7 +141,6 @@ export const getTaskIdStatus = async (taskId: string, params: any) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/status`,
     {
       method: "get",
-      headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
       credentials: "include",
       withCredentials: true,
       params: params,
@@ -113,7 +148,15 @@ export const getTaskIdStatus = async (taskId: string, params: any) => {
   );
 
   if (!response.success) {
-    message.error(`查询失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -126,7 +169,6 @@ export const getTaskIdStatus = async (taskId: string, params: any) => {
 export const getRecordList = async (resourceId: string, page: number) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/audits`, {
     method: "get",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
     params: {
@@ -140,7 +182,15 @@ export const getRecordList = async (resourceId: string, page: number) => {
   });
 
   if (!response?.success) {
-    message.error(`获取操作记录失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return null;
   }
   return response?.data;
@@ -162,7 +212,15 @@ export const resetJob = async (taskId: string) => {
   );
 
   if (!cleanDataResp?.success) {
-    message.error(`重置数据失败: ${cleanDataResp?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
+          dm: "验证失败： {responseMessage}",
+        },
+        { responseMessage: cleanDataResp.message }
+      )
+    );
     return null;
   }
 
@@ -177,7 +235,15 @@ export const resetJob = async (taskId: string) => {
   );
 
   if (!cleanMetaResp?.success) {
-    message.error(`重置元数据: ${cleanMetaResp?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
+          dm: "验证失败： {responseMessage}",
+        },
+        { responseMessage: cleanMetaResp?.message }
+      )
+    );
     return null;
   }
   return cleanMetaResp;
@@ -193,16 +259,20 @@ export const getJobRuntimeList = async (params: any) => {
     `${HTTP_SERVICE_URL}/api/tasks/${params.id}/pipelines`,
     {
       method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       // data: params,
     }
   );
 
   if (!response.success) {
-    message.error(`验证失败： ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
+          dm: "验证失败： {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response.data;
@@ -217,16 +287,20 @@ export const getPipleinesCyclesByName = async (params: any) => {
     )}/cycles`,
     {
       method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       // data: params,
     }
   );
 
   if (!response.success) {
-    message.error(`验证失败： ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
+          dm: "验证失败： {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response.data;
@@ -242,16 +316,20 @@ export const getJobErrorMessage = async (taskId: string) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/errors`,
     {
       method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       // data: params,
     }
   );
 
   if (!response.success) {
-    message.error(`验证失败： ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
+          dm: "验证失败： {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response.data;
@@ -261,16 +339,20 @@ export const getContainer = async (taskId: string) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/heartbeat`,
     {
       method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
       // data: params,
     }
   );
 
   if (!response.success) {
-    message.error(`验证失败： ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
+          dm: "验证失败： {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -285,15 +367,19 @@ export const getJobOffsetList = async (taskId: string) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/offsets`,
     {
       method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 
   if (!response.success) {
-    message.error(`获取 Offset 列表失败： ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.FailedToObtainTheOffset",
+          dm: "获取 Offset 列表失败： {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response.data?.list;
@@ -305,15 +391,19 @@ export const getHeartbeatByTaskId = async (taskId: string) => {
     `${HTTP_SERVICE_URL}/api/tasks/${taskId}/heartbeat`,
     {
       method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-      },
     }
   );
 
   if (!response.success) {
-    message.error(`获取heartbeat数据失败： ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.job-detail.FailedToObtainHeartbeatData",
+          dm: "获取heartbeat数据失败： {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return null;
   }
   return response.data;

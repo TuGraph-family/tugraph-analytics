@@ -3,7 +3,9 @@ import type { ProColumns } from "@ant-design/pro-components";
 import { EditableFormInstance } from "@ant-design/pro-components";
 import { Form, Input, Collapse, Row, Col, Table, message } from "antd";
 import React, { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./graphDefintionEditTable.less";
+import $i18n from "../../../../../../i18n";
 
 type DataSourceType = {
   id: React.Key;
@@ -48,6 +50,7 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
   const [dataSource, setDataSource] =
     useState<readonly DataSourceType[]>(fields);
 
+  const { t } = useTranslation();
   const [editDataSource, setEditDataSource] = useState<
     readonly DataSourceType[]
   >([]);
@@ -68,27 +71,48 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
         text: "ID",
       },
       VERTEX_LABEL: {
-        text: "标签",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Label",
+          dm: "标签",
+        }),
       },
       PROPERTY: {
-        text: "属性",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Properties",
+          dm: "属性",
+        }),
       },
     },
     EDGE: {
       EDGE_SOURCE_ID: {
-        text: "源点id",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.SourcePointId",
+          dm: "源点id",
+        }),
       },
       EDGE_TARGET_ID: {
-        text: "目标点id",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.TargetPointId",
+          dm: "目标点id",
+        }),
       },
       EDGE_LABEL: {
-        text: "边标签",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EdgeLabel",
+          dm: "边标签",
+        }),
       },
       EDGE_TIMESTAMP: {
-        text: "边时间戳",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EdgeTimestamp",
+          dm: "边时间戳",
+        }),
       },
       PROPERTY: {
-        text: "属性",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Properties",
+          dm: "属性",
+        }),
       },
     },
     TABLE: {
@@ -96,7 +120,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
         text: "ID",
       },
       PROPERTY: {
-        text: "属性",
+        text: $i18n.get({
+          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Properties",
+          dm: "属性",
+        }),
       },
     },
   };
@@ -107,7 +134,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
 
   const columns: ProColumns<DataSourceType>[] = [
     {
-      title: "字段名",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldName",
+        dm: "字段名",
+      }),
       dataIndex: allType[type],
       width: "30%",
       formItemProps: {
@@ -115,7 +145,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
           {
             required: true,
             whitespace: true,
-            message: "请输入字段名",
+            message: $i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EnterAFieldName",
+              dm: "请输入字段名",
+            }),
           },
         ],
       },
@@ -128,7 +161,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
       },
     },
     {
-      title: "字段类型",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldType",
+        dm: "字段类型",
+      }),
       key: "type",
       dataIndex: "type",
       valueType: "select",
@@ -137,7 +173,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
           {
             required: true,
             whitespace: true,
-            message: "请选择字段类型",
+            message: $i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.SelectAFieldType",
+              dm: "请选择字段类型",
+            }),
           },
         ],
       },
@@ -182,7 +221,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
     },
 
     {
-      title: "字段约束",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldConstraints",
+        dm: "字段约束",
+      }),
       dataIndex: "category",
       valueType: "select",
       formItemProps: {
@@ -190,7 +232,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
           {
             required: true,
             whitespace: true,
-            message: "请选择字段类型",
+            message: $i18n.get({
+              id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.SelectAFieldType",
+              dm: "请选择字段类型",
+            }),
           },
         ],
       },
@@ -206,7 +251,12 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
             if (type === "VERTEX") {
               if (value === "VERTEX_ID") {
                 if (dataSource?.some((i) => i.category === value)) {
-                  message.error("点/边v已包含字段约束");
+                  message.error(
+                    $i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointEdgeVAlreadyContains",
+                      dm: "点/边v已包含字段约束",
+                    })
+                  );
                   editableFormRef.current?.setRowData?.(rowIndex, {
                     category: [],
                   });
@@ -220,7 +270,12 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
                 )
               ) {
                 if (dataSource?.some((i) => i.category === value)) {
-                  message.error("点/边v已包含字段约束");
+                  message.error(
+                    $i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointEdgeVAlreadyContains",
+                      dm: "点/边v已包含字段约束",
+                    })
+                  );
                   editableFormRef.current?.setRowData?.(rowIndex, {
                     category: [],
                   });
@@ -232,7 +287,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
       },
     },
     {
-      title: "备注",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Remarks",
+        dm: "备注",
+      }),
       dataIndex: "comment",
       fieldProps: (_, { rowIndex }) => {
         if (readonly || (editable && !!name)) {
@@ -244,7 +302,10 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
     },
 
     {
-      title: "操作",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Operation",
+        dm: "操作",
+      }),
       valueType: readonly || (editable && !!name) ? "" : "option",
       width: 100,
     },
@@ -252,22 +313,34 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
 
   const showColumns = [
     {
-      title: "字段名",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldName",
+        dm: "字段名",
+      }),
       dataIndex: allType[type],
       width: "30%",
     },
     {
-      title: "字段类型",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldType",
+        dm: "字段类型",
+      }),
       key: "type",
       dataIndex: "type",
     },
 
     {
-      title: "字段约束",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldConstraints",
+        dm: "字段约束",
+      }),
       dataIndex: "category",
     },
     {
-      title: "备注",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Remarks",
+        dm: "备注",
+      }),
       dataIndex: "comment",
     },
   ];
@@ -323,7 +396,7 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
   return type !== "TABLE" ? (
     <Collapse ghost className={styles["collapse-bg"]} defaultActiveKey={["1"]}>
       <Panel
-        header={`名称：${allName[type] || "名称"}`}
+        header={`${t("i18n.key.name")}：${allName[type] || ""}`}
         key="1"
         extra={
           readonly || (editable && !!name) ? null : genExtra(index, paneIndex)
@@ -334,9 +407,18 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
             <Col span={12}>
               <Form.Item
                 name={`pointName${paneIndex}`}
-                label="点名称"
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointName",
+                  dm: "点名称",
+                })}
                 rules={[
-                  { required: true, message: "请输入点名称" },
+                  {
+                    required: true,
+                    message: $i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EnterAPointName",
+                      dm: "请输入点名称",
+                    }),
+                  },
                   () => ({
                     validator(rule, value) {
                       const values = form.getFieldsValue();
@@ -350,41 +432,12 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
                         }
                       });
                       if (vertices.includes(value)) {
-                        return Promise.reject("该点名称已存在!");
-                      }
-                      return Promise.resolve();
-                    },
-                  }),
-                ]}
-                initialValue={name}
-              >
-                <Input disabled={readonly || (editable && !!name)} />
-              </Form.Item>
-            </Col>
-          </Row>
-        )}
-        {type === "EDGE" && (
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
-                name={`sideName${paneIndex}`}
-                label="边名称"
-                rules={[
-                  { required: true, message: "请输入点名称" },
-                  () => ({
-                    validator(rule, value) {
-                      const values = form.getFieldsValue();
-                      let edges = [];
-                      Object.keys(values)?.map((item) => {
-                        if (
-                          item.indexOf("sideName") !== -1 &&
-                          item !== `sideName${paneIndex}`
-                        ) {
-                          edges.push(values[item]);
-                        }
-                      });
-                      if (edges.includes(value)) {
-                        return Promise.reject("该边名称已存在!");
+                        return Promise.reject(
+                          $i18n.get({
+                            id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.TheDotNameAlreadyExists",
+                            dm: "该点名称已存在!",
+                          })
+                        );
                       }
                       return Promise.resolve();
                     },
@@ -398,7 +451,65 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
           </Row>
         )}
 
-        <p>字段配置</p>
+        {type === "EDGE" && (
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item
+                name={`sideName${paneIndex}`}
+                label={$i18n.get({
+                  id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EdgeName",
+                  dm: "边名称",
+                })}
+                rules={[
+                  {
+                    required: true,
+                    message: $i18n.get({
+                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EnterAPointName",
+                      dm: "请输入点名称",
+                    }),
+                  },
+                  () => ({
+                    validator(rule, value) {
+                      const values = form.getFieldsValue();
+                      let edges = [];
+                      Object.keys(values)?.map((item) => {
+                        if (
+                          item.indexOf("sideName") !== -1 &&
+                          item !== `sideName${paneIndex}`
+                        ) {
+                          edges.push(values[item]);
+                        }
+                      });
+                      if (edges.includes(value)) {
+                        return Promise.reject(
+                          $i18n.get({
+                            id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.TheEdgeNameAlreadyExists",
+                            dm: "该边名称已存在!",
+                          })
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
+                ]}
+                initialValue={name}
+              >
+                <Input disabled={readonly || (editable && !!name)} />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+        {type === "VERTEX" &&
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.VertexFields",
+            dm: "点配置",
+          })}
+        {type === "EDGE" &&
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EdgeFields",
+            dm: "边配置",
+          })}
+
         {table()}
       </Panel>
     </Collapse>

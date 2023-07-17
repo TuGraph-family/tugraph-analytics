@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Modal, Button, Table, Tooltip } from "antd";
-import type { ActionType } from "@ant-design/pro-components";
 import { getRecordList } from "../../../services/job-detail";
-import moment from "moment";
+import $i18n from "../../../../../../../../i18n";
 
 interface OperationRecordProps {
   jobId: string;
@@ -21,25 +20,43 @@ const OperationRecord: React.FC<OperationRecordProps> = ({
     total: 0,
   });
   const status = {
-    START: "启动",
-    STOP: "停止",
-    CREATE: "创建",
+    START: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Start",
+      dm: "启动",
+    }),
+    STOP: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Stop",
+      dm: "停止",
+    }),
+    CREATE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Create",
+      dm: "创建",
+    }),
   };
   const columns = [
     {
-      title: "操作人",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.operationRecord.Operator",
+        dm: "操作人",
+      }),
       key: "creatorName",
       align: "center",
       render: (_, record: any) => <span>{record.creatorName}</span>,
     },
     {
-      title: "操作时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.operationRecord.OperationTime",
+        dm: "操作时间",
+      }),
       key: "createTime",
       align: "center",
       render: (_, record: any) => <span>{record.createTime}</span>,
     },
     {
-      title: "操作",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.operationRecord.Operation",
+        dm: "操作",
+      }),
       dataIndex: "operationType",
       key: "operationType",
       align: "center",
@@ -48,7 +65,10 @@ const OperationRecord: React.FC<OperationRecordProps> = ({
       ),
     },
     {
-      title: "详情信息",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.operationRecord.Details",
+        dm: "详情信息",
+      }),
       dataIndex: "detail",
       key: "detail",
       align: "center",
@@ -84,8 +104,18 @@ const OperationRecord: React.FC<OperationRecordProps> = ({
       open={visible}
       onCancel={onClose}
       width={835}
-      title="操作记录"
-      footer={<Button onClick={onClose}>关闭</Button>}
+      title={$i18n.get({
+        id: "openpiece-geaflow.job-detail.components.operationRecord.OperationRecord",
+        dm: "操作记录",
+      })}
+      footer={
+        <Button onClick={onClose}>
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.operationRecord.Close",
+            dm: "关闭",
+          })}
+        </Button>
+      }
     >
       <Table
         columns={columns}

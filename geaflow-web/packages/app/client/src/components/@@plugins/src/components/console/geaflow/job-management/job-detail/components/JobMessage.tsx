@@ -5,6 +5,7 @@ import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
 import moment from "moment";
 import styles from "../index.module.less";
+import $i18n from "../../../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -47,7 +48,10 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
       width: 100,
     },
     {
-      title: "发生时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobMessage.OccurrenceTime",
+        dm: "发生时间",
+      }),
       dataIndex: "timeStamp",
       key: "timeStamp",
       width: 250,
@@ -59,7 +63,10 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "服务器",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobMessage.Server",
+        dm: "服务器",
+      }),
       dataIndex: "hostname",
       key: "hostname",
       width: 500,
@@ -73,13 +80,19 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
       ),
     },
     {
-      title: "类型",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobMessage.Type",
+        dm: "类型",
+      }),
       dataIndex: "severity",
       key: "severity",
       width: 100,
     },
     {
-      title: "日志",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-detail.components.JobMessage.Log",
+        dm: "日志",
+      }),
       dataIndex: "message",
       key: "message",
       width: 100,
@@ -87,7 +100,12 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
         showTitle: false,
       },
       render: (message: string, record: any) => (
-        <a onClick={() => handleShowModal(record)}>查看详情</a>
+        <a onClick={() => handleShowModal(record)}>
+          {$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.JobMessage.ViewDetails",
+            dm: "查看详情",
+          })}
+        </a>
       ),
     },
   ];
@@ -101,11 +119,22 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
           pageSize: 10,
         }}
       />
+
       <Modal
-        title="日志详情"
+        title={$i18n.get({
+          id: "openpiece-geaflow.job-detail.components.JobMessage.LogDetails",
+          dm: "日志详情",
+        })}
         width={1200}
         visible={visible}
-        footer={[<Button onClick={() => setVisible(false)}> 关闭</Button>]}
+        footer={[
+          <Button onClick={() => setVisible(false)}>
+            {$i18n.get({
+              id: "openpiece-geaflow.job-detail.components.JobMessage.Close",
+              dm: "关闭",
+            })}
+          </Button>,
+        ]}
         onCancel={() => setVisible(false)}
         className={styles["message-model"]}
       >

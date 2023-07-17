@@ -11,6 +11,7 @@ import {
   FormInstance,
   message,
 } from "antd";
+import { useTranslation } from "react-i18next";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   getPluginCategoriesByType,
@@ -41,6 +42,7 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
   values = {} as ICategory,
   form,
 }) => {
+  const { t } = useTranslation();
   const [state, setState] = useImmer({
     list: [],
     // 选项的下拉列表
@@ -233,7 +235,7 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
       (d) => d.value === state.customItemName
     );
     if (hasItem) {
-      message.error("不允许添加重复的key");
+      message.error(t("i18n.key.duplicate.keys"));
       return;
     }
     setState((draft) => {
@@ -286,14 +288,18 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
   };
   return (
     <>
-      <Form.Item name={[prefixName, "type"]} label="类型" required={true}>
+      <Form.Item
+        name={[prefixName, "type"]}
+        label={t("i18n.key.type")}
+        required={true}
+      >
         <Select style={{ width: 450 }} onChange={handleChangeType}>
           {state.list.map((d) => {
             return <Select.Option value={d.value}>{d.label}</Select.Option>;
           })}
         </Select>
       </Form.Item>
-      <Form.Item label="配置">
+      <Form.Item label={t("i18n.key.configurations")}>
         <Form.List name={[prefixName, "config"]}>
           {(fields, { add, remove }) => (
             <>
@@ -306,7 +312,12 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
                   <Form.Item
                     {...restField}
                     name={[name, "key"]}
-                    rules={[{ required: true, message: "该参数必选" }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: t("i18n.key.parameter.required"),
+                      },
+                    ]}
                   >
                     <Select
                       style={{ width: 350 }}
@@ -317,7 +328,7 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
                           <Divider style={{ margin: "8px 0" }} />
                           <Space style={{ padding: "0 8px 4px" }}>
                             <Input
-                              placeholder="请输入自定义key"
+                              placeholder={t("i18n.key.enter.key")}
                               ref={inputRef}
                               value={state.customItemName}
                               onChange={onNameChange}
@@ -327,7 +338,7 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
                               icon={<PlusOutlined />}
                               onClick={addItem}
                             >
-                              自定义
+                              {t("i18n.key.custom")}
                             </Button>
                           </Space>
                         </>
@@ -356,7 +367,7 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
                         required:
                           form.getFieldsValue()[prefixName]?.config[index]
                             .required,
-                        message: "请输入参数值",
+                        message: t("i18n.key.parameter.value"),
                       },
                     ]}
                   >
@@ -367,7 +378,7 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
                       />
                     ) : (
                       <Input
-                        placeholder="请输入属性值"
+                        placeholder={t("i18n.key.attribute.value")}
                         style={{ width: 250 }}
                       />
                     )}
@@ -380,14 +391,14 @@ export const ClusterConfigPanel: React.FC<IProps> = ({
                   )}
                 </Space>
               ))}
-              <Form.Item style={{ width: 610 }}>
+              <Form.Item style={{ maxWidth: 610 }}>
                 <Button
                   type="dashed"
                   onClick={() => handleAddItem(add)}
                   block
                   icon={<PlusOutlined />}
                 >
-                  添加配置项
+                  {t("i18n.key.add.config")}
                 </Button>
               </Form.Item>
             </>
