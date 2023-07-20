@@ -57,14 +57,20 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         this.cycle = cycle;
         this.parentContext = parentContext;
 
-        long startIterationId;
         if (parentContext != null) {
             // Get worker manager from parent context, no need to init.
             this.workerManager = parentContext.getSchedulerWorkerManager();
-            startIterationId = parentContext.getCurrentIterationId();
         } else {
             this.workerManager = ScheduledWorkerManagerFactory.createScheduledWorkerManager(cycle.getConfig(),
                 getHaLevel());
+        }
+    }
+
+    public void init() {
+        long startIterationId;
+        if (parentContext != null) {
+            startIterationId = parentContext.getCurrentIterationId();
+        } else {
             startIterationId = DEFAULT_INITIAL_ITERATION_ID;
         }
         this.finishIterationId = cycle.getIterationCount() == Long.MAX_VALUE

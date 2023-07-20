@@ -43,6 +43,11 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
             throw new GeaflowRuntimeException("not support nested scheduler context fo checkpoint");
         }
         this.checkpointDuration = getConfig().getLong(BATCH_NUMBER_PER_CHECKPOINT);
+    }
+
+    @Override
+    public void init() {
+        super.init();
         this.schedulerStateMap.put(getCurrentIterationId(),
             Arrays.asList(SchedulerState.INIT, SchedulerState.EXECUTE));
         checkpoint(new CycleCheckpointFunction());
