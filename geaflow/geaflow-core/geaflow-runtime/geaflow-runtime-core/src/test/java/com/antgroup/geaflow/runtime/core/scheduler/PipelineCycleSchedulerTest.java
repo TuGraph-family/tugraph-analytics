@@ -30,6 +30,7 @@ import com.antgroup.geaflow.runtime.core.protocol.ComposeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import com.antgroup.geaflow.runtime.core.protocol.RollbackCycleEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
+import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
@@ -77,7 +78,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         ShuffleManager.getInstance().initShuffleMaster();
         StatsCollectorFactory.init(configuration);
 
-        CheckpointSchedulerContext context = new CheckpointSchedulerContext(buildMockCycle(configuration), null);
+        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(configuration), null);
         mockPersistContext = context;
         scheduler.init(context);
         scheduler.execute();
