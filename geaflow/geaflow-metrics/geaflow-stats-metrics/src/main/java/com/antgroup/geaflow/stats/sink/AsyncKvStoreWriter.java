@@ -113,26 +113,22 @@ public class AsyncKvStoreWriter implements IStatsWriter {
     public class MetricFlushTask implements Runnable {
 
         private int flushSize;
-        private long lastFlushTime;
         private final Queue<Tuple<String, Object>> buffers;
 
         public MetricFlushTask() {
             this.flushSize = 0;
             this.buffers = new LinkedList<>();
-            this.lastFlushTime = System.currentTimeMillis();
         }
 
         @Override
         public void run() {
             while (true) {
                 try {
-                    long timeGap = lastFlushTime + flushIntervalMs - System.currentTimeMillis();
                     fillBuffers();
-                    if (flushSize > 0 && (timeGap <= 0 || flushSize >= batchFlushSize)) {
+                    if (flushSize > 0) {
                         doFlush();
-                    } else {
-                        SleepUtils.sleepMilliSecond(timeGap);
                     }
+                    SleepUtils.sleepMilliSecond(flushIntervalMs);
                 } catch (Throwable e) {
                     LOGGER.warn("flush stats metrics failed:{}", e.getMessage(), e);
                 }
@@ -160,16 +156,12 @@ public class AsyncKvStoreWriter implements IStatsWriter {
                     kvStore.put(tuple.f0, JSON.toJSONString(tuple.f1));
                 }
                 kvStore.flush();
-                if (flushSize >= batchFlushSize) {
-                    LOGGER.info("flush {} metrics into kvStore after {} ms", flushSize,
-                        System.currentTimeMillis() - lastFlushTime);
-                }
             } catch (Throwable e) {
-                LOGGER.warn("discard {} metrics due to: {}", flushSize, e.getMessage());
+                LOGGER.warn("discard {} metrics due to: {}", flushSize, e.getMessage(), e);
             } finally {
                 flushSize = 0;
-                lastFlushTime = System.currentTimeMillis();
             }
         }
     }
+
 }
