@@ -33,7 +33,7 @@ public class ShuffleMemoryTracker {
     private final long maxShuffleSize;
     private final AtomicLong usedMemory;
 
-    private static ShuffleMemoryTracker INSTANCE;
+    private static volatile ShuffleMemoryTracker INSTANCE;
 
     private ShuffleMemoryTracker(Configuration config) {
         boolean memoryPool = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
@@ -57,7 +57,7 @@ public class ShuffleMemoryTracker {
         return INSTANCE;
     }
 
-    public static synchronized ShuffleMemoryTracker getInstance() {
+    public static ShuffleMemoryTracker getInstance() {
         return INSTANCE;
     }
 

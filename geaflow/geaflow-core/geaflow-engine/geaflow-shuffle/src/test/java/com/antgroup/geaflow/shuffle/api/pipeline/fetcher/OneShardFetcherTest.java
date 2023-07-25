@@ -26,6 +26,7 @@ import com.antgroup.geaflow.shuffle.api.pipeline.channel.LocalInputChannel;
 import com.antgroup.geaflow.shuffle.api.pipeline.channel.RemoteInputChannel;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
+import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
@@ -51,6 +52,7 @@ public class OneShardFetcherTest {
     public void setup() {
         Configuration configuration = new Configuration();
         configuration.put(ExecutionConfigKeys.JOB_APP_NAME, "default");
+        configuration.put(ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB, String.valueOf(1024));
         ShuffleConfig config = ShuffleConfig.getInstance(configuration);
         connectionManager = new ConnectionManager(config);
     }
@@ -62,6 +64,7 @@ public class OneShardFetcherTest {
 
     @Test
     public void testCreate() {
+        ShuffleMemoryTracker.getInstance(ShuffleConfig.getInstance().getConfig());
         List<PipelineSliceMeta> inputSlices = new ArrayList<>();
         ShuffleAddress address = connectionManager.getShuffleAddress();
         PipelineSliceMeta slice1 = new PipelineSliceMeta(0, 0, -1, 0, address);
@@ -94,6 +97,7 @@ public class OneShardFetcherTest {
 
     @Test
     public void testRemoteFetch() throws IOException, InterruptedException {
+        ShuffleMemoryTracker.getInstance(ShuffleConfig.getInstance().getConfig());
         List<PipelineSliceMeta> inputSlices = new ArrayList<>();
         ShuffleAddress address = connectionManager.getShuffleAddress();
         SliceId sliceId = new SliceId(-1, 0, 0, 0);

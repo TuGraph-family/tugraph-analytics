@@ -19,6 +19,7 @@ import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
 import com.antgroup.geaflow.shuffle.api.reader.ReaderContext;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
+import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.network.netty.ConnectionManager;
 import com.antgroup.geaflow.shuffle.service.impl.AutoShuffleService;
 import java.io.IOException;
@@ -45,6 +46,7 @@ public class ShuffleManager {
     public static synchronized ShuffleManager init(Configuration config) {
         if (INSTANCE == null) {
             INSTANCE = new ShuffleManager(config);
+            ShuffleMemoryTracker.getInstance(config);
         }
         return INSTANCE;
     }
