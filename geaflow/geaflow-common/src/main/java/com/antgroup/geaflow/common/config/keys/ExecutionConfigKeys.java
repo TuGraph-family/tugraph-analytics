@@ -491,7 +491,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey STATS_METRIC_FLUSH_THREADS = ConfigKeys
         .key("geaflow.metric.flush.threads")
-        .defaultValue(2)
+        .defaultValue(1)
         .description("stats metrics flush thread number");
 
     public static final ConfigKey STATS_METRIC_FLUSH_BATCH_SIZE = ConfigKeys
@@ -501,7 +501,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey STATS_METRIC_FLUSH_INTERVAL_MS = ConfigKeys
         .key("geaflow.metric.flush.interval.ms")
-        .defaultValue(100)
+        .defaultValue(1000)
         .description("stats flush interval in ms");
 
     public static final ConfigKey ENABLE_DETAIL_METRIC = ConfigKeys
