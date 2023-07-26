@@ -135,7 +135,7 @@ public class ContainerRuntime implements GeaflowRuntime {
             // start task process
             String java = System.getProperty("java.home") + "/bin/java";
             String classPathString = StringUtils.join(classPaths, ":");
-            String mainClass = GeaflowTask.CODE_TASK_MAIN_CLASS;
+            String mainClass = task.getMainClass();
             String args = StringEscapeUtils.escapeJava(JSON.toJSONString(geaflowArgs.build()));
             CommandLine cmd = new CommandLine(java);
             cmd.addArgument("-cp");

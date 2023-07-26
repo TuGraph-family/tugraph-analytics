@@ -14,9 +14,9 @@
 
 package com.antgroup.geaflow.console.core.service;
 
-import com.antgroup.geaflow.console.common.dal.dao.IdDao;
 import com.antgroup.geaflow.console.common.dal.dao.JobDao;
 import com.antgroup.geaflow.console.common.dal.dao.JobResourceMappingDao;
+import com.antgroup.geaflow.console.common.dal.dao.NameDao;
 import com.antgroup.geaflow.console.common.dal.entity.IdEntity;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.dal.entity.JobResourceMappingEntity;
@@ -55,7 +55,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class JobService extends IdService<GeaflowJob, JobEntity, JobSearch> {
+public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
 
     private final Map<GeaflowResourceType, DataService> serviceMap = new HashMap<>();
     @Autowired
@@ -100,7 +100,7 @@ public class JobService extends IdService<GeaflowJob, JobEntity, JobSearch> {
     @Autowired
     private TaskService taskService;
 
-    protected IdDao<JobEntity, JobSearch> getDao() {
+    protected NameDao<JobEntity, JobSearch> getDao() {
         return jobDao;
     }
 
@@ -144,6 +144,10 @@ public class JobService extends IdService<GeaflowJob, JobEntity, JobSearch> {
     public boolean update(List<GeaflowJob> jobs) {
         GeaflowVersion version = versionService.getDefaultVersion();
         for (GeaflowJob newJob : jobs) {
+            if (newJob.isApiJob()) {
+                continue;
+            }
+
             String jobId = newJob.getId();
             GeaflowJob oldJob = this.get(jobId);
             if (oldJob.getUserCode().getText().equals(newJob.getUserCode().getText())) {
