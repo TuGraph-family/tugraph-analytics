@@ -137,6 +137,8 @@ public class GQLContext {
 
     private String currentGraph;
 
+    private final Set<SqlNode> validatedRelNode;
+
     private static final Map<String, String> shortKeyMapping = new HashMap<>();
 
     static {
@@ -177,6 +179,7 @@ public class GQLContext {
             calciteCatalogReader, this.typeFactory, CONFORMANCE);
         this.validator.setIdentifierExpansion(true);
         this.convertLetTable = frameworkConfig.getConvertletTable();
+        this.validatedRelNode = new HashSet<>();
     }
 
     public static GQLContext create(Configuration conf, boolean isCompile) {
@@ -269,6 +272,7 @@ public class GQLContext {
     public GeaFlowView convertToView(SqlCreateView view) {
         String viewName = view.getName().getSimple();
         validator.validate(view.getSubQuery());
+        validatedRelNode.add(view.getSubQuery());
 
         RelRecordType recordType = (RelRecordType) validator.getValidatedNodeType(view.getSubQuery());
         Preconditions.checkArgument(recordType.getFieldCount() == view.getFields().size(),
@@ -538,6 +542,9 @@ public class GQLContext {
     }
 
     public SqlNode validate(SqlNode node) {
+        if (validatedRelNode.contains(node)) {
+            return node;
+        }
         return validator.validate(node, new QueryNodeContext());
     }
 
