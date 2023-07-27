@@ -2,6 +2,7 @@ import React from "react";
 import { Tabs } from "antd";
 import TaskParams from "./taskParams";
 import TaskDsl from "./taskDsl";
+import UDFList from "./udfList";
 import ClusterConfig from "./clusterConfig";
 import UserCode from "./userCode";
 import { isEmpty } from "lodash";
@@ -23,21 +24,30 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
   form,
 }) => {
   const { dsl = "" } = jobItem;
-
+  const jobType = record?.release?.job?.type;
   const items = [
     {
-      label: $i18n.get({
-        id: "openpiece-geaflow.job-detail.components.basicTabs.UserCode",
-        dm: "用户代码",
-      }),
+      label:
+        jobType === "CUSTOM"
+          ? $i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicTabs.Udf",
+              dm: "UDF",
+            })
+          : $i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicTabs.UserCode",
+              dm: "用户代码",
+            }),
       key: "1",
-      children: (
-        <TaskParams
-          syncConfig={syncConfig}
-          record={record}
-          stageType={stageType}
-        />
-      ),
+      children:
+        jobType === "CUSTOM" ? (
+          <UDFList syncConfig={syncConfig} record={record} />
+        ) : (
+          <TaskParams
+            syncConfig={syncConfig}
+            record={record}
+            stageType={stageType}
+          />
+        ),
     },
     {
       label: $i18n.get({

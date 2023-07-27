@@ -1,6 +1,10 @@
 import React from "react";
 import { useHistory } from "umi";
-import { EyeOutlined, EyeInvisibleOutlined, GlobalOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  GlobalOutlined,
+} from "@ant-design/icons";
 import { Button, Form, Input, message, Menu } from "antd";
 import { useTranslation } from "react-i18next";
 import { PUBLIC_PERFIX_CLASS } from "../constants";
@@ -49,7 +53,7 @@ export const GeaflowRegister = (props: PluginPorps) => {
   const handleChangeLanguage = (value: string) => {
     localStorage.setItem("i18nextLng", value);
     i18n.change(value);
-    location.reload()
+    location.reload();
   };
 
   return (

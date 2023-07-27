@@ -112,10 +112,12 @@ export const ClusterManage: React.FC<{}> = ({}) => {
       width: 150,
       render: (_, record: any) => (
         <span>
-          {t("i18n.key.creator")}{record.creatorName} <br />
+          {t("i18n.key.creator")}
+          {record.creatorName} <br />
           {record?.modifierName && (
             <span>
-              {t("i18n.key.modifier")}{record.modifierName}
+              {t("i18n.key.modifier")}
+              {record.modifierName}
             </span>
           )}
         </span>
