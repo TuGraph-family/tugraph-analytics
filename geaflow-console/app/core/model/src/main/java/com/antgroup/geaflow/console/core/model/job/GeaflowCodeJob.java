@@ -32,4 +32,9 @@ public abstract class GeaflowCodeJob extends GeaflowJob {
     public String getEntryClass() {
         return null;
     }
+
+    @Override
+    public boolean isApiJob() {
+        return false;
+    }
 }

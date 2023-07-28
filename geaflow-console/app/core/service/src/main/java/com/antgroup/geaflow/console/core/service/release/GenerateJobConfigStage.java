@@ -24,16 +24,25 @@ import org.springframework.stereotype.Component;
 public class GenerateJobConfigStage extends GeaflowBuildStage {
 
     private GeaflowConfig getDefaultConfig() {
-        return new GeaflowConfig();
+        GeaflowConfig geaflowConfig = new GeaflowConfig();
+        geaflowConfig.put("geaflow.heartbeat.timeout.ms", "300000");
+
+        return geaflowConfig;
     }
 
     @Override
     public void init(GeaflowRelease release) {
         // generate default job config from job plan
-        GeaflowConfig defaultConfig = getDefaultConfig();
-        defaultConfig.put("geaflow.heartbeat.timeout.ms", "300000");
-        release.setJobConfig(defaultConfig);
+        GeaflowConfig jobConfig = getDefaultConfig();
+
+        if (release.getJobConfig() != null) {
+            jobConfig.putAll(release.getJobConfig());
+        }
+
+        release.setJobConfig(jobConfig);
+
     }
+
 
     @Override
     public boolean update(GeaflowRelease release, ReleaseUpdate update) {

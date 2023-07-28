@@ -40,7 +40,8 @@ public class ResolveReleaseVersionStage extends GeaflowBuildStage {
             GeaflowTaskStatus status = task.getStatus();
             status.allowOperation(GeaflowOperationType.PUBLISH);
 
-            int currentVersion = task.getRelease().getReleaseVersion();
+            GeaflowRelease oldRelease = task.getRelease();
+            int currentVersion = oldRelease.getReleaseVersion();
             if (status == GeaflowTaskStatus.CREATED) {
                 //update release, releaseVersion unchanged
                 release.setReleaseVersion(currentVersion);
@@ -50,6 +51,8 @@ public class ResolveReleaseVersionStage extends GeaflowBuildStage {
                 release.setReleaseVersion(currentVersion + 1);
             }
 
+            release.setJobConfig(oldRelease.getJobConfig());
+            release.setClusterConfig(oldRelease.getClusterConfig());
         }
     }
 
