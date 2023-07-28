@@ -506,13 +506,21 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           </Col>
         </Row>
         <Row style={{ marginBottom: 24 }}>
-          <Col span={6}>
-            {$i18n.get({
-              id: "openpiece-geaflow.job-detail.components.basicInfo.ImageName",
-              dm: "图名称：",
-            })}
-            {job?.graphs[0]?.name}
-          </Col>
+          {job?.graphs[0]?.name && (
+            <Col span={6}>
+              {$i18n.get({
+                id: "openpiece-geaflow.job-detail.components.basicInfo.ImageName",
+                dm: "图名称：",
+              })}
+              {job?.graphs[0]?.name}
+            </Col>
+          )}
+          {job?.entryClass && (
+            <Col span={6}>
+              entryClass：
+              {job?.entryClass}
+            </Col>
+          )}
           <Col span={6}>
             {$i18n.get({
               id: "openpiece-geaflow.job-detail.components.basicInfo.TaskName",

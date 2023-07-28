@@ -207,11 +207,11 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
             disabled: true,
           };
         }
-        if (type === "EDGE" && [2, 3].includes(rowIndex)) {
-          return {
-            disabled: true,
-          };
-        }
+        // if (type === "EDGE" && [2, 3].includes(rowIndex)) {
+        //   return {
+        //     disabled: true,
+        //   };
+        // }
         if (readonly || (editable && !!name)) {
           return {
             disabled: true,

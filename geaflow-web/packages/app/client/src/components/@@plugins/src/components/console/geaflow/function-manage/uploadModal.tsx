@@ -157,7 +157,7 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
           ]}
         >
           <Input
-            placeHolder={$i18n.get({
+            placeholder={$i18n.get({
               id: "openpiece-geaflow.geaflow.function-manage.uploadModal.EnterTheFullClassPath",
               dm: "请输入函数实现类的完整Class路径",
             })}

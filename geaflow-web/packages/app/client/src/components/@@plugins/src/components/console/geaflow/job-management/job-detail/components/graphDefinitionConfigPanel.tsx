@@ -237,15 +237,15 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     form.setFieldsValue({
       [prefixName]: {
         ...originFormValue[prefixName],
-        config: [
-          ...originDefaultConfig,
-          {
-            key: value,
-            value: defaultValue,
-            masked,
-            type,
-          },
-        ],
+        // config: [
+        //   ...originDefaultConfig,
+        //   {
+        //     key: value,
+        //     value: defaultValue,
+        //     masked,
+        //     type,
+        //   },
+        // ],
       },
     });
   };
@@ -316,8 +316,6 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
       draft.configList = otherItems;
     });
   };
-
-  //console.log('form.getFieldsValue()', form.getFieldsValue(), prefixName);
 
   return (
     <>

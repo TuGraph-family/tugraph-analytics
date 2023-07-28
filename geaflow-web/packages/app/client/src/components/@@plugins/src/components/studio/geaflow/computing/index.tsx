@@ -10,9 +10,10 @@ import {
   Popconfirm,
   Breadcrumb,
   Tooltip,
+  Select,
+  Radio,
+  Upload,
 } from "antd";
-import { json } from "@codemirror/lang-json";
-import CodeMirror from "@uiw/react-codemirror";
 import { useOpenpieceUserAuth } from "@tugraph/openpiece-client";
 import {
   getJobsList,
@@ -22,11 +23,13 @@ import {
   deleteComputing,
   getJobsEditList,
   getJobsTasks,
+  getRemoteFiles,
 } from "../services/computing";
 import { isEmpty } from "lodash";
 import { useHistory } from "umi";
 import styles from "./index.module.less";
 import $i18n from "../../../../../../i18n";
+import CreateCompute from "./create";
 
 const { Search } = Input;
 
@@ -49,14 +52,14 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
     ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
     : {};
-
   const [temeplateList, setTemplateList] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [instance, setInstance] = useState({
     instanceList: {},
     check: false,
+    edit: false,
   });
-  const [loading, setLoading] = useState<boolean>(false);
+  const [files, setFiels] = useState([]);
 
   const handelTemplata = async (name?: string) => {
     if (currentInstance?.key) {
@@ -70,7 +73,8 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
         redirectLoginURL();
         return;
       }
-
+      const files = await getRemoteFiles();
+      setFiels(files);
       setTemplateList(result?.data?.list);
     }
   };
@@ -78,16 +82,6 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
   useEffect(() => {
     handelTemplata();
   }, []);
-
-  useEffect(() => {
-    if (jobId) {
-      getJobsEditList(jobId).then((res) => {
-        form.setFieldsValue(res.data);
-        setIsModalOpen(true);
-        setInstance({ ...instance, instanceList: res.data, check: true });
-      });
-    }
-  }, [jobId]);
 
   const typeMean = {
     INTEGRATE: $i18n.get({
@@ -130,7 +124,6 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
           <a
             onClick={() => {
               setInstance({ ...instance, instanceList: record, check: true });
-              form.setFieldsValue(record);
               setIsModalOpen(true);
             }}
           >
@@ -302,8 +295,7 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
         <Space>
           <a
             onClick={() => {
-              setInstance({ ...instance, instanceList: record, check: false });
-              form.setFieldsValue(record);
+              setInstance({ ...instance, instanceList: record, edit: true });
               setIsModalOpen(true);
             }}
           >
@@ -398,215 +390,25 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
     },
   ];
 
-  const handleOk = () => {
-    form.validateFields().then((val) => {
-      setLoading(true);
-
-      const { comment, name, userCode } = val;
-      const { id, instanceId } = instance.instanceList || {};
-      if (id) {
-        getJobsEdit(
-          { comment, name, userCode, type: "PROCESS", instanceId },
-          id
-        ).then((res) => {
-          setLoading(false);
-          if (res.success) {
-            message.success(
-              $i18n.get({
-                id: "openpiece-geaflow.geaflow.computing.EditedSuccessfully",
-                dm: "编辑成功",
-              })
-            );
-            handelTemplata();
-            setIsModalOpen(false);
-            setInstance({ ...instance, instanceList: {} });
-            form.resetFields();
-          } else {
-            message.error(
-              <p
-                style={{
-                  whiteSpace: "pre-line",
-                  textAlign: "left",
-                }}
-              >
-                {res?.message}
-              </p>
-            );
-          }
-        });
-      } else {
-        // 获取选择的实例 ID
-        const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
-          ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
-          : {};
-        getJobsCreat({
-          comment,
-          name,
-          userCode,
-          type: "PROCESS",
-          instanceId: currentInstance.key,
-        }).then((res) => {
-          setLoading(false);
-          if (res.success) {
-            message.success(
-              $i18n.get({
-                id: "openpiece-geaflow.geaflow.computing.AddedSuccessfully",
-                dm: "新增成功",
-              })
-            );
-            handelTemplata();
-            setIsModalOpen(false);
-          } else {
-            message.error(
-              <p
-                style={{
-                  whiteSpace: "pre-line",
-                  textAlign: "left",
-                }}
-              >
-                {res?.message}
-              </p>
-            );
-          }
-        });
-      }
-    });
-  };
-
   const handleCancel = () => {
     setIsModalOpen(false);
-    setInstance({ ...instance, instanceList: {} });
+    setInstance({ ...instance, instanceList: {}, edit: false, check: false });
     form.resetFields();
   };
+  const handleSuccess = () => {
+    handelTemplata();
+    handleCancel();
+  };
+
   return (
     <div className={styles["definition"]}>
       {isModalOpen ? (
-        <div className={styles["definition-create"]}>
-          <Breadcrumb style={{ marginBottom: 16 }}>
-            <Breadcrumb.Item>
-              <a
-                onClick={() => {
-                  setIsModalOpen(false);
-                  form.resetFields();
-                  setInstance({ ...instance, instanceList: {} });
-                }}
-              >
-                {$i18n.get({
-                  id: "openpiece-geaflow.geaflow.computing.GraphCalculationList",
-                  dm: "图任务",
-                })}
-              </a>
-            </Breadcrumb.Item>
-            <Breadcrumb.Item>
-              {instance.instanceList?.id
-                ? instance.check
-                  ? $i18n.get({
-                      id: "openpiece-geaflow.geaflow.computing.FigureCalculationDetails",
-                      dm: "图任务详情",
-                    })
-                  : $i18n.get({
-                      id: "openpiece-geaflow.geaflow.computing.EditGraphCalculation",
-                      dm: "编辑图任务",
-                    })
-                : $i18n.get({
-                    id: "openpiece-geaflow.geaflow.computing.AddGraphCalculation",
-                    dm: "新增图任务",
-                  })}
-            </Breadcrumb.Item>
-          </Breadcrumb>
-
-          <p style={{ fontWeight: 500, fontSize: 20, marginTop: 8 }}>
-            {instance.instanceList?.id
-              ? instance.check
-                ? $i18n.get({
-                    id: "openpiece-geaflow.geaflow.computing.FigureCalculationDetails",
-                    dm: "图任务详情",
-                  })
-                : $i18n.get({
-                    id: "openpiece-geaflow.geaflow.computing.EditGraphCalculation",
-                    dm: "编辑图任务",
-                  })
-              : $i18n.get({
-                  id: "openpiece-geaflow.geaflow.computing.AddGraphCalculation",
-                  dm: "新增图任务",
-                })}
-          </p>
-          <div className={styles["definition-form"]}>
-            <Form form={form}>
-              <Form.Item
-                label={$i18n.get({
-                  id: "openpiece-geaflow.geaflow.computing.TaskName",
-                  dm: "任务名称",
-                })}
-                name="name"
-                rules={[
-                  {
-                    required: true,
-                    message: $i18n.get({
-                      id: "openpiece-geaflow.geaflow.computing.EnterATaskName",
-                      dm: "请输入任务名称",
-                    }),
-                  },
-                ]}
-                initialValue=""
-              >
-                <Input disabled={instance.check} />
-              </Form.Item>
-
-              <Form.Item
-                label={$i18n.get({
-                  id: "openpiece-geaflow.geaflow.computing.TaskDescription",
-                  dm: "任务描述",
-                })}
-                name="comment"
-              >
-                <Input.TextArea disabled={instance.check} />
-              </Form.Item>
-              <Form.Item
-                label="DSL"
-                name="userCode"
-                rules={[
-                  {
-                    required: true,
-                    message: $i18n.get({
-                      id: "openpiece-geaflow.geaflow.computing.EnterDsl",
-                      dm: "请输入DSL",
-                    }),
-                  },
-                ]}
-              >
-                <CodeMirror
-                  value=""
-                  extensions={[json()]}
-                  readOnly={instance.check}
-                />
-              </Form.Item>
-            </Form>
-
-            <div className={styles["definition-bottom"]}>
-              <Button className={styles["bottom-btn"]} onClick={handleCancel}>
-                {$i18n.get({
-                  id: "openpiece-geaflow.geaflow.computing.Cancel",
-                  dm: "取消",
-                })}
-              </Button>
-              {!instance.check && (
-                <Button
-                  className={styles["bottom-btn"]}
-                  type="primary"
-                  htmlType="submit"
-                  onClick={handleOk}
-                  loading={loading}
-                >
-                  {$i18n.get({
-                    id: "openpiece-geaflow.geaflow.computing.Submit",
-                    dm: "提交",
-                  })}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <CreateCompute
+          handleCancel={handleCancel}
+          instance={instance}
+          files={files}
+          handleSuccess={handleSuccess}
+        />
       ) : (
         <div>
           <p>
