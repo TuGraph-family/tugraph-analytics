@@ -47,6 +47,7 @@ public class SpillableShardBufferTest {
         writerContext.setChannelNum(1);
         writerContext.setShuffleDescriptor(new ShuffleDescriptor());
         shardBuffer.init(writerContext);
+        ShuffleMemoryTracker.getInstance(config);
         int[] channels = new int[]{0};
 
         for (int i = 0; i < 10000; i++) {

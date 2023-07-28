@@ -54,7 +54,7 @@ public abstract class ShardBuffer<T, R> {
 
     public void init(IWriterContext writerContext) {
         this.config = writerContext.getConfig();
-        this.memoryTracker = ShuffleMemoryTracker.getInstance(config);
+        this.memoryTracker = ShuffleMemoryTracker.getInstance();
 
         this.targetChannels = writerContext.getTargetChannelNum();
         this.pipelineId = writerContext.getPipelineInfo().getPipelineId();
@@ -94,9 +94,6 @@ public abstract class ShardBuffer<T, R> {
     protected void send(int selectChannel, OutBuffer outBuffer, long batchId) {
         sendBuffer(selectChannel, outBuffer, batchId);
         this.bytesCounter[selectChannel] += outBuffer.getBufferSize();
-        if (outBuffer.isMemoryTracking()) {
-            memoryTracker.requireMemory(outBuffer.getBufferSize());
-        }
     }
 
     protected void sendBuffer(int sliceIndex, OutBuffer buffer, long batchId) {

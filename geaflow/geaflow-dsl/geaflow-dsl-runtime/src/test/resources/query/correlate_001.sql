@@ -29,4 +29,5 @@ SELECT
 	orderId,
 	units,
 	t.name
-FROM users, LATERAL table(UDTF_SPLIT(user_name, '|')) as t(name);
+FROM users, LATERAL table(UDTF_SPLIT(user_name, '|')) as t(name)
+where productId = 1 OR name = '中国';
