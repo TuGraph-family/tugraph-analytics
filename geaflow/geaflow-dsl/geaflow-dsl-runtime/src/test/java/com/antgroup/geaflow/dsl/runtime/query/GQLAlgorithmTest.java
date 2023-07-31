@@ -36,4 +36,13 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    @Test
+    public void testAlgorithm_003() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
 }
