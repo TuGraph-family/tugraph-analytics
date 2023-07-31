@@ -51,6 +51,11 @@ public class PipelineInputFetcher {
      * @param request
      */
     public void init(InitFetchRequest request) {
+        // Close the previous reader.
+        if (this.shuffleReader != null) {
+            this.shuffleReader.close();
+            this.shuffleReader = null;
+        }
         // Load shuffle reader according to shuffle type.
         this.shuffleReader = ShuffleManager.getInstance().loadShuffleReader(config);
         this.pipelineId = request.getPipelineId();
