@@ -72,7 +72,17 @@ public class GeaFlowAlgorithmTraversalFunction implements
 
     @Override
     public void finish() {
-
+        Iterator<Object> idIterator = traversalContext.vertex().loadIdIterator();
+        while (idIterator.hasNext()) {
+            Object id = idIterator.next();
+            algorithmCtx.setVertexId(id);
+            RowVertex rowVertex = (RowVertex) traversalContext.vertex().withId(id).get();
+            Row newValue = algorithmCtx.getVertexNewValue();
+            if (newValue != null) {
+                rowVertex.setValue(newValue);
+            }
+            userFunction.finish(rowVertex);
+        }
     }
 
     @Override
