@@ -27,6 +27,7 @@ import com.antgroup.geaflow.dsl.runtime.expression.UDTFExpression;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunctionImpl;
 import com.antgroup.geaflow.dsl.util.ExpressionUtil;
+import com.antgroup.geaflow.dsl.util.GQLRelUtil;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -39,6 +40,7 @@ import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Correlate;
 import org.apache.calcite.rel.core.CorrelationId;
+import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
@@ -83,9 +85,17 @@ public class PhysicCorrelateRelNode extends Correlate implements PhysicRelNode<R
 
     @Override
     public RuntimeTable translate(QueryContext context) {
-        RDataView input = ((PhysicRelNode<?>) getInput(0)).translate(context);
+        PhysicRelNode rightInput = ((PhysicRelNode<?>) getInput(1));
+        RelNode right = GQLRelUtil.toRel(rightInput);
+        Filter filterRelNode = null;
+        while (!(right instanceof TableFunctionScan)) {
+            Preconditions.checkArgument(rightInput.getInputs().size() == 1);
+            Preconditions.checkArgument(filterRelNode == null);
+            Preconditions.checkArgument(rightInput instanceof Filter);
+            filterRelNode = (Filter) right;
+            right = GQLRelUtil.toRel(right.getInput(0));
+        }
 
-        PhysicRelNode right = ((PhysicRelNode<?>) getInput(1));
         Preconditions.checkArgument(right instanceof PhysicTableFunctionScanRelNode);
         Expression tableExpression = ExpressionTranslator.of(right.getRowType())
             .translate(((PhysicTableFunctionScanRelNode) right).getCall());
@@ -96,8 +106,14 @@ public class PhysicCorrelateRelNode extends Correlate implements PhysicRelNode<R
         List<IType<?>> correlateRightOutputTypes = getRight().getRowType().getFieldList().stream()
             .map(field -> SqlTypeUtil.convertType(field.getType())).collect(Collectors.toList());
 
+        Expression condition = null;
+        if (filterRelNode != null) {
+            ExpressionTranslator translator = ExpressionTranslator.of(this.getRowType());
+            condition = translator.translate(filterRelNode.getCondition());
+        }
         CorrelateFunction correlateFunction = new CorrelateFunctionImpl(udtfExpression,
-            correlateLeftOutputTypes, correlateRightOutputTypes);
+            condition, correlateLeftOutputTypes, correlateRightOutputTypes);
+        RDataView input = ((PhysicRelNode<?>) getInput(0)).translate(context);
         if (input.getType() == ViewType.TABLE) {
             return ((RuntimeTable) input).correlate(correlateFunction);
         } else if (input.getType() == ViewType.GRAPH) {
