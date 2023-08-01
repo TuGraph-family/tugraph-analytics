@@ -273,4 +273,8 @@ public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object,
             ++i;
         }
     }
+
+    @Override
+    public void finish(RowVertex vertex) {
+    }
 }

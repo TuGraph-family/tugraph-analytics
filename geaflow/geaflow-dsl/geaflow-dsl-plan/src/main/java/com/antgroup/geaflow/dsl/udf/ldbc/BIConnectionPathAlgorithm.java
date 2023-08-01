@@ -292,4 +292,8 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
         }
         return result;
     }
+
+    @Override
+    public void finish(RowVertex vertex) {
+    }
 }

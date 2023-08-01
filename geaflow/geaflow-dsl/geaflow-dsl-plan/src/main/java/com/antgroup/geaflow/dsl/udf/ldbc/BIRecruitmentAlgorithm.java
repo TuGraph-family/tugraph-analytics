@@ -124,4 +124,8 @@ public class BIRecruitmentAlgorithm implements AlgorithmUserFunction<Object, Obj
             new TableField("distance", LongType.INSTANCE, false)
         );
     }
+
+    @Override
+    public void finish(RowVertex vertex) {
+    }
 }
