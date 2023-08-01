@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.antgroup.tugraph</groupId>
         <artifactId>geaflow-runtime</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

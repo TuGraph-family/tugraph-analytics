@@ -20,7 +20,7 @@
     <parent>
         <artifactId>geaflow-metrics</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2</version>
     </parent>
 
     <artifactId>geaflow-metrics-influxdb</artifactId>
