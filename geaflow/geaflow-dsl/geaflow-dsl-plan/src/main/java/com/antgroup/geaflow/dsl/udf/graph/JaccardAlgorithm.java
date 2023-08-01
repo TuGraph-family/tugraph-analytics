@@ -1,5 +1,8 @@
 package com.antgroup.geaflow.dsl.udf.graph;
 
+import com.antgroup.geaflow.common.type.primitive.DoubleType;
+import com.antgroup.geaflow.common.type.primitive.IntegerType;
+import com.antgroup.geaflow.common.type.primitive.LongType;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
@@ -8,6 +11,7 @@ import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.types.StructType;
+import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 
 import java.util.ArrayList;
@@ -52,7 +56,11 @@ public class JaccardAlgorithm implements AlgorithmUserFunction<Object, Row> {
 
     @Override
     public StructType getOutputType() {
-        return null;
+        return new StructType(
+            new TableField("currentid", IntegerType.INSTANCE, false),
+            new TableField("neighborid", IntegerType.INSTANCE, false),
+            new TableField("correlation", DoubleType.INSTANCE, false)
+        );
     }
 
     private void sendMessageToNeighbors(List<RowEdge> outEdges, Object message) {

@@ -11,5 +11,5 @@ USE GRAPH modern;
 
 INSERT INTO console
 CALL jaccard(1) YIELD (currentid, neighborid, correlation)
-RETURN cast (currentid as int), cast (neighborid as int), correlation
+RETURN cast (currentid as int), cast (neighborid as int), ROUND(correlation,2)
 ;

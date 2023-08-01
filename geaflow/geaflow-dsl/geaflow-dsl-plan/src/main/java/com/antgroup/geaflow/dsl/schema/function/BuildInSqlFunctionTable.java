@@ -18,6 +18,7 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.function.UDAF;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
+import com.antgroup.geaflow.dsl.udf.graph.JaccardAlgorithm;
 import com.antgroup.geaflow.dsl.udf.graph.PageRank;
 import com.antgroup.geaflow.dsl.udf.graph.SingleSourceShortestPath;
 import com.antgroup.geaflow.dsl.udf.table.date.AddMonths;
@@ -161,6 +162,7 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             // UDGA
             .add(GeaFlowFunction.of(SingleSourceShortestPath.class))
             .add(GeaFlowFunction.of(PageRank.class))
+            .add(GeaFlowFunction.of(JaccardAlgorithm.class))
             .build();
 
     public BuildInSqlFunctionTable(GQLJavaTypeFactory typeFactory) {
