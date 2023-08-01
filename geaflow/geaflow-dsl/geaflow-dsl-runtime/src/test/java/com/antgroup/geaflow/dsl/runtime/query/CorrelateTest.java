@@ -53,4 +53,13 @@ public class CorrelateTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testCorrelate_005() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/correlate_005.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }
