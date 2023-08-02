@@ -18,6 +18,7 @@ import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.rpc.IPipelineManagerEndpointRef;
 import com.antgroup.geaflow.rpc.proto.Container;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class PipelineMasterEndpointRef extends ContainerEndpointRef implements
     IPipelineManagerEndpointRef {
@@ -27,9 +28,10 @@ public class PipelineMasterEndpointRef extends ContainerEndpointRef implements
     }
 
     @Override
-    public void process(IEvent request) {
+    public Future<IEvent> process(IEvent request) {
         ensureChannelAlive();
         Container.Request taskEvent = buildRequest(request);
         blockingStub.process(taskEvent);
+        return null;
     }
 }

@@ -31,6 +31,7 @@ import com.antgroup.geaflow.runtime.core.protocol.DoneEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -67,7 +68,9 @@ public class BaseCycleSchedulerTest {
         // mock container rpc
         Mockito.doAnswer(in -> {
             processor.process((IEvent) in.getArgument(1));
-            return null;
+            CompletableFuture future = new CompletableFuture<>();
+            future.complete(null);
+            return future;
         }).when(rpcClient).processContainer(any(), any());
 
         Mockito.doAnswer(in -> {

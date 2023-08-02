@@ -25,6 +25,7 @@ import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.metric.CycleMetrics;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
+import com.antgroup.geaflow.common.utils.FutureUtil;
 import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.io.CollectType;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,6 +183,8 @@ public class PipelineCycleScheduler<E>
         } else {
             events = buildEvents(schedulerStates, iterationId);
         }
+        int eventSize = events.size();
+        List<Future<IEvent>> submitFutures = new ArrayList<>(eventSize);
         for (Map.Entry<Integer, IEvent> entry : events.entrySet()) {
             ExecutionTask task = cycleTasks.get(entry.getKey());
 
@@ -190,8 +194,12 @@ public class PipelineCycleScheduler<E>
                 task.getWorkerInfo().getWorkerIndex(), task.getWorkerInfo().getHost(),
                 task.getWorkerInfo().getProcessId());
 
-            RpcClient.getInstance().processContainer(task.getWorkerInfo().getContainerName(), entry.getValue());
+            Future<IEvent> future = RpcClient.getInstance()
+                .processContainer(task.getWorkerInfo().getContainerName(), entry.getValue());
+            submitFutures.add(future);
         }
+
+        FutureUtil.wait(submitFutures);
     }
 
     private Map<Integer, IEvent> buildEvents(List<ICycleSchedulerContext.SchedulerState> states, long iterationId) {
@@ -253,11 +261,15 @@ public class PipelineCycleScheduler<E>
 
         Map<Integer, IEvent> events = eventBuilder.build(ICycleSchedulerContext.SchedulerState.FINISH,
             context.getCurrentIterationId());
+        List<Future<IEvent>> submitFutures = new ArrayList<>(events.size());
         for (Map.Entry<Integer, IEvent> entry : events.entrySet()) {
             ExecutionTask task = cycleTasks.get(entry.getKey());
-            RpcClient.getInstance().processContainer(task.getWorkerInfo().getContainerName(), entry.getValue());
+            Future<IEvent> future = RpcClient.getInstance()
+                .processContainer(task.getWorkerInfo().getContainerName(), entry.getValue());
             LOGGER.info("{} submit finish event {} ", finishLogTag, entry);
+            submitFutures.add(future);
         }
+        FutureUtil.wait(submitFutures);
 
         // Need receive all tail responses.
         int responseCount = 0;
