@@ -28,4 +28,6 @@ public class GraphView extends DataView {
 
     private PluginConfigView pluginConfig;
 
+    private List<EndpointView> endpoints;
+
 }

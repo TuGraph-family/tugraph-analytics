@@ -12,24 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.core.model.data;
+package com.antgroup.geaflow.dsl.common.descriptor;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
-import lombok.Getter;
-import lombok.Setter;
+public class RelationDescriptor {
 
-@Getter
-@Setter
-public class GeaflowEdge extends GeaflowStruct {
+    public String source;
+    public String target;
+    public String type;
 
-    public GeaflowEdge() {
-        super(GeaflowStructType.EDGE);
+    public RelationDescriptor(String source, String target, String type) {
+        this.source = source;
+        this.target = target;
+        this.type = type;
     }
-
-    public GeaflowEdge(String name, String comment) {
-        this();
-        super.name = name;
-        super.comment = comment;
-    }
-
 }

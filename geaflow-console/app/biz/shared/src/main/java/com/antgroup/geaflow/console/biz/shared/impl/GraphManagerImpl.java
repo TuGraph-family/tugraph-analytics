@@ -21,6 +21,7 @@ import com.antgroup.geaflow.console.biz.shared.VertexManager;
 import com.antgroup.geaflow.console.biz.shared.convert.DataViewConverter;
 import com.antgroup.geaflow.console.biz.shared.convert.GraphViewConverter;
 import com.antgroup.geaflow.console.biz.shared.convert.PluginConfigViewConverter;
+import com.antgroup.geaflow.console.biz.shared.view.EndpointView;
 import com.antgroup.geaflow.console.biz.shared.view.GraphView;
 import com.antgroup.geaflow.console.biz.shared.view.IdView;
 import com.antgroup.geaflow.console.biz.shared.view.PluginConfigView;
@@ -31,6 +32,7 @@ import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
 import com.antgroup.geaflow.console.core.model.data.GeaflowEdge;
+import com.antgroup.geaflow.console.core.model.data.GeaflowEndpoint;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowVertex;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
@@ -47,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -167,4 +170,43 @@ public class GraphManagerImpl extends DataManagerImpl<GeaflowGraph, GraphView, G
         return structType.name() + "-" + resourceId;
     }
 
+    @Override
+    @Transactional
+    public boolean createEndpoints(String instanceName, String graphName, List<EndpointView> views) {
+        if (CollectionUtils.isEmpty(views)) {
+            return true;
+        }
+
+        String instanceId = getInstanceIdByName(instanceName);
+        GeaflowGraph graph = graphService.getByName(instanceId, graphName);
+        Preconditions.checkNotNull(graph, "Graph %s not exist", graphName);
+
+        List<GeaflowEndpoint> endpoints = buildEndpoints(instanceId, views);
+        return graphService.createEndpoints(graph, endpoints);
+    }
+
+    @Override
+    public boolean deleteEndpoints(String instanceName, String edgeName, List<EndpointView> views) {
+        String instanceId = getInstanceIdByName(instanceName);
+        GeaflowGraph graph = graphService.getByName(instanceId, edgeName);
+        Preconditions.checkNotNull(graph, "Graph %s not exist", edgeName);
+        List<GeaflowEndpoint> endpoints = buildEndpoints(instanceId, views);
+        return graphService.deleteEndpoints(graph, endpoints);
+    }
+
+    private List<GeaflowEndpoint> buildEndpoints(String instanceId, List<EndpointView> endpointViews) {
+        return ListUtil.convert(endpointViews, e -> {
+            // check vertex/edge existing and build endpoint models
+            String edgeName = e.getEdgeName();
+            String srcName = e.getSourceName();
+            String targetName = e.getTargetName();
+            GeaflowEdge edge = edgeService.getByName(instanceId, edgeName);
+            Preconditions.checkNotNull(edge, "Edge %s not exist", edgeName);
+            GeaflowVertex srcVertex = vertexService.getByName(instanceId, srcName);
+            Preconditions.checkNotNull(srcVertex, "Vertex %s not exist", srcName);
+            GeaflowVertex targetVertex = vertexService.getByName(instanceId, targetName);
+            Preconditions.checkNotNull(targetVertex, "Vertex %s not exist", targetName);
+            return new GeaflowEndpoint(edge.getId(), srcVertex.getId(), targetVertex.getId());
+        });
+    }
 }

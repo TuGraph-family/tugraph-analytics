@@ -22,8 +22,8 @@ import lombok.Setter;
 @Getter
 public class EdgeView extends StructView {
 
-
     public EdgeView() {
         type = GeaflowStructType.EDGE;
     }
+
 }

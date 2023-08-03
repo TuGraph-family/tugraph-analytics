@@ -21,6 +21,7 @@ import com.antgroup.geaflow.common.type.Types;
 import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.GraphRecordType;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
+import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.TableField;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
@@ -52,6 +54,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
     private boolean isStatic;
     private final boolean ifNotExists;
     private final boolean isTemporary;
+    private GraphDescriptor graphDescriptor;
 
     public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
                         List<EdgeTable> edgeTables, Map<String, String> config,
@@ -73,6 +76,57 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
             edgeTable.setGraph(this);
         }
         this.isStatic = isStatic;
+        this.validate();
+    }
+
+    public void validate() {
+        if (this.vertexTables.size() > 0) {
+            TableField commonVertexIdField = this.vertexTables.get(0).getIdField();
+            for (VertexTable vertexTable : this.vertexTables) {
+                if (!vertexTable.getIdFieldName().equals(commonVertexIdField.getName())) {
+                    throw new GeaFlowDSLException("Id field name should be same between vertex " + "tables");
+                } else if (!vertexTable.getIdField().getType().equals(commonVertexIdField.getType())) {
+                    throw new GeaFlowDSLException("Id field type should be same between vertex " + "tables");
+                }
+            }
+        }
+        if (this.edgeTables.size() > 0) {
+            TableField commonSrcIdField = this.edgeTables.get(0).getSrcIdField();
+            TableField commonTargetIdField = this.edgeTables.get(0).getTargetIdField();
+            Optional<TableField> commonTsField =
+                Optional.ofNullable(this.edgeTables.get(0).getTimestampField());
+            for (EdgeTable edgeTable : this.edgeTables) {
+                if (!edgeTable.getSrcIdFieldName().equals(commonSrcIdField.getName())) {
+                    throw new GeaFlowDSLException("SOURCE ID field name should be same between "
+                        + "edge tables");
+                } else if (!edgeTable.getSrcIdField().getType().equals(commonSrcIdField.getType())) {
+                    throw new GeaFlowDSLException("SOURCE ID field type should be same between edge "
+                        + "tables");
+                } else if (!edgeTable.getTargetIdFieldName().equals(commonTargetIdField.getName())) {
+                    throw new GeaFlowDSLException("DESTINATION ID field name should be same "
+                        + "between edge tables");
+                } else if (!edgeTable.getTargetIdField().getType().equals(commonTargetIdField.getType())) {
+                    throw new GeaFlowDSLException("DESTINATION ID field type should be same "
+                        + "between edge tables");
+                }
+
+                if (commonTsField.isPresent()) {
+                    if (edgeTable.getTimestampField() == null) {
+                        throw new GeaFlowDSLException("TIMESTAMP should defined or not defined in all edge tables");
+                    } else if (!edgeTable.getTimestampFieldName().equals(commonTsField.get().getName())) {
+                        throw new GeaFlowDSLException("TIMESTAMP field name should be same between "
+                            + "edge tables");
+                    } else if (!edgeTable.getTimestampField().getType().equals(commonTsField.get().getType())) {
+                        throw new GeaFlowDSLException("TIMESTAMP field type should be same between edge "
+                            + "tables");
+                    }
+                } else {
+                    if (edgeTable.getTimestampField() != null) {
+                        throw new GeaFlowDSLException("TIMESTAMP should defined or not defined in all edge tables");
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -115,6 +169,52 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
     public Configuration getConfig() {
         return new Configuration(config);
+    }
+
+    public GeaFlowGraph setDescriptor(GraphDescriptor desc) {
+        this.graphDescriptor = Objects.requireNonNull(desc);
+        return this;
+    }
+
+    public GraphDescriptor getValidDescriptorInGraph(GraphDescriptor desc) {
+        GraphDescriptor newDesc = new GraphDescriptor();
+        newDesc.addNode(desc.nodes.stream().filter(
+            node -> this.vertexTables.stream().anyMatch(v -> v.getTypeName().equals(node.type))
+        ).collect(Collectors.toList()));
+        newDesc.addEdge(desc.edges.stream().filter(
+            edge -> {
+                EdgeTable edgeTable = null;
+                for (EdgeTable e : this.getEdgeTables()) {
+                    if (e.getTypeName().equals(edge.type)) {
+                        edgeTable = e;
+                        break;
+                    }
+                }
+                VertexTable sourceVertexTable = null;
+                for (VertexTable v : this.getVertexTables()) {
+                    if (v.getTypeName().equals(edge.sourceType)) {
+                        sourceVertexTable = v;
+                        break;
+                    }
+                }
+                VertexTable targetVertexTable = null;
+                for (VertexTable v : this.getVertexTables()) {
+                    if (v.getTypeName().equals(edge.targetType)) {
+                        targetVertexTable = v;
+                        break;
+                    }
+                }
+                boolean exist = edgeTable != null
+                    && sourceVertexTable != null && targetVertexTable != null;
+                return exist && edgeTable.getSrcIdField().getType().equals(sourceVertexTable.getIdField().getType())
+                    && edgeTable.getTargetIdField().getType().equals(targetVertexTable.getIdField().getType());
+            }
+        ).collect(Collectors.toList()));
+        return newDesc;
+    }
+
+    public GraphDescriptor getDescriptor() {
+        return graphDescriptor == null ? new GraphDescriptor() : graphDescriptor;
     }
 
     public Configuration getConfigWithGlobal(Configuration globalConf) {

@@ -16,7 +16,6 @@ package com.antgroup.geaflow.console.core.service;
 
 import com.antgroup.geaflow.console.common.dal.dao.DataDao;
 import com.antgroup.geaflow.console.common.dal.dao.EdgeDao;
-import com.antgroup.geaflow.console.common.dal.dao.EdgeVertexMappingDao;
 import com.antgroup.geaflow.console.common.dal.entity.EdgeEntity;
 import com.antgroup.geaflow.console.common.dal.entity.IdEntity;
 import com.antgroup.geaflow.console.common.dal.model.EdgeSearch;
@@ -40,10 +39,13 @@ public class EdgeService extends DataService<GeaflowEdge, EdgeEntity, EdgeSearch
     private final GeaflowResourceType resourceType = GeaflowResourceType.EDGE;
     @Autowired
     private EdgeDao edgeDao;
+
     @Autowired
     private FieldService fieldService;
+
     @Autowired
-    private EdgeVertexMappingDao vertexEdgeMappingDao;
+    private GraphService graphService;
+
     @Autowired
     private EdgeConverter edgeConverter;
 
@@ -64,7 +66,6 @@ public class EdgeService extends DataService<GeaflowEdge, EdgeEntity, EdgeSearch
         for (GeaflowEdge model : models) {
             fieldService.createByResource(new ArrayList<>(model.getFields().values()), model.getId(), resourceType);
         }
-        // todo: save ve mapping
         return edgeIds;
     }
 
@@ -76,8 +77,7 @@ public class EdgeService extends DataService<GeaflowEdge, EdgeEntity, EdgeSearch
 
         return edgeEntities.stream().map(e -> {
             List<GeaflowField> fields = fieldsMap.get(e.getId());
-            // todo: parse ve mapping
-            return edgeConverter.convert(e, fields, new ArrayList<>());
+            return edgeConverter.convert(e, fields);
         }).collect(Collectors.toList());
     }
 
@@ -95,8 +95,12 @@ public class EdgeService extends DataService<GeaflowEdge, EdgeEntity, EdgeSearch
 
     @Override
     public boolean drop(List<String> ids) {
+        // can't drop if is used in graph.
+        for (String id : ids) {
+            graphService.checkBindingRelations(id, GeaflowResourceType.EDGE);
+        }
+
         fieldService.removeByResources(ids, resourceType);
-        // todo: remove ve mapping
         return super.drop(ids);
     }
 

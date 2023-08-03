@@ -17,12 +17,15 @@ package com.antgroup.geaflow.dsl.catalog.console;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.catalog.Catalog;
 import com.antgroup.geaflow.dsl.catalog.exception.ObjectAlreadyExistException;
+import com.antgroup.geaflow.dsl.common.descriptor.EdgeDescriptor;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowView;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.calcite.schema.Table;
@@ -106,6 +109,26 @@ public class ConsoleCatalog implements Catalog {
             return;
         }
         client.createGraph(instanceName, graph);
+        Map<String, List<String>> edgeType2SourceTypes = new HashMap<>();
+        Map<String, List<String>> edgeType2TargetTypes = new HashMap<>();
+        for (EdgeDescriptor edgeDescriptor : graph.getDescriptor().edges) {
+            edgeType2SourceTypes.computeIfAbsent(edgeDescriptor.type, t -> new ArrayList<>());
+            edgeType2TargetTypes.computeIfAbsent(edgeDescriptor.type, t -> new ArrayList<>());
+            edgeType2SourceTypes.get(edgeDescriptor.type).add(edgeDescriptor.sourceType);
+            edgeType2TargetTypes.get(edgeDescriptor.type).add(edgeDescriptor.targetType);
+        }
+        List<String> edgeTypes = new ArrayList<>();
+        List<String> sourceVertexTypes = new ArrayList<>();
+        List<String> targetVertexTypes = new ArrayList<>();
+        for (String edgeType : edgeType2SourceTypes.keySet()) {
+            for (int i = 0; i < edgeType2SourceTypes.get(edgeType).size(); i++) {
+                edgeTypes.add(edgeType);
+                sourceVertexTypes.add(edgeType2SourceTypes.get(edgeType).get(i));
+                targetVertexTypes.add(edgeType2TargetTypes.get(edgeType).get(i));
+            }
+        }
+        client.createEdgeEndpoints(instanceName, graph.getName(), edgeTypes,
+            sourceVertexTypes, targetVertexTypes);
         allTables.get(instanceName).put(graph.getName(), graph);
     }
 

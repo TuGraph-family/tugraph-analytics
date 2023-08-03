@@ -19,6 +19,10 @@ import static com.antgroup.geaflow.dsl.util.SqlTypeUtil.convertTypeName;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
+import com.antgroup.geaflow.dsl.catalog.console.GraphModel.Endpoint;
+import com.antgroup.geaflow.dsl.common.descriptor.EdgeDescriptor;
+import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
+import com.antgroup.geaflow.dsl.common.descriptor.NodeDescriptor;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
@@ -179,14 +183,29 @@ public class CatalogUtil {
         for (VertexModel vertexModel : vertices) {
             vertexTables.add(convertToVertexTable(vertexModel));
         }
+        GraphDescriptor desc = new GraphDescriptor();
+        for (VertexTable vertex : vertexTables) {
+            desc.addNode(new NodeDescriptor(desc.getIdName(model.getName()),
+                vertex.getTypeName()));
+        }
+
         List<EdgeModel> edges = model.getEdges();
         List<EdgeTable> edgeTables = new ArrayList<>(edges.size());
         for (EdgeModel edgeModel : edges) {
             edgeTables.add(convertToEdgeTable(edgeModel));
         }
-        return new GeaFlowGraph(instanceName, model.getName(), vertexTables, edgeTables,
-            convertToGeaFlowGraphConfig(model.getPluginConfig()), Collections.emptyMap(), true,
-            false, false);
+        if (model.getEndpoints() != null) {
+            for (Endpoint endpoint : model.getEndpoints()) {
+                desc.addEdge(new EdgeDescriptor(desc.getIdName(model.getName()),
+                    endpoint.getEdgeName(), endpoint.getSourceName(),
+                    endpoint.getTargetName()));
+            }
+        }
+        GeaFlowGraph geaFlowGraph = new GeaFlowGraph(instanceName, model.getName(), vertexTables,
+            edgeTables, convertToGeaFlowGraphConfig(model.getPluginConfig()), Collections.emptyMap(),
+            true, false, false);
+        geaFlowGraph.setDescriptor(geaFlowGraph.getValidDescriptorInGraph(desc));
+        return geaFlowGraph;
     }
 
     public static GeaFlowFunction convertToGeaFlowFunction(FunctionModel model) {

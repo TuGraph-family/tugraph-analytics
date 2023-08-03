@@ -14,22 +14,21 @@
 
 package com.antgroup.geaflow.console.core.model.data;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
 @Setter
-public class GeaflowEdge extends GeaflowStruct {
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class GeaflowEndpoint {
 
-    public GeaflowEdge() {
-        super(GeaflowStructType.EDGE);
-    }
+    private String edgeId;
 
-    public GeaflowEdge(String name, String comment) {
-        this();
-        super.name = name;
-        super.comment = comment;
-    }
+    private String sourceId;
+
+    private String targetId;
 
 }

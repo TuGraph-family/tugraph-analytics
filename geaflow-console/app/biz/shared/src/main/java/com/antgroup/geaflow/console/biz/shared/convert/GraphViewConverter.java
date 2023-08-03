@@ -15,16 +15,18 @@
 package com.antgroup.geaflow.console.biz.shared.convert;
 
 import com.antgroup.geaflow.console.biz.shared.view.EdgeView;
+import com.antgroup.geaflow.console.biz.shared.view.EndpointView;
 import com.antgroup.geaflow.console.biz.shared.view.GraphView;
 import com.antgroup.geaflow.console.biz.shared.view.VertexView;
+import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.core.model.data.GeaflowEdge;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowVertex;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -57,12 +59,28 @@ public class GraphViewConverter extends DataViewConverter<GeaflowGraph, GraphVie
     protected GraphView modelToView(GeaflowGraph model) {
         GraphView graphView = super.modelToView(model);
         graphView.setPluginConfig(pluginConfigViewConverter.modelToView(model.getPluginConfig()));
-        List<VertexView> vertexViews = model.getVertices().values().stream().map(e -> vertexViewConverter.modelToView(e))
-            .collect(Collectors.toList());
-        List<EdgeView> edgeViews = model.getEdges().values().stream().map(e -> edgeViewConverter.modelToView(e))
-            .collect(Collectors.toList());
+        // cache model for vertex/edge
+        HashMap<String, GeaflowVertex> vertexMap = new HashMap<>();
+        HashMap<String, GeaflowEdge> edgeMap = new HashMap<>();
+        List<VertexView> vertexViews = ListUtil.convert(model.getVertices().values(), e -> {
+            vertexMap.putIfAbsent(e.getId(), e);
+            return vertexViewConverter.modelToView(e);
+        });
+        List<EdgeView> edgeViews = ListUtil.convert(model.getEdges().values(), e -> {
+            edgeMap.putIfAbsent(e.getId(), e);
+            return edgeViewConverter.modelToView(e);
+        });
+
         graphView.setVertices(vertexViews);
         graphView.setEdges(edgeViews);
+
+        // set endpoints
+        List<EndpointView> endpointViews = ListUtil.convert(model.getEndpoints(), e ->
+            new EndpointView(edgeMap.get(e.getEdgeId()).getName(),
+                vertexMap.get(e.getSourceId()).getName(),
+                vertexMap.get(e.getTargetId()).getName())
+        );
+        graphView.setEndpoints(endpointViews);
         return graphView;
     }
 

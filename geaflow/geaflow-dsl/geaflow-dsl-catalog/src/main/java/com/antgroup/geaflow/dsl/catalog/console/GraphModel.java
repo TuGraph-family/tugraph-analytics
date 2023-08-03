@@ -24,6 +24,8 @@ public class GraphModel extends AbstractDataModel {
 
     private List<EdgeModel> edges;
 
+    private List<Endpoint> endpoints;
+
     public PluginConfigModel getPluginConfig() {
         return pluginConfig;
     }
@@ -46,6 +48,41 @@ public class GraphModel extends AbstractDataModel {
 
     public void setEdges(List<EdgeModel> edges) {
         this.edges = edges;
+    }
+
+
+    public List<Endpoint> getEndpoints() {
+        return endpoints;
+    }
+
+    public void setEndpoints(List<Endpoint> endpoints) {
+        this.endpoints = endpoints;
+    }
+
+    public static class Endpoint {
+
+        private final String sourceName;
+        private final String targetName;
+        private final String edgeName;
+
+        public Endpoint(String srcVertex, String targetVertex, String edgeName) {
+            this.sourceName = srcVertex;
+            this.targetName = targetVertex;
+            this.edgeName = edgeName;
+        }
+
+        public String getSourceName() {
+            return sourceName;
+        }
+
+        public String getTargetName() {
+            return targetName;
+        }
+
+        public String getEdgeName() {
+            return edgeName;
+        }
+
     }
 
 }
