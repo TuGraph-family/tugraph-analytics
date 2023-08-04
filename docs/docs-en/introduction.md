@@ -10,7 +10,7 @@ are a large number of join operations, and how to improve the efficiency and per
 
 ![stream_history](../static/img/stream_history_en.png)
 
-## Features
+# Features
 
 * Distribute streaming graph computing.
 * High availability and exactly once support.
