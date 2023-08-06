@@ -1,5 +1,7 @@
 # Introduction
-<p> Early big data processing mainly relied on offline processing, with technologies like Hadoop effectively solving 
+
+## Background introduction
+Early big data processing mainly relied on offline processing, with technologies like Hadoop effectively solving 
 the problem of analyzing large-scale data. However, processing efficiency was inadequate for high real-time demand scenarios. The emergence of stream computing engines, represented by Storm, effectively addressed the issue of real-time data processing, improving processing efficiency. However, Storm itself does not provide state management capabilities and is powerless in handling stateful computations such as aggregation. The emergence of Flink effectively addressed this shortcoming by introducing state management and checkpoint mechanisms, achieving efficient stateful stream computing capabilities.
 
 As real-time data processing scenarios evolve, particularly in real-time data warehousing scenarios, real-time 
@@ -10,7 +12,7 @@ are a large number of join operations, and how to improve the efficiency and per
 
 ![stream_history](../static/img/stream_history_en.png)
 
-# Features
+## Features
 
 * Distribute streaming graph computing.
 * High availability and exactly once support.
@@ -36,7 +38,7 @@ GeaFlow's relevant design reference papers are as follows: [GeaFlow: A Graph Ext
 System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
 
-# Technical overview
+## Technical overview
 The overall architecture of GeaFlow is as follows:
 
 ![geaflow_arch](../static/img/geaflow_arch.png)
@@ -54,18 +56,18 @@ The GeaFlow overall architecture includes the following layers from top to botto
 * **GeaFlow Console**
   The GeaFlow control platform, which includes functions such as job management and metadata management.
 
-# Application Scenarios
+## Application Scenarios
 
-## Real-time Data Warehouse Acceleration
+### Real-time Data Warehouse Acceleration
 In data warehouse scenarios, there are a large number of join operations, and in the DWD layer, it is often necessary to expand multiple tables into one large wide table to speed up subsequent queries. When the number of tables involved in a join increases, traditional real-time computing engines find it difficult to ensure the efficiency and performance of joins. This has become a challenging problem in the field of real-time data warehousing. GeaFlow's real-time graph computing engine can effectively address this problem. GeaFlow uses the graph as its data model, replacing the wide tables in the DWD layer, and can realize real-time graph construction. At the query stage, utilizing the point-edge materialization characteristics of the graph can greatly accelerate relationship operation queries. The following is the process diagram of GeaFlow's real-time data warehouse acceleration:
 ![graph_warehouse](../static/img/graph_warehouse.png)
 
-## Real-time Attribution Analysis
+### Real-time Attribution Analysis
 Under the background of informationization, channel attribution and path analysis of user behavior are the core of traffic analysis. By calculating the effective behavior path of users in real-time, and constructing a complete conversion path, it can quickly help businesses understand the value of products and assist operations in adjusting their strategies in a timely manner. The core points of real-time attribution analysis are accuracy and effectiveness. Accuracy requires ensuring the accuracy of user behavior path analysis under controllable costs. Effectiveness requires high real-time calculation to quickly assist business decision-making.
 Based on the capabilities of the GeaFlow's streaming computing, accurate and timely attribution analysis can be achieved. The following figure shows how this is accomplished:
 ![attribution_analysis](../static/img/guiyin_analysis.png)
 Firstly, GeaFlow converts the user behavior logs into a user behavior topology graph in real-time, with users as the vertex and every behavior related to them as an the edge towards the buried page. Then, GeaFlow analyzes the subgraph of user behavior in advance using its streaming computing capability, and based on the attribution path matching rule, matches and calculates the attribution path of the corresponding user for the transaction behavior, and outputs it to the downstream systems.
 
-## Real-time Anti-Crash System
+### Real-time Anti-Crash System
 In the context of credit risk management, detecting credit card cashing-out fraud is a typical risk management requirement. Based on analysis of existing cashing-out patterns, it can be seen that cashing-out is a loop subgraph. How to efficiently and quickly identify cashing-out in a large graph can greatly increase the efficiency of risk identification. Taking the following graph as an example, by transforming real-time transaction flows and transfer flows from input data sources into a real-time transaction graph, and then performing graph feature analysis on user transaction behavior based on risk management policies, such as loop checking and other feature calculations, real-time detection of cashing-out can be provided to decision-making and monitoring platforms. GeaFlow's real-time graph construction and calculation abilities can quickly identify abnormal transactional behaviors such as cashing-out, greatly reducing platform risk.
 ![real-anti-crash](../static/img/fantaoxian.png)
