@@ -1,5 +1,8 @@
+import $i18n from "../../../../../i18n";
 export function getUrlParam(param: string, location?: any) {
-  const urlSearchParams = new URLSearchParams(!location ? location.search : window.location.search);
+  const urlSearchParams = new URLSearchParams(
+    !location ? location.search : window.location.search
+  );
   return urlSearchParams.get(param);
 }
 
@@ -8,7 +11,7 @@ export const getLocalData = (key: string) => {
     return;
   }
   try {
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    const data = JSON.parse(localStorage.getItem(key) || "{}");
     return data;
   } catch (e) {
     console.error(`geaflow ${key} %d ${e}`);
@@ -24,7 +27,13 @@ export const setLocalData = (key: string, data: any) => {
 
 export const convertMillisecondsToHMS = (milliseconds: number) => {
   if (milliseconds < 1000) {
-    return `${milliseconds}毫秒`
+    return $i18n.get(
+      {
+        id: "openpiece-geaflow.console.geaflow.util.MillisecondsMilliseconds",
+        dm: "{milliseconds}毫秒",
+      },
+      { milliseconds: milliseconds }
+    );
   }
 
   // 计算总共有多少秒
@@ -46,11 +55,28 @@ export const convertMillisecondsToHMS = (milliseconds: number) => {
     // 没有小时，显示分钟和秒
     if (minutes < 1) {
       // 没有分钟，显示秒
-      return `${seconds}秒`
+      return $i18n.get(
+        {
+          id: "openpiece-geaflow.console.geaflow.util.SecondsSeconds",
+          dm: "{seconds}秒",
+        },
+        { seconds: seconds }
+      );
     }
-    return `${minutes}分${seconds}秒`
+    return $i18n.get(
+      {
+        id: "openpiece-geaflow.console.geaflow.util.MinutesMinutesSecondsSeconds",
+        dm: "{minutes}分{seconds}秒",
+      },
+      { minutes: minutes, seconds: seconds }
+    );
   }
-  
-  return `${hours}小时${minutes}分${seconds}秒`
 
-}
+  return $i18n.get(
+    {
+      id: "openpiece-geaflow.console.geaflow.util.HoursHoursMinutesMinutesSeconds",
+      dm: "{hours}小时{minutes}分{seconds}秒",
+    },
+    { hours: hours, minutes: minutes, seconds: seconds }
+  );
+};

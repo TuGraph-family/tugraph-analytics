@@ -9,6 +9,7 @@ import {
 } from "../../services/job-list";
 import { find, isEmpty, omitBy } from "lodash";
 import styles from "./index.module.less";
+import $i18n from "../../../../../../../i18n";
 
 interface PluginPorps {
   redirectPath?: RedirectPath[];
@@ -20,9 +21,11 @@ interface RedirectPath {
 }
 
 export const JobList: React.FC<PluginPorps> = (props) => {
-  const { redirectPath } = props;
+  const { redirectPath = [] } = props;
+
   const redirectUrl = find(redirectPath, ["pathName", "作业详情"])?.path || "/";
-  const redirectTable = find(redirectPath, ["pathName", "图计算"])?.path || "/";
+  const redirectTable = find(redirectPath, ["pathName", "图任务"])?.path || "/";
+
   const [operationData, setOperationData] = useState([]);
   const [filterData, setFilterData] = useState({
     newCluster: {},
@@ -65,7 +68,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
 
   const columns = [
     {
-      title: "任务名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.TaskName",
+        dm: "任务名称",
+      }),
       dataIndex: "name",
       key: "name",
       width: 150,
@@ -86,7 +92,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
     },
 
     {
-      title: "作业Id",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.JobId",
+        dm: "作业Id",
+      }),
       dataIndex: "jobId",
       key: "jobId",
       hideInSearch: true,
@@ -101,7 +110,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       ),
     },
     {
-      title: "作业类型",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.JobType",
+        dm: "作业类型",
+      }),
       dataIndex: "jobType",
       key: "jobType",
       hideInSearch: true,
@@ -110,7 +122,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       ),
     },
     {
-      title: "作业状态",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.JobStatus",
+        dm: "作业状态",
+      }),
       dataIndex: "status",
       key: "status",
       valueType: "select",
@@ -125,7 +140,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       },
     },
     {
-      title: "集群",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.Cluster",
+        dm: "集群",
+      }),
       dataIndex: "clusterId",
       key: "clusterId",
       valueType: "select",
@@ -135,7 +153,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       ),
     },
     {
-      title: "版本",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.Version",
+        dm: "版本",
+      }),
       dataIndex: "versionTd",
       key: "versionTd",
       valueType: "select",
@@ -145,7 +166,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       ),
     },
     {
-      title: "实例",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.Instance",
+        dm: "实例",
+      }),
       dataIndex: "instanceId",
       key: "instanceId",
       valueType: "select",
@@ -155,25 +179,59 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       ),
     },
     {
-      title: "操作人",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.Operator",
+        dm: "操作人",
+      }),
       key: "creatorName",
       hideInSearch: true,
       render: (_, record: any) => (
         <span>
-          创建人：{record.creatorName} <br />
-          {record?.modifierName && <span>修改人：{record.modifierName}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.job-management.joblist.Creator",
+            dm: "创建人：",
+          })}
+          {record.creatorName} <br />
+          {record?.modifierName && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.job-management.joblist.ModifiedByRecordmodifiername",
+                  dm: "修改人：{recordModifierName}",
+                },
+                { recordModifierName: record.modifierName }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.job-management.joblist.OperationTime",
+        dm: "操作时间",
+      }),
       key: "createTime",
       width: 250,
       hideInSearch: true,
       render: (_, record: any) => (
         <span>
-          创建时间：{record.createTime} <br />
-          {record?.modifyTime && <span>修改时间：{record.modifyTime}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.job-management.joblist.CreationTime",
+            dm: "创建时间：",
+          })}
+          {record.createTime} <br />
+          {record?.modifyTime && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.job-management.joblist.ModificationTimeRecordmodifytime",
+                  dm: "修改时间：{recordModifyTime}",
+                },
+                { recordModifyTime: record.modifyTime }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
@@ -199,7 +257,10 @@ export const JobList: React.FC<PluginPorps> = (props) => {
           labelWidth: "auto",
         }}
         dateFormatter="string"
-        headerTitle="作业列表"
+        headerTitle={$i18n.get({
+          id: "openpiece-geaflow.job-management.joblist.JobList",
+          dm: "作业列表",
+        })}
       />
     </div>
   );

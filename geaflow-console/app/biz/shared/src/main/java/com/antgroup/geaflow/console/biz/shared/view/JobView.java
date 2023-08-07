@@ -41,4 +41,8 @@ public class JobView extends NameView {
     private SlaView sla;
 
     private List<FunctionView> functions;
+
+    private String entryClass;
+
+    private RemoteFileView jarPackage;
 }

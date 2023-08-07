@@ -1,5 +1,3 @@
-set geaflow.dsl.window.size = 1;
-
 CREATE TABLE tbl_result (
   a_id bigint,
   b_id bigint,

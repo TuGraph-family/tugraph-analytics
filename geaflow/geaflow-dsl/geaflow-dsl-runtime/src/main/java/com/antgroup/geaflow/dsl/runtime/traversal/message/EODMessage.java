@@ -15,6 +15,10 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.message;
 
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EndOfData;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,4 +61,26 @@ public class EODMessage implements IMessage {
     public List<EndOfData> getEodData() {
         return endOfDatas;
     }
+
+    public static class EODMessageSerializer extends Serializer<EODMessage> {
+
+        @Override
+        public void write(Kryo kryo, Output output, EODMessage object) {
+            // serialize endOfDatas using default CollectionSerializer
+            kryo.writeObject(output, object.getEodData());
+        }
+
+        @Override
+        public EODMessage read(Kryo kryo, Input input, Class<EODMessage> type) {
+            // deserialize endOfDatas using default CollectionSerializer
+            List<EndOfData> endOfDatas = kryo.readObject(input, ArrayList.class);
+            return new EODMessage(endOfDatas);
+        }
+
+        @Override
+        public EODMessage copy(Kryo kryo, EODMessage original) {
+            return new EODMessage(new ArrayList<>(original.getEodData()));
+        }
+    }
+
 }

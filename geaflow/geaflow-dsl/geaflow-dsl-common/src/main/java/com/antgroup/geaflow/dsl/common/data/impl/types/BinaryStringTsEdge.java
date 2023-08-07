@@ -21,10 +21,15 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class BinaryStringTsEdge extends BinaryStringEdge implements IGraphElementWithTimeField {
+public class BinaryStringTsEdge extends BinaryStringEdge implements IGraphElementWithTimeField,
+    KryoSerializable {
 
     public static final Supplier<BinaryStringTsEdge> CONSTRUCTOR = new Constructor();
 
@@ -139,4 +144,42 @@ public class BinaryStringTsEdge extends BinaryStringEdge implements IGraphElemen
             return new BinaryStringTsEdge();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize fields
+        byte[] srcIdBytes = ((BinaryString)this.getSrcId()).getBytes();
+        byte[] targetIdBytes = ((BinaryString)this.getTargetId()).getBytes();
+        output.writeInt(srcIdBytes.length);
+        output.writeBytes(srcIdBytes);
+        output.writeInt(targetIdBytes.length);
+        output.writeBytes(targetIdBytes);
+        kryo.writeClassAndObject(output, this.getDirect());
+        byte[] labelBytes = this.getBinaryLabel().getBytes();
+        output.writeInt(labelBytes.length);
+        output.writeBytes(labelBytes);
+        output.writeLong(this.getTime());
+        // serialize value
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize fields
+        BinaryString srcId = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        BinaryString targetId = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        EdgeDirection direction = (EdgeDirection) kryo.readClassAndObject(input);
+        BinaryString label = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        long time = input.readLong();
+        // deserialize value
+        Row value = (Row) kryo.readClassAndObject(input);
+        // create edge object
+        this.setSrcId(srcId);
+        this.setTargetId(targetId);
+        this.setValue(value);
+        this.setBinaryLabel(label);
+        this.setDirect(direction);
+        this.setTime(time);
+    }
+
 }

@@ -40,6 +40,11 @@ public interface AlgorithmUserFunction<K, M> extends Serializable {
     void process(RowVertex vertex, Iterator<M> messages);
 
     /**
+     * Finish method called by each vertex upon algorithm convergence.
+     */
+    void finish(RowVertex vertex);
+
+    /**
      * Returns the output type for the function.
      */
     StructType getOutputType();

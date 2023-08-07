@@ -29,12 +29,13 @@ public class HeapBuffer extends AbstractBuffer {
     private byte[] bytes;
 
     public HeapBuffer(byte[] bytes) {
-        this.bytes = bytes;
+        this(bytes, false);
     }
 
     public HeapBuffer(byte[] bytes, boolean memoryTrack) {
         super(memoryTrack);
         this.bytes = bytes;
+        this.requireMemory(bytes.length);
     }
 
     @Override

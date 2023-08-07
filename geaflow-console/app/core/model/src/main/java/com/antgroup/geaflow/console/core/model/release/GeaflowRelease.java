@@ -44,7 +44,9 @@ public class GeaflowRelease extends GeaflowId {
     public void validate() {
         super.validate();
         Preconditions.checkNotNull(job, "Invalid job");
-        Preconditions.checkNotNull(jobPlan, "Invalid jobPlan");
+        if (!job.isApiJob()) {
+            Preconditions.checkNotNull(jobPlan, "Invalid jobPlan");
+        }
         Preconditions.checkNotNull(version, "Invalid version");
         Preconditions.checkNotNull(cluster, "Invalid cluster");
         Preconditions.checkArgument(releaseVersion >= 1);

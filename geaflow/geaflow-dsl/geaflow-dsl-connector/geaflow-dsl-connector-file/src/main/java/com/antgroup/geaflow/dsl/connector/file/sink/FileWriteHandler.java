@@ -20,7 +20,7 @@ import java.io.IOException;
 
 public interface FileWriteHandler {
 
-    void init(Configuration conf, StructType schema, int taskIndex);
+    void init(Configuration tableConf, StructType schema, int taskIndex);
 
     void write(String text) throws IOException;
 

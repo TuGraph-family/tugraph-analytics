@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.console.common.dal.entity;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFunctionType;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,8 +23,7 @@ import lombok.Setter;
 @TableName("geaflow_function")
 public class FunctionEntity extends DataEntity {
 
-    private GeaflowFunctionType type;
-
     private String jarPackageId;
 
+    private String entryClass;
 }

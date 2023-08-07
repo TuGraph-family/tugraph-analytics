@@ -16,24 +16,21 @@ package com.antgroup.geaflow.dsl.catalog.console;
 
 import static com.antgroup.geaflow.dsl.util.SqlTypeUtil.convertTypeName;
 
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
-import com.antgroup.geaflow.dsl.catalog.console.EdgeModel;
-import com.antgroup.geaflow.dsl.catalog.console.FieldModel;
-import com.antgroup.geaflow.dsl.catalog.console.GeaFlowFieldCategory;
-import com.antgroup.geaflow.dsl.catalog.console.GeaFlowFieldType;
-import com.antgroup.geaflow.dsl.catalog.console.GeaFlowPluginType;
-import com.antgroup.geaflow.dsl.catalog.console.GraphModel;
-import com.antgroup.geaflow.dsl.catalog.console.PluginConfigModel;
-import com.antgroup.geaflow.dsl.catalog.console.TableModel;
-import com.antgroup.geaflow.dsl.catalog.console.VertexModel;
 import com.antgroup.geaflow.dsl.common.types.TableField;
+import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CatalogUtil {
 
@@ -41,7 +38,7 @@ public class CatalogUtil {
         TableModel tableModel = new TableModel();
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
         pluginConfigModel.setType(GeaFlowPluginType.getPluginType(table.getTableType()));
-        pluginConfigModel.setConfig(table.getConfig());
+        pluginConfigModel.setConfig(convertToTableModelConfig(table.getConfig()));
         tableModel.setPluginConfig(pluginConfigModel);
         tableModel.setName(table.getName());
         List<TableField> fields = table.getFields();
@@ -57,7 +54,7 @@ public class CatalogUtil {
         List<FieldModel> fieldModels = model.getFields();
         List<TableField> fields = convertToTableField(fieldModels);
         return new GeaFlowTable(instanceName, model.getName(), fields, new ArrayList<>(),
-            new ArrayList<>(), model.getPluginConfig().getConfig(), true);
+            new ArrayList<>(), convertToGeaFlowTableConfig(model.getPluginConfig()), true, false);
     }
 
     public static VertexModel convertToVertexModel(VertexTable table) {
@@ -85,11 +82,8 @@ public class CatalogUtil {
         List<TableField> fields = new ArrayList<>(fieldModels.size());
         String idFieldName = null;
         for (FieldModel fieldModel : fieldModels) {
-            switch (fieldModel.getCategory()) {
-                case VERTEX_ID:
-                    idFieldName = fieldModel.getName();
-                    break;
-                default:
+            if (fieldModel.getCategory() == GeaFlowFieldCategory.VERTEX_ID) {
+                idFieldName = fieldModel.getName();
             }
             String typeName = convertTypeName(fieldModel.getType().name());
             IType<?> fieldType = Types.of(typeName);
@@ -157,7 +151,8 @@ public class CatalogUtil {
         GraphModel graphModel = new GraphModel();
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
         pluginConfigModel.setType(GeaFlowPluginType.getPluginType(graph.getStoreType()));
-        pluginConfigModel.setConfig(graph.getConfig().getConfigMap());
+        pluginConfigModel.setConfig(convertToGraphModelConfig(graph.getConfig().getConfigMap()));
+
         graphModel.setPluginConfig(pluginConfigModel);
         List<VertexTable> vertexTables = graph.getVertexTables();
         List<VertexModel> vertexModels = new ArrayList<>(vertexTables.size());
@@ -190,7 +185,12 @@ public class CatalogUtil {
             edgeTables.add(convertToEdgeTable(edgeModel));
         }
         return new GeaFlowGraph(instanceName, model.getName(), vertexTables, edgeTables,
-            model.getPluginConfig().getConfig(), true);
+            convertToGeaFlowGraphConfig(model.getPluginConfig()), Collections.emptyMap(), true,
+            false, false);
+    }
+
+    public static GeaFlowFunction convertToGeaFlowFunction(FunctionModel model) {
+        return GeaFlowFunction.of(model.getName(), Lists.newArrayList(model.getEntryClass()));
     }
 
     private static List<FieldModel> convertToFieldModel(List<TableField> fields) {
@@ -212,5 +212,31 @@ public class CatalogUtil {
             fields.add(field);
         }
         return fields;
+    }
+
+    private static Map<String, String> convertToTableModelConfig(Map<String, String> tableConfig) {
+        Map<String, String> modelConfig = new HashMap<>(tableConfig);
+        modelConfig.remove(DSLConfigKeys.GEAFLOW_DSL_TABLE_TYPE.getKey());
+        return modelConfig;
+    }
+
+    private static Map<String, String> convertToGeaFlowTableConfig(PluginConfigModel configModel) {
+        Map<String, String> tableConfig = new HashMap<>(configModel.getConfig());
+        tableConfig.put(DSLConfigKeys.GEAFLOW_DSL_TABLE_TYPE.getKey(),
+            configModel.getType().name());
+        return tableConfig;
+    }
+
+    private static Map<String, String> convertToGraphModelConfig(Map<String, String> graphConfig) {
+        Map<String, String> modelConfig = new HashMap<>(graphConfig);
+        modelConfig.remove(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey());
+        return modelConfig;
+    }
+
+    private static Map<String, String> convertToGeaFlowGraphConfig(PluginConfigModel configModel) {
+        Map<String, String> graphConfig = new HashMap<>(configModel.getConfig());
+        graphConfig.put(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey(),
+            configModel.getType().name());
+        return graphConfig;
     }
 }

@@ -1,10 +1,16 @@
-import React, { useCallback } from "react";
-import { useHistory } from 'umi'
-import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
-import { Button, Form, Input, message } from "antd";
+import React from "react";
+import { useHistory } from "umi";
+import {
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  GlobalOutlined,
+} from "@ant-design/icons";
+import { Button, Form, Input, message, Menu } from "antd";
+import { useTranslation } from "react-i18next";
 import { PUBLIC_PERFIX_CLASS } from "../constants";
 import { useAuth } from "../hooks/useAuth";
 import styles from "./index.module.less";
+import i18n from "../../../../../../i18n";
 
 const { Item, useForm } = Form;
 
@@ -18,10 +24,11 @@ interface RedirectPath {
 }
 
 export const GeaflowRegister = (props: PluginPorps) => {
-  const redirectUrl = props?.redirectPath?.[0]?.path || '/';
+  const redirectUrl = props?.redirectPath?.[0]?.path || "/";
   const [form] = useForm();
   const { onRegister, registerLoading } = useAuth();
-  const history = useHistory()
+  const history = useHistory();
+  const { t } = useTranslation();
 
   const register = async () => {
     const values = await form.validateFields();
@@ -31,19 +38,53 @@ export const GeaflowRegister = (props: PluginPorps) => {
         onRegister({ name, password, comment }).then((res) => {
           // 后端接口添加 success 字段的话就可以替换成 res.success
           if (res.code === "SUCCESS") {
-            message.success("注册成功！");
+            message.success(t("i18n.key.registration.succeeded"));
             window.location.href = redirectUrl;
           } else {
-            message.error("注册失败！" + res.message);
+            message.error(t("i18n.key.registration.failed") + res.message);
           }
         });
       } catch (error) {
-        message.error(error ?? "注册失败！");
+        message.error(error ?? t("i18n.key.registration.failed"));
       }
     }
   };
+
+  const handleChangeLanguage = (value: string) => {
+    localStorage.setItem("i18nextLng", value);
+    i18n.change(value);
+    location.reload();
+  };
+
   return (
     <div className={styles[`${PUBLIC_PERFIX_CLASS}-login-container`]}>
+      <Menu
+        style={{
+          position: "absolute",
+          right: 8,
+          top: 8,
+          zIndex: 3,
+          width: 200,
+        }}
+        mode="inline"
+      >
+        <Menu.SubMenu
+          title={
+            <>
+              <GlobalOutlined style={{ marginRight: 8 }} />
+              {t("i18n.key.switch.language")}
+            </>
+          }
+        >
+          <Menu.Item onClick={() => handleChangeLanguage("zh-CN")}>
+            {t("i18n.key.chinese")}
+          </Menu.Item>
+          <Menu.Item onClick={() => handleChangeLanguage("en-US")}>
+            {t("i18n.key.English")}
+          </Menu.Item>
+        </Menu.SubMenu>
+      </Menu>
+
       <img
         src="https://mdn.alipayobjects.com/huamei_qcdryc/afts/img/A*AbamQ5lxv0IAAAAAAAAAAAAADgOBAQ/original"
         alt="geaflow-logo"
@@ -51,13 +92,26 @@ export const GeaflowRegister = (props: PluginPorps) => {
       />
       <div className={styles[`${PUBLIC_PERFIX_CLASS}-particles-container`]}>
         <div className={styles[`${PUBLIC_PERFIX_CLASS}-text`]}>
-          蚂蚁集团开源<br />实时图计算引擎
+          {t("i18n.key.geaflow.title") === "Streaming Graph Computing" ? (
+            <div className={styles[`${PUBLIC_PERFIX_CLASS}-title`]}>
+              <span>{t("i18n.key.geaflow.title")}</span>
+              <span style={{ fontSize: 40, color: "#69c0ff" }}>
+                {t("i18n.key.geaflow.subtitle")}
+              </span>
+            </div>
+          ) : (
+            <div>
+              {t("i18n.key.geaflow.title")}
+              <br />
+              {t("i18n.key.geaflow.subtitle")}
+            </div>
+          )}
         </div>
       </div>
       <div className={styles[`${PUBLIC_PERFIX_CLASS}-login-form`]}>
         <div className={styles[`${PUBLIC_PERFIX_CLASS}-logo`]}>
           <div className={styles[`${PUBLIC_PERFIX_CLASS}-account-login`]}>
-            欢迎注册
+            {t("i18n.key.to.register")}
           </div>
           <Form
             form={form}
@@ -68,26 +122,26 @@ export const GeaflowRegister = (props: PluginPorps) => {
               rules={[
                 {
                   required: true,
-                  message: "请输入账号!",
+                  message: `${t("i18n.key.your.username")}`,
                 },
               ]}
             >
-              <Input placeholder="账号" />
+              <Input placeholder={t("i18n.key.account")} />
             </Item>
             <Item name="comment">
-              <Input placeholder="昵称" />
+              <Input placeholder={t("i18n.key.nickName")} />
             </Item>
             <Item
               name="password"
               rules={[
                 {
                   required: true,
-                  message: "请输入密码！",
+                  message: `${t("i18n.key.your.password")}`,
                 },
               ]}
             >
               <Input.Password
-                placeholder="密码"
+                placeholder={t("i18n.key.password")}
                 iconRender={(visible) =>
                   visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
                 }
@@ -99,20 +153,20 @@ export const GeaflowRegister = (props: PluginPorps) => {
               rules={[
                 {
                   required: true,
-                  message: "请输入确认密码！",
+                  message: `${t("i18n.key.confirmation.password")}`,
                 },
                 ({ getFieldValue }) => ({
                   validator(rule, value) {
                     if (!value || getFieldValue("password") === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject("新密码与确认新密码不同！");
+                    return Promise.reject(t("i18n.key.password.different"));
                   },
                 }),
               ]}
             >
               <Input.Password
-                placeholder="确认密码"
+                placeholder={t("i18n.key.confirm.password")}
                 iconRender={(visible) =>
                   visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
                 }
@@ -123,10 +177,12 @@ export const GeaflowRegister = (props: PluginPorps) => {
               loading={registerLoading}
               onClick={() => register()}
             >
-              注册
+              {t("i18n.key.register")}
             </Button>
             <p style={{ marginTop: 8 }}>
-              <a onClick={() => history.replace(redirectUrl)}>已有账号登录</a>
+              <a onClick={() => history.replace(redirectUrl)}>
+                {t("i18n.key.already.account")}
+              </a>
             </p>
           </Form>
         </div>

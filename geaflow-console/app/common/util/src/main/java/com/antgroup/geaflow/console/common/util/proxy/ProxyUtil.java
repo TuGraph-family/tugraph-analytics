@@ -47,7 +47,7 @@ public class ProxyUtil {
                 Constructor<?> constructor = getConstructor(targetClass, targetArgs);
                 Object targetInstance = constructor.newInstance(targetArgs);
 
-                return clazz.cast(proxyInstance(clazz, targetInstance));
+                return clazz.cast(proxyInstance(targetClassLoader, clazz, targetInstance));
             });
 
         } catch (Exception e) {
@@ -130,7 +130,7 @@ public class ProxyUtil {
         }
     }
 
-    protected static Object proxyInstance(Type type, Object targetInstance) {
+    protected static Object proxyInstance(ClassLoader targetClassLoader, Type type, Object targetInstance) {
         if (type instanceof Class) {
             Class<?> clazz = (Class<?>) type;
 
@@ -146,7 +146,7 @@ public class ProxyUtil {
 
             // proxy instance
             Object proxyInstance = Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz},
-                new GeaflowInvocationHandler(targetInstance));
+                new GeaflowInvocationHandler(targetClassLoader, targetInstance));
             return clazz.cast(proxyInstance);
         }
 
@@ -157,22 +157,23 @@ public class ProxyUtil {
 
             // proxy collection type
             if (Collection.class.isAssignableFrom(clazz)) {
-                return proxyCollection(clazz, elementType[0], targetInstance);
+                return proxyCollection(targetClassLoader, clazz, elementType[0], targetInstance);
             }
 
             // proxy map type
             if (Map.class.isAssignableFrom(clazz)) {
-                return proxyMap(elementType[0], elementType[1], targetInstance);
+                return proxyMap(targetClassLoader, elementType[0], elementType[1], targetInstance);
             }
 
             // proxy raw type
-            return proxyInstance(clazz, targetInstance);
+            return proxyInstance(targetClassLoader, clazz, targetInstance);
         }
 
         throw new GeaflowException("Type {} not support proxy", type.getTypeName());
     }
 
-    private static Object proxyCollection(Class<?> clazz, Type elementType, Object targetInstance) {
+    private static Object proxyCollection(ClassLoader targetClassLoader, Class<?> clazz, Type elementType,
+                                          Object targetInstance) {
         // create default collection
         Collection<Object> proxyCollection;
         if (Set.class.isAssignableFrom(clazz)) {
@@ -188,21 +189,21 @@ public class ProxyUtil {
         // proxy collection element
         Collection<?> targetCollection = (Collection<?>) targetInstance;
         for (Object element : targetCollection) {
-            proxyCollection.add(proxyInstance(elementType, element));
+            proxyCollection.add(proxyInstance(targetClassLoader, elementType, element));
         }
 
         return proxyCollection;
     }
 
-    private static Object proxyMap(Type keyType, Type valueType, Object targetInstance) {
+    private static Object proxyMap(ClassLoader targetClassLoader, Type keyType, Type valueType, Object targetInstance) {
         // create proxy map
         Map<Object, Object> proxyMap = new HashMap<>();
 
         // proxy map key value
         Map<?, ?> targetMap = (Map<?, ?>) targetInstance;
         for (Entry<?, ?> entry : targetMap.entrySet()) {
-            Object proxyKey = proxyInstance(keyType, entry.getKey());
-            Object proxyValue = proxyInstance(valueType, entry.getValue());
+            Object proxyKey = proxyInstance(targetClassLoader, keyType, entry.getKey());
+            Object proxyValue = proxyInstance(targetClassLoader, valueType, entry.getValue());
             proxyMap.put(proxyKey, proxyValue);
         }
 

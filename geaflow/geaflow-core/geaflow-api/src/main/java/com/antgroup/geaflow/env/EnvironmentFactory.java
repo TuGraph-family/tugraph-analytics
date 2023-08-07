@@ -44,9 +44,7 @@ public class EnvironmentFactory {
         Map<String, String> config = new HashMap<>(argsParser.parse(args));
         config.put(RUN_LOCAL_MODE.getKey(), Boolean.TRUE.toString());
         // Set default state backend type to memory on local env.
-        if (!config.containsKey(SYSTEM_STATE_BACKEND_TYPE.getKey())) {
-            config.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
-        }
+        config.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
         if (!config.containsKey(SYSTEM_OFFSET_BACKEND_TYPE.getKey())) {
             config.put(SYSTEM_OFFSET_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
         }

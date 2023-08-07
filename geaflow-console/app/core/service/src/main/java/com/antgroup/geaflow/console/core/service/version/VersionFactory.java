@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.console.core.service.version;
 
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
-import com.antgroup.geaflow.console.core.service.file.VersionFileFactory;
+import com.antgroup.geaflow.console.core.service.file.LocalFileFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class VersionFactory {
     private final Map<String, VersionClassLoader> classLoaderMap = new ConcurrentHashMap<>();
 
     @Autowired
-    private VersionFileFactory versionFileFactory;
+    private LocalFileFactory localFileFactory;
 
     public VersionClassLoader getClassLoader(GeaflowVersion version) {
         return classLoaderMap.compute(version.getName(), (k, vcl) -> {
@@ -39,7 +39,7 @@ public class VersionFactory {
                 vcl.closeClassLoader();
             }
 
-            return new VersionClassLoader(version, versionFileFactory);
+            return new VersionClassLoader(version, localFileFactory);
         });
     }
 }

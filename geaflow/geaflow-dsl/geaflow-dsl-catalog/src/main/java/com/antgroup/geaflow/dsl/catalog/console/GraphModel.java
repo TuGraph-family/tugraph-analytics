@@ -47,4 +47,5 @@ public class GraphModel extends AbstractDataModel {
     public void setEdges(List<EdgeModel> edges) {
         this.edges = edges;
     }
+
 }

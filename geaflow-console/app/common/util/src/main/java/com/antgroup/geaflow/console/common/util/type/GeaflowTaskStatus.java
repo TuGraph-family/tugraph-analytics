@@ -40,7 +40,7 @@ public enum GeaflowTaskStatus {
 
     DELETED;
 
-    public void allowOperation(GeaflowOperationType operationType) {
+    public void checkOperation(GeaflowOperationType operationType) {
         switch (operationType) {
             case START:
                 switch (this) {
@@ -64,8 +64,7 @@ public enum GeaflowTaskStatus {
             case REFRESH:
                 break;
             case PUBLISH:
-            case CLEAN_DATA:
-            case CLEAN_META:
+            case RESET:
             case DELETE:
                 switch (this) {
                     case CREATED:

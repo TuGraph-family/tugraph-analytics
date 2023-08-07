@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.common.data.impl;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Collection;
 import java.util.List;
 
@@ -99,4 +103,44 @@ public class DefaultParameterizedPath implements ParameterizedPath {
         return new DefaultParameterizedPath(basePath.subPath(indices), requestId,
             parameterRow, systemVariableRow);
     }
+
+    @Override
+    public long getId() {
+        return basePath.getId();
+    }
+
+    @Override
+    public void setId(long id) {
+        basePath.setId(id);
+    }
+
+    public static class DefaultParameterizedPathSerializer extends Serializer<DefaultParameterizedPath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, DefaultParameterizedPath object) {
+            kryo.writeClassAndObject(output, object.basePath);
+            kryo.writeClassAndObject(output, object.getRequestId());
+            kryo.writeClassAndObject(output, object.getParameter());
+            kryo.writeClassAndObject(output, object.getSystemVariables());
+        }
+
+        @Override
+        public DefaultParameterizedPath read(Kryo kryo, Input input, Class<DefaultParameterizedPath> aClass) {
+            Path basePath = (Path) kryo.readClassAndObject(input);
+            Object requestId = kryo.readClassAndObject(input);
+            Row parameterRow = (Row) kryo.readClassAndObject(input);
+            Row systemVariableRow = (Row) kryo.readClassAndObject(input);
+            return new DefaultParameterizedPath(basePath, requestId, parameterRow, systemVariableRow);
+        }
+
+        @Override
+        public DefaultParameterizedPath copy(Kryo kryo, DefaultParameterizedPath original) {
+            Path basePath = kryo.copy(original.basePath);
+            Object requestId = kryo.copy(original.getRequestId());
+            Row parameterRow = kryo.copy(original.getParameter());
+            Row systemVariableRow = kryo.copy(original.getSystemVariables());
+            return new DefaultParameterizedPath(basePath, requestId, parameterRow, systemVariableRow);
+        }
+    }
+
 }

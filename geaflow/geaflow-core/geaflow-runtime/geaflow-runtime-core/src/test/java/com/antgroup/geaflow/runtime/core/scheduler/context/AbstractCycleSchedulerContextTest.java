@@ -34,6 +34,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
@@ -49,6 +50,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
@@ -73,6 +75,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         // do checkpoint
         long checkpointId = 20L;
@@ -81,7 +84,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         // clean checkpoint cycle.
         ClusterMetaStore.getInstance(0, new Configuration()).clean();
         CheckpointSchedulerContext newContext =
-            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> new CheckpointSchedulerContext(cycle, null));
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> CycleSchedulerContextFactory.create(cycle, null));
 
         long currentIterationId = checkpointId + 1;
         context.init(currentIterationId);
@@ -100,6 +103,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
 
         ExecutionNodeCycle cycle = buildMockCycle(false);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         // not do checkpoint at 17
         long checkpointId = 17L;

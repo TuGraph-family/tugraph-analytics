@@ -111,7 +111,7 @@ public class GQLLetNamespace extends GQLBaseNamespace {
             // replace the type for left label.
             return inputPathType.copy(labelField.getIndex(), newLabelType);
         }
-        throw new IllegalArgumentException("Let without from is not support at " + letStatement.getParserPosition());
+        throw new GeaFlowDSLException(letStatement.getParserPosition(), "Let without from is not support");
     }
 
     @Override

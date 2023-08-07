@@ -39,23 +39,30 @@ import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateTable;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateView;
 import com.antgroup.geaflow.dsl.sqlnode.SqlEdge;
+import com.antgroup.geaflow.dsl.sqlnode.SqlEdgeUsing;
 import com.antgroup.geaflow.dsl.sqlnode.SqlTableColumn;
 import com.antgroup.geaflow.dsl.sqlnode.SqlTableProperty;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertex;
-import com.antgroup.geaflow.dsl.util.FunctionUtil;
+import com.antgroup.geaflow.dsl.sqlnode.SqlVertexUsing;
+import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import com.antgroup.geaflow.dsl.validator.GQLValidatorImpl;
 import com.antgroup.geaflow.dsl.validator.QueryNodeContext;
+import com.antgroup.geaflow.state.StoreType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -71,9 +78,11 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.convert.ConverterRule;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -124,9 +133,11 @@ public class GQLContext {
 
     private final SqlRexConvertletTable convertLetTable;
 
-    private String currentInstance = Catalog.DEFAULT_INSTANCE;
+    private String currentInstance;
 
     private String currentGraph;
+
+    private final Set<SqlNode> validatedRelNode;
 
     private static final Map<String, String> shortKeyMapping = new HashMap<>();
 
@@ -145,6 +156,9 @@ public class GQLContext {
         }
         this.defaultSchema = new GeaFlowRootCalciteSchema(this.catalog).plus();
         this.sqlOperatorTable = new GQLOperatorTable(
+            catalog,
+            typeFactory,
+            this,
             new BuildInSqlOperatorTable(),
             new BuildInSqlFunctionTable(typeFactory));
 
@@ -165,6 +179,7 @@ public class GQLContext {
             calciteCatalogReader, this.typeFactory, CONFORMANCE);
         this.validator.setIdentifierExpansion(true);
         this.convertLetTable = frameworkConfig.getConvertletTable();
+        this.validatedRelNode = new HashSet<>();
     }
 
     public static GQLContext create(Configuration conf, boolean isCompile) {
@@ -223,7 +238,7 @@ public class GQLContext {
         }
         String tableName = getCatalogObjName(table.getName());
         return new GeaFlowTable(currentInstance, tableName, fields, primaryFields, partitionFields,
-            config, table.ifNotExists());
+            config, table.ifNotExists(), table.isTemporary());
     }
 
     public static String getCatalogObjName(SqlIdentifier name) {
@@ -235,8 +250,8 @@ public class GQLContext {
 
     /**
      * Complete the catalog object name.
-     * @param name
-     * @return
+     * @param name catalog object identifier.
+     * @return completed catalog object identifier with instance name.
      */
     public SqlIdentifier completeCatalogObjName(SqlIdentifier name) {
         String firstName = name.names.get(0);
@@ -257,6 +272,7 @@ public class GQLContext {
     public GeaFlowView convertToView(SqlCreateView view) {
         String viewName = view.getName().getSimple();
         validator.validate(view.getSubQuery());
+        validatedRelNode.add(view.getSubQuery());
 
         RelRecordType recordType = (RelRecordType) validator.getValidatedNodeType(view.getSubQuery());
         Preconditions.checkArgument(recordType.getFieldCount() == view.getFields().size(),
@@ -285,11 +301,23 @@ public class GQLContext {
      * Convert {@link SqlCreateGraph} to {@link GeaFlowGraph}.
      */
     public GeaFlowGraph convertToGraph(SqlCreateGraph graph) {
+        return convertToGraph(graph, Collections.emptyList(), new Configuration());
+    }
+
+    public GeaFlowGraph convertToGraph(SqlCreateGraph graph, Configuration globalConfiguration) {
+        return convertToGraph(graph, Collections.emptyList(), globalConfiguration);
+    }
+
+    public GeaFlowGraph convertToGraph(SqlCreateGraph graph,
+                                       Collection<GeaFlowTable> createTablesInScript,
+                                       Configuration globalConfiguration) {
         List<VertexTable> vertexTables = new ArrayList<>();
         SqlNodeList vertices = graph.getVertices();
+        boolean isAllVertexEdgeStatic = true;
+        Map<String, String> vertexEdgeName2UsingTableNameMap = new HashMap<>();
 
         for (SqlNode node : vertices) {
-            String idField = null;
+            String idFieldName = null;
             List<TableField> vertexFields = new ArrayList<>();
 
             if (node instanceof SqlVertex) {
@@ -299,7 +327,7 @@ public class GQLContext {
                     vertexFields.add(tableColumn.toTableField());
                     switch (tableColumn.getCategory()) {
                         case ID:
-                            idField = tableColumn.getName().getSimple();
+                            idFieldName = tableColumn.getName().getSimple();
                             break;
                         case NONE:
                             break;
@@ -308,7 +336,53 @@ public class GQLContext {
                                 + " at " + tableColumn.getParserPosition());
                     }
                 }
-                vertexTables.add(new VertexTable(vertex.getName().getSimple(), vertexFields, idField));
+                isAllVertexEdgeStatic = false;
+                vertexTables.add(new VertexTable(vertex.getName().getSimple(), vertexFields, idFieldName));
+            } else if (node instanceof SqlVertexUsing) {
+                SqlVertexUsing vertexUsing = (SqlVertexUsing) node;
+                List<String> names = vertexUsing.getUsingTableName().names;
+                String tableName = vertexUsing.getUsingTableName().getSimple();
+
+                Table usingTable = null;
+                for (GeaFlowTable createTable : createTablesInScript) {
+                    if (createTable.getName().equals(vertexUsing.getUsingTableName().getSimple())) {
+                        usingTable = createTable;
+                    }
+                }
+                if (usingTable == null) {
+                    String instanceName = names.size() > 1 ? names.get(names.size() - 2) : getCurrentInstance();
+                    usingTable = this.getCatalog().getTable(instanceName, tableName);
+                }
+                if (usingTable == null) {
+                    throw new GeaFlowDSLException(node.getParserPosition(),
+                        "Cannot found using table: {}, check statement order.", tableName);
+                }
+                idFieldName = vertexUsing.getId().getSimple();
+
+                TableField idField = null;
+                Set<String> fieldNames = new HashSet<>();
+                for (RelDataTypeField column : usingTable.getRowType(this.typeFactory).getFieldList()) {
+                    TableField tableField = new TableField(column.getName(),
+                        SqlTypeUtil.convertType(column.getType()), column.getType().isNullable());
+                    if (fieldNames.contains(tableField.getName())) {
+                        throw new GeaFlowDSLException("Column already exists: {}", tableField.getName());
+                    }
+                    vertexFields.add(tableField);
+                    fieldNames.add(tableField.getName());
+                    if (tableField.getName().equals(idFieldName)) {
+                        idField = tableField;
+                    }
+                }
+                if (idField == null) {
+                    throw new GeaFlowDSLException("Cannot found srcIdFieldName: {} in vertex {}",
+                        idFieldName, vertexUsing.getName().getSimple());
+                }
+
+                isAllVertexEdgeStatic &= (usingTable instanceof GeaFlowTable)
+                    && ((GeaFlowTable)usingTable).isAllWindow(globalConfiguration);
+                vertexEdgeName2UsingTableNameMap.put(vertexUsing.getName().getSimple(),
+                    vertexUsing.getUsingTableName().getSimple());
+                vertexTables.add(new VertexTable(vertexUsing.getName().getSimple(), vertexFields, idFieldName));
             } else {
                 throw new GeaFlowDSLException("vertex not support: " + node);
             }
@@ -318,9 +392,9 @@ public class GQLContext {
         SqlNodeList edges = graph.getEdges();
 
         for (SqlNode node : edges) {
-            String srcIdField = null;
-            String targetIdField = null;
-            String tsField = null;
+            String srcIdFieldName = null;
+            String targetIdFieldName = null;
+            String tsFieldName = null;
             List<TableField> edgeFields = new ArrayList<>();
 
             if (node instanceof SqlEdge) {
@@ -332,13 +406,13 @@ public class GQLContext {
 
                     switch (tableColumn.getCategory()) {
                         case SOURCE_ID:
-                            srcIdField = columnName;
+                            srcIdFieldName = columnName;
                             break;
                         case DESTINATION_ID:
-                            targetIdField = columnName;
+                            targetIdFieldName = columnName;
                             break;
                         case TIMESTAMP:
-                            tsField = columnName;
+                            tsFieldName = columnName;
                             break;
                         case NONE:
                             break;
@@ -347,8 +421,71 @@ public class GQLContext {
                                 + " at " + tableColumn.getParserPosition());
                     }
                 }
+                isAllVertexEdgeStatic = false;
                 String tableName = edge.getName().getSimple();
-                edgeTables.add(new EdgeTable(tableName, edgeFields, srcIdField, targetIdField, tsField));
+                edgeTables.add(new EdgeTable(tableName, edgeFields, srcIdFieldName, targetIdFieldName, tsFieldName));
+            } else if (node instanceof SqlEdgeUsing) {
+                SqlEdgeUsing edgeUsing = (SqlEdgeUsing)  node;
+                List<String> names = edgeUsing.getUsingTableName().names;
+                String tableName = edgeUsing.getUsingTableName().getSimple();
+
+                Table usingTable = null;
+                for (GeaFlowTable createTable : createTablesInScript) {
+                    if (createTable.getName().equals(edgeUsing.getUsingTableName().getSimple())) {
+                        usingTable = createTable;
+                    }
+                }
+                if (usingTable == null) {
+                    String instanceName = names.size() > 1 ? names.get(names.size() - 2) : getCurrentInstance();
+                    usingTable = this.getCatalog().getTable(instanceName, tableName);
+                }
+                if (usingTable == null) {
+                    throw new GeaFlowDSLException(node.getParserPosition(),
+                        "Cannot found using table: {}, check statement order.", tableName);
+                }
+
+                srcIdFieldName = edgeUsing.getSourceId().getSimple();
+                targetIdFieldName = edgeUsing.getTargetId().getSimple();
+                tsFieldName = edgeUsing.getTimeField() == null ? null : edgeUsing.getTimeField().getSimple();
+                TableField srcIdField = null;
+                TableField targetIdField = null;
+                TableField tsField = null;
+                Set<String> fieldNames = new HashSet<>();
+                for (RelDataTypeField column : usingTable.getRowType(this.typeFactory).getFieldList()) {
+                    TableField tableField = new TableField(column.getName(),
+                        SqlTypeUtil.convertType(column.getType()), column.getType().isNullable());
+                    if (fieldNames.contains(tableField.getName())) {
+                        throw new GeaFlowDSLException("Column already exists: {}", tableField.getName());
+                    }
+                    edgeFields.add(tableField);
+                    fieldNames.add(tableField.getName());
+                    if (tableField.getName().equals(srcIdFieldName)) {
+                        srcIdField = tableField;
+                    } else if (tableField.getName().equals(targetIdFieldName)) {
+                        targetIdField = tableField;
+                    } else if (tableField.getName().equals(tsFieldName)) {
+                        tsField = tableField;
+                    }
+                }
+                if (srcIdField == null) {
+                    throw new GeaFlowDSLException("Cannot found srcIdFieldName: {} in edge {}",
+                        srcIdFieldName, edgeUsing.getName().getSimple());
+                }
+                if (targetIdField == null) {
+                    throw new GeaFlowDSLException("Cannot found targetIdFieldName: {} in edge {}",
+                        targetIdFieldName, edgeUsing.getName().getSimple());
+                }
+                if (tsFieldName != null && tsField == null) {
+                    throw new GeaFlowDSLException("Cannot found tsFieldName: {} in edge {}",
+                        tsFieldName, edgeUsing.getName().getSimple());
+                }
+
+                isAllVertexEdgeStatic &= (usingTable instanceof GeaFlowTable)
+                    && ((GeaFlowTable)usingTable).isAllWindow(globalConfiguration);
+                vertexEdgeName2UsingTableNameMap.put(edgeUsing.getName().getSimple(),
+                    edgeUsing.getUsingTableName().getSimple());
+                edgeTables.add(new EdgeTable(edgeUsing.getName().getSimple(), edgeFields,
+                    srcIdFieldName, targetIdFieldName, tsFieldName));
             }
         }
 
@@ -361,8 +498,11 @@ public class GQLContext {
                 config.put(key, value);
             }
         }
+        boolean isStaticGraph = isAllVertexEdgeStatic || config.getOrDefault(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey(),
+            StoreType.MEMORY.name()).equalsIgnoreCase(StoreType.MEMORY.name());
         return new GeaFlowGraph(currentInstance, graph.getName().getSimple(), vertexTables,
-            edgeTables, config, graph.ifNotExists());
+            edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(), isStaticGraph,
+            graph.isTemporary());
     }
 
     private String keyMapping(String key) {
@@ -397,20 +537,22 @@ public class GQLContext {
     }
 
     public void registerFunction(GeaFlowFunction function) {
-        SqlFunction sqlFunction = FunctionUtil.createSqlFunction(function, typeFactory);
-        sqlOperatorTable.registerSqlFunction(sqlFunction);
+        sqlOperatorTable.registerSqlFunction(currentInstance, function);
         LOG.info("register Function : {} to catlog", function);
     }
 
     public SqlNode validate(SqlNode node) {
+        if (validatedRelNode.contains(node)) {
+            return node;
+        }
         return validator.validate(node, new QueryNodeContext());
     }
 
     /**
      * Find the {@link SqlFunction}.
      */
-    public SqlFunction findSqlFunction(String name) {
-        return sqlOperatorTable.getSqlFunction(name);
+    public SqlFunction findSqlFunction(String instance, String name) {
+        return sqlOperatorTable.getSqlFunction(instance == null ? currentInstance : instance, name);
     }
 
     // ~ convert SqlNode to RelNode ----------------------------------------------------------

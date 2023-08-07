@@ -25,7 +25,7 @@ import lombok.Setter;
 @Setter
 public abstract class ClusterArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "taskClusterConfig", comment = "作业集群参数")
+    @GeaflowConfigKey(value = "taskClusterConfig", comment = "i18n.key.job.cluster.args")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private ClusterConfigClass taskClusterConfig;
 

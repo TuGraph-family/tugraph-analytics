@@ -32,7 +32,7 @@ import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphScan;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalParameterizedRelNode;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
-import com.antgroup.geaflow.dsl.rel.match.LoopUtilMatch;
+import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
 import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
@@ -611,10 +611,10 @@ public class GQLToRelConverter extends SqlToRelConverter {
             loopStart.getTraitSet(), generateSubQueryName(), loopStart.getPathSchema(),
             (VertexRecordType) loopStart.getNodeType());
         // replace the input of regexEdgeMatch to queryStart and clone vertexMatch
-        IMatchNode loopBody = GQLRelUtil.replaceInput(vertexMatch, regexEdgeMatch, queryStart);
+        SingleMatchNode loopBody = GQLRelUtil.replaceInput(vertexMatch, regexEdgeMatch, queryStart);
 
         RexNode utilCondition = getRexBuilder().makeLiteral(true);
-        return LoopUtilMatch.create(getCluster(), vertexMatch.getTraitSet(), loopStart,
+        return LoopUntilMatch.create(getCluster(), vertexMatch.getTraitSet(), loopStart,
             loopBody, utilCondition, regexEdge.getMinHop(), regexEdge.getMaxHop(),
             vertexMatch.getPathSchema());
     }

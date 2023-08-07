@@ -35,8 +35,8 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
 
     private AlgorithmRuntimeContext<Object, Long> context;
     private Object sourceVertexId;
-    private final int maxIteration = 10;
     private String edgeType = null;
+    private String vertexType = null;
 
     @Override
     public void init(AlgorithmRuntimeContext<Object, Long> context, Object[] parameters) {
@@ -48,44 +48,54 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
             assert parameters[1] instanceof String : "Edge type parameter should be string.";
             edgeType = (String) parameters[1];
         }
+        if (parameters.length >= 3) {
+            assert parameters[2] instanceof String : "Vertex type parameter should be string.";
+            vertexType = (String) parameters[2];
+        }
     }
 
     @Override
     public void process(RowVertex vertex, Iterator<Long> messages) {
+        if (vertexType != null && !vertex.getLabel().equals(vertexType)) {
+            return;
+        }
         long currentDistance;
+        boolean currentDistanceUpdated = false;
         if (context.getCurrentIterationId() == 1L) {
             if (Objects.equals(vertex.getId(), sourceVertexId)) {
                 currentDistance = 0;
+                currentDistanceUpdated = true;
             } else {
                 currentDistance = Long.MAX_VALUE;
             }
-        } else if (context.getCurrentIterationId() <= maxIteration) {
+        } else {
             currentDistance = (long) vertex.getValue().getField(0, LongType.INSTANCE);
             while (messages.hasNext()) {
                 long d = messages.next();
                 if (d < currentDistance) {
+                    currentDistanceUpdated = true;
                     currentDistance = d;
                 }
             }
-        } else {
-            currentDistance = (long) vertex.getValue().getField(0, LongType.INSTANCE);
-            context.take(ObjectRow.create(BinaryString.fromString(
-                (String) TypeCastUtil.cast(vertex.getId(), StringType.INSTANCE)), currentDistance));
-            return;
         }
         context.updateVertexValue(ObjectRow.create(currentDistance));
-        context.sendMessage(vertex.getId(), currentDistance);
         long scatterDistance = currentDistance == Long.MAX_VALUE ? Long.MAX_VALUE :
                                currentDistance + 1;
-        for (RowEdge edge : context.loadEdges(EdgeDirection.OUT)) {
-            if (edgeType == null || edge.getLabel().equals(edgeType)) {
-                context.sendMessage(edge.getTargetId(), scatterDistance);
+        if (currentDistanceUpdated) {
+            for (RowEdge edge : context.loadEdges(EdgeDirection.OUT)) {
+                if (edgeType == null || edge.getLabel().equals(edgeType)) {
+                    context.sendMessage(edge.getTargetId(), scatterDistance);
+                }
             }
         }
-        for (RowEdge edge : context.loadEdges(EdgeDirection.BOTH)) {
-            if (edgeType == null || edge.getLabel().equals(edgeType)) {
-                context.sendMessage(edge.getTargetId(), scatterDistance);
-            }
+    }
+
+    @Override
+    public void finish(RowVertex vertex) {
+        long currentDistance = (long) vertex.getValue().getField(0, LongType.INSTANCE);
+        if (currentDistance < Long.MAX_VALUE) {
+            context.take(ObjectRow.create(BinaryString.fromString(
+                (String) TypeCastUtil.cast(vertex.getId(), StringType.INSTANCE)), currentDistance));
         }
     }
 

@@ -6,6 +6,7 @@ import {
   updateInstance,
   queryInstanceList,
 } from "../services/instance";
+import $i18n from "../../../../../../i18n";
 
 const { TextArea } = Input;
 
@@ -20,7 +21,15 @@ export const AddInstanceModal: React.FC<AddInstanceProps> = ({
   const queryInstance = async () => {
     let result: any = await queryInstanceList();
     if (result.code !== "SUCCESS") {
-      message.error(`查询实例失败：${result.message}`);
+      message.error(
+        $i18n.get(
+          {
+            id: "openpiece-geaflow.geaflow.instance.InstanceModals.FailedToQueryTheInstance",
+            dm: "查询实例失败：{resultMessage}",
+          },
+          { resultMessage: result.message }
+        )
+      );
       return;
     }
 
@@ -56,13 +65,23 @@ export const AddInstanceModal: React.FC<AddInstanceProps> = ({
       // 更新
       result = await updateInstance(createParams, itemtData?.name);
       if (result) {
-        message.success("更新实例成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.instance.InstanceModals.TheInstanceHasBeenUpdated",
+            dm: "更新实例成功",
+          })
+        );
         queryInstance();
       }
     } else {
       result = await createInstance(createParams);
       if (result) {
-        message.success("创建实例成功");
+        message.success(
+          $i18n.get({
+            id: "openpiece-geaflow.geaflow.instance.InstanceModals.TheInstanceIsCreated",
+            dm: "创建实例成功",
+          })
+        );
         queryInstance();
       }
     }
@@ -80,7 +99,17 @@ export const AddInstanceModal: React.FC<AddInstanceProps> = ({
 
   return (
     <Modal
-      title={itemtData ? "编辑实例" : "新增实例"}
+      title={
+        itemtData
+          ? $i18n.get({
+              id: "openpiece-geaflow.geaflow.instance.InstanceModals.EditAnInstance",
+              dm: "编辑实例",
+            })
+          : $i18n.get({
+              id: "openpiece-geaflow.geaflow.instance.InstanceModals.AddAnInstance",
+              dm: "新增实例",
+            })
+      }
       visible={isAddInstance}
       onOk={handleCreateInstance}
       onCancel={() => {
@@ -88,17 +117,45 @@ export const AddInstanceModal: React.FC<AddInstanceProps> = ({
         form.resetFields();
       }}
       confirmLoading={loading}
-      okText="保存"
-      cancelText="取消"
+      okText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.instance.InstanceModals.Save",
+        dm: "保存",
+      })}
+      cancelText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.instance.InstanceModals.Cancel",
+        dm: "取消",
+      })}
     >
       <Form.Item
         name="name"
-        label="实例名称"
-        rules={[{ required: true, message: "请输入实例名称" }]}
+        label={$i18n.get({
+          id: "openpiece-geaflow.geaflow.instance.InstanceModals.InstanceName",
+          dm: "实例名称",
+        })}
+        rules={[
+          {
+            required: true,
+            message: $i18n.get({
+              id: "openpiece-geaflow.geaflow.instance.InstanceModals.EnterAnInstanceName",
+              dm: "请输入实例名称",
+            }),
+          },
+        ]}
       >
-        <Input placeholder="请输入实例名称" />
+        <Input
+          placeholder={$i18n.get({
+            id: "openpiece-geaflow.geaflow.instance.InstanceModals.EnterAnInstanceName",
+            dm: "请输入实例名称",
+          })}
+        />
       </Form.Item>
-      <Form.Item name="comment" label="描述">
+      <Form.Item
+        name="comment"
+        label={$i18n.get({
+          id: "openpiece-geaflow.geaflow.instance.InstanceModals.Description",
+          dm: "描述",
+        })}
+      >
         <TextArea rows={1} />
       </Form.Item>
     </Modal>

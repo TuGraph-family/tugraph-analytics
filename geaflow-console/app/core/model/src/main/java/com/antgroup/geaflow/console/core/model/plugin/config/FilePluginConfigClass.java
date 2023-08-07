@@ -24,19 +24,19 @@ import lombok.Setter;
 @Setter
 public class FilePluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.dsl.file.path", comment = "文件路径")
+    @GeaflowConfigKey(value = "geaflow.dsl.file.path", comment = "i18n.key.file.path")
     @GeaflowConfigValue(required = true, defaultValue = "/")
     private String filePath;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.column.separator", comment = "列分隔符")
+    @GeaflowConfigKey(value = "geaflow.dsl.column.separator", comment = "i18n.key.column.separator")
     @GeaflowConfigValue(defaultValue = ",")
     private String columnSeparator;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.line.separator", comment = "行分隔符")
+    @GeaflowConfigKey(value = "geaflow.dsl.line.separator", comment = "i18n.key.line.separator")
     @GeaflowConfigValue(defaultValue = "\\n")
     private String lineSeparator;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.config.json", comment = "DFS配置")
+    @GeaflowConfigKey(value = "geaflow.file.persistent.config.json", comment = "i18n.key.ext.config.json")
     @GeaflowConfigValue(defaultValue = "{\"fs.defaultFS\":\"local\"}")
     private String persistConfig;
 

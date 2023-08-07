@@ -22,14 +22,18 @@ import com.antgroup.geaflow.console.biz.shared.convert.ReleaseViewConverter;
 import com.antgroup.geaflow.console.biz.shared.view.ReleaseUpdateView;
 import com.antgroup.geaflow.console.biz.shared.view.ReleaseView;
 import com.antgroup.geaflow.console.common.dal.model.ReleaseSearch;
+import com.antgroup.geaflow.console.common.util.Fmt;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
+import com.antgroup.geaflow.console.common.util.type.GeaflowOperationType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.core.model.cluster.GeaflowCluster;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.release.ReleaseUpdate;
+import com.antgroup.geaflow.console.core.model.runtime.GeaflowAudit;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
+import com.antgroup.geaflow.console.core.service.AuditService;
 import com.antgroup.geaflow.console.core.service.ClusterService;
 import com.antgroup.geaflow.console.core.service.IdService;
 import com.antgroup.geaflow.console.core.service.JobService;
@@ -65,6 +69,9 @@ public class ReleaseManagerImpl extends IdManagerImpl<GeaflowRelease, ReleaseVie
 
     @Autowired
     private ReleaseViewConverter releaseViewConverter;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     protected IdService<GeaflowRelease, ?, ReleaseSearch> getService() {
@@ -102,17 +109,23 @@ public class ReleaseManagerImpl extends IdManagerImpl<GeaflowRelease, ReleaseVie
 
         // handle task
         if (newRelease) {
+            String taskId;
+
             if (release.getReleaseVersion() == 1) {
                 // create a task when first publishing
-                taskService.createTask(release);
+                taskId = taskService.createTask(release).get(0).getId();
             } else {
                 // bind task with release for later publishing
-                taskService.bindRelease(release);
+                taskId = taskService.bindRelease(release);
+            }
+
+            if (taskId != null) {
+                String detail = Fmt.as("Publish version {}", release.getReleaseVersion());
+                auditService.create(new GeaflowAudit(taskId, GeaflowOperationType.PUBLISH, detail));
             }
         }
 
         return releaseId;
-
     }
 
 

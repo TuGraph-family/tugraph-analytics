@@ -29,7 +29,7 @@ public class DfsPluginConfigClass extends PersistentPluginConfigClass {
 
     public static final String DFS_URI_KEY = "fs.defaultFS";
 
-    @GeaflowConfigKey(value = DFS_URI_KEY, comment = "DFS地址")
+    @GeaflowConfigKey(value = DFS_URI_KEY, comment = "i18n.key.dfs.address")
     @GeaflowConfigValue(required = true, defaultValue = "hdfs://0.0.0.0:9000")
     private String defaultFs;
 

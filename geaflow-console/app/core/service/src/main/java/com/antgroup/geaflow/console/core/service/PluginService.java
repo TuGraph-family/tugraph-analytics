@@ -20,7 +20,7 @@ import com.antgroup.geaflow.console.common.dal.entity.PluginEntity;
 import com.antgroup.geaflow.console.common.dal.model.PluginSearch;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.service.converter.NameConverter;
 import com.antgroup.geaflow.console.core.service.converter.PluginConverter;
@@ -55,7 +55,7 @@ public class PluginService extends NameService<GeaflowPlugin, PluginEntity, Plug
     protected List<GeaflowPlugin> parse(List<PluginEntity> pluginEntities) {
         return pluginEntities.stream().map(e -> {
             GeaflowPlugin dataPlugin = this.get(e.getDataPluginId());
-            GeaflowJarPackage jarPackage = (GeaflowJarPackage) remoteFileService.get(e.getJarPackageId());
+            GeaflowRemoteFile jarPackage = remoteFileService.get(e.getJarPackageId());
             return pluginConverter.convert(e, dataPlugin, jarPackage);
         }).collect(Collectors.toList());
     }

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.table.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 
@@ -29,6 +30,31 @@ public class Instr extends UDF {
     }
 
     public Long eval(String str, String target, Long from, Long nth) {
+        if (str == null || target == null || from == null || nth == null) {
+            return null;
+        }
+        if (nth <= 0) {
+            return null;
+        }
+        int fromIndex = from.intValue() - 1;
+        if (fromIndex < 0) {
+            return null;
+        }
+        for (int i = 0; i < nth; ++i) {
+            fromIndex = str.indexOf(target, fromIndex) + 1;
+        }
+        return (long) fromIndex;
+    }
+
+    public Long eval(BinaryString str, BinaryString target) {
+        return eval(str, target, 1L, 1L);
+    }
+
+    public Long eval(BinaryString str, BinaryString target, Long from) {
+        return eval(str, target, from, 1L);
+    }
+
+    public Long eval(BinaryString str, BinaryString target, Long from, Long nth) {
         if (str == null || target == null || from == null || nth == null) {
             return null;
         }

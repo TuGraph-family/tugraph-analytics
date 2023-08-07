@@ -36,49 +36,22 @@ public class LocalFileClient implements RemoteFileClient {
     @Override
     public void init(GeaflowPlugin plugin, GeaflowPluginConfig config) {
         this.localConfig = config.getConfig().parse(LocalPluginConfigClass.class);
-        String root = localConfig.getRoot();
-        try {
-            FileUtil.mkdir(root);
-
-        } catch (Exception e) {
-            throw new GeaflowException("Init root {} failed", root, e);
-        }
+        FileUtil.mkdir(localConfig.getRoot());
     }
 
     @Override
     public void upload(String path, InputStream inputStream) {
-        String url = getFullPath(path);
-
-        try {
-            FileUtil.writeFile(url, inputStream);
-
-        } catch (Exception e) {
-            throw new GeaflowException("Write file {} failed", url, e);
-        }
+        FileUtil.writeFile(getFullPath(path), inputStream);
     }
 
     @Override
     public InputStream download(String path) {
-        String url = getFullPath(path);
-
-        try {
-            return FileUtil.readFileStream(url);
-
-        } catch (Exception e) {
-            throw new GeaflowException("Read file {} failed", url, e);
-        }
+        return FileUtil.readFileStream(getFullPath(path));
     }
 
     @Override
     public void delete(String path) {
-        String url = getFullPath(path);
-
-        try {
-            FileUtil.delete(url);
-
-        } catch (Exception e) {
-            throw new GeaflowException("Delete file {} failed", url, e);
-        }
+        FileUtil.delete(getFullPath(path));
     }
 
     @Override

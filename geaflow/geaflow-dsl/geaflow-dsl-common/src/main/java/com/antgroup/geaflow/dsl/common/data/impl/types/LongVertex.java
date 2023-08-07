@@ -22,14 +22,18 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class LongVertex implements RowVertex {
+public class LongVertex implements RowVertex, KryoSerializable {
 
     public static final Supplier<LongVertex> CONSTRUCTOR = new Constructor();
 
-    private long id;
+    public long id;
 
     private BinaryString label;
 
@@ -104,8 +108,13 @@ public class LongVertex implements RowVertex {
         if (!(o instanceof RowVertex)) {
             return false;
         }
-        RowVertex that = (RowVertex) o;
-        return id == (long) that.getId() && Objects.equals(label, that.getBinaryLabel());
+        if (o instanceof LongVertex) {
+            LongVertex that = (LongVertex) o;
+            return id == that.id && Objects.equals(label, that.getBinaryLabel());
+        } else {
+            RowVertex that = (RowVertex) o;
+            return that.equals(this);
+        }
     }
 
     @Override
@@ -152,4 +161,24 @@ public class LongVertex implements RowVertex {
             return new LongVertex();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize id, label and value
+        output.writeLong(this.id);
+        kryo.writeClassAndObject(output, this.getBinaryLabel());
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize id, label and value
+        long id = input.readLong();
+        BinaryString label = (BinaryString) kryo.readClassAndObject(input);
+        Row value = (Row) kryo.readClassAndObject(input);
+        this.id = id;
+        this.setValue(value);
+        this.setBinaryLabel(label);
+    }
+
 }

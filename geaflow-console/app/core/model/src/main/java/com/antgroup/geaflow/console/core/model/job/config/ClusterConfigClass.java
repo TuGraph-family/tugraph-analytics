@@ -24,63 +24,63 @@ import lombok.Setter;
 @Setter
 public class ClusterConfigClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.container.num", comment = "Container数")
+    @GeaflowConfigKey(value = "geaflow.container.num", comment = "i18n.key.container.count")
     @GeaflowConfigValue(required = true)
     private Integer containers;
 
-    @GeaflowConfigKey(value = "geaflow.container.worker.num", comment = "Container内worker数")
+    @GeaflowConfigKey(value = "geaflow.container.worker.num", comment = "i18n.key.container.worker.count")
     @GeaflowConfigValue(required = true)
     private Integer containerWorkers;
 
-    @GeaflowConfigKey(value = "geaflow.container.memory.mb", comment = "Container内存(MB)")
+    @GeaflowConfigKey(value = "geaflow.container.memory.mb", comment = "i18n.key.container.memory.mb")
     @GeaflowConfigValue(required = true, defaultValue = "256")
     private Integer containerMemory;
 
-    @GeaflowConfigKey(value = "geaflow.container.vcores", comment = "Container核数(vcore)")
+    @GeaflowConfigKey(value = "geaflow.container.vcores", comment = "i18n.key.container.vcores")
     @GeaflowConfigValue(required = true, defaultValue = "1")
     private Double containerCores;
 
-    @GeaflowConfigKey(value = "geaflow.container.jvm.options", comment = "Container JVM参数")
+    @GeaflowConfigKey(value = "geaflow.container.jvm.options", comment = "i18n.key.container.jvm.args")
     @GeaflowConfigValue(required = true)
     private String containerJvmOptions;
 
-    @GeaflowConfigKey(value = "geaflow.fo.enable", comment = "是否开启FO")
+    @GeaflowConfigKey(value = "geaflow.fo.enable", comment = "i18n.key.fo.enable")
     @GeaflowConfigValue(defaultValue = "true")
     private Boolean enableFo;
 
-    @GeaflowConfigKey(value = "geaflow.client.memory.mb", comment = "Client内存(MB)")
+    @GeaflowConfigKey(value = "geaflow.client.memory.mb", comment = "i18n.key.client.memory.mb")
     @GeaflowConfigValue(defaultValue = "1024")
     private Integer clientMemory;
 
-    @GeaflowConfigKey(value = "geaflow.master.memory.mb", comment = "Master内存(MB)")
+    @GeaflowConfigKey(value = "geaflow.master.memory.mb", comment = "i18n.key.master.memory.mb")
     @GeaflowConfigValue(defaultValue = "4096")
     private Integer masterMemory;
 
-    @GeaflowConfigKey(value = "geaflow.driver.memory.mb", comment = "Driver内存(MB)")
+    @GeaflowConfigKey(value = "geaflow.driver.memory.mb", comment = "i18n.key.driver.memory.mb")
     @GeaflowConfigValue(defaultValue = "4096")
     private Integer driverMemory;
 
-    @GeaflowConfigKey(value = "geaflow.client.vcores", comment = "Client核数(vcore)")
+    @GeaflowConfigKey(value = "geaflow.client.vcores", comment = "i18n.key.client.vcores")
     @GeaflowConfigValue(defaultValue = "1")
     private Double clientCores;
 
-    @GeaflowConfigKey(value = "geaflow.master.vcores", comment = "Master核数(vcore)")
+    @GeaflowConfigKey(value = "geaflow.master.vcores", comment = "i18n.key.master.vcores")
     @GeaflowConfigValue(defaultValue = "1")
     private Double masterCores;
 
-    @GeaflowConfigKey(value = "geaflow.driver.vcores", comment = "Driver核数(vcore)")
+    @GeaflowConfigKey(value = "geaflow.driver.vcores", comment = "i18n.key.driver.vcores")
     @GeaflowConfigValue(defaultValue = "1")
     private Double driverCores;
 
-    @GeaflowConfigKey(value = "geaflow.client.jvm.options", comment = "Client JVM参数")
+    @GeaflowConfigKey(value = "geaflow.client.jvm.options", comment = "i18n.key.client.jvm.args")
     @GeaflowConfigValue(defaultValue = "-Xmx1024m,-Xms1024m,-Xmn256m,-Xss256k,-XX:MaxDirectMemorySize=512m")
     private String clientJvmOptions;
 
-    @GeaflowConfigKey(value = "geaflow.master.jvm.options", comment = "Master JVM参数")
+    @GeaflowConfigKey(value = "geaflow.master.jvm.options", comment = "i18n.key.master.jvm.args")
     @GeaflowConfigValue(defaultValue = "-Xmx2048m,-Xms2048m,-Xmn512m,-Xss512k,-XX:MaxDirectMemorySize=1024m")
     private String masterJvmOptions;
 
-    @GeaflowConfigKey(value = "geaflow.driver.jvm.options", comment = "Driver JVM参数")
+    @GeaflowConfigKey(value = "geaflow.driver.jvm.options", comment = "i18n.key.driver.jvm.args")
     @GeaflowConfigValue(defaultValue = "-Xmx2048m,-Xms2048m,-Xmn512m,-Xss512k,-XX:MaxDirectMemorySize=1024m")
     private String driverJvmOptions;
 

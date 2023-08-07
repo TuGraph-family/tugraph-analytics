@@ -18,7 +18,6 @@ import com.antgroup.geaflow.dsl.common.data.StepRecord;
 import com.antgroup.geaflow.dsl.common.data.StepRecord.StepRecordType;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestId;
-import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestWithStartVertexId;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EndOfData;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.ParameterRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.SingleValue;
@@ -49,18 +48,16 @@ public class StepReturnCollector implements StepCollector<StepRecord> {
             ParameterRequest request = context.getRequest();
             CallRequestId callRequestId = (CallRequestId) request.getRequestId();
             long callOpId = callRequestId.getCallOpId();
-            Object requestId = callRequestId.getRequestId();
-            sendReturnValue(callOpId, requestId, request.getVertexId(), (SingleValue) record);
+            sendReturnValue(callOpId, callRequestId.getPathId(), request.getVertexId(), (SingleValue) record);
         } else if (recordType == StepRecordType.EOD) {
-            Iterable<CallRequestWithStartVertexId> callRequestIds = context.takeCallRequestIds();
+            Iterable<CallRequestId> callRequestIds = context.takeCallRequestIds();
             // Send default return value: 'null' to the caller as the request may filter by the middle operator
             // and cannot reach to the return operator. If the request can reach the return operator, the return value
             // will update the null value.
-            for (CallRequestWithStartVertexId callRequestId : callRequestIds) {
+            for (CallRequestId callRequestId : callRequestIds) {
                 long callOpId = callRequestId.getCallOpId();
-                Object requestId = callRequestId.getRequestId();
-                Object startVertexId = callRequestId.getStartVertexId();
-                sendReturnValue(callOpId, requestId, startVertexId, null);
+                Object startVertexId = callRequestId.getVertexId();
+                sendReturnValue(callOpId, callRequestId.getPathId(), startVertexId, null);
             }
             // send eod to the caller after call return.
             EndOfData eod = (EndOfData) record;
@@ -71,10 +68,10 @@ public class StepReturnCollector implements StepCollector<StepRecord> {
         }
     }
 
-    private void sendReturnValue(long callerOpId, Object requestId, Object startVertexId, SingleValue value) {
+    private void sendReturnValue(long callerOpId, long pathId, Object startVertexId, SingleValue value) {
         // send back the result value.
         ReturnMessage returnMessage = new ReturnMessageImpl();
-        returnMessage.putValue(new ReturnKey(requestId, queryId), value);
+        returnMessage.putValue(new ReturnKey(pathId, queryId), value);
         context.sendMessage(startVertexId, returnMessage, callerOpId);
     }
 }

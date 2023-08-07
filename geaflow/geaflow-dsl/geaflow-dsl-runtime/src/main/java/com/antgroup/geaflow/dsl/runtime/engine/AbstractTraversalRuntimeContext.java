@@ -27,7 +27,6 @@ import com.antgroup.geaflow.dsl.runtime.traversal.DagTopologyGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.BroadcastId;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestId;
-import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestWithStartVertexId;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.ParameterRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.IMessage;
@@ -36,6 +35,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageType;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.ParameterRequestMessage;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.RequestIsolationMessage;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
+import com.antgroup.geaflow.dsl.runtime.util.IDUtil;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     // opId -> CallContext stack.
     private final Map<Long, Stack<CallContext>> callStacks = new HashMap<>();
 
-    private final Set<CallRequestWithStartVertexId> callRequestIds = new HashSet<>();
+    private final Set<CallRequestId> callRequestIds = new HashSet<>();
 
     private final Map<Object, Object[]> vertexId2AppendFields = new HashMap<>();
 
@@ -264,15 +264,13 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     protected abstract void sendBroadcastMessage(Object vertexId, MessageBox messageBox);
 
     @Override
-    public void stashCallRequestId(CallRequestId callRequestId, Object startVertexId) {
-        CallRequestWithStartVertexId requestWithStartVertexId = new CallRequestWithStartVertexId(
-            callRequestId.getRequestId(), callRequestId.getCallOpId(), startVertexId);
-        callRequestIds.add(requestWithStartVertexId);
+    public void stashCallRequestId(CallRequestId callRequestId) {
+        callRequestIds.add(callRequestId);
     }
 
     @Override
-    public Iterable<CallRequestWithStartVertexId> takeCallRequestIds() {
-        Set<CallRequestWithStartVertexId> requestIds = new HashSet<>(callRequestIds);
+    public Iterable<CallRequestId> takeCallRequestIds() {
+        Set<CallRequestId> requestIds = new HashSet<>(callRequestIds);
         callRequestIds.clear();
         return requestIds;
     }
@@ -288,10 +286,20 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     }
 
     @Override
-    public void addFieldToVertex(Object vertexId, int valueIndex, int numAppendValue, Object value) {
-        Object[] appendFields = vertexId2AppendFields.computeIfAbsent(vertexId,
-            k -> new Object[numAppendValue]);
-        appendFields[valueIndex] = value;
+    public void addFieldToVertex(Object vertexId, int updateIndex, Object value) {
+        //Here append value to the existed store
+        Object[] appendFields;
+        Object[] existFields = vertexId2AppendFields.get(vertexId);
+        if (existFields == null) {
+            appendFields = new Object[updateIndex + 1];
+        } else if (updateIndex >= existFields.length) {
+            appendFields = new Object[updateIndex + 1];
+            System.arraycopy(existFields, 0, appendFields, 0, existFields.length);
+        } else {
+            appendFields = existFields;
+        }
+        appendFields[updateIndex] = value;
+        vertexId2AppendFields.put(vertexId, appendFields);
     }
 
     public int getNumTasks() {
@@ -301,6 +309,11 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     @Override
     public int getTaskIndex() {
         return getRuntimeContext().getTaskArgs().getTaskIndex();
+    }
+
+    @Override
+    public long createUniqueId(long idInTask) {
+        return IDUtil.uniqueId(getNumTasks(), getTaskIndex(), idInTask);
     }
 
     @Override

@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.common.data.impl;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,10 +30,17 @@ import java.util.Objects;
 
 public class DefaultPath implements Path {
 
+    private long id;
+
     private final List<Row> pathNodes;
 
-    public DefaultPath(List<Row> pathNodes) {
+    public DefaultPath(List<Row> pathNodes, long id) {
         this.pathNodes = Objects.requireNonNull(pathNodes);
+        this.id = id;
+    }
+
+    public DefaultPath(List<Row> pathNodes) {
+        this(pathNodes, -1L);
     }
 
     public DefaultPath(Row[] pathNodes) {
@@ -62,7 +73,7 @@ public class DefaultPath implements Path {
 
     @Override
     public Path copy() {
-        return new DefaultPath(Lists.newArrayList(pathNodes));
+        return new DefaultPath(Lists.newArrayList(pathNodes), id);
     }
 
     @Override
@@ -96,5 +107,45 @@ public class DefaultPath implements Path {
         return "DefaultPath{"
             + "pathNodes=" + pathNodes
             + '}';
+    }
+
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public static class DefaultPathSerializer extends Serializer<DefaultPath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, DefaultPath defaultPath) {
+            output.writeInt(defaultPath.getPathNodes().size());
+            for (Row pathNode : defaultPath.getPathNodes()) {
+                kryo.writeClassAndObject(output, pathNode);
+            }
+        }
+
+        @Override
+        public DefaultPath read(Kryo kryo, Input input, Class<DefaultPath> aClass) {
+            int size = input.readInt();
+            List<Row> pathNodes = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                pathNodes.add((Row) kryo.readClassAndObject(input));
+            }
+            return new DefaultPath(pathNodes);
+        }
+
+        @Override
+        public DefaultPath copy(Kryo kryo, DefaultPath original) {
+            List<Row> pathNodes = new ArrayList<>(original.getPathNodes().size());
+            for (Row pathNode : original.getPathNodes()) {
+                pathNodes.add(kryo.copy(pathNode));
+            }
+            return new DefaultPath(pathNodes);
+        }
     }
 }

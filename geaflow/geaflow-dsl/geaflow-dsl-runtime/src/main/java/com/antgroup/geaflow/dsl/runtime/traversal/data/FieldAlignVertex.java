@@ -18,7 +18,15 @@ import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.types.DoubleVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.types.IntVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.types.LongVertex;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class FieldAlignVertex implements RowVertex {
@@ -122,4 +130,47 @@ public class FieldAlignVertex implements RowVertex {
     public String toString() {
         return getId() + "#" + getBinaryLabel() + "#" + getValue();
     }
+
+    public static RowVertex createFieldAlignedVertex(RowVertex baseVertex, int[] fieldMapping) {
+        if (baseVertex instanceof LongVertex) {
+            return new FieldAlignLongVertex((LongVertex)baseVertex, fieldMapping);
+        } else if (baseVertex instanceof IntVertex) {
+            return new FieldAlignIntVertex((IntVertex)baseVertex, fieldMapping);
+        } else if (baseVertex instanceof DoubleVertex) {
+            return new FieldAlignDoubleVertex((DoubleVertex)baseVertex, fieldMapping);
+        }
+        return new FieldAlignVertex(baseVertex, fieldMapping);
+    }
+
+    public static class FieldAlignVertexSerializer extends Serializer<FieldAlignVertex> {
+
+        @Override
+        public void write(Kryo kryo, Output output, FieldAlignVertex object) {
+            kryo.writeClassAndObject(output, object.baseVertex);
+            if (object.fieldMapping != null) {
+                output.writeInt(object.fieldMapping.length, true);
+                for (int i : object.fieldMapping) {
+                    output.writeInt(i);
+                }
+            } else {
+                output.writeInt(0, true);
+            }
+        }
+
+        @Override
+        public FieldAlignVertex read(Kryo kryo, Input input, Class<FieldAlignVertex> type) {
+            RowVertex baseVertex = (RowVertex) kryo.readClassAndObject(input);
+            int[] fieldMapping = new int[input.readInt(true)];
+            for (int i = 0; i < fieldMapping.length; i++) {
+                fieldMapping[i] = input.readInt();
+            }
+            return new FieldAlignVertex(baseVertex, fieldMapping);
+        }
+
+        @Override
+        public FieldAlignVertex copy(Kryo kryo, FieldAlignVertex original) {
+            return new FieldAlignVertex(kryo.copy(original.baseVertex), Arrays.copyOf(original.fieldMapping, original.fieldMapping.length));
+        }
+    }
+
 }

@@ -76,6 +76,7 @@ public class GQLMatchTest {
     public void testMatch_007() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_match_007.sql")
             .execute()
             .checkSinkResult();
@@ -85,6 +86,7 @@ public class GQLMatchTest {
     public void testMatch_008() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_match_008.sql")
             .execute()
             .checkSinkResult();
@@ -94,6 +96,7 @@ public class GQLMatchTest {
     public void testMatch_009() throws Exception {
         QueryTester
             .build()
+            .enableInitDDL(false)
             .withQueryPath("/query/gql_match_009.sql")
             .execute()
             .checkSinkResult();

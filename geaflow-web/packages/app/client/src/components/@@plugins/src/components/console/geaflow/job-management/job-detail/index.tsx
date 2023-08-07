@@ -10,6 +10,7 @@ import { getJobsTasks, getApiTasks } from "../../services/job-detail";
 import { JobContainer } from "./components/container";
 import { useHistory } from "umi";
 import styles from "./index.module.less";
+import $i18n from "../../../../../../../i18n";
 
 interface props {
   redirectPath?: RedirectPath[];
@@ -55,7 +56,10 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
   // Tabs
   const jobTabItems = (value: string, jobItem?: any) => [
     {
-      label: "作业详情",
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-management.job-detail.JobDetails",
+        dm: "作业详情",
+      }),
       key: "job-detail",
       children: tabKey === "job-detail" && (
         <BasicInfo
@@ -67,7 +71,10 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
       ),
     }, // 务必填写 key
     {
-      label: "运行详情",
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-management.job-detail.RunDetails",
+        dm: "运行详情",
+      }),
       key: "item-2",
       children: tabKey === "item-2" && <JobRunTimeDetail jobItem={jobItem} />,
     },
@@ -77,7 +84,10 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
       children: tabKey === "metric" && <JobMetric jobItem={jobItem} />,
     },
     {
-      label: "异常信息",
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-management.job-detail.ExceptionInformation",
+        dm: "异常信息",
+      }),
       key: "exception-info",
       children: tabKey === "exception-info" && <JobMessage jobItem={jobItem} />,
     },
@@ -92,7 +102,10 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
       children: tabKey === "offset" && <JobOffSet jobItem={jobItem} />,
     },
     {
-      label: "运行时日志",
+      label: $i18n.get({
+        id: "openpiece-geaflow.job-management.job-detail.RuntimeLogs",
+        dm: "运行时日志",
+      }),
       key: "runtime-log",
       children: <Card>{text}</Card>,
     },
@@ -130,7 +143,12 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
       <Row>
         <Breadcrumb>
           <Breadcrumb.Item>
-            <a href={redirectUrl}>作业管理</a>
+            <a href={redirectUrl}>
+              {$i18n.get({
+                id: "openpiece-geaflow.job-management.job-detail.JobManagement",
+                dm: "作业管理",
+              })}
+            </a>
           </Breadcrumb.Item>
           <Breadcrumb.Item>{record.release?.job.name}</Breadcrumb.Item>
         </Breadcrumb>

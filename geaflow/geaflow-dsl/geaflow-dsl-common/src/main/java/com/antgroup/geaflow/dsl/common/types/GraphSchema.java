@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GraphSchema extends StructType {
 
@@ -121,8 +122,10 @@ public class GraphSchema extends StructType {
         assert graphName.equals(((GraphSchema) other).graphName) : "Cannot merge with different graph schema";
 
         List<TableField> mergedFields = new ArrayList<>(fields);
+        List<String> mergedFieldNames = fields.stream().map(TableField::getName)
+            .collect(Collectors.toList());
         for (TableField field : other.fields) {
-            int index = mergedFields.indexOf(field);
+            int index = mergedFieldNames.indexOf(field.getName());
             if (index >= 0) {
                 StructType thisType = (StructType) mergedFields.get(index).getType();
                 StructType thatType = (StructType) field.getType();
@@ -131,6 +134,7 @@ public class GraphSchema extends StructType {
                 mergedFields.set(index, field.copy(mergedType));
             } else {
                 mergedFields.add(field);
+                mergedFieldNames.add(field.getName());
             }
         }
         return new GraphSchema(graphName, mergedFields);

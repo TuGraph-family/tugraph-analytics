@@ -1,8 +1,9 @@
 import { Modal, Form, Input, message, Upload } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
 import React, { useEffect, useState } from "react";
 import { createUpload } from "../services/file-manage";
 import { InboxOutlined } from "@ant-design/icons";
+import { isEmpty } from "lodash";
+import $i18n from "../../../../../../i18n";
 
 const { Dragger } = Upload;
 interface AddTemplateProps {
@@ -37,10 +38,11 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
     const { file } = values;
 
     const formData = new FormData();
+    !isEmpty(file) &&
+      file.forEach((item) => {
+        formData.append("file", item.originFileObj);
+      });
 
-    file.forEach((item) => {
-      formData.append("file", item.originFileObj);
-    });
     const resp = await createUpload(id, formData);
 
     setState({
@@ -48,7 +50,12 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
       loading: false,
     });
     if (resp?.success) {
-      message.success("上传成功");
+      message.success(
+        $i18n.get({
+          id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.UploadedSuccessfully",
+          dm: "上传成功",
+        })
+      );
       setTemplateList({ ...temeplateList, isAddMd: false });
       form.resetFields();
     } else {
@@ -66,17 +73,31 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
 
   return (
     <Modal
-      title="上传文件"
+      title={$i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.UploadFiles",
+        dm: "上传文件",
+      })}
       visible={isAddMd}
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={state.loading}
       width={700}
-      okText="确认"
-      cancelText="取消"
+      okText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.Confirm",
+        dm: "确认",
+      })}
+      cancelText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.Cancel",
+        dm: "取消",
+      })}
     >
       <Form form={form}>
-        <Form.Item label="Jar文件">
+        <Form.Item
+          label={$i18n.get({
+            id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.JarFile",
+            dm: "Jar文件",
+          })}
+        >
           <Form.Item
             name="file"
             valuePropName="fileList"
@@ -87,8 +108,18 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
-              <p className="ant-upload-text">拖拽或点击选择文件</p>
-              <p className="ant-upload-hint">只支持 jar 文件。</p>
+              <p className="ant-upload-text">
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.DragOrClickSelectFile",
+                  dm: "拖拽或点击选择文件",
+                })}
+              </p>
+              <p className="ant-upload-hint">
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.jar-file-manage.uploadModal.OnlyJarFilesAreSupported",
+                  dm: "只支持 jar 文件。",
+                })}
+              </p>
             </Upload.Dragger>
           </Form.Item>
         </Form.Item>

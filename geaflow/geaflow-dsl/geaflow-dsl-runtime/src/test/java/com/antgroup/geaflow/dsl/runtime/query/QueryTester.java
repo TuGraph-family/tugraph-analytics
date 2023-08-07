@@ -106,7 +106,6 @@ public class QueryTester implements Serializable {
 
         Environment environment = EnvironmentFactory.onLocalEnvironment(new String[]{});
         environment.getEnvironmentContext().withConfig(config);
-        environment.getEnvironmentContext().withConfig(this.config);
 
         GQLPipeLine gqlPipeLine = new GQLPipeLine(environment, testTimeWaitSeconds);
 
@@ -166,6 +165,9 @@ public class QueryTester implements Serializable {
 
     private String readFile(String path) throws IOException {
         File file = new File(path);
+        if (file.isHidden()) {
+            return "";
+        }
         if (file.isFile()) {
             return IOUtils.toString(new File(path).toURI(), Charset.defaultCharset()).trim();
         }
@@ -173,13 +175,17 @@ public class QueryTester implements Serializable {
         StringBuilder content = new StringBuilder();
         if (files != null) {
             for (File subFile : files) {
+                String readText = readFile(subFile.getAbsolutePath());
+                if (StringUtils.isBlank(readText)) {
+                    continue;
+                }
                 if (content.length() > 0) {
                     content.append("\n");
                 }
-                content.append(readFile(subFile.getAbsolutePath()));
+                content.append(readText);
             }
         }
-        return content.toString();
+        return content.toString().trim();
     }
 
     private static String getTargetPath(String queryPath) {
@@ -210,8 +216,7 @@ public class QueryTester implements Serializable {
 
         @Override
         public String rewriteScript(String script, Configuration configuration) {
-            return script.replace("${target}",
-                FileConstants.PREFIX_LOCAL_FILE + getTargetPath(queryPath));
+            return script.replace("${target}", getTargetPath(queryPath));
         }
 
         @Override

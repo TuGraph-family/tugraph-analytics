@@ -26,6 +26,8 @@ import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
@@ -54,6 +56,8 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
     @Autowired
     private TableViewConverter tableViewConverter;
 
+    @Autowired
+    private RemoteFileViewConverter remoteFileViewConverter;
 
     @Autowired
     private FunctionViewConverter functionViewConverter;
@@ -76,6 +80,10 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
         switch (view.getType()) {
             case PROCESS:
                 Optional.ofNullable(updateView.getUserCode()).ifPresent(view::setUserCode);
+                break;
+            case CUSTOM:
+                Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
+                Optional.ofNullable(updateView.getJarPackage()).ifPresent(view::setJarPackage);
                 break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", view.getType());
@@ -100,11 +108,13 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
         jobView.setType(model.getType());
         jobView.setInstanceId(model.getInstanceId());
         jobView.setInstanceName(instanceService.get(model.getInstanceId()).getName());
+        jobView.setEntryClass(model.getEntryClass());
+        jobView.setJarPackage(Optional.ofNullable(model.getJarPackage()).map(e -> remoteFileViewConverter.convert(e)).orElse(null));
         return jobView;
     }
 
     public GeaflowJob convert(JobView view, List<GeaflowStruct> structs, List<GeaflowGraph> graphs,
-                              List<GeaflowFunction> functions) {
+                              List<GeaflowFunction> functions, GeaflowRemoteFile jarFile) {
         GeaflowJobType jobType = view.getType();
         GeaflowJob job;
         switch (jobType) {
@@ -124,9 +134,16 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
                 processJob.setFunctions(functions);
                 job = processJob;
                 break;
+            case CUSTOM:
+                GeaflowCustomJob customJob = (GeaflowCustomJob) viewToModel(view, GeaflowCustomJob.class);
+                customJob.setEntryClass(view.getEntryClass());
+                customJob.setJarPackage(jarFile);
+                job = customJob;
+                break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", jobType);
         }
+
         job.setInstanceId(view.getInstanceId());
         job.setType(jobType);
         //TODO job.setSla(entity.getSlaId());

@@ -19,12 +19,16 @@
     <parent>
         <artifactId>geaflow-dsl-connector</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.3-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>geaflow-dsl-connector-file</artifactId>
+
+    <properties>
+        <parquet.version>1.10.1</parquet.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -35,6 +39,25 @@
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-dsl-connector-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-hadoop</artifactId>
+            <version>${parquet.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.xerial.snappy</groupId>
+                    <artifactId>snappy-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Parquet -->
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-avro</artifactId>
+            <version>${parquet.version}</version>
         </dependency>
 
         <dependency>

@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.schema;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
@@ -48,19 +47,24 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
     private final String name;
     private final List<VertexTable> vertexTables;
     private final List<EdgeTable> edgeTables;
+    private final Map<String, String> usingTables;
     private final Map<String, String> config;
-    private final boolean isStatic;
+    private boolean isStatic;
     private final boolean ifNotExists;
+    private final boolean isTemporary;
 
     public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
                         List<EdgeTable> edgeTables, Map<String, String> config,
-                        boolean ifNotExists) {
+                        Map<String, String> usingTables, boolean ifNotExists,
+                        boolean isStatic, boolean isTemporary) {
         this.instanceName = instanceName;
         this.name = name;
         this.vertexTables = vertexTables;
         this.edgeTables = edgeTables;
         this.config = ImmutableMap.copyOf(config);
+        this.usingTables = ImmutableMap.copyOf(usingTables);
         this.ifNotExists = ifNotExists;
+        this.isTemporary = isTemporary;
 
         for (VertexTable vertexTable : this.vertexTables) {
             vertexTable.setGraph(this);
@@ -68,8 +72,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         for (EdgeTable edgeTable : this.edgeTables) {
             edgeTable.setGraph(this);
         }
-        this.isStatic = config.containsKey(ConnectorConfigKeys.GEAFLOW_DSL_USING_VERTEX_PATH.getKey())
-            && config.containsKey(ConnectorConfigKeys.GEAFLOW_DSL_USING_EDGE_PATH.getKey());
+        this.isStatic = isStatic;
     }
 
     @Override
@@ -139,6 +142,10 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         return isStatic;
     }
 
+    public void setStatic(boolean aStatic) {
+        isStatic = aStatic;
+    }
+
     public IType<?> getIdType() {
         VertexTable vertexTable = vertexTables.iterator().next();
         return vertexTable.getIdField().getType();
@@ -150,6 +157,10 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
     public boolean isIfNotExists() {
         return ifNotExists;
+    }
+
+    public boolean isTemporary() {
+        return isTemporary;
     }
 
     public GraphElementTable getTable(String tableName) {
@@ -164,6 +175,10 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
             }
         }
         return null;
+    }
+
+    public Map<String, String> getUsingTables() {
+        return usingTables;
     }
 
     public static class VertexTable extends AbstractTable implements GraphElementTable, Serializable {

@@ -15,6 +15,10 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.message;
 
 import com.antgroup.geaflow.dsl.runtime.traversal.data.SingleValue;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,12 +79,15 @@ public class ReturnMessageImpl implements ReturnMessage {
 
     public static class ReturnKey implements Serializable {
 
-        private final Object requestId;
+        private final long pathId;
 
         private final long queryId;
 
-        public ReturnKey(Object requestId, long queryId) {
-            this.requestId = requestId;
+        public ReturnKey(long pathId, long queryId) {
+            if (pathId < 0) {
+                throw new IllegalArgumentException("Illegal pathId: " + pathId);
+            }
+            this.pathId = pathId;
             this.queryId = queryId;
         }
 
@@ -93,20 +100,41 @@ public class ReturnMessageImpl implements ReturnMessage {
                 return false;
             }
             ReturnKey returnKey = (ReturnKey) o;
-            return queryId == returnKey.queryId && Objects.equals(requestId, returnKey.requestId);
+            return queryId == returnKey.queryId && Objects.equals(pathId, returnKey.pathId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(requestId, queryId);
+            return Objects.hash(pathId, queryId);
         }
 
         @Override
         public String toString() {
             return "ReturnKey{"
-                + "requestId=" + requestId
+                + "pathId=" + pathId
                 + ", queryId=" + queryId
                 + '}';
         }
     }
+
+    public static class ReturnMessageImplSerializer extends Serializer<ReturnMessageImpl> {
+
+        @Override
+        public void write(Kryo kryo, Output output, ReturnMessageImpl object) {
+            kryo.writeClassAndObject(output, object.returnKey2Value);
+        }
+
+        @Override
+        public ReturnMessageImpl read(Kryo kryo, Input input, Class<ReturnMessageImpl> type) {
+            Map<ReturnMessageImpl.ReturnKey, SingleValue> returnKey2Value =
+                (Map<ReturnMessageImpl.ReturnKey, SingleValue>) kryo.readClassAndObject(input);
+            return new ReturnMessageImpl(returnKey2Value);
+        }
+
+        @Override
+        public ReturnMessageImpl copy(Kryo kryo, ReturnMessageImpl original) {
+            return new ReturnMessageImpl(new HashMap<>(original.returnKey2Value));
+        }
+    }
+
 }

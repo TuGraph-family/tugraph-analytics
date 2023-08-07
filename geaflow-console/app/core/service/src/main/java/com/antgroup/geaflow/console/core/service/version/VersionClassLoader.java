@@ -16,28 +16,30 @@ package com.antgroup.geaflow.console.core.service.version;
 
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.proxy.ProxyUtil;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
-import com.antgroup.geaflow.console.core.service.file.VersionFileFactory;
+import com.antgroup.geaflow.console.core.service.file.LocalFileFactory;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class VersionClassLoader {
+@Getter
+public class VersionClassLoader implements CompileClassLoader {
 
     protected final GeaflowVersion version;
 
-    protected final VersionFileFactory versionFileFactory;
+    protected final LocalFileFactory localFileFactory;
 
     protected final URLClassLoader classLoader;
 
-    protected VersionClassLoader(GeaflowVersion version, VersionFileFactory versionFileFactory) {
+    protected VersionClassLoader(GeaflowVersion version, LocalFileFactory localFileFactory) {
         this.version = version;
-        this.versionFileFactory = versionFileFactory;
+        this.localFileFactory = localFileFactory;
         this.classLoader = createClassLoader();
     }
 
@@ -47,13 +49,9 @@ public class VersionClassLoader {
 
     protected void closeClassLoader() {
         try {
-            versionFileFactory.deleteVersionFile(version.getName(), version.getEngineJarPackage());
-            if (version.getLangJarPackage() != null) {
-                versionFileFactory.deleteVersionFile(version.getName(), version.getLangJarPackage());
-            }
             classLoader.close();
-            log.info("Close classloader of version {}", version.getName());
 
+            log.info("Close classloader of version {}", version.getName());
         } catch (Exception e) {
             log.info("Close classloader of version {} failed", version.getName(), e);
         }
@@ -62,20 +60,20 @@ public class VersionClassLoader {
     private URLClassLoader createClassLoader() {
         try {
             String versionName = version.getName();
-            GeaflowJarPackage engineJarPackage = version.getEngineJarPackage();
-            GeaflowJarPackage langJarPackage = version.getLangJarPackage();
+            GeaflowRemoteFile engineJarPackage = version.getEngineJarPackage();
+            GeaflowRemoteFile langJarPackage = version.getLangJarPackage();
             if (engineJarPackage == null) {
                 throw new GeaflowException("Engine jar not found in version {}", versionName);
             }
 
             // prepare engine jar file
             List<URL> urlList = new ArrayList<>();
-            File engineJarFile = versionFileFactory.getVersionFile(versionName, engineJarPackage);
+            File engineJarFile = localFileFactory.getVersionFile(versionName, engineJarPackage);
             urlList.add(engineJarFile.toURI().toURL());
 
             // prepare lang jar file
             if (langJarPackage != null) {
-                File langJarFile = versionFileFactory.getVersionFile(versionName, langJarPackage);
+                File langJarFile = localFileFactory.getVersionFile(versionName, langJarPackage);
                 urlList.add(langJarFile.toURI().toURL());
             }
 
@@ -87,4 +85,5 @@ public class VersionClassLoader {
             throw new GeaflowException("Create classloader of version {} failed", version.getName(), e);
         }
     }
+
 }

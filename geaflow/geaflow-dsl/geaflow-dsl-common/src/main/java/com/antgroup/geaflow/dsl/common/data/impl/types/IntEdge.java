@@ -21,18 +21,22 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class IntEdge implements RowEdge {
+public class IntEdge implements RowEdge, KryoSerializable {
 
     public static final Supplier<IntEdge> CONSTRUCTOR = new Constructor();
 
-    private int srcId;
+    public int srcId;
 
-    private int targetId;
+    public int targetId;
 
-    private EdgeDirection direction = EdgeDirection.OUT;
+    public EdgeDirection direction = EdgeDirection.OUT;
 
     private BinaryString label;
 
@@ -98,12 +102,17 @@ public class IntEdge implements RowEdge {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof IntEdge)) {
+        if (!(o instanceof RowEdge)) {
             return false;
         }
-        IntEdge that = (IntEdge) o;
-        return Objects.equals(srcId, that.srcId) && Objects.equals(targetId,
-            that.targetId) && direction == that.direction && Objects.equals(label, that.label);
+        if (o instanceof IntEdge) {
+            IntEdge that = (IntEdge) o;
+            return srcId == that.srcId && targetId == that.targetId
+                && direction == that.direction && Objects.equals(label, that.label);
+        } else {
+            RowEdge that = (RowEdge) o;
+            return that.equals(this);
+        }
     }
 
     @Override
@@ -189,4 +198,37 @@ public class IntEdge implements RowEdge {
             return new IntEdge();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize fields
+        output.writeInt(this.srcId);
+        output.writeInt(this.targetId);
+        kryo.writeClassAndObject(output, this.getDirect());
+        byte[] labelBytes = this.getBinaryLabel().getBytes();
+        output.writeInt(labelBytes.length);
+        output.writeBytes(labelBytes);
+        // serialize value
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize fields
+        int srcId = input.readInt();
+        this.srcId = srcId;
+        int targetId = input.readInt();
+        this.targetId = targetId;
+        EdgeDirection direction = (EdgeDirection) kryo.readClassAndObject(input);
+        this.setDirect(direction);
+        int labelLength = input.readInt();
+        BinaryString label = BinaryString.fromBytes(input.readBytes(labelLength));
+        this.setBinaryLabel(label);
+        // deserialize value
+        Row value = (Row) kryo.readClassAndObject(input);
+        // create edge object
+        this.setValue(value);
+    }
+
+
 }

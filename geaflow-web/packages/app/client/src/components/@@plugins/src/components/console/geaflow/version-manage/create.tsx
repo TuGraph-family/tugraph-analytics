@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, Form, Input, message, Upload } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { createVersion } from "../services/version";
+import $i18n from "../../../../../../i18n";
 
 interface CreateClusterProps {
   visible: boolean;
@@ -17,11 +18,10 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
   const [form] = Form.useForm();
   const [state, setState] = useState({
     loading: false,
+    fileList: [],
   });
-
   const handleCreateVersion = async () => {
     const values = await form.validateFields();
-
     setState({
       ...state,
       loading: true,
@@ -31,17 +31,18 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
     const formData = new FormData();
     formData.append("name", name);
 
-    formData.append("comment", comment);
+    comment && formData.append("comment", comment);
 
-    engineJarFile.forEach((item) => {
-      formData.append("engineJarFile", item.originFileObj);
-    });
+    engineJarFile &&
+      engineJarFile.forEach((item) => {
+        formData.append("engineJarFile", item.originFileObj);
+      });
 
     const params = {
       // name,
       engineJarFile: formData,
     };
-    console.log(formData);
+
     const resp = await createVersion(formData);
 
     setState({
@@ -49,8 +50,23 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
       loading: false,
     });
     if (resp?.success) {
-      message.success("创建版本成功");
+      message.success(
+        $i18n.get({
+          id: "openpiece-geaflow.geaflow.version-manage.create.VersionCreated",
+          dm: "创建版本成功",
+        })
+      );
       reload();
+    } else {
+      message.error(
+        $i18n.get(
+          {
+            id: "openpiece-geaflow.geaflow.services.use-manage.FailedToAddResponsemessage",
+            dm: "新增失败: {responseMessage}",
+          },
+          { responseMessage: resp?.message }
+        )
+      );
     }
   };
 
@@ -59,33 +75,68 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
     if (Array.isArray(e)) {
       return e;
     }
+    setState({ ...state, fileList: e?.fileList });
     return e?.fileList.slice(-1);
   };
 
   return (
     <Modal
-      title="创建版本"
+      title={$i18n.get({
+        id: "openpiece-geaflow.geaflow.version-manage.create.CreateVersion",
+        dm: "创建版本",
+      })}
       width={700}
       visible={visible}
       onOk={handleCreateVersion}
       confirmLoading={state.loading}
-      onCancel={close}
-      okText="确认"
-      cancelText="取消"
+      onCancel={() => {
+        close();
+        form.resetFields();
+      }}
+      okText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.version-manage.create.Confirm",
+        dm: "确认",
+      })}
+      cancelText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.version-manage.create.Cancel",
+        dm: "取消",
+      })}
     >
       <Form form={form}>
         <Form.Item
-          label="名称"
+          label={$i18n.get({
+            id: "openpiece-geaflow.geaflow.version-manage.create.Name",
+            dm: "名称",
+          })}
           name="name"
-          rules={[{ required: true, message: "请输入版本名称" }]}
+          rules={[
+            {
+              required: true,
+              message: $i18n.get({
+                id: "openpiece-geaflow.geaflow.version-manage.create.EnterAVersionName",
+                dm: "请输入版本名称",
+              }),
+            },
+          ]}
           initialValue=""
         >
           <Input />
         </Form.Item>
-        <Form.Item label="版本描述" name="comment">
+        <Form.Item
+          label={$i18n.get({
+            id: "openpiece-geaflow.geaflow.version-manage.create.VersionDescription",
+            dm: "版本描述",
+          })}
+          name="comment"
+        >
           <Input.TextArea rows={1} />
         </Form.Item>
-        <Form.Item label="Jar文件">
+        <Form.Item
+          label={$i18n.get({
+            id: "openpiece-geaflow.geaflow.version-manage.create.JarFile",
+            dm: "Jar文件",
+          })}
+        >
           <Form.Item
             name="engineJarFile"
             valuePropName="fileList"
@@ -96,8 +147,18 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
-              <p className="ant-upload-text">拖拽或点击选择文件</p>
-              <p className="ant-upload-hint">只支持 jar 文件。</p>
+              <p className="ant-upload-text">
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.version-manage.create.DragOrClickSelectFile",
+                  dm: "拖拽或点击选择文件",
+                })}
+              </p>
+              <p className="ant-upload-hint">
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.version-manage.create.OnlyJarFilesAreSupported",
+                  dm: "只支持 jar 文件。",
+                })}
+              </p>
             </Upload.Dragger>
           </Form.Item>
         </Form.Item>

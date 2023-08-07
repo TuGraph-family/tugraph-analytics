@@ -15,9 +15,12 @@
 package com.antgroup.geaflow.console.common.service.integration.engine;
 
 import com.antgroup.geaflow.console.common.util.proxy.ProxyClass;
+import java.util.Set;
 
 @ProxyClass("com.antgroup.geaflow.dsl.runtime.QueryClient")
 public interface GeaflowCompiler {
 
     CompileResult compile(String script, CompileContext context);
+
+    Set<FunctionInfo> getUnResolvedFunctions(String script, CompileContext context);
 }

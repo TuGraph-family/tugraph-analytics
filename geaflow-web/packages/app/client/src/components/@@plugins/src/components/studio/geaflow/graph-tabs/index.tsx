@@ -6,6 +6,7 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { GraphDefinitionConfigPanel } from "../graph-tabs/graphDefinitionConfigPanel";
 import { isEmpty } from "lodash";
 import styles from "./index.less";
+import $i18n from "../../../../../../i18n";
 
 type Props = {
   tabsList: {
@@ -20,9 +21,18 @@ type Props = {
 };
 
 const TYPE_TEXT = {
-  VERTEX: "添加一个点",
-  EDGE: "添加一条边",
-  TABLE: "添加一个输入表",
+  VERTEX: $i18n.get({
+    id: "openpiece-geaflow.geaflow.graph-tabs.AddAPoint",
+    dm: "添加一个点",
+  }),
+  EDGE: $i18n.get({
+    id: "openpiece-geaflow.geaflow.graph-tabs.AddAnEdge",
+    dm: "添加一条边",
+  }),
+  TABLE: $i18n.get({
+    id: "openpiece-geaflow.geaflow.graph-tabs.AddAnInputTable",
+    dm: "添加一个输入表",
+  }),
 };
 
 const { TabPane } = Tabs;
@@ -70,7 +80,10 @@ export const GraphDefintionTab: React.FC<Props> = ({
   //删除事件
   const handleDelete = (index: number, paneIndex: number) => (
     <Popconfirm
-      title="你确定要删除吗?"
+      title={$i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.AreYouSureYouWant",
+        dm: "你确定要删除吗?",
+      })}
       placement="topRight"
       onConfirm={(event) => {
         event.stopPropagation();
@@ -78,8 +91,14 @@ export const GraphDefintionTab: React.FC<Props> = ({
         deleteData[index].editTables.splice(paneIndex, 1);
         setTabsData([...deleteData]);
       }}
-      okText="确认"
-      cancelText="取消"
+      okText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.Confirm",
+        dm: "确认",
+      })}
+      cancelText={$i18n.get({
+        id: "openpiece-geaflow.geaflow.graph-tabs.Cancel",
+        dm: "取消",
+      })}
     >
       <DeleteOutlined
         onClick={(event) => {
@@ -132,6 +151,7 @@ export const GraphDefintionTab: React.FC<Props> = ({
               );
             })
           )}
+
           {(!readonly || editable) &&
             !["tableConfig", "paramConfig", "TABLE"].includes(item.type) && (
               <Button

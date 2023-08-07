@@ -19,17 +19,26 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.parser.GeaFlowDSLParser;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
+import com.antgroup.geaflow.dsl.sqlnode.SqlCreateTable;
+import com.antgroup.geaflow.dsl.sqlnode.SqlEdgeUsing;
+import com.antgroup.geaflow.dsl.sqlnode.SqlVertexUsing;
 import com.antgroup.geaflow.dsl.util.GQLNodeUtil;
+import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
+import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlSetOption;
 import org.apache.calcite.sql.parser.SqlParseException;
 
 public class QueryUtil {
@@ -40,13 +49,30 @@ public class QueryUtil {
         PreCompileResult preCompileResult = new PreCompileResult();
         try {
             List<SqlNode> sqlNodes = parser.parseMultiStatement(script);
-
+            List<GeaFlowTable> createTablesInScript = new ArrayList<>();
             Map<String, SqlCreateGraph> createGraphs = new HashMap<>();
             for (SqlNode sqlNode : sqlNodes) {
-                if (sqlNode instanceof SqlCreateGraph) {
+                if (sqlNode instanceof SqlSetOption) {
+                    SqlSetOption sqlSetOption = (SqlSetOption) sqlNode;
+                    String key = StringLiteralUtil.toJavaString(sqlSetOption.getName());
+                    String value = StringLiteralUtil.toJavaString(sqlSetOption.getValue());
+                    config.put(key, value);
+                } else if (sqlNode instanceof SqlCreateTable) {
+                    createTablesInScript.add(gqlContext.convertToTable((SqlCreateTable) sqlNode));
+                } else if (sqlNode instanceof SqlCreateGraph) {
                     SqlCreateGraph createGraph = (SqlCreateGraph) sqlNode;
                     SqlIdentifier graphName = gqlContext.completeCatalogObjName(createGraph.getName());
-                    createGraphs.put(graphName.toString(), createGraph);
+                    if (createGraph.getVertices().getList().stream().anyMatch(node -> node instanceof SqlVertexUsing)
+                        || createGraph.getEdges().getList().stream().anyMatch(node -> node instanceof SqlEdgeUsing)) {
+                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph,
+                            createTablesInScript, config);
+                        Configuration globalConfig = graph.getConfigWithGlobal(config);
+                        if (!QueryUtil.isGraphExists(graph, globalConfig)) {
+                            preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, globalConfig));
+                        }
+                    } else {
+                        createGraphs.put(graphName.toString(), createGraph);
+                    }
                 } else if (sqlNode instanceof SqlInsert) {
                     SqlInsert insert = (SqlInsert) sqlNode;
                     SqlIdentifier insertName = gqlContext.completeCatalogObjName(
@@ -54,8 +80,15 @@ public class QueryUtil {
                     SqlIdentifier insertGraphName = GQLNodeUtil.getGraphTableName(insertName);
                     if (createGraphs.containsKey(insertGraphName.toString())) {
                         SqlCreateGraph createGraph = createGraphs.get(insertGraphName.toString());
-                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph);
+                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph, config);
                         preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, config));
+                    } else {
+                        Table graph = gqlContext.getCatalog().getGraph(gqlContext.getCurrentInstance(),
+                            insertGraphName.toString());
+                        if (graph != null) {
+                            GeaFlowGraph geaFlowGraph = (GeaFlowGraph) graph;
+                            preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(geaFlowGraph, config));
+                        }
                     }
                 }
             }
@@ -65,6 +98,17 @@ public class QueryUtil {
         }
     }
 
+    public static boolean isGraphExists(GeaFlowGraph graph, Configuration globalConfig) {
+        boolean graphExists;
+        try {
+            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graph.getUniqueName(), globalConfig);
+            long lastCheckPointId = keeper.getLatestViewVersion(graph.getUniqueName());
+            graphExists = lastCheckPointId >= 0;
+        } catch (IOException e) {
+            throw new GeaFlowDSLException(e);
+        }
+        return graphExists;
+    }
 
     public static class PreCompileResult implements Serializable {
 

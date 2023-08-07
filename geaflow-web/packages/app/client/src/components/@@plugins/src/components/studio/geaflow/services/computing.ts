@@ -1,6 +1,7 @@
-import request from "umi-request";
+import request from "./request";
 import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
+import $i18n from "../../../../../../i18n";
 interface ComputingParams {
   instanceId: string;
   name?: string;
@@ -14,7 +15,6 @@ export const getJobsList = async (params: ComputingParams) => {
     method: "get",
     credentials: "include",
     withCredentials: true,
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     params: params,
   });
 
@@ -27,7 +27,6 @@ export const getJobsList = async (params: ComputingParams) => {
 export const getJobsCreat = async (params: any) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/jobs`, {
     method: "post",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
     data: params,
@@ -42,16 +41,11 @@ export const getJobsCreat = async (params: any) => {
 export const getJobsEdit = async (params: any, id: string) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/jobs/${id}`, {
     method: "put",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
     data: params,
   });
 
-  if (!response.success) {
-    message.error(`编辑失败: ${response.message}`);
-    return [];
-  }
   return response;
 };
 
@@ -61,13 +55,20 @@ export const getJobsEdit = async (params: any, id: string) => {
 export const getJobsEditList = async (id: string) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/jobs/${id}`, {
     method: "get",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
   });
 
   if (!response.success) {
-    message.error(`编辑失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.FailedToEditResponsemessage",
+          dm: "编辑失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -81,14 +82,21 @@ export const getJobsReleases = async (jobId: string) => {
     `${HTTP_SERVICE_URL}/api/jobs/${jobId}/releases`,
     {
       method: "post",
-      headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
       credentials: "include",
       withCredentials: true,
     }
   );
 
   if (!response.success) {
-    message.error(`发布失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.PublishingFailedResponsemessage",
+          dm: "发布失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
   return response;
@@ -96,13 +104,18 @@ export const getJobsReleases = async (jobId: string) => {
 export const deleteComputing = async (jobId: string) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/jobs/${jobId}`, {
     method: "delete",
-    headers: {
-      "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN"),
-    },
   });
 
   if (!response?.success) {
-    message.error(`删除失败: ${response?.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.function-manage.FailedToDeleteResponsemessage",
+          dm: "删除失败：{responseMessage}",
+        },
+        { responseMessage: response?.message }
+      )
+    );
     return [];
   }
   return response;
@@ -110,15 +123,29 @@ export const deleteComputing = async (jobId: string) => {
 export const getJobsTasks = async (jobId: string) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/tasks`, {
     method: "get",
-    headers: { "geaflow-token": localStorage.getItem("GEAFLOW_TOKEN") },
     credentials: "include",
     withCredentials: true,
     params: { jobId },
   });
 
   if (!response.success) {
-    message.error(`查询失败: ${response.message}`);
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
     return [];
   }
+  return response?.data?.list;
+};
+export const getRemoteFiles = async () => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/remote-files`, {
+    method: "get",
+    requestType: "form",
+  });
   return response?.data?.list;
 };

@@ -14,6 +14,7 @@ import {
 } from "../services/tableDefinition";
 import CreateTableDefinition from "./create";
 import styles from "./list.module.less";
+import $i18n from "../../../../../../i18n";
 
 const { Search } = Input;
 
@@ -59,7 +60,10 @@ export const TableDefinition: React.FC<{}> = ({}) => {
 
   const columns = [
     {
-      title: "表名称",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.table-definition.TableName",
+        dm: "表名称",
+      }),
       dataIndex: "name",
       key: "name",
       render: (_, record: any) => (
@@ -87,27 +91,64 @@ export const TableDefinition: React.FC<{}> = ({}) => {
       ),
     },
     {
-      title: "操作人",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.table-definition.Operator",
+        dm: "操作人",
+      }),
       key: "creatorName",
       render: (_, record: any) => (
         <span>
-          创建人：{record.creatorName} <br />
-          {record?.modifierName && <span>修改人：{record.modifierName}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.table-definition.Creator",
+            dm: "创建人：",
+          })}
+          {record.creatorName} <br />
+          {record?.modifierName && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.table-definition.ModifiedByRecordmodifiername",
+                  dm: "修改人：{recordModifierName}",
+                },
+                { recordModifierName: record.modifierName }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作时间",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.table-definition.OperationTime",
+        dm: "操作时间",
+      }),
       key: "createTime",
       render: (_, record: any) => (
         <span>
-          创建时间：{record.createTime} <br />
-          {record?.modifyTime && <span>修改时间：{record.modifyTime}</span>}
+          {$i18n.get({
+            id: "openpiece-geaflow.geaflow.table-definition.CreationTime",
+            dm: "创建时间：",
+          })}
+          {record.createTime} <br />
+          {record?.modifyTime && (
+            <span>
+              {$i18n.get(
+                {
+                  id: "openpiece-geaflow.geaflow.table-definition.ModificationTimeRecordmodifytime",
+                  dm: "修改时间：{recordModifyTime}",
+                },
+                { recordModifyTime: record.modifyTime }
+              )}
+            </span>
+          )}
         </span>
       ),
     },
     {
-      title: "操作",
+      title: $i18n.get({
+        id: "openpiece-geaflow.geaflow.table-definition.Operation",
+        dm: "操作",
+      }),
       render: (_, record) => (
         <Space>
           <a
@@ -120,22 +161,44 @@ export const TableDefinition: React.FC<{}> = ({}) => {
               })
             }
           >
-            编辑
+            {$i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.Edit",
+              dm: "编辑",
+            })}
           </a>
           <Popconfirm
-            title="确认删除？"
+            title={$i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.AreYouSureYouWant",
+              dm: "确认删除？",
+            })}
             onConfirm={() => {
               deleteTableDefinition(instanceName, record?.name).then((res) => {
                 if (res?.success) {
-                  message.success("删除成功");
+                  message.success(
+                    $i18n.get({
+                      id: "openpiece-geaflow.geaflow.table-definition.DeletedSuccessfully",
+                      dm: "删除成功",
+                    })
+                  );
                   handelTemplata();
                 }
               });
             }}
-            okText="确定"
-            cancelText="取消"
+            okText={$i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.Ok",
+              dm: "确定",
+            })}
+            cancelText={$i18n.get({
+              id: "openpiece-geaflow.geaflow.table-definition.Cancel",
+              dm: "取消",
+            })}
           >
-            <a>删除</a>
+            <a>
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.Delete",
+                dm: "删除",
+              })}
+            </a>
           </Popconfirm>
         </Space>
       ),
@@ -165,16 +228,28 @@ export const TableDefinition: React.FC<{}> = ({}) => {
                   })
                 }
               >
-                表定义
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.table-definition.Tables",
+                  dm: "表定义",
+                })}
               </a>
             </Breadcrumb.Item>
 
             <Breadcrumb.Item>
               {showCreatePage.readonly
-                ? "表定义详情"
+                ? $i18n.get({
+                    id: "openpiece-geaflow.geaflow.table-definition.TableDefinitionDetails",
+                    dm: "表定义详情",
+                  })
                 : showCreatePage.currentItem
-                ? "编辑表定义"
-                : "新增表定义"}
+                ? $i18n.get({
+                    id: "openpiece-geaflow.geaflow.table-definition.EditTableDefinitions",
+                    dm: "编辑表定义",
+                  })
+                : $i18n.get({
+                    id: "openpiece-geaflow.geaflow.table-definition.AddTableDefinitions",
+                    dm: "新增表定义",
+                  })}
             </Breadcrumb.Item>
           </Breadcrumb>
           <CreateTableDefinition
@@ -186,20 +261,37 @@ export const TableDefinition: React.FC<{}> = ({}) => {
       ) : (
         <div className={styles["definition"]}>
           <p>
-            <span className={styles["definition-title"]}>表定义</span>
+            <span className={styles["definition-title"]}>
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.TableDefinition",
+                dm: "表定义",
+              })}
+            </span>
             <span className={styles["meaing"]}>
-              定义图计算任务依赖的输入表、输出表结构。
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.table-definition.DefineTheStructureOfThe",
+                dm: "定义图任务依赖的输入表、输出表结构。",
+              })}
             </span>
           </p>
           <div className={styles["definition-table"]}>
             <div className={styles["definition-header"]}>
-              <div className={styles["title"]}>表定义列表</div>
+              <div className={styles["title"]}>
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.table-definition.TableDefinitionList",
+                  dm: "表定义列表",
+                })}
+              </div>
               <div>
                 <Search
                   style={{ width: 286, marginRight: 16 }}
-                  placeholder="请输入搜索关键词"
+                  placeholder={$i18n.get({
+                    id: "openpiece-geaflow.geaflow.table-definition.EnterASearchKeyword",
+                    dm: "请输入搜索关键词",
+                  })}
                   onSearch={handleSearch}
                 />
+
                 <Button
                   type="primary"
                   onClick={() =>
@@ -211,7 +303,10 @@ export const TableDefinition: React.FC<{}> = ({}) => {
                     })
                   }
                 >
-                  新增
+                  {$i18n.get({
+                    id: "openpiece-geaflow.geaflow.table-definition.Add",
+                    dm: "新增",
+                  })}
                 </Button>
               </div>
             </div>

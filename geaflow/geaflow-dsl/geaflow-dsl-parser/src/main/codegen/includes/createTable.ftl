@@ -81,6 +81,7 @@ void PrimaryKeyList(List<SqlNode> list) :
 SqlCreate SqlCreateTable(Span s, boolean replace) :
 {
     boolean ifNotExists = false;
+    boolean isTemporary = false;
     final SqlIdentifier id;
     final SqlNodeList columns;
     SqlNodeList propertyList = null;
@@ -90,6 +91,7 @@ SqlCreate SqlCreateTable(Span s, boolean replace) :
     SqlNodeList partitionFieldList = null;
 }
 {
+    [ <TEMPORARY> { isTemporary = true; } ]
     <TABLE> [ <IF> <NOT> <EXISTS> { ifNotExists = true; } ]
     id = CompoundIdentifier()
 
@@ -145,7 +147,7 @@ SqlCreate SqlCreateTable(Span s, boolean replace) :
     ]
     {
         partitionFieldList = new SqlNodeList(partitionFields, s.addAll(partitionFields).pos());
-        return new SqlCreateTable(s.end(this), ifNotExists, id, columns, propertyList, primaryKeyList,
-        partitionFieldList);
+        return new SqlCreateTable(s.end(this), isTemporary, ifNotExists, id, columns, propertyList,
+        primaryKeyList, partitionFieldList);
     }
 }

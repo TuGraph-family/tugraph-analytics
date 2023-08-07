@@ -41,6 +41,8 @@ import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -128,10 +130,11 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
             runtimeContext.getTaskArgs().getMaxParallelism(), parallel, index);
 
         deserializer = tableSource.getDeserializer(conf);
-        StructType schema = (StructType) SqlTypeUtil.convertType(
-            table.getRowType(GQLJavaTypeFactory.create()));
-        deserializer.init(conf, schema);
-
+        if (deserializer != null) {
+            StructType schema = (StructType) SqlTypeUtil.convertType(
+                table.getRowType(GQLJavaTypeFactory.create()));
+            deserializer.init(conf, schema);
+        }
         LOGGER.info("open source table: {}, taskIndex:{}, parallel: {}, windowSize:{}, assigned "
             + "partitions:{}", table.getName(), index, parallel, windowSize, partitions);
     }
@@ -151,12 +154,16 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
             Offset offset = offsetStore.readOffset(partition.getName(), batchId);
             FetchData<Object> fetchData = tableSource.fetch(partition, Optional.ofNullable(offset),
                 windowSize);
-            LOGGER.info("fetch data size: {}, isFinish: {}, table: {}, partition: {}, batchId: {}",
-                fetchData.getDataSize(), fetchData.isFinish(), table.getName(), partition.getName(),
-                batchId);
-            for (Object record : fetchData.getDataList()) {
+            Iterator<Object> dataIterator = fetchData.getDataIterator();
+            while (dataIterator.hasNext()) {
+                Object record = dataIterator.next();
                 long startTime = System.nanoTime();
-                List<Row> rows = ((TableDeserializer<Object>) deserializer).deserialize(record);
+                List<Row> rows;
+                if (deserializer != null) {
+                    rows = ((TableDeserializer<Object>) deserializer).deserialize(record);
+                } else {
+                    rows = Collections.singletonList((Row) record);
+                }
                 if (rows != null && rows.size() > 0) {
                     parserRt.update((System.nanoTime() - startTime) / 1000L);
                     for (Row row : rows) {
@@ -169,6 +176,11 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
             }
             // store the next offset.
             offsetStore.writeOffset(partition.getName(), batchId + 1, fetchData.getNextOffset());
+
+            LOGGER.info("fetch data size: {}, isFinish: {}, table: {}, partition: {}, batchId: {},"
+                    + "nextOffset: {}",
+                fetchData.getDataSize(), fetchData.isFinish(), table.getName(), partition.getName(),
+                batchId, fetchData.getNextOffset().humanReadable());
 
             if (!fetchData.isFinish()) {
                 isFinish = false;

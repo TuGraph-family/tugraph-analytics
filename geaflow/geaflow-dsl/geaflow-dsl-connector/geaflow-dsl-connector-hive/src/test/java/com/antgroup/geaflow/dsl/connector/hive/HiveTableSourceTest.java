@@ -23,11 +23,12 @@ import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
-import com.antgroup.geaflow.dsl.connector.api.Windows;
+import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -197,7 +198,9 @@ public class HiveTableSourceTest extends BaseHiveTest {
             LOGGER.info("partition: {}", partition.getName());
             FetchData<Row> fetchData = hiveTableSource.fetch(partition, Optional.empty(),
                 Windows.SIZE_OF_ALL_WINDOW);
-            for (Row row : fetchData.getDataList()) {
+            Iterator<Row> rowIterator = fetchData.getDataIterator();
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
                 readRows.addAll(deserializer.deserialize(row));
             }
         }

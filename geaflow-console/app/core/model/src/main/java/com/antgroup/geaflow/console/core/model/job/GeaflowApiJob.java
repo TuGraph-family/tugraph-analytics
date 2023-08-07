@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.model.job;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -25,15 +26,26 @@ import lombok.Setter;
 @Setter
 public abstract class GeaflowApiJob extends GeaflowJob {
 
+    @Setter
+    protected GeaflowRemoteFile jarPackage;
+
+    @Setter
+    private String entryClass;
+
     public GeaflowApiJob(GeaflowJobType type) {
         super(type);
     }
 
     public List<GeaflowFunction> getFunctions() {
-        return null;
+        return functions;
     }
 
     public Map<String, Map<String, Map<String, String>>> getStructMappings() {
         return null;
+    }
+
+    @Override
+    public boolean isApiJob() {
+        return true;
     }
 }

@@ -18,8 +18,4 @@ public class FileConstants {
 
     public static final String PREFIX_JAVA_RESOURCE = "resource://";
 
-    public static final String PREFIX_HDFS = "hdfs://";
-
-    public static final String PREFIX_LOCAL_FILE = "file://";
-
 }

@@ -12,6 +12,40 @@ From the introduction of the two types of APIs, it can be seen that GeaFlow unif
 * For streaming or dynamic graph APIs, the Window can be split by size, and each window reads a certain size of data to achieve incremental computation.
 * For batch or static graph APIs, the Window will use the AllWindow mode, and a window will read the full amount of data to achieve full computation.
 
+# Maven依赖
+To develop a GeaFlow API application, you need to add maven dependencies:
+
+```xml
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-api</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-pdata</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-cluster</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-on-local</artifactId>
+    <version>0.1</version>
+</dependency>
+
+<dependency>
+    <groupId>com.antgroup.tugraph</groupId>
+    <artifactId>geaflow-pipeline</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 
 # Overview Of Functions
 ## Graph API

@@ -17,11 +17,15 @@ package com.antgroup.geaflow.dsl.runtime.traversal.path;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class EmptyTreePath extends AbstractSingleTreePath {
+public class EmptyTreePath extends AbstractSingleTreePath implements KryoSerializable {
 
     public static final ITreePath INSTANCE = new EmptyTreePath();
 
@@ -116,14 +120,14 @@ public class EmptyTreePath extends AbstractSingleTreePath {
     }
 
     @Override
-    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth) {
+    public boolean walkTree(List<Object> pathNodes, WalkFunction walkFunction, int maxDepth, PathIdCounter pathId) {
         return false;
     }
 
     @Override
     protected ITreePath filter(PathFilterFunction filterFunction,
                                int[] refPathIndices, int[] fieldMapping,
-                               Path currentPath, int maxDepth) {
+                               Path currentPath, int maxDepth, PathIdCounter pathId) {
         return EmptyTreePath.of();
     }
 
@@ -131,4 +135,15 @@ public class EmptyTreePath extends AbstractSingleTreePath {
     public boolean equalNode(ITreePath other) {
         return other.getNodeType() == NodeType.EMPTY_TREE;
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // no fields to serialize
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // no fields to deserialize
+    }
+
 }

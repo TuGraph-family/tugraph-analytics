@@ -35,23 +35,23 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PersistentArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.type", comment = "存储类型")
+    @GeaflowConfigKey(value = "geaflow.file.persistent.type", comment = "i18n.key.storage.type")
     @GeaflowConfigValue(required = true, defaultValue = "LOCAL")
     private GeaflowPluginType type;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.root", comment = "Root路径")
+    @GeaflowConfigKey(value = "geaflow.file.persistent.root", comment = "i18n.key.root.path")
     @GeaflowConfigValue(required = true, defaultValue = "/geaflow/chk")
     private String root;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.thread.size", comment = "本地线程池大小")
+    @GeaflowConfigKey(value = "geaflow.file.persistent.thread.size", comment = "i18n.key.local.thread.pool.count")
     @GeaflowConfigValue
     private Integer threadSize;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.user.name", comment = "用户名")
+    @GeaflowConfigKey(value = "geaflow.file.persistent.user.name", comment = "i18n.key.username")
     @GeaflowConfigValue(defaultValue = "geaflow")
     private String username;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.config.json", comment = "插件配置JSON")
+    @GeaflowConfigKey(value = "geaflow.file.persistent.config.json", comment = "i18n.key.ext.config.json")
     @GeaflowConfigValue(behavior = ConfigValueBehavior.JSON)
     private PluginConfigClass plugin;
 

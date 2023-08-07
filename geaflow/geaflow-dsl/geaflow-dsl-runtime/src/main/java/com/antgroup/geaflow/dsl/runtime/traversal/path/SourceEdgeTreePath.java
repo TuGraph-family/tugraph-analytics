@@ -16,6 +16,10 @@ package com.antgroup.geaflow.dsl.runtime.traversal.path;
 
 import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,4 +127,26 @@ public class SourceEdgeTreePath extends AbstractSingleTreePath {
     public int hashCode() {
         return Objects.hash(edges, requestIds);
     }
+
+    public static class SourceEdgeTreePathSerializer extends Serializer<SourceEdgeTreePath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, SourceEdgeTreePath object) {
+            kryo.writeClassAndObject(output, object.getRequestIds());
+            kryo.writeClassAndObject(output, object.getEdgeSet());
+        }
+
+        @Override
+        public SourceEdgeTreePath read(Kryo kryo, Input input, Class<SourceEdgeTreePath> type) {
+            Set<Object> requestIds = (Set<Object>) kryo.readClassAndObject(input);
+            EdgeSet edges = (EdgeSet) kryo.readClassAndObject(input);
+            return SourceEdgeTreePath.of(requestIds, edges);
+        }
+
+        @Override
+        public SourceEdgeTreePath copy(Kryo kryo, SourceEdgeTreePath original) {
+            return (SourceEdgeTreePath) original.copy();
+        }
+    }
+
 }

@@ -20,6 +20,7 @@ import {
 } from "./services";
 import { useImmer } from "use-immer";
 import { isEmpty } from "lodash";
+import $i18n from "../../../../../../../../i18n";
 
 interface IProps {
   prefixName: string;
@@ -236,15 +237,15 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     form.setFieldsValue({
       [prefixName]: {
         ...originFormValue[prefixName],
-        config: [
-          ...originDefaultConfig,
-          {
-            key: value,
-            value: defaultValue,
-            masked,
-            type,
-          },
-        ],
+        // config: [
+        //   ...originDefaultConfig,
+        //   {
+        //     key: value,
+        //     value: defaultValue,
+        //     masked,
+        //     type,
+        //   },
+        // ],
       },
     });
   };
@@ -262,7 +263,12 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
       (d) => d.value === state.customItemName
     );
     if (hasItem) {
-      message.error("不允许添加重复的key");
+      message.error(
+        $i18n.get({
+          id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.DuplicateKeysAreNotAllowed",
+          dm: "不允许添加重复的key",
+        })
+      );
       return;
     }
     setState((draft) => {
@@ -273,6 +279,7 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
           value: state.customItemName,
         },
       ];
+
       draft.customItemName = "";
     });
     setTimeout(() => {
@@ -310,12 +317,17 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     });
   };
 
-  //console.log('form.getFieldsValue()', form.getFieldsValue(), prefixName);
-
   return (
     <>
       {["pluginConfig", "tableConfig"].includes(prefixName) && (
-        <Form.Item name={[prefixName, "type"]} label="类型" required={true}>
+        <Form.Item
+          name={[prefixName, "type"]}
+          label={$i18n.get({
+            id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.Type",
+            dm: "类型",
+          })}
+          required={true}
+        >
           <Select
             style={{ width: 450 }}
             onChange={handleChangeType}
@@ -328,7 +340,12 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
         </Form.Item>
       )}
 
-      <Form.Item label="配置">
+      <Form.Item
+        label={$i18n.get({
+          id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.Configuration",
+          dm: "配置",
+        })}
+      >
         <Form.List name={[prefixName, "config"]}>
           {(fields, { add, remove }) => (
             <>
@@ -341,7 +358,15 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                   <Form.Item
                     {...restField}
                     name={[name, "key"]}
-                    rules={[{ required: true, message: "该参数必选" }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: $i18n.get({
+                          id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.Required",
+                          dm: "该参数必选",
+                        }),
+                      },
+                    ]}
                   >
                     <Select
                       style={{ width: 450 }}
@@ -353,17 +378,24 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                           <Divider style={{ margin: "8px 0" }} />
                           <Space style={{ padding: "0 8px 4px" }}>
                             <Input
-                              placeholder="请输入自定义key"
+                              placeholder={$i18n.get({
+                                id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.EnterACustomKey",
+                                dm: "请输入自定义key",
+                              })}
                               ref={inputRef}
                               value={state.customItemName}
                               onChange={onNameChange}
                             />
+
                             <Button
                               type="text"
                               icon={<PlusOutlined />}
                               onClick={addItem}
                             >
-                              自定义
+                              {$i18n.get({
+                                id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.Custom",
+                                dm: "自定义",
+                              })}
                             </Button>
                           </Space>
                         </>
@@ -392,7 +424,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                         required:
                           form.getFieldsValue()[prefixName]?.config[index]
                             .required,
-                        message: "请输入参数值",
+                        message: $i18n.get({
+                          id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.EnterAParameterValue",
+                          dm: "请输入参数值",
+                        }),
                       },
                     ]}
                   >
@@ -405,7 +440,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                     ) : (
                       <Input
                         disabled={readonly}
-                        placeholder="请输入属性值"
+                        placeholder={$i18n.get({
+                          id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.EnterAnAttributeValue",
+                          dm: "请输入属性值",
+                        })}
                         style={{ width: 350 }}
                       />
                     )}
@@ -426,7 +464,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                     block
                     icon={<PlusOutlined />}
                   >
-                    添加配置项
+                    {$i18n.get({
+                      id: "openpiece-geaflow.job-detail.components.graphDefinitionConfigPanel.AddAConfigurationItem",
+                      dm: "添加配置项",
+                    })}
                   </Button>
                 </Form.Item>
               )}

@@ -30,9 +30,9 @@ import com.antgroup.geaflow.dsl.runtime.function.graph.StepBoolFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepKeyFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepKeyFunctionImpl;
-import com.antgroup.geaflow.dsl.runtime.function.graph.StepMapFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepMapRowFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepNodeFilterFunction;
+import com.antgroup.geaflow.dsl.runtime.function.graph.StepPathModifyFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepSortFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepSortFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.graph.TraversalFromVertexFunction;
@@ -273,8 +273,8 @@ public class StepLogicalPlan implements Serializable {
             .withInputPathSchema(loopBody.getOutputPathSchema());
     }
 
-    public StepLogicalPlan map(StepMapFunction function) {
-        StepMapOperator operator = new StepMapOperator(nextPlanId(), function);
+    public StepLogicalPlan map(StepPathModifyFunction function, boolean isGlobal) {
+        StepMapOperator operator = new StepMapOperator(nextPlanId(), function, isGlobal);
         return new StepLogicalPlan(this, operator)
             .withGraphSchema(this.getGraphSchema())
             .withInputPathSchema(this.getOutputPathSchema())

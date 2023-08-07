@@ -21,10 +21,14 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class BinaryStringEdge implements RowEdge {
+public class BinaryStringEdge implements RowEdge, KryoSerializable {
 
     public static final Supplier<BinaryStringEdge> CONSTRUCTOR = new Constructor();
 
@@ -188,5 +192,34 @@ public class BinaryStringEdge implements RowEdge {
         public BinaryStringEdge get() {
             return new BinaryStringEdge();
         }
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        byte[] srcIdBytes = this.srcId.getBytes();
+        output.writeInt(srcIdBytes.length);
+        output.writeBytes(srcIdBytes);
+        byte[] targetIdBytes = this.targetId.getBytes();
+        output.writeInt(targetIdBytes.length);
+        output.writeBytes(targetIdBytes);
+        kryo.writeClassAndObject(output, this.getDirect());
+        byte[] labelBytes = this.getBinaryLabel().getBytes();
+        output.writeInt(labelBytes.length);
+        output.writeBytes(labelBytes);
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        BinaryString srcId = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        this.srcId = srcId;
+        BinaryString targetId = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        this.targetId = targetId;
+        EdgeDirection direction = (EdgeDirection) kryo.readClassAndObject(input);
+        this.setDirect(direction);
+        BinaryString label = BinaryString.fromBytes(input.readBytes(input.readInt()));
+        this.setBinaryLabel(label);
+        Row value = (Row) kryo.readClassAndObject(input);
+        this.value = value;
     }
 }

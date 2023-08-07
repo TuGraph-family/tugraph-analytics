@@ -18,8 +18,15 @@ import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.types.DoubleEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.types.IntEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.types.LongEdge;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -147,4 +154,48 @@ public class FieldAlignEdge implements RowEdge {
     public String toString() {
         return getSrcId() + "#" + getTargetId() + "#" + getBinaryLabel() + "#" + getDirect() + "#" + getValue();
     }
+
+    public static RowEdge createFieldAlignedEdge(RowEdge baseEdge, int[] fieldMapping) {
+        if (baseEdge instanceof LongEdge) {
+            return new FieldAlignLongEdge((LongEdge)baseEdge, fieldMapping);
+        } else if (baseEdge instanceof IntEdge) {
+            return new FieldAlignIntEdge((IntEdge)baseEdge, fieldMapping);
+        } else if (baseEdge instanceof DoubleEdge) {
+            return new FieldAlignDoubleEdge((DoubleEdge)baseEdge, fieldMapping);
+        }
+        return new FieldAlignEdge(baseEdge, fieldMapping);
+    }
+
+    public static class FieldAlignEdgeSerializer extends Serializer<FieldAlignEdge> {
+
+        @Override
+        public void write(Kryo kryo, Output output, FieldAlignEdge object) {
+            kryo.writeClassAndObject(output, object.baseEdge);
+            if (object.fieldMapping != null) {
+                output.writeInt(object.fieldMapping.length, true);
+                for (int i : object.fieldMapping) {
+                    output.writeInt(i);
+                }
+            } else {
+                output.writeInt(0, true);
+            }
+        }
+
+        @Override
+        public FieldAlignEdge read(Kryo kryo, Input input, Class<FieldAlignEdge> type) {
+            RowEdge baseEdge = (RowEdge) kryo.readClassAndObject(input);
+            int[] fieldMapping = new int[input.readInt(true)];
+            for (int i = 0; i < fieldMapping.length; i++) {
+                fieldMapping[i] = input.readInt();
+            }
+            return new FieldAlignEdge(baseEdge, fieldMapping);
+        }
+
+        @Override
+        public FieldAlignEdge copy(Kryo kryo, FieldAlignEdge original) {
+            return new FieldAlignEdge(kryo.copy(original.baseEdge), Arrays.copyOf(original.fieldMapping, original.fieldMapping.length));
+        }
+
+    }
+
 }

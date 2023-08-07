@@ -36,6 +36,8 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+
+
     @Test
     public void testAlgorithm_003() throws Exception {
         QueryTester
@@ -45,4 +47,33 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    @Test
+    public void testAlgorithm_004() throws Exception {
+        QueryTester
+            .build()
+            .enableInitDDL(false)
+            .withQueryPath("/query/gql_algorithm_004.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithm_005() throws Exception {
+        QueryTester
+            .build()
+            .enableInitDDL(false)
+            .withQueryPath("/query/gql_algorithm_005.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithm_006() throws Exception {
+        QueryTester
+            .build()
+            .enableInitDDL(false)
+            .withQueryPath("/query/gql_algorithm_006.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }

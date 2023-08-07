@@ -20,23 +20,34 @@ import com.antgroup.geaflow.console.common.dal.entity.ReleaseEntity;
 import com.antgroup.geaflow.console.common.dal.model.ReleaseSearch;
 import com.antgroup.geaflow.console.common.service.integration.engine.CompileContext;
 import com.antgroup.geaflow.console.common.service.integration.engine.CompileResult;
+import com.antgroup.geaflow.console.common.service.integration.engine.FunctionInfo;
 import com.antgroup.geaflow.console.common.service.integration.engine.GeaflowCompiler;
+import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowCompileException;
+import com.antgroup.geaflow.console.common.util.type.CatalogType;
 import com.antgroup.geaflow.console.core.model.cluster.GeaflowCluster;
+import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowInstance;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
+import com.antgroup.geaflow.console.core.model.job.config.CompileContextClass;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
+import com.antgroup.geaflow.console.core.service.config.DeployConfig;
 import com.antgroup.geaflow.console.core.service.converter.IdConverter;
 import com.antgroup.geaflow.console.core.service.converter.ReleaseConverter;
+import com.antgroup.geaflow.console.core.service.file.LocalFileFactory;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
+import com.antgroup.geaflow.console.core.service.version.CompileClassLoader;
+import com.antgroup.geaflow.console.core.service.version.FunctionClassLoader;
 import com.antgroup.geaflow.console.core.service.version.VersionClassLoader;
 import com.antgroup.geaflow.console.core.service.version.VersionFactory;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,9 +55,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, ReleaseSearch> {
 
-    private static final String GEAFLOW_DSL_CATALOG_TOKEN_KEY = "geaflow.dsl.catalog.token.key";
-
-    private static final String GEAFLOW_DSL_CATALOG_INSTANCE_NAME = "geaflow.dsl.catalog.instance.name";
+    @Autowired
+    private DeployConfig deployConfig;
 
     @Autowired
     private ReleaseDao releaseDao;
@@ -72,6 +82,9 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
     @Autowired
     private RemoteFileStorage remoteFileStorage;
 
+    @Autowired
+    private LocalFileFactory localFileFactory;
+
     protected IdDao<ReleaseEntity, ReleaseSearch> getDao() {
         return releaseDao;
     }
@@ -94,10 +107,44 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
         }).collect(Collectors.toList());
     }
 
-    public CompileResult compile(GeaflowJob job, GeaflowVersion version, Map<String, Integer> parallelisms) {
+    public Set<FunctionInfo> parseFunctions(GeaflowJob job, GeaflowVersion version) {
         VersionClassLoader classLoader = versionFactory.getClassLoader(version);
         CompileContext context = classLoader.newInstance(CompileContext.class);
-        setContextToken(context, job.getInstanceId());
+        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
+        setContextConfig(context, job.getInstanceId(), CatalogType.MEMORY);
+
+        try {
+            return compiler.getUnResolvedFunctions(job.generateCode().getText(), context);
+        } catch (Exception e) {
+            throw new GeaflowCompileException("Parse functions failed", e);
+        }
+    }
+
+
+    public CompileResult compile(GeaflowJob job, GeaflowVersion version, Map<String, Integer> parallelisms) {
+        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
+        List<GeaflowRemoteFile> jars = ListUtil.convert(job.getFunctions(), GeaflowFunction::getJarPackage);
+        if (CollectionUtils.isNotEmpty(jars)) {
+            // use FunctionClassLoader if job has udf
+            FunctionClassLoader functionLoader = null;
+            try {
+                functionLoader = new FunctionClassLoader(classLoader, jars);
+                return compile(functionLoader, job, parallelisms);
+            } finally {
+                if (functionLoader != null) {
+                    functionLoader.closeClassLoader();
+                }
+
+            }
+        }
+
+        return compile(classLoader, job, parallelisms);
+    }
+
+
+    private CompileResult compile(CompileClassLoader classLoader, GeaflowJob job, Map<String, Integer> parallelisms) {
+        CompileContext context = classLoader.newInstance(CompileContext.class);
+        setContextConfig(context, job.getInstanceId(), CatalogType.CONSOLE);
         if (MapUtils.isNotEmpty(parallelisms)) {
             context.setParallelisms(parallelisms);
         }
@@ -110,12 +157,15 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
         }
     }
 
-    private void setContextToken(CompileContext context, String instanceId) {
+    private void setContextConfig(CompileContext context, String instanceId, CatalogType catalogType) {
         GeaflowInstance instance = instanceService.get(instanceId);
-        Map<String, String> config = new HashMap<>();
-        config.put(GEAFLOW_DSL_CATALOG_INSTANCE_NAME, instance.getName());
-        config.put(GEAFLOW_DSL_CATALOG_TOKEN_KEY, ContextHolder.get().getSessionToken());
-        context.setConfig(config);
+        CompileContextClass config = new CompileContextClass();
+        config.setTokenKey(ContextHolder.get().getSessionToken());
+        config.setInstanceName(instance.getName());
+        config.setCatalogType(catalogType.getValue());
+        config.setEndpoint(deployConfig.getGatewayUrl());
+        Map<String, String> map = config.build().toStringMap();
+        context.setConfig(map);
     }
 
     public void dropByJobIds(List<String> ids) {

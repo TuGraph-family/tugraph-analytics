@@ -27,10 +27,11 @@ import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.dal.model.VersionSearch;
 import com.antgroup.geaflow.console.common.util.FileUtil;
 import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
-import com.antgroup.geaflow.console.core.model.file.GeaflowJarPackage;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.NameService;
 import com.antgroup.geaflow.console.core.service.RemoteFileService;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
+@Slf4j
 public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionView, VersionSearch> implements
     VersionManager {
 
@@ -84,9 +87,9 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
     @Override
     protected List<GeaflowVersion> parse(List<VersionView> views) {
         return views.stream().map(e -> {
-            GeaflowJarPackage engineJar = (GeaflowJarPackage) remoteFileService.get(
+            GeaflowRemoteFile engineJar = remoteFileService.get(
                 Optional.ofNullable(e.getEngineJarPackage()).map(IdView::getId).orElse(null));
-            GeaflowJarPackage langJar = (GeaflowJarPackage) remoteFileService.get(
+            GeaflowRemoteFile langJar = remoteFileService.get(
                 Optional.ofNullable(e.getLangJarPackage()).map(IdView::getId).orElse(null));
             return versionViewConverter.convert(e, engineJar, langJar);
         }).collect(Collectors.toList());
@@ -127,7 +130,7 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
 
         VersionView versionView = new VersionView();
         versionView.setName("0.1");
-        versionView.setComment("默认版本");
+        versionView.setComment(I18nUtil.getMessage("i18n.key.default.version"));
         versionView.setPublish(true);
 
         return createVersion(versionView, new LocalMultipartFile(new File(path)), null);
@@ -183,18 +186,19 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
             return false;
         }
 
-        GeaflowJarPackage engineJarPackage = version.getEngineJarPackage();
+        GeaflowRemoteFile engineJarPackage = version.getEngineJarPackage();
         if (engineJarPackage != null) {
-            remoteFileManager.delete(engineJarPackage.getId());
+            remoteFileManager.deleteVersionJar(engineJarPackage.getId());
         }
 
-        GeaflowJarPackage langJarPackage = version.getLangJarPackage();
+        GeaflowRemoteFile langJarPackage = version.getLangJarPackage();
         if (langJarPackage != null) {
-            remoteFileManager.delete(langJarPackage.getId());
+            remoteFileManager.deleteVersionJar(langJarPackage.getId());
         }
 
         return drop(version.getId());
     }
+
 
     private RemoteFileView createRemoteFile(String versionName, MultipartFile multipartFile, String filePrefix) {
         if (!StringUtils.endsWith(multipartFile.getOriginalFilename(), JAR_FILE_SUFFIX)) {

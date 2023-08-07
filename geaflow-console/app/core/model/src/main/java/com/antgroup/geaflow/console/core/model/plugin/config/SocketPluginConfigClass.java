@@ -27,11 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 public class SocketPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.dsl.socket.host", comment = "主机")
+    @GeaflowConfigKey(value = "geaflow.dsl.socket.host", comment = "i18n.key.host")
     @GeaflowConfigValue(required = true)
     private String host;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.socket.port", comment = "端口")
+    @GeaflowConfigKey(value = "geaflow.dsl.socket.port", comment = "i18n.key.port")
     @GeaflowConfigValue(required = true)
     private Integer port;
 

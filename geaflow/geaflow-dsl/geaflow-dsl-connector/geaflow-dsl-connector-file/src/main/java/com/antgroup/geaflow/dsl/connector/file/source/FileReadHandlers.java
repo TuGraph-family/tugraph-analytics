@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.connector.file.source;
 
 import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_JAVA_RESOURCE;
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_LOCAL_FILE;
 
 public class FileReadHandlers {
 
@@ -23,9 +22,6 @@ public class FileReadHandlers {
         if (path.startsWith(PREFIX_JAVA_RESOURCE)) {
             return new JarFileReadHandler();
         }
-        if (path.startsWith(PREFIX_LOCAL_FILE)) {
-            return new LocalFileReadHandler();
-        }
-        return new HdfsFileReadHandler();
+        return new DfsFileReadHandler();
     }
 }

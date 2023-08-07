@@ -16,6 +16,10 @@ package com.antgroup.geaflow.dsl.common.data.impl;
 
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Arrays;
 
 public class ObjectRow implements Row {
@@ -55,5 +59,31 @@ public class ObjectRow implements Row {
     @Override
     public int hashCode() {
         return Arrays.hashCode(fields);
+    }
+
+    public static class ObjectRowSerializer extends Serializer<ObjectRow> {
+
+        @Override
+        public void write(Kryo kryo, Output output, ObjectRow objectRow) {
+            output.writeInt(objectRow.fields.length);
+            for (Object field : objectRow.fields) {
+                kryo.writeClassAndObject(output, field);
+            }
+        }
+
+        @Override
+        public ObjectRow read(Kryo kryo, Input input, Class<ObjectRow> aClass) {
+            int size = input.readInt();
+            Object[] fields = new Object[size];
+            for (int i = 0; i < size; i++) {
+                fields[i] = kryo.readClassAndObject(input);
+            }
+            return ObjectRow.create(fields);
+        }
+
+        @Override
+        public ObjectRow copy(Kryo kryo, ObjectRow original) {
+            return ObjectRow.create(original.fields);
+        }
     }
 }

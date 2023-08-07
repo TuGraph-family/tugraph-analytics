@@ -27,11 +27,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class K8sClientStopArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.job.cluster.id", comment = "运行时作业ID")
+    @GeaflowConfigKey(value = "geaflow.job.cluster.id", comment = "i18n.key.running.job.id")
     @GeaflowConfigValue(required = true)
     private String runtimeTaskId;
 
-    @GeaflowConfigKey(value = "clusterArgs", comment = "集群参数")
+    @GeaflowConfigKey(value = "clusterArgs", comment = "i18n.key.cluster.args")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private K8SClusterArgsClass clusterArgs;
 

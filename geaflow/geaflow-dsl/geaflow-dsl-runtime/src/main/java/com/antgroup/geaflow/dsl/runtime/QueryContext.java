@@ -80,6 +80,8 @@ public class QueryContext {
 
     private long opNameCounter = 0L;
 
+    private int traversalParallelism = -1;
+
     private final Map<String, String> setOptions = new HashMap<>();
 
     private final Map<String, PWindowStream<RowVertex>> graphVertices = new HashMap<>();
@@ -329,11 +331,21 @@ public class QueryContext {
         return new Configuration(globalConf);
     }
 
+    public void setTraversalParallelism(int traversalParallelism) {
+        this.traversalParallelism = traversalParallelism;
+    }
+
+    public int getTraversalParallelism() {
+        return this.traversalParallelism;
+    }
+
     public static class QueryContextBuilder {
 
         private QueryEngine engineContext;
 
         private boolean isCompile;
+
+        private int traversalParallelism = -1;
 
         public QueryContextBuilder setEngineContext(QueryEngine engineContext) {
             this.engineContext = engineContext;
@@ -345,8 +357,15 @@ public class QueryContext {
             return this;
         }
 
+        public QueryContextBuilder setTraversalParallelism(int traversalParallelism) {
+            this.traversalParallelism = traversalParallelism;
+            return this;
+        }
+
         public QueryContext build() {
-            return new QueryContext(engineContext, isCompile);
+            QueryContext context = new QueryContext(engineContext, isCompile);
+            context.setTraversalParallelism(traversalParallelism);
+            return context;
         }
     }
 }

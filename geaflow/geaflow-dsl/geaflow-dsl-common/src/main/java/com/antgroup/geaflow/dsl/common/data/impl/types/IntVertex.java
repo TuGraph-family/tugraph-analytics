@@ -22,14 +22,18 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class IntVertex implements RowVertex {
+public class IntVertex implements RowVertex, KryoSerializable {
 
     public static final Supplier<IntVertex> CONSTRUCTOR = new Constructor();
 
-    private int id;
+    public int id;
 
     private BinaryString label;
 
@@ -104,8 +108,13 @@ public class IntVertex implements RowVertex {
         if (!(o instanceof RowVertex)) {
             return false;
         }
-        RowVertex that = (RowVertex) o;
-        return id == (int) that.getId() && Objects.equals(label, that.getBinaryLabel());
+        if (o instanceof IntVertex) {
+            IntVertex that = (IntVertex) o;
+            return id == that.id && Objects.equals(label, that.getBinaryLabel());
+        } else {
+            RowVertex that = (RowVertex) o;
+            return that.equals(this);
+        }
     }
 
     @Override
@@ -152,4 +161,27 @@ public class IntVertex implements RowVertex {
             return new IntVertex();
         }
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        // serialize id, label and value
+        output.writeInt(this.id);
+        byte[] labelBytes = this.getBinaryLabel().getBytes();
+        output.writeInt(labelBytes.length);
+        output.writeBytes(labelBytes);
+        kryo.writeClassAndObject(output, this.getValue());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        // deserialize id, label and value
+        int id = input.readInt();
+        int labelLength = input.readInt();
+        BinaryString label = BinaryString.fromBytes(input.readBytes(labelLength));
+        Row value = (Row) kryo.readClassAndObject(input);
+        this.id = id;
+        this.setValue(value);
+        this.setBinaryLabel(label);
+    }
+
 }

@@ -23,6 +23,8 @@ public enum GeaflowPluginType {
 
     SOCKET,
 
+    CONSOLE,
+
     MEMORY,
 
     ROCKSDB,

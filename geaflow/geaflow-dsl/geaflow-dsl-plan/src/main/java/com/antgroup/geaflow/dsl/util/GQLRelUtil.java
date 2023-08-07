@@ -21,6 +21,7 @@ import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.rel.MatchRelShuffle;
 import com.antgroup.geaflow.dsl.rel.match.IMatchLabel;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
+import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.SingleMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.SubQueryStart;
@@ -95,6 +96,9 @@ public class GQLRelUtil {
             .stream()
             .flatMap(input -> collect(input, predicate).stream())
             .collect(Collectors.toList());
+        if (root instanceof LoopUntilMatch) {
+            childVisit.addAll(collect(((LoopUntilMatch)root).getLoopBody(), predicate));
+        }
         List<RelNode> results = new ArrayList<>(childVisit);
         if (predicate.test(root)) {
             results.add(root);
@@ -108,6 +112,9 @@ public class GQLRelUtil {
         }
         if (pathPattern instanceof IMatchLabel) {
             return (IMatchLabel) pathPattern;
+        }
+        if (pathPattern instanceof LoopUntilMatch) {
+            return getLatestMatchNode(((LoopUntilMatch) pathPattern).getLoopBody());
         }
         return getLatestMatchNode((SingleMatchNode) pathPattern.getInput());
     }
@@ -152,9 +159,19 @@ public class GQLRelUtil {
         // generate new path schema.
         if (p1 instanceof IMatchLabel) {
             concatPathType = concatPathType.addField(((IMatchLabel) p1).getLabel(), p1.getNodeType(), caseSensitive);
+        } else if (p1 instanceof LoopUntilMatch) {
+            for (RelDataTypeField field : p1.getPathSchema().getFieldList()) {
+                if (concatPathType.getField(field.getName(), caseSensitive, false) == null) {
+                    concatPathType = concatPathType.addField(field.getName(), field.getType(), caseSensitive);
+                }
+            }
         }
         // copy with new input and path type.
         p1 = (SingleMatchNode) p1.copy(Lists.newArrayList(concatInput), concatPathType);
+        if (p1 instanceof LoopUntilMatch) {
+            LoopUntilMatch loop = (LoopUntilMatch) p1;
+            p1 = LoopUntilMatch.copyWithSubQueryStartPathType(p0.getPathSchema(), loop, caseSensitive);
+        }
         // adjust path field ref in match node after concat
         return (SingleMatchNode) p1.accept(new RexShuttle() {
             @Override

@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.console.biz.shared.view;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowFunctionType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,8 +25,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class FunctionView extends DataView {
 
-    private GeaflowFunctionType type;
-
     private RemoteFileView jarPackage;
+
+    private String entryClass;
 
 }

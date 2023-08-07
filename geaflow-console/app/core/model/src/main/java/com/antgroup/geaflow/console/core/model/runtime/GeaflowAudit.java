@@ -17,7 +17,6 @@ package com.antgroup.geaflow.console.core.model.runtime;
 import com.antgroup.geaflow.console.common.util.type.GeaflowOperationType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
-import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -35,15 +34,14 @@ public class GeaflowAudit extends GeaflowId {
 
     private String detail;
 
-    public GeaflowAudit(GeaflowTask task, GeaflowOperationType operationType,
-                        String detail) {
-        this.operationType = operationType;
-        this.resourceId = task.getId();
-        this.resourceType = GeaflowResourceType.TASK;
-        this.detail = detail;
+    public GeaflowAudit(String taskId, GeaflowOperationType operationType) {
+        this(taskId, operationType, null);
     }
 
-    public GeaflowAudit(GeaflowTask task, GeaflowOperationType operationType) {
-        this(task, operationType, null);
+    public GeaflowAudit(String taskId, GeaflowOperationType operationType, String detail) {
+        this.operationType = operationType;
+        this.resourceId = taskId;
+        this.resourceType = GeaflowResourceType.TASK;
+        this.detail = detail;
     }
 }

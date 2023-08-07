@@ -21,6 +21,7 @@ import com.antgroup.geaflow.dsl.runtime.function.graph.StepFunction;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.collector.StepCollector;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestId;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.EndOfData;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.VertexRecord;
 import java.util.Collections;
 import java.util.List;
@@ -39,18 +40,14 @@ public class StepSubQueryStartOperator extends AbstractStepOperator<StepFunction
     protected void processRecord(VertexRecord record) {
         Object requestId = context.getRequestId();
         if (requestId instanceof CallRequestId) {
-            context.stashCallRequestId((CallRequestId) requestId, record.getVertex().getId());
+            context.stashCallRequestId((CallRequestId) requestId);
         }
         collect(record);
     }
 
     @Override
-    protected boolean hasReceivedAllEod(List<Long> receiveEodIds, List<Long> inputOpIds) {
-        if (inputOpIds.isEmpty()) { // for sub-query calling
-            return receiveEodIds.size() == numTasks;
-        }
-        // for loop util body start.
-        return super.hasReceivedAllEod(receiveEodIds, inputOpIds);
+    protected boolean hasReceivedAllEod(List<EndOfData> receiveEods) {
+        return receiveEods.size() == numTasks;
     }
 
     @Override

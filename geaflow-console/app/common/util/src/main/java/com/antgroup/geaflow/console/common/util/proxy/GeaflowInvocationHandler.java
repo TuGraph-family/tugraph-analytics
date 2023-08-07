@@ -25,6 +25,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class GeaflowInvocationHandler implements InvocationHandler {
 
+    private final ClassLoader targetClassLoader;
+
     private final Object targetInstance;
 
     @Override
@@ -32,7 +34,7 @@ public class GeaflowInvocationHandler implements InvocationHandler {
         try {
             Class<?> targetClass = targetInstance.getClass();
 
-            return LoaderSwitchUtil.call(targetClass.getClassLoader(), () -> {
+            return LoaderSwitchUtil.call(targetClassLoader, () -> {
                 // prepare target args
                 Object[] targetArgs = ProxyUtil.getTargetArgs(args);
 
@@ -43,7 +45,7 @@ public class GeaflowInvocationHandler implements InvocationHandler {
                 Object targetResult = targetMethod.invoke(targetInstance, targetArgs);
 
                 // proxy target result
-                return ProxyUtil.proxyInstance(method.getGenericReturnType(), targetResult);
+                return ProxyUtil.proxyInstance(targetClassLoader, method.getGenericReturnType(), targetResult);
             });
         } catch (Exception e) {
             if (e instanceof InvocationTargetException) {
@@ -51,7 +53,5 @@ public class GeaflowInvocationHandler implements InvocationHandler {
             }
             throw e;
         }
-
     }
-
 }

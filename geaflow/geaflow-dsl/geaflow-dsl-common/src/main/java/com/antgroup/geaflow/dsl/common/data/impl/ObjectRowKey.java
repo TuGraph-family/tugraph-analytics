@@ -16,6 +16,10 @@ package com.antgroup.geaflow.dsl.common.data.impl;
 
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.RowKey;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -63,5 +67,31 @@ public class ObjectRowKey implements RowKey {
         return "ObjectRowKey{"
             + "keys=" + Arrays.toString(keys)
             + '}';
+    }
+
+    public static class ObjectRowKeySerializer extends Serializer<ObjectRowKey> {
+
+        @Override
+        public void write(Kryo kryo, Output output, ObjectRowKey objectRowKey) {
+            output.writeInt(objectRowKey.getKeys().length);
+            for (Object key : objectRowKey.getKeys()) {
+                kryo.writeClassAndObject(output, key);
+            }
+        }
+
+        @Override
+        public ObjectRowKey read(Kryo kryo, Input input, Class<ObjectRowKey> aClass) {
+            int size = input.readInt();
+            Object[] keys = new Object[size];
+            for (int i = 0; i < size; i++) {
+                keys[i] = kryo.readClassAndObject(input);
+            }
+            return new ObjectRowKey(keys);
+        }
+
+        @Override
+        public ObjectRowKey copy(Kryo kryo, ObjectRowKey original) {
+            return new ObjectRowKey(original.getKeys());
+        }
     }
 }

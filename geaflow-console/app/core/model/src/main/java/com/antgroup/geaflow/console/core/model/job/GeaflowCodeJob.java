@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.console.core.model.job;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
+import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 
 public abstract class GeaflowCodeJob extends GeaflowJob {
 
@@ -22,4 +23,18 @@ public abstract class GeaflowCodeJob extends GeaflowJob {
         super(type);
     }
 
+    @Override
+    public GeaflowRemoteFile getJarPackage() {
+        return null;
+    }
+
+    @Override
+    public String getEntryClass() {
+        return null;
+    }
+
+    @Override
+    public boolean isApiJob() {
+        return false;
+    }
 }

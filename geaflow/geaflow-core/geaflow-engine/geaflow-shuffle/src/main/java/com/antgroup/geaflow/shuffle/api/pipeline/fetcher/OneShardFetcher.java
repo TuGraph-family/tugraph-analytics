@@ -441,8 +441,9 @@ public class OneShardFetcher implements ShardFetcher {
                 try {
                     LOGGER.debug("{}: Releasing {}.", taskName, this);
 
-                    if (retriggerLocalRequestTimer != null) {
-                        retriggerLocalRequestTimer.cancel();
+                    if (this.retriggerLocalRequestTimer != null) {
+                        this.retriggerLocalRequestTimer.cancel();
+                        this.retriggerLocalRequestTimer = null;
                     }
 
                     for (AbstractInputChannel inputChannel : inputChannels.values()) {
