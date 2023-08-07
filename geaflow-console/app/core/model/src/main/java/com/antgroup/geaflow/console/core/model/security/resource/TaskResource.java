@@ -12,29 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.common.util.type;
+package com.antgroup.geaflow.console.core.model.security.resource;
 
-public enum GeaflowOperationType {
+import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 
-    CREATE,
+public class TaskResource extends AtomResource {
 
-    UPDATE,
-
-    DELETE,
-
-    /**
-     * operations for job.
-     */
-    PUBLISH,
-
-    START,
-
-    STOP,
-
-    REFRESH,
-
-    RESET,
-
-    STARTUP_NOTIFY
-
+    public TaskResource(JobResource jobResource, String taskId) {
+        super(taskId, GeaflowResourceType.TASK, jobResource);
+    }
 }

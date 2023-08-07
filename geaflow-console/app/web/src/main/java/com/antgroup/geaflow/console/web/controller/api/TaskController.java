@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.web.controller.api;
 
+import com.antgroup.geaflow.console.biz.shared.AuthorizationManager;
 import com.antgroup.geaflow.console.biz.shared.TaskManager;
 import com.antgroup.geaflow.console.biz.shared.view.TaskOperationView;
 import com.antgroup.geaflow.console.biz.shared.view.TaskStartupNotifyView;
@@ -28,7 +29,9 @@ import com.antgroup.geaflow.console.core.model.runtime.GeaflowCycle;
 import com.antgroup.geaflow.console.core.model.runtime.GeaflowError;
 import com.antgroup.geaflow.console.core.model.runtime.GeaflowOffset;
 import com.antgroup.geaflow.console.core.model.runtime.GeaflowPipeline;
+import com.antgroup.geaflow.console.core.model.security.GeaflowAuthority;
 import com.antgroup.geaflow.console.core.model.task.GeaflowHeartbeatInfo;
+import com.antgroup.geaflow.console.core.service.security.Resources;
 import com.antgroup.geaflow.console.web.api.GeaflowApiResponse;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +48,9 @@ public class TaskController {
     @Autowired
     private TaskManager taskManager;
 
+    @Autowired
+    private AuthorizationManager authorizationManager;
+
     @GetMapping("/tasks")
     public GeaflowApiResponse<PageList<TaskView>> searchTasks(TaskSearch search) {
         return GeaflowApiResponse.success(taskManager.search(search));
@@ -58,6 +64,7 @@ public class TaskController {
     @PostMapping("/tasks/{taskId}/operations")
     public GeaflowApiResponse<Boolean> operateTask(@PathVariable String taskId,
                                                    @RequestBody TaskOperationView request) {
+        authorizationManager.hasAuthority(GeaflowAuthority.EXECUTE, Resources.task(taskId));
         taskManager.operate(taskId, request.getAction());
         return GeaflowApiResponse.success(true);
     }
@@ -112,7 +119,7 @@ public class TaskController {
 
     @PostMapping("/tasks/{taskId}/startup-notify")
     public GeaflowApiResponse<Void> startupNotify(@PathVariable String taskId,
-                                                    @RequestBody TaskStartupNotifyView startupNotifyView) {
+                                                  @RequestBody TaskStartupNotifyView startupNotifyView) {
         taskManager.startupNotify(taskId, startupNotifyView);
         return GeaflowApiResponse.success(null);
     }

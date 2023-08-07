@@ -38,7 +38,7 @@ public class ResolveReleaseVersionStage extends GeaflowBuildStage {
             release.setReleaseVersion(1);
         } else {
             GeaflowTaskStatus status = task.getStatus();
-            status.allowOperation(GeaflowOperationType.PUBLISH);
+            status.checkOperation(GeaflowOperationType.PUBLISH);
 
             GeaflowRelease oldRelease = task.getRelease();
             int currentVersion = oldRelease.getReleaseVersion();

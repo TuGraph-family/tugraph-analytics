@@ -109,7 +109,7 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
     @Transactional(rollbackFor = Exception.class)
     public void operate(String taskId, GeaflowOperationType action) {
         GeaflowTask task = taskService.get(taskId);
-        task.getStatus().allowOperation(action);
+        task.getStatus().checkOperation(action);
         switch (action) {
             case START:
                 start(task);
@@ -120,11 +120,8 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
             case REFRESH:
                 taskOperator.refreshStatus(task);
                 break;
-            case CLEAN_DATA:
-                cleanData(task);
-                break;
-            case CLEAN_META:
-                cleanMeta(task);
+            case RESET:
+                clean(task);
                 break;
             case DELETE:
                 delete(task);
@@ -132,7 +129,6 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
             default:
                 throw new UnsupportedOperationException("not supported task action: " + action);
         }
-
     }
 
 
@@ -146,7 +142,7 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
         task.setHost(NetworkUtil.getHostName());
         taskService.update(task);
         log.info("submit task successfully, waiting for scheduling. id: {}", task.getId());
-        auditService.create(new GeaflowAudit(task, GeaflowOperationType.START));
+        auditService.create(new GeaflowAudit(task.getId(), GeaflowOperationType.START));
     }
 
     protected void stop(GeaflowTask task) {
@@ -156,24 +152,19 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
         }
 
         taskService.updateStatus(task.getId(), status, STOPPED);
-        auditService.create(new GeaflowAudit(task, STOP));
+        auditService.create(new GeaflowAudit(task.getId(), STOP));
+    }
+
+    protected void clean(GeaflowTask task) {
+        taskOperator.cleanMeta(task);
+        taskOperator.cleanData(task);
+        auditService.create(new GeaflowAudit(task.getId(), GeaflowOperationType.RESET));
     }
 
     protected void delete(GeaflowTask task) {
-        cleanData(task);
-        cleanMeta(task);
+        clean(task);
         taskService.updateStatus(task.getId(), task.getStatus(), DELETED);
-        auditService.create(new GeaflowAudit(task, DELETE));
-    }
-
-    protected void cleanData(GeaflowTask task) {
-        taskOperator.cleanData(task);
-        auditService.create(new GeaflowAudit(task, GeaflowOperationType.CLEAN_DATA));
-    }
-
-    protected void cleanMeta(GeaflowTask task) {
-        taskOperator.cleanMeta(task);
-        auditService.create(new GeaflowAudit(task, GeaflowOperationType.CLEAN_META));
+        auditService.create(new GeaflowAudit(task.getId(), DELETE));
     }
 
     @Override
@@ -243,7 +234,7 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
         taskService.update(task);
         taskService.updateStatus(task.getId(), task.getStatus(), newStatus);
         log.info("Task {} get startup notify '{}' from cluster", task.getId(), JSON.toJSONString(startupNotifyView));
-        auditService.create(new GeaflowAudit(task, STARTUP_NOTIFY, "Task startup success"));
+        auditService.create(new GeaflowAudit(taskId, STARTUP_NOTIFY, "Task startup success"));
     }
 
     @Override
