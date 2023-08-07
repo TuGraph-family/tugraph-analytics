@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * Calculate the similarity between point sets
  */
 @Description(name = "jaccard", description = "Jaccard similarity")
-public class JaccardAlgorithm implements AlgorithmUserFunction<Object, Row> {
+public class JaccardAlgorithm implements AlgorithmUserFunction {
 
     private AlgorithmRuntimeContext context;
 
@@ -38,10 +38,8 @@ public class JaccardAlgorithm implements AlgorithmUserFunction<Object, Row> {
     //Similarity truncation Limit the similarity greater than how much it is counted Filter out useless similar nodes
     private double similarityCutoff;
 
-
-
     @Override
-    public void init(AlgorithmRuntimeContext<Object, Row> context, Object[] params) {
+    public void init(AlgorithmRuntimeContext context, Object[] params) {
         this.context = context;
 
         if (params.length > 2) {
@@ -58,7 +56,7 @@ public class JaccardAlgorithm implements AlgorithmUserFunction<Object, Row> {
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<Row> messages) {
+    public void process(RowVertex vertex, Iterator messages) {
 
         List<RowEdge> bothEdges = new ArrayList<>(context.loadEdges(EdgeDirection.BOTH));
         List<String> collection = bothEdges.stream().map(x -> String.valueOf(x.getTargetId())).collect(Collectors.toList());
@@ -88,10 +86,18 @@ public class JaccardAlgorithm implements AlgorithmUserFunction<Object, Row> {
                     Long[] collection1 = neighborsVertexCollection.toArray(new Long[neighborsVertexCollection.size()]);
                     Long[] collection2 = currentCollection.toArray(new Long[currentCollection.size()]);
                     double similar =  computeSimilar(collection1, collection2);
-                    context.take(ObjectRow.create(neighborsVertexId, vertex.getId(), similar));
+                    context.updateVertexValue(ObjectRow.create(neighborsVertexId, vertex.getId(), similar));
                 }
             }
         }
+    }
+
+    @Override
+    public void finish(RowVertex vertex) {
+        long srcId = (long) vertex.getValue().getField(0, LongType.INSTANCE);
+        long targetId =  (long) vertex.getValue().getField(1, LongType.INSTANCE);
+        double similar =  (double) vertex.getValue().getField(1, DoubleType.INSTANCE);
+        context.take(ObjectRow.create(srcId, targetId, similar));
     }
 
     @Override
