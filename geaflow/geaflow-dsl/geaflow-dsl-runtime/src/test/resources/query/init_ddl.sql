@@ -25,7 +25,6 @@ CREATE GRAPH modern (
 	geaflow.dsl.using.edge.path = 'resource:///data/modern_edge.txt'
 );
 
-
 CREATE GRAPH modern_ts (
 	Vertex person (
 	  id bigint ID,
