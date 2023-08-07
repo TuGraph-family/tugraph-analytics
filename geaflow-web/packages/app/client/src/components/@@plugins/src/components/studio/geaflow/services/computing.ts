@@ -59,18 +59,6 @@ export const getJobsEditList = async (id: string) => {
     withCredentials: true,
   });
 
-  if (!response.success) {
-    message.error(
-      $i18n.get(
-        {
-          id: "openpiece-geaflow.geaflow.services.computing.FailedToEditResponsemessage",
-          dm: "编辑失败: {responseMessage}",
-        },
-        { responseMessage: response.message }
-      )
-    );
-    return [];
-  }
   return response;
 };
 

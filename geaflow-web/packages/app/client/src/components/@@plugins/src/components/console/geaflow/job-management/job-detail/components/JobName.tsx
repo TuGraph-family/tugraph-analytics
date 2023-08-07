@@ -45,10 +45,10 @@ export const JobName: React.FC<JobJournalProps> = ({
 
   const stagesColumns = [
     {
-      title: "cycleName",
+      title: "Cycle Name",
       dataIndex: "name",
       key: "name",
-      width: 80,
+      width: 120,
       hideInSearch: true,
     },
 
@@ -59,7 +59,7 @@ export const JobName: React.FC<JobJournalProps> = ({
       }),
       dataIndex: "startTime",
       key: "startTime",
-      width: 120,
+      width: 80,
       defaultSortOrder: "descend",
       sorter: (a, b) => a.startTime - b.startTime,
       render: (text: number) => {
@@ -70,7 +70,7 @@ export const JobName: React.FC<JobJournalProps> = ({
       },
     },
     {
-      title: "opName",
+      title: "Operator Name",
       dataIndex: "opName",
       key: "opName",
       width: 80,

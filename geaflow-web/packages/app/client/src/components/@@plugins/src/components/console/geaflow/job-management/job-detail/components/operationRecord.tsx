@@ -20,6 +20,22 @@ const OperationRecord: React.FC<OperationRecordProps> = ({
     total: 0,
   });
   const status = {
+    CREATE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Create",
+      dm: "创建",
+    }),
+    UPDATE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Update",
+      dm: "更新",
+    }),
+    DELETE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Delete",
+      dm: "删除",
+    }),
+    PUBLISH: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Publish",
+      dm: "发布",
+    }),
     START: $i18n.get({
       id: "openpiece-geaflow.job-detail.components.operationRecord.Start",
       dm: "启动",
@@ -28,9 +44,17 @@ const OperationRecord: React.FC<OperationRecordProps> = ({
       id: "openpiece-geaflow.job-detail.components.operationRecord.Stop",
       dm: "停止",
     }),
-    CREATE: $i18n.get({
-      id: "openpiece-geaflow.job-detail.components.operationRecord.Create",
-      dm: "创建",
+    REFRESH: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Refresh",
+      dm: "刷新",
+    }),
+    RESET: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.Reset",
+      dm: "重置",
+    }),
+    STARTUP_NOTIFY: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.operationRecord.StartupNotify",
+      dm: "启动通知",
     }),
   };
   const columns = [

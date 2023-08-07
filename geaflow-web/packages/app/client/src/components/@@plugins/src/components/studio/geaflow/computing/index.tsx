@@ -8,17 +8,11 @@ import {
   Space,
   message,
   Popconfirm,
-  Breadcrumb,
   Tooltip,
-  Select,
-  Radio,
-  Upload,
 } from "antd";
 import { useOpenpieceUserAuth } from "@tugraph/openpiece-client";
 import {
   getJobsList,
-  getJobsCreat,
-  getJobsEdit,
   getJobsReleases,
   deleteComputing,
   getJobsEditList,
@@ -48,6 +42,7 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
   const history = useHistory();
   const { location } = history;
   const jobId = location.query?.jobId;
+  
   const { redirectLoginURL } = useOpenpieceUserAuth();
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
     ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
@@ -83,6 +78,26 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
     handelTemplata();
   }, []);
 
+
+  const getJobDetailInfoById = async (id: string) => {
+    const response = await getJobsEditList(id)
+    if (response.success) {
+      if (location.query.view === 'true') {
+        setInstance({ ...instance, instanceList: response.data, check: true });
+      } else {
+        setInstance({ ...instance, instanceList: response.data, edit: true });
+      }
+      setIsModalOpen(true);
+    }
+  }
+
+  useEffect(() => {
+    if (jobId) {
+      // 通过 jobID 查询详情
+      getJobDetailInfoById(jobId)
+    }
+  }, [jobId])
+
   const typeMean = {
     INTEGRATE: $i18n.get({
       id: "openpiece-geaflow.geaflow.computing.Integration",
@@ -93,7 +108,7 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
       dm: "分发",
     }),
     PROCESS: $i18n.get({
-      id: "openpiece-geaflow.geaflow.computing.Calculation",
+      id: "openpiece-geaflow.geaflow.computing.Process",
       dm: "计算",
     }),
     SERVE: $i18n.get({
@@ -113,7 +128,7 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
   const columns = [
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.geaflow.computing.TaskName",
+        id: "openpiece-geaflow.geaflow.computing.JobName",
         dm: "任务名称",
       }),
       dataIndex: "name",

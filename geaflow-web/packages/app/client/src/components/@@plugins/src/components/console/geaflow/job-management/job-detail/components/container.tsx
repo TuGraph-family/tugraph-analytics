@@ -69,7 +69,7 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
       width: 100,
     },
     {
-      title: "host",
+      title: "Host",
       dataIndex: "host",
       key: "host",
       width: 150,
@@ -96,13 +96,13 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "pid",
+      title: "PID",
       dataIndex: "pid",
       key: "pid",
       width: 100,
     },
     {
-      title: "heap(%)",
+      title: "Heap Usage(%)",
       dataIndex: "heapUsedRatio",
       key: "heapUsedRatio",
       width: 100,
@@ -138,7 +138,7 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "cpu(%)",
+      title: "CPU(%)",
       dataIndex: "processCpu",
       key: "processCpu",
       width: 100,
@@ -147,7 +147,7 @@ export const JobContainer: React.FC<JobContainerProps> = ({ jobItem }) => {
       },
     },
     {
-      title: "avgLoad",
+      title: "Load(60s)",
       dataIndex: "avgLoad",
       key: "avgLoad",
       width: 100,

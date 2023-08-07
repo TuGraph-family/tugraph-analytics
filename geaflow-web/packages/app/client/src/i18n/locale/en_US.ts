@@ -100,4 +100,5 @@ export default {
   "i18n.key.chinese": "Chinese",
   "i18n.key.English": "English",
   "i18n.key.task": "Task",
+  "i18n.key.jump.task.editpage": "Edit code on graph editing page"
 };
