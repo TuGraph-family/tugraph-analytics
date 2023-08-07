@@ -20,6 +20,7 @@ import com.antgroup.geaflow.console.common.dal.dao.GraphDao;
 import com.antgroup.geaflow.console.common.dal.dao.InstanceDao;
 import com.antgroup.geaflow.console.common.dal.dao.JobDao;
 import com.antgroup.geaflow.console.common.dal.dao.TableDao;
+import com.antgroup.geaflow.console.common.dal.dao.TaskDao;
 import com.antgroup.geaflow.console.common.dal.dao.VertexDao;
 import com.antgroup.geaflow.console.common.dal.dao.ViewDao;
 import com.antgroup.geaflow.console.common.dal.entity.EdgeEntity;
@@ -28,6 +29,7 @@ import com.antgroup.geaflow.console.common.dal.entity.GraphEntity;
 import com.antgroup.geaflow.console.common.dal.entity.InstanceEntity;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.dal.entity.TableEntity;
+import com.antgroup.geaflow.console.common.dal.entity.TaskEntity;
 import com.antgroup.geaflow.console.common.dal.entity.VertexEntity;
 import com.antgroup.geaflow.console.common.dal.entity.ViewEntity;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
@@ -38,6 +40,7 @@ import com.antgroup.geaflow.console.core.model.security.resource.GraphResource;
 import com.antgroup.geaflow.console.core.model.security.resource.InstanceResource;
 import com.antgroup.geaflow.console.core.model.security.resource.JobResource;
 import com.antgroup.geaflow.console.core.model.security.resource.TableResource;
+import com.antgroup.geaflow.console.core.model.security.resource.TaskResource;
 import com.antgroup.geaflow.console.core.model.security.resource.TenantResource;
 import com.antgroup.geaflow.console.core.model.security.resource.ViewResource;
 import org.springframework.beans.factory.InitializingBean;
@@ -72,6 +75,9 @@ public class ResourceFactory implements InitializingBean {
 
     @Autowired
     private JobDao jobDao;
+
+    @Autowired
+    private TaskDao taskDao;
 
     protected static ResourceFactory getInstance() {
         if (INSTANCE == null) {
@@ -131,6 +137,11 @@ public class ResourceFactory implements InitializingBean {
                 case JOB:
                     JobEntity job = jobDao.get(resourceId);
                     resource = new JobResource(job.getTenantId(), job.getInstanceId(), job.getId());
+                    break;
+
+                case TASK:
+                    TaskEntity task = taskDao.get(resourceId);
+                    resource = new TaskResource(build(GeaflowResourceType.JOB, task.getJobId()), task.getId());
                     break;
 
                 default:

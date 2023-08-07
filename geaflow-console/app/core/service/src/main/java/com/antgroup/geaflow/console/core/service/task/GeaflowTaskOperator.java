@@ -135,7 +135,7 @@ public class GeaflowTaskOperator {
                     // waiting startup timeout
                     String detail = Fmt.as("Waiting task startup timeout after {}s", TASK_STARTUP_TIMEOUT);
                     log.info(detail);
-                    auditService.create(new GeaflowAudit(task, GeaflowOperationType.STOP, detail));
+                    auditService.create(new GeaflowAudit(task.getId(), GeaflowOperationType.STOP, detail));
 
                 } else {
                     // waiting startup, keep status not changed

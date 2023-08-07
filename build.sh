@@ -145,8 +145,8 @@ function buildGeaflowWebPackage() {
 
   mkdir -p $BASE_DIR/target
   cd $GEAFLOW_WEB_DIR
-  bash -c 'tar czvf geaflow-web.tar.gz --exclude=.git * .[!.]* &> /dev/null' || return 1
-  mv geaflow-web.tar.gz $BASE_DIR/target
+  tar czvf $BASE_DIR/target/geaflow-web.tar.gz \
+    --exclude=.git --exclude=node_modules * .[!.]* &>/dev/null || return 1
 }
 
 function buildGeaflowImage() {

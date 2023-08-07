@@ -112,10 +112,10 @@ After completing the configuration, click the one-click installation button. Aft
 
 4. Create Job
 
-Go to the Graph Development page, select the Graph Calculation tab on the left, click the "New" button in the upper right corner, and create a new DSL job.
+Go to the `DEVELOPMENT` page, select the `Jobs` tab on the left, click the "Add" button in the upper right corner, and create a new DSL job.
 
 ![create_job](../static/img/create_job_en.png)
-Fill in the task name, task description, and DSL content. The DSL content is the same as described in the local runtime job section earlier, just modify the DSL and replace tbl_source and tbl_result tables with ${your.host.ip}.
+Fill in the job name, task description, and DSL content. The DSL content is the same as described in the local runtime job section earlier, just modify the DSL and replace tbl_source and tbl_result tables with ${your.host.ip}.
 
 ```sql
 set geaflow.dsl.window.size = 1;
