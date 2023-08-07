@@ -14,10 +14,10 @@
 
 package com.antgroup.geaflow.console.common.dal.mapper;
 
-import com.antgroup.geaflow.console.common.dal.entity.EdgeVertexMappingEntity;
+import com.antgroup.geaflow.console.common.dal.entity.EndpointEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface EdgeVertexMappingMapper extends GeaflowBaseMapper<EdgeVertexMappingEntity> {
+public interface EndpointMapper extends GeaflowBaseMapper<EndpointEntity> {
 
 }

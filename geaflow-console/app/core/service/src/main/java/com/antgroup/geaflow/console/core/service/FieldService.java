@@ -79,6 +79,9 @@ public class FieldService extends NameService<GeaflowField, FieldEntity, FieldSe
     }
 
     public Map<String, List<GeaflowField>> getByResources(List<String> resourceIds, GeaflowResourceType resourceType) {
+        if (CollectionUtils.isEmpty(resourceIds)) {
+            return new HashMap<>();
+        }
         List<FieldEntity> fieldEntityList = fieldDao.getByResources(resourceIds, resourceType);
 
         // init map to avoid null fields

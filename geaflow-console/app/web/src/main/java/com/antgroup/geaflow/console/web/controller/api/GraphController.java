@@ -15,10 +15,12 @@
 package com.antgroup.geaflow.console.web.controller.api;
 
 import com.antgroup.geaflow.console.biz.shared.GraphManager;
+import com.antgroup.geaflow.console.biz.shared.view.EndpointView;
 import com.antgroup.geaflow.console.biz.shared.view.GraphView;
 import com.antgroup.geaflow.console.common.dal.model.GraphSearch;
 import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.web.api.GeaflowApiResponse;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,6 +71,20 @@ public class GraphController {
     public GeaflowApiResponse<Boolean> drop(@PathVariable("instanceName") String instanceName,
                                             @PathVariable("graphName") String graphName) {
         return GeaflowApiResponse.success(graphManager.dropByName(instanceName, graphName));
+    }
+
+    @PostMapping("/instances/{instanceName}/graphs/{graphName}/endpoints")
+    public GeaflowApiResponse<Boolean> createEndpoints(@PathVariable("instanceName") String instanceName,
+                                                       @PathVariable("graphName") String graphName,
+                                                       @RequestBody List<EndpointView> endpoints) {
+        return GeaflowApiResponse.success(graphManager.createEndpoints(instanceName, graphName, endpoints));
+    }
+
+    @DeleteMapping("/instances/{instanceName}/graphs/{graphName}/endpoints")
+    public GeaflowApiResponse<Boolean> deleteEndpoints(@PathVariable("instanceName") String instanceName,
+                                                       @PathVariable("graphName") String graphName,
+                                                       @RequestBody(required = false) List<EndpointView> endpoints) {
+        return GeaflowApiResponse.success(graphManager.deleteEndpoints(instanceName, graphName, endpoints));
     }
 
 }

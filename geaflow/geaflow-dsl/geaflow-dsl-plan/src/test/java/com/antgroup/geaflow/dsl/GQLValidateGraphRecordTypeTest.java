@@ -113,10 +113,6 @@ public class GQLValidateGraphRecordTypeTest {
             + ")";
 
         PlanTester.build().registerGraph(graphDDL)
-            .gql("MATCH (a:user|person WHERE a.id = 1)-[e:knows]->(b:user)\n"
-                + "RETURN a, e, b Order by a.id "
-                + "DESC Limit 10")
-            .validate()
             .expectException("Id field name should be same between vertex tables");
     }
 
@@ -147,10 +143,6 @@ public class GQLValidateGraphRecordTypeTest {
             + ")"
             + ")";
         PlanTester.build().registerGraph(graphDDL)
-            .gql("MATCH (a:user|person WHERE a.id = 1)-[e:knows|follow]->(b:user)\n"
-                + "RETURN a, e, b Order by a.id "
-                + "DESC Limit 10")
-            .validate()
             .expectException("SOURCE ID field name should be same between edge tables");
     }
 
@@ -182,10 +174,6 @@ public class GQLValidateGraphRecordTypeTest {
             + ")";
 
         PlanTester.build().registerGraph(graphDDL)
-            .gql("MATCH (a:user|person WHERE a.id = 1)-[e:knows|follow]->(b:user)\n"
-                + "RETURN a, e, b Order by a.id "
-                + "DESC Limit 10")
-            .validate()
             .expectException("DESTINATION ID field name should be same between edge tables");
     }
 
@@ -217,10 +205,6 @@ public class GQLValidateGraphRecordTypeTest {
             + ")"
             + ")";
         PlanTester.build().registerGraph(graphDDL)
-            .gql("MATCH (a:user|person WHERE a.id = 1)-[e:knows|follow]->(b:user)\n"
-                + "RETURN a, e, b Order by a.id "
-                + "DESC Limit 10")
-            .validate()
             .expectException("TIMESTAMP field name should be same between edge tables");
     }
 }

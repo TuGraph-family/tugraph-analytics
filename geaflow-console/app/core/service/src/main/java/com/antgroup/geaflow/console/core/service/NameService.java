@@ -74,4 +74,9 @@ public abstract class NameService<M extends GeaflowName,
         return getDao().getIdsByNames(names);
     }
 
+    public String getNameById(String id) {
+        E e = getDao().get(id);
+        return e != null ? e.getName() : null;
+    }
+
 }

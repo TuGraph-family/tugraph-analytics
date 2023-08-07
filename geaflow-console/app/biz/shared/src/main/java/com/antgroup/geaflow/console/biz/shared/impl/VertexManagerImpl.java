@@ -71,4 +71,5 @@ public class VertexManagerImpl extends DataManagerImpl<GeaflowVertex, VertexView
     public List<GeaflowVertex> getVerticesByEdgeId(String edgeId) {
         return vertexService.getVerticesByEdgeId(edgeId);
     }
+
 }

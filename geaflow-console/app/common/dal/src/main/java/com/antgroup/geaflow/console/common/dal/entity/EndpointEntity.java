@@ -15,17 +15,26 @@
 package com.antgroup.geaflow.console.common.dal.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@TableName("geaflow_edge_vertex_mapping")
-public class EdgeVertexMappingEntity extends IdEntity {
+@AllArgsConstructor
+@NoArgsConstructor
+@TableName("geaflow_endpoint")
+@EqualsAndHashCode(of = {"graphId", "edgeId", "sourceId", "targetId"}, callSuper = false)
+public class EndpointEntity extends IdEntity {
+
+    private String graphId;
+
+    private String edgeId;
 
     private String sourceId;
 
     private String targetId;
 
-    private String edgeId;
 }

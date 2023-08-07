@@ -48,4 +48,9 @@ public class GraphStructMappingDao extends TenantLevelDao<GraphStructMappingMapp
         return lambdaUpdate().in(GraphStructMappingEntity::getGraphId, graphIds).remove();
     }
 
+    public List<GraphStructMappingEntity> getByResourceId(String resourceId, GeaflowResourceType resourceType) {
+        return lambdaQuery().eq(GraphStructMappingEntity::getResourceId, resourceId)
+            .eq(GraphStructMappingEntity::getResourceType, resourceType)
+            .list();
+    }
 }

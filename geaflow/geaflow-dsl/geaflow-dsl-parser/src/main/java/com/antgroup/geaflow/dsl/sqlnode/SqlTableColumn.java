@@ -29,6 +29,8 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
 
 public class SqlTableColumn extends SqlCall {
 
@@ -38,6 +40,7 @@ public class SqlTableColumn extends SqlCall {
     private SqlIdentifier name;
     private SqlDataTypeSpec type;
     private SqlIdentifier category;
+    private SqlIdentifier typeFrom;
 
     public SqlTableColumn(SqlIdentifier name,
                           SqlDataTypeSpec type,
@@ -45,7 +48,21 @@ public class SqlTableColumn extends SqlCall {
                           SqlParserPos pos) {
         super(pos);
         this.name = name;
+        this.type = Objects.requireNonNull(type);
+        this.typeFrom = null;
+        this.category = category;
+    }
+
+    public SqlTableColumn(SqlIdentifier name,
+                          SqlDataTypeSpec type,
+                          SqlIdentifier typeFrom,
+                          SqlIdentifier category,
+                          SqlParserPos pos) {
+        super(pos);
+        this.name = name;
         this.type = type;
+        this.typeFrom = typeFrom;
+        assert type != null || typeFrom != null;
         this.category = category;
     }
 
@@ -56,7 +73,7 @@ public class SqlTableColumn extends SqlCall {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableList.of(getName(), getType(), category);
+        return ImmutableList.of(getName(), getType() != null ? getType() : getTypeFrom(), category);
     }
 
     @Override
@@ -66,7 +83,13 @@ public class SqlTableColumn extends SqlCall {
                 this.name = (SqlIdentifier) operand;
                 break;
             case 1:
-                this.type = (SqlDataTypeSpec) operand;
+                if (operand instanceof SqlDataTypeSpec) {
+                    this.type = (SqlDataTypeSpec) operand;
+                    this.typeFrom = null;
+                } else {
+                    this.type = null;
+                    this.typeFrom = (SqlIdentifier) operand;
+                }
                 break;
             case 2:
                 this.category = (SqlIdentifier) operand;
@@ -83,12 +106,33 @@ public class SqlTableColumn extends SqlCall {
 
         name.unparse(writer, leftPrec, rightPrec);
         writer.print(" ");
-        type.unparse(writer, leftPrec, rightPrec);
+        if (type == null) {
+            writer.keyword("from");
+            typeFrom.unparse(writer, leftPrec, rightPrec);
+        } else {
+            type.unparse(writer, leftPrec, rightPrec);
+        }
+
         if (category != null) {
             ColumnCategory category = getCategory();
             writer.print(" ");
             writer.keyword(category.name);
         }
+    }
+
+    public void validate() {
+        if (type == null && typeFrom != null) {
+            ColumnCategory columnCategory = ColumnCategory.of(this.category.toString());
+            assert columnCategory == ColumnCategory.SOURCE_ID
+                || columnCategory == ColumnCategory.DESTINATION_ID
+                : "Only edge source/destination id field can use type from syntax.";
+        }
+    }
+
+    @Override
+    public void validate(SqlValidator validator, SqlValidatorScope scope) {
+        this.validate();
+        super.validate(validator, scope);
     }
 
     public SqlIdentifier getName() {
@@ -103,6 +147,10 @@ public class SqlTableColumn extends SqlCall {
         return type;
     }
 
+    public SqlIdentifier getTypeFrom() {
+        return typeFrom;
+    }
+
     public ColumnCategory getCategory() {
         if (category == null) {
             return ColumnCategory.NONE;
@@ -111,13 +159,16 @@ public class SqlTableColumn extends SqlCall {
     }
 
     public TableField toTableField() {
-        String columnName = name.getSimple();
-
         IType<?> columnType = SqlTypeUtil.convertType(type);
         Boolean nullable = type.getNullable();
         if (nullable == null) {
             nullable = true;
         }
+        return toTableField(columnType, nullable);
+    }
+
+    public TableField toTableField(IType<?> columnType, boolean nullable) {
+        String columnName = name.getSimple();
         return new TableField(columnName, columnType, nullable);
     }
 

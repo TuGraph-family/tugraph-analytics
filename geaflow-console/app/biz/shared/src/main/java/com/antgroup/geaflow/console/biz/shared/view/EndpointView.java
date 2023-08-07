@@ -12,24 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.core.model.data;
+package com.antgroup.geaflow.console.biz.shared.view;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
 @Setter
-public class GeaflowEdge extends GeaflowStruct {
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class EndpointView {
 
-    public GeaflowEdge() {
-        super(GeaflowStructType.EDGE);
-    }
+    private String edgeName;
 
-    public GeaflowEdge(String name, String comment) {
-        this();
-        super.name = name;
-        super.comment = comment;
-    }
+    private String sourceName;
+
+    private String targetName;
 
 }

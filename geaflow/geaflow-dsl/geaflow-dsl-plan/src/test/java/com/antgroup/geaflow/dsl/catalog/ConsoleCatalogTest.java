@@ -17,9 +17,12 @@ package com.antgroup.geaflow.dsl.catalog;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.dsl.catalog.console.CatalogUtil;
 import com.antgroup.geaflow.dsl.catalog.console.ConsoleCatalog;
 import com.antgroup.geaflow.dsl.catalog.console.InstanceModel;
 import com.antgroup.geaflow.dsl.catalog.console.PageList;
+import com.antgroup.geaflow.dsl.common.descriptor.EdgeDescriptor;
+import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
 import com.antgroup.geaflow.dsl.parser.GeaFlowDSLParser;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
@@ -28,7 +31,6 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowView;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateTable;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateView;
-import com.antgroup.geaflow.dsl.catalog.console.CatalogUtil;
 import com.antgroup.geaflow.utils.client.HttpResponse;
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -47,7 +49,7 @@ import org.testng.annotations.Test;
 
 public class ConsoleCatalogTest {
 
-    private String instanceName = "default";
+    private final String instanceName = "default";
     private String baseUrl;
     private MockWebServer server;
     private ConsoleCatalog consoleCatalog;
@@ -90,6 +92,8 @@ public class ConsoleCatalogTest {
         SqlNode sqlNodeOfGraph2 = parser.parseStatement(stmtOfGraph2);
         SqlCreateGraph sqlCreateGraph2 = (SqlCreateGraph) sqlNodeOfGraph2;
         graph2 = gqlContext.convertToGraph(sqlCreateGraph2);
+        GraphDescriptor stats = new GraphDescriptor().addEdge(new EdgeDescriptor("0", "created", "person", "software"));
+        graph2.setDescriptor(stats);
 
         // setup table
         String stmtOfTable = "CREATE TABLE IF NOT EXISTS users (\n" + "\tcreateTime bigint,\n"
@@ -127,41 +131,49 @@ public class ConsoleCatalogTest {
                 Gson gson = new Gson();
                 HttpResponse response = new HttpResponse();
                 response.setCode("200");
-                if (path.equals("/api/instances/default/graphs/modern")) {
-                    response.setData(gson.toJsonTree(CatalogUtil.convertToGraphModel(graph)));
-                    return new MockResponse().setResponseCode(200).setBody(gson.toJson(response));
-                } else if (path.equals("/api/instances/default/graphs/modern2")) {
-                    return new MockResponse().setResponseCode(200).setBody("{}");
-                } else if (path.equals("/api/instances/default/graphs")) {
-                    PageList graphList = new PageList();
-                    graphList.setList(Collections.singletonList(CatalogUtil.convertToGraphModel(graph)));
-                    response.setData(gson.toJsonTree(graphList));
-                    return new MockResponse().setResponseCode(200).setBody(gson.toJson(response));
-                } else if (path.equals("/api/instances/default/tables/users")) {
-                    response.setData(gson.toJsonTree(CatalogUtil.convertToTableModel(table)));
-                    return new MockResponse().setResponseCode(200).setBody(gson.toJson(response));
-                } else if (path.equals("/api/instances/default/tables/users2")) {
-                    return new MockResponse().setResponseCode(200).setBody("{}");
-                } else if (path.equals("/api/instances/default/tables")) {
-                    PageList tableList = new PageList();
-                    tableList.setList(Collections.singletonList(CatalogUtil.convertToTableModel(table)));
-                    response.setData(gson.toJsonTree(tableList));
-                    return new MockResponse().setResponseCode(200).setBody(gson.toJson(response));
-                } else if (path.equals("/api/instances")) {
-                    PageList instanceList = new PageList();
-                    InstanceModel instanceModel = new InstanceModel();
-                    instanceModel.setName(instanceName);
-                    instanceModel.setId("13");
-                    instanceModel.setComment("test comment");
-                    instanceModel.setCreateTime("2023-05-19");
-                    instanceModel.setCreatorId("128745");
-                    instanceModel.setModifierId("128745");
-                    instanceModel.setModifierName("user1");
-                    instanceModel.setCreatorName("user1");
-                    instanceModel.setModifyTime("2023-05-19");
-                    instanceList.setList(Collections.singletonList(instanceModel));
-                    response.setData(gson.toJsonTree(instanceList));
-                    return new MockResponse().setResponseCode(200).setBody(gson.toJson(response));
+                switch (path) {
+                    case "/api/instances/default/graphs/modern":
+                        response.setData(gson.toJsonTree(CatalogUtil.convertToGraphModel(graph)));
+                        return new MockResponse().setResponseCode(200)
+                            .setBody(gson.toJson(response));
+                    case "/api/instances/default/graphs/modern2":
+                    case "/api/instances/default/tables/users2":
+                    case "/api/instances/default/graphs/modern2/endpoints":
+                        return new MockResponse().setResponseCode(200).setBody("{}");
+                    case "/api/instances/default/graphs":
+                        PageList graphList = new PageList();
+                        graphList.setList(
+                            Collections.singletonList(CatalogUtil.convertToGraphModel(graph)));
+                        response.setData(gson.toJsonTree(graphList));
+                        return new MockResponse().setResponseCode(200)
+                            .setBody(gson.toJson(response));
+                    case "/api/instances/default/tables/users":
+                        response.setData(gson.toJsonTree(CatalogUtil.convertToTableModel(table)));
+                        return new MockResponse().setResponseCode(200)
+                            .setBody(gson.toJson(response));
+                    case "/api/instances/default/tables":
+                        PageList tableList = new PageList();
+                        tableList.setList(
+                            Collections.singletonList(CatalogUtil.convertToTableModel(table)));
+                        response.setData(gson.toJsonTree(tableList));
+                        return new MockResponse().setResponseCode(200)
+                            .setBody(gson.toJson(response));
+                    case "/api/instances":
+                        PageList instanceList = new PageList();
+                        InstanceModel instanceModel = new InstanceModel();
+                        instanceModel.setName(instanceName);
+                        instanceModel.setId("13");
+                        instanceModel.setComment("test comment");
+                        instanceModel.setCreateTime("2023-05-19");
+                        instanceModel.setCreatorId("128745");
+                        instanceModel.setModifierId("128745");
+                        instanceModel.setModifierName("user1");
+                        instanceModel.setCreatorName("user1");
+                        instanceModel.setModifyTime("2023-05-19");
+                        instanceList.setList(Collections.singletonList(instanceModel));
+                        response.setData(gson.toJsonTree(instanceList));
+                        return new MockResponse().setResponseCode(200)
+                            .setBody(gson.toJson(response));
                 }
                 return null;
             }
