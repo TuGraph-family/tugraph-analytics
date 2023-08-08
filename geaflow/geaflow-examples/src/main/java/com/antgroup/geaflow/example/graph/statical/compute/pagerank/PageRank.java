@@ -45,6 +45,7 @@ import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,22 +71,21 @@ public class PageRank {
 
         pipeline.submit((PipelineTask) pipelineTaskCxt -> {
             Configuration conf = pipelineTaskCxt.getConfig();
-            PWindowSource<IVertex<Integer, Double>> prVertices =
-                pipelineTaskCxt.buildSource(new FileSource<>("data/input/email_vertex",
-                    line -> {
+            PWindowSource<IVertex<Integer, Double>> prVertices = pipelineTaskCxt.buildSource(
+                    new FileSource<>("data/input/email_vertex", line -> {
                         String[] fields = line.split(",");
                         IVertex<Integer, Double> vertex = new ValueVertex<>(
                             Integer.valueOf(fields[0]), Double.valueOf(fields[1]));
                         return Collections.singletonList(vertex);
                     }), AllWindow.getInstance())
-                    .withParallelism(conf.getInteger(ExampleConfigKeys.SOURCE_PARALLELISM));
+                .withParallelism(conf.getInteger(ExampleConfigKeys.SOURCE_PARALLELISM));
 
-            PWindowSource<IEdge<Integer, Integer>> prEdges = pipelineTaskCxt.buildSource(new FileSource<>("data/input/email_edge",
-                line -> {
-                    String[] fields = line.split(",");
-                    IEdge<Integer, Integer> edge = new ValueEdge<>(Integer.valueOf(fields[0]), Integer.valueOf(fields[1]), 1);
-                    return Collections.singletonList(edge);
-                }), AllWindow.getInstance())
+            PWindowSource<IEdge<Integer, Integer>> prEdges = pipelineTaskCxt.buildSource(
+                    new FileSource<>("data/input/email_edge", line -> {
+                        String[] fields = line.split(",");
+                        IEdge<Integer, Integer> edge = new ValueEdge<>(Integer.valueOf(fields[0]), Integer.valueOf(fields[1]), 1);
+                        return Collections.singletonList(edge);
+                    }), AllWindow.getInstance())
                 .withParallelism(conf.getInteger(ExampleConfigKeys.SOURCE_PARALLELISM));
 
             int iterationParallelism = conf.getInteger(ExampleConfigKeys.ITERATOR_PARALLELISM);
@@ -98,9 +98,13 @@ public class PageRank {
                 pipelineTaskCxt.buildWindowStreamGraph(prVertices, prEdges, graphViewDesc);
 
             SinkFunction<IVertex<Integer, Double>> sink = ExampleSinkFunctionFactory.getSinkFunction(conf);
-            graphWindow.compute(new PRAlgorithms(3))
+            graphWindow.compute(new PRAlgorithms(10, 0.85))
                 .compute(iterationParallelism)
                 .getVertices()
+                .map(e -> {
+                    double value = Double.parseDouble(String.format("%.2f", e.getValue()));
+                    return e.withValue(value);
+                })
                 .sink(sink)
                 .withParallelism(conf.getInteger(ExampleConfigKeys.SINK_PARALLELISM));
         });
@@ -114,8 +118,11 @@ public class PageRank {
 
     public static class PRAlgorithms extends VertexCentricCompute<Integer, Double, Integer, Double> {
 
-        public PRAlgorithms(long iterations) {
+        private double alpha;
+
+        public PRAlgorithms(long iterations, double alpha) {
             super(iterations);
+            this.alpha = alpha;
         }
 
         @Override
@@ -128,25 +135,34 @@ public class PageRank {
             return null;
         }
 
-    }
+        private class PRVertexCentricComputeFunction extends AbstractVcFunc<Integer, Double, Integer, Double> {
 
-    public static class PRVertexCentricComputeFunction extends AbstractVcFunc<Integer, Double, Integer, Double> {
+            @Override
+            public void compute(Integer vertexId,
+                                Iterator<Double> messageIterator) {
+                IVertex<Integer, Double> vertex = this.context.vertex().get();
+                List<IEdge<Integer, Integer>> outEdges = context.edges().getOutEdges();
+                if (this.context.getIterationId() == 1) {
+                    if (!outEdges.isEmpty()) {
+                        this.context.sendMessageToNeighbors(vertex.getValue() / outEdges.size());
+                    }
 
-        @Override
-        public void compute(Integer vertexId,
-                            Iterator<Double> messageIterator) {
-            IVertex<Integer, Double> vertex = this.context.vertex().get();
-            if (this.context.getIterationId() == 1) {
-                this.context.sendMessageToNeighbors(vertex.getValue());
-            } else {
-                double sum = 0;
-                while (messageIterator.hasNext()) {
-                    double value = messageIterator.next();
-                    sum += value;
+                } else {
+                    double sum = 0;
+                    while (messageIterator.hasNext()) {
+                        double value = messageIterator.next();
+                        sum += value;
+                    }
+                    double pr = sum * alpha + (1 - alpha);
+                    this.context.setNewVertexValue(pr);
+
+                    if (!outEdges.isEmpty()) {
+                        this.context.sendMessageToNeighbors(pr / outEdges.size());
+                    }
                 }
-                this.context.setNewVertexValue(sum);
             }
         }
-
     }
+
+
 }
