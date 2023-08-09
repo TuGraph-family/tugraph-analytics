@@ -4,7 +4,7 @@
   "main": "lib/server/index.js",
   "devDependencies": {
     "@tugraph/openpiece-client": "^0.0.16",
-    "@tugraph/openpiece-server": "^0.0.10"
+    "@tugraph/openpiece-server": "^0.0.13"
   },
   "peerDependencies": {
     "@tugraph/openpiece-client": "*",
