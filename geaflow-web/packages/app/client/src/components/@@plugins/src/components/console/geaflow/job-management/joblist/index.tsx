@@ -22,7 +22,6 @@ interface RedirectPath {
 
 export const JobList: React.FC<PluginPorps> = (props) => {
   const { redirectPath = [] } = props;
-
   const redirectUrl = find(redirectPath, ["pathName", "作业详情"])?.path || "/";
   const redirectTable = find(redirectPath, ["pathName", "图任务"])?.path || "/";
 
@@ -69,7 +68,7 @@ export const JobList: React.FC<PluginPorps> = (props) => {
   const columns = [
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.job-management.joblist.TaskName",
+        id: "openpiece-geaflow.job-management.joblist.JobName",
         dm: "任务名称",
       }),
       dataIndex: "name",
@@ -77,7 +76,7 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       width: 150,
       render: (_, record: any) => (
         <span>
-          <a href={`${redirectTable}?jobId=${record?.release?.job.id}`}>
+          <a href={`${redirectTable}?jobId=${record?.release?.job.id}&view=true`}>
             {record?.release?.job.name}
           </a>
 
@@ -93,8 +92,8 @@ export const JobList: React.FC<PluginPorps> = (props) => {
 
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.job-management.joblist.JobId",
-        dm: "作业Id",
+        id: "openpiece-geaflow.job-management.joblist.TaskId",
+        dm: "作业ID",
       }),
       dataIndex: "jobId",
       key: "jobId",

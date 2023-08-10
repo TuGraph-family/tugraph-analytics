@@ -5,7 +5,7 @@ import $i18n from "../../../../../../i18n";
 
 /**
  * 获取指定作业
- */ 
+ */
 export const getJobsTasks = async (jobId: string) => {
   const response = await request(`${HTTP_SERVICE_URL}/api/tasks`, {
     method: "get",
@@ -175,7 +175,7 @@ export const getRecordList = async (resourceId: string, page: number) => {
       resourceId,
       resourceType: "TASK",
       size: 10,
-      sort: "gmt_create",
+      sort: "id",
       order: "DESC",
       page: page,
     },
@@ -202,11 +202,11 @@ export const getRecordList = async (resourceId: string, page: number) => {
  */
 export const resetJob = async (taskId: string) => {
   const cleanDataResp = await request(
-    `${HTTP_SERVICE_URL}/tasks/${taskId}/operations`,
+    `${HTTP_SERVICE_URL}/api/tasks/${taskId}/operations`,
     {
       method: "post",
       data: {
-        action: "CLEAN_DATA",
+        action: "RESET",
       },
     }
   );
@@ -223,30 +223,7 @@ export const resetJob = async (taskId: string) => {
     );
     return null;
   }
-
-  const cleanMetaResp = await request(
-    `${HTTP_SERVICE_URL}/tasks/${taskId}/operations`,
-    {
-      method: "post",
-      data: {
-        action: "CLEAN_META",
-      },
-    }
-  );
-
-  if (!cleanMetaResp?.success) {
-    message.error(
-      $i18n.get(
-        {
-          id: "openpiece-geaflow.geaflow.services.job-detail.VerificationFailedResponsemessage",
-          dm: "验证失败： {responseMessage}",
-        },
-        { responseMessage: cleanMetaResp?.message }
-      )
-    );
-    return null;
-  }
-  return cleanMetaResp;
+  return cleanDataResp;
 };
 
 /**
