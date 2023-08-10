@@ -33,6 +33,7 @@ interface BasicInfoProps {
   onCreate?: () => void;
   onDelete?: () => void;
   uniqueId: string;
+  redirectPath?: any[];
 }
 interface SLALevelResponse {
   alertEnable: boolean;
@@ -56,7 +57,7 @@ const STATUS_COLOR_MAPPING = {
   FINISHED: "green",
   DELETED: "red",
 };
-const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId, redirectPath }) => {
   const [form] = Form.useForm();
   const [state, setState] = useState<{
     detailInfo: any;
@@ -86,6 +87,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
     dslConfig: "",
     jarUrl: "",
   });
+
   const [loading, setLoading] = useState<{
     edit: boolean;
     del: boolean;
@@ -121,11 +123,11 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
       dm: "分发",
     }),
     PROCESS: $i18n.get({
-      id: "openpiece-geaflow.job-detail.components.basicInfo.Calculation",
-      dm: "计算",
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Process",
+      dm: "加工",
     }),
     SERVE: $i18n.get({
-      id: "openpiece-geaflow.job-detail.components.basicInfo.Service",
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Serving",
       dm: "服务",
     }),
     STAT: $i18n.get({
@@ -205,7 +207,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
             id: "openpiece-geaflow.job-detail.components.basicInfo.WhetherToResetTheName",
             dm: "是否重置名称为",
           })}
-          <Tag color="orange">{jobName}</Tag>
+          <Tag color="orange">{job?.name}</Tag>
           {$i18n.get({
             id: "openpiece-geaflow.job-detail.components.basicInfo.Homework",
             dm: "的作业？",
@@ -446,14 +448,16 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           </Button>
         )}
 
-        <>
-          <Button onClick={handleResetJob} disabled>
+        {["CREATED", "FAILED", "STOPPED", "FINISHED"].includes(
+          currentStatus
+        ) && (
+          <Button onClick={handleResetJob}>
             {$i18n.get({
               id: "openpiece-geaflow.job-detail.components.basicInfo.Reset",
               dm: "重置",
             })}
           </Button>
-        </>
+        )}
         <Dropdown overlay={menus}>
           <Button onClick={(e) => e.preventDefault()}>...</Button>
         </Dropdown>
@@ -481,7 +485,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           <Col span={6}>
             {$i18n.get(
               {
-                id: "openpiece-geaflow.job-detail.components.basicInfo.JobIdId",
+                id: "openpiece-geaflow.job-detail.components.basicInfo.TaskId",
                 dm: "作业ID：{id}",
               },
               { id: id }
@@ -509,7 +513,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           {job?.graphs[0]?.name && (
             <Col span={6}>
               {$i18n.get({
-                id: "openpiece-geaflow.job-detail.components.basicInfo.ImageName",
+                id: "openpiece-geaflow.job-detail.components.basicInfo.GraphName",
                 dm: "图名称：",
               })}
               {job?.graphs[0]?.name}
@@ -523,7 +527,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
           )}
           <Col span={6}>
             {$i18n.get({
-              id: "openpiece-geaflow.job-detail.components.basicInfo.TaskName",
+              id: "openpiece-geaflow.job-detail.components.basicInfo.JobName",
               dm: "任务名称：",
             })}
             {job?.name}
@@ -564,6 +568,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId }) => {
             jobItem={jobItem}
             syncConfig={syncDetailConfig}
             form={form}
+            redirectPath={redirectPath}
           />
         </Form>
       </Card>

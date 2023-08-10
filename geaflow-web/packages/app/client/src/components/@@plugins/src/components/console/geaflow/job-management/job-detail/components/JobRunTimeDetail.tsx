@@ -37,7 +37,7 @@ export const JobRunTimeDetail: React.FC<JobDetailsProps> = ({ jobItem }) => {
   const columns = [
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.job-detail.components.JobRunTimeDetail.JobName",
+        id: "openpiece-geaflow.job-detail.components.JobRunTimeDetail.PipelineName",
         dm: "Job名称",
       }),
       dataIndex: "name",

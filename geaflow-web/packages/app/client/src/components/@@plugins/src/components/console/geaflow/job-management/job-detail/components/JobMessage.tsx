@@ -49,7 +49,7 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
     },
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.job-detail.components.JobMessage.OccurrenceTime",
+        id: "openpiece-geaflow.job-detail.components.JobMessage.Time",
         dm: "发生时间",
       }),
       dataIndex: "timeStamp",
@@ -64,7 +64,7 @@ export const JobMessage: React.FC<JobMessageProps> = ({ jobItem }) => {
     },
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.job-detail.components.JobMessage.Server",
+        id: "openpiece-geaflow.job-detail.components.JobMessage.Host",
         dm: "服务器",
       }),
       dataIndex: "hostname",

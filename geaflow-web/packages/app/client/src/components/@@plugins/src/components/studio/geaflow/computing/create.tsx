@@ -201,7 +201,7 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
         <Form form={form}>
           <Form.Item
             label={$i18n.get({
-              id: "openpiece-geaflow.geaflow.computing.TaskName",
+              id: "openpiece-geaflow.geaflow.computing.JobName",
               dm: "任务名称",
             })}
             name="name"
@@ -209,7 +209,7 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
               {
                 required: true,
                 message: $i18n.get({
-                  id: "openpiece-geaflow.geaflow.computing.EnterATaskName",
+                  id: "openpiece-geaflow.geaflow.computing.EnterAJobName",
                   dm: "请输入任务名称",
                 }),
               },
