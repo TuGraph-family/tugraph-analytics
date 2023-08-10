@@ -16,10 +16,13 @@ package com.antgroup.geaflow.dsl.planner;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.catalog.Catalog;
 import com.antgroup.geaflow.dsl.catalog.CatalogFactory;
 import com.antgroup.geaflow.dsl.catalog.CompileCatalog;
 import com.antgroup.geaflow.dsl.catalog.GeaFlowRootCalciteSchema;
+import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
+import com.antgroup.geaflow.dsl.common.descriptor.NodeDescriptor;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.optimize.GQLOptimizer;
@@ -44,6 +47,7 @@ import com.antgroup.geaflow.dsl.sqlnode.SqlTableColumn;
 import com.antgroup.geaflow.dsl.sqlnode.SqlTableProperty;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertex;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertexUsing;
+import com.antgroup.geaflow.dsl.util.GraphDescriptorUtil;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import com.antgroup.geaflow.dsl.validator.GQLValidatorImpl;
@@ -316,6 +320,7 @@ public class GQLContext {
         boolean isAllVertexEdgeStatic = true;
         Map<String, String> vertexEdgeName2UsingTableNameMap = new HashMap<>();
 
+        GraphDescriptor desc = new GraphDescriptor();
         for (SqlNode node : vertices) {
             String idFieldName = null;
             List<TableField> vertexFields = new ArrayList<>();
@@ -338,6 +343,8 @@ public class GQLContext {
                 }
                 isAllVertexEdgeStatic = false;
                 vertexTables.add(new VertexTable(vertex.getName().getSimple(), vertexFields, idFieldName));
+                desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
+                    vertex.getName().getSimple()));
             } else if (node instanceof SqlVertexUsing) {
                 SqlVertexUsing vertexUsing = (SqlVertexUsing) node;
                 List<String> names = vertexUsing.getUsingTableName().names;
@@ -383,6 +390,8 @@ public class GQLContext {
                 vertexEdgeName2UsingTableNameMap.put(vertexUsing.getName().getSimple(),
                     vertexUsing.getUsingTableName().getSimple());
                 vertexTables.add(new VertexTable(vertexUsing.getName().getSimple(), vertexFields, idFieldName));
+                desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
+                    vertexUsing.getName().getSimple()));
             } else {
                 throw new GeaFlowDSLException("vertex not support: " + node);
             }
@@ -399,9 +408,21 @@ public class GQLContext {
 
             if (node instanceof SqlEdge) {
                 SqlEdge edge = (SqlEdge) node;
+                edge.validate();
                 for (SqlNode column : edge.getColumns()) {
                     SqlTableColumn tableColumn = (SqlTableColumn) column;
-                    edgeFields.add(tableColumn.toTableField());
+                    if (tableColumn.getTypeFrom() != null) {
+                        IType<?> columnType = null;
+                        for (VertexTable vertexTable : vertexTables) {
+                            if (vertexTable.getTypeName().equals(tableColumn.getTypeFrom().getSimple())) {
+                                columnType = vertexTable.getIdField().getType();
+                            }
+                        }
+                        assert columnType != null;
+                        edgeFields.add(tableColumn.toTableField(columnType, false));
+                    } else {
+                        edgeFields.add(tableColumn.toTableField());
+                    }
                     String columnName = tableColumn.getName().getSimple();
 
                     switch (tableColumn.getCategory()) {
@@ -424,6 +445,7 @@ public class GQLContext {
                 isAllVertexEdgeStatic = false;
                 String tableName = edge.getName().getSimple();
                 edgeTables.add(new EdgeTable(tableName, edgeFields, srcIdFieldName, targetIdFieldName, tsFieldName));
+                desc.addEdge(GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edge));
             } else if (node instanceof SqlEdgeUsing) {
                 SqlEdgeUsing edgeUsing = (SqlEdgeUsing)  node;
                 List<String> names = edgeUsing.getUsingTableName().names;
@@ -486,6 +508,8 @@ public class GQLContext {
                     edgeUsing.getUsingTableName().getSimple());
                 edgeTables.add(new EdgeTable(edgeUsing.getName().getSimple(), edgeFields,
                     srcIdFieldName, targetIdFieldName, tsFieldName));
+                desc.addEdge(
+                    GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edgeUsing));
             }
         }
 
@@ -500,9 +524,19 @@ public class GQLContext {
         }
         boolean isStaticGraph = isAllVertexEdgeStatic || config.getOrDefault(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey(),
             StoreType.MEMORY.name()).equalsIgnoreCase(StoreType.MEMORY.name());
-        return new GeaFlowGraph(currentInstance, graph.getName().getSimple(), vertexTables,
-            edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(), isStaticGraph,
-            graph.isTemporary());
+        GeaFlowGraph geaFlowGraph = new GeaFlowGraph(currentInstance, graph.getName().getSimple(),
+            vertexTables, edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(),
+            isStaticGraph, graph.isTemporary()).setDescriptor(desc);
+        GraphDescriptor graphStats = geaFlowGraph.getValidDescriptorInGraph(desc);
+        if (graphStats.nodes.size() != desc.nodes.size()
+            || graphStats.edges.size() != desc.edges.size()
+            || graphStats.relations.size() != desc.relations.size()) {
+            throw new GeaFlowDSLException("Error occurred while generating desc as partially "
+                + "constraints are invalid. \n desc: {} \n valid: {}",
+                desc, graphStats);
+        }
+        geaFlowGraph.setDescriptor(graphStats);
+        return geaFlowGraph;
     }
 
     private String keyMapping(String key) {

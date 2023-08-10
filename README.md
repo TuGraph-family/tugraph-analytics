@@ -5,15 +5,17 @@
 [ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
 <!--intro-start-->
 ## Introduction
-GeaFlow(the brand name is TuGraph-Analytics) is an open-source distributed real-time graph computing engine 
-developed by Ant Group. It is widely used in scenarios such as financial risk control, social networks, knowledge 
-graphs, and data applications. The core competence of GeaFlow is streaming graph computing, which provides a 
-high-time efficiency and low-latency graph computing mode compared to offline graph computing. Compared with 
-traditional streaming computing engines such as Flink and Storm, which are real-time processing systems for table 
-data, GeaFlow mainly focuses on real-time processing of graph data, supporting more complex relationship analysis 
-and calculations, such as real-time search for multi-degree relationships and loop detection. At the same time, it 
-also supports real-time analysis and processing of graph-table integration and can handle both table data and graph 
-data at the same time. For more information on GeaFlow use cases, please refer to the [GeaFlow introduction document](docs/docs-en/introduction.md)
+GeaFlow (brand name TuGraph-Analytics) is an open-source distributed stream graph computing engine developed 
+by Ant Group. It is currently widely used in scenarios such as data warehousing acceleration, financial risk
+control, knowledge graphs, and social networks. GeaFlow's core capability is a stream computing engine based
+on the graph as its data model, which also has the ability to handle both streaming and batch processing. 
+Compared with traditional stream computing engines such as Flink and Storm, which use tables as their data
+model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when
+handling join relationship operations, especially complex multi-degree relationship operations like those 
+involving 3 or more degrees of join and complex loop searches. Stream graph computing provides a high-efficiency 
+and low-latency graph computing mode compared to offline graph computing. GeaFlow also supports real-time analysis 
+and processing of graphs and tables, and can handle both table and graph data. For more information on GeaFlow usage scenarios, 
+please refer to: [GeaFlow introduction document](docs/docs-en/introduction.md)
 
 ## Features
 
@@ -25,6 +27,20 @@ data at the same time. For more information on GeaFlow use cases, please refer t
 * High level api support.
 * One-stop graph development platform
 * Cloud native deployment support.
+
+The similarities and differences between GeaFlow and traditional stream computing engine, such as Flink, are as follows:
+
+| Features | GeaFlow | Flink |
+| -------- | -------- | -------- |
+|  Data Model    | A graph-based stream computing engine that can handle both graph and table model data     | A stream computing engine based on the table model     |
+| State Management | Supports both stream and graph data state management | Supports stream state management |
+| Exactly once |Supported | Supported|
+| Join Support | Supports complex multi-degree join operations | Not suitable for complex joins |
+| Graph Algorithm Support| Native graph algorithm support | Flink Gelly module support (currently removed)|
+| Query Language| SQL + ISO/GQL| SQL |
+
+GeaFlow's relevant design reference papers are as follows: [GeaFlow: A Graph Extended and Accelerated Dataflow
+System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
 ## Quick start
 You need to first fork a copy of GeaFlow code on Github and then try to compile the source code. Compiling GeaFlow 
@@ -40,22 +56,7 @@ document](docs/docs-en/application-development/dsl/overview.md), and for the hig
 
 ## Document
 
-Here is the document list for GeaFlow:
-
-- [GeaFlow Introduction](docs/docs-en/introduction.md)
-- [Quick start](docs/docs-en/quick_start.md)
-- Concepts:
-    - [Graph View](docs/docs-en/concepts/graph_view.md)
-    - [Streaming Graph](docs/docs-en/concepts/stream_graph.md)
-    - [Glossary](docs/docs-en/concepts/glossary.md)
-- GeaFlow Development:
-    - [API Development](docs/docs-en/application-development/api/guid.md)
-    - [DSL Development](docs/docs-en/application-development/dsl/overview.md)
-- [Deployment](docs/docs-en/deploy/install_guide.md)
-- Principle introduction:
-    - [Framework Principle](docs/docs-en/principle/framework_principle.md)
-    - [State Principle](docs/docs-en/principle/state_principle.md)
-    - [DSL Principle](docs/docs-en/principle/dsl_principle.md)
+Please refer to:  [ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
 
 ## Contributing to GeaFlow
 Thank you very much for contributing to GeaFlow, whether it's bug reporting, documentation improvement, or major 
@@ -65,7 +66,8 @@ our guidelines:[Contributing to GeaFlow](docs/docs-en/contribution.md).
 ## Contact Us
 You can contact us through DingTalk or WeChat group.
 
-**If you feel GeaFlow useful or interesting, please ⭐️ Star it on github.**
+**If you feel GeaFlow useful or interesting, please ⭐️ [Star](https://github.com/TuGraph-family/tugraph-analytics) 
+it on github.**
 
 ![dingding](docs/static/img/dingding.png)
 

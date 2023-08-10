@@ -142,3 +142,10 @@ export const getJobsTasks = async (jobId: string) => {
   }
   return response?.data?.list;
 };
+export const getRemoteFiles = async () => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/remote-files`, {
+    method: "get",
+    requestType: "form",
+  });
+  return response?.data?.list;
+};

@@ -24,11 +24,13 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.utils.HttpUtil;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 
 public class ConsoleCatalogClient {
 
@@ -55,6 +57,36 @@ public class ConsoleCatalogClient {
         String createUrl = endpoint + "/api/instances/" + instanceName + "/graphs";
         GraphModel graphModel = CatalogUtil.convertToGraphModel(graph);
         HttpUtil.post(createUrl, gson.toJson(graphModel), headers, Object.class);
+    }
+
+    public void createEdgeEndpoints(String instanceName, String graphName, List<String> edgeNames,
+                                    List<String> srcVertexNames, List<String> targetVertexNames) {
+        assert srcVertexNames != null && targetVertexNames != null
+            && srcVertexNames.size() == targetVertexNames.size();
+        String createUrl = endpoint + "/api/instances/" + instanceName + "/graphs/" + graphName
+            + "/endpoints";
+        List<EndpointWrapper> endpointWrappers = new ArrayList<>();
+        for (int i = 0; i < srcVertexNames.size(); i++) {
+            endpointWrappers.add(new EndpointWrapper(srcVertexNames.get(i),
+                targetVertexNames.get(i), edgeNames.get(i)));
+        }
+        HttpUtil.post(createUrl, gson.toJson(endpointWrappers), headers, Object.class);
+    }
+
+    public static class EndpointWrapper {
+
+        public final String sourceName;
+        public final String targetName;
+        public final String edgeName;
+
+        public EndpointWrapper(String sourceName, String targetName, String edgeName) {
+            assert !StringUtils.isBlank(sourceName) && !StringUtils.isBlank(targetName)
+                && !StringUtils.isBlank(edgeName);
+            this.sourceName = sourceName;
+            this.targetName = targetName;
+            this.edgeName = edgeName;
+        }
+
     }
 
     public GeaFlowTable getTable(String instanceName, String tableName) {

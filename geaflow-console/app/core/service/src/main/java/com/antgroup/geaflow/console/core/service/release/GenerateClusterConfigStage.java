@@ -50,8 +50,13 @@ public class GenerateClusterConfigStage extends GeaflowBuildStage {
     @Override
     public void init(GeaflowRelease release) {
         // generate default cluster config from job config
-        GeaflowConfig newConfig = getDefaultClusterConfig();
-        release.setClusterConfig(newConfig);
+        GeaflowConfig clusterConfig = getDefaultClusterConfig();
+
+        if (release.getClusterConfig() != null) {
+            clusterConfig.putAll(release.getClusterConfig());
+        }
+
+        release.setClusterConfig(clusterConfig);
     }
 
     @Override

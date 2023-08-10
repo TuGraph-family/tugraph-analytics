@@ -21,6 +21,7 @@ import com.antgroup.geaflow.console.core.model.security.resource.GraphResource;
 import com.antgroup.geaflow.console.core.model.security.resource.InstanceResource;
 import com.antgroup.geaflow.console.core.model.security.resource.JobResource;
 import com.antgroup.geaflow.console.core.model.security.resource.TableResource;
+import com.antgroup.geaflow.console.core.model.security.resource.TaskResource;
 import com.antgroup.geaflow.console.core.model.security.resource.TenantResource;
 import com.antgroup.geaflow.console.core.model.security.resource.VertexResource;
 import com.antgroup.geaflow.console.core.model.security.resource.ViewResource;
@@ -65,5 +66,9 @@ public class Resources {
 
     public static JobResource job(String jobId) {
         return getResourceFactory().build(GeaflowResourceType.JOB, jobId);
+    }
+
+    public static TaskResource task(String taskId) {
+        return getResourceFactory().build(GeaflowResourceType.TASK, taskId);
     }
 }

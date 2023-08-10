@@ -51,6 +51,9 @@ public abstract class GeaflowJob extends GeaflowName {
         this.type = type;
     }
 
+
+    public abstract boolean isApiJob();
+
     public abstract GeaflowRemoteFile getJarPackage();
 
     public abstract String getEntryClass();
@@ -94,4 +97,5 @@ public abstract class GeaflowJob extends GeaflowName {
         Preconditions.checkNotNull(type, "job type is null");
         Preconditions.checkNotNull(instanceId, "instanceId is null");
     }
+
 }

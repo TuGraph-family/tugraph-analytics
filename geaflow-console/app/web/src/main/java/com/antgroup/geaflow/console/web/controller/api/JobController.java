@@ -28,9 +28,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
@@ -56,16 +57,19 @@ public class JobController {
     }
 
     @PostMapping
-    public GeaflowApiResponse<String> createJob(@RequestBody JobView jobView) {
+    public GeaflowApiResponse<String> createJob(JobView jobView,
+                                                @RequestParam(required = false) MultipartFile jarFile,
+                                                @RequestParam(required = false) String fileId) {
         authorizationManager.hasAuthority(GeaflowAuthority.ALL, Resources.instance(jobView.getInstanceId()));
-        return GeaflowApiResponse.success(jobManager.create(jobView));
+        return GeaflowApiResponse.success(jobManager.create(jobView, jarFile, fileId));
     }
 
     @PutMapping("/{jobId}")
-    public GeaflowApiResponse<Boolean> updateJob(@PathVariable String jobId,
-                                                 @RequestBody JobView jobView) {
+    public GeaflowApiResponse<Boolean> updateJob(@PathVariable String jobId, JobView jobView,
+                                                 @RequestParam(required = false) MultipartFile jarFile,
+                                                 @RequestParam(required = false) String fileId) {
         authorizationManager.hasAuthority(GeaflowAuthority.UPDATE, Resources.job(jobId));
-        return GeaflowApiResponse.success(jobManager.updateById(jobId, jobView));
+        return GeaflowApiResponse.success(jobManager.update(jobId, jobView, jarFile, fileId));
     }
 
     @DeleteMapping("/{jobId}")

@@ -15,17 +15,12 @@
 package com.antgroup.geaflow.console.core.model.data;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class GeaflowEdge extends GeaflowStruct {
-
-    private List<Endpoint> endpoints = new ArrayList<>();
 
     public GeaflowEdge() {
         super(GeaflowStructType.EDGE);
@@ -37,17 +32,4 @@ public class GeaflowEdge extends GeaflowStruct {
         super.comment = comment;
     }
 
-    public void addEndpoints(List<Endpoint> endpoints) {
-        this.endpoints.addAll(endpoints);
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class Endpoint {
-
-        private GeaflowVertex source;
-
-        private GeaflowVertex target;
-
-    }
 }

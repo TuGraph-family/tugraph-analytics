@@ -522,3 +522,22 @@ UNIQUE KEY `uk_name` (`tenant_id`, `instance_id`, `name`),
 UNIQUE KEY `uk_guid` (`guid`)
 ) DEFAULT CHARSET = utf8mb4 COMMENT = 'Vertex Table'
 ;
+
+CREATE TABLE `geaflow_endpoint` (
+`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'PK',
+`gmt_create` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create Time',
+`gmt_modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modify Time',
+`creator_id` char(64) NOT NULL COMMENT 'Creator ID',
+`modifier_id` char(64) NOT NULL COMMENT 'Modifier ID',
+`guid` char(64) NOT NULL COMMENT 'ID',
+`tenant_id` char(64) NOT NULL COMMENT 'Tenant ID',
+`edge_id` char(64) NOT NULL COMMENT 'Edge Id',
+`source_id` char(64) NOT NULL COMMENT 'Source Id',
+`target_id` char(64) NOT NULL COMMENT 'Target Id',
+`graph_id` char(64) NOT NULL COMMENT 'Graph ID',
+PRIMARY KEY (`id`),
+UNIQUE KEY `uk_guid` (`guid`),
+UNIQUE KEY `uk_src_target` (`edge_id`, `source_id`, `target_id`, `graph_id`),
+KEY `idx_edge_id` (`edge_id`)
+) DEFAULT CHARSET = utf8mb4 COMMENT = 'Endpoint'
+;

@@ -80,10 +80,13 @@ public class PageRank implements AlgorithmUserFunction {
             sendMessageToNeighbors(outEdges, currentPr / outEdges.size());
             context.sendMessage(vertex.getId(), -1.0);
             context.updateVertexValue(ObjectRow.create(pr));
-        } else {
-            double currentPr = (double) vertex.getValue().getField(0, DoubleType.INSTANCE);
-            context.take(ObjectRow.create(vertex.getId(), currentPr));
         }
+    }
+
+    @Override
+    public void finish(RowVertex vertex) {
+        double currentPr = (double) vertex.getValue().getField(0, DoubleType.INSTANCE);
+        context.take(ObjectRow.create(vertex.getId(), currentPr));
     }
 
     @Override

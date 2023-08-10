@@ -16,7 +16,6 @@ package com.antgroup.geaflow.console.core.service.converter;
 
 import com.antgroup.geaflow.console.common.dal.entity.EdgeEntity;
 import com.antgroup.geaflow.console.core.model.data.GeaflowEdge;
-import com.antgroup.geaflow.console.core.model.data.GeaflowEdge.Endpoint;
 import com.antgroup.geaflow.console.core.model.data.GeaflowField;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -24,10 +23,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class EdgeConverter extends DataConverter<GeaflowEdge, EdgeEntity> {
 
-    public GeaflowEdge convert(EdgeEntity entity, List<GeaflowField> fields, List<Endpoint> endpoints) {
+    public GeaflowEdge convert(EdgeEntity entity, List<GeaflowField> fields) {
         GeaflowEdge edge = entityToModel(entity);
         edge.addFields(fields);
-        edge.addEndpoints(endpoints);
         return edge;
     }
 }

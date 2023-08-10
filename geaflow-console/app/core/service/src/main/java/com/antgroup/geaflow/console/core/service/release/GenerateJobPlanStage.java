@@ -33,12 +33,20 @@ public class GenerateJobPlanStage extends GeaflowBuildStage {
     private ReleaseService releaseService;
 
     public void init(GeaflowRelease release) {
+        // Hla Jobs don't need compile
+        if (release.getJob().isApiJob()) {
+            return;
+        }
         GeaflowVersion version = release.getVersion();
         release.setJobPlan(compileJobPlan(release.getJob(), version, null));
     }
 
     @Override
     public boolean update(GeaflowRelease release, ReleaseUpdate update) {
+        if (release.getJob().isApiJob()) {
+            return false;
+        }
+
         Map<String, Integer> newParallelisms = update.getNewParallelisms();
         if (newParallelisms == null) {
             return false;

@@ -93,7 +93,8 @@ SqlNode GraphEdge() :
         <RPAREN>
       ) {
               return new SqlEdge(s.add(this).pos(), edgeName,
-                                        new SqlNodeList(edgeColumns, s.addAll(edgeColumns).pos()));
+                                        new SqlNodeList(edgeColumns, s.addAll(edgeColumns).pos()),
+                                        SqlNodeList.EMPTY);
         }
       |
       (
@@ -114,7 +115,8 @@ SqlNode GraphEdge() :
           )]
         )
       ) {
-        return new SqlEdgeUsing(getPos(), edgeName, usingTableName, sourceId, targetId, timeField);
+        return new SqlEdgeUsing(getPos(), edgeName, usingTableName, sourceId, targetId, timeField,
+                                SqlNodeList.EMPTY);
         }
     )
 }
@@ -123,16 +125,26 @@ SqlTableColumn GraphTableColumn() :
 {
    SqlParserPos pos;
    SqlIdentifier name = null;
-   SqlDataTypeSpec type;
+   SqlDataTypeSpec type = null;
+   SqlIdentifier typeFrom = null;
    SqlIdentifier category = null;
 }
 {
-  { pos = getPos();
+  {
+    pos = getPos();
     category = new SqlIdentifier(ColumnCategory.NONE.getName(), getPos());
   }
   name = SimpleIdentifier()
-  type = DataType()
-  [ <NOT> <NULL> { type = type.withNullable(false); } ]
+  (
+    (
+        <FROM> typeFrom = SimpleIdentifier()
+    )
+    |
+    (
+        type = DataType()
+        [ <NOT> <NULL> { type = type.withNullable(false); } ]
+    )
+  )
   [
     (
          <ID> { category = new SqlIdentifier(ColumnCategory.ID.getName(), getPos()); }
@@ -145,7 +157,7 @@ SqlTableColumn GraphTableColumn() :
               { category = new SqlIdentifier(ColumnCategory.TIMESTAMP.getName(), getPos()); }
     )
   ] {
-      return new SqlTableColumn(name, type, category, pos);
+      return new SqlTableColumn(name, type, typeFrom, category, pos);
     }
 }
 

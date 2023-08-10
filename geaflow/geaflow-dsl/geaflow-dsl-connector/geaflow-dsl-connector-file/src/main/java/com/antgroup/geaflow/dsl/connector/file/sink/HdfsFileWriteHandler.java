@@ -76,14 +76,14 @@ public class HdfsFileWriteHandler implements FileWriteHandler {
 
     @Override
     public void flush() throws IOException {
-        this.writer.hflush();
         this.writer.flush();
+        this.writer.hflush();
     }
 
     @Override
     public void close() throws IOException {
         if (this.writer != null) {
-            this.writer.flush();
+            flush();
             this.writer.close();
         }
     }

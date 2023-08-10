@@ -49,6 +49,18 @@ public class GeaflowBuildPipeline {
     @Autowired
     private PackageStage packageStage;
 
+    @PostConstruct
+    public void init() {
+        STAGES.add(resolveReleaseVersionStage);
+        STAGES.add(resolveVersionStage);
+        STAGES.add(generateJobPlanStage);
+        STAGES.add(generateJobConfigStage);
+        STAGES.add(generateClusterConfigStage);
+        STAGES.add(resolveClusterStage);
+        STAGES.add(packageStage);
+    }
+
+
     public static GeaflowRelease build(GeaflowJob job) {
         GeaflowRelease release = new GeaflowRelease();
         release.setJob(job);
@@ -66,17 +78,6 @@ public class GeaflowBuildPipeline {
             }
             initNext = stage.update(release, update);
         }
-    }
-
-    @PostConstruct
-    public void init() {
-        STAGES.add(resolveReleaseVersionStage);
-        STAGES.add(resolveVersionStage);
-        STAGES.add(generateJobPlanStage);
-        STAGES.add(generateJobConfigStage);
-        STAGES.add(generateClusterConfigStage);
-        STAGES.add(resolveClusterStage);
-        STAGES.add(packageStage);
     }
 
 }

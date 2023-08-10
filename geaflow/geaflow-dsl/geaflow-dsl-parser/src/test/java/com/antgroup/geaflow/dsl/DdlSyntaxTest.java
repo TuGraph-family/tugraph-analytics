@@ -82,4 +82,11 @@ public class DdlSyntaxTest extends BaseDslTest {
         String unParseStmts = parseStmtsAndUnParse(parseStmtsAndUnParse(unParseSql));
         Assert.assertEquals(unParseStmts, unParseSql);
     }
+
+    @Test
+    public void testEdgeConstraint() throws Exception {
+        String unParseSql = parseSqlAndUnParse("GQLEdgeConstraint.sql");
+        String unParseStmts = parseStmtsAndUnParse(parseStmtsAndUnParse(unParseSql));
+        Assert.assertEquals(unParseStmts, unParseSql);
+    }
 }

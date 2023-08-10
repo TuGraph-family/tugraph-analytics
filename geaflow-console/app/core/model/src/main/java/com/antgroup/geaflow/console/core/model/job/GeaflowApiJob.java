@@ -37,10 +37,15 @@ public abstract class GeaflowApiJob extends GeaflowJob {
     }
 
     public List<GeaflowFunction> getFunctions() {
-        return null;
+        return functions;
     }
 
     public Map<String, Map<String, Map<String, String>>> getStructMappings() {
         return null;
+    }
+
+    @Override
+    public boolean isApiJob() {
+        return true;
     }
 }

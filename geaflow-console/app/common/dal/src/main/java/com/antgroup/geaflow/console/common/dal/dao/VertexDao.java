@@ -14,10 +14,10 @@
 
 package com.antgroup.geaflow.console.common.dal.dao;
 
-import com.antgroup.geaflow.console.common.dal.entity.EdgeVertexMappingEntity;
+import com.antgroup.geaflow.console.common.dal.entity.EndpointEntity;
 import com.antgroup.geaflow.console.common.dal.entity.GraphStructMappingEntity;
 import com.antgroup.geaflow.console.common.dal.entity.VertexEntity;
-import com.antgroup.geaflow.console.common.dal.mapper.EdgeVertexMappingMapper;
+import com.antgroup.geaflow.console.common.dal.mapper.EndpointMapper;
 import com.antgroup.geaflow.console.common.dal.mapper.GraphStructMappingMapper;
 import com.antgroup.geaflow.console.common.dal.mapper.VertexMapper;
 import com.antgroup.geaflow.console.common.dal.model.VertexSearch;
@@ -33,7 +33,7 @@ public class VertexDao extends TenantLevelDao<VertexMapper, VertexEntity> implem
     private GraphStructMappingMapper graphStructMappingMapper;
 
     @Autowired
-    private EdgeVertexMappingMapper edgeVertexMappingMapper;
+    private EndpointMapper endpointMapper;
 
 
     public List<VertexEntity> getByGraphId(String graphId) {
@@ -47,10 +47,10 @@ public class VertexDao extends TenantLevelDao<VertexMapper, VertexEntity> implem
     }
 
     public List<VertexEntity> getByEdge(String edgeId) {
-        MPJLambdaWrapper<EdgeVertexMappingEntity> wrapper = new MPJLambdaWrapper<EdgeVertexMappingEntity>().selectAll(
+        MPJLambdaWrapper<EndpointEntity> wrapper = new MPJLambdaWrapper<EndpointEntity>().selectAll(
                 VertexEntity.class).innerJoin(VertexEntity.class, VertexEntity::getId,
-                EdgeVertexMappingEntity::getSourceId)
-            .eq(EdgeVertexMappingEntity::getEdgeId, edgeId);
-        return edgeVertexMappingMapper.selectJoinList(VertexEntity.class, wrapper);
+                EndpointEntity::getSourceId)
+            .eq(EndpointEntity::getEdgeId, edgeId);
+        return endpointMapper.selectJoinList(VertexEntity.class, wrapper);
     }
 }

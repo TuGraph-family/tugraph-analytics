@@ -97,13 +97,20 @@ public class GeaFlowAlgorithmDynamicTraversalFunction
 
     @Override
     public void finish(Object vertexId, MutableGraph<Object, Row, Row> mutableGraph) {
+        algorithmCtx.setVertexId(vertexId);
+        RowVertex rowVertex = (RowVertex) algorithmCtx.loadVertex();
+        Row newValue = algorithmCtx.getVertexNewValue();
+        if (newValue != null) {
+            rowVertex.setValue(newValue);
+        }
+        userFunction.finish(rowVertex);
     }
 
     @Override
-    public void initIteration(long windowId) {
+    public void initIteration(long iterationId) {
     }
 
     @Override
-    public void finishIteration(long windowId) {
+    public void finishIteration(long iterationId) {
     }
 }

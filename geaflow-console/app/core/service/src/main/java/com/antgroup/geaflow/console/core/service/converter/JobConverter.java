@@ -19,6 +19,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
+import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
@@ -44,6 +45,7 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
         entity.setUserCode(Optional.ofNullable(model.getUserCode()).map(GeaflowCode::getText).orElse(null));
         entity.setStructMappings(Optional.ofNullable(model.getStructMappings()).map(JSON::toJSONString).orElse(null));
         entity.setInstanceId(model.getInstanceId());
+        entity.setJarPackageId(Optional.ofNullable(model.getJarPackage()).map(GeaflowId::getId).orElse(null));
         entity.setEntryClass(model.getEntryClass());
         return entity;
     }

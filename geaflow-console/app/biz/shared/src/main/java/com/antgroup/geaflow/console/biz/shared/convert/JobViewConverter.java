@@ -81,6 +81,10 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
             case PROCESS:
                 Optional.ofNullable(updateView.getUserCode()).ifPresent(view::setUserCode);
                 break;
+            case CUSTOM:
+                Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
+                Optional.ofNullable(updateView.getJarPackage()).ifPresent(view::setJarPackage);
+                break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", view.getType());
         }
@@ -110,7 +114,7 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
     }
 
     public GeaflowJob convert(JobView view, List<GeaflowStruct> structs, List<GeaflowGraph> graphs,
-                              List<GeaflowFunction> functions, GeaflowRemoteFile jarPackage) {
+                              List<GeaflowFunction> functions, GeaflowRemoteFile jarFile) {
         GeaflowJobType jobType = view.getType();
         GeaflowJob job;
         switch (jobType) {
@@ -133,7 +137,7 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
             case CUSTOM:
                 GeaflowCustomJob customJob = (GeaflowCustomJob) viewToModel(view, GeaflowCustomJob.class);
                 customJob.setEntryClass(view.getEntryClass());
-                customJob.setJarPackage(jarPackage);
+                customJob.setJarPackage(jarFile);
                 job = customJob;
                 break;
             default:
