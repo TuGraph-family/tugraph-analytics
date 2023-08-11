@@ -75,7 +75,7 @@ public class JaccardAlgorithm implements AlgorithmUserFunction {
             while (messages.hasNext()) {
                 ObjectRow singleRow = (ObjectRow) messages.next();
                 // set of neighbors
-                String neighborsVertexId =  (String) singleRow.getField(0, StringType.INSTANCE);
+                Long neighborsVertexId =  (Long) singleRow.getField(0, LongType.INSTANCE);
                 String vertexCollection = (String) singleRow.getField(1, StringType.INSTANCE);
                 if (StringUtils.isBlank(vertexCollection)) {
                     return;
