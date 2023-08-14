@@ -196,7 +196,6 @@
                 <version>${kafka.version}</version>
             </dependency>
 
-
         </dependencies>
     </dependencyManagement>
 </project>
