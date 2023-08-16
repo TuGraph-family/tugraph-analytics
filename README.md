@@ -72,6 +72,9 @@ it on github.**
 ![dingding](docs/static/img/dingding.png)
 
 ![wechat](docs/static/img/wechat.png)
+
+**Email:**  tugraph@service.alipay.com
+
 ## Acknowledgement
 Thanks to some outstanding open-source projects in the industry, such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions.
 <!--intro-end-->
