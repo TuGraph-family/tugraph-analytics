@@ -279,10 +279,10 @@ SqlPathPattern SqlPathPattern() :
         nodeOrEdge = SqlMatchEdge()  { nodeList.add(nodeOrEdge); }
         nodeOrEdge = SqlMatchNode()  { nodeList.add(nodeOrEdge); }
     )*
-     {
+    {
         pathNodes = new SqlNodeList(nodeList, s.addAll(nodeList).pos());
         return new SqlPathPattern(s.end(this), pathNodes, null);
-     }
+    }
 }
 
 SqlCall SqlUnionPathPattern() :
@@ -317,7 +317,6 @@ SqlMatchPattern SqlMatchPattern(SqlNode preMatch) :
     Span s = Span.of();
     List<SqlNode> pathList = new ArrayList<SqlNode>();
     SqlNodeList graphPattern;
-    List<SqlNode> matchModeWords = new ArrayList<SqlNode>();
     SqlNode pathPattern = null;
     SqlNode condition = null;
     SqlNodeList orderBy = null;
@@ -347,17 +346,17 @@ SqlMatchPattern SqlMatchPattern(SqlNode preMatch) :
     }
 }
 
- SqlLetStatement SqlLetStatement(SqlNode from) :
- {
-   Span s = Span.of();
-   SqlIdentifier leftVar;
-   SqlNode expression;
-   boolean isGlobal = false;
- }
- {
-   <LET> [<GLOBAL> { isGlobal = true; }] leftVar = CompoundIdentifier()
-   (<EQ> | <AS>) expression = Expression(ExprContext.ACCEPT_SUB_QUERY)
-   {
-     return new SqlLetStatement(s.end(this), from, leftVar, expression, isGlobal);
-   }
- }
+SqlLetStatement SqlLetStatement(SqlNode from) :
+{
+    Span s = Span.of();
+    SqlIdentifier leftVar;
+    SqlNode expression;
+    boolean isGlobal = false;
+}
+{
+    <LET> [<GLOBAL> { isGlobal = true; }] leftVar = CompoundIdentifier()
+    (<EQ> | <AS>) expression = Expression(ExprContext.ACCEPT_SUB_QUERY)
+    {
+        return new SqlLetStatement(s.end(this), from, leftVar, expression, isGlobal);
+    }
+}
