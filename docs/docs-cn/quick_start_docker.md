@@ -178,7 +178,7 @@ FROM (
 );
 
 INSERT INTO tbl_result
-SELECT
+SELECT DISTINCT
   a_id,
   b_id,
   c_id,
