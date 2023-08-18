@@ -10,7 +10,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_double.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	user_name varchar,
 	count_id bigint,
 	sum_id bigint,
@@ -23,7 +23,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT
   concat(o.name, '-' , concat(o.name, '-', o.name)) as _name,
   mycount(o.name, o.id) AS count_id,

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime.query;
 
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import org.testng.annotations.Test;
 
 public class DistinctTest {
@@ -59,6 +60,28 @@ public class DistinctTest {
         QueryTester
             .build()
             .withQueryPath("/query/distinct_005.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testDistinct_006() throws Exception {
+        QueryTester
+            .build()
+            .enableInitDDL(false)
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), "4")
+            .withQueryPath("/query/distinct_006.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testDistinct_007() throws Exception {
+        QueryTester
+            .build()
+            .enableInitDDL(false)
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), "4")
+            .withQueryPath("/query/distinct_007.sql")
             .execute()
             .checkSinkResult();
     }

@@ -1,4 +1,4 @@
-CREATE TABLE console (
+CREATE TABLE tbl_result (
   vid int,
 	distance bigint
 ) WITH (
@@ -8,7 +8,7 @@ CREATE TABLE console (
 
 USE GRAPH modern;
 
-INSERT INTO console
+INSERT INTO tbl_result
 CALL SSSP(1) YIELD (vid, distance)
 RETURN cast (vid as int), distance
 ;

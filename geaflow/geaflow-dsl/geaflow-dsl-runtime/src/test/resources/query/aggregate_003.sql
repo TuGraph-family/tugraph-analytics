@@ -7,7 +7,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
   cnt int,
 	sum_age long,
 	avg_age long
@@ -16,7 +16,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 select
   sum(cnt), sum(age), avg(age)
 FROM (
