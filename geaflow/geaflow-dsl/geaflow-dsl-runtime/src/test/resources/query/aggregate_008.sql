@@ -7,7 +7,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_duplication.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
   f0 varchar,
   f1 bigint,
   f2 bigint,
@@ -19,7 +19,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT
     name,
     count(distinct id),

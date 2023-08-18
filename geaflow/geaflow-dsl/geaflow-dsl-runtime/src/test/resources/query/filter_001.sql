@@ -8,7 +8,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.name.regex = '^users.*'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	id bigint,
   age int
 ) WITH (
@@ -16,6 +16,6 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT id, age FROM users
 WHERE age > 20;

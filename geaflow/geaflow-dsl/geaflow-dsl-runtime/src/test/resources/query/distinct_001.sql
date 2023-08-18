@@ -9,7 +9,7 @@ CREATE TABLE orders (
 	geaflow.dsl.file.path = 'resource:///data/orders.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	user_name VARCHAR,
 	count_id int,
 	sum_id int,
@@ -22,7 +22,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT
   o.user_name,
   count(1) as count_id,
