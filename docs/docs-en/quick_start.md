@@ -81,7 +81,7 @@ FROM (
 );
 
 INSERT INTO dy_modern.knows
-SELECT
+SELECT DISTINCT
  cast(split_ex(t1, ',', 0) as bigint),
  cast(split_ex(t1, ',', 1) as bigint),
  cast(split_ex(t1, ',', 2) as double)
