@@ -213,7 +213,7 @@ public class KubernetesConfigKeys {
         .defaultValue("where to restart process automatically");
 
     public static final ConfigKey CLIENT_KEY_ALGO = ConfigKeys.key("kubernetes.certs.client.key.algo")
-            .noDefaultValue()
-            .description("client key algo");
+        .noDefaultValue()
+        .description("client key algo");
 
 }
