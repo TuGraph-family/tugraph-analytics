@@ -14,13 +14,6 @@
 
 package com.antgroup.geaflow.cluster.k8s.clustermanager;
 
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CA_DATA;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CERT_DATA;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CERT_KEY;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.MASTER_URL;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.PING_INTERVAL_MS;
-
 import com.antgroup.geaflow.common.config.Configuration;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -29,6 +22,8 @@ import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
+
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.*;
 
 /**
  * Builder for Kubernetes clients.
@@ -64,6 +59,11 @@ public class KubernetesClientFactory {
         String caData = config.getString(CA_DATA);
         if (!StringUtils.isBlank(caData)) {
             clientConfig.withCaCertData(certData);
+        }
+
+        String cKeyAlgo = config.getString(CLIENT_KEY_ALGO);
+        if (!StringUtils.isBlank(cKeyAlgo)) {
+            clientConfig.withClientKeyAlgo(cKeyAlgo);
         }
 
         Dispatcher dispatcher = new Dispatcher();
