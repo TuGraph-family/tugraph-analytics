@@ -203,7 +203,7 @@ public class CatalogUtil {
         }
         GeaFlowGraph geaFlowGraph = new GeaFlowGraph(instanceName, model.getName(), vertexTables,
             edgeTables, convertToGeaFlowGraphConfig(model.getPluginConfig()), Collections.emptyMap(),
-            true, false, false);
+            true, false);
         geaFlowGraph.setDescriptor(geaFlowGraph.getValidDescriptorInGraph(desc));
         return geaFlowGraph;
     }

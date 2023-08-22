@@ -70,8 +70,7 @@ public class GeaFlowGraphTest {
             Lists.newArrayList(vertexTable),
             Lists.newArrayList(edgeTable),
             config, new HashMap<>(),
-            false, false, false
-        );
+            false, false);
 
         RelDataType relDataType = graph.getRowType(typeFactory);
         assertEquals(relDataType.toString(), "Graph:RecordType:peek("

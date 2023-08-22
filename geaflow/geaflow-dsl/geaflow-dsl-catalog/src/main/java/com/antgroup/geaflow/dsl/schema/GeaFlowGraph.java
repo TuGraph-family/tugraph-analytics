@@ -51,15 +51,13 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
     private final List<EdgeTable> edgeTables;
     private final Map<String, String> usingTables;
     private final Map<String, String> config;
-    private boolean isStatic;
     private final boolean ifNotExists;
     private final boolean isTemporary;
     private GraphDescriptor graphDescriptor;
 
     public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
                         List<EdgeTable> edgeTables, Map<String, String> config,
-                        Map<String, String> usingTables, boolean ifNotExists,
-                        boolean isStatic, boolean isTemporary) {
+                        Map<String, String> usingTables, boolean ifNotExists, boolean isTemporary) {
         this.instanceName = instanceName;
         this.name = name;
         this.vertexTables = vertexTables;
@@ -75,8 +73,15 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         for (EdgeTable edgeTable : this.edgeTables) {
             edgeTable.setGraph(this);
         }
-        this.isStatic = isStatic;
         this.validate();
+    }
+
+    public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
+                        List<EdgeTable> edgeTables, Map<String, String> config,
+                        Map<String, String> usingTables, boolean ifNotExists, boolean isTemporary,
+                        GraphDescriptor descriptor) {
+        this(instanceName, name, vertexTables, edgeTables, config, usingTables, ifNotExists, isTemporary);
+        this.graphDescriptor = Objects.requireNonNull(descriptor);
     }
 
     public void validate() {
@@ -236,14 +241,6 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
     public int getShardCount() {
         return Configuration.getInteger(DSLConfigKeys.GEAFLOW_DSL_STORE_SHARD_COUNT, config);
-    }
-
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public void setStatic(boolean aStatic) {
-        isStatic = aStatic;
     }
 
     public IType<?> getIdType() {

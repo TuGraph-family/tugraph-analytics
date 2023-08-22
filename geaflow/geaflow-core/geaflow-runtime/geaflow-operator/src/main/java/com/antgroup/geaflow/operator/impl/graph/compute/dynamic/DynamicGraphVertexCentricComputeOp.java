@@ -20,7 +20,6 @@ import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunctio
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunction.IncGraphComputeContext;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
-import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.operator.OpArgs;
@@ -30,8 +29,6 @@ import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic.IncGraphContextImpl;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox.MsgProcessFunc;
 import com.antgroup.geaflow.operator.impl.iterator.IteratorOperator;
-import com.antgroup.geaflow.state.DataModel;
-import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.util.HashSet;
 import java.util.List;
@@ -74,15 +71,6 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
             }
         }
     }
-
-    @Override
-    protected GraphStateDescriptor<K, VV, EV> buildGraphStateDesc(String name) {
-        GraphStateDescriptor<K, VV, EV> desc =  super.buildGraphStateDesc(name);
-        desc.withDataModel(DataModel.DYNAMIC_GRAPH);
-        desc.withGraphMeta(new GraphMeta(graphViewDesc.getGraphMetaType()));
-        return desc;
-    }
-
 
     @Override
     public void doFinishIteration(long iterations) {

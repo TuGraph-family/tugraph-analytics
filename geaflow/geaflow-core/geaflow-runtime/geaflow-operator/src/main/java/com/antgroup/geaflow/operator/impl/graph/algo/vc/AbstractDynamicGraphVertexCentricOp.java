@@ -20,10 +20,13 @@ import com.antgroup.geaflow.api.graph.base.algo.VertexCentricAlgo;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.CheckpointUtil;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.OpArgs.OpType;
 import com.antgroup.geaflow.operator.impl.graph.compute.dynamic.cache.TemporaryGraphCache;
+import com.antgroup.geaflow.state.DataModel;
+import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
 import java.io.IOException;
@@ -86,6 +89,14 @@ public abstract class AbstractDynamicGraphVertexCentricOp<K, VV, EV, M,
         this.graphMsgBox.clearInBox();
         this.graphMsgBox.clearOutBox();
         this.graphState.manage().operate().close();
+    }
+
+    @Override
+    protected GraphStateDescriptor<K, VV, EV> buildGraphStateDesc(String name) {
+        GraphStateDescriptor<K, VV, EV> desc =  super.buildGraphStateDesc(name);
+        desc.withDataModel(DataModel.DYNAMIC_GRAPH);
+        desc.withGraphMeta(new GraphMeta(graphViewDesc.getGraphMetaType()));
+        return desc;
     }
 
     public GraphViewDesc getGraphViewDesc() {

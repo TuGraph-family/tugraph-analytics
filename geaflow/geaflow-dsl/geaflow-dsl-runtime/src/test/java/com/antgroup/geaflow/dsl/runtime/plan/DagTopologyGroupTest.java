@@ -141,7 +141,7 @@ public class DagTopologyGroupTest {
 
     private GraphSchema createGraph() {
         GeaFlowGraph graph = new GeaFlowGraph("default", "test", new ArrayList<>(),
-            new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false, false);
+            new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false);
         GraphRecordType graphRecordType = (GraphRecordType) graph.getRowType(GQLJavaTypeFactory.create());
         return (GraphSchema) SqlTypeUtil.convertType(graphRecordType);
     }

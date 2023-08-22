@@ -87,14 +87,8 @@ public class SchemaUtil {
     private static long getGraphLatestVersion(GeaFlowGraph graph, Configuration conf) {
         try {
             Configuration globalConfig = graph.getConfigWithGlobal(conf);
-            long lastCheckPointId;
-            if (graph.isStatic()) {
-                lastCheckPointId = 0L;
-            } else {
-                ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graph.getUniqueName(), globalConfig);
-                lastCheckPointId = keeper.getLatestViewVersion(graph.getUniqueName());
-            }
-            return lastCheckPointId;
+            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graph.getUniqueName(), globalConfig);
+            return keeper.getLatestViewVersion(graph.getUniqueName());
         } catch (IOException e) {
             throw new GeaFlowDSLException(e);
         }
