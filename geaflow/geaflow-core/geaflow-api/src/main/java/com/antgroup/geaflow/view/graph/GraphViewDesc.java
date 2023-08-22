@@ -101,4 +101,9 @@ public class GraphViewDesc implements IViewDesc {
             return currentWindowId + currentVersion;
         }
     }
+
+    public GraphViewDesc asStatic() {
+        return new GraphViewDesc(viewName, shardNum, backend, partitioner,
+            graphMetaType, props, 0L);
+    }
 }

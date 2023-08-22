@@ -25,14 +25,12 @@ import com.antgroup.geaflow.context.AbstractRuntimeContext;
 import com.antgroup.geaflow.metrics.common.MetricNameFormatter;
 import com.antgroup.geaflow.metrics.common.api.Meter;
 import com.antgroup.geaflow.model.graph.message.IGraphMessage;
-import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.GraphMsgBoxFactory;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox;
 import com.antgroup.geaflow.operator.impl.iterator.IteratorOperator;
-import com.antgroup.geaflow.state.DataModel;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.StateFactory;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
@@ -122,21 +120,12 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
         BackendType backendType = graphViewDesc.getBackend();
         GraphStateDescriptor<K, VV, EV> desc = GraphStateDescriptor.build(graphViewDesc.getName()
             , backendType.name());
-        int maxPara;
-        switch (backendType) {
-            case RocksDB:
-                desc.withDataModel(graphViewDesc.isStatic() ? DataModel.STATIC_GRAPH : DataModel.DYNAMIC_GRAPH);
-                desc.withGraphMeta(new GraphMeta(graphViewDesc.getGraphMetaType()));
-                maxPara = graphViewDesc.getShardNum();
-                Preconditions.checkArgument(taskPara <= maxPara, String.format("task parallelism '%s' must be <= shard num(max parallelism) '%s'",
-                    taskPara, maxPara));
-                break;
-            case Memory:
-                maxPara = runtimeContext.getTaskArgs().getMaxParallelism();
-                break;
-            default:
-                throw new GeaflowRuntimeException("Illegal backend type: " + graphViewDesc.getBackend());
-        }
+
+        int maxPara = graphViewDesc.getShardNum();
+        Preconditions.checkArgument(taskPara <= maxPara,
+            String.format("task parallelism '%s' must be <= shard num(max parallelism) '%s'",
+                taskPara, maxPara));
+
         keyGroup = KeyGroupAssignment.computeKeyGroupRangeForOperatorIndex(maxPara, taskPara, taskIndex);
         IKeyGroupAssigner keyGroupAssigner =
             KeyGroupAssignerFactory.createKeyGroupAssigner(keyGroup, taskIndex, maxPara);

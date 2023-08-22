@@ -23,7 +23,6 @@ import com.antgroup.geaflow.api.window.impl.AllWindow;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.tuple.Triple;
 import com.antgroup.geaflow.env.Environment;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.data.GraphDataSet;
 import com.antgroup.geaflow.example.function.AbstractVcFunc;
@@ -76,7 +75,7 @@ public class ShortestPathOfVertexSet {
 
     public static IPipelineResult submit(Environment environment) {
         ResultValidator.cleanResult(RESULT_FILE_DIR);
-        Configuration envConfig = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration envConfig = environment.getEnvironmentContext().getConfig();
         envConfig.put(FileSink.OUTPUT_DIR, RESULT_FILE_DIR);
 
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
@@ -99,7 +98,7 @@ public class ShortestPathOfVertexSet {
 
             GraphViewDesc graphViewDesc = GraphViewBuilder
                 .createGraphView(GraphViewBuilder.DEFAULT_GRAPH)
-                .withShardNum(2)
+                .withShardNum(iterationParallelism)
                 .withBackend(BackendType.Memory)
                 .build();
             PWindowStream<IVertex<Integer, Map<String, Map<Integer, Object>>>> result =

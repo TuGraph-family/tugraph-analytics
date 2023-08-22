@@ -15,16 +15,19 @@
 package com.antgroup.geaflow.pdata.graph.window;
 
 import com.antgroup.geaflow.api.function.base.KeySelector;
+import com.antgroup.geaflow.api.function.internal.CollectionSource;
 import com.antgroup.geaflow.api.graph.PGraphWindow;
 import com.antgroup.geaflow.api.graph.compute.PGraphCompute;
 import com.antgroup.geaflow.api.graph.compute.VertexCentricCompute;
 import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
 import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
+import com.antgroup.geaflow.api.window.impl.AllWindow;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.pdata.graph.window.compute.ComputeWindowGraph;
 import com.antgroup.geaflow.pdata.graph.window.traversal.TraversalWindowGraph;
+import com.antgroup.geaflow.pdata.stream.window.WindowStreamSource;
 import com.antgroup.geaflow.pipeline.context.IPipelineContext;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.google.common.base.Preconditions;
@@ -41,14 +44,30 @@ public class WindowStreamGraph<K, VV, EV> implements PGraphWindow<K, VV, EV>, Se
     private final PWindowStream<IVertex<K, VV>> vertexWindowSteam;
     private final PWindowStream<IEdge<K, EV>> edgeWindowStream;
 
+    /**
+     * Create a static window graph.
+     */
     public WindowStreamGraph(GraphViewDesc graphViewDesc, IPipelineContext pipelineContext,
                              PWindowStream<IVertex<K, VV>> vertexWindowSteam,
                              PWindowStream<IEdge<K, EV>> edgeWindowStream) {
-        this.graphViewDesc = graphViewDesc;
+        this.graphViewDesc = graphViewDesc.asStatic();
         this.pipelineContext = pipelineContext;
         this.vertexWindowSteam = vertexWindowSteam;
         this.edgeWindowStream =  edgeWindowStream;
     }
+
+    /**
+     * Create a snapshot window graph.
+     */
+    public WindowStreamGraph(GraphViewDesc graphViewDesc, IPipelineContext pipelineContext) {
+        this.graphViewDesc = graphViewDesc;
+        this.pipelineContext = pipelineContext;
+        this.vertexWindowSteam = new WindowStreamSource(pipelineContext, new CollectionSource(),
+            AllWindow.getInstance());
+        this.edgeWindowStream = new WindowStreamSource(pipelineContext, new CollectionSource(),
+            AllWindow.getInstance());
+    }
+
 
     @Override
     public <M> PGraphCompute<K, VV, EV> compute(VertexCentricCompute<K, VV, EV, M> vertexCentricCompute) {

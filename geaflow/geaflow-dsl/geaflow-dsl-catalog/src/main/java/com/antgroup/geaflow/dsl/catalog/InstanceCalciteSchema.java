@@ -44,7 +44,20 @@ public class InstanceCalciteSchema implements Schema {
 
     @Override
     public Table getTable(String name) {
-        return catalog.getTable(instanceName, name);
+        //At present, Calcite only has one Table data model.
+        // The Graph data model inherits from the Table data model.
+        // During validator inference, it is impossible to distinguish whether it is a graph or a
+        // table based on identifier. It is necessary to read the catalog separately.
+        Table table;
+        try {
+            table = catalog.getTable(instanceName, name);
+        } catch (Exception e) {
+            table = null;
+        }
+        if (table != null) {
+            return table;
+        }
+        return catalog.getGraph(instanceName, name);
     }
 
     @Override

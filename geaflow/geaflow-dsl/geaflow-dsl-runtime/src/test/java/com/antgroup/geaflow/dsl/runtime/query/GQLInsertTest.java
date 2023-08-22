@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime.query;
 
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import org.testng.annotations.Test;
 
 public class GQLInsertTest {
@@ -32,6 +33,17 @@ public class GQLInsertTest {
         QueryTester
             .build()
             .withQueryPath("/query/gql_insert_and_graph_002.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testInsertAndQuery_003() throws Exception {
+        QueryTester
+            .build()
+            .enableInitDDL(false)
+            .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), "2")
+            .withQueryPath("/query/gql_insert_and_graph_003.sql")
             .execute()
             .checkSinkResult();
     }

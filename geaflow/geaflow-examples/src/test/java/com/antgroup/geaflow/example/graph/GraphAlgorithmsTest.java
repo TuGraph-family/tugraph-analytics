@@ -48,7 +48,7 @@ public class GraphAlgorithmsTest extends BaseTest {
     private static final Map<String, String> TEST_CONFIG = new HashMap<>();
     static {
         TEST_CONFIG.put(ExampleConfigKeys.SOURCE_PARALLELISM.getKey(), String.valueOf(3));
-        TEST_CONFIG.put(ExampleConfigKeys.ITERATOR_PARALLELISM.getKey(), String.valueOf(7));
+        TEST_CONFIG.put(ExampleConfigKeys.ITERATOR_PARALLELISM.getKey(), String.valueOf(4));
         TEST_CONFIG.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), String.valueOf(5));
         TEST_CONFIG.put(ExampleConfigKeys.GEAFLOW_SINK_TYPE.getKey(), SinkType.FILE_SINK.name());
     }
@@ -188,7 +188,7 @@ public class GraphAlgorithmsTest extends BaseTest {
     @Test
     public void personalRankTest() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration config = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
 
         IPipelineResult result = PersonalRank.submit(environment);
@@ -201,7 +201,7 @@ public class GraphAlgorithmsTest extends BaseTest {
     @Test
     public void shortestPathTest() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration config = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
 
         IPipelineResult result = ShortestPath.submit(environment);
@@ -227,7 +227,7 @@ public class GraphAlgorithmsTest extends BaseTest {
     @Test
     public void SSSPTest() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration config = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
 
         IPipelineResult result = SSSP.submit(environment);
