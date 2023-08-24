@@ -59,15 +59,14 @@ public class JaccardAlgorithm implements AlgorithmUserFunction {
     public void process(RowVertex vertex, Iterator messages) {
 
         List<RowEdge> bothEdges = new ArrayList<>(context.loadEdges(EdgeDirection.BOTH));
+        StringBuilder sb = new StringBuilder();
         List<String> collection = bothEdges.stream().map(x -> String.valueOf(x.getTargetId())).collect(Collectors.toList());
 
         if (context.getCurrentIterationId()  == iteration) {
 
             bothEdges.stream().forEach(x -> {
-                //Update the value of the current iteration table
-                String initValueStr = collection.toString();
-                initValueStr = initValueStr.substring(1, initValueStr.length()-1);
-                context.updateVertexValue(ObjectRow.create(x.getSrcId(), x.getTargetId(), initValueStr, 0, 0));
+                // Update the value of the current iteration table
+                context.updateVertexValue(ObjectRow.create(x.getSrcId(), x.getTargetId(), 0));
             });
 
             sendMessageToNeighbors(bothEdges, ObjectRow.create(vertex.getId(), collection.toString()));
@@ -77,9 +76,11 @@ public class JaccardAlgorithm implements AlgorithmUserFunction {
                 // set of neighbors
                 Long neighborsVertexId =  (Long) singleRow.getField(0, LongType.INSTANCE);
                 String vertexCollection = (String) singleRow.getField(1, StringType.INSTANCE);
+                vertexCollection = vertexCollection.substring(1, vertexCollection.length()-1);
                 if (StringUtils.isBlank(vertexCollection)) {
                     return;
                 } else {
+                    vertexCollection = vertexCollection.substring(1, vertexCollection.length()-1);
                     String[] vertexIds =  vertexCollection.split(",");
                     List<Long> neighborsVertexCollection =  Arrays.asList(vertexIds).stream().map(Long::valueOf).collect(Collectors.toList());
                     List<Long> currentCollection = collection.stream().map(Long::valueOf).collect(Collectors.toList());
@@ -96,7 +97,7 @@ public class JaccardAlgorithm implements AlgorithmUserFunction {
     public void finish(RowVertex vertex) {
         long srcId = (long) vertex.getValue().getField(0, LongType.INSTANCE);
         long targetId =  (long) vertex.getValue().getField(1, LongType.INSTANCE);
-        double similar =  (double) vertex.getValue().getField(1, DoubleType.INSTANCE);
+        double similar =  (double) vertex.getValue().getField(2, DoubleType.INSTANCE);
         context.take(ObjectRow.create(srcId, targetId, similar));
     }
 
