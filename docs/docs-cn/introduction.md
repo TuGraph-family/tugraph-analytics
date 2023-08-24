@@ -44,20 +44,13 @@ GeaFlow相关设计参考论文：[GeaFlow: A Graph Extended and Accelerated Dat
 ## 技术概览
 GeaFlow整体架构如下所示：
 
-![GeaFlow架构](../static/img/geaflow_arch.png)
-GeaFlow整体架构从上往下包含以下几层：
-* **GeaFlow DSL**
-  GeaFlow对用户提供图表融合分析语言，采用SQL + ISO/GQL方式.用户可以通过类似SQL编程的方式编写实时图计算任务.
-* **GraphView API**
-  GeaFlow以GraphView为核心定义的一套图计算的编程接口,包含图构建、图计算以及Stream API接口.
-* **GeaFlow Runtime**
-  GeaFlow运行时，包含GeaFlow图表算子、task调度、failover以及shuffle等核心功能.
-* **GeaFlow State**
-  GeaFlow的图状态存储，用于存储图的点边数据.同时流式计算的状态如聚合状态也存放在State中.
-* **K8S Deployment**
-  GeaFlow支持K8S的方式进行部署运行.
-* **GeaFlow Console**
-  GeaFlow的管控平台，包含作业管理、元数据管理等功能.
+![GeaFlow架构](../static/img/geaflow_arch_new.png)
+
+* [DSL层](./principle/dsl_principle.md)：即语言层。GeaFlow设计了SQL+GQL的融合分析语言，支持对表模型和图模型统一处理。
+* [Framework层](./principle/framework_principle.md)：即框架层。GeaFlow设计了面向Graph和Stream的两套API支持流、批、图融合计算，并实现了基于Cycle的统一分布式调度模型。
+* [State层](./principle/state_principle.md)：即存储层。GeaFlow设计了面向Graph和KV的两套API支持表数据和图数据的混合存储，整体采用了Sharing Nothing的设计，并支持将数据持久化到远程存储。
+* [Console平台](./principle/console_principle.md)：GeaFlow提供了一站式图研发平台，实现了图数据的建模、加工、分析能力，并提供了图作业的运维管控支持。
+* **执行环境**：GeaFlow可以运行在多种异构执行环境，如K8S、Ray以及本地模式。
 
 ## 应用场景
 
