@@ -41,20 +41,12 @@ System](https://dl.acm.org/doi/abs/10.1145/3589771)
 ## Technical overview
 The overall architecture of GeaFlow is as follows:
 
-![geaflow_arch](../static/img/geaflow_arch.png)
-The GeaFlow overall architecture includes the following layers from top to bottom:
-* **GeaFlow DSL**
-  GeaFlow provides users with a graph-table fusion analysis language, which adopts SQL + ISO/GQL approach. Users can write real-time graph computing tasks in a similar way to SQL programming.
-* **GraphView API**
-  GeaFlow defines a set of graph computing programming interfaces with GraphView as the core, which includes graph construction, graph computing, and Stream API interfaces.
-* **GeaFlow Runtime**
-  This is the GeaFlow runtime module, which includes core functions such as GeaFlow chart operator, task scheduling, failover, and shuffle.
-* **GeaFlow State**
-  GeaFlow's graph state storage, used to store point-edge data of the graph. The streaming calculation state, such as aggregation state, is also stored in the state.
-* **Deployment Environment**
-  GeaFlow supports deployment and operation in different ways: K8S, Ray and Local.
-* **GeaFlow Console**
-  The GeaFlow control platform, which includes functions such as job management and metadata management.
+![geaflow_arch](../static/img/geaflow_arch_new.png)
+* [DSL Layer](./principle/dsl_principle.md): GeaFlow has designed a fusion analysis language, SQL+GQL, which supports unified processing of table models and graph models.
+* [Framework Layer](./principle/framework_principle.md): GeaFlow has designed two sets of APIs for graph and stream, supporting the fusion computation of streaming, batch, and graph processing. It has also implemented a unified distributed scheduling model based on Cycle.
+* [State Layer](./principle/state_principle.md): GeaFlow has designed two sets of APIs for graph and key-value storage, supporting the mixed storage of table data and graph data. The overall design follows the Sharing Nothing principle and supports the persistence of data to remote storage.
+* [Console Platform](./principle/console_principle.md): GeaFlow provides an all-in-one graph development platform, implementing the capabilities of graph data modeling, processing, and analysis. It also provides operational and control support for graph tasks.
+* **Execution Environment**: GeaFlow can run in various heterogeneous execution environments, such as K8S, Ray, and local mode.
 
 ## Application Scenarios
 
