@@ -52,9 +52,9 @@ public class KubernetesClientFactory {
             .withNamespace(namespace);
 
         clientConfig.withTrustCerts(true);
-        String certKet = config.getString(CERT_KEY);
-        if (!StringUtils.isBlank(certKet)) {
-            clientConfig.withClientKeyData(certKet);
+        String certKey = config.getString(CERT_KEY);
+        if (!StringUtils.isBlank(certKey)) {
+            clientConfig.withClientKeyData(certKey);
         }
 
         String certData = config.getString(CERT_DATA);
@@ -67,9 +67,9 @@ public class KubernetesClientFactory {
             clientConfig.withCaCertData(certData);
         }
 
-        String cKeyAlgo = config.getString(CLIENT_KEY_ALGO);
-        if (!StringUtils.isBlank(cKeyAlgo)) {
-            clientConfig.withClientKeyAlgo(cKeyAlgo);
+        String certKeyAlgo = config.getString(CLIENT_KEY_ALGO);
+        if (!StringUtils.isBlank(certKeyAlgo)) {
+            clientConfig.withClientKeyAlgo(certKeyAlgo);
         }
 
         Dispatcher dispatcher = new Dispatcher();
