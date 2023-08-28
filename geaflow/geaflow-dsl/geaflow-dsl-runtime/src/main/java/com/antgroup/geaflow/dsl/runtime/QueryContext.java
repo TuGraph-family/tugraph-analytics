@@ -74,6 +74,8 @@ public class QueryContext {
 
     private RuntimeTable requestTable;
 
+    private boolean isIdOnlyRequest;
+
     private Expression pushFilter;
 
     private final Map<String, Integer> configParallelisms = new HashMap<>();
@@ -195,8 +197,18 @@ public class QueryContext {
         return preValue;
     }
 
+    public boolean setIdOnlyRequest(boolean isIdOnlyRequest) {
+        boolean preValue = this.isIdOnlyRequest;
+        this.isIdOnlyRequest = isIdOnlyRequest;
+        return preValue;
+    }
+
     public RuntimeTable getRequestTable() {
         return requestTable;
+    }
+
+    public boolean isIdOnlyRequest() {
+        return isIdOnlyRequest;
     }
 
     public Expression setPushFilter(Expression pushFilter) {

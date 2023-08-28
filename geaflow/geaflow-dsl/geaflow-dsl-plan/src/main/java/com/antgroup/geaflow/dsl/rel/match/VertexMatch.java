@@ -33,6 +33,8 @@ import org.apache.calcite.rel.AbstractRelNode;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMatchLabel {
@@ -47,8 +49,20 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
 
     private final RelDataType nodeType;
 
-    public VertexMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input, String label,
-                       Collection<String> vertexTypes, RelDataType nodeType, PathRecordType pathType) {
+    /**
+     * The filter pushed down to the first vertex match.
+     */
+    private RexNode pushDownFilter;
+
+    public VertexMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
+                       String label, Collection<String> vertexTypes, RelDataType nodeType,
+                       PathRecordType pathType) {
+        this(cluster, traitSet, input, label, vertexTypes, nodeType, pathType, null);
+    }
+
+    public VertexMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
+                       String label, Collection<String> vertexTypes, RelDataType nodeType,
+                       PathRecordType pathType, RexNode pushDownFilter) {
         super(cluster, traitSet);
         this.input = input;
         this.label = label;
@@ -62,6 +76,7 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
         this.rowType = Objects.requireNonNull(pathType);
         this.pathType = Objects.requireNonNull(pathType);
         this.nodeType = Objects.requireNonNull(nodeType);
+        this.pushDownFilter = pushDownFilter;
     }
 
     @Override
@@ -87,19 +102,28 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
         return input;
     }
 
+    public RexNode getPushDownFilter() {
+        return pushDownFilter;
+    }
+
     @Override
     public SingleMatchNode copy(List<RelNode> inputs, PathRecordType pathSchema) {
         assert inputs.size() <= 1;
         RelNode input = inputs.isEmpty() ? null : inputs.get(0);
         return new VertexMatch(getCluster(), traitSet, input, label,
-            vertexTypes, nodeType, pathSchema);
+            vertexTypes, nodeType, pathSchema, pushDownFilter);
     }
 
     @Override
     public VertexMatch copy(RelTraitSet traitSet, List<RelNode> inputs) {
         RelNode input = GQLRelUtil.oneInput(inputs);
         return new VertexMatch(getCluster(), getTraitSet(), input,
-            label, vertexTypes, nodeType, pathType);
+            label, vertexTypes, nodeType, pathType, pushDownFilter);
+    }
+
+    public VertexMatch copy(RexNode pushDownFilter) {
+        return new VertexMatch(getCluster(), getTraitSet(), input,
+            label, vertexTypes, nodeType, pathType, pushDownFilter);
     }
 
     @Override
@@ -139,5 +163,14 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
     @Override
     public <T> T accept(MatchNodeVisitor<T> visitor) {
         return visitor.visitVertexMatch(this);
+    }
+
+    @Override
+    public RelNode accept(RexShuttle shuttle) {
+        if (pushDownFilter != null) {
+            RexNode newPushDownFilter = pushDownFilter.accept(shuttle);
+            return copy(newPushDownFilter);
+        }
+        return this;
     }
 }
