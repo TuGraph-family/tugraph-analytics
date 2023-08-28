@@ -91,11 +91,13 @@ public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunctio
             Object targetId = edge.getTargetId();
             // load targetId.
             RowVertex vertex = context.loadVertex(targetId, function.getVertexFilter(), graphSchema, addingVertexFieldTypes);
-            ITreePath treePath = edgeGroupRecord.getPathById(targetId);
-            // set current vertex.
-            context.setVertex(vertex);
-            // process new vertex.
-            processVertex(VertexRecord.of(vertex, treePath));
+            if (vertex != null) {
+                ITreePath treePath = edgeGroupRecord.getPathById(targetId);
+                // set current vertex.
+                context.setVertex(vertex);
+                // process new vertex.
+                processVertex(VertexRecord.of(vertex, treePath));
+            }
         }
     }
 
