@@ -41,6 +41,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.ExecuteDagGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.StepLogicalPlan;
 import com.antgroup.geaflow.dsl.runtime.traversal.StepLogicalPlanSet;
 import com.antgroup.geaflow.dsl.runtime.traversal.StepLogicalPlanTranslator;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.IdOnlyRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.InitParameterRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.TraversalAll;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepOperator;
@@ -52,6 +53,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ParameterizedTreePath;
 import com.antgroup.geaflow.dsl.runtime.util.IDUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
@@ -181,6 +183,7 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         return new GeaFlowRuntimeTable(queryContext, context, resultPWindow);
     }
 
+    @SuppressWarnings("unchecked")
     private PWindowStream<ITraversalResponse<ITreePath>> staticGraphTraversal(
         PGraphWindow<Object, Row, Row> staticGraph,
         Set<ParameterStartId> parameterStartIds,
@@ -190,22 +193,24 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         PWindowStream<ITraversalResponse<ITreePath>> responsePWindow;
         if (queryContext.getRequestTable() != null) { // traversal with request
             RuntimeTable requestTable = queryContext.getRequestTable();
+            boolean isIdOnlyRequest = queryContext.isIdOnlyRequest();
+
             PWindowStream<Row> requestWindowStream = requestTable.getPlan();
-            PWindowStream<InitParameterRequest> parameterizedRequest;
+            PWindowStream<ITraversalRequest<?>> parameterizedRequest;
             boolean isTraversalAllWithRequest;
             if (parameterStartIds.size() == 1) { // static request table attach the start id
                 parameterizedRequest = requestWindowStream.map(
-                    new RowToParameterRequestFunction(parameterStartIds.iterator().next()));
+                    new RowToParameterRequestFunction(parameterStartIds.iterator().next(), isIdOnlyRequest));
                 isTraversalAllWithRequest = false;
             } else { // static request table attach all the traversal ids.
-                parameterizedRequest = requestWindowStream.map(new RowToParameterRequestFunction(null))
+                parameterizedRequest = requestWindowStream.map(new RowToParameterRequestFunction(null, isIdOnlyRequest))
                     .broadcast();
                 isTraversalAllWithRequest = true;
             }
             responsePWindow =
                 staticGraph.traversal(new GeaFlowStaticVCTraversal(executeDagGroup,
                         maxTraversal, isTraversalAllWithRequest))
-                    .start(parameterizedRequest);
+                    .start((PWindowStream) parameterizedRequest);
         } else if (constantStartIds.size() > 0) { // static request with constant ids.
             responsePWindow =
                 staticGraph.traversal(new GeaFlowStaticVCTraversal(executeDagGroup,
@@ -220,6 +225,7 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         return responsePWindow;
     }
 
+    @SuppressWarnings("unchecked")
     private PWindowStream<ITraversalResponse<ITreePath>> dynamicGraphTraversal(
         PIncGraphView<Object, Row, Row> dynamicGraph,
         Set<ParameterStartId> parameterStartIds,
@@ -228,21 +234,23 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         int maxTraversal) {
         if (queryContext.getRequestTable() != null) { // dynamic traversal with request
             RuntimeTable requestTable = queryContext.getRequestTable();
+            boolean isIdOnlyRequest = queryContext.isIdOnlyRequest();
+
             PWindowStream<Row> requestWindowStream = requestTable.getPlan();
-            PWindowStream<InitParameterRequest> parameterizedRequest;
+            PWindowStream<ITraversalRequest<?>> parameterizedRequest;
             boolean isTraversalAllWithRequest;
             if (parameterStartIds.size() == 1) { // request table attach the start id.
                 parameterizedRequest = requestWindowStream.map(
-                    new RowToParameterRequestFunction(parameterStartIds.iterator().next()));
+                    new RowToParameterRequestFunction(parameterStartIds.iterator().next(), isIdOnlyRequest));
                 isTraversalAllWithRequest = false;
             } else {
-                parameterizedRequest = requestWindowStream.map(new RowToParameterRequestFunction(null))
-                    .broadcast();
+                parameterizedRequest = requestWindowStream.map(
+                    new RowToParameterRequestFunction(null, isIdOnlyRequest)).broadcast();
                 isTraversalAllWithRequest = true;
             }
             return dynamicGraph.incrementalTraversal(
                     new GeaFlowDynamicVCTraversal(executeDagGroup, maxTraversal, isTraversalAllWithRequest))
-                .start(parameterizedRequest);
+                .start((PWindowStream) parameterizedRequest);
         } else if (constantStartIds.size() > 0) { // request with constant ids.
             return dynamicGraph.incrementalTraversal(new GeaFlowDynamicVCTraversal(executeDagGroup,
                     maxTraversal, false))
@@ -325,9 +333,11 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
     }
 
     private static class RowToParameterRequestFunction extends RichFunction
-        implements MapFunction<Row, InitParameterRequest> {
+        implements MapFunction<Row, ITraversalRequest<?>> {
 
         private final ParameterStartId startId;
+
+        private final boolean isIdOnlyRequest;
 
         private int numTasks;
 
@@ -335,8 +345,9 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
 
         private long rowCounter = 0;
 
-        public RowToParameterRequestFunction(ParameterStartId startId) {
+        public RowToParameterRequestFunction(ParameterStartId startId, boolean isIdOnlyRequest) {
             this.startId = startId;
+            this.isIdOnlyRequest = isIdOnlyRequest;
         }
 
         @Override
@@ -346,7 +357,7 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
         }
 
         @Override
-        public InitParameterRequest map(Row row) {
+        public ITraversalRequest<?> map(Row row) {
             long requestId = IDUtil.uniqueId(numTasks, taskIndex, rowCounter);
             if (requestId < 0) {
                 throw new GeaFlowDSLException("Request id exceed the Long.MAX, numTasks: "
@@ -358,6 +369,9 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
                 vertexId = startId.getIdExpression().evaluate(row);
             } else {
                 vertexId = TraversalAll.INSTANCE;
+            }
+            if (isIdOnlyRequest) {
+                return new IdOnlyRequest(vertexId);
             }
             return new InitParameterRequest(requestId, vertexId, row);
         }

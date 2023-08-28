@@ -44,4 +44,31 @@ public class GQLParameterRequestTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testIdOnlyParameterRequest_001() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_idonly_parameter_request_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIdOnlyParameterRequest_002() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_idonly_parameter_request_002.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIdOnlyParameterRequest_003() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_idonly_parameter_request_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }
