@@ -106,11 +106,14 @@ public class QueryContext {
 
     private final Set<GraphInfo> referTargetGraphs = new HashSet<>();
 
+    private final List<QueryCallback> queryCallbacks = new ArrayList<>();
+
     private QueryContext(QueryEngine engineContext, boolean isCompile) {
         this.engineContext = engineContext;
         this.gqlContext = GQLContext.create(new Configuration(engineContext.getConfig()), isCompile);
         this.pathAnalyzer = new PathReferenceAnalyzer(gqlContext);
         this.isCompile = isCompile;
+        registerQueryCallback(InsertGraphMaterialCallback.INSTANCE);
     }
 
     public IQueryCommand getCommand(SqlNode node) {
@@ -349,6 +352,17 @@ public class QueryContext {
 
     public int getTraversalParallelism() {
         return this.traversalParallelism;
+    }
+
+
+    public void registerQueryCallback(QueryCallback callback) {
+        queryCallbacks.add(callback);
+    }
+
+    public void finish() {
+        for (QueryCallback callback : queryCallbacks) {
+            callback.onQueryFinish(this);
+        }
     }
 
     public static class QueryContextBuilder {

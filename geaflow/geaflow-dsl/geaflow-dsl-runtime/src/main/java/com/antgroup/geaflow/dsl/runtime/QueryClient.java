@@ -32,7 +32,6 @@ import com.antgroup.geaflow.plan.graph.PipelineGraph;
 import com.antgroup.geaflow.plan.visualization.JsonPlanGraphVisualization;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskContext;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,10 +44,8 @@ public class QueryClient implements QueryCompiler {
 
     private final GeaFlowDSLParser parser = new GeaFlowDSLParser();
 
-    private final List<QueryCallback> queryCallbacks = new ArrayList<>();
 
     public QueryClient() {
-        registerQueryCallback(InsertGraphMaterialCallback.INSTANCE);
     }
 
     /**
@@ -62,9 +59,6 @@ public class QueryClient implements QueryCompiler {
             List<SqlNode> sqlNodes = parser.parseMultiStatement(sql);
             for (SqlNode sqlNode : sqlNodes) {
                 executeQuery(sqlNode, context);
-            }
-            for (QueryCallback callback : queryCallbacks) {
-                callback.onQueryFinish(context);
             }
         } catch (SqlParseException e) {
             throw new GeaFlowDSLException("Error in execute query: \n" + sql, e);
@@ -92,10 +86,6 @@ public class QueryClient implements QueryCompiler {
     private QueryResult executeQuery(SqlNode sqlNode, QueryContext context) {
         IQueryCommand command = context.getCommand(sqlNode);
         return command.execute(context);
-    }
-
-    public void registerQueryCallback(QueryCallback callback) {
-        queryCallbacks.add(callback);
     }
 
     @Override

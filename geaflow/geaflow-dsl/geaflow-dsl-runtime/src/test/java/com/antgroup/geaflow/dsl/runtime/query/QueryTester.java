@@ -96,7 +96,6 @@ public class QueryTester implements Serializable {
         if (queryPath == null) {
             throw new IllegalArgumentException("You should call withQueryPath() before execute().");
         }
-
         Map<String, String> config = new HashMap<>();
         config.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), String.valueOf(-1L));
         config.put(FileConfigKeys.ROOT.getKey(), DSL_STATE_REMOTE_PATH);
