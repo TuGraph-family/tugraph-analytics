@@ -18,15 +18,15 @@ import java.util.Map;
 
 public class PluginConfigModel extends AbstractNameModel {
 
-    private GeaFlowPluginType type;
+    private String type;
 
     private Map<String, String> config;
 
-    public GeaFlowPluginType getType() {
+    public String getType() {
         return type;
     }
 
-    public void setType(GeaFlowPluginType type) {
+    public void setType(String type) {
         this.type = type;
     }
 

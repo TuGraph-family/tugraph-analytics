@@ -41,7 +41,7 @@ public class CatalogUtil {
     public static TableModel convertToTableModel(GeaFlowTable table) {
         TableModel tableModel = new TableModel();
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
-        pluginConfigModel.setType(GeaFlowPluginType.getPluginType(table.getTableType()));
+        pluginConfigModel.setType(table.getTableType());
         pluginConfigModel.setConfig(convertToTableModelConfig(table.getConfig()));
         tableModel.setPluginConfig(pluginConfigModel);
         tableModel.setName(table.getName());
@@ -154,7 +154,7 @@ public class CatalogUtil {
     public static GraphModel convertToGraphModel(GeaFlowGraph graph) {
         GraphModel graphModel = new GraphModel();
         PluginConfigModel pluginConfigModel = new PluginConfigModel();
-        pluginConfigModel.setType(GeaFlowPluginType.getPluginType(graph.getStoreType()));
+        pluginConfigModel.setType(graph.getStoreType());
         pluginConfigModel.setConfig(convertToGraphModelConfig(graph.getConfig().getConfigMap()));
 
         graphModel.setPluginConfig(pluginConfigModel);
@@ -242,7 +242,7 @@ public class CatalogUtil {
     private static Map<String, String> convertToGeaFlowTableConfig(PluginConfigModel configModel) {
         Map<String, String> tableConfig = new HashMap<>(configModel.getConfig());
         tableConfig.put(DSLConfigKeys.GEAFLOW_DSL_TABLE_TYPE.getKey(),
-            configModel.getType().name());
+            configModel.getType());
         return tableConfig;
     }
 
@@ -255,7 +255,7 @@ public class CatalogUtil {
     private static Map<String, String> convertToGeaFlowGraphConfig(PluginConfigModel configModel) {
         Map<String, String> graphConfig = new HashMap<>(configModel.getConfig());
         graphConfig.put(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey(),
-            configModel.getType().name());
+            configModel.getType());
         return graphConfig;
     }
 }
