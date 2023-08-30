@@ -14,9 +14,11 @@
 
 package com.antgroup.geaflow.console.biz.shared.view;
 
+import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfig;
+import java.util.Locale;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,9 +26,27 @@ import lombok.Setter;
 @Setter
 public class PluginConfigView extends NameView {
 
-    private GeaflowPluginType type;
+    private String type;
 
+    @Getter
+    @Setter
     private GeaflowConfig config;
 
+    @Getter
+    @Setter
     private GeaflowPluginCategory category;
+
+    public GeaflowPluginType getType() {
+        GeaflowPluginType pluginType;
+        try {
+            pluginType = GeaflowPluginType.valueOf(type.toUpperCase(Locale.ROOT));
+        } catch (Exception e) {
+            throw new GeaflowException("Cannot find relate plugin type: {}", type, e);
+        }
+        return pluginType;
+    }
+
+    public void setType(GeaflowPluginType type) {
+        this.type = type.name().toUpperCase(Locale.ROOT);
+    }
 }
