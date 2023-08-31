@@ -1,9 +1,11 @@
 # Framework原理介绍
 
 ## 架构图
+
 GeaFlow Framework的架构如下图所示：
 
 ![framework_arch](../../static/img/framework_arch_new.png)
+
 * **高阶API**：GeaFlow通过Environment接口适配异构的分布式执行环境（K8S、Ray、Local），使用Pipeline封装了用户的数据处理流程，使用Window抽象统一了流处理（无界Window）和批处理（有界Window）。Graph接口提供了静态图和动态图（流图）上的计算API，如append/snapshot/compute/traversal等，Stream接口提供了统一流批处理API，如map/reduce/join/keyBy等。
 * **逻辑执行计划**：逻辑执行计划信息统一封装在PipelineGraph对象内，将高阶API对应的算子（Operator）组织在DAG中，算子一共分为5大类：SourceOperator对应数据源加载、OneInputOperator/TwoInputOperator对应传统的数据处理、IteratorOperator对应静态/动态图计算。DAG中的点（PipelineVertex）记录了算子（Operator）的关键信息，如类型、并发度、算子函数等信息，边（PipelineEdge）则记录了数据shuffle的关键信息，如Partition规则（forward/broadcast/key等）、编解码器等。
 * **物理执行计划**：物理执行计划信息统一封装在ExecutionGraph对象内，并支持二级嵌套结构，以尽可能将可以流水线执行的子图（ExecutionVertexGroup）结构统一调度。图中示例的物理执行计划DAG被划分为三部分子图结构分别执行。

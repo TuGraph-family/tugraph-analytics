@@ -10,6 +10,7 @@ Geaflow 中的状态是指图、流计算过程中的直接计算节点的中间
 为此，我们有如下的架构图，整体结构上灵活可变、支持多种可插拔组件。
 
 ### 架构图
+
 ![state_arch](../../static/img/state_arch_new.png)
 
 * **State API**：提供了面向KV存储API，如get/put/delete等。以及面向图存储的API，如V/E/VE，以及点/边的add/update/delete等。

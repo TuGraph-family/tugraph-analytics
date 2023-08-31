@@ -1,10 +1,13 @@
 # DSL原理介绍
 
 ## GeaFlow DSL架构
+
 GeaFlow DSL整体架构如下图所示：
+
 ![DSL架构](../../static/img/dsl_arch_new.png)
 
 DSL层是一个典型的编译器技术架构，即语法分析、语义分析、中间代码生成(IR)、代码优化、目标代码生成（OBJ）的流程。
+
 * **语言设计**：GeaFlow设计了SQL+GQL的融合语法，解决了图+表一体化分析的诉求。
 * **语法分析**：通过扩展[Calcite](https://calcite.apache.org/)的SqlNode和SqlOperator，实现SQL+GQL的语法解析器，生成统一的语法树信息。
 * **语义分析**：通过扩展Calcite的Scope和Namespace，实现自定义Validator，对语法树进行约束语义检查。

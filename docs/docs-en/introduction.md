@@ -39,6 +39,7 @@ System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
 
 ## Technical overview
+
 The overall architecture of GeaFlow is as follows:
 
 ![geaflow_arch](../static/img/geaflow_arch_new.png)

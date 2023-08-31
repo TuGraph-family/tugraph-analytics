@@ -1,6 +1,9 @@
 # GeaFlow DSL Architecture
+
 The overall architecture of GeaFlow DSL is shown in the following figure:
+
 ![dsl_arch](../../static/img/dsl_arch_new.png)
+
 DSL Layer is a typical compiler technology architecture, which consists of syntax analysis, semantic analysis, intermediate code generation (IR), code optimization, and target code generation (OBJ).
 
 * **Language Design**: GeaFlow has designed a fusion syntax of SQL+GQL to address the demand for integrated analysis of graphs and tables.
