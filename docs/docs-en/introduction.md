@@ -43,6 +43,7 @@ System](https://dl.acm.org/doi/abs/10.1145/3589771)
 The overall architecture of GeaFlow is as follows:
 
 ![geaflow_arch](../static/img/geaflow_arch_new.png)
+
 * [DSL Layer](./principle/dsl_principle.md): GeaFlow has designed a fusion analysis language, SQL+GQL, which supports unified processing of table models and graph models.
 * [Framework Layer](./principle/framework_principle.md): GeaFlow has designed two sets of APIs for graph and stream, supporting the fusion computation of streaming, batch, and graph processing. It has also implemented a unified distributed scheduling model based on Cycle.
 * [State Layer](./principle/state_principle.md): GeaFlow has designed two sets of APIs for graph and key-value storage, supporting the mixed storage of table data and graph data. The overall design follows the Sharing Nothing principle and supports the persistence of data to remote storage.
