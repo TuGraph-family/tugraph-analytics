@@ -3,6 +3,7 @@
 GeaFlow Console提供了一站式图研发、运维的平台能力，同时为引擎运行时提供元数据（Catalog）服务。
 
 ### 平台架构
+
 ![console_arch](../../static/img/console_arch.png)
 
 * **标准化API**：平台提供了标准化的RESTful API和认证机制，同时支持了页面端和应用端的统一API服务能力。
