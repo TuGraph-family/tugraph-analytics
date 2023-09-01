@@ -20,6 +20,8 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.utils.HttpUtil;
 import com.google.common.reflect.TypeToken;
@@ -99,6 +101,18 @@ public class ConsoleCatalogClient {
         String getUrl = endpoint + "/api/instances/" + instanceName + "/graphs/" + graphName;
         GraphModel graphModel = HttpUtil.get(getUrl, headers, GraphModel.class);
         return CatalogUtil.convertToGeaFlowGraph(graphModel, instanceName);
+    }
+
+    public VertexTable getVertex(String instanceName, String vertexName) {
+        String getUrl = endpoint + "/api/instances/" + instanceName + "/vertices/" + vertexName;
+        VertexModel vertexModel = HttpUtil.get(getUrl, headers, VertexModel.class);
+        return CatalogUtil.convertToVertexTable(instanceName, vertexModel);
+    }
+
+    public EdgeTable getEdge(String instanceName, String edgeName) {
+        String getUrl = endpoint + "/api/instances/" + instanceName + "/edges/" + edgeName;
+        EdgeModel edgeModel = HttpUtil.get(getUrl, headers, EdgeModel.class);
+        return CatalogUtil.convertToEdgeTable(instanceName, edgeModel);
     }
 
     public GeaFlowFunction getFunction(String instanceName, String functionName) {

@@ -81,7 +81,10 @@ public class CatalogUtil {
         return vertexModel;
     }
 
-    public static VertexTable convertToVertexTable(VertexModel model) {
+    public static VertexTable convertToVertexTable(String instanceName, VertexModel model) {
+        if (model == null) {
+            return null;
+        }
         List<FieldModel> fieldModels = model.getFields();
         List<TableField> fields = new ArrayList<>(fieldModels.size());
         String idFieldName = null;
@@ -94,7 +97,7 @@ public class CatalogUtil {
             TableField field = new TableField(fieldModel.getName(), fieldType, false);
             fields.add(field);
         }
-        return new VertexTable(model.getName(), fields, idFieldName);
+        return new VertexTable(instanceName, model.getName(), fields, idFieldName);
     }
 
     public static EdgeModel convertToEdgeModel(EdgeTable table) {
@@ -123,7 +126,10 @@ public class CatalogUtil {
         return edgeModel;
     }
 
-    public static EdgeTable convertToEdgeTable(EdgeModel model) {
+    public static EdgeTable convertToEdgeTable(String instanceName, EdgeModel model) {
+        if (model == null) {
+            return null;
+        }
         List<FieldModel> fieldModels = model.getFields();
         List<TableField> fields = new ArrayList<>(fieldModels.size());
         String srcIdFieldName = null;
@@ -147,7 +153,7 @@ public class CatalogUtil {
             TableField field = new TableField(fieldModel.getName(), fieldType, false);
             fields.add(field);
         }
-        return new EdgeTable(model.getName(), fields, srcIdFieldName, targetIdFieldName,
+        return new EdgeTable(instanceName, model.getName(), fields, srcIdFieldName, targetIdFieldName,
             timestampFieldName);
     }
 
@@ -181,7 +187,7 @@ public class CatalogUtil {
         List<VertexModel> vertices = model.getVertices();
         List<VertexTable> vertexTables = new ArrayList<>(vertices.size());
         for (VertexModel vertexModel : vertices) {
-            vertexTables.add(convertToVertexTable(vertexModel));
+            vertexTables.add(convertToVertexTable(instanceName, vertexModel));
         }
         GraphDescriptor desc = new GraphDescriptor();
         for (VertexTable vertex : vertexTables) {
@@ -192,7 +198,7 @@ public class CatalogUtil {
         List<EdgeModel> edges = model.getEdges();
         List<EdgeTable> edgeTables = new ArrayList<>(edges.size());
         for (EdgeModel edgeModel : edges) {
-            edgeTables.add(convertToEdgeTable(edgeModel));
+            edgeTables.add(convertToEdgeTable(instanceName, edgeModel));
         }
         if (model.getEndpoints() != null) {
             for (Endpoint endpoint : model.getEndpoints()) {

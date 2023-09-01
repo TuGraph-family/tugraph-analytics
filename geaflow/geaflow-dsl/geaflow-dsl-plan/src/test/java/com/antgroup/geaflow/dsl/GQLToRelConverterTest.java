@@ -719,11 +719,10 @@ public class GQLToRelConverterTest {
             .gql(script)
             .toRel()
             .checkRelNode(
-                "LogicalParameterizedRelNode\n"
-                    + "  LogicalProject(id=[$0])\n"
+                "LogicalParameterizedRelNode\n" + "  LogicalProject(id=[$0])\n"
                     + "    LogicalTableScan(table=[[default, t0]])\n"
                     + "  LogicalProject(a_id=[$0.id], b_id=[$2.id])\n"
-                    + "    LogicalGraphMatch(path=[(a:) where =(a.id, $$0) -[e:]->(b:)])\n"
+                    + "    LogicalGraphMatch(path=[(a:) where =(a.id, CAST($$0):BIGINT) -[e:]->(b:)])\n"
                     + "      LogicalGraphScan(table=[default.g0])\n");
     }
 
@@ -740,12 +739,11 @@ public class GQLToRelConverterTest {
             .gql(script)
             .toRel()
             .checkRelNode(
-                "LogicalProject(a_id=[$0])\n"
-                    + "  LogicalParameterizedRelNode\n"
+                "LogicalProject(a_id=[$0])\n" + "  LogicalParameterizedRelNode\n"
                     + "    LogicalProject(id=[$0])\n"
                     + "      LogicalTableScan(table=[[default, t0]])\n"
                     + "    LogicalProject(a_id=[$0.id], b_id=[$2.id])\n"
-                    + "      LogicalGraphMatch(path=[(a:) where =(a.id, $$0) -[e:]->(b:)])\n"
+                    + "      LogicalGraphMatch(path=[(a:) where =(a.id, CAST($$0):BIGINT) -[e:]->(b:)])\n"
                     + "        LogicalGraphScan(table=[default.g0])\n");
     }
 

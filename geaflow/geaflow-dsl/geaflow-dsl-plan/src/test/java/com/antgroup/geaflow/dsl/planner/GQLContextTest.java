@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.planner;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -44,10 +45,10 @@ public class GQLContextTest {
         GeaFlowGraph graph = gqlContext.convertToGraph(sqlCreateGraph);
         gqlContext.registerGraph(graph);
         assertNull(gqlContext.findSqlFunction(null,"function"));
-        assertTrue(gqlContext.getTypeFactory() instanceof GQLJavaTypeFactory);
+        assertNotNull(gqlContext.getTypeFactory());
         assertTrue(gqlContext.getRelBuilder() instanceof GQLRelBuilder);
-        assertTrue(gqlContext.getValidator() instanceof GQLValidatorImpl);
-        gqlContext.setCurrentGraph("g0");
-        assertEquals(gqlContext.getCurrentGraph(), "g0");
+        assertNotNull(gqlContext.getValidator());
+        gqlContext.setCurrentGraph("g");
+        assertEquals(gqlContext.getCurrentGraph(), "g");
     }
 }

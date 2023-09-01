@@ -20,6 +20,8 @@ import com.antgroup.geaflow.dsl.catalog.exception.ObjectAlreadyExistException;
 import com.antgroup.geaflow.dsl.common.descriptor.EdgeDescriptor;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowView;
 import java.util.ArrayList;
@@ -80,6 +82,20 @@ public class ConsoleCatalog implements Catalog {
         return allTables
             .computeIfAbsent(instanceName, k -> new HashMap<>())
             .computeIfAbsent(tableName, k -> client.getTable(instanceName, tableName));
+    }
+
+    @Override
+    public VertexTable getVertex(String instanceName, String vertexName) {
+        return (VertexTable) allTables
+            .computeIfAbsent(instanceName, k -> new HashMap<>())
+            .computeIfAbsent(vertexName, k -> client.getVertex(instanceName, vertexName));
+    }
+
+    @Override
+    public EdgeTable getEdge(String instanceName, String edgeName) {
+        return (EdgeTable) allTables
+            .computeIfAbsent(instanceName, k -> new HashMap<>())
+            .computeIfAbsent(edgeName, k -> client.getEdge(instanceName, edgeName));
     }
 
     @Override

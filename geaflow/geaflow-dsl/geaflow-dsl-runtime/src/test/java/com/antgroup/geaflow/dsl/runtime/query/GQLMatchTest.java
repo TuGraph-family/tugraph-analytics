@@ -110,4 +110,13 @@ public class GQLMatchTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testMatch_011() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_match_011.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }
