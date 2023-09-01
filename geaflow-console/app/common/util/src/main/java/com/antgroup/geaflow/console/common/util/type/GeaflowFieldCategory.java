@@ -14,6 +14,11 @@
 
 package com.antgroup.geaflow.console.common.util.type;
 
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.NumConstraint.AT_MOST_ONCE;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.NumConstraint.EXACTLY_ONCE;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.NumConstraint.NONE;
+
+import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,25 +26,28 @@ import java.util.Set;
 
 public enum GeaflowFieldCategory {
 
-    PROPERTY(GeaflowStructType.values()),
+    PROPERTY(NONE, GeaflowStructType.values()),
 
-    ID(GeaflowStructType.TABLE, GeaflowStructType.VIEW),
+    ID(EXACTLY_ONCE, GeaflowStructType.TABLE, GeaflowStructType.VIEW),
 
-    VERTEX_ID(GeaflowStructType.VERTEX),
+    VERTEX_ID(EXACTLY_ONCE, GeaflowStructType.VERTEX),
 
-    VERTEX_LABEL(GeaflowStructType.VERTEX),
+    VERTEX_LABEL(EXACTLY_ONCE, GeaflowStructType.VERTEX),
 
-    EDGE_SOURCE_ID(GeaflowStructType.EDGE),
+    EDGE_SOURCE_ID(EXACTLY_ONCE, GeaflowStructType.EDGE),
 
-    EDGE_TARGET_ID(GeaflowStructType.EDGE),
+    EDGE_TARGET_ID(EXACTLY_ONCE, GeaflowStructType.EDGE),
 
-    EDGE_LABEL(GeaflowStructType.EDGE),
+    EDGE_LABEL(EXACTLY_ONCE, GeaflowStructType.EDGE),
 
-    EDGE_TIMESTAMP(GeaflowStructType.EDGE);
+    EDGE_TIMESTAMP(AT_MOST_ONCE, GeaflowStructType.EDGE);
 
     private final Set<GeaflowStructType> structTypes;
 
-    GeaflowFieldCategory(GeaflowStructType... structTypes) {
+    private final NumConstraint numConstraint;
+
+    GeaflowFieldCategory(NumConstraint numConstraint, GeaflowStructType... structTypes) {
+        this.numConstraint = numConstraint;
         this.structTypes = Sets.newHashSet(structTypes);
     }
 
@@ -53,4 +61,34 @@ public enum GeaflowFieldCategory {
         return constraints;
     }
 
+    enum NumConstraint {
+        /**
+         * count == 1.
+         */
+        EXACTLY_ONCE,
+        /**
+         * count <= 1.
+         */
+        AT_MOST_ONCE,
+        NONE
+    }
+
+    public void validate(int count) {
+        switch (this.numConstraint) {
+            case EXACTLY_ONCE:
+                if (count < 1) {
+                    throw new GeaflowException("Must have {} field", this.name());
+                } else if (count > 1) {
+                    throw new GeaflowException("Can have only one {} field", this.name());
+                }
+                break;
+            case AT_MOST_ONCE:
+                if (count > 1) {
+                    throw new GeaflowException("Can have only one {} field", this.name());
+                }
+                break;
+            default:
+                return;
+        }
+    }
 }

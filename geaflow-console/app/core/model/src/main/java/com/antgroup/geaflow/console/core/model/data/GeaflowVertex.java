@@ -14,6 +14,10 @@
 
 package com.antgroup.geaflow.console.core.model.data;
 
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.VERTEX_ID;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.VERTEX_LABEL;
+
+import com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,5 +34,27 @@ public class GeaflowVertex extends GeaflowStruct {
         this();
         super.name = name;
         super.comment = comment;
+    }
+
+    @Override
+    public void validate() {
+        super.validate();
+
+        int idCount = 0;
+        int labelCount = 0;
+        for (GeaflowField value : fields.values()) {
+            GeaflowFieldCategory category = value.getCategory();
+            if (category == VERTEX_ID) {
+                idCount++;
+            }
+
+            if (category == VERTEX_LABEL) {
+                labelCount++;
+            }
+        }
+
+        VERTEX_ID.validate(idCount);
+        VERTEX_LABEL.validate(labelCount);
+
     }
 }

@@ -18,6 +18,7 @@ import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.OSSException;
 import com.aliyun.oss.common.auth.DefaultCredentialProvider;
 import com.aliyun.oss.model.OSSObject;
+import com.antgroup.geaflow.console.common.util.NetworkUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
@@ -56,7 +57,8 @@ public class OssFileClient implements RemoteFileClient {
 
     @Override
     public String getUrl(String path) {
-        return String.format("http://%s.%s/%s", ossConfig.getBucket(), ossConfig.getEndpoint(), getFullPath(path));
+        return String.format("http://%s.%s/%s", ossConfig.getBucket(), NetworkUtil.getHost(ossConfig.getEndpoint()),
+            getFullPath(path));
     }
 
     public String getFullPath(String path) {
