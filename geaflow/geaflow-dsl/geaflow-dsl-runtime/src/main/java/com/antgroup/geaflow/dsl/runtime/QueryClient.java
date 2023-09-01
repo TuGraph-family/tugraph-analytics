@@ -101,7 +101,7 @@ public class QueryClient implements QueryCompiler {
             .build();
         queryContext.putConfigParallelism(context.getParallelisms());
         executeQuery(script, queryContext);
-
+        queryContext.finish();
         PipelinePlanBuilder pipelinePlanBuilder = new PipelinePlanBuilder();
         PipelineGraph pipelineGraph = pipelinePlanBuilder.buildPlan(pipelineContext);
         pipelinePlanBuilder.optimizePlan(pipelineContext.getConfig());

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.model.data;
 
+import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,7 +39,11 @@ public abstract class GeaflowStruct extends GeaflowData {
 
     public void addFields(List<GeaflowField> fields) {
         for (GeaflowField field : fields) {
-            this.fields.put(field.getName(), field);
+            String fieldName = field.getName();
+            if (this.fields.containsKey(fieldName)) {
+                throw new GeaflowException("Field name {} duplicated", fieldName);
+            }
+            this.fields.put(fieldName, field);
         }
     }
 
