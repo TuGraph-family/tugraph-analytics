@@ -25,6 +25,8 @@ import com.antgroup.geaflow.common.encoder.impl.LongEncoder;
 import com.antgroup.geaflow.common.encoder.impl.ShortEncoder;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.tuple.Triple;
+import com.antgroup.geaflow.common.tuple.Tuple;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -595,4 +597,50 @@ public class EncoderTest {
     public enum TestEnum {
         A,B,C,D,E
     }
+
+    @Test
+    public void testTupleEncoder() throws IOException {
+        IEncoder<Tuple<Integer, Integer>> tupleEncoder = Encoders.tuple(Encoders.INTEGER, Encoders.INTEGER);
+        Assert.assertNotNull(tupleEncoder);
+        tupleEncoder.init(new Configuration());
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        for (int i = 0; i < 10; i++) {
+            Tuple<Integer, Integer> data = Tuple.of(1, 1);
+            tupleEncoder.encode(data, bos);
+        }
+        tupleEncoder.encode(null, bos);
+
+        byte[] arr = bos.toByteArray();
+        ByteArrayInputStream bis = new ByteArrayInputStream(arr);
+        for (int i = 0; i < 10; i++) {
+            Tuple<Integer, Integer> data = tupleEncoder.decode(bis);
+            Assert.assertNotNull(data);
+        }
+        Assert.assertNull(tupleEncoder.decode(bis));
+    }
+
+    @Test
+    public void testTripleEncoder() throws IOException {
+        IEncoder<Triple<Integer, Integer, Integer>> tripleEncoder =
+            Encoders.triple(Encoders.INTEGER, Encoders.INTEGER, Encoders.INTEGER);
+        Assert.assertNotNull(tripleEncoder);
+        tripleEncoder.init(new Configuration());
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        for (int i = 0; i < 10; i++) {
+            Triple<Integer, Integer, Integer> data = Triple.of(1, 1, 1);
+            tripleEncoder.encode(data, bos);
+        }
+        tripleEncoder.encode(null, bos);
+
+        byte[] arr = bos.toByteArray();
+        ByteArrayInputStream bis = new ByteArrayInputStream(arr);
+        for (int i = 0; i < 10; i++) {
+            Triple<Integer, Integer, Integer> data = tripleEncoder.decode(bis);
+            Assert.assertNotNull(data);
+        }
+        Assert.assertNull(tripleEncoder.decode(bis));
+    }
+    
 }
