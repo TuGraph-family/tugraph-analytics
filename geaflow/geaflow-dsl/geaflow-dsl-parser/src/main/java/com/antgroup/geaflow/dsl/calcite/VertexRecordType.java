@@ -109,10 +109,10 @@ public class VertexRecordType extends RelRecordType {
 
         // put id field at position 0.
         reorderFields.add(new RelDataTypeFieldImpl(idTypeField.getName(), VertexType.ID_FIELD_POSITION,
-            vertexId(idTypeField.getType())));
+            vertexId(idTypeField.getType(), typeFactory)));
         // put label field at position 1.
         reorderFields.add(new RelDataTypeFieldImpl(GraphSchema.LABEL_FIELD_NAME, VertexType.LABEL_FIELD_POSITION,
-            vertexType(typeFactory.createSqlType(SqlTypeName.VARCHAR))));
+            vertexType(typeFactory.createSqlType(SqlTypeName.VARCHAR), typeFactory)));
         // put other fields by order exclude ~label.
         int labelIndex = EdgeRecordType.indexOf(fields, GraphSchema.LABEL_FIELD_NAME);
         for (int k = 0; k < fields.size(); k++) {

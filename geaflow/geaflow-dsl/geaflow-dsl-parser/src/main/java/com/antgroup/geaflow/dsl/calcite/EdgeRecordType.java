@@ -149,19 +149,19 @@ public class EdgeRecordType extends RelRecordType {
         RelDataTypeField targetIdTypeField = fields.get(targetIdIndex);
         // put srcId field.
         reorderFields.add(new RelDataTypeFieldImpl(srcIdTypeField.getName(), EdgeType.SRC_ID_FIELD_POSITION,
-            edgeSrcId(srcIdTypeField.getType())));
+            edgeSrcId(srcIdTypeField.getType(), typeFactory)));
         // put targetId field.
         reorderFields.add(new RelDataTypeFieldImpl(targetIdTypeField.getName(), EdgeType.TARGET_ID_FIELD_POSITION,
-            edgeTargetId(targetIdTypeField.getType())));
+            edgeTargetId(targetIdTypeField.getType(), typeFactory)));
         // put label field.
         reorderFields.add(new RelDataTypeFieldImpl(GraphSchema.LABEL_FIELD_NAME, EdgeType.LABEL_FIELD_POSITION,
-            edgeType(typeFactory.createSqlType(SqlTypeName.VARCHAR))));
+            edgeType(typeFactory.createSqlType(SqlTypeName.VARCHAR), typeFactory)));
         // put ts field if it has defined.
         int tsIndex = indexOf(fields, timestampField);
         if (tsIndex != -1) {
             RelDataTypeField tsTypeField = fields.get(tsIndex);
             reorderFields.add(new RelDataTypeFieldImpl(tsTypeField.getName(), EdgeType.TIME_FIELD_POSITION,
-                edgeTs(tsTypeField.getType())));
+                edgeTs(tsTypeField.getType(), typeFactory)));
         }
         int labelIndex = indexOf(fields, GraphSchema.LABEL_FIELD_NAME);
         // put other fields by order exclude ~label.

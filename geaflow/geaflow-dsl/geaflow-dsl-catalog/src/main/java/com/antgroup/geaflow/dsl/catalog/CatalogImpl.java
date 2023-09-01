@@ -19,6 +19,8 @@ import com.antgroup.geaflow.dsl.catalog.exception.ObjectAlreadyExistException;
 import com.antgroup.geaflow.dsl.catalog.exception.ObjectNotExistException;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowView;
 import java.util.HashMap;
@@ -78,7 +80,33 @@ public class CatalogImpl implements Catalog {
         if (table != null) {
             return table;
         }
-        return baseCatalog.getTable(instanceName, tableName);
+        table = baseCatalog.getTable(instanceName, tableName);
+        if (table != null) {
+            return table;
+        }
+        table = getVertex(instanceName, tableName);
+        if (table != null) {
+            return table;
+        }
+        return getEdge(instanceName, tableName);
+    }
+
+    @Override
+    public VertexTable getVertex(String instanceName, String vertexName) {
+        Table table = memoryCatalog.getTable(instanceName, vertexName);
+        if (table instanceof VertexTable) {
+            return (VertexTable) table;
+        }
+        return baseCatalog.getVertex(instanceName, vertexName);
+    }
+
+    @Override
+    public EdgeTable getEdge(String instanceName, String edgeName) {
+        Table table = memoryCatalog.getTable(instanceName, edgeName);
+        if (table instanceof EdgeTable) {
+            return (EdgeTable) table;
+        }
+        return baseCatalog.getEdge(instanceName, edgeName);
     }
 
     @Override
@@ -105,10 +133,18 @@ public class CatalogImpl implements Catalog {
         if (!isInstanceExists(instanceName)) {
             throw new ObjectNotExistException("instance: '" + instanceName + "' is not exists.");
         }
+        // create graph
         if (graph.isTemporary()) {
             memoryCatalog.createGraph(instanceName, graph);
         } else {
             baseCatalog.createGraph(instanceName, graph);
+        }
+        // create vertex table & edge table in catalog
+        for (VertexTable vertexTable : graph.getVertexTables()) {
+            createTable(instanceName, vertexTable);
+        }
+        for (EdgeTable edgeTable : graph.getEdgeTables()) {
+            createTable(instanceName, edgeTable);
         }
     }
 

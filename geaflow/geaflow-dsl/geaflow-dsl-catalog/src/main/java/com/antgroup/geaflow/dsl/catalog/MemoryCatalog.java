@@ -19,6 +19,8 @@ import com.antgroup.geaflow.dsl.catalog.exception.ObjectAlreadyExistException;
 import com.antgroup.geaflow.dsl.catalog.exception.ObjectNotExistException;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowView;
 import java.util.HashMap;
@@ -74,6 +76,24 @@ public class MemoryCatalog implements Catalog {
         Map<String, Table> tables = allTables.get(instanceName);
         if (tables != null) {
             return tables.get(tableName);
+        }
+        return null;
+    }
+
+    @Override
+    public VertexTable getVertex(String instanceName, String vertexName) {
+        Map<String, Table> tables = allTables.get(instanceName);
+        if (tables != null && (tables.get(vertexName) instanceof VertexTable)) {
+            return (VertexTable)tables.get(vertexName);
+        }
+        return null;
+    }
+
+    @Override
+    public EdgeTable getEdge(String instanceName, String edgeName) {
+        Map<String, Table> tables = allTables.get(instanceName);
+        if (tables != null && (tables.get(edgeName) instanceof EdgeTable)) {
+            return (EdgeTable)tables.get(edgeName);
         }
         return null;
     }

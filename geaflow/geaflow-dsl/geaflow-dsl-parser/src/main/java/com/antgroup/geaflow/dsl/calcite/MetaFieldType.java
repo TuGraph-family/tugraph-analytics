@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeComparability;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFamily;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeImpl;
@@ -41,28 +42,28 @@ public class MetaFieldType extends RelDataTypeImpl {
         computeDigest();
     }
 
-    public static MetaFieldType vertexId(RelDataType type) {
-        return new MetaFieldType(MetaField.VERTEX_ID, type);
+    public static MetaFieldType vertexId(RelDataType type, RelDataTypeFactory typeFactory) {
+        return new MetaFieldType(MetaField.VERTEX_ID, typeFactory.createTypeWithNullability(type, false));
     }
 
-    public static MetaFieldType vertexType(RelDataType type) {
-        return new MetaFieldType(MetaField.VERTEX_TYPE, type);
+    public static MetaFieldType vertexType(RelDataType type, RelDataTypeFactory typeFactory) {
+        return new MetaFieldType(MetaField.VERTEX_TYPE, typeFactory.createTypeWithNullability(type, false));
     }
 
-    public static MetaFieldType edgeSrcId(RelDataType type) {
-        return new MetaFieldType(MetaField.EDGE_SRC_ID, type);
+    public static MetaFieldType edgeSrcId(RelDataType type, RelDataTypeFactory typeFactory) {
+        return new MetaFieldType(MetaField.EDGE_SRC_ID, typeFactory.createTypeWithNullability(type, false));
     }
 
-    public static MetaFieldType edgeTargetId(RelDataType type) {
-        return new MetaFieldType(MetaField.EDGE_TARGET_ID, type);
+    public static MetaFieldType edgeTargetId(RelDataType type, RelDataTypeFactory typeFactory) {
+        return new MetaFieldType(MetaField.EDGE_TARGET_ID, typeFactory.createTypeWithNullability(type, false));
     }
 
-    public static MetaFieldType edgeType(RelDataType type) {
-        return new MetaFieldType(MetaField.EDGE_TYPE, type);
+    public static MetaFieldType edgeType(RelDataType type, RelDataTypeFactory typeFactory) {
+        return new MetaFieldType(MetaField.EDGE_TYPE, typeFactory.createTypeWithNullability(type, false));
     }
 
-    public static MetaFieldType edgeTs(RelDataType type) {
-        return new MetaFieldType(MetaField.EDGE_TS, type);
+    public static MetaFieldType edgeTs(RelDataType type, RelDataTypeFactory typeFactory) {
+        return new MetaFieldType(MetaField.EDGE_TS, typeFactory.createTypeWithNullability(type, false));
     }
 
     @Override

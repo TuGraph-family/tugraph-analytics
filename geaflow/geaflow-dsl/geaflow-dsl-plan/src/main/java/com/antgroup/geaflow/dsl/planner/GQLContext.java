@@ -339,7 +339,8 @@ public class GQLContext {
                                 + " at " + tableColumn.getParserPosition());
                     }
                 }
-                vertexTables.add(new VertexTable(vertex.getName().getSimple(), vertexFields, idFieldName));
+                vertexTables.add(new VertexTable(currentInstance, vertex.getName().getSimple(),
+                    vertexFields, idFieldName));
                 desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
                     vertex.getName().getSimple()));
             } else if (node instanceof SqlVertexUsing) {
@@ -383,7 +384,8 @@ public class GQLContext {
                 }
                 vertexEdgeName2UsingTableNameMap.put(vertexUsing.getName().getSimple(),
                     vertexUsing.getUsingTableName().getSimple());
-                vertexTables.add(new VertexTable(vertexUsing.getName().getSimple(), vertexFields, idFieldName));
+                vertexTables.add(new VertexTable(currentInstance, vertexUsing.getName().getSimple(),
+                    vertexFields, idFieldName));
                 desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
                     vertexUsing.getName().getSimple()));
             } else {
@@ -437,7 +439,8 @@ public class GQLContext {
                     }
                 }
                 String tableName = edge.getName().getSimple();
-                edgeTables.add(new EdgeTable(tableName, edgeFields, srcIdFieldName, targetIdFieldName, tsFieldName));
+                edgeTables.add(new EdgeTable(currentInstance, tableName, edgeFields, srcIdFieldName,
+                    targetIdFieldName, tsFieldName));
                 desc.addEdge(GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edge));
             } else if (node instanceof SqlEdgeUsing) {
                 SqlEdgeUsing edgeUsing = (SqlEdgeUsing)  node;
@@ -496,7 +499,7 @@ public class GQLContext {
                 }
                 vertexEdgeName2UsingTableNameMap.put(edgeUsing.getName().getSimple(),
                     edgeUsing.getUsingTableName().getSimple());
-                edgeTables.add(new EdgeTable(edgeUsing.getName().getSimple(), edgeFields,
+                edgeTables.add(new EdgeTable(currentInstance, edgeUsing.getName().getSimple(), edgeFields,
                     srcIdFieldName, targetIdFieldName, tsFieldName));
                 desc.addEdge(
                     GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edgeUsing));
@@ -739,7 +742,14 @@ public class GQLContext {
     }
 
     public void setCurrentGraph(String currentGraph) {
-        this.currentGraph = currentGraph;
+        Table graphTable = catalog.getGraph(currentInstance, currentGraph);
+        if (graphTable instanceof GeaFlowGraph) {
+            this.currentGraph = currentGraph;
+            getTypeFactory().setCurrentGraph((GeaFlowGraph) graphTable);
+        } else {
+            throw new GeaFlowDSLException("Graph: {} is not exists.", currentGraph);
+        }
+
     }
 
     public boolean isCaseSensitive() {

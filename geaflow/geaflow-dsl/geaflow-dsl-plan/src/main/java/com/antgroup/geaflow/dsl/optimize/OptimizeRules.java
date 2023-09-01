@@ -18,9 +18,14 @@ import com.antgroup.geaflow.dsl.optimize.rule.AddVertexResetRule;
 import com.antgroup.geaflow.dsl.optimize.rule.GQLAggregateProjectMergeRule;
 import com.antgroup.geaflow.dsl.optimize.rule.GQLMatchUnionMergeRule;
 import com.antgroup.geaflow.dsl.optimize.rule.GQLProjectRemoveRule;
+import com.antgroup.geaflow.dsl.optimize.rule.MatchJoinTableToGraphMatchRule;
 import com.antgroup.geaflow.dsl.optimize.rule.MatchSortToLogicalSortRule;
 import com.antgroup.geaflow.dsl.optimize.rule.PathInputReplaceRule;
 import com.antgroup.geaflow.dsl.optimize.rule.PathModifyMergeRule;
+import com.antgroup.geaflow.dsl.optimize.rule.PushConsecutiveJoinConditionRule;
+import com.antgroup.geaflow.dsl.optimize.rule.PushJoinFilterConditionRule;
+import com.antgroup.geaflow.dsl.optimize.rule.TableJoinMatchToGraphMatchRule;
+import com.antgroup.geaflow.dsl.optimize.rule.TableJoinTableToGraphRule;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.apache.calcite.plan.RelOptRule;
@@ -76,7 +81,12 @@ public class OptimizeRules {
         GQLMatchUnionMergeRule.INSTANCE,
         MatchSortToLogicalSortRule.INSTANCE,
         PathModifyMergeRule.INSTANCE,
-        AddVertexResetRule.INSTANCE);
+        AddVertexResetRule.INSTANCE,
+        PushJoinFilterConditionRule.INSTANCE,
+        PushConsecutiveJoinConditionRule.INSTANCE,
+        TableJoinTableToGraphRule.INSTANCE,
+        MatchJoinTableToGraphMatchRule.INSTANCE,
+        TableJoinMatchToGraphMatchRule.INSTANCE);
 
     private static final List<RelOptRule> POST_OPTIMIZE_RULES = ImmutableList.of(
         PathInputReplaceRule.INSTANCE

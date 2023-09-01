@@ -111,6 +111,10 @@ public class SqlMatchEdge extends SqlMatchNode {
             }
             throw new IllegalArgumentException("Illegal direction value: " + value);
         }
+
+        public static EdgeDirection reverse(EdgeDirection direction) {
+            return direction == BOTH ? direction : ((direction == IN) ? OUT : IN);
+        }
     }
 
     @Override
