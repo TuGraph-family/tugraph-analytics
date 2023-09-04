@@ -397,7 +397,6 @@ public class DefaultResourceManagerTest {
         recoverMasterContext.setRecover(true);
         recoverRm.init(ResourceManagerContext.build(recoverMasterContext, clusterContext));
 
-        clusterManager.allocateWorkers(20);
         pending = recoverRm.getPendingWorkerCounter();
         lock = recoverRm.getResourceLock();
         // wait async allocate worker ready
@@ -422,6 +421,7 @@ public class DefaultResourceManagerTest {
     public void testRecoverWithWorkerLtUserDefinedWorker() {
         config.put(JOB_UNIQUE_ID.getKey(), "geaflow23456");
         config.put(CONTAINER_WORKER_NUM.getKey(), String.valueOf(5));
+        config.put(CONTAINER_NUM.getKey(), String.valueOf(4));
         ClusterMetaStore.init(0, config);
         ClusterContext clusterContext = new ClusterContext(config);
         MockRecoverClusterManager clusterManager = new MockRecoverClusterManager();
@@ -443,7 +443,6 @@ public class DefaultResourceManagerTest {
         recoverMasterContext.setRecover(true);
         recoverRm.init(ResourceManagerContext.build(recoverMasterContext, clusterContext));
 
-        clusterManager.allocateWorkers(16);
         pending = recoverRm.getPendingWorkerCounter();
         lock = recoverRm.getResourceLock();
         // wait async allocate worker ready
@@ -498,7 +497,6 @@ public class DefaultResourceManagerTest {
         recoverMasterContext.setRecover(true);
         recoverRm.init(ResourceManagerContext.build(recoverMasterContext, clusterContext));
 
-        clusterManager.allocateWorkers(16);
         pending = recoverRm.getPendingWorkerCounter();
         lock = recoverRm.getResourceLock();
         while (pending.get() > 0 || !lock.get()) {

@@ -138,7 +138,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
             }
             LOGGER.info("[{}] require {} allocated {} available {}",
                 requireId, num, allocated.size(), this.availableWorkers.size());
-            if (allocated.size() > 0) {
+            if (!allocated.isEmpty()) {
                 this.persist();
             }
             return allocated;
@@ -310,7 +310,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
         this.pendingWorkerCounter.addAndGet(- availableWorkerNum - usedWorkerNum);
         LOGGER.info("recover {}/{} workers, pending {}, costs {}ms",
             availableWorkerNum, usedWorkerNum, pendingWorkerCounter.get(), System.currentTimeMillis() - start);
-        if (pendingWorkerCounter.get() <= 0) {
+        if (this.pendingWorkerCounter.get() <= 0) {
             this.recovering.set(false);
             LOGGER.info("recover worker over, available/used : {}/{}",
                 this.availableWorkers.size(), usedWorkerNum);

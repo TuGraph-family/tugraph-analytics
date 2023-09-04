@@ -19,6 +19,8 @@ import com.antgroup.geaflow.common.encoder.impl.GenericArrayEncoder;
 import com.antgroup.geaflow.common.encoder.impl.PojoEncoder;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.tuple.Triple;
+import com.antgroup.geaflow.common.tuple.Tuple;
 import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -64,6 +66,12 @@ public class EncoderResolver {
             if (Encoders.PRIMITIVE_ENCODER_MAP.containsKey(clazz)) {
                 return Encoders.PRIMITIVE_ENCODER_MAP.get(clazz);
             }
+            if (Tuple.class.isAssignableFrom(clazz)) {
+                return resolveTuple(type);
+            }
+            if (Triple.class.isAssignableFrom(clazz)) {
+                return resolveTriple(type);
+            }
             if (Enum.class.isAssignableFrom(clazz)) {
                 return new EnumEncoder<>(clazz);
             }
@@ -82,6 +90,83 @@ public class EncoderResolver {
             return resolvePojo(type);
         }
         return null;
+    }
+
+    public static IEncoder<?> resolveTuple(Type type) {
+        List<ParameterizedType> subTypeTree = new ArrayList<>();
+        Type curType = type;
+        while (!(isClassType(curType) && typeToClass(curType).equals(Tuple.class))) {
+            if (curType instanceof ParameterizedType) {
+                subTypeTree.add((ParameterizedType) curType);
+            }
+            curType = typeToClass(curType).getGenericSuperclass();
+        }
+
+        if (curType instanceof Class) {
+            LOGGER.warn("Tuple needs to be parameterized with generics");
+            return null;
+        }
+
+        ParameterizedType parameterizedType = (ParameterizedType) curType;
+        subTypeTree.add(parameterizedType);
+
+        IEncoder<?>[] subEncoders = resolveSubEncoder(subTypeTree, parameterizedType);
+        if (subEncoders == null || subEncoders.length != 2) {
+            return null;
+        }
+        if (countClassFields(typeToClass(type)) != subEncoders.length) {
+            LOGGER.warn("tuple filed num does not match encoder num");
+            return null;
+        }
+        return Encoders.tuple(subEncoders[0], subEncoders[1]);
+    }
+
+    public static IEncoder<?> resolveTriple(Type type) {
+        List<ParameterizedType> subTypeTree = new ArrayList<>();
+        Type curType = type;
+        while (!(isClassType(curType) && typeToClass(curType).equals(Triple.class))) {
+            if (curType instanceof ParameterizedType) {
+                subTypeTree.add((ParameterizedType) curType);
+            }
+            curType = typeToClass(curType).getGenericSuperclass();
+        }
+
+        if (curType instanceof Class) {
+            LOGGER.warn("Tuple needs to be parameterized with generics");
+            return null;
+        }
+
+        ParameterizedType parameterizedType = (ParameterizedType) curType;
+        subTypeTree.add(parameterizedType);
+
+        IEncoder<?>[] subEncoders = resolveSubEncoder(subTypeTree, parameterizedType);
+        if (subEncoders == null || subEncoders.length != 3) {
+            return null;
+        }
+        if (countClassFields(typeToClass(type)) != subEncoders.length) {
+            LOGGER.warn("triple filed num does not match encoder num");
+            return null;
+        }
+        return Encoders.triple(subEncoders[0], subEncoders[1], subEncoders[2]);
+    }
+
+    private static IEncoder<?>[] resolveSubEncoder(List<ParameterizedType> typeTree,
+                                                   ParameterizedType parameterizedType) {
+        Type[] typeArguments = parameterizedType.getActualTypeArguments();
+        IEncoder<?>[] encoders = new IEncoder<?>[typeArguments.length];
+        for (int i = 0; i < typeArguments.length; i++) {
+            Type typeArgument = typeArguments[i];
+            Type concreteType = typeArgument;
+            if (typeArgument instanceof TypeVariable) {
+                concreteType = getConcreteTypeofTypeVariable(typeTree, (TypeVariable<?>) typeArgument);
+            }
+            IEncoder<?> encoder = resolveType(concreteType);
+            if (encoder == null) {
+                return null;
+            }
+            encoders[i] = encoder;
+        }
+        return encoders;
     }
 
     public static IEncoder<?> resolvePojo(Type type) {
@@ -136,7 +221,7 @@ public class EncoderResolver {
         }
 
         List<Field> fields = getPojoFields(clazz);
-        if (fields.size() == 0) {
+        if (fields.isEmpty()) {
             String msg = "Class [" + clazz.getName() + "] has no declared fields";
             throw new GeaflowRuntimeException(RuntimeErrors.INST.typeSysError(msg));
         }
