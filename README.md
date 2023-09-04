@@ -40,6 +40,9 @@ please refer to: [GeaFlow introduction document](docs/docs-en/introduction.md)
 * One-stop graph development platform
 * Cloud native deployment support.
 
+[Why using graphs for relational operations is more appealing than table joins?](./docs/docs-en/principle/vs_join.md)
+[![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
+
 The similarities and differences between GeaFlow and traditional stream computing engine, such as Flink, are as follows:
 
 | Features | GeaFlow | Flink |
@@ -65,6 +68,8 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 using GeaFlow's SQL extension language SQL+ISO/GQL or use GeaFlow's high-level API programming interface to develop 
 applications in Java. For more information on DSL application development, please refer to the [DSL development 
 document](docs/docs-en/application-development/dsl/overview.md), and for the high-level API application development, please refer to the [API application development document](docs/docs-en/application-development/api/overview.md).
+
+![code_style](./docs/static/img/code_style.jpg)
 
 ## Document
 

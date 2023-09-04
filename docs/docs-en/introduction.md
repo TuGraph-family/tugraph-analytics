@@ -10,8 +10,6 @@ relational operations (i.e. stream join) increasingly become a challenge in real
 In Ant Financial's big data scenarios, particularly in financial risk control and real-time data warehousing, there 
 are a large number of join operations, and how to improve the efficiency and performance of joins has become an important challenge we face. We have introduced the graph model, which is a data model that describes entity relationships using a point-edge structure. In the graph model, points represent entities, and edges represent relationships, and the data is stored together at the point-edge level. Therefore, the graph model naturally defines relationships and simultaneously materializes point-edge relationships at the storage level. Based on the graph model, we have implemented the next-generation real-time computing engine, GeaFlow, which effectively addresses the problem of complex relationship operations that traditional streaming computing engines face. Currently, GeaFlow has been widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graphs, and social networks.
 
-![stream_history](../static/img/stream_history_en.png)
-
 ## Features
 
 * Distribute streaming graph computing.
@@ -22,6 +20,9 @@ are a large number of join operations, and how to improve the efficiency and per
 * High level api support.
 * One-stop graph development platform
 * Cloud native deployment support.
+
+[Why using graphs for relational operations is more appealing than table joins?](./principle/vs_join.md)
+[![total_time](../static/img/vs_join_total_time_en.jpg)](./principle/vs_join.md)
 
 The similarities and differences between GeaFlow and traditional stream computing engine, such as Flink, are as follows:
 
@@ -54,7 +55,6 @@ The overall architecture of GeaFlow is as follows:
 
 ### Real-time Data Warehouse Acceleration
 In data warehouse scenarios, there are a large number of join operations, and in the DWD layer, it is often necessary to expand multiple tables into one large wide table to speed up subsequent queries. When the number of tables involved in a join increases, traditional real-time computing engines find it difficult to ensure the efficiency and performance of joins. This has become a challenging problem in the field of real-time data warehousing. GeaFlow's real-time graph computing engine can effectively address this problem. GeaFlow uses the graph as its data model, replacing the wide tables in the DWD layer, and can realize real-time graph construction. At the query stage, utilizing the point-edge materialization characteristics of the graph can greatly accelerate relationship operation queries. The following is the process diagram of GeaFlow's real-time data warehouse acceleration:
-![graph_warehouse](../static/img/graph_warehouse.png)
 
 ### Real-time Attribution Analysis
 Under the background of informationization, channel attribution and path analysis of user behavior are the core of traffic analysis. By calculating the effective behavior path of users in real-time, and constructing a complete conversion path, it can quickly help businesses understand the value of products and assist operations in adjusting their strategies in a timely manner. The core points of real-time attribution analysis are accuracy and effectiveness. Accuracy requires ensuring the accuracy of user behavior path analysis under controllable costs. Effectiveness requires high real-time calculation to quickly assist business decision-making.
