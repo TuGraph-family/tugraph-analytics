@@ -45,7 +45,7 @@ public class JDBCTableSink implements TableSink {
 
     @Override
     public void init(Configuration tableConf, StructType tableSchema) {
-        LOGGER.info("prepare with config: {}, \n schema: {}", tableConf, tableSchema);
+        LOGGER.info("init jdbc sink with config: {}, \n schema: {}", tableConf, tableSchema);
         this.tableConf = tableConf;
         this.schema = tableSchema;
 
@@ -61,6 +61,7 @@ public class JDBCTableSink implements TableSink {
         try {
             Class.forName(this.driver);
             this.connection = DriverManager.getConnection(url, username, password);
+            this.connection.setAutoCommit(false);
             this.statement = connection.createStatement();
             JDBCUtils.createTemporaryTable(statement, this.tableName, this.schema.getFields());
         } catch (Exception e) {
@@ -80,7 +81,6 @@ public class JDBCTableSink implements TableSink {
     @Override
     public void finish() throws IOException {
         try {
-            LOGGER.info("commit");
             connection.commit();
         } catch (SQLException e) {
             LOGGER.error("failed to commit", e);
