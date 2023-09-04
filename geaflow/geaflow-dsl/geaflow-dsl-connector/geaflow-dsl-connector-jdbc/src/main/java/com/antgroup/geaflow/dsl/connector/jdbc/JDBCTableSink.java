@@ -73,7 +73,7 @@ public class JDBCTableSink implements TableSink {
         try {
             JDBCUtils.insertIntoTable(this.statement, this.tableName, this.schema.getFields(), row);
         } catch (SQLException e) {
-            throw new GeaFlowDSLException("failed to write");
+            throw new GeaFlowDSLException("failed to write to table: " + tableName, e);
         }
     }
 
@@ -83,11 +83,11 @@ public class JDBCTableSink implements TableSink {
             LOGGER.info("commit");
             connection.commit();
         } catch (SQLException e) {
-            LOGGER.warn("failed to commit");
+            LOGGER.error("failed to commit", e);
             try {
                 connection.rollback();
             } catch (SQLException ex) {
-                throw new GeaFlowDSLException("failed to rollback");
+                throw new GeaFlowDSLException("failed to rollback", e);
             }
         }
     }
