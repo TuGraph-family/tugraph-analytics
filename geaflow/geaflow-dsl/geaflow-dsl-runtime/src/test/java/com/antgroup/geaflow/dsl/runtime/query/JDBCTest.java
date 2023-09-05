@@ -16,12 +16,14 @@ package com.antgroup.geaflow.dsl.runtime.query;
 
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.runtime.testenv.SourceFunctionNoPartitionCheck;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import org.h2.jdbcx.JdbcDataSource;
-import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class JDBCTest {
@@ -32,12 +34,16 @@ public class JDBCTest {
     private final String password = "h2_pwd";
 
     @BeforeClass
-    public void setup() {
+    public void setup() throws SQLException {
         LOGGER.info("start h2 database.");
         JdbcDataSource dataSource = new JdbcDataSource();
-        dataSource.setURL(this.URL);
-        dataSource.setURL(this.username);
-        dataSource.setPassword(this.password);
+        dataSource.setURL(URL);
+        dataSource.setUser(username);
+        dataSource.setPassword(password);
+
+        Statement statement = dataSource.getConnection().createStatement();
+        statement.execute("CREATE TABLE test (name VARCHAR(255) primary key, count INT);");
+        statement.execute("CREATE TABLE users (id INT primary key, name VARCHAR(255), age INT);");
     }
 
     @Test

@@ -63,7 +63,6 @@ public class JDBCTableSink implements TableSink {
             this.connection = DriverManager.getConnection(url, username, password);
             this.connection.setAutoCommit(false);
             this.statement = connection.createStatement();
-            JDBCUtils.createTemporaryTable(statement, this.tableName, this.schema.getFields());
         } catch (Exception e) {
             throw new GeaFlowDSLException("failed to connect to database", e);
         }
