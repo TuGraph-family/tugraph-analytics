@@ -31,6 +31,9 @@ GeaFlow(品牌名TuGraph-Analytics)是蚂蚁集团开源的分布式流式图计
 * 一站式图研发平台支持
 * 云原生部署支持
 
+[为什么使用图进行关联运算比表Join更具吸引力？](./docs/docs-cn/principle/vs_join.md)
+[![total_time](./docs/static/img/vs_join_total_time_cn.jpg)](./docs/docs-cn/principle/vs_join.md)
+
 和传统流计算引擎如Flink的异同点如下：
 
 | 特性 | GeaFlow | Flink |
@@ -53,6 +56,8 @@ GeaFlow相关设计参考论文：[GeaFlow: A Graph Extended and Accelerated Dat
 
 GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类SQL扩展语言SQL+ISO/GQL进行流图计算作业的开发，也可以通过GeaFlow的高阶API编程接口通过Java语言进行应用开发。关于DSL
 应用开发的详细内容请参考：[DSL开发文档](docs/docs-cn/application-development/dsl/overview.md)，高阶API应用开发部分参考：[API应用开发](docs/docs-cn/application-development/api/guid.md)。
+
+![code_style](./docs/static/img/code_style.jpg)
 
 ## 使用文档
 参考 [ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
