@@ -47,10 +47,10 @@ public class JDBCTableConnectorTest {
         LOGGER.info("start h2 database.");
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL(URL);
-        dataSource.setURL(username);
+        dataSource.setUser(username);
         dataSource.setPassword(password);
 
-        connection = DriverManager.getConnection(URL);
+        connection = java.sql.DriverManager.getConnection(URL);
         statement = connection.createStatement();
         statement.execute("CREATE TABLE test_table (id INT PRIMARY KEY, name VARCHAR(255))");
         statement.execute("INSERT INTO test_table (id, name) VALUES (1, 'Test1')");

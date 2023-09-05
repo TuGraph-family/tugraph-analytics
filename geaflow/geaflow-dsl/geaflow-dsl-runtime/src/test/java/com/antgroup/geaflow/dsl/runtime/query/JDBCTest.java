@@ -16,7 +16,6 @@ package com.antgroup.geaflow.dsl.runtime.query;
 
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.runtime.testenv.SourceFunctionNoPartitionCheck;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -42,7 +41,7 @@ public class JDBCTest {
         dataSource.setUser(username);
         dataSource.setPassword(password);
 
-        Statement statement = DriverManager.getConnection(URL).createStatement();
+        Statement statement = dataSource.getConnection().createStatement();
         statement.execute("CREATE TABLE test (name VARCHAR(255) primary key, count INT);");
         statement.execute("CREATE TABLE users (id INT primary key, name VARCHAR(255), age INT);");
     }
