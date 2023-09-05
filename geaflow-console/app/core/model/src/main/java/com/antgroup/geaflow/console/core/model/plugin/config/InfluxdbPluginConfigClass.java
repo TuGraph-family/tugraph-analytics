@@ -30,7 +30,7 @@ public class InfluxdbPluginConfigClass extends PluginConfigClass {
     private String url;
 
     @GeaflowConfigKey(value = "geaflow.metric.influxdb.token", comment = "i18n.key.token")
-    @GeaflowConfigValue(required = true)
+    @GeaflowConfigValue(required = true, masked = true)
     private String token;
 
     @GeaflowConfigKey(value = "geaflow.metric.influxdb.org", comment = "i18n.key.organization")

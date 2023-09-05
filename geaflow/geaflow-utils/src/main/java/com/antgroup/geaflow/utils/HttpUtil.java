@@ -72,6 +72,9 @@ public class HttpUtil {
                         throw new GeaflowRuntimeException(RuntimeErrors.INST.undefinedError(msg));
                     }
                     HttpResponse httpResponse = GSON.fromJson(msg, HttpResponse.class);
+                    if (!httpResponse.isSuccess()) {
+                        throw new GeaflowRuntimeException(RuntimeErrors.INST.undefinedError(msg));
+                    }
                     T result = GSON.fromJson(httpResponse.getData(), resultClass);
                     LOGGER.info("post {} response cost {}ms: {}", url, System.currentTimeMillis() - t, msg);
                     return result;
@@ -104,6 +107,9 @@ public class HttpUtil {
                         throw new GeaflowRuntimeException(RuntimeErrors.INST.undefinedError(msg));
                     }
                     HttpResponse httpResponse = GSON.fromJson(msg, HttpResponse.class);
+                    if (!httpResponse.isSuccess()) {
+                        throw new GeaflowRuntimeException(RuntimeErrors.INST.undefinedError(msg));
+                    }
                     T result = GSON.fromJson(httpResponse.getData(), typeOfT);
                     LOGGER.info("get {} response cost {}ms: {}", url, System.currentTimeMillis() - t,
                         msg);

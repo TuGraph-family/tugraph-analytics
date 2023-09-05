@@ -7,7 +7,7 @@ import {
   UserSwitchOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
-import { Button, Dropdown, Space, Menu, Tag } from "antd";
+import { Button, Dropdown, Space, Menu, Tag, message } from "antd";
 import cx from "classnames";
 import { useTranslation } from "react-i18next";
 import { useOpenpieceUserAuth } from "@tugraph/openpiece-client";
@@ -150,6 +150,8 @@ export const GeaflowHeader: React.FC<PluginPorps> = ({ redirectPath }) => {
           isAdminLogin: "true",
         });
       }
+    } else {
+      message.error(`操作失败: ${resp.message}`)
     }
   };
 

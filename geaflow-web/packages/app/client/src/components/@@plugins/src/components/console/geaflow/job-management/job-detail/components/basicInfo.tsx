@@ -24,7 +24,7 @@ import {
 } from "../../../services/job-detail";
 import BasicTabs from "./basicTabs";
 import OperationRecord from "./operationRecord";
-import { isEmpty } from "lodash";
+import { isEmpty, find } from "lodash";
 import $i18n from "../../../../../../../../i18n";
 
 interface BasicInfoProps {
@@ -57,7 +57,12 @@ const STATUS_COLOR_MAPPING = {
   FINISHED: "green",
   DELETED: "red",
 };
-const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId, redirectPath }) => {
+const BasicInfo: React.FC<BasicInfoProps> = ({
+  jobItem,
+  uniqueId,
+  redirectPath,
+}) => {
+  const redirectTable = find(redirectPath, ["pathName", "图任务"])?.path || "/";
   const [form] = Form.useForm();
   const [state, setState] = useState<{
     detailInfo: any;
@@ -530,7 +535,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ jobItem, uniqueId, redirectPath }
               id: "openpiece-geaflow.job-detail.components.basicInfo.JobName",
               dm: "任务名称：",
             })}
-            {job?.name}
+            <a href={`${redirectTable}?jobId=${job?.id}&view=true`}>
+              {job?.name}
+            </a>
           </Col>
           <Col span={6}>
             {$i18n.get(

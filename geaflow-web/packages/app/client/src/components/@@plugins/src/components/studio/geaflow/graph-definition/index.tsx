@@ -72,7 +72,7 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
             onClick={() =>
               setShowCreatePage({
                 visible: true,
-                currentItem: record,
+                currentItem: record.name,
                 realodedList: false,
                 readonly: true,
                 editable: false,
@@ -157,7 +157,7 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
             onClick={() =>
               setShowCreatePage({
                 visible: true,
-                currentItem: record,
+                currentItem: record.name,
                 realodedList: false,
                 readonly: false,
                 editable: true,
@@ -255,7 +255,7 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
             </Breadcrumb.Item>
           </Breadcrumb>
           <CreateGraphDefinition
-            currentItem={showCreatePage.currentItem}
+            graphName={showCreatePage.currentItem}
             readonly={showCreatePage.readonly}
             editable={showCreatePage.editable}
             toBackList={setShowCreatePage}

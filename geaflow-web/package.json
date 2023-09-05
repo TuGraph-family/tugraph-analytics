@@ -19,7 +19,8 @@
   },
   "resolutions": {
     "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0"
+    "@types/react-dom": "^17.0.0",
+    "umzug": "3.1.1"
   },
   "dependencies": {
     "@tugraph/openpiece-cli": "0.0.5",

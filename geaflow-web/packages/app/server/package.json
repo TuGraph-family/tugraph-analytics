@@ -7,8 +7,8 @@
   "types": "./lib/index.d.ts",
   "dependencies": {
     "@nocobase/cache": "0.8.0-alpha.13",
-    "@tugraph/openpiece-server": "^0.0.13",
-    "@tugraph/preset-openpiece": "^0.0.41"
+    "@tugraph/openpiece-server": "^0.0.10",
+    "@tugraph/preset-openpiece": "^0.0.28"
   },
   "repository": {
     "type": "git",

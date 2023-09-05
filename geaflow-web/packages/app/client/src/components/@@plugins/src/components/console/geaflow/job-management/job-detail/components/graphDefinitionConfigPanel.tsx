@@ -211,14 +211,29 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     getPluginConfigList(DEFAULT_CATEGORY[prefixName], value);
   };
 
-  const handleChangeConfig = (value: string) => {
+  const handleFocusConfig = () => {
+    const { config } = form.getFieldsValue()[prefixName];
+    const selectedKeys = config.map((d) => d.key);
+    const otherItems = state.originConfigList.filter(
+      (d) => !selectedKeys.includes(d.value)
+    );
+    setState((draft) => {
+      draft.configList = otherItems;
+    });
+  };
+
+  const handleChangeConfig = (value: string, index: number) => {
     const currentConfig = state.configList.find((d) => d.value === value);
     const { masked, defaultValue, type } = currentConfig;
 
     // 更新 input 值
     const originFormValue = form.getFieldsValue();
-    const originDefaultConfig =
-      originFormValue[prefixName]?.config?.filter((d) => d.key !== value) || [];
+    originFormValue[prefixName].config[index] = {
+      key: value,
+      value: defaultValue,
+      masked,
+      type,
+    };
 
     setState((draft) => {
       draft.configSelectedList = [
@@ -234,20 +249,20 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
       draft.currentCategoryType = value;
     });
 
-    form.setFieldsValue({
-      [prefixName]: {
-        ...originFormValue[prefixName],
-        // config: [
-        //   ...originDefaultConfig,
-        //   {
-        //     key: value,
-        //     value: defaultValue,
-        //     masked,
-        //     type,
-        //   },
-        // ],
-      },
-    });
+    // form.setFieldsValue({
+    //   [prefixName]: {
+    //     ...originFormValue[prefixName],
+    //     config: [
+    //       ...originDefaultConfig,
+    //       {
+    //         key: value,
+    //         value: defaultValue,
+    //         masked,
+    //         type,
+    //       },
+    //     ],
+    //   },
+    // });
   };
 
   const onNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -370,7 +385,10 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
                   >
                     <Select
                       style={{ width: 450 }}
-                      onChange={handleChangeConfig}
+                      onChange={(value) => {
+                        handleChangeConfig(value, index);
+                      }}
+                      onFocus={handleFocusConfig}
                       disabled={readonly}
                       dropdownRender={(menu) => (
                         <>

@@ -53,7 +53,7 @@ export const GeaflowLogin: React.FC<PluginPorps> = ({ redirectPath = [] }) => {
             localStorage.removeItem("GEAFLOW_CURRENT_INSTANCE");
 
             // 登录成功后，检查是否执行过一键安装
-            hasQuickInstall().then((resp) => {
+            hasQuickInstall(sessionToken).then((resp) => {
               // 管理员且没有安装
               if (systemSession) {
                 message.success(t("i18n.key.login.succeeded"));

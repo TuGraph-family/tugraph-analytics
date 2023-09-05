@@ -32,6 +32,33 @@ export const JobList: React.FC<PluginPorps> = (props) => {
     newInstance: {},
   });
 
+  const typeMean = {
+    INTEGRATE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Integration",
+      dm: "集成",
+    }),
+    DISTRIBUTE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Distribution",
+      dm: "分发",
+    }),
+    PROCESS: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Process",
+      dm: "加工",
+    }),
+    SERVE: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Serving",
+      dm: "服务",
+    }),
+    STAT: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Statistics",
+      dm: "统计",
+    }),
+    CUSTOM: $i18n.get({
+      id: "openpiece-geaflow.job-detail.components.basicInfo.Custom",
+      dm: "自定义",
+    }),
+  };
+
   const handleQuery = async () => {
     const clusterData = await getApiClusters();
     const newCluster = {};
@@ -76,7 +103,9 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       width: 150,
       render: (_, record: any) => (
         <span>
-          <a href={`${redirectTable}?jobId=${record?.release?.job.id}&view=true`}>
+          <a
+            href={`${redirectTable}?jobId=${record?.release?.job.id}&view=true`}
+          >
             {record?.release?.job.name}
           </a>
 
@@ -117,7 +146,9 @@ export const JobList: React.FC<PluginPorps> = (props) => {
       key: "jobType",
       hideInSearch: true,
       render: (text: string, record: any) => (
-        <span>{record?.release?.job.type}</span>
+        <span>
+          {record?.release?.job.type && typeMean[record?.release?.job.type]}
+        </span>
       ),
     },
     {

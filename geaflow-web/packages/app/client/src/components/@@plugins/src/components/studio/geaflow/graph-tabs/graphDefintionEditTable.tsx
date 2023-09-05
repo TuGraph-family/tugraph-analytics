@@ -66,55 +66,6 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
   };
 
   const categoryType = {
-    VERTEX: {
-      VERTEX_ID: {
-        text: "ID",
-      },
-      VERTEX_LABEL: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Label",
-          dm: "标签",
-        }),
-      },
-      PROPERTY: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Properties",
-          dm: "属性",
-        }),
-      },
-    },
-    EDGE: {
-      EDGE_SOURCE_ID: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.SourcePointId",
-          dm: "源点id",
-        }),
-      },
-      EDGE_TARGET_ID: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.TargetPointId",
-          dm: "目标点id",
-        }),
-      },
-      EDGE_LABEL: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EdgeLabel",
-          dm: "边标签",
-        }),
-      },
-      EDGE_TIMESTAMP: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.EdgeTimestamp",
-          dm: "边时间戳",
-        }),
-      },
-      PROPERTY: {
-        text: $i18n.get({
-          id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Properties",
-          dm: "属性",
-        }),
-      },
-    },
     TABLE: {
       ID: {
         text: "ID",
