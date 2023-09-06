@@ -8,7 +8,7 @@ CREATE TABLE jdbc_table (
   name VARCHAR,
   age INT
 ) WITH (
-	type='file',
+	type='jdbc',
     geaflow.dsl.jdbc.driver = 'org.h2.Driver',
     geaflow.dsl.jdbc.url = 'jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1',
     geaflow.dsl.jdbc.username = 'h2_user',
@@ -44,7 +44,7 @@ CREATE TABLE jdbc_source_table (
   name VARCHAR,
   age INT
 ) WITH (
-	type='file',
+	type='jdbc',
     geaflow.dsl.jdbc.table.name = 'source_table',
 );
 
@@ -53,7 +53,7 @@ CREATE TABLE jdbc_sink_table (
   name VARCHAR,
   age INT
 ) WITH (
-	type='file',
+	type='jdbc',
     geaflow.dsl.jdbc.table.name = 'sink_table'
 );
 
