@@ -40,9 +40,6 @@ please refer to: [GeaFlow introduction document](docs/docs-en/introduction.md)
 * One-stop graph development platform
 * Cloud native deployment support.
 
-[Why using graphs for relational operations is more appealing than table joins?](./docs/docs-en/principle/vs_join.md)
-[![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
-
 The similarities and differences between GeaFlow and traditional stream computing engine, such as Flink, are as follows:
 
 | Features | GeaFlow | Flink |
@@ -53,6 +50,9 @@ The similarities and differences between GeaFlow and traditional stream computin
 | Join Support | Supports complex multi-degree join operations | Not suitable for complex joins |
 | Graph Algorithm Support| Native graph algorithm support | Flink Gelly module support (currently removed)|
 | Query Language| SQL + ISO/GQL| SQL |
+
+[Why using graphs for relational operations is more appealing than table joins?](./docs/docs-en/principle/vs_join.md)
+[![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
 
 GeaFlow's relevant design reference papers are as follows: [GeaFlow: A Graph Extended and Accelerated Dataflow
 System](https://dl.acm.org/doi/abs/10.1145/3589771)
@@ -69,7 +69,21 @@ using GeaFlow's SQL extension language SQL+ISO/GQL or use GeaFlow's high-level A
 applications in Java. For more information on DSL application development, please refer to the [DSL development 
 document](docs/docs-en/application-development/dsl/overview.md), and for the high-level API application development, please refer to the [API application development document](docs/docs-en/application-development/api/overview.md).
 
-![code_style](./docs/static/img/code_style.jpg)
+```roomsql
+--GQL Style
+Match (s:student)-[sc:selectCource]->(c:cource)
+Return c.name
+;
+```
+
+```roomsql
+--SQL Style
+SELECT c.name
+FROM course c JOIN selectCourse sc 
+ON c.id = sc.targetId
+JOIN student s ON sc.srcId = s.id
+;
+```
 
 ## Document
 
