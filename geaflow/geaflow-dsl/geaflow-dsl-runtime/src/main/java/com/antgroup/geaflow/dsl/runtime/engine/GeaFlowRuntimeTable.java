@@ -28,6 +28,7 @@ import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.type.IType;
+import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.common.utils.ClassUtil;
 import com.antgroup.geaflow.dsl.common.binary.EncoderFactory;
 import com.antgroup.geaflow.dsl.common.binary.encoder.EdgeEncoder;
@@ -58,6 +59,7 @@ import com.antgroup.geaflow.dsl.runtime.SinkDataView;
 import com.antgroup.geaflow.dsl.runtime.function.table.AggFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.GroupByFunction;
+import com.antgroup.geaflow.dsl.runtime.function.table.GroupByFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.table.JoinTableFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.OrderByFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.ProjectFunction;
@@ -74,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GeaFlowRuntimeTable implements RuntimeTable {
 
@@ -207,7 +210,19 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         } else {
             sinkFunction = new GeaFlowTableSinkFunction(table, tableSink);
         }
-        PStreamSink<Row> sink = pStream.sink(sinkFunction)
+        PWindowStream<Row> inputStream = pStream;
+        if (table.getPrimaryFields().size() > 0) {
+            int[] primaryKeyIndices = ArrayUtil.toIntArray(table.getPrimaryFields()
+                .stream().map(name -> table.getTableSchema().indexOf(name))
+                .collect(Collectors.toList()));
+            IType<?>[] primaryKeyTypes = table.getPrimaryFields()
+                .stream().map(name -> table.getTableSchema().getField(name).getType())
+                .collect(Collectors.toList()).toArray(new IType[]{});
+
+            inputStream = pStream.keyBy(new GroupKeySelectorFunction(
+                new GroupByFunctionImpl(primaryKeyIndices, primaryKeyTypes)));
+        }
+        PStreamSink<Row> sink = inputStream.sink(sinkFunction)
             .withConfig(queryContext.getSetOptions())
             .withName(opName)
             .withParallelism(parallelism);
