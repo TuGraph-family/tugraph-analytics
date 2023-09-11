@@ -90,3 +90,12 @@ export const updateTableDefinition = (
     }
   );
 };
+
+export const tableDetail = (instanceName: string, vertexName: string) => {
+  return request(
+    `${HTTP_SERVICE_URL}/api/instances/${instanceName}/tables/${vertexName}`,
+    {
+      method: "get",
+    }
+  );
+};

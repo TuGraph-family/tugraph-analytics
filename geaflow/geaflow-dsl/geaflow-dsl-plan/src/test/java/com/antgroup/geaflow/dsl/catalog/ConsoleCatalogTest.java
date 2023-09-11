@@ -130,6 +130,7 @@ public class ConsoleCatalogTest {
                 String path = recordedRequest.getPath();
                 Gson gson = new Gson();
                 HttpResponse response = new HttpResponse();
+                response.setSuccess(true);
                 response.setCode("200");
                 switch (path) {
                     case "/api/instances/default/graphs/modern":
@@ -139,7 +140,7 @@ public class ConsoleCatalogTest {
                     case "/api/instances/default/graphs/modern2":
                     case "/api/instances/default/tables/users2":
                     case "/api/instances/default/graphs/modern2/endpoints":
-                        return new MockResponse().setResponseCode(200).setBody("{}");
+                        return new MockResponse().setResponseCode(200).setBody("{success:true}");
                     case "/api/instances/default/graphs":
                         PageList graphList = new PageList();
                         graphList.setList(

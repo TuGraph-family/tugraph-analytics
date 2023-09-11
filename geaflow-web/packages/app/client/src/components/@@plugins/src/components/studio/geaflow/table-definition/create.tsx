@@ -3,9 +3,10 @@ import { Input, Row, Col, Form, Card, Button, message } from "antd";
 import {
   createTableDefinition,
   updateTableDefinition,
+  tableDetail,
 } from "../services/tableDefinition";
 import { GraphDefintionTab } from "../graph-tabs";
-
+import { isEmpty } from "lodash";
 import styles from "./list.module.less";
 import $i18n from "../../../../../../i18n";
 
@@ -14,11 +15,21 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
     ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
     : {};
   const { value: instanceName } = currentInstance;
-
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [details, setDeatils] = useState<object>({});
+  const [activeKey, setActiveKey] = useState<string>("TABLE");
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    if (currentItem) {
+      tableDetail(instanceName, currentItem.name).then((res) => {
+        if (res.success) {
+          setDeatils(res.data);
+          form.setFieldsValue(res.data);
+        }
+      });
+    }
+  }, [currentItem]);
 
   const handleFileds = (value: any, name: string) => {
     return value?.map((item: any) => {
@@ -48,27 +59,25 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
       configObj.config[item.key] = item.value;
     }
 
-    if (currentItem) {
+    if (!isEmpty(details)) {
       // 修改
       const updateParams = {
-        ...currentItem,
+        ...details,
         name,
         comment,
         fields: handleFileds(fields, "tableName0"),
         pluginConfig: {
-          ...currentItem.pluginConfig,
-          type: type || currentItem.pluginConfig.type,
+          ...details?.pluginConfig,
+          type: type || details?.pluginConfig.type,
           config:
-            config.length > 0
-              ? configObj.config
-              : currentItem.pluginConfig.config,
+            config.length > 0 ? configObj.config : details?.pluginConfig.config,
         },
         type: "TABLE",
       };
 
       const result = await updateTableDefinition(
         instanceName,
-        currentItem.name,
+        details?.name,
         updateParams
       );
 
@@ -142,9 +151,10 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
       message.info(
         $i18n.get({
           id: "openpiece-geaflow.geaflow.table-definition.create.EnterParameterConfiguration",
-          dm: "请输入参数配置",
+          dm: "请选择参数配置",
         })
       );
+      setActiveKey("tableConfig");
     }
     setIsLoading(false);
   };
@@ -152,9 +162,10 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
   let defaultFormValues = {};
 
   // 根据 currentItem 来判断是新增还是修改
-  if (currentItem) {
+  if (!isEmpty(details)) {
+    console.log(details);
     // 修改，设置表单初始值
-    const { pluginConfig } = currentItem;
+    const { pluginConfig } = details;
     const configArr = [];
     for (const key in pluginConfig.config) {
       const current = pluginConfig.config[key];
@@ -168,10 +179,8 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
         type: pluginConfig.type,
         config: configArr,
       },
-      edges: currentItem.edges,
-      vertices: currentItem.vertices,
-      name: currentItem.name,
-      comment: currentItem.comment,
+      edges: details?.edges,
+      vertices: details?.vertices,
     };
   } else {
     defaultFormValues = {
@@ -285,8 +294,10 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
             },
           ]}
           form={form}
-          currentItem={currentItem}
+          currentItem={details}
           readonly={readonly}
+          activeKey={activeKey}
+          setActiveKey={setActiveKey}
         />
 
         {!readonly && (

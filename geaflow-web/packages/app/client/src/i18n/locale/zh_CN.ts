@@ -99,5 +99,5 @@ export default {
   "i18n.key.chinese": "简体中文",
   "i18n.key.English": "英文",
   "i18n.key.task": "任务",
-  "i18n.key.jump.task.editpage": "跳转到图任务编辑页面进行编辑"
+  "i18n.key.jump.task.editpage": "前往图任务编辑页面进行编辑"
 };

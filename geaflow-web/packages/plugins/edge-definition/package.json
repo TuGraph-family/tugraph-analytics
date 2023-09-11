@@ -1,0 +1,16 @@
+{
+  "name": "@tugraph/plugin-edge-definition",
+  "version": "0.0.1",
+  "main": "lib/server/index.js",
+  "devDependencies": {
+    "@tugraph/openpiece-client": "^0.0.17",
+    "@tugraph/openpiece-server": "^0.0.10"
+  },
+  "peerDependencies": {
+    "@tugraph/openpiece-client": "*",
+    "@tugraph/openpiece-server": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

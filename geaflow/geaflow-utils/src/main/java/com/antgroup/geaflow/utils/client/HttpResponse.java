@@ -22,6 +22,7 @@ public class HttpResponse implements Serializable {
     private String code;
     private String message;
     private String host;
+    private boolean success;
     private JsonElement data;
 
     public String getCode() {
@@ -56,4 +57,11 @@ public class HttpResponse implements Serializable {
         this.data = data;
     }
 
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
 }

@@ -109,10 +109,7 @@ interface CrateGraphParams {
  * @param params 创建图的参数
  * @returns
  */
-export const createGraphDefinition = (
-  instanceName: string,
-  params: CrateGraphParams
-) => {
+export const createGraphDefinition = (instanceName: string, params: any) => {
   return request(`${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs`, {
     method: "POST",
     data: params,
@@ -128,13 +125,22 @@ export const createGraphDefinition = (
 export const updateGraphDefinition = (
   instanceName: string,
   graphName: string,
-  params: CrateGraphParams
+  params: any
 ) => {
   return request(
     `${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs/${graphName}`,
     {
       method: "PUT",
       data: params,
+    }
+  );
+};
+
+export const graphDetail = (instanceName: string, graphName: string) => {
+  return request(
+    `${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs/${graphName}`,
+    {
+      method: "get",
     }
   );
 };

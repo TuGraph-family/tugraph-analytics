@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.console.core.model.data;
 
-import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_LABEL;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_SOURCE_ID;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_TARGET_ID;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_TIMESTAMP;
@@ -44,7 +43,6 @@ public class GeaflowEdge extends GeaflowStruct {
 
         int sourceIdCount = 0;
         int targetIdCount = 0;
-        int labelCount = 0;
         int tsCount = 0;
         for (GeaflowField value : fields.values()) {
             GeaflowFieldCategory category = value.getCategory();
@@ -56,10 +54,6 @@ public class GeaflowEdge extends GeaflowStruct {
                 targetIdCount++;
             }
 
-            if (category == EDGE_LABEL) {
-                labelCount++;
-            }
-
             if (category == EDGE_TIMESTAMP) {
                 tsCount++;
             }
@@ -67,7 +61,6 @@ public class GeaflowEdge extends GeaflowStruct {
 
         EDGE_SOURCE_ID.validate(sourceIdCount);
         EDGE_TARGET_ID.validate(targetIdCount);
-        EDGE_LABEL.validate(labelCount);
         EDGE_TIMESTAMP.validate(tsCount);
     }
 

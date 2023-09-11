@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "devDependencies": {
-    "@tugraph/openpiece-client": "^0.0.21",
+    "@tugraph/openpiece-client": "^0.0.17",
     "i18next-browser-languagedetector": "^7.1.0"
   },
   "repository": {

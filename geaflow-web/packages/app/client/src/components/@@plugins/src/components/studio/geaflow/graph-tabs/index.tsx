@@ -18,6 +18,8 @@ type Props = {
   currentItem?: any;
   readonly: boolean;
   editable?: boolean;
+  activeKey?: string;
+  setActiveKey?: any;
 };
 
 const TYPE_TEXT = {
@@ -42,6 +44,8 @@ export const GraphDefintionTab: React.FC<Props> = ({
   currentItem,
   readonly,
   editable,
+  activeKey,
+  setActiveKey,
 }) => {
   const [tabsData, setTabsData] = useState(tabsList);
 
@@ -121,7 +125,13 @@ export const GraphDefintionTab: React.FC<Props> = ({
   };
 
   return (
-    <Tabs className={styles["graph-tab"]} key={tabsData}>
+    <Tabs
+      className={styles["graph-tab"]}
+      activeKey={activeKey}
+      onChange={(key) => {
+        setActiveKey(key);
+      }}
+    >
       {tabsData.map((item, index) => (
         <TabPane tab={item.name} key={item.type}>
           {["tableConfig", "paramConfig"].includes(item.type) ? (

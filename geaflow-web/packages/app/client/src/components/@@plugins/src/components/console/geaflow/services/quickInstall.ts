@@ -58,9 +58,12 @@ export const getPluginCategoriesConfig = (type: string, value: string) => {
  * 判断是否已经执行过一键安装操作
  * @returns 
  */
-export const hasQuickInstall = () => {
+export const hasQuickInstall = (token: string) => {
   return request(`${HTTP_SERVICE_URL}/api/configs/geaflow.initialized/value`, {
     method: 'GET',
+    headers: {
+      'geaflow-token': token
+    }
   });
 }
 

@@ -50,8 +50,8 @@ public class HttpUtilTest {
     @Test
     public void test() throws InterruptedException {
         // Schedule some responses.
-        server.enqueue(new MockResponse().setBody("{key:value}"));
-        server.enqueue(new MockResponse().setBody("{delete:true}"));
+        server.enqueue(new MockResponse().setBody("{key:value,success:true}"));
+        server.enqueue(new MockResponse().setBody("{delete:true,success:true}"));
 
         // Ask the server for its URL. You'll need this to make HTTP requests.
         String url = URI.create(baseUrl).resolve("/v1/cluster").toString();
