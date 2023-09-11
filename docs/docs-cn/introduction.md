@@ -16,8 +16,6 @@
 边代表关系，数据存储层面点边存放在一起。因此，图模型天然定义了数据的关系同时存储层面物化了点边关系。基于图模型，我们实现了新一代实时计算
 引擎GeaFlow，很好的解决了复杂关系运算实时化的问题。目前GeaFlow已广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
 
-![stream_history](../static/img/stream_history.png)
-
 ## 主要特点
 * 以图为模型的分布式流式计算引擎
 * 高可用和exactly once保障
@@ -26,7 +24,10 @@
 * UDF/图算法/Connector插件支持
 * 高阶API开发支持
 * 一站式图研发平台支持
-* 云原生部署支持`
+* 云原生部署支持
+
+[为什么使用图进行关联运算比表Join更具吸引力？](./principle/vs_join.md)
+[![total_time](../static/img/vs_join_total_time_cn.jpg)](./principle/vs_join.md)
 
 和传统流计算引擎如Flink的异同点如下：
 
@@ -44,20 +45,13 @@ GeaFlow相关设计参考论文：[GeaFlow: A Graph Extended and Accelerated Dat
 ## 技术概览
 GeaFlow整体架构如下所示：
 
-![GeaFlow架构](../static/img/geaflow_arch.png)
-GeaFlow整体架构从上往下包含以下几层：
-* **GeaFlow DSL**
-  GeaFlow对用户提供图表融合分析语言，采用SQL + ISO/GQL方式.用户可以通过类似SQL编程的方式编写实时图计算任务.
-* **GraphView API**
-  GeaFlow以GraphView为核心定义的一套图计算的编程接口,包含图构建、图计算以及Stream API接口.
-* **GeaFlow Runtime**
-  GeaFlow运行时，包含GeaFlow图表算子、task调度、failover以及shuffle等核心功能.
-* **GeaFlow State**
-  GeaFlow的图状态存储，用于存储图的点边数据.同时流式计算的状态如聚合状态也存放在State中.
-* **K8S Deployment**
-  GeaFlow支持K8S的方式进行部署运行.
-* **GeaFlow Console**
-  GeaFlow的管控平台，包含作业管理、元数据管理等功能.
+![GeaFlow架构](../static/img/geaflow_arch_new.png)
+
+* [DSL层](./principle/dsl_principle.md)：即语言层。GeaFlow设计了SQL+GQL的融合分析语言，支持对表模型和图模型统一处理。
+* [Framework层](./principle/framework_principle.md)：即框架层。GeaFlow设计了面向Graph和Stream的两套API支持流、批、图融合计算，并实现了基于Cycle的统一分布式调度模型。
+* [State层](./principle/state_principle.md)：即存储层。GeaFlow设计了面向Graph和KV的两套API支持表数据和图数据的混合存储，整体采用了Sharing Nothing的设计，并支持将数据持久化到远程存储。
+* [Console平台](./principle/console_principle.md)：GeaFlow提供了一站式图研发平台，实现了图数据的建模、加工、分析能力，并提供了图作业的运维管控支持。
+* **执行环境**：GeaFlow可以运行在多种异构执行环境，如K8S、Ray以及本地模式。
 
 ## 应用场景
 
@@ -65,8 +59,6 @@ GeaFlow整体架构从上往下包含以下几层：
 数仓场景存在大量Join运算，在DWD层往往需要将多张表展开成一张大宽表，以加速后续查询。当Join的表数量变多时，传统的实时计算引擎很难
 保证Join的时效性和性能，这也成为目前实时数仓领域一个棘手的问题。基于GeaFlow的实时图计算引擎，可以很好的解决这方面的问题。
 GeaFlow以图作为数据模型，替代DWD层的宽表，可以实现数据实时构图，同时在查询阶段利用图的点边物化特性，可以极大加速关系运算的查询。
-如下为GeaFlow实时数仓加速的流程图：
-![graph_warehouse](../static/img/graph_warehouse.png)
 
 ### 实时归因分析
 在信息化的大背景下，对用户行为进行渠道归因和路径分析是流量分析领域中的核心所在。通过实时计算用户的有效行为路径，构建出完整的转化路径，能够快速帮助业务看清楚产品的价值，帮助运营及时调整运营思路。实时归因分析的核心要点是准确性和实效性。准确性要求在成本可控下保证用户行为路径分析的准确性;实效性则要求计算的实时性足够高，才能快速帮助业务决策。

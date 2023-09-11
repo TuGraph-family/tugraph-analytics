@@ -7,7 +7,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_duplication.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
   max_id long,
 	max_name string,
 	max_age int,
@@ -19,7 +19,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 select
   max(id), max(name), max(age), min(id), min(name), min(age)
 FROM users

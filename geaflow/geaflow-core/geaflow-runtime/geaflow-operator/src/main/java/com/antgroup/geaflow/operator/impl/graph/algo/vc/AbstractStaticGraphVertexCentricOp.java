@@ -16,7 +16,10 @@ package com.antgroup.geaflow.operator.impl.graph.algo.vc;
 
 import com.antgroup.geaflow.api.graph.base.algo.VertexCentricAlgo;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.antgroup.geaflow.state.DataModel;
+import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 
 import org.slf4j.Logger;
@@ -49,5 +52,15 @@ public abstract class AbstractStaticGraphVertexCentricOp<K, VV, EV, M,
         }
         this.graphState.staticGraph().E().add(edge);
         this.opInputMeter.mark();
+    }
+
+    @Override
+    protected GraphStateDescriptor<K, VV, EV> buildGraphStateDesc(String name) {
+        GraphStateDescriptor<K, VV, EV> desc =  super.buildGraphStateDesc(name);
+        desc.withDataModel(graphViewDesc.isStatic() ? DataModel.STATIC_GRAPH : DataModel.DYNAMIC_GRAPH);
+        if (graphViewDesc.getGraphMetaType() != null) {
+            desc.withGraphMeta(new GraphMeta(graphViewDesc.getGraphMetaType()));
+        }
+        return desc;
     }
 }

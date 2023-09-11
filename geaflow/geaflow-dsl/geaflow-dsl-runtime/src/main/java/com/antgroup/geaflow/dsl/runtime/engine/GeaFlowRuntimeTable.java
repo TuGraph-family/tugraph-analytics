@@ -133,15 +133,18 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     public RuntimeTable aggregate(GroupByFunction groupByFunction, AggFunction aggFunction) {
         String opName = PhysicRelNodeName.AGGREGATE.getName(queryContext.getOpNameCount());
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
+        boolean isGlobalDistinct = aggFunction.getValueTypes().length == 0;
         PWindowStream<Row> aggregate =
-            pStream.flatMap(new TableLocalAggregateFunction(groupByFunction, aggFunction))
+            pStream.flatMap(isGlobalDistinct ? new TableLocalDistinctFunction(groupByFunction)
+                                             : new TableLocalAggregateFunction(groupByFunction, aggFunction))
                 .withName(opName + "-local")
                 .withParallelism(pStream.getParallelism())
                 .keyBy(new GroupKeySelectorFunction(groupByFunction))
                 .withName(opName + "-KeyBy")
                 .withParallelism(pStream.getParallelism())
                 .materialize()
-                .aggregate(new TableGlobalAggregateFunction(groupByFunction, aggFunction))
+                .aggregate(isGlobalDistinct ? new TableGlobalDistinctFunction(groupByFunction)
+                                            : new TableGlobalAggregateFunction(groupByFunction, aggFunction))
                 .withName(opName + "-global")
                 .withParallelism(parallelism);
         return copyWithSetOptions(aggregate);
@@ -296,6 +299,54 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         }
     }
 
+    private static class TableLocalDistinctFunction extends RichWindowFunction implements
+        FlatMapFunction<Row, Row> {
+
+        private final GroupByFunction groupByFunction;
+        private final Map<RowKey, Row> aggregatingState;
+        private final IBinaryEncoder encoder;
+
+        public TableLocalDistinctFunction(GroupByFunction groupByFunction) {
+            this.groupByFunction = groupByFunction;
+            this.aggregatingState = new HashMap<>();
+            IType<?>[] fieldTypes = groupByFunction.getFieldTypes();
+            TableField[] tableFields = new TableField[fieldTypes.length];
+            for (int i = 0; i < fieldTypes.length; i++) {
+                tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
+            }
+            this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
+        }
+
+        @Override
+        public void open(RuntimeContext runtimeContext) {
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public void flatMap(Row value, Collector<Row> collector) {
+            //local distinct
+            RowKey groupKey = groupByFunction.getRowKey(value);
+            Row acc = aggregatingState.get(groupKey);
+            if (acc == null) {
+                assert collector != null : "collector is null";
+                IType<?>[] keyTypes = groupByFunction.getFieldTypes();
+                Object[] fields = new Object[keyTypes.length];
+                for (int i = 0; i < keyTypes.length; i++) {
+                    fields[i] = groupKey.getField(i, keyTypes[i]);
+                }
+                collector.partition(encoder.encode(ObjectRow.create(fields)));
+            }
+            aggregatingState.put(groupKey, value);
+        }
+
+        @Override
+        public void finish() {
+            aggregatingState.clear();
+        }
+    }
 
     private static class TableLocalAggregateFunction extends RichWindowFunction implements
         FlatMapFunction<Row, Row> {
@@ -304,7 +355,6 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         private final GroupByFunction groupByFunction;
         private Collector<Row> collector;
         private final Map<RowKey, Object> aggregatingState;
-        private final boolean hasAccumulator;
         private final IBinaryEncoder encoder;
 
         public TableLocalAggregateFunction(GroupByFunction groupByFunction, AggFunction localAggFunction) {
@@ -312,22 +362,13 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             this.groupByFunction = groupByFunction;
             this.aggregatingState = new HashMap<>();
             IType<?>[] fieldTypes = groupByFunction.getFieldTypes();
-            this.hasAccumulator = localAggFunction.getValueTypes().length > 0;
-            if (hasAccumulator) {
-                TableField[] tableFields = new TableField[fieldTypes.length + 1];
-                for (int i = 0; i < fieldTypes.length; i++) {
-                    tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
-                }
-                tableFields[fieldTypes.length] = new TableField(String.valueOf(fieldTypes.length)
-                    , ObjectType.INSTANCE, false);
-                this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
-            } else {
-                TableField[] tableFields = new TableField[fieldTypes.length];
-                for (int i = 0; i < fieldTypes.length; i++) {
-                    tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
-                }
-                this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
+            TableField[] tableFields = new TableField[fieldTypes.length + 1];
+            for (int i = 0; i < fieldTypes.length; i++) {
+                tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
             }
+            tableFields[fieldTypes.length] = new TableField(String.valueOf(fieldTypes.length)
+                , ObjectType.INSTANCE, false);
+            this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
         }
 
         @Override
@@ -360,17 +401,100 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
                 assert collector != null : "collector is null";
                 IType<?>[] keyTypes = groupByFunction.getFieldTypes();
                 //The last offset of ObjectRow is accumulator
-                Object[] fields =
-                    hasAccumulator ? new Object[keyTypes.length + 1] : new Object[keyTypes.length];
+                Object[] fields = new Object[keyTypes.length + 1];
                 for (int i = 0; i < keyTypes.length; i++) {
                     fields[i] = rowKeyObjectEntry.getKey().getField(i, keyTypes[i]);
                 }
-                if (hasAccumulator) {
-                    fields[keyTypes.length] = rowKeyObjectEntry.getValue();
-                }
+                fields[keyTypes.length] = rowKeyObjectEntry.getValue();
                 collector.partition(encoder.encode(ObjectRow.create(fields)));
             }
             aggregatingState.clear();
+        }
+    }
+
+    private static class TableGlobalDistinctFunction extends RichFunction implements
+        AggregateFunction<Row, Object, Row> {
+
+        private final GroupByFunction groupByFunction;
+
+        public TableGlobalDistinctFunction(GroupByFunction groupByFunction) {
+            this.groupByFunction = groupByFunction;
+        }
+
+        @Override
+        public void open(RuntimeContext runtimeContext) {
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public Object createAccumulator() {
+            return new DistinctAccumulator(null);
+        }
+
+        @Override
+        public void add(Row value, Object keyAccumulator) {
+            IType<?>[] keyTypes = groupByFunction.getFieldTypes();
+            Object[] fields = new Object[keyTypes.length];
+            for (int i = 0; i < keyTypes.length; i++) {
+                fields[i] = value.getField(i, keyTypes[i]);
+            }
+            RowKey key = ObjectRowKey.of(fields);
+            DistinctAccumulator keyAcc = (DistinctAccumulator) keyAccumulator;
+            if (keyAcc.getKey() == null) {
+                keyAcc.setKey(key);
+            }
+        }
+
+        @Override
+        public Row getResult(Object keyAccumulator) {
+            RowKey key = ((DistinctAccumulator) keyAccumulator).getResult();
+            if (key == null) {
+                return null;
+            }
+            IType<?>[] keyTypes = groupByFunction.getFieldTypes();
+            Object[] fields = new Object[keyTypes.length];
+            for (int i = 0; i < keyTypes.length; i++) {
+                fields[i] = key.getField(i, keyTypes[i]);
+            }
+            return ObjectRow.create(fields);
+        }
+
+        @Override
+        public Object merge(Object a, Object b) {
+            assert Objects.equals(((DistinctAccumulator) a).getKey(),
+                ((DistinctAccumulator) b).getKey());
+            return a;
+        }
+
+        private static class DistinctAccumulator implements Serializable {
+
+            private RowKey key;
+
+            private boolean hasBeenRead = false;
+
+            public DistinctAccumulator(RowKey key) {
+                this.key = key;
+            }
+
+            public RowKey getKey() {
+                return key;
+            }
+
+            public void setKey(RowKey key) {
+                this.key = key;
+            }
+
+            public RowKey getResult() {
+                if (hasBeenRead) {
+                    return null;
+                } else {
+                    hasBeenRead = true;
+                    return key;
+                }
+            }
         }
     }
 

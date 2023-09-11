@@ -32,6 +32,10 @@ import com.antgroup.geaflow.common.encoder.impl.LongEncoder;
 import com.antgroup.geaflow.common.encoder.impl.ShortArrEncoder;
 import com.antgroup.geaflow.common.encoder.impl.ShortEncoder;
 import com.antgroup.geaflow.common.encoder.impl.StringEncoder;
+import com.antgroup.geaflow.common.encoder.impl.TripleEncoder;
+import com.antgroup.geaflow.common.encoder.impl.TupleEncoder;
+import com.antgroup.geaflow.common.tuple.Triple;
+import com.antgroup.geaflow.common.tuple.Tuple;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -112,6 +116,15 @@ public class Encoders {
         PRIMITIVE_WRAPPER_MAP.put(Double.TYPE, Double.class);
         PRIMITIVE_WRAPPER_MAP.put(Float.TYPE, Float.class);
         PRIMITIVE_WRAPPER_MAP.put(Void.TYPE, Void.TYPE);
+    }
+
+    public static <T0, T1> IEncoder<Tuple<T0, T1>> tuple(IEncoder<T0> encoder0, IEncoder<T1> encoder1) {
+        return new TupleEncoder<>(encoder0, encoder1);
+    }
+
+    public static <T0, T1, T2> IEncoder<Triple<T0, T1, T2>> triple(
+        IEncoder<T0> encoder0, IEncoder<T1> encoder1, IEncoder<T2> encoder2) {
+        return new TripleEncoder<>(encoder0, encoder1, encoder2);
     }
 
 }

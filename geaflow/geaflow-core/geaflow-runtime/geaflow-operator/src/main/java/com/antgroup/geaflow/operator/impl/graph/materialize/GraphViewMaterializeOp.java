@@ -58,7 +58,7 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
         String storeType = graphViewDesc.getBackend().name();
         GraphStateDescriptor<K, VV, EV> descriptor = GraphStateDescriptor.build(
             graphViewDesc.getName(), storeType);
-        descriptor.withDataModel(graphViewDesc.isStatic() ? DataModel.STATIC_GRAPH : DataModel.DYNAMIC_GRAPH);
+        descriptor.withDataModel(DataModel.DYNAMIC_GRAPH);
         descriptor.withGraphMeta(new GraphMeta(graphViewDesc.getGraphMetaType()));
         descriptor.withMetricGroup(runtimeContext.getMetric());
 
@@ -80,11 +80,7 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
             taskIndex, keyGroup);
         this.graphState = StateFactory.buildGraphState(descriptor, runtimeContext.getConfiguration());
         recover();
-        if (graphViewDesc.isStatic()) {
-            this.function =  new StaticGraphMaterializeFunction<>(graphState);
-        } else {
-            this.function = new DynamicGraphMaterializeFunction<>(graphState);
-        }
+        this.function = new DynamicGraphMaterializeFunction<>(graphState);
     }
 
     @Override
@@ -153,25 +149,6 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
                 graphState.manage().operate().setCheckpointId(recoverVersionId);
                 graphState.manage().operate().recover();
             }
-        }
-    }
-
-    private static class StaticGraphMaterializeFunction<K, VV, EV> implements GraphMaterializeFunction<K, VV, EV> {
-
-        private final GraphState<K, VV, EV> graphState;
-
-        public StaticGraphMaterializeFunction(GraphState<K, VV, EV> graphState) {
-            this.graphState = graphState;
-        }
-
-        @Override
-        public void materializeVertex(IVertex<K, VV> vertex) {
-            graphState.staticGraph().V().add(vertex);
-        }
-
-        @Override
-        public void materializeEdge(IEdge<K, EV> edge) {
-            graphState.staticGraph().E().add(edge);
         }
     }
 

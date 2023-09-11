@@ -191,6 +191,8 @@ public interface IdDao<E extends IdEntity, S extends IdSearch> extends IService<
             String sort = search.getSort();
             if (StringUtils.isNotBlank(sort)) {
                 page.addOrder(SortOrder.ASC.equals(search.getOrder()) ? OrderItem.asc(sort) : OrderItem.desc(sort));
+            } else {
+                page.addOrder(OrderItem.desc(MODIFY_TIME_FIELD_NAME));
             }
         }
         return page;

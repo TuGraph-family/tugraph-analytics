@@ -16,10 +16,12 @@ CREATE TABLE file_table (
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
+| geaflow.file.persistent.config.json     | false    | The JSON format DFS configuration will override the system environment configuration.      |
 | geaflow.dsl.file.path     | true     | The file path to read or write.     |
 | geaflow.dsl.column.separator     | false     | The column separator for split text to columns.Default value is ','.     |
 | geaflow.dsl.line.separator     | false     | The line separator for split text to columns..Default value is '\n'.     |
-
+| geaflow.dsl.file.name.regex    | false    | The regular expression filter rule for file name reading is empty by default.           |
+| geaflow.dsl.file.format     | false    | The file format for reading and writing supports Parquet and TXT, with the default format being TXT. |
 
 # Example
 

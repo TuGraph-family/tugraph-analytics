@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.k8s.clustermanager;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CA_DATA;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CERT_DATA;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CERT_KEY;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLIENT_KEY_ALGO;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.MASTER_URL;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.PING_INTERVAL_MS;
@@ -51,9 +52,9 @@ public class KubernetesClientFactory {
             .withNamespace(namespace);
 
         clientConfig.withTrustCerts(true);
-        String certKet = config.getString(CERT_KEY);
-        if (!StringUtils.isBlank(certKet)) {
-            clientConfig.withClientKeyData(certKet);
+        String certKey = config.getString(CERT_KEY);
+        if (!StringUtils.isBlank(certKey)) {
+            clientConfig.withClientKeyData(certKey);
         }
 
         String certData = config.getString(CERT_DATA);
@@ -64,6 +65,11 @@ public class KubernetesClientFactory {
         String caData = config.getString(CA_DATA);
         if (!StringUtils.isBlank(caData)) {
             clientConfig.withCaCertData(certData);
+        }
+
+        String certKeyAlgo = config.getString(CLIENT_KEY_ALGO);
+        if (!StringUtils.isBlank(certKeyAlgo)) {
+            clientConfig.withClientKeyAlgo(certKeyAlgo);
         }
 
         Dispatcher dispatcher = new Dispatcher();

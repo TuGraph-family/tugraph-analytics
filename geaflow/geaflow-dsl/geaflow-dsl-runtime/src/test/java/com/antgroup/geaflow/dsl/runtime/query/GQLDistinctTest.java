@@ -80,4 +80,13 @@ public class GQLDistinctTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testDistinct_008() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_distinct_008.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }

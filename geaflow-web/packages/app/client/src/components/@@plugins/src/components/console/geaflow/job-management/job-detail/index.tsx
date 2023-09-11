@@ -57,7 +57,7 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
   const jobTabItems = (value: string, jobItem?: any) => [
     {
       label: $i18n.get({
-        id: "openpiece-geaflow.job-management.job-detail.JobDetails",
+        id: "openpiece-geaflow.job-management.job-detail.TaskDetails",
         dm: "作业详情",
       }),
       key: "job-detail",
@@ -67,6 +67,7 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
           jobItem={jobItem}
           onDelete={handleDeleteDraftJob}
           uniqueId={uniqueId}
+          redirectPath={redirectPath}
         />
       ),
     }, // 务必填写 key
@@ -79,7 +80,7 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
       children: tabKey === "item-2" && <JobRunTimeDetail jobItem={jobItem} />,
     },
     {
-      label: "Metric",
+      label: "Metrics",
       key: "metric",
       children: tabKey === "metric" && <JobMetric jobItem={jobItem} />,
     },
@@ -92,12 +93,12 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
       children: tabKey === "exception-info" && <JobMessage jobItem={jobItem} />,
     },
     {
-      label: "Container",
+      label: "Containers",
       key: "JobContainer",
       children: tabKey === "JobContainer" && <JobContainer jobItem={jobItem} />,
     },
     {
-      label: "Offset",
+      label: "Offsets",
       key: "offset",
       children: tabKey === "offset" && <JobOffSet jobItem={jobItem} />,
     },
@@ -145,12 +146,12 @@ export const JobDetail: React.FC<props> = ({ redirectPath }) => {
           <Breadcrumb.Item>
             <a href={redirectUrl}>
               {$i18n.get({
-                id: "openpiece-geaflow.job-management.job-detail.JobManagement",
+                id: "openpiece-geaflow.job-management.job-detail.TaskManagement",
                 dm: "作业管理",
               })}
             </a>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>{record.release?.job.name}</Breadcrumb.Item>
+          <Breadcrumb.Item>{record.id}</Breadcrumb.Item>
         </Breadcrumb>
       </Row>
       <Row style={{ marginTop: 16 }}>

@@ -10,31 +10,13 @@ Geaflow 中的状态是指图、流计算过程中的直接计算节点的中间
 为此，我们有如下的架构图，整体结构上灵活可变、支持多种可插拔组件。
 
 ### 架构图
-![state_arch](../../static/img/state_arch.png)
 
-* State API 层
+![state_arch](../../static/img/state_arch_new.png)
 
-  State API 层对接框架层以及各种不同的流、图算子，它提供基于图语义以及流语义的State管理。
-
-
-* Strategy 层
-
-  Strategy 包括各种策略模型，包括但不限于 keygroup 划分模型，扩缩容模型；也可以加入不同的 index模型，还可以是图计算中的VC、GAS模型。各种模型可以插件化的管理或组合。
-
-
-* Model 层
-
-  Model 层是数据模型层，目前包括Graph、Stream两种模型，其中Graph 和 Stream 都可以各自扩展，Graph包括 Static 以及 Dynamic，Stream 包括 KV、KList、KMap等。这层数据模型与底下的 Store 提供的各种能力有关系。
-
-
-* Store 层
-
-  Store 层就是存储引擎层，这层涉及到内存数据结构如何真正映射到存储结构上。目前包括Redis、Rocksdb、CStore等存储引擎，其中CStore是GeaFlow团队自研的高性能分布式多级图存储引擎。各种不同的存储引擎通过SPI来提供服务，另外根据存储引擎的特点，他们可支持的数据模型可能不同，例如对Rocksdb所有的数据结构都需要映射到KV，而Redis天生就提供list/map等高阶的数据结构。
-
-
-* Persistency 层
-
-  Persistency 层将Store生成的各种不同的数据持久化起来。Geaflow State本身不提供持久化的能力，如果机器发生故障，磁盘损坏可能就会导致数据丢失。因此它需要依赖外部的组件来提供持久化存储，这里组件也是可插拔的，支持 HDFS/Pangu/OSS等分布式文件存储或对象存储。
+* **State API**：提供了面向KV存储API，如get/put/delete等。以及面向图存储的API，如V/E/VE，以及点/边的add/update/delete等。
+* **State执行层**：通过KeyGroup的设计实现数据的Sharding和扩缩容能力，Accessor提供了面向不同读写策略和数据模型的IO抽象，StateOperator抽象了存储层SPI，如finish（刷盘）、archive（Checkpoint）、compact（压缩）、recover（恢复）等。另外，State提供了多种PushDown优化以加速IO访问效率。通过自定义内存管理和面向属性的二级索引也会提供大量的存储访问优化手段。
+* **Store层**：GeaFlow支持了多种存储系统类型，并通过StoreContext封装了Schema、序列化器，以及数据版本信息。这层涉及到内存数据结构如何真正映射到存储结构上。目前包括Redis、Rocksdb、CStore（GeaFlow自建存储系统）等存储引擎，各种不同的存储引擎通过SPI来提供服务，另外根据存储引擎的特点，他们可支持的数据模型可能不同，例如对Rocksdb所有的数据结构都需要映射到KV，而Redis天生就提供list/map等高阶的数据结构。
+* **持久化层**：GeaFlow State本身不提供持久化的能力，如果机器发生故障，磁盘损坏可能就会导致数据丢失。因此它需要依赖外部的组件来提供持久化存储，这里组件也是可插拔的，支持 HDFS/OSS/S3等分布式文件存储或对象存储。
 
 ## State 运行流程
 

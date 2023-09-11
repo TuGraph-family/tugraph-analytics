@@ -9,7 +9,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
   groupId int,
 	cnt bigint
 ) WITH (
@@ -17,6 +17,6 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT age % 2 as groupId, rename_count(id) as cnt FROM users GROUP BY groupId order by cnt
 ;

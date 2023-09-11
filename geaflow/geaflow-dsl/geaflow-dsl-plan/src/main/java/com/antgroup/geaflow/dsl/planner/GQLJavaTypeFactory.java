@@ -21,6 +21,7 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.nio.ByteOrder;
@@ -37,11 +38,23 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 public class GQLJavaTypeFactory extends JavaTypeFactoryImpl {
 
+    private GeaFlowGraph currentGraph;
+
     public static final String NATIVE_UTF16_CHARSET_NAME =
         (ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? "UTF-16BE" : "UTF-16LE";
 
     public GQLJavaTypeFactory(RelDataTypeSystem relDataTypeSystem) {
         super(relDataTypeSystem);
+    }
+
+    public GeaFlowGraph getCurrentGraph() {
+        return currentGraph;
+    }
+
+    public GeaFlowGraph setCurrentGraph(GeaFlowGraph graph) {
+        GeaFlowGraph prevGraph = currentGraph;
+        currentGraph = graph;
+        return prevGraph;
     }
 
     @Override

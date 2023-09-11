@@ -1,5 +1,17 @@
 # GeaFlow(The brand name is TuGraph-Analytics)
 
+[![Star](https://shields.io/github/stars/tugraph-family/tugraph-analytics?logo=startrek&label=Star&color=yellow)](https://github.com/TuGraph-family/tugraph-analytics/stargazers)
+[![Fork](https://shields.io/github/forks/tugraph-family/tugraph-analytics?logo=forgejo&label=Fork&color=orange)](https://github.com/TuGraph-family/tugraph-analytics/forks)
+[![Contributor](https://shields.io/github/contributors/tugraph-family/tugraph-analytics?logo=actigraph&label=Contributor&color=abcdef)](https://github.com/TuGraph-family/tugraph-analytics/contributors)
+[![Commit](https://badgen.net/github/last-commit/tugraph-family/tugraph-analytics/master?icon=git&label=Commit)](https://github.com/TuGraph-family/tugraph-analytics/commits/master)
+[![Docker](https://shields.io/docker/pulls/tugraph/geaflow-console?logo=docker&label=Docker&color=blue)](https://hub.docker.com/r/tugraph/geaflow-console/tags)
+[![License](https://shields.io/github/license/tugraph-family/tugraph-analytics?logo=apache&label=License&color=blue)](https://www.apache.org/licenses/LICENSE-2.0.html)
+[![Release](https://shields.io/github/v/release/tugraph-family/tugraph-analytics.svg?logo=stackblitz&label=Version&color=red)](https://github.com/TuGraph-family/tugraph-analytics/releases)
+[![CN](https://shields.io/badge/Docs-中文-blue?logo=readme)](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
+[![EN](https://shields.io/badge/Docs-English-blue?logo=readme)](https://tugraph-analytics.readthedocs.io/en/latest/docs-en/introduction/)
+[![Blog](https://shields.io/badge/Blog-github.io-orange?logo=rss)](https://tugraph-analytics.github.io/)
+
+
 [中文文档](README_cn.md) 
 
 [ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
@@ -39,6 +51,9 @@ The similarities and differences between GeaFlow and traditional stream computin
 | Graph Algorithm Support| Native graph algorithm support | Flink Gelly module support (currently removed)|
 | Query Language| SQL + ISO/GQL| SQL |
 
+[Why using graphs for relational operations is more appealing than table joins?](./docs/docs-en/principle/vs_join.md)
+[![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
+
 GeaFlow's relevant design reference papers are as follows: [GeaFlow: A Graph Extended and Accelerated Dataflow
 System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
@@ -53,6 +68,22 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 using GeaFlow's SQL extension language SQL+ISO/GQL or use GeaFlow's high-level API programming interface to develop 
 applications in Java. For more information on DSL application development, please refer to the [DSL development 
 document](docs/docs-en/application-development/dsl/overview.md), and for the high-level API application development, please refer to the [API application development document](docs/docs-en/application-development/api/overview.md).
+
+```roomsql
+--GQL Style
+Match (s:student)-[sc:selectCource]->(c:cource)
+Return c.name
+;
+```
+
+```roomsql
+--SQL Style
+SELECT c.name
+FROM course c JOIN selectCourse sc 
+ON c.id = sc.targetId
+JOIN student s ON sc.srcId = s.id
+;
+```
 
 ## Document
 
@@ -72,6 +103,9 @@ it on github.**
 ![dingding](docs/static/img/dingding.png)
 
 ![wechat](docs/static/img/wechat.png)
+
+**Email:**  tugraph@service.alipay.com
+
 ## Acknowledgement
 Thanks to some outstanding open-source projects in the industry, such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions.
 <!--intro-end-->

@@ -45,7 +45,7 @@ public class JDBCTableSink implements TableSink {
 
     @Override
     public void init(Configuration tableConf, StructType tableSchema) {
-        LOGGER.info("prepare with config: {}, \n schema: {}", tableConf, tableSchema);
+        LOGGER.info("init jdbc sink with config: {}, \n schema: {}", tableConf, tableSchema);
         this.tableConf = tableConf;
         this.schema = tableSchema;
 
@@ -61,8 +61,8 @@ public class JDBCTableSink implements TableSink {
         try {
             Class.forName(this.driver);
             this.connection = DriverManager.getConnection(url, username, password);
+            this.connection.setAutoCommit(false);
             this.statement = connection.createStatement();
-            JDBCUtils.createTemporaryTable(statement, this.tableName, this.schema.getFields());
         } catch (Exception e) {
             throw new GeaFlowDSLException("failed to connect to database", e);
         }
@@ -73,21 +73,20 @@ public class JDBCTableSink implements TableSink {
         try {
             JDBCUtils.insertIntoTable(this.statement, this.tableName, this.schema.getFields(), row);
         } catch (SQLException e) {
-            throw new GeaFlowDSLException("failed to write");
+            throw new GeaFlowDSLException("failed to write to table: " + tableName, e);
         }
     }
 
     @Override
     public void finish() throws IOException {
         try {
-            LOGGER.info("commit");
             connection.commit();
         } catch (SQLException e) {
-            LOGGER.warn("failed to commit");
+            LOGGER.error("failed to commit", e);
             try {
                 connection.rollback();
             } catch (SQLException ex) {
-                throw new GeaFlowDSLException("failed to rollback");
+                throw new GeaFlowDSLException("failed to rollback", e);
             }
         }
     }

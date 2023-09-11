@@ -15,12 +15,7 @@
 package com.antgroup.geaflow.operator.impl.graph.traversal.dynamic;
 
 import com.antgroup.geaflow.api.graph.traversal.IncVertexCentricTraversal;
-import com.antgroup.geaflow.model.traversal.ITraversalRequest;
-import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,19 +29,5 @@ public class DynamicGraphVertexCentricTraversalStartByStreamOp<K, VV, EV, M, R> 
         GraphViewDesc graphViewDesc,
         IncVertexCentricTraversal<K, VV, EV, M, R> vcTraversal) {
         super(graphViewDesc, vcTraversal);
-    }
-
-    @Override
-    public Iterator<ITraversalRequest<K>> getTraversalRequests() {
-        List<ITraversalRequest<K>> currentTaskRequest = new ArrayList<>();
-        int maxParallelism = graphViewDesc.getShardNum();
-        for (ITraversalRequest<K> traversalRequest : traversalRequests) {
-            int currentKeyGroup = KeyGroupAssignment.assignToKeyGroup(traversalRequest.getVId(),
-                maxParallelism);
-            if (currentKeyGroup >= keyGroup.getStartKeyGroup() && currentKeyGroup <= keyGroup.getEndKeyGroup()) {
-                currentTaskRequest.add(traversalRequest);
-            }
-        }
-        return currentTaskRequest.iterator();
     }
 }

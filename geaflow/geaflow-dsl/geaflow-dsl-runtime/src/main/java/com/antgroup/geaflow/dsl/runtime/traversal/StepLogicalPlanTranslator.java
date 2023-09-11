@@ -146,6 +146,10 @@ public class StepLogicalPlanTranslator {
         public StepLogicalPlan visitVertexMatch(VertexMatch vertexMatch) {
             String label = vertexMatch.getLabel();
             RexNode filter = nodePushDownFilters.get(vertexMatch);
+            // TODO use optimizer rule to push the filter to the vertex-match.
+            if (vertexMatch.getPushDownFilter() != null) {
+                filter = vertexMatch.getPushDownFilter();
+            }
             Set<StartId> startIds = new HashSet<>();
             if (vertexMatch.getInput() == null && filter != null) {
                 Set<RexNode> ids = GQLRexUtil.findVertexIds(filter, (VertexRecordType) vertexMatch.getNodeType());
@@ -274,7 +278,9 @@ public class StepLogicalPlanTranslator {
             StepLogicalPlan input = this.visit(filter.getInput());
             PathType outputPath = (PathType) SqlTypeUtil.convertType(filter.getPathSchema());
             PathRecordType inputPath = ((IMatchNode) filter.getInput()).getPathSchema();
-            Expression condition = ExpressionTranslator.of(inputPath, logicalPlanSet).translate(filter.getCondition());
+
+            Expression condition =
+                ExpressionTranslator.of(inputPath, logicalPlanSet).translate(filter.getCondition());
             StepBoolFunction fn = new StepBoolFunctionImpl(condition);
             return input.filter(fn).withModifyGraphSchema(input.getModifyGraphSchema())
                 .withOutputPathSchema(outputPath);

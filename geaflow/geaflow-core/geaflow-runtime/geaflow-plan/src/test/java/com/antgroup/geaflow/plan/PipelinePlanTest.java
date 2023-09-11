@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.plan;
 
+import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,12 +25,14 @@ import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.api.window.WindowFactory;
+import com.antgroup.geaflow.api.window.impl.AllWindow;
 import com.antgroup.geaflow.api.window.impl.SizeTumblingWindow;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.common.type.primitive.IntegerType;
 import com.antgroup.geaflow.context.AbstractPipelineContext;
+import com.antgroup.geaflow.core.graph.builder.ExecutionGraphBuilderTest;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.edge.impl.ValueEdge;
 import com.antgroup.geaflow.model.graph.meta.GraphMetaType;
@@ -219,5 +222,30 @@ public class PipelinePlanTest extends BasePlanTest {
         Map<Integer, PipelineVertex> vertexMap = pipelineGraph.getVertexMap();
         Assert.assertEquals(vertexMap.size(), 3);
 
+    }
+
+    @Test
+    public void testAllWindowCheckpointDuration() {
+        AtomicInteger idGenerator = new AtomicInteger(0);
+        AbstractPipelineContext context = mock(AbstractPipelineContext.class);
+        when(context.generateId()).then(invocation -> idGenerator.incrementAndGet());
+        Configuration configuration = new Configuration();
+        configuration.put(FrameworkConfigKeys.INC_STREAM_MATERIALIZE_DISABLE, Boolean.TRUE.toString());
+        when(context.getConfig()).thenReturn(configuration);
+        WindowStreamSource source = new WindowStreamSource(context,
+            new CollectionSource<>(ImmutableList.of(1, 2, 3)), AllWindow.getInstance());
+        PStreamSink sink = source
+            .map(e -> Tuple.of(e, 1))
+            .keyBy(v -> ((Tuple) v).f0)
+            .reduce(new ExecutionGraphBuilderTest.CountFunc())
+            .withParallelism(1)
+            .sink(v -> {})
+            .withParallelism(1);
+        when(context.getActions()).thenReturn(ImmutableList.of(sink));
+
+        PipelinePlanBuilder planBuilder = new PipelinePlanBuilder();
+        PipelineGraph pipelineGraph = planBuilder.buildPlan(context);
+
+        Assert.assertEquals(context.getConfig().getLong(BATCH_NUMBER_PER_CHECKPOINT), 1);
     }
 }

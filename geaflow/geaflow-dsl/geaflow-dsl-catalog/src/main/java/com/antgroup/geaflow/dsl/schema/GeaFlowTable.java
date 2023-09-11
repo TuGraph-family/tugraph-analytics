@@ -19,7 +19,6 @@ import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import java.io.Serializable;
@@ -63,12 +62,6 @@ public class GeaFlowTable extends AbstractTable implements Serializable {
         this.config = Objects.requireNonNull(config, "config is null");
         this.ifNotExists = ifNotExists;
         this.isTemporary = isTemporaryTable;
-    }
-
-    public boolean isAllWindow(Configuration globalConfig) {
-        return getConfigWithGlobal(globalConfig).getConfigMap().containsKey(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey())
-            && getConfigWithGlobal(globalConfig).getConfigMap().get(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey()).equals(String.valueOf(
-            Windows.SIZE_OF_ALL_WINDOW));
     }
 
     @Override

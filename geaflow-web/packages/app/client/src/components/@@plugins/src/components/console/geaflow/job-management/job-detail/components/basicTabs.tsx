@@ -14,6 +14,7 @@ interface BasicTabsProps {
   stageType: string;
   syncConfig: (params: any) => void;
   form: any;
+  redirectPath?: any[]
 }
 
 const BasicTabs: React.FC<BasicTabsProps> = ({
@@ -22,6 +23,7 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
   stageType,
   syncConfig,
   form,
+  redirectPath
 }) => {
   const { dsl = "" } = jobItem;
   const jobType = record?.release?.job?.type;
@@ -45,7 +47,7 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
           <TaskParams
             syncConfig={syncConfig}
             record={record}
-            stageType={stageType}
+            redirectPath={redirectPath}
           />
         ),
     },

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.plan;
 
+import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.ENABLE_EXTRA_OPTIMIZE;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.ENABLE_EXTRA_OPTIMIZE_SINK;
 
@@ -26,6 +27,8 @@ import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.context.AbstractPipelineContext;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
+import com.antgroup.geaflow.operator.OpArgs;
+import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.partitioner.impl.ForwardPartitioner;
 import com.antgroup.geaflow.pdata.graph.view.compute.ComputeIncGraph;
 import com.antgroup.geaflow.pdata.graph.view.materialize.MaterializedIncGraph;
@@ -49,7 +52,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +61,8 @@ import org.slf4j.LoggerFactory;
 public class PipelinePlanBuilder implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelinePlanBuilder.class);
+
+    private static final int SINGLE_WINDOW_CHECKPOINT_DURATION = 1;
 
     private PipelineGraph pipelineGraph;
     private HashSet<Integer> visitedVIds;
@@ -87,6 +91,14 @@ public class PipelinePlanBuilder implements Serializable {
             LOGGER.info(pipelineVertex.getVertexString());
             DAGValidator.checkVertexValidity(this.pipelineGraph, pipelineVertex, true);
         });
+
+        boolean isSingleWindow = this.pipelineGraph.getSourceVertices().stream().allMatch(v ->
+            ((AbstractOperator) v.getOperator()).getOpArgs().getOpType() == OpArgs.OpType.SINGLE_WINDOW_SOURCE);
+        if (isSingleWindow) {
+            pipelineContext.getConfig().put(BATCH_NUMBER_PER_CHECKPOINT.getKey(),
+                String.valueOf(SINGLE_WINDOW_CHECKPOINT_DURATION));
+            LOGGER.info("reset checkpoint duration for all single window source pipeline graph");
+        }
 
         return this.pipelineGraph;
     }

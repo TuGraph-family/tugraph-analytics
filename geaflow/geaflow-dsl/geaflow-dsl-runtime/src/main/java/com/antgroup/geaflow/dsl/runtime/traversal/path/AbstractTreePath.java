@@ -44,17 +44,7 @@ public abstract class AbstractTreePath implements ITreePath {
 
     @Override
     public void addParent(ITreePath parent) {
-        ITreePath existParent = null;
-        for (ITreePath myParent : getParents()) {
-            if (myParent.equalNode(parent) && myParent.getDepth() == parent.getDepth()) {
-                existParent = myParent;
-                break;
-            }
-        }
-        if (existParent != null) {
-            ITreePath result = existParent.merge(parent);
-            assert result == existParent;
-        } else {
+        if (parent.getNodeType() != NodeType.EMPTY_TREE) {
             getParents().add(parent);
         }
     }
@@ -81,7 +71,7 @@ public abstract class AbstractTreePath implements ITreePath {
             this.addRequestIds(other.getRequestIds());
             return this;
         } else {
-            return new UnionTreePath(Lists.newArrayList(this, other)).optimize();
+            return UnionTreePath.create(Lists.newArrayList(this, other)).optimize();
         }
     }
 
@@ -219,10 +209,7 @@ public abstract class AbstractTreePath implements ITreePath {
                         }
                         currentPath.remove(currentPath.size() - 1);
                     }
-                    if (filterTrees.size() > 0) {
-                        return new UnionTreePath(filterTrees);
-                    }
-                    return EmptyTreePath.of();
+                    return UnionTreePath.create(filterTrees);
                 } else { // edge is not referred in the filter function, so add null to the current path.
                     currentPath.addNode(null);
                 }
@@ -433,7 +420,24 @@ public abstract class AbstractTreePath implements ITreePath {
 
     @Override
     public IMessage combine(IMessage other) {
-        return this.merge((ITreePath) other);
+        if (this.getNodeType() == NodeType.EMPTY_TREE) {
+            return other;
+        }
+        if (((ITreePath) other).getNodeType() == NodeType.EMPTY_TREE) {
+            return this;
+        }
+        List<ITreePath> nodes = new ArrayList<>();
+        if (this instanceof UnionTreePath) {
+            nodes.addAll(((UnionTreePath) this).getNodes());
+        } else {
+            nodes.add(this);
+        }
+        if (other instanceof UnionTreePath) {
+            nodes.addAll(((UnionTreePath) other).getNodes());
+        } else {
+            nodes.add((ITreePath) other);
+        }
+        return UnionTreePath.create(nodes);
     }
 
     @Override

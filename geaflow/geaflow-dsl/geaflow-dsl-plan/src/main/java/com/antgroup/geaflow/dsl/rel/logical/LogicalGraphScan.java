@@ -15,7 +15,9 @@
 package com.antgroup.geaflow.dsl.rel.logical;
 
 import com.antgroup.geaflow.dsl.calcite.GraphRecordType;
+import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.rel.GraphScan;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import java.util.List;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.plan.RelOptCluster;
@@ -47,9 +49,81 @@ public class LogicalGraphScan extends GraphScan {
         return new LogicalGraphScan(cluster, cluster.traitSet(), relOptTable);
     }
 
+    public static LogicalGraphScan create(RelOptCluster cluster, GeaFlowGraph graph) {
+        RelOptTable table = new RelOptTable() {
+
+            @Override
+            public <C> C unwrap(Class<C> aClass) {
+                return (C) graph;
+            }
+
+            @Override
+            public List<String> getQualifiedName() {
+                return null;
+            }
+
+            @Override
+            public double getRowCount() {
+                return 0;
+            }
+
+            @Override
+            public RelDataType getRowType() {
+                return graph.getRowType(GQLJavaTypeFactory.create());
+            }
+
+            @Override
+            public RelOptSchema getRelOptSchema() {
+                return null;
+            }
+
+            @Override
+            public RelNode toRel(ToRelContext context) {
+                return null;
+            }
+
+            @Override
+            public List<RelCollation> getCollationList() {
+                return null;
+            }
+
+            @Override
+            public RelDistribution getDistribution() {
+                return null;
+            }
+
+            @Override
+            public boolean isKey(ImmutableBitSet columns) {
+                return false;
+            }
+
+            @Override
+            public List<RelReferentialConstraint> getReferentialConstraints() {
+                return null;
+            }
+
+            @Override
+            public Expression getExpression(Class clazz) {
+                return null;
+            }
+
+            @Override
+            public RelOptTable extend(List<RelDataTypeField> extendedFields) {
+                return null;
+            }
+
+            @Override
+            public List<ColumnStrategy> getColumnStrategies() {
+                return null;
+            }
+        };
+        return create(cluster, table);
+    }
+
     public static LogicalGraphScan emptyScan(RelOptCluster cluster, GraphRecordType graphRecordType) {
         return create(cluster, empty(graphRecordType));
     }
+
 
     private static RelOptTable empty(GraphRecordType graphRecordType) {
         return new RelOptTable() {

@@ -1,19 +1,21 @@
 # DSL原理介绍
 
 ## GeaFlow DSL架构
+
 GeaFlow DSL整体架构如下图所示：
-![DSL架构](../../static/img/dsl_arch.png)
-从上到下分五层：
-* DSL语言层
-  定义了GeaFlow DSL的语言，目前使用SQL + ISO/GQL融合分析语言。
-* 统一Parser层
-  DSL统一的语法解析层，主要将DSL文本转换成统一的AST语法树。GeaFlow在[Apache Calcite](https://calcite.apache.org/)的基础上扩展了GQL的语法，同时将SQL语法和GQL融合解析成统一的语法树。
-* 统一逻辑执行计划
-  GeaFlow在关系代数的基础之上扩展了一套图的逻辑执行计划，实现了图表逻辑执行计划的统一。
-* 优化器
-  在现有SQL RBO优化器基础上扩展了对图执行计划优化的支持，支持了图表一体逻辑执行计划的优化。
-* 物理执行计划层
-  包含图表的物理执行计划，负责将优化器生成的图表逻辑执行计划通过DAG Builder转换成底层框架可执行的运行时逻辑。
+
+![DSL架构](../../static/img/dsl_arch_new.png)
+
+DSL层是一个典型的编译器技术架构，即语法分析、语义分析、中间代码生成(IR)、代码优化、目标代码生成（OBJ）的流程。
+
+* **语言设计**：GeaFlow设计了SQL+GQL的融合语法，解决了图+表一体化分析的诉求。
+* **语法分析**：通过扩展[Calcite](https://calcite.apache.org/)的SqlNode和SqlOperator，实现SQL+GQL的语法解析器，生成统一的语法树信息。
+* **语义分析**：通过扩展Calcite的Scope和Namespace，实现自定义Validator，对语法树进行约束语义检查。
+* **中间代码生成**：通过扩展Calcite的RelNode，实现图上的Logical RelNode，用于GQL语法的中间表示。
+* **代码优化**：优化器实现了大量的优化规则（RBO）用于提升执行性能，未来也会引入CBO。
+* **目标代码生成**：代码生成器Converter负责将Logical RelNode转换为Physical RelNode，即目标代码。Physical RelNode可以直接翻译为Graph/Table上的API调用。
+* **自定义函数**: GeaFlow提供了大量的内置系统函数，用户也可以根据需要注册自定义函数。
+* **自定义插件**: GeaFlow允许用户扩展自己的Connector类型，以支持不同的数据源和数据格式。
 
 
 ## DSL主要执行流程

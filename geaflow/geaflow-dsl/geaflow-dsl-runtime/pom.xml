@@ -97,11 +97,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-        </dependency>
-
-        <dependency>
             <!-- include kafka server for tests  -->
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.binary.version}</artifactId>

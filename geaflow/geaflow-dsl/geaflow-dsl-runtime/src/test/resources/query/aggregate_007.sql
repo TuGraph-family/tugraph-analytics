@@ -7,7 +7,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_double.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	max_age double,
 	min_age double,
 	max_c char,
@@ -17,7 +17,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 select
   max(age),  min(age), max(cnt),  min(cnt)
 FROM (

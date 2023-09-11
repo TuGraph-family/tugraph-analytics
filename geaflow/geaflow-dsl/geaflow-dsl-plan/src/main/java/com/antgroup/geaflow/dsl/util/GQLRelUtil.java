@@ -332,8 +332,42 @@ public class GQLRelUtil {
             public RexInputRef visitInputRef(RexInputRef inputRef) {
                 Integer newIndex = indexMapping.get(inputRef.getIndex());
                 assert newIndex != null;
+                if (inputRef instanceof PathInputRef) {
+                    return ((PathInputRef) inputRef).copy(newIndex);
+                }
                 return new RexInputRef(newIndex, inputRef.getType());
             }
         });
+    }
+
+    /**
+     * Reverse the traversal order for {@link SingleMatchNode}.
+     * @param matchNode The match node to reverse.
+     * @param input If input is not null, we make it as the input node of the reversed match node.
+     */
+    public static SingleMatchNode reverse(SingleMatchNode matchNode, IMatchNode input) {
+        IMatchNode concatNode = input;
+        SingleMatchNode node = matchNode;
+        while (node != null) {
+            SingleMatchNode endNode = node;
+            // find the latest VertexMatch/EdgeMatch
+            while (node != null && !(node instanceof IMatchLabel)) {
+                node = (SingleMatchNode) node.getInput();
+            }
+            assert node != null;
+
+            RelDataTypeField field = endNode.getPathSchema().lastField().get();
+            if (concatNode != null) {
+                PathRecordType pathRecordType = concatNode.getPathSchema().addField(field.getName()
+                    , field.getType(), false);
+                concatNode = node.copy(Collections.singletonList(concatNode), pathRecordType);
+            } else {
+                PathRecordType pathRecordType = PathRecordType.EMPTY.addField(field.getName()
+                    , field.getType(), false);
+                concatNode = node.copy(Collections.emptyList(), pathRecordType);
+            }
+            node = (SingleMatchNode) node.getInput();
+        }
+        return (SingleMatchNode) concatNode;
     }
 }

@@ -66,8 +66,11 @@ public class GeaFlowAlgorithmDynamicTraversalFunction
         Object vertexId = traversalRequest.getVId();
         algorithmCtx.setVertexId(vertexId);
         RowVertex vertex = (RowVertex) algorithmCtx.loadVertex();
-        algorithmCtx.setVertexId(vertex.getId());
-        userFunction.process(vertex, Collections.emptyIterator());
+        if (vertex != null) {
+            algorithmCtx.setVertexId(vertex.getId());
+            userFunction.process(vertex, Collections.emptyIterator());
+        }
+
     }
 
     @Override
@@ -88,22 +91,26 @@ public class GeaFlowAlgorithmDynamicTraversalFunction
     public void compute(Object vertexId, Iterator<Object> messages) {
         algorithmCtx.setVertexId(vertexId);
         RowVertex vertex = (RowVertex) algorithmCtx.loadVertex();
-        Row newValue = algorithmCtx.getVertexNewValue();
-        if (newValue != null) {
-            vertex.setValue(newValue);
+        if (vertex != null) {
+            Row newValue = algorithmCtx.getVertexNewValue();
+            if (newValue != null) {
+                vertex.setValue(newValue);
+            }
+            userFunction.process(vertex, messages);
         }
-        userFunction.process(vertex, messages);
     }
 
     @Override
     public void finish(Object vertexId, MutableGraph<Object, Row, Row> mutableGraph) {
         algorithmCtx.setVertexId(vertexId);
         RowVertex rowVertex = (RowVertex) algorithmCtx.loadVertex();
-        Row newValue = algorithmCtx.getVertexNewValue();
-        if (newValue != null) {
-            rowVertex.setValue(newValue);
+        if (rowVertex != null) {
+            Row newValue = algorithmCtx.getVertexNewValue();
+            if (newValue != null) {
+                rowVertex.setValue(newValue);
+            }
+            userFunction.finish(rowVertex);
         }
-        userFunction.finish(rowVertex);
     }
 
     @Override

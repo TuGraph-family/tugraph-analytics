@@ -179,7 +179,6 @@ public class GQLPipeLine {
             QueryContext queryContext = QueryContext.builder()
                 .setEngineContext(engineContext)
                 .setCompile(false)
-                .setTraversalParallelism(-1)
                 .build();
             if (pipelineHook != null) {
                 pipelineHook.beforeExecute(queryClient, queryContext);
@@ -191,6 +190,7 @@ public class GQLPipeLine {
             if (pipelineHook != null) {
                 pipelineHook.afterExecute(queryClient, queryContext);
             }
+            queryContext.finish();
         }
     }
 

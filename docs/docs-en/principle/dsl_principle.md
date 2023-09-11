@@ -1,16 +1,19 @@
 # GeaFlow DSL Architecture
+
 The overall architecture of GeaFlow DSL is shown in the following figure:
-![dsl_arch](../../static/img/dsl_arch.png)
-* DSL Language Layer
-  Defines the language of GeaFlow DSL, which currently uses SQL + ISO/GQL Hybrid analysis language.
-* Unified Parser Layer
-  The unified syntax parsing layer of DSL, which mainly converts DSL text into a unified AST syntax tree. GeaFlow extends the GQL syntax based on [Apache Calcite](https://calcite.apache.org/), and parses the SQL syntax and GQL into a unified syntax tree.
-* Unified Logical Execution Plan
-  GeaFlow extends a logical execution plan of the graph on the basis of relational algebra, achieving a unified logical execution plan for the graph and table.
-* Optimizer
-  Based on the existing SQL RBO optimizer, GeaFlow extends support for optimizing the graph execution plan, supporting optimization of the graph-logic execution plan.
-* Physical Execution Plan Layer
-  Contains the physical execution plan of the flowchart, responsible for converting the optimized flowchart logic execution plan into a runtime logic executable by the underlying framework through the DAG Builder.
+
+![dsl_arch](../../static/img/dsl_arch_new.png)
+
+DSL Layer is a typical compiler technology architecture, which consists of syntax analysis, semantic analysis, intermediate code generation (IR), code optimization, and target code generation (OBJ).
+
+* **Language Design**: GeaFlow has designed a fusion syntax of SQL+GQL to address the demand for integrated analysis of graphs and tables.
+* **Syntax Analysis**: By extending the SqlNode and SqlOperator of [Calcite](https://calcite.apache.org/), GeaFlow implements a syntax parser for SQL+GQL, generating unified syntax tree information.
+* **Semantic Analysis**: By extending the Scope and Namespace of Calcite, GeaFlow implements a custom Validator to perform constraint semantic checks on the syntax tree.
+* **Intermediate Code Generation**: By extending the RelNode of Calcite, GeaFlow implements Logical RelNode on the graph for the intermediate representation of GQL syntax.
+* **Code Optimization**: The optimizer implements a large number of optimization rules (RBO) to improve execution performance, and may introduce CBO in the future.
+* **Target Code Generation**: The code generator Converter is responsible for converting Logical RelNode to Physical RelNode, which is the target code. Physical RelNode can be directly translated into API calls on the graph or table.
+* **Custom Functions**: GeaFlow provides a wide range of built-in system functions, and users can also register custom functions as needed.
+* **Custom Plugins**: GeaFlow allows users to extend their own Connector types to support different data sources and data formats.
 
 # Main Execution Flow of DSL
 The main execution flow of DSL is illustrated in the following figure:

@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Input } from "antd";
+import { Button, Tooltip } from "antd";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
+import styles from "../index.module.less";
+import { useTranslation } from "react-i18next";
 
 interface TaskParamsProps {
   record: any;
-  stageType: string;
   syncConfig: (params: any) => void;
+  redirectPath?: any[];
 }
 
 const TaskParams: React.FC<TaskParamsProps> = ({
   record,
-  stageType,
   syncConfig,
+  redirectPath,
 }) => {
+  const jobEditUrl = redirectPath?.find((d) => d.pathName === "图任务");
+
   const [state, setState] = useState<{
     mainClass: string;
     taskConfig: string;
@@ -22,21 +26,13 @@ const TaskParams: React.FC<TaskParamsProps> = ({
     taskConfig: "",
   });
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (record) {
       setState({ ...state, taskConfig: record?.release?.job?.userCode });
     }
   }, [record]);
-
-  const handleValueChange = (evt) => {
-    setState({
-      ...state,
-      mainClass: evt.target.value,
-    });
-    syncConfig({
-      mainClass: evt.target.value,
-    });
-  };
 
   const handleCodeChange = (value: string) => {
     setState({
@@ -47,8 +43,26 @@ const TaskParams: React.FC<TaskParamsProps> = ({
       taskConfig: value,
     });
   };
+
+  const handleToEditPage = () => {
+    window.location.href = `${jobEditUrl.path}?jobId=${record.release.job.id}`;
+  };
   return (
-    <div>
+    <div className={styles["task-params"]}>
+      <Tooltip title={t("i18n.key.jump.task.editpage")}>
+        <Button
+          style={{
+            position: "absolute",
+            zIndex: 2,
+            right: 0,
+            top: -1,
+          }}
+          size="small"
+          onClick={handleToEditPage}
+        >
+          {t("i18n.key.Edit")}
+        </Button>
+      </Tooltip>
       <CodeMirror
         value={state.taskConfig}
         extensions={[json()]}

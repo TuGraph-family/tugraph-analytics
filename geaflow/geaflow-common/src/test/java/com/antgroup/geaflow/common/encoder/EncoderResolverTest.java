@@ -17,7 +17,11 @@ package com.antgroup.geaflow.common.encoder;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.impl.EnumEncoder;
 import com.antgroup.geaflow.common.encoder.impl.PojoEncoder;
+import com.antgroup.geaflow.common.encoder.impl.TripleEncoder;
+import com.antgroup.geaflow.common.encoder.impl.TupleEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.tuple.Triple;
+import com.antgroup.geaflow.common.tuple.Tuple;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Random;
@@ -84,8 +88,8 @@ public class EncoderResolverTest {
         IEncoder<?> encoder12_1 = EncoderResolver.resolveFunction(ITest1.class, new CTest12(), 1);
         Assert.assertEquals(encoder12_1, Encoders.INTEGER);
 
-        IEncoder<?> encoder13_0 = EncoderResolver.resolveFunction(ITest1.class, new CTest13(), 0);
-        IEncoder<?> encoder13_1 = EncoderResolver.resolveFunction(ITest1.class, new CTest13(), 1);
+        IEncoder<?> encoder13_0 = EncoderResolver.resolveFunction(ITest1.class, new CTest13<>(), 0);
+        IEncoder<?> encoder13_1 = EncoderResolver.resolveFunction(ITest1.class, new CTest13<>(), 1);
         IEncoder<?> encoder13_2 = EncoderResolver.resolveFunction(ITest1.class, new CTest13<Integer>(), 0);
         IEncoder<?> encoder13_3 = EncoderResolver.resolveFunction(ITest1.class, new CTest13<Integer>(), 1);
         IEncoder<?> encoder13_4 = EncoderResolver.resolveFunction(ITest1.class, new CTest13<Integer>() {}, 0);
@@ -170,6 +174,70 @@ public class EncoderResolverTest {
     }
 
     public static class CTest16 extends ACTest4<Integer, Float> {
+    }
+
+    @Test
+    public void testResolveTuple() {
+        IEncoder<?> encoder17 = EncoderResolver.resolveFunction(ITest0.class, new CTest17());
+        Assert.assertNotNull(encoder17);
+        Assert.assertEquals(encoder17.getClass(), TupleEncoder.class);
+
+        IEncoder<?> encoder18 = EncoderResolver.resolveFunction(ITest0.class, new CTest18());
+        Assert.assertNotNull(encoder18);
+        Assert.assertEquals(encoder18.getClass(), TupleEncoder.class);
+
+        IEncoder<?> encoder19 = EncoderResolver.resolveFunction(ITest0.class, new CTest19());
+        Assert.assertNotNull(encoder19);
+        Assert.assertEquals(encoder19.getClass(), TupleEncoder.class);
+
+        IEncoder<?> encoder20 = EncoderResolver.resolveFunction(ITest0.class, new CTest20());
+        Assert.assertNotNull(encoder20);
+        Assert.assertEquals(encoder20.getClass(), TupleEncoder.class);
+
+        IEncoder<?> encoder21 = EncoderResolver.resolveFunction(ITest0.class, new CTest21());
+        Assert.assertNotNull(encoder21);
+        Assert.assertEquals(encoder21.getClass(), TupleEncoder.class);
+    }
+
+    @Test
+    public void testResolveTriple() {
+        IEncoder<?> encoder22 = EncoderResolver.resolveFunction(ITest0.class, new CTest22());
+        Assert.assertNotNull(encoder22);
+        Assert.assertEquals(encoder22.getClass(), TripleEncoder.class);
+    }
+
+    public static class CTest17 implements ITest0<Tuple<Integer, Long>> {
+    }
+
+    public static class CTest18 extends ACTest1<Tuple<Integer, Long>> {
+    }
+
+    public static class CTest19 extends ACTest1<Tuple<Integer, Tuple<String, Boolean>>> {
+    }
+
+    public static class MyTuple0 extends Tuple<String, Integer> {
+
+        public MyTuple0(String s, Integer integer) {
+            super(s, integer);
+        }
+
+    }
+
+    public static class CTest20 extends ACTest1<MyTuple0> {
+    }
+
+    public static class MyTuple1<T0, T1> extends Tuple<T0, T1> {
+
+        public MyTuple1(T0 t0, T1 t1) {
+            super(t0, t1);
+        }
+
+    }
+
+    public static class CTest21 extends ACTest1<MyTuple1<String, Integer>> {
+    }
+
+    public static class CTest22 extends ACTest1<Triple<String, Integer, Boolean>> {
     }
 
     @SuppressWarnings("unchecked")

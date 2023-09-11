@@ -1,5 +1,16 @@
 # GeaFlow (品牌名TuGraph-Analytics)
 
+[![Star](https://shields.io/github/stars/tugraph-family/tugraph-analytics?logo=startrek&label=Star&color=yellow)](https://github.com/TuGraph-family/tugraph-analytics/stargazers)
+[![Fork](https://shields.io/github/forks/tugraph-family/tugraph-analytics?logo=forgejo&label=Fork&color=orange)](https://github.com/TuGraph-family/tugraph-analytics/forks)
+[![Contributor](https://shields.io/github/contributors/tugraph-family/tugraph-analytics?logo=actigraph&label=Contributor&color=abcdef)](https://github.com/TuGraph-family/tugraph-analytics/contributors)
+[![Commit](https://badgen.net/github/last-commit/tugraph-family/tugraph-analytics/master?icon=git&label=Commit)](https://github.com/TuGraph-family/tugraph-analytics/commits/master)
+[![Docker](https://shields.io/docker/pulls/tugraph/geaflow-console?logo=docker&label=Docker&color=blue)](https://hub.docker.com/r/tugraph/geaflow-console/tags)
+[![License](https://shields.io/github/license/tugraph-family/tugraph-analytics?logo=apache&label=License&color=blue)](https://www.apache.org/licenses/LICENSE-2.0.html)
+[![Release](https://shields.io/github/v/release/tugraph-family/tugraph-analytics.svg?logo=stackblitz&label=Version&color=red)](https://github.com/TuGraph-family/tugraph-analytics/releases)
+[![CN](https://shields.io/badge/Docs-中文-blue?logo=readme)](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
+[![EN](https://shields.io/badge/Docs-English-blue?logo=readme)](https://tugraph-analytics.readthedocs.io/en/latest/docs-en/introduction/)
+[![Blog](https://shields.io/badge/Blog-github.io-orange?logo=rss)](https://tugraph-analytics.github.io/)
+
 [English Document](README.md)
 
 [ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
@@ -31,6 +42,9 @@ GeaFlow(品牌名TuGraph-Analytics)是蚂蚁集团开源的分布式流式图计
 | 图算法支持| 原生支持图算法 | Flink gelly模块支持(目前已移除)|
 | 查询语言| SQL + ISO/GQL| SQL |
 
+[为什么使用图进行关联运算比表Join更具吸引力？](./docs/docs-cn/principle/vs_join.md)
+[![total_time](./docs/static/img/vs_join_total_time_cn.jpg)](./docs/docs-cn/principle/vs_join.md)
+
 GeaFlow相关设计参考论文：[GeaFlow: A Graph Extended and Accelerated Dataflow System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
 ## 快速上手
@@ -42,6 +56,22 @@ GeaFlow相关设计参考论文：[GeaFlow: A Graph Extended and Accelerated Dat
 
 GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类SQL扩展语言SQL+ISO/GQL进行流图计算作业的开发，也可以通过GeaFlow的高阶API编程接口通过Java语言进行应用开发。关于DSL
 应用开发的详细内容请参考：[DSL开发文档](docs/docs-cn/application-development/dsl/overview.md)，高阶API应用开发部分参考：[API应用开发](docs/docs-cn/application-development/api/guid.md)。
+
+```roomsql
+--GQL Style
+Match (s:student)-[sc:selectCource]->(c:cource)
+Return c.name
+;
+```
+
+```roomsql
+--SQL Style
+SELECT c.name
+FROM course c JOIN selectCourse sc 
+ON c.id = sc.targetId
+JOIN student s ON sc.srcId = s.id
+;
+```
 
 ## 使用文档
 参考 [ReadTheDocs](https://tugraph-analytics.readthedocs.io/en/latest/docs-cn/introduction/)
@@ -58,6 +88,8 @@ it on github.**
 ![dingding](docs/static/img/dingding.png)
 
 ![wechat](docs/static/img/wechat.png)
+
+**Email:**  tugraph@service.alipay.com
 
 ## 感谢
 GeaFlow开发过程中部分模块参考了一些业界优秀的开源项目，包括Apache Flink、Apache Spark以及Apache Calcite等, 这里表示特别的感谢。

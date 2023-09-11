@@ -86,7 +86,7 @@ public class CommonNeighbors {
 
             GraphViewDesc graphViewDesc = GraphViewBuilder
                 .createGraphView(GraphViewBuilder.DEFAULT_GRAPH)
-                .withShardNum(2)
+                .withShardNum(iterationParallelism)
                 .withBackend(BackendType.Memory)
                 .build();
             PWindowStream<IVertex<Integer, Integer>> result =

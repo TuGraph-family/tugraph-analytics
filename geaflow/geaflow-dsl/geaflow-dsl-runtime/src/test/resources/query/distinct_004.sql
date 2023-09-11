@@ -9,7 +9,7 @@ CREATE TABLE orders (
 	geaflow.dsl.file.path = 'resource:///data/orders.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	orderId bigint,
 	user_name VARCHAR
 ) WITH (
@@ -17,7 +17,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT orderId, user_name
 FROM orders o
 GROUP BY orderId, user_name;

@@ -11,7 +11,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_correlate2.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	f1 bigint,
 	f2 bigint,
 	f3 bigint,
@@ -23,7 +23,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT
 	createTime,
 	productId,

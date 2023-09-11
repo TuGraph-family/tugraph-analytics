@@ -1,17 +1,14 @@
 # Framework Architecture
+
 The architecture of GeaFlow Framework is shown in the following diagram:
 
-![framework_arch](../../static/img/framework_arch.png)
-* GraphView/StreamView API
-  The API layer provides programming and development interfaces for high-level users, providing semantics based on graph views and stream views.
-* Unified Execution Graph
-  Within GeaFlow, a unified execution plan is generated for streams/graphs, and the physical execution plan is constructed as a DAG using a unified Plan model.
-* Unified Cycle Scheduler
-  In order for the Execution Graph to run on a computing engine, the Execution Graph and Execution Vertex Group are first mapped into schedulable cycles, which can be nested. The framework directly schedules and executes cycles uniformly through a state machine, while supporting FO fault tolerance mechanisms.
-* Unified Graph Engine
-  This layer is the unified graph computing engine of GeaFlow, which supports the calculation and execution of stream/graph tasks.
-* Execution Engine
-  GeaFlow currently supports running on a cloud-native (K8S) distributed execution engine.
+![framework_arch](../../static/img/framework_arch_new.png)
+
+* **High Level API**: GeaFlow adapts to heterogeneous distributed execution environments (K8S, Ray, Local) through the Environment interface. It encapsulates the user's data processing flow using Pipelines and abstracts the stream processing (unbounded window) and batch processing (bounded window) using Windows. The Graph interface provides computation APIs on static graphs and dynamic graphs (streaming graphs), such as append/snapshot/compute/traversal, while the Stream interface provides unified stream and batch processing APIs, such as map/reduce/join/keyBy, etc.
+* **Logical Execution Plan**: The logical execution plan information is encapsulated in the PipelineGraph object. It organizes the high-level API operators in a directed acyclic graph. Operators are categorized into 5 types: SourceOperator for data source loading, OneInputOperator/TwoInputOperator for traditional data processing, and IteratorOperator for static/dynamic graph computation. The vertices (PipelineVertex) in the DAG store crucial information about operators, such as type, parallelism, and operator functions, while the edges (PipelineEdge) record key information about data shuffling, such as partition rules (forward/broadcast/key), and encoders/decoders.
+* **Physical Execution Plan**: The physical execution plan information is encapsulated in the ExecutionGraph object, which supports a two-level nested structure to schedule subgraphs that can be executed in pipelined manner. The example execution plan DAG in the graph is partitioned into three subgraph structures for execution.
+* **Scheduler**: GeaFlow designs a Cycle-based scheduler (CycleScheduler) to achieve unified scheduling for stream, batch, and graph processing. The scheduling process is triggered by an event-driven model. Each subgraph in the physical execution plan is transformed into an ExecutionCycle object. The scheduler sends events to the head node (Head) of the cycle and receives events sent back from the tail node (Tail) to form a complete scheduling loop. For stream processing, each cycle scheduling round completes the processing of a window of data and continues indefinitely. For batch processing, the entire cycle scheduling is executed only once. For graph processing, each cycle scheduling round completes one iteration of graph computation.
+* **Runtime Components**: GeaFlow's runtime launches the Client, Master, Driver, and Container components. When the Client submits a Pipeline to the Driver, it triggers the construction of the execution plan, task allocation (resources are provided by ResourceManagement), and scheduler. Each Container can run multiple Worker components, and data exchange between different Worker components is done through the Shuffle module. All workers need to regularly send heartbeats (HeartbeatManagement) to the Master and report runtime metric information to the time-series database. Additionally, GeaFlow's runtime provides fault tolerance mechanisms (FailOver) to continue execution in case of exceptions/interruptions.
 
 
 # Computing Engine

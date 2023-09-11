@@ -21,7 +21,7 @@ SELECT
 FROM users, LATERAL table(UDTF_SPLIT(user_name, '|')) as t(name)
 ;
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	f1 bigint,
 	f2 bigint,
 	f3 bigint,
@@ -32,6 +32,6 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT f1, f2, f3, f4, name FROM console_view
 where f2 = 1 OR name = '中国';
