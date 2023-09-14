@@ -132,4 +132,12 @@ public class StepLoopUntilOperator extends AbstractStepOperator<StepBoolFunction
         this.numProcessRecords = 0L;
         this.loopCounter++;
     }
+
+    public int getMinLoopCount() {
+        return this.minLoopCount;
+    }
+
+    public int getMaxLoopCount() {
+        return this.maxLoopCount;
+    }
 }

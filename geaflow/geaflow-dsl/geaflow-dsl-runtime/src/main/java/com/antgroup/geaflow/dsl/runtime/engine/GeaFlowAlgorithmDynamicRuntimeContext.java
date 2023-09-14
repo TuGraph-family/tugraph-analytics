@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContextFunction.VertexCentricAggContext;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction.IncVertexCentricTraversalFuncContext;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction.TraversalGraphSnapShot;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
@@ -23,6 +24,7 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
@@ -32,10 +34,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeContext<Object, Object> {
 
     private final IncVertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> incVCTraversalCtx;
+
+    protected VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext;
 
     private final GraphSchema graphSchema;
 
@@ -44,6 +49,8 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
     protected TraversalEdgeQuery<Object, Row> edgeQuery;
 
     private Object vertexId;
+
+    private long iterationId = -1L;
 
     private final Map<Object, Row> vertexId2NewValue = new HashMap<>();
 
@@ -64,12 +71,12 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
         this.edgeQuery.withId(vertexId);
     }
 
-    public Iterator<Object> loadAllVertex() {
-        return vertexQuery.loadIdIterator();
-    }
-
     public IVertex loadVertex() {
         return vertexQuery.get();
+    }
+
+    public Iterator<Object> loadAllVertex() {
+        return vertexQuery.loadIdIterator();
     }
 
     @SuppressWarnings("unchecked")
@@ -93,6 +100,10 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
     @Override
     public void sendMessage(Object vertexId, Object message) {
         incVCTraversalCtx.sendMessage(vertexId, message);
+        if (getCurrentIterationId() > iterationId) {
+            iterationId = getCurrentIterationId();
+            aggContext.aggregate(GeaFlowKVAlgorithmAggregateFunction.getAlgorithmAgg(iterationId));
+        }
     }
 
     @Override
@@ -116,6 +127,14 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
     @Override
     public GraphSchema getGraphSchema() {
         return graphSchema;
+    }
+
+    public VertexCentricAggContext<ITraversalAgg, ITraversalAgg> getAggContext() {
+        return aggContext;
+    }
+
+    public void setAggContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
+        this.aggContext = Objects.requireNonNull(aggContext);
     }
 
     private static class AlgorithmResponse implements ITraversalResponse<Row> {

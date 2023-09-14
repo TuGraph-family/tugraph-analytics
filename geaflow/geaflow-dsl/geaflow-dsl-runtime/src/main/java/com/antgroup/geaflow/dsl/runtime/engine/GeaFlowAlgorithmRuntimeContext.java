@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContextFunction.VertexCentricAggContext;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.VertexCentricTraversalFuncContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
@@ -21,6 +22,7 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.model.traversal.TraversalType.ResponseType;
@@ -28,15 +30,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<Object, Object> {
 
     private final VertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> traversalContext;
 
+    protected VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext;
+
     private final GraphSchema graphSchema;
     private final TraversalEdgeQuery<Object, Row> edgeQuery;
 
     private Object vertexId;
+
+    private long lastSendAggMsgIterationId = -1L;
 
     private final Map<Object, Row> vertexId2NewValue = new HashMap<>();
 
@@ -46,6 +53,7 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
         this.traversalContext = traversalContext;
         this.edgeQuery = traversalContext.edges();
         this.graphSchema = graphSchema;
+        this.aggContext = null;
     }
 
     public void setVertexId(Object vertexId) {
@@ -74,6 +82,11 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
     @Override
     public void sendMessage(Object vertexId, Object message) {
         traversalContext.sendMessage(vertexId, message);
+        if (getCurrentIterationId() > lastSendAggMsgIterationId) {
+            lastSendAggMsgIterationId = getCurrentIterationId();
+            aggContext.aggregate(GeaFlowKVAlgorithmAggregateFunction.getAlgorithmAgg(
+                lastSendAggMsgIterationId));
+        }
     }
 
     @Override
@@ -97,6 +110,14 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
     @Override
     public GraphSchema getGraphSchema() {
         return graphSchema;
+    }
+
+    public VertexCentricAggContext<ITraversalAgg, ITraversalAgg> getAggContext() {
+        return aggContext;
+    }
+
+    public void setAggContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
+        this.aggContext = Objects.requireNonNull(aggContext);
     }
 
     private static class AlgorithmResponse implements ITraversalResponse<Row> {

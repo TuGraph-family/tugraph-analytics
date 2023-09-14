@@ -64,8 +64,7 @@ public class QueryUtil {
                     SqlIdentifier graphName = gqlContext.completeCatalogObjName(createGraph.getName());
                     if (createGraph.getVertices().getList().stream().anyMatch(node -> node instanceof SqlVertexUsing)
                         || createGraph.getEdges().getList().stream().anyMatch(node -> node instanceof SqlEdgeUsing)) {
-                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph,
-                            createTablesInScript, config);
+                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph, createTablesInScript);
                         Configuration globalConfig = graph.getConfigWithGlobal(config);
                         if (!QueryUtil.isGraphExists(graph, globalConfig)) {
                             preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, globalConfig));
@@ -80,7 +79,7 @@ public class QueryUtil {
                     SqlIdentifier insertGraphName = GQLNodeUtil.getGraphTableName(insertName);
                     if (createGraphs.containsKey(insertGraphName.toString())) {
                         SqlCreateGraph createGraph = createGraphs.get(insertGraphName.toString());
-                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph, config);
+                        GeaFlowGraph graph = gqlContext.convertToGraph(createGraph);
                         preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, config));
                     } else {
                         Table graph = gqlContext.getCatalog().getGraph(gqlContext.getCurrentInstance(),

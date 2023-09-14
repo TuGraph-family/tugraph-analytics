@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContextFunction.VertexCentricAggContext;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
 import com.antgroup.geaflow.common.type.IType;
@@ -30,6 +31,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestId;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.ParameterRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.IMessage;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageBox;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageType;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.ParameterRequestMessage;
@@ -43,6 +45,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 
@@ -70,6 +73,8 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     private final Set<CallRequestId> callRequestIds = new HashSet<>();
 
     private final Map<Object, Object[]> vertexId2AppendFields = new HashMap<>();
+
+    protected VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext;
 
     public AbstractTraversalRuntimeContext(TraversalVertexQuery<Object, Row> vertexQuery,
                                            TraversalEdgeQuery<Object, Row> edgeQuery) {
@@ -319,5 +324,15 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     @Override
     public MetricGroup getMetric() {
         return getRuntimeContext().getMetric();
+    }
+
+    @Override
+    public VertexCentricAggContext<ITraversalAgg, ITraversalAgg> getAggContext() {
+        return aggContext;
+    }
+
+    @Override
+    public void setAggContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
+        this.aggContext = Objects.requireNonNull(aggContext);
     }
 }

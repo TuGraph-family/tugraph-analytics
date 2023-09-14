@@ -14,28 +14,36 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
-import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction;
+import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricAggTraversalFunction;
+import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggregateFunction;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricCombineFunction;
-import com.antgroup.geaflow.api.graph.traversal.IncVertexCentricTraversal;
+import com.antgroup.geaflow.api.graph.traversal.IncVertexCentricAggTraversal;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import java.util.Objects;
 
-public class GeaFlowAlgorithmDynamicTraversal extends IncVertexCentricTraversal<Object, Row, Row, Object, Row> {
+public class GeaFlowAlgorithmDynamicAggTraversal extends
+    IncVertexCentricAggTraversal<Object, Row, Row, Object, Row, ITraversalAgg,
+        ITraversalAgg, ITraversalAgg, ITraversalAgg, ITraversalAgg> {
 
     private final AlgorithmUserFunction userFunction;
     private final Object[] params;
 
     private final GraphSchema graphSchema;
+    private final int parallelism;
 
-    public GeaFlowAlgorithmDynamicTraversal(AlgorithmUserFunction userFunction, int maxTraversal,
-                                            Object[] params, GraphSchema graphSchema) {
+    public GeaFlowAlgorithmDynamicAggTraversal(AlgorithmUserFunction userFunction, int maxTraversal,
+                                               Object[] params, GraphSchema graphSchema,
+                                               int parallelism) {
         super(maxTraversal);
         this.userFunction = Objects.requireNonNull(userFunction);
         this.params = Objects.requireNonNull(params);
         this.graphSchema = Objects.requireNonNull(graphSchema);
+        assert parallelism >= 1;
+        this.parallelism = parallelism;
     }
 
     @Override
@@ -49,7 +57,14 @@ public class GeaFlowAlgorithmDynamicTraversal extends IncVertexCentricTraversal<
     }
 
     @Override
-    public IncVertexCentricTraversalFunction<Object, Row, Row, Object, Row> getIncTraversalFunction() {
-        return new GeaFlowAlgorithmDynamicTraversalFunction(graphSchema, userFunction, params);
+    public IncVertexCentricAggTraversalFunction<Object, Row, Row, Object, Row,
+        ITraversalAgg, ITraversalAgg> getIncTraversalFunction() {
+        return new GeaFlowAlgorithmDynamicAggTraversalFunction(graphSchema, userFunction, params);
+    }
+
+    @Override
+    public VertexCentricAggregateFunction<ITraversalAgg, ITraversalAgg, ITraversalAgg,
+        ITraversalAgg, ITraversalAgg> getAggregateFunction() {
+        return (VertexCentricAggregateFunction) new GeaFlowKVAlgorithmAggregateFunction(parallelism);
     }
 }

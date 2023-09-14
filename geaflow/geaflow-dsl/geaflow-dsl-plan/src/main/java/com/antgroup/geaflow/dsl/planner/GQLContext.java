@@ -304,16 +304,11 @@ public class GQLContext {
      * Convert {@link SqlCreateGraph} to {@link GeaFlowGraph}.
      */
     public GeaFlowGraph convertToGraph(SqlCreateGraph graph) {
-        return convertToGraph(graph, Collections.emptyList(), new Configuration());
-    }
-
-    public GeaFlowGraph convertToGraph(SqlCreateGraph graph, Configuration globalConfiguration) {
-        return convertToGraph(graph, Collections.emptyList(), globalConfiguration);
+        return convertToGraph(graph, Collections.emptyList());
     }
 
     public GeaFlowGraph convertToGraph(SqlCreateGraph graph,
-                                       Collection<GeaFlowTable> createTablesInScript,
-                                       Configuration globalConfiguration) {
+                                       Collection<GeaFlowTable> createTablesInScript) {
         List<VertexTable> vertexTables = new ArrayList<>();
         SqlNodeList vertices = graph.getVertices();
         Map<String, String> vertexEdgeName2UsingTableNameMap = new HashMap<>();

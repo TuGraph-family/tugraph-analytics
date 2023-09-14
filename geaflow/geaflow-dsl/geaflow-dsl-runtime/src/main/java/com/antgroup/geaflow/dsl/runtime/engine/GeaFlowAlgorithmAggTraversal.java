@@ -14,28 +14,34 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggTraversalFunction;
+import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggregateFunction;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricCombineFunction;
-import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction;
-import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
+import com.antgroup.geaflow.api.graph.traversal.VertexCentricAggTraversal;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import java.util.Objects;
 
-public class GeaFlowAlgorithmTraversal extends VertexCentricTraversal<Object, Row, Row, Object, Row> {
+public class GeaFlowAlgorithmAggTraversal extends VertexCentricAggTraversal<Object, Row, Row,
+    Object, Row, ITraversalAgg, ITraversalAgg, ITraversalAgg, ITraversalAgg, ITraversalAgg> {
 
     private final AlgorithmUserFunction userFunction;
     private final Object[] params;
 
     private final GraphSchema graphSchema;
+    private final int parallelism;
 
-    public GeaFlowAlgorithmTraversal(AlgorithmUserFunction userFunction, int maxTraversal,
-                                     Object[] params, GraphSchema graphSchema) {
+    public GeaFlowAlgorithmAggTraversal(AlgorithmUserFunction userFunction, int maxTraversal,
+                                        Object[] params, GraphSchema graphSchema, int parallelism) {
         super(maxTraversal);
         this.userFunction = Objects.requireNonNull(userFunction);
         this.params = Objects.requireNonNull(params);
         this.graphSchema = Objects.requireNonNull(graphSchema);
+        assert parallelism >= 1;
+        this.parallelism = parallelism;
     }
 
     @Override
@@ -49,7 +55,13 @@ public class GeaFlowAlgorithmTraversal extends VertexCentricTraversal<Object, Ro
     }
 
     @Override
-    public VertexCentricTraversalFunction<Object, Row, Row, Object, Row> getTraversalFunction() {
-        return new GeaFlowAlgorithmTraversalFunction(graphSchema, userFunction, params);
+    public VertexCentricAggTraversalFunction<Object, Row, Row, Object, Row,
+        ITraversalAgg, ITraversalAgg> getTraversalFunction() {
+        return new GeaFlowAlgorithmAggTraversalFunction(graphSchema, userFunction, params);
+    }
+
+    @Override
+    public VertexCentricAggregateFunction<ITraversalAgg, ITraversalAgg, ITraversalAgg, ITraversalAgg, ITraversalAgg> getAggregateFunction() {
+        return (VertexCentricAggregateFunction) new GeaFlowKVAlgorithmAggregateFunction(parallelism);
     }
 }

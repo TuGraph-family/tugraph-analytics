@@ -18,6 +18,7 @@ import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.VertexCentricTraversalFuncContext;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.KVTraversalAgg;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageBox;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
@@ -64,7 +65,11 @@ public class GeaFlowStaticTraversalRuntimeContext extends AbstractTraversalRunti
 
     @Override
     public void sendCoordinator(String name, Object value) {
-        LOGGER.info("task: {} send to coordinator {}:{} ", getTaskIndex(), name, value);
+        LOGGER.info("task: {} send to coordinator {}:{} isAggTraversal:{}", getTaskIndex(), name,
+            value, aggContext != null);
+        if (aggContext != null) {
+            aggContext.aggregate(new KVTraversalAgg(name, value));
+        }
     }
 
     @Override

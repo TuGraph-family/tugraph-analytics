@@ -59,7 +59,7 @@ public class CreateGraphCommand implements IQueryCommand {
     @Override
     public QueryResult execute(QueryContext context) {
         GQLContext gContext = context.getGqlContext();
-        GeaFlowGraph graph = gContext.convertToGraph(createGraph, context.getGlobalConf());
+        GeaFlowGraph graph = gContext.convertToGraph(createGraph);
         gContext.registerGraph(graph);
         processUsing(graph, context);
         LOGGER.info("Succeed to create graph: {}.", graph);
@@ -68,6 +68,7 @@ public class CreateGraphCommand implements IQueryCommand {
 
 
     private void processUsing(GeaFlowGraph graph, QueryContext context) {
+
         //Graph first time creation will trigger insert operations
         if (!QueryUtil.isGraphExists(graph, graph.getConfigWithGlobal(context.getGlobalConf()))) {
             //Convert graph construction using tables to equivalent insert statement

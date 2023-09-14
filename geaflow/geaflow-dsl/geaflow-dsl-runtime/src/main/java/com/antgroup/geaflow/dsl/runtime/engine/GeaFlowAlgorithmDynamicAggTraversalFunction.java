@@ -15,11 +15,12 @@
 package com.antgroup.geaflow.dsl.runtime.engine;
 
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
-import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction;
+import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricAggTraversalFunction;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
@@ -28,8 +29,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-public class GeaFlowAlgorithmDynamicTraversalFunction
-    implements IncVertexCentricTraversalFunction<Object, Row, Row, Object, Row>, RichIteratorFunction {
+public class GeaFlowAlgorithmDynamicAggTraversalFunction
+    implements IncVertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg,
+        ITraversalAgg>, RichIteratorFunction {
 
     private static final long VERSION = 0L;
 
@@ -45,20 +47,21 @@ public class GeaFlowAlgorithmDynamicTraversalFunction
 
     private MutableGraph<Object, Row, Row> mutableGraph;
 
-    public GeaFlowAlgorithmDynamicTraversalFunction(GraphSchema graphSchema,
-                                                    AlgorithmUserFunction<Object, Object> userFunction,
-                                                    Object[] params) {
+    public GeaFlowAlgorithmDynamicAggTraversalFunction(GraphSchema graphSchema,
+                                                       AlgorithmUserFunction<Object, Object> userFunction,
+                                                       Object[] params) {
         this.graphSchema = Objects.requireNonNull(graphSchema);
         this.userFunction = Objects.requireNonNull(userFunction);
         this.params = Objects.requireNonNull(params);
     }
 
     @Override
-    public void open(IncVertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> traversalContext) {
+    public void open(
+        IncVertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> vertexCentricFuncContext) {
+        this.traversalContext = vertexCentricFuncContext;
         this.algorithmCtx = new GeaFlowAlgorithmDynamicRuntimeContext(traversalContext, graphSchema);
         this.userFunction.init(algorithmCtx, params);
         this.mutableGraph = traversalContext.getMutableGraph();
-        this.traversalContext = traversalContext;
     }
 
     @Override
@@ -70,7 +73,6 @@ public class GeaFlowAlgorithmDynamicTraversalFunction
             algorithmCtx.setVertexId(vertex.getId());
             userFunction.process(vertex, Collections.emptyIterator());
         }
-
     }
 
     @Override
@@ -119,5 +121,10 @@ public class GeaFlowAlgorithmDynamicTraversalFunction
 
     @Override
     public void finishIteration(long iterationId) {
+    }
+
+    @Override
+    public void initContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
+        this.algorithmCtx.setAggContext(Objects.requireNonNull(aggContext));
     }
 }
