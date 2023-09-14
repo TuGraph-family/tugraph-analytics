@@ -46,7 +46,6 @@ import com.antgroup.geaflow.shuffle.message.ShuffleId;
 import com.antgroup.geaflow.shuffle.service.IShuffleMaster;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
