@@ -22,6 +22,7 @@ public class GQLContinueMatchTest {
     public void testContinueMatch_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_continue_match_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLContinueMatchTest {
     public void testContinueMatch_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_continue_match_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLContinueMatchTest {
     public void testContinueMatch_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_continue_match_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLContinueMatchTest {
     public void testContinueMatch_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_continue_match_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLContinueMatchTest {
     public void testContinueMatch_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_continue_match_005.sql")
             .execute()
             .checkSinkResult();

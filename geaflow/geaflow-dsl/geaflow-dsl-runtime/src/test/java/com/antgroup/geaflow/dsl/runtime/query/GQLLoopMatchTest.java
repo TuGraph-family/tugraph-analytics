@@ -22,6 +22,7 @@ public class GQLLoopMatchTest {
     public void testMatchLoop_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_loop_match_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLLoopMatchTest {
     public void testMatchLoop_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_loop_match_002.sql")
             .execute()
             .checkSinkResult();

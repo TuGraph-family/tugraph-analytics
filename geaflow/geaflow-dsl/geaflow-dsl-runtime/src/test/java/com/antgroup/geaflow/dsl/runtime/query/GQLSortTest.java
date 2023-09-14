@@ -22,6 +22,7 @@ public class GQLSortTest {
     public void testSort_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLSortTest {
     public void testSort_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLSortTest {
     public void testSort_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLSortTest {
     public void testSort_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLSortTest {
     public void testSort_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLSortTest {
     public void testSort_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_006.sql")
             .compareWithOrder()
             .execute()
@@ -77,6 +83,7 @@ public class GQLSortTest {
     public void testSort_007() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_007.sql")
             .compareWithOrder()
             .execute()
@@ -87,6 +94,7 @@ public class GQLSortTest {
     public void testSort_008() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_008.sql")
             .compareWithOrder()
             .execute()
@@ -97,6 +105,7 @@ public class GQLSortTest {
     public void testSort_009() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_009.sql")
             .execute()
             .checkSinkResult();
@@ -106,6 +115,7 @@ public class GQLSortTest {
     public void testSort_010() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_sort_010.sql")
             .compareWithOrder()
             .execute()

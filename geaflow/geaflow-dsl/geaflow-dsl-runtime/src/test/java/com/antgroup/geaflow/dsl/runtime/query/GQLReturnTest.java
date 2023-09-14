@@ -22,6 +22,7 @@ public class GQLReturnTest {
     public void testReturn_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLReturnTest {
     public void testReturn_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLReturnTest {
     public void testReturn_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLReturnTest {
     public void testReturn_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLReturnTest {
     public void testReturn_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLReturnTest {
     public void testReturn_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_006.sql")
             .execute()
             .checkSinkResult();
@@ -76,6 +82,7 @@ public class GQLReturnTest {
     public void testReturn_007() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_007.sql")
             .execute()
             .checkSinkResult();
@@ -85,6 +92,7 @@ public class GQLReturnTest {
     public void testReturn_008() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_008.sql")
             .compareWithOrder()
             .execute()
@@ -95,6 +103,7 @@ public class GQLReturnTest {
     public void testReturn_009() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_009.sql")
             .execute()
             .checkSinkResult();
@@ -104,6 +113,7 @@ public class GQLReturnTest {
     public void testReturn_010() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_010.sql")
             .execute()
             .checkSinkResult();
@@ -113,6 +123,7 @@ public class GQLReturnTest {
     public void testReturn_011() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_011.sql")
             .execute()
             .checkSinkResult();
@@ -122,6 +133,7 @@ public class GQLReturnTest {
     public void testReturn_012() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_012.sql")
             .execute()
             .checkSinkResult();
@@ -131,6 +143,7 @@ public class GQLReturnTest {
     public void testReturn_013() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_013.sql")
             .execute()
             .checkSinkResult();
@@ -140,6 +153,7 @@ public class GQLReturnTest {
     public void testReturn_014() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_014.sql")
             .execute()
             .checkSinkResult();
@@ -149,6 +163,7 @@ public class GQLReturnTest {
     public void testReturn_015() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_015.sql")
             .execute()
             .checkSinkResult();
@@ -158,6 +173,7 @@ public class GQLReturnTest {
     public void testReturn_016() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_return_016.sql")
             .execute()
             .checkSinkResult();

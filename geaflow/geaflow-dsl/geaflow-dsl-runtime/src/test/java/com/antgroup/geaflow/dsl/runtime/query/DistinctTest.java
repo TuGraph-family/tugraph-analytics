@@ -68,7 +68,6 @@ public class DistinctTest {
     public void testDistinct_006() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), "4")
             .withQueryPath("/query/distinct_006.sql")
             .execute()
@@ -79,7 +78,6 @@ public class DistinctTest {
     public void testDistinct_007() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), "4")
             .withQueryPath("/query/distinct_007.sql")
             .execute()
