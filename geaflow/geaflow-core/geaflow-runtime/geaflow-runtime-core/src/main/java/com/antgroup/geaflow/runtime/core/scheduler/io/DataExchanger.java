@@ -34,30 +34,26 @@ public class DataExchanger {
      *         value: list of input shards
      */
     public static Map<Integer, List<Shard>> buildInput(ExecutionVertex vertex,
+                                                       ExecutionEdge inputEdge,
                                                        CycleResultManager resultManager) {
 
         Map<Integer, List<Shard>> result = new HashMap<>();
-
-        List<ExecutionEdge> inputEdges = vertex.getInputEdges();
-        for (ExecutionEdge edge : inputEdges) {
-            int edgeId = edge.getEdgeId();
-            List<IResult> eventResults = resultManager.get(edgeId);
-            for (IResult eventResult : eventResults) {
-                ShardResult shard = (ShardResult) eventResult;
-                for (int i = 0; i < shard.getResponse().size(); i++) {
-                    int index = i % vertex.getParallelism();
-                    if (!result.containsKey(index)) {
-                        result.put(index, new ArrayList<>());
-                    }
-                    Shard newShard = new Shard(
-                        shard.getId(), Arrays.asList(shard.getResponse().get(i)));
-                    result.get(index).add(newShard);
+        int edgeId = inputEdge.getEdgeId();
+        List<IResult> eventResults = resultManager.get(edgeId);
+        for (IResult eventResult : eventResults) {
+            ShardResult shard = (ShardResult) eventResult;
+            for (int i = 0; i < shard.getResponse().size(); i++) {
+                int index = i % vertex.getParallelism();
+                if (!result.containsKey(index)) {
+                    result.put(index, new ArrayList<>());
                 }
+                Shard newShard = new Shard(
+                    shard.getId(), Arrays.asList(shard.getResponse().get(i)));
+                result.get(index).add(newShard);
             }
         }
         return result;
     }
-
 
     private static boolean needRepartition(ExecutionVertex vertex,
                                            ExecutionVertexGroup group) {

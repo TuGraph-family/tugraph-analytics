@@ -27,9 +27,9 @@ import com.antgroup.geaflow.cluster.protocol.OpenContainerEvent;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.cluster.util.SystemExitSignalCatcher;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.utils.ReflectionUtil;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.ha.service.HAServiceFactory;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -72,11 +72,11 @@ public class ContainerTest {
         config.put(RUN_LOCAL_MODE.getKey(), "true");
         config.put(CONTAINER_DISPATCH_THREADS.getKey(), "1");
         Configuration configuration = new Configuration(config);
-        setField(container, "name", "test");
-        setField(container, "configuration", configuration);
-        setField(container, "haService", HAServiceFactory.getService(configuration));
-        setField(container, "containerContext", new ContainerContext(0, configuration));
-        setField(container, "exceptionCollectService", new ExceptionCollectService());
+        ReflectionUtil.setField(container, "name", "test");
+        ReflectionUtil.setField(container, "configuration", configuration);
+        ReflectionUtil.setField(container, "haService", HAServiceFactory.getService(configuration));
+        ReflectionUtil.setField(container, "containerContext", new ContainerContext(0, configuration));
+        ReflectionUtil.setField(container, "exceptionCollectService", new ExceptionCollectService());
         container.open(new OpenContainerEvent(1));
         container.process(new TestCreateTaskEvent());
         container.process(new ExceptionCommandEvent());
@@ -97,11 +97,11 @@ public class ContainerTest {
         config.put(RUN_LOCAL_MODE.getKey(), "true");
         config.put(CONTAINER_DISPATCH_THREADS.getKey(), "1");
         Configuration configuration = new Configuration(config);
-        setField(container, "name", "test");
-        setField(container, "configuration", configuration);
-        setField(container, "haService", HAServiceFactory.getService(configuration));
-        setField(container, "containerContext", new ContainerContext(0, configuration));
-        setField(container, "exceptionCollectService", new ExceptionCollectService());
+        ReflectionUtil.setField(container, "name", "test");
+        ReflectionUtil.setField(container, "configuration", configuration);
+        ReflectionUtil.setField(container, "haService", HAServiceFactory.getService(configuration));
+        ReflectionUtil.setField(container, "containerContext", new ContainerContext(0, configuration));
+        ReflectionUtil.setField(container, "exceptionCollectService", new ExceptionCollectService());
         container.open(new OpenContainerEvent(1));
         container.process(new TestCreateTaskEvent());
         container.process(new ExceptionCommandEvent());
@@ -122,24 +122,6 @@ public class ContainerTest {
             SleepUtils.sleepMilliSecond(100);
             retry --;
         }
-    }
-
-    private void setField(Container container, String fieldName, Object value) throws Exception {
-
-        Field field = getField(container.getClass(), fieldName);
-        field.setAccessible(true);
-        field.set(container, value);
-    }
-
-    private Field getField(Class clazz, String fieldName) throws NoSuchFieldException {
-        while (clazz != Object.class) {
-            try {
-                return clazz.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-            }
-            clazz = clazz.getSuperclass();
-        }
-        throw new NoSuchFieldException(fieldName);
     }
 
     static class ExceptionCommandEvent implements IExecutableCommand {

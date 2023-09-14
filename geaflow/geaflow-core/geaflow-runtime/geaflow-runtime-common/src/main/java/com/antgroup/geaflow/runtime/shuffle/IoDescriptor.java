@@ -14,11 +14,9 @@
 
 package com.antgroup.geaflow.runtime.shuffle;
 
+import com.antgroup.geaflow.runtime.io.IInputDesc;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
-import com.antgroup.geaflow.shuffle.message.Shard;
-
 import java.io.Serializable;
-import java.util.List;
 
 public class IoDescriptor implements Serializable {
 
@@ -54,9 +52,9 @@ public class IoDescriptor implements Serializable {
      */
     public int getInputTaskNum() {
         int inputTaskNumber = 0;
-        if (inputDescriptor != null && inputDescriptor.getInputShardMap() != null) {
-            for (List<Shard> shards : inputDescriptor.getInputShardMap().values()) {
-                inputTaskNumber += shards.size();
+        if (inputDescriptor != null && inputDescriptor.getInputDescMap() != null) {
+            for (IInputDesc inputDesc : inputDescriptor.getInputDescMap().values()) {
+                inputTaskNumber += inputDesc.getInput().size();
             }
         }
         return inputTaskNumber;

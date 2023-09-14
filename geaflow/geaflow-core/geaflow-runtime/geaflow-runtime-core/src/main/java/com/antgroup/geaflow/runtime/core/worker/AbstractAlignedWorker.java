@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.runtime.core.worker;
 
 import com.antgroup.geaflow.api.trait.CancellableTrait;
-import com.antgroup.geaflow.cluster.collector.PipelineOutputCollector;
+import com.antgroup.geaflow.cluster.collector.AbstractPipelineOutputCollector;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.Message;
 import com.antgroup.geaflow.cluster.response.IResult;
@@ -27,10 +27,11 @@ import com.antgroup.geaflow.collector.IResultCollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.GcUtil;
 import com.antgroup.geaflow.core.graph.util.ExecutionTaskUtils;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.model.record.BatchRecord;
+import com.antgroup.geaflow.model.record.RecordArgs;
 import com.antgroup.geaflow.runtime.core.protocol.DoneEvent;
 import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
-import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 import java.util.ArrayList;
@@ -122,20 +123,10 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
                 IResultCollector responseCollector = (IResultCollector) collectors.get(i);
                 IResult result = (IResult) responseCollector.collectResult();
                 if (result != null) {
-                    if (result.getType() == IResult.ResponseType.COLLECTION) {
-                        if (results.containsKey(result.getId())) {
-                            results.get(result.getId()).getResponse().addAll(result.getResponse());
-                        } else {
-                            results.put(result.getId(), result);
-                        }
-                        outputRecordNum += result.getResponse().size();
-                    } else {
-                        results.put(result.getId(), result);
-                        ShardResult shard = (ShardResult) result;
-                        for (ISliceMeta sliceMeta : shard.getResponse()) {
-                            outputRecordNum += sliceMeta.getRecordNum();
-                            outputBytes += sliceMeta.getEncodedSize();
-                        }
+                    results.put(result.getId(), result);
+                    if (result.getType() == CollectType.FORWARD || result.getType() == CollectType.LOOP) {
+                        outputRecordNum += ((ShardResult) result).getRecordNum();
+                        outputBytes += ((ShardResult) result).getRecordBytes();
                     }
                 }
             }
@@ -155,8 +146,8 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
         context.getEventMetrics().setStartGcTs(GcUtil.computeCurrentTotalGcTime());
         context.setCurrentWindowId(windowId);
         for (ICollector collector : outputWriter.getCollectors()) {
-            if (collector instanceof PipelineOutputCollector) {
-                ((PipelineOutputCollector) collector).setWindowId(windowId);
+            if (collector instanceof AbstractPipelineOutputCollector) {
+                ((AbstractPipelineOutputCollector) collector).setWindowId(windowId);
             }
         }
     }
@@ -192,7 +183,8 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
         if (totalCount != processCount) {
             LOGGER.error("taskId {} {} mismatch, TotalCount:{} != ProcessCount:{}",
                 context.getTaskId(), totalCount, totalCount, processCount);
-            throw new GeaflowRuntimeException("TotalCount Not Equal, ProcessCount " + totalCount + ", " + processCount);
+            throw new GeaflowRuntimeException(String.format("taskId %s mismatch, TotalCount:%s != ProcessCount:%s",
+                context.getTaskId(), totalCount, processCount));
         }
         context.getEventMetrics().setInputRecords(totalCount);
 
@@ -211,11 +203,14 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
         long count = messageIterator.getSize();
         messageIterator.close();
 
-        if (!windowCount.containsKey(windowId)) {
-            windowCount.put(windowId, count);
-        } else {
-            long oldCounter = windowCount.get(windowId);
-            windowCount.put(windowId, oldCounter + count);
+        // Aggregate message not take into account when check message count.
+        if (message.getRecordArgs().getName() != RecordArgs.GraphRecordNames.Aggregate.name()) {
+            if (!windowCount.containsKey(windowId)) {
+                windowCount.put(windowId, count);
+            } else {
+                long oldCounter = windowCount.get(windowId);
+                windowCount.put(windowId, oldCounter + count);
+            }
         }
     }
 

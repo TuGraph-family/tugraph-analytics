@@ -16,6 +16,7 @@ package com.antgroup.geaflow.collector;
 
 import com.antgroup.geaflow.api.collector.Collector;
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.io.CollectType;
 
 public interface ICollector<T> extends Collector<T> {
 
@@ -28,6 +29,11 @@ public interface ICollector<T> extends Collector<T> {
      * Returns tag.
      */
     String getTag();
+
+    /**
+     * Returns type.
+     */
+    CollectType getType();
 
     /**
      * Initialize collector.

@@ -16,11 +16,11 @@ package com.antgroup.geaflow.operator.impl.graph.traversal.statical;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractVertexCentricTraversalAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.VertexCentricTraversalFuncContext;
-import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
 import com.antgroup.geaflow.model.graph.message.IGraphMessage;
@@ -28,7 +28,6 @@ import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.operator.OpArgs.OpType;
-import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractStaticGraphVertexCentricOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphTraversalOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic.DynamicTraversalEdgeQueryImpl;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic.DynamicTraversalVertexQueryImpl;
@@ -37,18 +36,19 @@ import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical.StaticT
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical.StaticTraversalVertexQueryImpl;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox.MsgProcessFunc;
+import com.antgroup.geaflow.operator.impl.graph.compute.statical.AbstractStaticGraphVertexCentricOp;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.view.graph.GraphSnapshotDesc;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, R> extends
-    AbstractStaticGraphVertexCentricOp<K, VV, EV, M, VertexCentricTraversal<K, VV, EV, M, R>>
+public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, R,
+    FUNC extends VertexCentricTraversalFunction<K, VV, EV, M, R>>
+    extends AbstractStaticGraphVertexCentricOp<K, VV, EV, M, AbstractVertexCentricTraversalAlgo<K, VV, EV, M, R, FUNC>>
     implements IGraphTraversalOp<K, VV, EV, M> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
@@ -64,7 +64,7 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
     protected final List<ITraversalRequest<K>> traversalRequests;
 
     public AbstractStaticGraphVertexCentricTraversalOp(GraphViewDesc graphViewDesc,
-                                                       VertexCentricTraversal<K, VV, EV, M, R> vcTraversal) {
+                                                       AbstractVertexCentricTraversalAlgo<K, VV, EV, M, R, FUNC> vcTraversal) {
         super(graphViewDesc, vcTraversal);
         opArgs.setOpType(OpType.VERTEX_CENTRIC_TRAVERSAL);
         this.traversalRequests = new ArrayList<>();
@@ -73,7 +73,6 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
     @Override
     public void open(OpContext opContext) {
         super.open(opContext);
-
         this.vcTraversalFunction = this.function.getTraversalFunction();
         this.graphVCTraversalCtx = new GraphVCTraversalCtxImpl(
             opContext, this.runtimeContext, this.graphState,
@@ -83,7 +82,8 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
         this.responses = new ArrayList<>();
 
         for (ICollector collector : this.collectors) {
-            if (!collector.getTag().equals(GraphRecordNames.Message.name())) {
+            if (!collector.getTag().equals(GraphRecordNames.Message.name())
+                && !collector.getTag().equals(GraphRecordNames.Aggregate.name())) {
                 responseCollector = collector;
             }
         }

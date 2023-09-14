@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.collector;
 
+import com.antgroup.geaflow.io.CollectType;
 import java.util.List;
 
 public class CollectionCollector<T> extends AbstractCollector implements ICollector<T> {
@@ -36,6 +37,11 @@ public class CollectionCollector<T> extends AbstractCollector implements ICollec
     @Override
     public String getTag() {
         return "";
+    }
+
+    @Override
+    public CollectType getType() {
+        return CollectType.FORWARD;
     }
 
     @Override

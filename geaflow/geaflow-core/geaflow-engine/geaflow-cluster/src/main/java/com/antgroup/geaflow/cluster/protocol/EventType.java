@@ -48,6 +48,11 @@ public enum EventType implements Serializable {
     EXECUTE_COMPUTE,
 
     /**
+     * A basic cycle command to that execute iteration with agg info.
+     */
+    ITERATIVE_COMPUTE_WITH_AGGREGATE,
+
+    /**
      * A basic cycle command to start one cycle iteration to fetch source.
      * The command send from scheduler to cycle heads.
      */

@@ -62,16 +62,16 @@ public class CompilerTest {
                 + "\"operatorName\":\"5\",\"parents\":[{\"id\":\"2-2\"}]}}}},"
                 + "\"3\":{\"vertexType\":\"vertex_centric\",\"id\":\"3\",\"parallelism\":2,"
                 + "\"operator\":\"StaticGraphVertexCentricTraversalAllOp\","
-                + "\"operatorName\":\"GeaFlowStaticVCTraversal\",\"parents\":[{\"id\":\"2\","
-                + "\"partitionType\":\"key\"},{\"id\":\"1\",\"partitionType\":\"key\"}]},"
-                + "\"6\":{\"vertexType\":\"process\",\"id\":\"6\",\"parallelism\":2,\"parents\":[{\"id\":\"3\","
-                + "\"partitionType\":\"forward\"}],\"innerPlan\":{\"vertices\":{\"6-7\":{\"id\":\"6-7\","
-                + "\"parallelism\":2,\"operator\":\"MapOperator\",\"operatorName\":\"Project-1\","
-                + "\"parents\":[{\"id\":\"6-6\"}]},\"6-8\":{\"id\":\"6-8\",\"parallelism\":2,"
-                + "\"operator\":\"SinkOperator\",\"operatorName\":\"TableSink-2\","
+                + "\"operatorName\":\"GeaFlowStaticVCTraversal\",\"parents\":[{\"id\":\"3\","
+                + "\"partitionType\":\"key\"},{\"id\":\"2\",\"partitionType\":\"key\"},{\"id\":\"1\","
+                + "\"partitionType\":\"key\"}]},\"6\":{\"vertexType\":\"process\",\"id\":\"6\",\"parallelism\":2,"
+                + "\"parents\":[{\"id\":\"3\",\"partitionType\":\"forward\"}],"
+                + "\"innerPlan\":{\"vertices\":{\"6-7\":{\"id\":\"6-7\",\"parallelism\":2,\"operator\":\"MapOperator\","
+                + "\"operatorName\":\"Project-1\",\"parents\":[{\"id\":\"6-6\"}]},\"6-8\":{\"id\":\"6-8\","
+                + "\"parallelism\":2,\"operator\":\"SinkOperator\",\"operatorName\":\"TableSink-2\","
                 + "\"parents\":[{\"id\":\"6-7\"}]},\"6-6\":{\"id\":\"6-6\",\"parallelism\":2,"
-                + "\"operator\":\"FlatMapOperator\",\"operatorName\":\"TraversalResponseToRow-0\","
-                + "\"parents\":[]}}}}}}");
+                + "\"operator\":\"FlatMapOperator\",\"operatorName\":\"TraversalResponseToRow-0\",\"parents\":[]}}}}}}"
+        );
     }
 
     @Test

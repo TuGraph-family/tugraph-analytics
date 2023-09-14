@@ -24,8 +24,7 @@ import java.util.Iterator;
  * @param <EV> The value type of edge.
  * @param <M> The message type during iterations.
  */
-public interface VertexCentricComputeFunction<K, VV, EV, M> extends VertexCentricFunction<K, VV,
-    EV, M> {
+public interface VertexCentricComputeFunction<K, VV, EV, M> extends VertexCentricFunction<K, VV, EV, M> {
 
     /**
      * Initialize compute function based on context.
@@ -42,8 +41,7 @@ public interface VertexCentricComputeFunction<K, VV, EV, M> extends VertexCentri
      */
     void finish();
 
-    interface VertexCentricComputeFuncContext<K, VV, EV, M> extends VertexCentricFuncContext<K, VV,
-        EV, M> {
+    interface VertexCentricComputeFuncContext<K, VV, EV, M> extends VertexCentricFuncContext<K, VV, EV, M> {
 
         /**
          * Update new value of current vertex.

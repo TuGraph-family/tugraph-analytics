@@ -14,8 +14,11 @@
 
 package com.antgroup.geaflow.pdata.graph.window.traversal;
 
+import com.antgroup.geaflow.api.graph.base.algo.AbstractVertexCentricTraversalAlgo;
+import com.antgroup.geaflow.api.graph.base.algo.GraphAggregationAlgo;
 import com.antgroup.geaflow.api.graph.base.algo.GraphExecAlgo;
 import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
+import com.antgroup.geaflow.api.graph.traversal.VertexCentricAggTraversal;
 import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
 import com.antgroup.geaflow.api.partition.graph.request.DefaultTraversalRequestPartition;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowBroadcastStream;
@@ -42,7 +45,7 @@ public class TraversalWindowGraph<K, VV, EV, M, R> extends
     AbstractGraphWindow<K, VV, EV, M, ITraversalResponse<R>> implements PGraphTraversal<K, R> {
 
     protected PWindowStream<? extends ITraversalRequest<K>> requestStream;
-    protected VertexCentricTraversal<K, VV, EV, M, R> vertexCentricTraversal;
+    protected AbstractVertexCentricTraversalAlgo<K, VV, EV, M, R, ?> vertexCentricTraversal;
     private final GraphViewDesc graphViewDesc;
 
     public TraversalWindowGraph(GraphViewDesc graphViewDesc,
@@ -62,11 +65,24 @@ public class TraversalWindowGraph<K, VV, EV, M, R> extends
         this.maxIterations = vertexCentricTraversal.getMaxIterationCount();
     }
 
+    public <I, PA, PR, GA, GR> void traversalOnVertexCentric(
+        VertexCentricAggTraversal<K, VV, EV, M, R, I, PA, PR, GA, GR> vertexCentricTraversal) {
+        this.vertexCentricTraversal = vertexCentricTraversal;
+        processOnVertexCentric(vertexCentricTraversal);
+        this.graphExecAlgo = GraphExecAlgo.VertexCentric;
+        this.maxIterations = vertexCentricTraversal.getMaxIterationCount();
+    }
+
     @Override
     public PWindowStream<ITraversalResponse<R>> start() {
-        IGraphVertexCentricOp<K, VV, EV, M> traversalOp =
-            GraphVertexCentricOpFactory.buildStaticGraphVertexCentricTraversalAllOp(graphViewDesc
-                , vertexCentricTraversal);
+        IGraphVertexCentricOp<K, VV, EV, M> traversalOp;
+        if (vertexCentricTraversal instanceof GraphAggregationAlgo) {
+            traversalOp = GraphVertexCentricOpFactory.buildStaticGraphVertexCentricAggTraversalAllOp(graphViewDesc,
+                (VertexCentricAggTraversal) vertexCentricTraversal);
+        } else {
+            traversalOp = GraphVertexCentricOpFactory.buildStaticGraphVertexCentricTraversalAllOp(graphViewDesc,
+                (VertexCentricTraversal<K, VV, EV, M, R>) vertexCentricTraversal);
+        }
         super.operator = (Operator) traversalOp;
         this.opArgs = ((AbstractOperator) operator).getOpArgs();
         this.opArgs.setOpId(getId());
@@ -88,10 +104,14 @@ public class TraversalWindowGraph<K, VV, EV, M, R> extends
                 vId);
             vertexBeginTraversalRequests.add(vertexBeginTraversalRequest);
         }
-        IGraphVertexCentricOp<K, VV, EV, M> traversalOp =
-            GraphVertexCentricOpFactory.buildStaticGraphVertexCentricTraversalOp(graphViewDesc,
-                vertexCentricTraversal
-                , vertexBeginTraversalRequests);
+        IGraphVertexCentricOp<K, VV, EV, M> traversalOp;
+        if (vertexCentricTraversal instanceof GraphAggregationAlgo) {
+            traversalOp = GraphVertexCentricOpFactory.buildStaticGraphVertexCentricAggTraversalOp(graphViewDesc,
+                (VertexCentricAggTraversal) vertexCentricTraversal, vertexBeginTraversalRequests);
+        } else {
+            traversalOp = GraphVertexCentricOpFactory.buildStaticGraphVertexCentricTraversalOp(graphViewDesc,
+                (VertexCentricTraversal<K, VV, EV, M, R>) vertexCentricTraversal, vertexBeginTraversalRequests);
+        }
         super.operator = (Operator) traversalOp;
         this.opArgs = ((AbstractOperator) operator).getOpArgs();
         this.opArgs.setOpId(getId());
@@ -105,9 +125,14 @@ public class TraversalWindowGraph<K, VV, EV, M, R> extends
         PWindowStream<? extends ITraversalRequest<K>> requests) {
         this.requestStream = requests instanceof PWindowBroadcastStream
                              ? requests : requests.keyBy(new DefaultTraversalRequestPartition());
-        IGraphVertexCentricOp<K, VV, EV, M> traversalOp =
-            GraphVertexCentricOpFactory.buildStaticGraphVertexCentricTraversalOp(graphViewDesc,
-                vertexCentricTraversal);
+        IGraphVertexCentricOp<K, VV, EV, M> traversalOp;
+        if (vertexCentricTraversal instanceof GraphAggregationAlgo) {
+            traversalOp = GraphVertexCentricOpFactory.buildStaticGraphVertexCentricAggTraversalOp(graphViewDesc,
+                (VertexCentricAggTraversal) vertexCentricTraversal);
+        } else {
+            traversalOp = GraphVertexCentricOpFactory.buildStaticGraphVertexCentricTraversalOp(graphViewDesc,
+                (VertexCentricTraversal<K, VV, EV, M, R>) vertexCentricTraversal);
+        }
         super.operator = (Operator) traversalOp;
         this.opArgs = ((AbstractOperator) operator).getOpArgs();
         this.opArgs.setOpId(getId());

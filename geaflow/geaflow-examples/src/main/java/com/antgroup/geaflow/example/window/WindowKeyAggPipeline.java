@@ -85,6 +85,7 @@ public class WindowKeyAggPipeline implements Serializable {
             }
         });
 
+        pipeline.shutdown();
         return pipeline.execute();
     }
 

@@ -23,7 +23,7 @@ import com.antgroup.geaflow.partitioner.IPartitioner;
 import com.antgroup.geaflow.partitioner.impl.KeyPartitioner;
 import com.antgroup.geaflow.selector.ISelector;
 import com.antgroup.geaflow.selector.impl.ChannelSelector;
-import com.antgroup.geaflow.shuffle.OutputInfo;
+import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.api.writer.IWriterContext;
 import com.antgroup.geaflow.shuffle.api.writer.WriterContext;
@@ -37,28 +37,28 @@ public abstract class AbstractPipelineCollector<T> extends AbstractCollector imp
 
     protected transient IShuffleWriter pipeRecordWriter;
     protected transient ISelector recordISelector;
-    protected OutputInfo outputInfo;
+    protected ForwardOutputDesc outputDesc;
     protected long windowId;
 
-    public AbstractPipelineCollector(OutputInfo outputInfo) {
-        super(outputInfo.getPartitioner().getOpId());
-        this.outputInfo = outputInfo;
+    public AbstractPipelineCollector(ForwardOutputDesc outputDesc) {
+        super(outputDesc.getPartitioner().getOpId());
+        this.outputDesc = outputDesc;
     }
 
     @Override
     public void setUp(RuntimeContext runtimeContext) {
         super.setUp(runtimeContext);
-        List<Integer> targetTaskIds = outputInfo.getTargetTaskIndices();
-        IPartitioner partitioner = outputInfo.getPartitioner();
+        List<Integer> targetTaskIds = outputDesc.getTargetTaskIndices();
+        IPartitioner partitioner = outputDesc.getPartitioner();
         if (partitioner.getPartitionType() == IPartitioner.PartitionType.key) {
-            ((KeyPartitioner) partitioner).init(outputInfo.getNumPartitions());
+            ((KeyPartitioner) partitioner).init(outputDesc.getNumPartitions());
         }
         this.recordISelector = new ChannelSelector(targetTaskIds.size(),
             partitioner);
 
         this.pipeRecordWriter = ShuffleManager.getInstance().loadShuffleWriter();
 
-        IEncoder<?> encoder = this.outputInfo.getEncoder();
+        IEncoder<?> encoder = this.outputDesc.getEncoder();
         if (encoder != null) {
             encoder.init(runtimeContext.getConfiguration());
         }
@@ -66,13 +66,13 @@ public abstract class AbstractPipelineCollector<T> extends AbstractCollector imp
             .setPipelineId(runtimeContext.getPipelineId())
             .setPipelineName(runtimeContext.getPipelineName())
             .setVertexId(id)
-            .setEdgeId(outputInfo.getEdgeId())
+            .setEdgeId(outputDesc.getEdgeId())
             .setTaskId(runtimeContext.getTaskArgs().getTaskId())
             .setTaskIndex(runtimeContext.getTaskArgs().getTaskIndex())
             .setTaskName(runtimeContext.getTaskArgs().getTaskName())
             .setChannelNum(targetTaskIds.size())
             .setConfig(runtimeContext.getConfiguration())
-            .setShuffleDescriptor(outputInfo.getShuffleDescriptor())
+            .setShuffleDescriptor(outputDesc.getShuffleDescriptor())
             .setEncoder(encoder);
         this.pipeRecordWriter.init(writerContext);
     }
@@ -92,7 +92,7 @@ public abstract class AbstractPipelineCollector<T> extends AbstractCollector imp
 
     @Override
     public void broadcast(T value) {
-        List<Integer> targetTaskIds = outputInfo.getTargetTaskIndices();
+        List<Integer> targetTaskIds = outputDesc.getTargetTaskIndices();
         int[] channels = IntStream.rangeClosed(0, targetTaskIds.size() - 1).toArray();
         try {
             pipeRecordWriter.emit(windowId, value, false, channels);
@@ -156,7 +156,7 @@ public abstract class AbstractPipelineCollector<T> extends AbstractCollector imp
         }
     }
 
-    public void setOutputInfo(OutputInfo outputInfo) {
-        this.outputInfo = outputInfo;
+    public void setOutputDesc(ForwardOutputDesc outputDesc) {
+        this.outputDesc = outputDesc;
     }
 }

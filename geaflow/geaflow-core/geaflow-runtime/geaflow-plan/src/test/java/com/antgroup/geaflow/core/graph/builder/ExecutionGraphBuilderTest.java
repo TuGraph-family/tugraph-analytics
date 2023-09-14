@@ -74,7 +74,6 @@ import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -395,7 +394,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
 
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -437,7 +436,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
 
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getIterationCount());
 
@@ -480,7 +479,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(5, graph.getVertexGroupMap().size());
-        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(5, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -526,7 +525,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -566,7 +565,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getIterationCount());
 
@@ -614,7 +613,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(3, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -667,7 +666,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(3, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -752,7 +751,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(3, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 

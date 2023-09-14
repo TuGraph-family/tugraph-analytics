@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.io;
 
+import static com.antgroup.geaflow.runtime.core.scheduler.io.IoDescriptorBuilder.COLLECT_DATA_EDGE_ID;
+
 import com.antgroup.geaflow.cluster.response.IResult;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,11 +24,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CycleResultManager {
 
-    // Edge id to result shard.
+    /**
+     * edge id to result shard.
+     */
     private Map<Integer, List<IResult>> shards;
+
+    /**
+     * all data response.
+     */
+    private List<IResult> rawDatas;
 
     public CycleResultManager() {
         this.shards = new ConcurrentHashMap<>();
+        this.rawDatas = new ArrayList<>();
     }
 
     public void register(int id, IResult response) {
@@ -38,6 +48,10 @@ public class CycleResultManager {
 
     public List<IResult> get(int id) {
         return shards.get(id);
+    }
+
+    public List<IResult> getDataResponse() {
+        return shards.get(COLLECT_DATA_EDGE_ID);
     }
 
     public void release(int id) {

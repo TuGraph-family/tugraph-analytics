@@ -81,7 +81,7 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
         cycleChildren.get(cycle.getCycleId()).addAll(nodeCycle.getVertexGroup().getChildrenVertexGroupIds());
 
         if (iterationCount > 1 && haLevel != HighAvailableLevel.CHECKPOINT
-            && cycle.getType() == ExecutionCycleType.ITERATION) {
+            && (cycle.getType() == ExecutionCycleType.ITERATION || cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG)) {
             haLevel = HighAvailableLevel.CHECKPOINT;
         }
     }

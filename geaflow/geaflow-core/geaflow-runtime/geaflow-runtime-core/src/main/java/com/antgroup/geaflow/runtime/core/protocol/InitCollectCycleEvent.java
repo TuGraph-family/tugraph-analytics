@@ -17,13 +17,12 @@ package com.antgroup.geaflow.runtime.core.protocol;
 import com.antgroup.geaflow.cluster.collector.InitCollectEmitterRequest;
 import com.antgroup.geaflow.cluster.collector.InitEmitterRequest;
 import com.antgroup.geaflow.collector.ICollector;
-import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
-import com.antgroup.geaflow.operator.base.AbstractOperator;
-import com.antgroup.geaflow.processor.impl.AbstractProcessor;
+import com.antgroup.geaflow.io.ResponseOutputDesc;
 import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
+import com.google.common.base.Preconditions;
 import java.util.List;
 
 /**
@@ -43,20 +42,13 @@ public class InitCollectCycleEvent extends InitCycleEvent {
      */
     protected List<ICollector> initEmitterRequest(OutputDescriptor outputDescriptor) {
 
-        InitEmitterRequest request = new InitCollectEmitterRequest(getCollectOpId((AbstractOperator) ((AbstractProcessor) getTask().getProcessor()).getOperator()));
+        Preconditions.checkArgument(outputDescriptor.getOutputDescList().size() == 1,
+            "only support one collect output info yet");
+        InitEmitterRequest request = new InitCollectEmitterRequest(
+            (ResponseOutputDesc) outputDescriptor.getOutputDescList().get(0));
         emitterRunner.add(request);
         ((AbstractAlignedWorker) worker).getOutputWriter()
             .setCollectors(request.getCollectors());
         return request.getCollectors();
-    }
-
-    private Integer getCollectOpId(AbstractOperator operator) {
-        if (operator.getNextOperators().isEmpty()) {
-            return operator.getOpArgs().getOpId();
-        } else if (operator.getNextOperators().size() == 1) {
-            return getCollectOpId((AbstractOperator) operator.getNextOperators().get(0));
-        } else {
-            throw new GeaflowRuntimeException("not support collect multi-output");
-        }
     }
 }

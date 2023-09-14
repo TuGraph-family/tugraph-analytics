@@ -16,12 +16,13 @@ package com.antgroup.geaflow.shuffle;
 
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.partitioner.IPartitioner;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OutputInfo implements Serializable {
+public class ForwardOutputDesc implements IOutputDesc, Serializable {
 
     // Describe the target task ids which the current output will send data to.
     private List<Integer> targetTaskIndices;
@@ -42,7 +43,7 @@ public class OutputInfo implements Serializable {
 
     private ShuffleDescriptor shuffleDescriptor;
 
-    public OutputInfo(int edgeId, String edgeName, int vertexId, ShuffleDescriptor shuffleDescriptor) {
+    public ForwardOutputDesc(int edgeId, String edgeName, int vertexId, ShuffleDescriptor shuffleDescriptor) {
         this.edgeId = edgeId;
         this.edgeName = edgeName;
         this.vertexId = vertexId;
@@ -55,6 +56,11 @@ public class OutputInfo implements Serializable {
 
     public String getEdgeName() {
         return edgeName;
+    }
+
+    @Override
+    public CollectType getType() {
+        return CollectType.FORWARD;
     }
 
     public int getVertexId() {
@@ -97,18 +103,19 @@ public class OutputInfo implements Serializable {
         return shuffleDescriptor;
     }
 
-    public OutputInfo clone() {
-        OutputInfo outputInfo = new OutputInfo(this.edgeId, this.edgeName, this.vertexId, this.shuffleDescriptor);
+    public ForwardOutputDesc clone() {
+        ForwardOutputDesc outputDesc = new ForwardOutputDesc(this.edgeId,
+            this.edgeName, this.vertexId, this.shuffleDescriptor);
         if (this.partitioner != null) {
-            outputInfo.setPartitioner(this.partitioner);
+            outputDesc.setPartitioner(this.partitioner);
         }
         if (this.targetTaskIndices != null) {
-            outputInfo.setTargetTaskIndices(new ArrayList<>(this.targetTaskIndices));
+            outputDesc.setTargetTaskIndices(new ArrayList<>(this.targetTaskIndices));
         }
         if (this.encoder != null) {
-            outputInfo.setEncoder(this.encoder);
+            outputDesc.setEncoder(this.encoder);
         }
-        outputInfo.setNumPartitions(this.numPartitions);
-        return outputInfo;
+        outputDesc.setNumPartitions(this.numPartitions);
+        return outputDesc;
     }
 }

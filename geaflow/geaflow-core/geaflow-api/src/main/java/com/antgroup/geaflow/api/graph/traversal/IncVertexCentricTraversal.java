@@ -14,11 +14,11 @@
 
 package com.antgroup.geaflow.api.graph.traversal;
 
-import com.antgroup.geaflow.api.graph.base.algo.VertexCentricAlgo;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractIncVertexCentricTraversalAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction;
 
-public abstract class IncVertexCentricTraversal<K, VV, EV, M, R> extends VertexCentricAlgo<K, VV,
-    EV, M> {
+public abstract class IncVertexCentricTraversal<K, VV, EV, M, R>
+    extends AbstractIncVertexCentricTraversalAlgo<K, VV, EV, M, R, IncVertexCentricTraversalFunction<K, VV, EV, M, R>> {
 
     public IncVertexCentricTraversal(long iterations) {
         super(iterations);
@@ -27,10 +27,4 @@ public abstract class IncVertexCentricTraversal<K, VV, EV, M, R> extends VertexC
     public IncVertexCentricTraversal(long iterations, String name) {
         super(iterations, name);
     }
-
-    /**
-     * Returns incremental vertex centric traversal function.
-     */
-    public abstract IncVertexCentricTraversalFunction<K, VV, EV, M, R> getIncTraversalFunction();
-
 }

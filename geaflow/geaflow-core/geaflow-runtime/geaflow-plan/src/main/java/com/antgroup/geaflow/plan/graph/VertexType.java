@@ -66,5 +66,9 @@ public enum VertexType {
     /**
      * Collect vertex.
      */
-    collect
+    collect,
+    /**
+     * Iteration aggregation vertex.
+     */
+    iteration_aggregation
 }

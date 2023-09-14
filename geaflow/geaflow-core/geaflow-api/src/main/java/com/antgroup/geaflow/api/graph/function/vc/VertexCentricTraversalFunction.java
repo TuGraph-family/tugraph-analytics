@@ -28,8 +28,7 @@ import java.util.Iterator;
  * @param <M> The message type during iterations.
  * @param <R> The request type for traversal.
  */
-public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexCentricFunction<K, VV
-    , EV, M> {
+public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexCentricFunction<K, VV, EV, M> {
 
     /**
      * Open traversal function based on context.

@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.operator.impl.graph.compute.dynamic;
 
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
-import com.antgroup.geaflow.api.graph.compute.IncVertexCentricCompute;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractIncVertexCentricComputeAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunction;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunction.IncGraphComputeContext;
 import com.antgroup.geaflow.collector.ICollector;
@@ -24,7 +24,6 @@ import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.OpArgs.OpType;
-import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractDynamicGraphVertexCentricOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic.IncGraphContextImpl;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox.MsgProcessFunc;
@@ -36,9 +35,9 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
-    AbstractDynamicGraphVertexCentricOp<K, VV, EV, M, IncVertexCentricCompute<K, VV, EV, M>> implements
-    IGraphVertexCentricOp<K, VV, EV, M>, IteratorOperator  {
+public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M, FUNC extends IncVertexCentricComputeFunction<K, VV, EV, M>>
+    extends AbstractDynamicGraphVertexCentricOp<K, VV, EV, M, AbstractIncVertexCentricComputeAlgo<K, VV, EV, M, FUNC>>
+    implements IGraphVertexCentricOp<K, VV, EV, M>, IteratorOperator  {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicGraphVertexCentricComputeOp.class);
 
@@ -49,8 +48,8 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
 
     private ICollector<IVertex<K, VV>> vertexCollector;
 
-    public DynamicGraphVertexCentricComputeOp(GraphViewDesc graphViewDesc, IncVertexCentricCompute<K,
-        VV, EV, M> incVCAlgorithm) {
+    public DynamicGraphVertexCentricComputeOp(GraphViewDesc graphViewDesc,
+                                              AbstractIncVertexCentricComputeAlgo<K, VV, EV, M, FUNC> incVCAlgorithm) {
         super(graphViewDesc, incVCAlgorithm);
         opArgs.setOpType(OpType.INC_VERTEX_CENTRIC_COMPUTE);
         opArgs.setChainStrategy(OpArgs.ChainStrategy.NEVER);
@@ -66,7 +65,8 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
         this.invokeVIds = new HashSet<>();
 
         for (ICollector collector : this.collectors) {
-            if (!collector.getTag().equals(GraphRecordNames.Message.name())) {
+            if (!collector.getTag().equals(GraphRecordNames.Message.name())
+                && !collector.getTag().equals(GraphRecordNames.Aggregate.name())) {
                 vertexCollector = collector;
             }
         }
@@ -114,7 +114,6 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
         this.graphMsgBox.clearOutBox();
     }
 
-
     @Override
     public void finish() {
         LOGGER.info("current batch invokeIds:{}", this.invokeVIds);
@@ -128,7 +127,6 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
         checkpoint();
     }
 
-
     class IncGraphComputeContextImpl extends IncGraphContextImpl<K, VV, EV, M> implements IncGraphComputeContext<K, VV, EV, M> {
 
         public IncGraphComputeContextImpl() {
@@ -139,7 +137,5 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M> extends
         public void collect(IVertex vertex) {
             vertexCollector.partition(vertex.getId(), vertex);
         }
-
     }
-
 }

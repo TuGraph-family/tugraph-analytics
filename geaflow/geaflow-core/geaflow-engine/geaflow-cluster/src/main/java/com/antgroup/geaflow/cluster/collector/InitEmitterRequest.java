@@ -15,10 +15,9 @@
 package com.antgroup.geaflow.cluster.collector;
 
 import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.shuffle.IOutputDesc;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
-import com.antgroup.geaflow.shuffle.OutputInfo;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +36,16 @@ public class InitEmitterRequest implements IEmitterRequest {
      * Init output collectors.
      */
     public void initEmitter(List<ICollector> collectors) {
-        if (outputDescriptor != null && outputDescriptor.getOutputInfoList() != null) {
+        if (outputDescriptor != null && outputDescriptor.getOutputDescList() != null) {
             collectors.clear();
-            for (OutputInfo outputInfo : outputDescriptor.getOutputInfoList()) {
-                PipelineOutputCollector collector = new PipelineOutputCollector(outputInfo);
+            for (IOutputDesc outputDesc : outputDescriptor.getOutputDescList()) {
+                ICollector collector = CollectorFactory.create(outputDesc);
                 collectors.add(collector);
             }
         }
         this.collectors = collectors;
     }
+
 
     public List<ICollector> getCollectors() {
         while (collectors == null) {

@@ -14,7 +14,8 @@
 
 package com.antgroup.geaflow.operator.impl.graph.traversal.dynamic;
 
-import com.antgroup.geaflow.api.graph.traversal.IncVertexCentricTraversal;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractIncVertexCentricTraversalAlgo;
+import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.impl.VertexBeginTraversalRequest;
 import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
@@ -25,8 +26,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DynamicGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R> extends
-    AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M, R> {
+public class DynamicGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R,
+    FUNC extends IncVertexCentricTraversalFunction<K, VV, EV, M, R>>
+    extends AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M, R, FUNC> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
         DynamicGraphVertexCentricTraversalStartByIdsOp.class);
@@ -36,7 +38,7 @@ public class DynamicGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R> ext
     public DynamicGraphVertexCentricTraversalStartByIdsOp(
         GraphViewDesc graphViewDesc,
         VertexBeginTraversalRequest<K> vertexBeginTraversalRequest,
-        IncVertexCentricTraversal<K, VV, EV, M, R> vcTraversal) {
+        AbstractIncVertexCentricTraversalAlgo<K, VV, EV, M, R, FUNC> vcTraversal) {
         super(graphViewDesc, vcTraversal);
         traversalRequests = new ArrayList<>();
         traversalRequests.add(vertexBeginTraversalRequest);
@@ -45,7 +47,7 @@ public class DynamicGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R> ext
     public DynamicGraphVertexCentricTraversalStartByIdsOp(
         GraphViewDesc graphViewDesc,
         List<VertexBeginTraversalRequest<K>> vertexBeginTraversalRequests,
-        IncVertexCentricTraversal<K, VV, EV, M, R> vcTraversal) {
+        AbstractIncVertexCentricTraversalAlgo<K, VV, EV, M, R, FUNC> vcTraversal) {
         super(graphViewDesc, vcTraversal);
         traversalRequests = new ArrayList<>();
         traversalRequests.addAll(vertexBeginTraversalRequests);

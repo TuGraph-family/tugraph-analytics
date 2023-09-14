@@ -18,26 +18,29 @@ import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.collector.IResultCollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.shuffle.OutputInfo;
+import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import java.io.IOException;
 import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PipelineOutputCollector<T> extends AbstractPipelineCollector<T> implements IResultCollector<ShardResult> {
+public abstract class AbstractPipelineOutputCollector<T>
+    extends AbstractPipelineCollector<T> implements IResultCollector<ShardResult> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineOutputCollector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPipelineOutputCollector.class);
 
     private int edgeId;
     private String edgeName;
     private Shard shard;
+    private CollectType collectType;
 
-    public PipelineOutputCollector(OutputInfo outputInfo) {
-        super(outputInfo);
-        this.edgeName = outputInfo.getEdgeName();
-        this.edgeId = outputInfo.getEdgeId();
+    public AbstractPipelineOutputCollector(ForwardOutputDesc outputDesc) {
+        super(outputDesc);
+        this.edgeName = outputDesc.getEdgeName();
+        this.edgeId = outputDesc.getEdgeId();
+        this.collectType = outputDesc.getType();
     }
 
     @Override
@@ -77,6 +80,6 @@ public class PipelineOutputCollector<T> extends AbstractPipelineCollector<T> imp
         if (shard == null) {
             return null;
         }
-        return new ShardResult(shard.getEdgeId(), shard.getSlices());
+        return new ShardResult(shard.getEdgeId(), collectType, shard.getSlices());
     }
 }

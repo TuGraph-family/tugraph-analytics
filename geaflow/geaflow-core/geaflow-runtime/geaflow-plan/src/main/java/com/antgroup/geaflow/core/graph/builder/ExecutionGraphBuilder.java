@@ -26,10 +26,12 @@ import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroupEdge;
 import com.antgroup.geaflow.core.graph.IteratorExecutionVertex;
 import com.antgroup.geaflow.core.graph.plan.visualization.ExecutionGraphVisualization;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
-import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractDynamicGraphVertexCentricOp;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricAggOp;
+import com.antgroup.geaflow.operator.impl.graph.compute.dynamic.AbstractDynamicGraphVertexCentricOp;
 import com.antgroup.geaflow.plan.graph.AffinityLevel;
 import com.antgroup.geaflow.plan.graph.PipelineEdge;
 import com.antgroup.geaflow.plan.graph.PipelineGraph;
@@ -52,7 +54,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,13 +102,7 @@ public class ExecutionGraphBuilder implements Serializable {
                 Map<Integer, ExecutionEdge> inEdgeMap = new HashMap<>();
 
                 for (PipelineEdge pipelineEdge : vertexOutEdges) {
-                    ExecutionEdge executionEdge = new ExecutionEdge(
-                        pipelineEdge.getPartition(),
-                        pipelineEdge.getEdgeId(),
-                        pipelineEdge.getEdgeName(),
-                        pipelineEdge.getSrcId(),
-                        pipelineEdge.getTargetId(),
-                        pipelineEdge.getEncoder());
+                    ExecutionEdge executionEdge = buildEdge(pipelineEdge);
                     outEdgeMap.put(pipelineEdge.getEdgeId(), executionEdge);
                 }
                 vertexGroup.getEdgeMap().putAll(outEdgeMap);
@@ -116,13 +111,7 @@ public class ExecutionGraphBuilder implements Serializable {
 
                 Set<PipelineEdge> vertexInEdges = plan.getVertexInputEdges(vertexId);
                 for (PipelineEdge pipelineEdge : vertexInEdges) {
-                    ExecutionEdge executionEdge = new ExecutionEdge(
-                        pipelineEdge.getPartition(),
-                        pipelineEdge.getEdgeId(),
-                        pipelineEdge.getEdgeName(),
-                        pipelineEdge.getSrcId(),
-                        pipelineEdge.getTargetId(),
-                        pipelineEdge.getEncoder());
+                    ExecutionEdge executionEdge = buildEdge(pipelineEdge);
                     inEdgeMap.put(pipelineEdge.getEdgeId(), executionEdge);
                 }
                 vertexGroup.getEdgeMap().putAll(inEdgeMap);
@@ -131,18 +120,6 @@ public class ExecutionGraphBuilder implements Serializable {
 
                 entry.getValue().setInputEdges(inEdgeMap.values().stream().collect(Collectors.toList()));
                 entry.getValue().setOutputEdges(outEdgeMap.values().stream().collect(Collectors.toList()));
-
-                PipelineEdge iterationEdge = this.plan.getIterationEdge(vertexId);
-                if (iterationEdge != null) {
-                    ExecutionEdge iterationExecutionEdge = new ExecutionEdge(
-                        iterationEdge.getPartition(),
-                        iterationEdge.getEdgeId(),
-                        iterationEdge.getEdgeName(),
-                        iterationEdge.getSrcId(),
-                        iterationEdge.getTargetId(),
-                        iterationEdge.getEncoder());
-                    vertexGroup.getIterationEdgeMap().put(iterationEdge.getSrcId(), iterationExecutionEdge);
-                }
             }
 
             // 2. Build the input and output vertex group for the group.
@@ -154,14 +131,21 @@ public class ExecutionGraphBuilder implements Serializable {
             List<Integer> headVertexIds = vertexGroup.getHeadVertexIds();
 
             headVertexIds.stream().forEach(headVertexId -> {
-                inGroupEdgeIds.addAll(plan.getVertexInputEdges(headVertexId).stream().map(PipelineEdge::getEdgeId).collect(Collectors.toList()));
+                inGroupEdgeIds.addAll(plan.getVertexInputEdges(headVertexId).stream()
+                    // Exclude self-loop edge.
+                    .filter(e -> !vertexGroup.getVertexMap().containsKey(e.getSrcId()))
+                    .map(PipelineEdge::getEdgeId).collect(Collectors.toList()));
                 vertexGroup.getParentVertexGroupIds().addAll(plan.getVertexInputVertexIds(headVertexId).stream()
+                    .filter(vertexId -> !vertexGroup.getVertexMap().containsKey(vertexId))
                     .map(vertexId -> vertexId2GroupIdMap.get(vertexId)).collect(Collectors.toList()));
             });
 
             tailVertexIds.stream().forEach(tailVertexId -> {
-                outGroupEdgeIds.addAll(plan.getVertexOutEdges(tailVertexId).stream().map(PipelineEdge::getEdgeId).collect(Collectors.toList()));
+                outGroupEdgeIds.addAll(plan.getVertexOutEdges(tailVertexId).stream()
+                    .filter(e -> vertexGroup.getVertexMap().containsKey(e.getTargetId()))
+                    .map(PipelineEdge::getEdgeId).collect(Collectors.toList()));
                 vertexGroup.getChildrenVertexGroupIds().addAll(plan.getVertexOutputVertexIds(tailVertexId).stream()
+                    .filter(vertexId -> !vertexGroup.getVertexMap().containsKey(vertexId))
                     .map(vertexId -> vertexId2GroupIdMap.get(vertexId)).collect(Collectors.toList()));
             });
 
@@ -199,7 +183,7 @@ public class ExecutionGraphBuilder implements Serializable {
 
         while (!pipelineVertexQueue.isEmpty()) {
             PipelineVertex pipelineVertex = pipelineVertexQueue.poll();
-            // ignore already grouped vertex
+            // Ignore already grouped vertex.
             if (groupedVertices.contains(pipelineVertex.getVertexId())) {
                 continue;
             }
@@ -297,22 +281,38 @@ public class ExecutionGraphBuilder implements Serializable {
         // The current vertex can group only if all input can group.
         // 1. All input must support group into current vertex.
         List<Integer> inputVertexIds = plan.getVertexInputVertexIds(vertex.getVertexId());
+        List<Integer> inputVertexIdCandidates = new ArrayList<>();
         for (int id : inputVertexIds) {
             PipelineVertex inputVertex = plan.getVertexMap().get(id);
-            if (!canGroup(inputVertex)) {
+            // Input already in current vertex group, ignore.
+            if (currentVertexGroupMap.containsKey(id) || globalGroupedVertices.contains(id)) {
+                continue;
+            } else if (id == vertex.getVertexId()) {
+                // Ignore self loop edge.
+                continue;
+            } else if (currentVisited.contains(id)) {
+                // Visited but not in grouped vertices, it means group failed in previous steps.
+                // return false;
+                continue;
+            }
+            if (!canGroup(inputVertex, vertex)) {
                 return false;
             }
+            inputVertexIdCandidates.add(id);
         }
 
         // 2. Try group input.
         Map<Integer, ExecutionVertex> inputVertices = new HashMap<>();
-        for (int id : inputVertexIds) {
+        for (int id : inputVertexIdCandidates) {
             PipelineVertex inputVertex = plan.getVertexMap().get(id);
             // Input already in current vertex group, ignore.
             if (currentVertexGroupMap.containsKey(id) || globalGroupedVertices.contains(id) || inputVertices.containsKey(id)) {
                 continue;
             } else if (currentVisited.contains(id)) {
                 // Visited but not in grouped vertices, it means group failed in previous steps.
+                return false;
+            }
+            if (!canGroup(inputVertex, vertex)) {
                 return false;
             }
 
@@ -353,7 +353,9 @@ public class ExecutionGraphBuilder implements Serializable {
             }
 
             // If it cannot group, add to trigger queue.
-            if (!group(outputVertex, currentVertexGroupMap, currentVisited, groupOutputVertices, globalGroupedVertices)) {
+            if (!canGroup(vertex, outputVertex)
+                || !group(outputVertex, currentVertexGroupMap,
+                currentVisited, groupOutputVertices, globalGroupedVertices)) {
                 groupOutputVertices.add(outputVertex);
             }
         }
@@ -371,8 +373,11 @@ public class ExecutionGraphBuilder implements Serializable {
             case inc_vertex_centric:
             case iterator:
             case inc_iterator:
-                enGroup = false;
-                break;
+            case iteration_aggregation:
+                if (currentVertex.getOperator() instanceof IGraphVertexCentricAggOp) {
+                    return true;
+                }
+                return false;
             default:
                 AbstractOperator operator = (AbstractOperator) currentVertex.getOperator();
                 if (!operator.getOpArgs().isEnGroup()) {
@@ -388,6 +393,58 @@ public class ExecutionGraphBuilder implements Serializable {
                 }
         }
         return enGroup;
+    }
+
+    /**
+     * Check the current pipeline vertex can group with output vertex.
+     */
+    private boolean canGroup(PipelineVertex currentVertex, PipelineVertex outputVertex) {
+        if (canGroupWithInput(currentVertex, outputVertex) && canGroupWithOutput(outputVertex, currentVertex)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check the current pipeline vertex can group with output vertex.
+     */
+    private boolean canGroupWithOutput(PipelineVertex currentVertex, PipelineVertex outputVertex) {
+        VertexType type = currentVertex.getType();
+        switch (type) {
+            case vertex_centric:
+            case inc_vertex_centric:
+            case iterator:
+            case inc_iterator:
+            case iteration_aggregation:
+                if (currentVertex.getOperator() instanceof IGraphVertexCentricAggOp
+                    && outputVertex.getOperator() instanceof IGraphVertexCentricAggOp) {
+                    return true;
+                }
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Check the current pipeline vertex can group with input vertex.
+     */
+    private boolean canGroupWithInput(PipelineVertex currentVertex, PipelineVertex inputVertex) {
+        VertexType type = currentVertex.getType();
+        switch (type) {
+            case vertex_centric:
+            case inc_vertex_centric:
+            case iterator:
+            case inc_iterator:
+            case iteration_aggregation:
+                if (currentVertex.getOperator() instanceof IGraphVertexCentricAggOp
+                    && inputVertex.getOperator() instanceof IGraphVertexCentricAggOp) {
+                    return true;
+                }
+                return false;
+            default:
+                return true;
+        }
     }
 
     /**
@@ -490,6 +547,9 @@ public class ExecutionGraphBuilder implements Serializable {
                         vertexGroup.getCycleGroupMeta().setFlyingCount(flyingCount);
                         break;
                     case incremental:
+                        if (vertex.getVertexType() == VertexType.iteration_aggregation) {
+                            continue;
+                        }
                         graph.getCycleGroupMeta().setIterationCount(Long.MAX_VALUE);
                         iteratorSet.add(vertexGroup);
                         vertexGroup.getCycleGroupMeta().setIterationCount(((IteratorExecutionVertex) vertex).getIteratorCount());
@@ -497,6 +557,9 @@ public class ExecutionGraphBuilder implements Serializable {
                         vertexGroup.getCycleGroupMeta().setAffinityLevel(AffinityLevel.worker);
                         break;
                     case statical:
+                        if (vertex.getVertexType() == VertexType.iteration_aggregation) {
+                            continue;
+                        }
                         List<PipelineVertex> sourceVertexList = plan.getSourceVertices();
                         boolean isSingleWindow = sourceVertexList.stream().allMatch(v ->
                             ((AbstractOperator) v.getOperator()).getOpArgs().getOpType() == OpArgs.OpType.SINGLE_WINDOW_SOURCE);
@@ -611,6 +674,21 @@ public class ExecutionGraphBuilder implements Serializable {
             }
         }
         return affinityLevel;
+    }
+
+    private ExecutionEdge buildEdge(PipelineEdge pipelineEdge) {
+        CollectType dataTransferType = pipelineEdge.getType();
+        if (dataTransferType == null) {
+            dataTransferType = CollectType.FORWARD;
+        }
+        return new ExecutionEdge(
+            pipelineEdge.getPartition(),
+            pipelineEdge.getEdgeId(),
+            pipelineEdge.getEdgeName(),
+            pipelineEdge.getSrcId(),
+            pipelineEdge.getTargetId(),
+            dataTransferType,
+            pipelineEdge.getEncoder());
     }
 
     private enum CycleGroupType {

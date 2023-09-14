@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.response;
 
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import java.util.List;
 
@@ -23,11 +24,21 @@ public class ShardResult implements IResult<ISliceMeta> {
      * Use edge id of output info to identify the result.
      */
     private int id;
+    private CollectType outputType;
     private List<ISliceMeta> slices;
+    private long recordNum;
+    private long recordBytes;
 
-    public ShardResult(int id, List<ISliceMeta> slices) {
+    public ShardResult(int id, CollectType outputType, List<ISliceMeta> slices) {
         this.id = id;
+        this.outputType = outputType;
         this.slices = slices;
+        if (slices != null) {
+            for (ISliceMeta sliceMeta : slices) {
+                recordNum += sliceMeta.getRecordNum();
+                recordBytes += sliceMeta.getEncodedSize();
+            }
+        }
     }
 
     @Override
@@ -40,8 +51,16 @@ public class ShardResult implements IResult<ISliceMeta> {
         return slices;
     }
 
+    public long getRecordNum() {
+        return recordNum;
+    }
+
+    public long getRecordBytes() {
+        return recordBytes;
+    }
+
     @Override
-    public ResponseType getType() {
-        return ResponseType.SHARD;
+    public CollectType getType() {
+        return outputType;
     }
 }

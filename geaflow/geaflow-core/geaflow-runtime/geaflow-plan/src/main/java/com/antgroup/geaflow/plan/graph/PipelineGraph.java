@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,14 +35,12 @@ public class PipelineGraph implements Serializable {
 
     private final Map<Integer, PipelineVertex> vertexMap;
     private final Map<Integer, PipelineEdge> edgeMap;
-    private final Map<Integer, PipelineEdge> iterationEdgeMap;
     private final Map<Integer, List<Integer>> vertexOutputEdgeIds;
     private final Map<Integer, List<Integer>> vertexInputEdgeIds;
 
     public PipelineGraph() {
         this.vertexMap = new HashMap<>();
         this.edgeMap = new LinkedHashMap<>();
-        this.iterationEdgeMap = new HashMap<>();
         this.vertexOutputEdgeIds = new HashMap<>();
         this.vertexInputEdgeIds = new HashMap<>();
     }
@@ -77,10 +74,6 @@ public class PipelineGraph implements Serializable {
         } else {
             vertexInputEdgeIds.put(tarId, Lists.newArrayList(edgeId));
         }
-    }
-
-    public void addIterationEdge(PipelineEdge pipelineEdge) {
-        this.iterationEdgeMap.put(pipelineEdge.getSrcId(), pipelineEdge);
     }
 
     public void setPipelineEdges(Set<PipelineEdge> pipelineEdges) {
@@ -170,10 +163,5 @@ public class PipelineGraph implements Serializable {
             return new ArrayList<>();
         }
     }
-
-    public PipelineEdge getIterationEdge(int vertexId) {
-        return this.iterationEdgeMap.get(vertexId);
-    }
-
 }
 

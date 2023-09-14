@@ -157,6 +157,10 @@ public class OpArgs implements Serializable {
          * Incremental vertex centric traversal.
          */
         INC_VERTEX_CENTRIC_TRAVERSAL,
+        /**
+         * Vertex centric compute with agg.
+         */
+        VERTEX_CENTRIC_COMPUTE_WITH_AGG,
     }
 
 }
