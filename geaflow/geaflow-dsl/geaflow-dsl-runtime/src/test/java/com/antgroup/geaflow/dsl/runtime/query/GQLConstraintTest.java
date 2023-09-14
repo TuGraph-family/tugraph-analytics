@@ -22,7 +22,6 @@ public class GQLConstraintTest {
     public void testConstraint_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_constraint_001.sql")
             .execute();
     }
@@ -31,7 +30,6 @@ public class GQLConstraintTest {
     public void testConstraint_002() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_constraint_002.sql")
             .execute();
     }

@@ -22,6 +22,7 @@ public class GQLGlobalVariableTest {
     public void testVertexGlobalVariable_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_global_variable_001.sql")
             .execute()
             .checkSinkResult();

@@ -122,7 +122,6 @@ public class AggregateTest {
         QueryTester
             .build()
             .withQueryPath("/query/stream_aggregate_001.sql")
-            .enableInitDDL(false)
             .execute()
             .checkSinkResult();
     }

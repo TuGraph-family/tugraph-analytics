@@ -22,6 +22,7 @@ public class GQLFilterTest {
     public void testFilter_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_filter_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLFilterTest {
     public void testFilter_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_filter_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLFilterTest {
     public void testFilter_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_filter_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLFilterTest {
     public void testFilter_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_filter_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLFilterTest {
     public void testFilter_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_filter_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLFilterTest {
     public void testFilter_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_filter_006.sql")
             .execute()
             .checkSinkResult();

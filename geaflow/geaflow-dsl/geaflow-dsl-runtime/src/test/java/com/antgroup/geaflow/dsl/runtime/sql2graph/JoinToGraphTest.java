@@ -50,7 +50,6 @@ public class JoinToGraphTest {
         }
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(testConfig)
             .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), "1")
             .withConfig(FileConfigKeys.PERSISTENT_TYPE.getKey(), "DFS")

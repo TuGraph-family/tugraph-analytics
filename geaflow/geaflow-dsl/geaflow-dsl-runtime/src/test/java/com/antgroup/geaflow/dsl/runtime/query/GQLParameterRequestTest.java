@@ -22,6 +22,7 @@ public class GQLParameterRequestTest {
     public void testParameterRequest_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_parameter_request_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLParameterRequestTest {
     public void testParameterRequest_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_parameter_request_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLParameterRequestTest {
     public void testParameterRequest_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_parameter_request_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLParameterRequestTest {
     public void testIdOnlyParameterRequest_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_idonly_parameter_request_001.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLParameterRequestTest {
     public void testIdOnlyParameterRequest_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_idonly_parameter_request_002.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLParameterRequestTest {
     public void testIdOnlyParameterRequest_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_idonly_parameter_request_003.sql")
             .execute()
             .checkSinkResult();

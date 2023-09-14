@@ -22,6 +22,7 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_algorithm_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_algorithm_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_algorithm_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,7 +52,6 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_004() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_algorithm_004.sql")
             .execute()
             .checkSinkResult();
@@ -59,7 +61,6 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_005() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_algorithm_005.sql")
             .execute()
             .checkSinkResult();
@@ -69,7 +70,6 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_006() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_algorithm_006.sql")
             .execute()
             .checkSinkResult();

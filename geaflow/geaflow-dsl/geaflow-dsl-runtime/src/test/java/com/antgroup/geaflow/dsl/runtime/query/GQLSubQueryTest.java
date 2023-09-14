@@ -22,6 +22,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_006.sql")
             .execute()
             .checkSinkResult();
@@ -76,6 +82,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_007() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_007.sql")
             .execute()
             .checkSinkResult();
@@ -85,6 +92,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_008() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_008.sql")
             .execute()
             .checkSinkResult();
@@ -94,6 +102,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_009() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_009.sql")
             .execute()
             .checkSinkResult();
@@ -103,6 +112,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_010() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_010.sql")
             .execute()
             .checkSinkResult();
@@ -112,6 +122,7 @@ public class GQLSubQueryTest {
     public void testSubQuery_011() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_subquery_011.sql")
             .execute()
             .checkSinkResult();

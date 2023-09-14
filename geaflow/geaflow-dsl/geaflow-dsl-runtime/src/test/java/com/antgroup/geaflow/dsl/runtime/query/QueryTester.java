@@ -43,14 +43,12 @@ public class QueryTester implements Serializable {
 
     private int testTimeWaitSeconds = 0;
 
-    private static final String INIT_DDL = "/query/init_ddl.sql";
+    public static final String INIT_DDL = "/query/modern_graph.sql";
     public static final String DSL_STATE_REMOTE_PATH = "/tmp/dsl/";
 
     private String queryPath;
 
     private boolean compareWithOrder = false;
-
-    private boolean enableInitDDL = true;
 
     private String graphDefinePath;
 
@@ -110,14 +108,11 @@ public class QueryTester implements Serializable {
 
         GQLPipeLine gqlPipeLine = new GQLPipeLine(environment, testTimeWaitSeconds);
 
-        String graphDefinePath;
+        String graphDefinePath = null;
         if (this.graphDefinePath != null) {
             graphDefinePath = this.graphDefinePath;
-        } else {
-            graphDefinePath = INIT_DDL;
         }
-        gqlPipeLine.setPipelineHook(new TestGQLPipelineHook(enableInitDDL, graphDefinePath,
-            queryPath));
+        gqlPipeLine.setPipelineHook(new TestGQLPipelineHook(graphDefinePath, queryPath));
         try {
             gqlPipeLine.execute();
         } finally {
@@ -206,11 +201,6 @@ public class QueryTester implements Serializable {
         return targetPath;
     }
 
-    public QueryTester enableInitDDL(boolean enableInitDDL) {
-        this.enableInitDDL = enableInitDDL;
-        return this;
-    }
-
     public QueryTester withGraphDefine(String graphDefinePath) {
         this.graphDefinePath = Objects.requireNonNull(graphDefinePath);
         return this;
@@ -218,15 +208,11 @@ public class QueryTester implements Serializable {
 
     private static class TestGQLPipelineHook implements GQLPipelineHook {
 
-        private final boolean enableInitDDL;
-
         private final String graphDefinePath;
 
         private final String queryPath;
 
-        public TestGQLPipelineHook(boolean enableInitDDL, String graphDefinePath,
-                                   String queryPath) {
-            this.enableInitDDL = enableInitDDL;
+        public TestGQLPipelineHook(String graphDefinePath, String queryPath) {
             this.graphDefinePath = graphDefinePath;
             this.queryPath = queryPath;
         }
@@ -238,7 +224,7 @@ public class QueryTester implements Serializable {
 
         @Override
         public void beforeExecute(QueryClient queryClient, QueryContext queryContext) {
-            if (enableInitDDL) {
+            if (graphDefinePath != null) {
                 try {
                     String ddl = IOUtils.resourceToString(graphDefinePath, Charset.defaultCharset());
                     queryClient.executeQuery(ddl, queryContext);

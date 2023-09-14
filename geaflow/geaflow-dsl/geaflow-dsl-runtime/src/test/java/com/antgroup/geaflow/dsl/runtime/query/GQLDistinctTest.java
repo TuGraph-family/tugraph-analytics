@@ -22,6 +22,7 @@ public class GQLDistinctTest {
     public void testDistinct_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLDistinctTest {
     public void testDistinct_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLDistinctTest {
     public void testDistinct_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLDistinctTest {
     public void testDistinct_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLDistinctTest {
     public void testDistinct_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLDistinctTest {
     public void testDistinct_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_006.sql")
             .execute()
             .checkSinkResult();
@@ -76,6 +82,7 @@ public class GQLDistinctTest {
     public void testDistinct_007() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_007.sql")
             .execute()
             .checkSinkResult();
@@ -85,6 +92,7 @@ public class GQLDistinctTest {
     public void testDistinct_008() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_distinct_008.sql")
             .execute()
             .checkSinkResult();

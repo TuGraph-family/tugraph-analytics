@@ -23,7 +23,6 @@ public class GQLUsingTest {
     public void testUsing_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), 1)
             .withQueryPath("/query/gql_using_001_ddl.sql")
             .execute()
@@ -36,7 +35,6 @@ public class GQLUsingTest {
     public void testUsing_002() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_using_002.sql")
             .execute()
             .checkSinkResult();
@@ -46,7 +44,6 @@ public class GQLUsingTest {
     public void testUsingTemporary_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_temporary_001.sql")
             .execute()
             .checkSinkResult();
@@ -56,7 +53,6 @@ public class GQLUsingTest {
     public void testUsingTemporary_002() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_temporary_002.sql")
             .execute()
             .checkSinkResult();
