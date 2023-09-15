@@ -43,8 +43,15 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
             vertexGroup.getCycleGroupMeta().getFlyingCount(), vertexGroup.getCycleGroupMeta().getIterationCount(),
             config);
         this.vertexGroup = vertexGroup;
-        this.type = vertexGroup.getCycleGroupMeta().isIterative()
-            ? ExecutionCycleType.ITERATION : ExecutionCycleType.PIPELINE;
+        if (vertexGroup.getCycleGroupMeta().isIterative()) {
+            if (vertexGroup.getVertexMap().size() > 1) {
+                this.type = ExecutionCycleType.ITERATION_WITH_AGG;
+            } else {
+                this.type = ExecutionCycleType.ITERATION;
+            }
+        } else {
+            this.type = ExecutionCycleType.PIPELINE;
+        }
         this.isPipelineDataLoop = vertexGroup.getCycleGroupMeta().isIterative();
         this.driverId = driverId;
         if (!vertexGroup.getCycleGroupMeta().isIterative() && vertexGroup.getCycleGroupMeta().getIterationCount() > 1) {

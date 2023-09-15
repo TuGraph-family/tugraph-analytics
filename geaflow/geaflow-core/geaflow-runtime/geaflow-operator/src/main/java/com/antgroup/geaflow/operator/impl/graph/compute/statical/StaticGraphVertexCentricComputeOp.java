@@ -16,7 +16,7 @@ package com.antgroup.geaflow.operator.impl.graph.compute.statical;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
-import com.antgroup.geaflow.api.graph.compute.VertexCentricCompute;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractVertexCentricComputeAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricComputeFunction;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricComputeFunction.VertexCentricComputeFuncContext;
 import com.antgroup.geaflow.collector.ICollector;
@@ -24,21 +24,19 @@ import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.operator.OpArgs.OpType;
-import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractStaticGraphVertexCentricOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical.StaticGraphContextImpl;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox.MsgProcessFunc;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StaticGraphVertexCentricComputeOp<K, VV, EV, M> extends
-    AbstractStaticGraphVertexCentricOp<K, VV, EV, M, VertexCentricCompute<K, VV, EV, M>> {
+public class StaticGraphVertexCentricComputeOp<K, VV, EV, M, FUNC extends VertexCentricComputeFunction<K, VV, EV, M>>
+    extends AbstractStaticGraphVertexCentricOp<K, VV, EV, M, AbstractVertexCentricComputeAlgo<K, VV, EV, M, FUNC>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StaticGraphVertexCentricComputeOp.class);
 
@@ -47,7 +45,8 @@ public class StaticGraphVertexCentricComputeOp<K, VV, EV, M> extends
 
     private ICollector<IVertex<K, VV>> vertexCollector;
 
-    public StaticGraphVertexCentricComputeOp(GraphViewDesc graphViewDesc, VertexCentricCompute<K, VV, EV, M> vcAlgorithm) {
+    public StaticGraphVertexCentricComputeOp(GraphViewDesc graphViewDesc,
+                                             AbstractVertexCentricComputeAlgo<K, VV, EV, M, FUNC> vcAlgorithm) {
         super(graphViewDesc, vcAlgorithm);
         opArgs.setOpType(OpType.VERTEX_CENTRIC_COMPUTE);
     }
@@ -62,9 +61,9 @@ public class StaticGraphVertexCentricComputeOp<K, VV, EV, M> extends
             opContext, this.runtimeContext, this.graphState, this.graphMsgBox, this.maxIterations);
         this.vcComputeFunction.init(this.graphVCComputeCtx);
 
-        Preconditions.checkArgument(this.collectors.size() == 2);
         for (ICollector collector : this.collectors) {
-            if (!collector.getTag().equals(GraphRecordNames.Message.name())) {
+            if (!collector.getTag().equals(GraphRecordNames.Message.name())
+                && !collector.getTag().equals(GraphRecordNames.Aggregate.name())) {
                 vertexCollector = collector;
             }
         }

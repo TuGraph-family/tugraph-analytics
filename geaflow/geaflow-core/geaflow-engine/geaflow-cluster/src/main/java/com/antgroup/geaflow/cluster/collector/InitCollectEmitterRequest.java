@@ -15,15 +15,16 @@
 package com.antgroup.geaflow.cluster.collector;
 
 import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.io.ResponseOutputDesc;
 import java.util.List;
 
 public class InitCollectEmitterRequest extends InitEmitterRequest {
 
-    private int opId;
+    private ResponseOutputDesc outputDesc;
 
-    public InitCollectEmitterRequest(int opId) {
+    public InitCollectEmitterRequest(ResponseOutputDesc outputDesc) {
         super(null);
-        this.opId = opId;
+        this.outputDesc = outputDesc;
     }
 
     /**
@@ -31,7 +32,8 @@ public class InitCollectEmitterRequest extends InitEmitterRequest {
      */
     public void initEmitter(List<ICollector> collectors) {
         collectors.clear();
-        collectors.add(new CollectCollector(opId));
+        collectors.add(new CollectResponseCollector(outputDesc));
         this.collectors = collectors;
     }
 }
+

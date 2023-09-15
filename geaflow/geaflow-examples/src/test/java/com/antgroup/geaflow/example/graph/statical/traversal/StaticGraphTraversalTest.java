@@ -14,18 +14,26 @@
 
 package com.antgroup.geaflow.example.graph.statical.traversal;
 
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CLUSTER_TYPE;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.LOCAL_CLUSTER;
-
-import com.antgroup.geaflow.example.graph.statical.traversal.StaticGraphTraversalExample;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.env.EnvironmentFactory;
+import com.antgroup.geaflow.example.base.BaseTest;
+import com.antgroup.geaflow.pipeline.IPipelineResult;
+import java.io.IOException;
 import org.testng.annotations.Test;
 
-public class StaticGraphTraversalTest {
+public class StaticGraphTraversalTest extends BaseTest {
 
     @Test
-    public void testMainInvoke() {
-        System.setProperty(CLUSTER_TYPE, LOCAL_CLUSTER);
-        StaticGraphTraversalExample.main(null);
-    }
+    public void test() throws IOException {
+        environment = EnvironmentFactory.onLocalEnvironment();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.putAll(config);
 
+        IPipelineResult result = StaticGraphTraversalExample.submit(environment);
+        if (!result.isSuccess()) {
+            throw new GeaflowRuntimeException("execute failed");
+        }
+        StaticGraphTraversalExample.validateResult();
+    }
 }

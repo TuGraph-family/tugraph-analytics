@@ -16,6 +16,7 @@ package com.antgroup.geaflow.collector.chain;
 
 import com.antgroup.geaflow.collector.AbstractCollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.operator.base.window.OneInputOperator;
@@ -42,5 +43,10 @@ public class OpChainCollector<T> extends AbstractCollector implements IChainColl
     public String getTag() {
         return String.format("%s-%s", ((AbstractOperator) operator).getOpArgs().getOpName(),
             ((AbstractOperator) operator).getOpArgs().getOpId());
+    }
+
+    @Override
+    public CollectType getType() {
+        return CollectType.FORWARD;
     }
 }

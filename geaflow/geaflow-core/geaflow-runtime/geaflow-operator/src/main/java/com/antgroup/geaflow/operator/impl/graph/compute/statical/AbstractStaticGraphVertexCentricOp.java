@@ -12,22 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.operator.impl.graph.algo.vc;
+package com.antgroup.geaflow.operator.impl.graph.compute.statical;
 
 import com.antgroup.geaflow.api.graph.base.algo.VertexCentricAlgo;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractGraphVertexCentricOp;
 import com.antgroup.geaflow.state.DataModel;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractStaticGraphVertexCentricOp<K, VV, EV, M,
-    FUNC extends VertexCentricAlgo<K, VV, EV, M>> extends AbstractGraphVertexCentricOp<K, VV, EV, M,
-    FUNC> {
+public abstract class AbstractStaticGraphVertexCentricOp<K, VV, EV, M, FUNC extends VertexCentricAlgo<K, VV, EV, M>>
+    extends AbstractGraphVertexCentricOp<K, VV, EV, M, FUNC> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
         AbstractStaticGraphVertexCentricOp.class);

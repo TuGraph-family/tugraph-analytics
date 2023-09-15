@@ -18,8 +18,10 @@ import com.antgroup.geaflow.api.function.base.KeySelector;
 import com.antgroup.geaflow.api.function.internal.CollectionSource;
 import com.antgroup.geaflow.api.graph.PGraphWindow;
 import com.antgroup.geaflow.api.graph.compute.PGraphCompute;
+import com.antgroup.geaflow.api.graph.compute.VertexCentricAggCompute;
 import com.antgroup.geaflow.api.graph.compute.VertexCentricCompute;
 import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
+import com.antgroup.geaflow.api.graph.traversal.VertexCentricAggTraversal;
 import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.api.window.impl.AllWindow;
@@ -78,6 +80,15 @@ public class WindowStreamGraph<K, VV, EV> implements PGraphWindow<K, VV, EV>, Se
         return graphCompute;
     }
 
+    @Override
+    public <M, I, PA, PR, GA, R> PGraphCompute<K, VV, EV> compute(
+        VertexCentricAggCompute<K, VV, EV, M, I, PA, PR, GA, R> vertexCentricAggCompute) {
+        Preconditions.checkArgument(vertexCentricAggCompute.getMaxIterationCount() > 0);
+        ComputeWindowGraph<K, VV, EV, M> graphCompute = new ComputeWindowGraph<>(pipelineContext,
+            vertexWindowSteam, edgeWindowStream);
+        graphCompute.computeOnVertexCentric(graphViewDesc, vertexCentricAggCompute);
+        return graphCompute;
+    }
 
 
     public static class DefaultVertexPartition<K, VV> implements KeySelector<IVertex<K, VV>, K> {
@@ -102,6 +113,17 @@ public class WindowStreamGraph<K, VV, EV> implements PGraphWindow<K, VV, EV>, Se
             vertexWindowSteam,
             edgeWindowStream);
         traversalWindowGraph.traversalOnVertexCentric(vertexCentricTraversal);
+        return traversalWindowGraph;
+    }
+
+    @Override
+    public <M, R, I, PA, PR, GA, GR> PGraphTraversal<K, R> traversal(
+        VertexCentricAggTraversal<K, VV, EV, M, R, I, PA, PR, GA, GR> vertexCentricAggTraversal) {
+        TraversalWindowGraph<K, VV, EV, M, R> traversalWindowGraph =
+            new TraversalWindowGraph<>(graphViewDesc, pipelineContext,
+                vertexWindowSteam,
+                edgeWindowStream);
+        traversalWindowGraph.traversalOnVertexCentric(vertexCentricAggTraversal);
         return traversalWindowGraph;
     }
 

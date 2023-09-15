@@ -14,15 +14,18 @@
 
 package com.antgroup.geaflow.cluster.response;
 
+import com.antgroup.geaflow.io.CollectType;
 import java.util.List;
 
-public class CollectResult implements IResult<Object> {
+public class ResponseResult implements IResult<Object> {
 
     private int collectId;
+    private CollectType outputType;
     private List<Object> responses;
 
-    public CollectResult(int collectId, List<Object> responses) {
+    public ResponseResult(int collectId, CollectType outputType, List<Object> responses) {
         this.collectId = collectId;
+        this.outputType = outputType;
         this.responses = responses;
     }
 
@@ -37,7 +40,8 @@ public class CollectResult implements IResult<Object> {
     }
 
     @Override
-    public ResponseType getType() {
-        return ResponseType.COLLECTION;
+    public CollectType getType() {
+        return outputType;
     }
 }
+

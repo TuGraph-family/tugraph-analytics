@@ -102,7 +102,6 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
         this.graphState = StateFactory.buildGraphState(desc, runtimeContext.getConfiguration());
         recover();
 
-        Preconditions.checkArgument(this.collectors.size() == 2);
         collectorMap = new HashMap<>();
         for (ICollector collector : this.collectors) {
             collectorMap.put(collector.getTag(), collector);

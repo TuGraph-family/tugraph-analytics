@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler;
 
-import com.antgroup.geaflow.cluster.collector.CollectCollector;
 import com.antgroup.geaflow.cluster.common.ExecutionIdGenerator;
 import com.antgroup.geaflow.cluster.common.IDispatcher;
 import com.antgroup.geaflow.cluster.common.IEventListener;
@@ -47,7 +46,6 @@ import com.antgroup.geaflow.shuffle.message.ShuffleId;
 import com.antgroup.geaflow.shuffle.service.IShuffleMaster;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -158,7 +156,6 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
         LOGGER.info("{} finish", cycleLogTag);
         // Clean shuffle data for all used workers.
         context.getSchedulerWorkerManager().clean(usedWorkers -> cleanEnv(usedWorkers, iterationId, false));
-        collectResponse();
         // Clear last iteration shard meta.
         resultManager.clear();
         this.pipelineMetrics.setDuration(System.currentTimeMillis() - pipelineMetrics.getStartTime());
@@ -208,15 +205,6 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
             return String.format("%s-%s", cycle.getPipelineName(), iterationId);
         } else {
             return cycle.getPipelineName();
-        }
-    }
-
-    private void collectResponse() {
-        if (resultManager.get(CollectCollector.COLLECT_RESULT_ID) != null) {
-            results = new ArrayList<>();
-            for (IResult response : resultManager.get(CollectCollector.COLLECT_RESULT_ID)) {
-                results.addAll(response.getResponse());
-            }
         }
     }
 
@@ -296,7 +284,7 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
                                 LOGGER.info("cycle {} source finished at iteration {}",
                                     doneEvent.getResult(), doneEvent.getWindowId());
                                 if (finishedCycles.size() == sourceCycleNum) {
-                                    ((AbstractCycleSchedulerContext) context).setFinishedSourceIterationId(
+                                    ((AbstractCycleSchedulerContext) context).setTerminateIterationId(
                                         doneEvent.getWindowId());
                                     LOGGER.info("all source cycle finished");
                                 }

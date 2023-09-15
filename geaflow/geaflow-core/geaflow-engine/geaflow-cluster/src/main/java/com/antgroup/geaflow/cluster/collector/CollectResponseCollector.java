@@ -14,27 +14,32 @@
 
 package com.antgroup.geaflow.cluster.collector;
 
-import com.antgroup.geaflow.cluster.response.CollectResult;
+import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.collector.AbstractCollector;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.collector.IResultCollector;
+import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.io.ResponseOutputDesc;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CollectCollector<T> extends AbstractCollector
-    implements IResultCollector<CollectResult>, ICollector<T> {
+public class CollectResponseCollector<T> extends AbstractCollector
+    implements IResultCollector<ResponseResult>, ICollector<T> {
 
-    /**
-     * A fixed id for collect collector to identify the result.
-     */
-    public static final int COLLECT_RESULT_ID = -1;
+    private int edgeId;
+    private CollectType collectorType;
+    private String edgeName;
     private final List<T> buffer;
+    private final List<T> result;
 
-    public CollectCollector(int id) {
-        super(id);
+    public CollectResponseCollector(ResponseOutputDesc outputDesc) {
+        super(outputDesc.getOpId());
+        this.edgeId = outputDesc.getEdgeId();
+        this.collectorType = outputDesc.getType();
+        this.edgeName = outputDesc.getEdgeName();
         this.buffer = new ArrayList<>();
+        this.result = new ArrayList<>();
     }
-
 
     @Override
     public void partition(T value) {
@@ -44,11 +49,19 @@ public class CollectCollector<T> extends AbstractCollector
 
     @Override
     public void finish() {
+        result.clear();
+        result.addAll(buffer);
+        buffer.clear();
     }
 
     @Override
     public String getTag() {
-        return null;
+        return edgeName;
+    }
+
+    @Override
+    public CollectType getType() {
+        return collectorType;
     }
 
     @Override
@@ -62,7 +75,9 @@ public class CollectCollector<T> extends AbstractCollector
     }
 
     @Override
-    public CollectResult collectResult() {
-        return new CollectResult(COLLECT_RESULT_ID, new ArrayList<>(buffer));
+    public ResponseResult collectResult() {
+        ResponseResult responseResult = new ResponseResult(edgeId, getType(), new ArrayList<>(result));
+        result.clear();
+        return responseResult;
     }
 }

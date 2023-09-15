@@ -14,7 +14,8 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler;
 
-import com.antgroup.geaflow.cluster.collector.CollectCollector;
+import static com.antgroup.geaflow.runtime.core.scheduler.io.IoDescriptorBuilder.COLLECT_DATA_EDGE_ID;
+
 import com.antgroup.geaflow.cluster.common.IEventListener;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
@@ -26,10 +27,12 @@ import com.antgroup.geaflow.common.metric.CycleMetrics;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.runtime.core.protocol.ComposeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.DoneEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.AbstractCycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionCycleType;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
@@ -70,6 +73,7 @@ public class PipelineCycleScheduler<E>
     private DataExchangeMode outputExchangeMode;
 
     private SchedulerEventBuilder eventBuilder;
+    private SchedulerGraphAggregateProcessor aggregator;
 
     public PipelineCycleScheduler() {
     }
@@ -100,6 +104,10 @@ public class PipelineCycleScheduler<E>
             throw new GeaflowRuntimeException(String.format("failed to assign resource for cycle %s", null));
         }
         this.eventBuilder = new SchedulerEventBuilder(context, outputExchangeMode, resultManager);
+        if (nodeCycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG) {
+            this.aggregator = new SchedulerGraphAggregateProcessor(nodeCycle,
+                (AbstractCycleSchedulerContext) context, resultManager);
+        }
     }
 
     @Override
@@ -130,7 +138,7 @@ public class PipelineCycleScheduler<E>
                             long allSourceFinishIterationId =
                                 taskIdToFinishedSourceIds.values().stream().max(Long::compareTo).get();
                             ((AbstractCycleSchedulerContext) context)
-                                .setFinishedSourceIterationId(allSourceFinishIterationId);
+                                .setTerminateIterationId(allSourceFinishIterationId);
                             LOGGER.info("{} all source is finished at {}", cycleLogTag, allSourceFinishIterationId);
 
                             ICycleSchedulerContext parentContext = ((AbstractCycleSchedulerContext) context).getParentContext();
@@ -281,7 +289,7 @@ public class PipelineCycleScheduler<E>
             LOGGER.info("{} finished {}", finishLogTag, cycleMetrics);
         }
 
-        return collectCycleResult();
+        return context.getResultManager().getDataResponse();
     }
 
     private void registerResults(DoneEvent<Map<Integer, IResult>> event) {
@@ -290,19 +298,14 @@ public class PipelineCycleScheduler<E>
             // Register result to resultManager.
             for (IResult result : event.getResult().values()) {
                 LOGGER.info("{} register result for {}", event, result.getId());
-                resultManager.register(result.getId(), result);
+                if (result.getType() == CollectType.RESPONSE && result.getId() != COLLECT_DATA_EDGE_ID) {
+                    LOGGER.info("do aggregate, result {}", result.getResponse());
+                    aggregator.aggregate(result.getResponse());
+                } else {
+                    resultManager.register(result.getId(), result);
+                }
             }
         }
-    }
-
-    private List<IResult> collectCycleResult() {
-        List<IResult> results = new ArrayList<>();
-        if (resultManager.get(CollectCollector.COLLECT_RESULT_ID) != null) {
-            for (IResult response : resultManager.get(CollectCollector.COLLECT_RESULT_ID)) {
-                results.addAll(response.getResponse());
-            }
-        }
-        return results;
     }
 
     private void collectEventMetrics(CycleMetrics cycleMetrics, List<IEvent> responses) {

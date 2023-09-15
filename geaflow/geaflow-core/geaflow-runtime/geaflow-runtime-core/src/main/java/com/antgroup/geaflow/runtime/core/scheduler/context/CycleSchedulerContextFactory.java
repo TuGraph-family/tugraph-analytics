@@ -37,7 +37,8 @@ public class CycleSchedulerContextFactory {
                 context = new CheckpointSchedulerContext(cycle, parent);
                 break;
             case REDO:
-                if (cycle.getType() == ExecutionCycleType.ITERATION) {
+                if (cycle.getType() == ExecutionCycleType.ITERATION
+                    || cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG) {
                     LOGGER.info("create iteration redo scheduler context");
                     context = new IterationRedoSchedulerContext(cycle, parent);
                 } else {

@@ -23,23 +23,25 @@ import com.antgroup.geaflow.model.record.BatchRecord;
 import com.antgroup.geaflow.model.record.RecordArgs;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
-import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractGraphVertexCentricOp;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphAggregateOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphTraversalOp;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricOp;
+import com.antgroup.geaflow.operator.impl.iterator.IteratorOperator;
 import com.antgroup.geaflow.processor.impl.AbstractWindowProcessor;
 import java.util.Iterator;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GraphVertexCentricProcessor<U> extends AbstractWindowProcessor<BatchRecord<U>,
-    Void, AbstractGraphVertexCentricOp> {
+public class GraphVertexCentricProcessor<U, OP extends IGraphVertexCentricOp & IteratorOperator>
+    extends AbstractWindowProcessor<BatchRecord<U>, Void, OP> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphVertexCentricProcessor.class);
 
     private long iterations;
 
-    public GraphVertexCentricProcessor(AbstractGraphVertexCentricOp graphVertexCentricComputeOp) {
-        super(graphVertexCentricComputeOp);
+    public GraphVertexCentricProcessor(OP graphVertexCentricOp) {
+        super(graphVertexCentricOp);
     }
 
     @Override
@@ -81,6 +83,12 @@ public class GraphVertexCentricProcessor<U> extends AbstractWindowProcessor<Batc
                         batchRecord.getMessageIterator();
                     while (requestIterator.hasNext()) {
                         ((IGraphTraversalOp) this.operator).addRequest(requestIterator.next());
+                    }
+                } else if (graphRecordName == GraphRecordNames.Aggregate) {
+                    final Iterator<ITraversalRequest> requestIterator =
+                        batchRecord.getMessageIterator();
+                    while (requestIterator.hasNext()) {
+                        ((IGraphAggregateOp) this.operator).processAggregateResult(requestIterator.next());
                     }
                 }
             }

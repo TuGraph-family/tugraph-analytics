@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.operator.impl.graph.algo.vc;
+package com.antgroup.geaflow.operator.impl.graph.compute.dynamic;
 
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT;
 
@@ -24,6 +24,7 @@ import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.OpArgs.OpType;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractGraphVertexCentricOp;
 import com.antgroup.geaflow.operator.impl.graph.compute.dynamic.cache.TemporaryGraphCache;
 import com.antgroup.geaflow.state.DataModel;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
@@ -33,8 +34,8 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractDynamicGraphVertexCentricOp<K, VV, EV, M,
-    FUNC extends VertexCentricAlgo<K, VV, EV, M>> extends AbstractGraphVertexCentricOp<K, VV, EV, M, FUNC>  {
+public abstract class AbstractDynamicGraphVertexCentricOp<K, VV, EV, M, FUNC extends VertexCentricAlgo<K, VV, EV, M>>
+    extends AbstractGraphVertexCentricOp<K, VV, EV, M, FUNC> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
         AbstractDynamicGraphVertexCentricOp.class);

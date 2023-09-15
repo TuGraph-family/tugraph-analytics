@@ -88,7 +88,7 @@ public class AsyncFlushMultiVersionedBuffer<K, VV, EV> {
 
         ExecutorUtil.spinLockMs(() -> flushCounter.get() == writeCounter.get(),
             this::exceptionCheck, SLEEP_MILLI_SECOND);
-        LOGGER.info("flushCount {}", flushCounter.get());
+        // LOGGER.info("flushCount {}", flushCounter.get());
         flushCounter.set(0);
         writeCounter.set(0);
         exceptionCheck();

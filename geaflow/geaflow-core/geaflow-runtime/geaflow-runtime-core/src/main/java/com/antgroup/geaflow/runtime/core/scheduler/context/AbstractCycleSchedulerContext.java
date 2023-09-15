@@ -46,7 +46,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
     protected transient long initialIterationId;
     protected transient Map<Long, List<SchedulerState>> schedulerStateMap;
     protected transient long lastCheckpointId;
-    protected transient long allSourceFinishIterationId;
+    protected transient long terminateIterationId;
 
     protected transient ICycleSchedulerContext parentContext;
     protected IScheduledWorkerManager workerManager;
@@ -84,7 +84,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         this.initialIterationId = startIterationId;
         this.iterationIdGenerator = new AtomicLong(currentIterationId);
         this.lastCheckpointId = 0;
-        this.allSourceFinishIterationId = Long.MAX_VALUE;
+        this.terminateIterationId = Long.MAX_VALUE;
         this.schedulerStateMap = new HashMap<>();
         if (parentContext != null) {
             this.cycleResultManager = parentContext.getResultManager();
@@ -113,7 +113,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public boolean isCycleFinished() {
-        return (iterationIdGenerator.get() > finishIterationId || lastCheckpointId >= allSourceFinishIterationId)
+        return (iterationIdGenerator.get() > finishIterationId || lastCheckpointId >= terminateIterationId)
             && flyingIterations.isEmpty();
     }
 
@@ -129,7 +129,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public boolean hasNextIteration() {
-        return iterationIdGenerator.get() <= finishIterationId && lastCheckpointId < allSourceFinishIterationId
+        return iterationIdGenerator.get() <= finishIterationId && lastCheckpointId < terminateIterationId
             && flyingIterations.size() < cycle.getFlyingCount();
     }
 
@@ -175,8 +175,8 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         return parentContext;
     }
 
-    public void setFinishedSourceIterationId(long iterationId) {
-        allSourceFinishIterationId = iterationId;
+    public void setTerminateIterationId(long iterationId) {
+        terminateIterationId = iterationId;
     }
 
     public void setCallbackFunction(ICallbackFunction callbackFunction) {

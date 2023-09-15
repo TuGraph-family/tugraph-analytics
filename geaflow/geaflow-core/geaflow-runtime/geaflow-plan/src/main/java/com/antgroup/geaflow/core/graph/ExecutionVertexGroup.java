@@ -119,10 +119,10 @@ public class ExecutionVertexGroup implements Serializable {
             if (outputVertexIds.size() == 0) {
                 tailVertexIds.add(vertexId);
             } else {
-                boolean flag = true;
+                boolean flag = false;
                 for (int outputVertexId : outputVertexIds) {
-                    if (vertexMap.containsKey(outputVertexId)) {
-                        flag = false;
+                    if (!vertexMap.containsKey(outputVertexId)) {
+                        flag = true;
                         break;
                     }
                 }

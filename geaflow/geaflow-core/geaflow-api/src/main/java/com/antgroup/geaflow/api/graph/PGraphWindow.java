@@ -15,8 +15,10 @@
 package com.antgroup.geaflow.api.graph;
 
 import com.antgroup.geaflow.api.graph.compute.PGraphCompute;
+import com.antgroup.geaflow.api.graph.compute.VertexCentricAggCompute;
 import com.antgroup.geaflow.api.graph.compute.VertexCentricCompute;
 import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
+import com.antgroup.geaflow.api.graph.traversal.VertexCentricAggTraversal;
 import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
@@ -30,9 +32,21 @@ public interface PGraphWindow<K, VV, EV> {
     <M> PGraphCompute<K, VV, EV> compute(VertexCentricCompute<K, VV, EV, M> vertexCentricCompute);
 
     /**
+     * Build ComputeWindowGraph based on vertexCentricAggCompute function.
+     */
+    <M, I, PA, PR, GA, R> PGraphCompute<K, VV ,EV> compute(
+        VertexCentricAggCompute<K, VV, EV, M, I, PA, PR, GA, R> vertexCentricAggCompute);
+
+    /**
      * Build PGraphTraversal based on vertexCentricTraversal function.
      */
     <M, R> PGraphTraversal<K, R> traversal(VertexCentricTraversal<K, VV, EV, M, R> vertexCentricTraversal);
+
+    /**
+     * Build PGraphTraversal based on vertexCentricTraversal function.
+     */
+    <M, R, I, PA, PR, GA, GR> PGraphTraversal<K, R> traversal(
+        VertexCentricAggTraversal<K, VV, EV, M, R, I, PA, PR, GA, GR> vertexCentricAggTraversal);
 
     /**
      * Returns the edges.

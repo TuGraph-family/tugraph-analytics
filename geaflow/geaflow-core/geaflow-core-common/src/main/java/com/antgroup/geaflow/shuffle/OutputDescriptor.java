@@ -21,24 +21,22 @@ import java.util.List;
 public class OutputDescriptor implements Serializable {
 
     // The output info list is the info of downstream output dependencies.
-    private List<OutputInfo> outputInfoList;
+    private List<IOutputDesc> outputDescList;
 
-    public OutputDescriptor() {
+    public OutputDescriptor(List<IOutputDesc> outputDescList) {
+        this.outputDescList = outputDescList;
     }
 
-    public List<OutputInfo> getOutputInfoList() {
-        return outputInfoList;
-    }
-
-    public void setOutputInfoList(List<OutputInfo> outputInfoList) {
-        this.outputInfoList = outputInfoList;
+    public List<IOutputDesc> getOutputDescList() {
+        return outputDescList;
     }
 
     public OutputDescriptor clone() {
-        OutputDescriptor outputDescriptor = new OutputDescriptor();
-        if (this.outputInfoList != null) {
-            outputDescriptor.setOutputInfoList(new ArrayList<>(this.outputInfoList));
+        List<IOutputDesc> outputDescs = null;
+        if (this.outputDescList != null) {
+            outputDescs = new ArrayList<>(this.outputDescList);
         }
+        OutputDescriptor outputDescriptor = new OutputDescriptor(outputDescs);
         return outputDescriptor;
     }
 }

@@ -16,6 +16,7 @@ package com.antgroup.geaflow.pdata.graph.window.compute;
 
 import com.antgroup.geaflow.api.graph.base.algo.GraphExecAlgo;
 import com.antgroup.geaflow.api.graph.compute.PGraphCompute;
+import com.antgroup.geaflow.api.graph.compute.VertexCentricAggCompute;
 import com.antgroup.geaflow.api.graph.compute.VertexCentricCompute;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
@@ -23,6 +24,7 @@ import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.GraphVertexCentricOpFactory;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricAggOp;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricOp;
 import com.antgroup.geaflow.pdata.graph.window.AbstractGraphWindow;
 import com.antgroup.geaflow.pdata.stream.TransformType;
@@ -50,6 +52,21 @@ public class ComputeWindowGraph<K, VV, EV, M> extends AbstractGraphWindow<K, VV,
         this.opArgs = ((AbstractOperator)operator).getOpArgs();
         this.opArgs.setOpId(getId());
         this.opArgs.setOpName(vertexCentricCompute.getName());
+        return this;
+    }
+
+    public <I, PA, PR, GA, R> PWindowStream<IVertex<K, VV>> computeOnVertexCentric(
+        GraphViewDesc graphViewDesc,
+        VertexCentricAggCompute<K, VV, EV, M, I, PA, PR, GA, R> vertexCentricAggCompute) {
+        processOnVertexCentric(vertexCentricAggCompute);
+
+        IGraphVertexCentricAggOp<K, VV, EV, M, I, PA, PR, R> graphVertexCentricComputeOp =
+            GraphVertexCentricOpFactory.buildStaticGraphVertexCentricAggComputeOp(graphViewDesc,
+                vertexCentricAggCompute);
+        super.operator = (Operator) graphVertexCentricComputeOp;
+        this.opArgs = ((AbstractOperator)operator).getOpArgs();
+        this.opArgs.setOpId(getId());
+        this.opArgs.setOpName(vertexCentricAggCompute.getName());
         return this;
     }
 

@@ -14,23 +14,24 @@
 
 package com.antgroup.geaflow.operator.impl.graph.traversal.statical;
 
-import com.antgroup.geaflow.api.graph.traversal.VertexCentricTraversal;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractVertexCentricTraversalAlgo;
+import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.impl.VertexBeginTraversalRequest;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.util.Iterator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StaticGraphVertexCentricTraversalAllOp<K, VV, EV, M, R> extends
-    AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, R> {
+public class StaticGraphVertexCentricTraversalAllOp<K, VV, EV, M, R,
+    FUNC extends VertexCentricTraversalFunction<K, VV, EV, M, R>>
+    extends AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, R, FUNC> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
         StaticGraphVertexCentricTraversalAllOp.class);
 
     public StaticGraphVertexCentricTraversalAllOp(GraphViewDesc graphViewDesc,
-                                                  VertexCentricTraversal<K, VV, EV, M, R> vcTraversal) {
+                                                  AbstractVertexCentricTraversalAlgo<K, VV, EV, M, R, FUNC> vcTraversal) {
         super(graphViewDesc, vcTraversal);
     }
 
