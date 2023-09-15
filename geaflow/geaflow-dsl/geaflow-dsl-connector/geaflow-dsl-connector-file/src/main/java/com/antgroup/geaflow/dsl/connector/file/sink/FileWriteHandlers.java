@@ -14,9 +14,18 @@
 
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
+
 public class FileWriteHandlers {
 
-    public static FileWriteHandler from(String path) {
+    public static FileWriteHandler from(String path, Configuration conf) {
+        FileSystem fs = FileConnectorUtil.getHdfsFileSystem(conf);
+        if (fs instanceof LocalFileSystem) {
+            return new LocalFileWriteHandler(path);
+        }
         return new HdfsFileWriteHandler(path);
     }
 }

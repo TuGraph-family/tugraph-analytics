@@ -49,7 +49,7 @@ public class FileTableSink implements TableSink {
 
     @Override
     public void open(RuntimeContext context) {
-        this.writer = FileWriteHandlers.from(path);
+        this.writer = FileWriteHandlers.from(path, tableConf);
         this.writer.init(tableConf, schema, context.getTaskArgs().getTaskIndex());
     }
 
