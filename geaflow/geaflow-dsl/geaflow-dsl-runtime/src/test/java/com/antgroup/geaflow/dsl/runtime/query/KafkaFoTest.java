@@ -62,7 +62,6 @@ public class KafkaFoTest {
             .execute();
         QueryTester tester = QueryTester
             .build()
-            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/kafka_scan_001.sql")
             .withConfig(config)
             .withTestTimeWaitSeconds(60);
