@@ -12,25 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dsl.runtime.traversal;
+package com.antgroup.geaflow.dsl.runtime.traversal.message;
 
-import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageBox;
+public interface ITraversalAgg {
 
-public interface ExecuteDagGroup {
-
-    void open(TraversalRuntimeContext context);
-
-    void execute(Object vertexId, long... receiverOpIds);
-
-    void finishIteration(long iterationId);
-
-    void processBroadcast(MessageBox messageBox);
-
-    void close();
-
-    long getEntryOpId();
-
-    DagTopology getMainDag();
-
-    int getMaxIterationCount();
 }

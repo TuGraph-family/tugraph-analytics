@@ -429,11 +429,17 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     public void close() {
     }
 
+    @Override
     public void addNextOperator(StepOperator nextOperator) {
         if (nextOperators.contains(nextOperator)) {
             return;
         }
         this.nextOperators.add(nextOperator);
+    }
+
+    @Override
+    public List<StepOperator<OUT, ?>> getNextOperators() {
+        return this.nextOperators;
     }
 
     @Override
@@ -533,12 +539,17 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     }
 
     @Override
+    public List<String> getSubQueryNames() {
+        return function.getCallQueryProxies().stream()
+            .flatMap(proxy -> proxy.getSubQueryNames().stream())
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
         str.append(getName());
-        List<String> subQueryNames = function.getCallQueryProxies().stream()
-            .flatMap(proxy -> proxy.getSubQueryNames().stream())
-            .collect(Collectors.toList());
+        List<String> subQueryNames = getSubQueryNames();
         if (subQueryNames.size() > 0) {
             str.append("[").append(StringUtils.join(subQueryNames, ",")).append("]");
         }

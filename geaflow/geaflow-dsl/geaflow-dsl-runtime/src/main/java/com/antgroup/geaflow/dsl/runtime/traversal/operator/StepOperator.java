@@ -54,6 +54,8 @@ public interface StepOperator<IN extends StepRecord, OUT extends StepRecord> ext
 
     void addNextOperator(StepOperator<OUT, ? extends StepRecord> nextOperator);
 
+    List<StepOperator<OUT, ?>> getNextOperators();
+
     StepOperator<IN, OUT> withName(String name);
 
     /**
@@ -95,6 +97,8 @@ public interface StepOperator<IN extends StepRecord, OUT extends StepRecord> ext
     GraphSchema getGraphSchema();
 
     GraphSchema getModifyGraphSchema();
+
+    List<String> getSubQueryNames();
 
     StepOperator<IN, OUT> copy();
 }

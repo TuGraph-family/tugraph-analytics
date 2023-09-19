@@ -14,18 +14,19 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
-import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction;
+import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggTraversalFunction;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 
-public class GeaFlowAlgorithmTraversalFunction implements
-    VertexCentricTraversalFunction<Object, Row, Row, Object, Row> {
+public class GeaFlowAlgorithmAggTraversalFunction implements
+    VertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg, ITraversalAgg> {
 
     private final AlgorithmUserFunction<Object, Object> userFunction;
 
@@ -37,19 +38,20 @@ public class GeaFlowAlgorithmTraversalFunction implements
 
     private GeaFlowAlgorithmRuntimeContext algorithmCtx;
 
-    public GeaFlowAlgorithmTraversalFunction(GraphSchema graphSchema,
-                                             AlgorithmUserFunction<Object, Object> userFunction,
-                                             Object[] params) {
+    public GeaFlowAlgorithmAggTraversalFunction(GraphSchema graphSchema,
+                                                AlgorithmUserFunction<Object, Object> userFunction,
+                                                Object[] params) {
         this.graphSchema = Objects.requireNonNull(graphSchema);
         this.userFunction = Objects.requireNonNull(userFunction);
         this.params = Objects.requireNonNull(params);
     }
 
     @Override
-    public void open(VertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> traversalContext) {
+    public void open(
+        VertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> vertexCentricFuncContext) {
+        this.traversalContext = vertexCentricFuncContext;
         this.algorithmCtx = new GeaFlowAlgorithmRuntimeContext(traversalContext, graphSchema);
         this.userFunction.init(algorithmCtx, params);
-        this.traversalContext = traversalContext;
     }
 
     @Override
@@ -81,16 +83,23 @@ public class GeaFlowAlgorithmTraversalFunction implements
             Object id = idIterator.next();
             algorithmCtx.setVertexId(id);
             RowVertex rowVertex = (RowVertex) traversalContext.vertex().withId(id).get();
-            Row newValue = algorithmCtx.getVertexNewValue();
-            if (newValue != null) {
-                rowVertex.setValue(newValue);
+            if (rowVertex != null) {
+                Row newValue = algorithmCtx.getVertexNewValue();
+                if (newValue != null) {
+                    rowVertex.setValue(newValue);
+                }
+                userFunction.finish(rowVertex);
             }
-            userFunction.finish(rowVertex);
         }
     }
 
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public void initContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
+        this.algorithmCtx.setAggContext(Objects.requireNonNull(aggContext));
     }
 }

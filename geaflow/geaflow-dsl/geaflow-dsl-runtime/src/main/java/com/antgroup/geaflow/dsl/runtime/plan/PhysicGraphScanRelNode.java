@@ -33,8 +33,13 @@ public class PhysicGraphScanRelNode extends GraphScan implements PhysicRelNode<R
     @Override
     public RuntimeGraph translate(QueryContext context) {
         GeaFlowGraph graph = table.unwrap(GeaFlowGraph.class);
-        context.addReferSourceGraph(graph);
-        return context.getEngineContext().createRuntimeGraph(context, graph);
+        RuntimeGraph runtimeGraph = context.getRuntimeGraph(graph.getName());
+        if (runtimeGraph == null) {
+            context.addReferSourceGraph(graph);
+            runtimeGraph = context.getEngineContext().createRuntimeGraph(context, graph);
+            context.putRuntimeGraph(graph.getName(), runtimeGraph);
+        }
+        return runtimeGraph;
     }
 
     @Override
