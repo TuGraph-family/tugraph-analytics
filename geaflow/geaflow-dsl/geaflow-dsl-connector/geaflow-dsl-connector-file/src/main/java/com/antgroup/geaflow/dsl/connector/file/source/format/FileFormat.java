@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dsl.connector.file.source.format;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.IOException;
 import java.util.Iterator;
@@ -29,4 +30,6 @@ public interface FileFormat<T> {
     Iterator<T> batchRead() throws IOException;
 
     void close() throws IOException;
+
+    TableDeserializer<T> getDeserializer();
 }

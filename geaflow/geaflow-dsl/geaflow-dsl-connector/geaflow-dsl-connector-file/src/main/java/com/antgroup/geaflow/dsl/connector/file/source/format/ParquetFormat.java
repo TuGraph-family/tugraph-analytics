@@ -25,6 +25,7 @@ import com.antgroup.geaflow.dsl.common.types.ArrayType;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.IOException;
@@ -141,6 +142,11 @@ public class ParquetFormat implements FileFormat<Row> {
         if (currentReader != null) {
             currentReader.close();
         }
+    }
+
+    @Override
+    public TableDeserializer<Row> getDeserializer() {
+        return null;
     }
 
     public static Schema convertToAvroSchema(IType<?> sqlType, boolean nullable) {

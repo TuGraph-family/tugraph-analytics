@@ -24,7 +24,6 @@ import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,7 +91,7 @@ public class FileTableSource implements TableSource {
     @SuppressWarnings("unchecked")
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        return (TableDeserializer<IN>) new TextDeserializer();
+        return fileReadHandler.getDeserializer();
     }
 
     @SuppressWarnings("unchecked")

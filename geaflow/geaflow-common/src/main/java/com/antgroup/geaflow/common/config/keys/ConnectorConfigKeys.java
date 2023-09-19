@@ -66,4 +66,9 @@ public class ConnectorConfigKeys implements Serializable {
         .key("geaflow.dsl.file.format")
         .defaultValue("txt")
         .description("The file format to read or write, default value is 'txt'. ");
+
+    public static final ConfigKey GEAFLOW_DSL_SKIP_HEADER = ConfigKeys
+        .key("geaflow.dsl.skip.header")
+        .defaultValue(false)
+        .description("Whether skip the header for csv format.");
 }

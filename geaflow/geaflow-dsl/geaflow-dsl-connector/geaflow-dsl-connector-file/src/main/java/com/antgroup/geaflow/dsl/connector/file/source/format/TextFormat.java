@@ -18,6 +18,8 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.BufferedReader;
@@ -90,6 +92,11 @@ public class TextFormat implements FileFormat<String>, StreamFormat<String> {
         if (reader != null) {
             reader.close();
         }
+    }
+
+    @Override
+    public TableDeserializer<String> getDeserializer() {
+        return new TextDeserializer();
     }
 
     @Override

@@ -18,6 +18,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.IOException;
@@ -33,4 +34,6 @@ public interface FileReadHandler extends Serializable {
     <T> FetchData<T> readPartition(FileSplit split, FileOffset offset, int windowSize) throws IOException;
 
     void close() throws IOException;
+
+    <T> TableDeserializer<T> getDeserializer();
 }
