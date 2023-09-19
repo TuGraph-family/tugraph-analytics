@@ -20,6 +20,7 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import com.antgroup.geaflow.dsl.connector.file.source.format.FileFormat;
@@ -79,5 +80,11 @@ public abstract class AbstractFileReadHandler implements FileReadHandler {
         for (FileFormat format : fileFormats.values()) {
             format.close();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> TableDeserializer<T> getDeserializer() {
+        return (TableDeserializer<T>) FileFormats.loadFileFormat(formatName).getDeserializer();
     }
 }
