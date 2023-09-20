@@ -131,10 +131,10 @@ public class TypeCastUtil {
         }
         if (o.getClass() == String.class) {
             if (targetType == Long.class) {
-                return Double.valueOf((String) o).longValue();
+                return Long.parseLong((String) o);
             }
             if (targetType == Integer.class) {
-                return Double.valueOf((String) o).intValue();
+                return Integer.parseInt((String) o);
             }
             if (targetType == Double.class) {
                 return Double.valueOf((String) o);
@@ -151,10 +151,10 @@ public class TypeCastUtil {
         }
         if (o.getClass() == BinaryString.class) {
             if (targetType == Long.class) {
-                return Double.valueOf(o.toString()).longValue();
+                return Long.parseLong(o.toString());
             }
             if (targetType == Integer.class) {
-                return Double.valueOf(o.toString()).intValue();
+                return Integer.parseInt(o.toString());
             }
             if (targetType == Double.class) {
                 return Double.valueOf(o.toString());
