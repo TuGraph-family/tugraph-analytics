@@ -197,15 +197,14 @@ public abstract class AbstractTreePath implements ITreePath {
                                 }
                                 filterTrees.add(edgeTreePath);
                             }
-                        } else if (parentSize == 1) {
-                            ITreePath filterTree = ((AbstractTreePath) getParents().get(0)).filter(filterFunction,
-                                refPathIndices, fieldMapping, currentPath, maxDepth, pathId);
-                            if (!filterTree.isEmpty()) {
-                                filterTrees.add(filterTree.extendTo(edge));
+                        } else if (parentSize >= 1) {
+                            for (ITreePath parent : getParents()) {
+                                ITreePath filterTree = ((AbstractTreePath) parent).filter(filterFunction,
+                                    refPathIndices, fieldMapping, currentPath, maxDepth, pathId);
+                                if (!filterTree.isEmpty()) {
+                                    filterTrees.add(filterTree.extendTo(edge));
+                                }
                             }
-                        } else {
-                            throw new IllegalArgumentException("Edge node should have only one parent,"
-                                + " current is: " + parentSize);
                         }
                         currentPath.remove(currentPath.size() - 1);
                     }

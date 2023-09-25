@@ -312,7 +312,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
             if (fieldNames.size() != super.getFields().size()) {
                 throw new GeaFlowDSLException("Duplicate field has found in vertex table: " + getName());
             }
-            if (!fieldNames.contains(idField.toLowerCase())) {
+            if (!fieldNames.contains(idField)) {
                 throw new GeaFlowDSLException("id field:'" + idField + "' is not found in the fields: " + fieldNames);
             }
         }

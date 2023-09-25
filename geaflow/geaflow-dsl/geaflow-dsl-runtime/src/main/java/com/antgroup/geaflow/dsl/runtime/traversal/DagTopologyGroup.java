@@ -141,7 +141,7 @@ public class DagTopologyGroup {
                 maxSubDagIteration = subDagIterationCount;
             }
         }
-        currentDepth += addIteration(currentDepth, maxSubDagIteration);
+        currentDepth = addIteration(currentDepth, maxSubDagIteration);
 
         if (stepOperator instanceof StepLoopUntilOperator) {
             StepLoopUntilOperator loopUntilOperator = (StepLoopUntilOperator)stepOperator;
