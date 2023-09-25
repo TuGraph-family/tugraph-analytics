@@ -21,6 +21,7 @@ import com.antgroup.geaflow.api.function.base.FlatMapFunction;
 import com.antgroup.geaflow.api.function.base.MapFunction;
 import com.antgroup.geaflow.api.graph.PGraphWindow;
 import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
+import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.utils.ArrayUtil;
@@ -37,6 +38,7 @@ import com.antgroup.geaflow.dsl.rel.GraphMatch;
 import com.antgroup.geaflow.dsl.runtime.QueryContext;
 import com.antgroup.geaflow.dsl.runtime.RuntimeGraph;
 import com.antgroup.geaflow.dsl.runtime.RuntimeTable;
+import com.antgroup.geaflow.dsl.runtime.function.graph.source.DynamicGraphVertexScanSourceFunction;
 import com.antgroup.geaflow.dsl.runtime.traversal.DagGroupBuilder;
 import com.antgroup.geaflow.dsl.runtime.traversal.ExecuteDagGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.StepLogicalPlan;
@@ -223,9 +225,24 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
                 ((PGraphTraversal<Object, ITreePath>)getStaticVCTraversal(isAggTraversal,
                     staticGraph, executeDagGroup, maxTraversal, false, parallelism)).start(new ArrayList<>(constantStartIds));
         } else { // traversal all
-            responsePWindow =
-                ((PGraphTraversal<Object, ITreePath>)getStaticVCTraversal(isAggTraversal,
-                    staticGraph, executeDagGroup, maxTraversal, false, parallelism)).start();
+            boolean enableTraversalAllSplit = queryContext.getGlobalConf()
+                .getBoolean(DSLConfigKeys.GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE);
+            if (enableTraversalAllSplit) {
+                DynamicGraphVertexScanSourceFunction<?> sourceFunction =
+                    new DynamicGraphVertexScanSourceFunction<>(graphViewDesc);
+                PWindowSource<?> source = queryContext.getEngineContext()
+                    .createRuntimeTable(queryContext, sourceFunction)
+                    .withParallelism(graphViewDesc.getShardNum())
+                    .withName(queryContext.createOperatorName("VertexScanSource"));
+                responsePWindow =
+                    getStaticVCTraversal(isAggTraversal,
+                        staticGraph, executeDagGroup, maxTraversal, false, parallelism)
+                        .start((PWindowStream) source);
+            } else {
+                responsePWindow =
+                    ((PGraphTraversal<Object, ITreePath>)getStaticVCTraversal(isAggTraversal,
+                        staticGraph, executeDagGroup, maxTraversal, false, parallelism)).start();
+            }
         }
         return responsePWindow;
     }
@@ -260,8 +277,22 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
             return ((PGraphTraversal<Object, ITreePath>)getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup,
                 maxTraversal, false, parallelism)).start(new ArrayList<>(constantStartIds));
         } else { // dynamic traversal all
-            return ((PGraphTraversal<Object, ITreePath>)getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup,
-                maxTraversal, false, parallelism)).start();
+            boolean enableTraversalAllSplit = queryContext.getGlobalConf()
+                .getBoolean(DSLConfigKeys.GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE);
+            if (enableTraversalAllSplit) {
+                DynamicGraphVertexScanSourceFunction<?> sourceFunction =
+                    new DynamicGraphVertexScanSourceFunction<>(graphViewDesc);
+                PWindowSource<?> source = queryContext.getEngineContext()
+                    .createRuntimeTable(queryContext, sourceFunction)
+                    .withParallelism(graphViewDesc.getShardNum())
+                    .withName(queryContext.createOperatorName("VertexScanSource"));
+                return getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup,
+                    maxTraversal, false, parallelism)
+                    .start((PWindowStream) source);
+            }
+            return ((PGraphTraversal<Object, ITreePath>) getDynamicVCTraversal(isAggTraversal, dynamicGraph,
+                executeDagGroup, maxTraversal, false, parallelism)).start();
+
         }
     }
 
