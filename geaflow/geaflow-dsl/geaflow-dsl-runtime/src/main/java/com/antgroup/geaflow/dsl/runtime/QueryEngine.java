@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.api.function.io.SourceFunction;
+import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.runtime.expression.Expression;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
@@ -34,6 +36,8 @@ public interface QueryEngine {
     RuntimeTable createRuntimeTable(QueryContext context, GeaFlowTable table, Expression pushFilter);
 
     RuntimeTable createRuntimeTable(QueryContext context, Collection<Row> rows);
+
+    <T> PWindowSource<T> createRuntimeTable(QueryContext context, SourceFunction<T> sourceFunction);
 
     RuntimeGraph createRuntimeGraph(QueryContext context, GeaFlowGraph graph);
 }

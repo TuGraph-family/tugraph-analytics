@@ -80,4 +80,9 @@ public class DSLConfigKeys implements Serializable {
         .key("geaflow.dsl.ignore.exception")
         .defaultValue(false)
         .description("If set true, dsl will skip the exception for dirty data.");
+
+    public static final ConfigKey GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE = ConfigKeys
+        .key("geaflow.dsl.traversal.all.split.enable")
+        .defaultValue(false)
+        .description("Whether enable the split of the ids for traversal all. ");
 }

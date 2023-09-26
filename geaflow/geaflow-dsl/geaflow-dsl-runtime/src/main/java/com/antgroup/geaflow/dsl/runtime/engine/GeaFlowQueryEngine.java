@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.runtime.engine;
 
 import com.antgroup.geaflow.api.function.internal.CollectionSource;
+import com.antgroup.geaflow.api.function.io.SourceFunction;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.window.IWindow;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -152,6 +153,13 @@ public class GeaFlowQueryEngine implements QueryEngine {
             .withName(PhysicRelNodeName.VALUE_SCAN.getName(context.getOpNameCount()))
             .withParallelism(1);
         return new GeaFlowRuntimeTable(context, pipelineContext, source);
+    }
+
+    @Override
+    public <T> PWindowSource<T> createRuntimeTable(QueryContext context, SourceFunction<T> sourceFunction) {
+        IWindow<T> window = Windows.createWindow(pipelineContext.getConfig());
+        return pipelineContext.buildSource(sourceFunction, window)
+            .withConfig(context.getSetOptions());
     }
 
     @SuppressWarnings("unchecked")
