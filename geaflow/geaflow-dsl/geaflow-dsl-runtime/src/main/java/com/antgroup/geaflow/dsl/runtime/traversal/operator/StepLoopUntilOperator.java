@@ -17,14 +17,17 @@ package com.antgroup.geaflow.dsl.runtime.traversal.operator;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.StepRecord;
+import com.antgroup.geaflow.dsl.common.data.VirtualId;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepBoolFunction;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.collector.StepCollector;
 import com.antgroup.geaflow.dsl.runtime.traversal.collector.StepJumpCollector;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EndOfData;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.IdOnlyVertex;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.StepRecordWithPath;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.VertexRecord;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
+import com.antgroup.geaflow.state.pushdown.filter.EmptyFilter;
 import java.util.List;
 
 public class StepLoopUntilOperator extends AbstractStepOperator<StepBoolFunction,
@@ -88,8 +91,17 @@ public class StepLoopUntilOperator extends AbstractStepOperator<StepBoolFunction
     }
 
     private StepRecordWithPath selectLastLoopPath(StepRecordWithPath record, boolean fromZeroLoop) {
-        RowVertex vertexRecord = ((VertexRecord)record).getTreePath().getVertex();
+        RowVertex vertexId = ((VertexRecord)record).getVertex();
         if (fromZeroLoop) {
+            final RowVertex vertexRecord;
+            if (vertexId instanceof IdOnlyVertex && !(vertexId.getId() instanceof VirtualId)) {
+                vertexRecord = context.loadVertex(vertexId.getId(),
+                    EmptyFilter.of(),
+                    graphSchema,
+                    addingVertexFieldTypes);
+            } else {
+                vertexRecord = vertexId;
+            }
             return record.mapTreePath(treePath -> {
                 ITreePath newTreePath = treePath;
                 for (int i = 0; i < loopBodyPathFieldCount - 1; i++) {

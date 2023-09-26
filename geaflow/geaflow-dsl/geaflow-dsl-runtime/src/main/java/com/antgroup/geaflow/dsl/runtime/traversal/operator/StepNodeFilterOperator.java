@@ -26,7 +26,7 @@ public class StepNodeFilterOperator extends AbstractStepOperator<StepNodeFilterF
 
     @Override
     protected void processRecord(VertexRecord record) {
-        if (function.filter(record.getTreePath().getVertex())) {
+        if (function.filter(record.getVertex())) {
             collect(record);
         }
     }
