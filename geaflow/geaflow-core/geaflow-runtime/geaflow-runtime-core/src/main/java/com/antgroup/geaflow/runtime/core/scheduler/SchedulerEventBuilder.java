@@ -136,9 +136,9 @@ public class SchedulerEventBuilder {
         }
     }
 
-    private IEvent buildCleanOrStashEvent(int workerId) {
+    private IEvent buildCleanOrStashEvent(int workerId, int taskId) {
         if (enableAffinity) {
-            return new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
+            return new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount(), taskId);
         } else {
             return new CleanCycleEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
         }
@@ -233,7 +233,7 @@ public class SchedulerEventBuilder {
             int workerId = task.getWorkerInfo().getWorkerIndex();
             IEvent cleanEvent;
             if (enableAffinity) {
-                cleanEvent = new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
+                cleanEvent = new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount(), task.getTaskId());
             } else {
                 cleanEvent = new CleanCycleEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
             }
@@ -257,7 +257,7 @@ public class SchedulerEventBuilder {
             // finish iteration
             FinishIterationEvent iterationFinishEvent = new FinishIterationEvent(workerId,
                 context.getInitialIterationId(), cycle.getCycleId(), task.getTaskId());
-            IEvent cleanEvent = buildCleanOrStashEvent(workerId);
+            IEvent cleanEvent = buildCleanOrStashEvent(workerId, task.getTaskId());
 
             ComposeEvent composeEvent =
                 new ComposeEvent(task.getWorkerInfo().getWorkerIndex(),

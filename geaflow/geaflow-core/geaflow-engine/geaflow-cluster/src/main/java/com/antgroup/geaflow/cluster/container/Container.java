@@ -81,7 +81,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
             LOGGER.info("open container {} with {} executors", name, num);
 
             this.fetcherService = new FetcherService(num, configuration);
-            this.emitterService = new EmitterService(num);
+            this.emitterService = new EmitterService(num, configuration);
             this.workerService = new TaskService(id, num,
                 configuration, metricGroup, fetcherService, emitterService);
             this.dispatcher = new Dispatcher(workerService);

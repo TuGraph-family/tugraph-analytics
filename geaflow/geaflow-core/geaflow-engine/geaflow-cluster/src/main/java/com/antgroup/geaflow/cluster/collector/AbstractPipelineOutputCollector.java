@@ -21,8 +21,6 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
 import com.antgroup.geaflow.shuffle.message.Shard;
-import java.io.IOException;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,11 +54,8 @@ public abstract class AbstractPipelineOutputCollector<T>
     @Override
     public void finish() {
         try {
-            Optional result = this.pipeRecordWriter.flush(this.windowId);
-            if (result.isPresent()) {
-                shard = (Shard) result.get();
-            }
-        } catch (IOException e) {
+            this.shard = (Shard) this.outputBuffer.finish(this.windowId);
+        } catch (Exception e) {
             throw new GeaflowRuntimeException(e);
         }
     }

@@ -22,7 +22,17 @@ public enum RequestType {
     INIT,
 
     /**
+     * Update request.
+     */
+    UPDATE,
+
+    /**
      * Close request.
      */
     CLOSE,
+    /**
+     * Clear the init emitter request in cache.
+     */
+    CLEAR
+
 }

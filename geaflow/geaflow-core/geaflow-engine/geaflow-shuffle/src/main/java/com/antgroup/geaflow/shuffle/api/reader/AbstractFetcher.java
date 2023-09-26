@@ -24,6 +24,7 @@ import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.FetchRequest;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
+import com.antgroup.geaflow.shuffle.serialize.AbstractMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.EncoderMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.MessageIterator;
@@ -54,7 +55,7 @@ public abstract class AbstractFetcher<T extends ISliceMeta> implements IShuffleF
 
     public void setup(IConnectionManager connectionManager, Configuration config) {
         this.maxBytesInFlight = config.getLong(SHUFFLE_MAX_BYTES_IN_FLIGHT);
-        this.shuffleConfig = ShuffleConfig.getInstance(config);
+        this.shuffleConfig = ShuffleConfig.getInstance();
         this.totalSliceNum = 0;
     }
 
@@ -84,18 +85,18 @@ public abstract class AbstractFetcher<T extends ISliceMeta> implements IShuffleF
 
     protected IMessageIterator<?> getMessageIterator(int edgeId, OutBuffer outBuffer) {
         IEncoder<?> encoder = this.encoders.get(edgeId);
-        if (encoder == null) {
-            return new MessageIterator<>(outBuffer);
-        }
-        return new EncoderMessageIterator<>(outBuffer, encoder);
+        AbstractMessageIterator<?> messageIterator = encoder == null
+            ? new MessageIterator<>(outBuffer)
+            : new EncoderMessageIterator<>(outBuffer, encoder);
+        return messageIterator;
     }
 
     protected IMessageIterator<?> getMessageIterator(int edgeId, InputStream inputStream) {
         IEncoder<?> encoder = this.encoders.get(edgeId);
-        if (encoder == null) {
-            return new MessageIterator<>(inputStream);
-        }
-        return new EncoderMessageIterator<>(inputStream, encoder);
+        AbstractMessageIterator<?> messageIterator = encoder == null
+            ? new MessageIterator<>(inputStream)
+            : new EncoderMessageIterator<>(inputStream, encoder);
+        return messageIterator;
     }
 
 }

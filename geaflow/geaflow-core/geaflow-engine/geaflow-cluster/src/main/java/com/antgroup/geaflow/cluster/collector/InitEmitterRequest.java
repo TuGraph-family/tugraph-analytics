@@ -14,48 +14,64 @@
 
 package com.antgroup.geaflow.cluster.collector;
 
-import com.antgroup.geaflow.collector.ICollector;
-import com.antgroup.geaflow.shuffle.IOutputDesc;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.task.TaskArgs;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
+import com.antgroup.geaflow.shuffle.message.Shard;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class InitEmitterRequest implements IEmitterRequest {
+public class InitEmitterRequest extends AbstractEmitterRequest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InitEmitterRequest.class);
+    private final Configuration configuration;
+    private final long pipelineId;
+    private final String pipelineName;
+    private final TaskArgs taskArgs;
+    private final OutputDescriptor outputDescriptor;
+    protected final List<IOutputMessageBuffer<?, Shard>> outputBuffers;
 
-    private OutputDescriptor outputDescriptor;
-    protected List<ICollector> collectors;
-
-    public InitEmitterRequest(OutputDescriptor outputDescriptor) {
+    public InitEmitterRequest(Configuration configuration,
+                              long windowId,
+                              long pipelineId,
+                              String pipelineName,
+                              TaskArgs taskArgs,
+                              OutputDescriptor outputDescriptor,
+                              List<IOutputMessageBuffer<?, Shard>> outputBuffers) {
+        super(taskArgs.getTaskId(), windowId);
+        this.configuration = configuration;
+        this.pipelineId = pipelineId;
+        this.pipelineName = pipelineName;
+        this.taskArgs = taskArgs;
         this.outputDescriptor = outputDescriptor;
+        this.outputBuffers = outputBuffers;
     }
 
-    /**
-     * Init output collectors.
-     */
-    public void initEmitter(List<ICollector> collectors) {
-        if (outputDescriptor != null && outputDescriptor.getOutputDescList() != null) {
-            collectors.clear();
-            for (IOutputDesc outputDesc : outputDescriptor.getOutputDescList()) {
-                ICollector collector = CollectorFactory.create(outputDesc);
-                collectors.add(collector);
-            }
-        }
-        this.collectors = collectors;
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 
+    public long getPipelineId() {
+        return this.pipelineId;
+    }
 
-    public List<ICollector> getCollectors() {
-        while (collectors == null) {
-            LOGGER.debug("wait init request done");
-        }
-        return collectors;
+    public String getPipelineName() {
+        return this.pipelineName;
+    }
+
+    public TaskArgs getTaskArgs() {
+        return this.taskArgs;
+    }
+
+    public OutputDescriptor getOutputDescriptor() {
+        return this.outputDescriptor;
+    }
+
+    public List<IOutputMessageBuffer<?, Shard>> getOutputBuffers() {
+        return this.outputBuffers;
     }
 
     @Override
     public RequestType getRequestType() {
         return RequestType.INIT;
     }
+
 }

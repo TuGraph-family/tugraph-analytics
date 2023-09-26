@@ -19,27 +19,25 @@ import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 /**
  * A message which is processed by worker.
  */
-public class Message<T> implements IMessage {
+public class InputMessage<T> extends AbstractMessage<PipelineMessage<T>> {
 
-    private final long windowId;
-    private PipelineMessage message;
-    private long windowCount;
+    private final PipelineMessage<T> message;
+    private final long windowCount;
 
-    public Message(long windowId, PipelineMessage message) {
-        this.windowId = windowId;
+    public InputMessage(PipelineMessage<T> message) {
+        super(message.getWindowId());
         this.message = message;
+        this.windowCount = -1;
     }
 
-    public Message(long windowId, long windowCount) {
-        this.windowId = windowId;
+    public InputMessage(long windowId, long windowCount) {
+        super(windowId);
+        this.message = null;
         this.windowCount = windowCount;
     }
 
-    public long getWindowId() {
-        return windowId;
-    }
-
-    public PipelineMessage getMessage() {
+    @Override
+    public PipelineMessage<T> getMessage() {
         return message;
     }
 
@@ -47,8 +45,4 @@ public class Message<T> implements IMessage {
         return windowCount;
     }
 
-    @Override
-    public EventType getEventType() {
-        return EventType.MESSAGE;
-    }
 }

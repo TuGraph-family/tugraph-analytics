@@ -17,6 +17,9 @@ package com.antgroup.geaflow.cluster.fetcher;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.metric.EventMetrics;
+import com.antgroup.geaflow.common.metric.ShuffleReadMetrics;
+import com.antgroup.geaflow.io.AbstractMessageBuffer;
 import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
 import com.antgroup.geaflow.shuffle.message.FetchRequest;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
@@ -35,7 +38,7 @@ public class PipelineInputFetcher {
     private IShuffleReader shuffleReader;
     private InitFetchRequest initRequest;
 
-    private List<FetchListener> fetchListeners;
+    private List<IInputMessageBuffer<?>> fetchListeners;
     private BarrierHandler barrierHandler;
 
     private long pipelineId;
@@ -132,7 +135,7 @@ public class PipelineInputFetcher {
                 if (event != null) {
                     if (event instanceof PipelineMessage) {
                         PipelineMessage message = (PipelineMessage) event;
-                        for (FetchListener listener : fetchListeners) {
+                        for (IInputMessageBuffer<?> listener : fetchListeners) {
                             listener.onMessage(message);
                         }
                     } else {
@@ -140,18 +143,27 @@ public class PipelineInputFetcher {
                         if (barrierHandler.checkCompleted(barrier)) {
                             long windowId = barrier.getWindowId();
                             long windowCount = barrierHandler.getTotalWindowCount();
-                            for (FetchListener listener : fetchListeners) {
-                                listener.onCompleted(windowId, windowCount);
+                            this.handleMetrics();
+                            for (IInputMessageBuffer<?> listener : fetchListeners) {
+                                listener.onBarrier(windowId, windowCount);
                             }
                         }
                     }
                 }
             }
-            LOGGER.info("task {} worker reader finish fetch by reader {} fetch windowId {}",
-                    request.getTaskId(), shuffleReader, request.getTargetBatchId());
+            LOGGER.info("task {} worker reader finish fetch windowId {}",
+                    request.getTaskId(), request.getTargetBatchId());
         } catch (Throwable e) {
             LOGGER.error("fetcher encounters unexpected exception: {}", e.getMessage(), e);
             throw new GeaflowRuntimeException(e);
+        }
+    }
+
+    private void handleMetrics() {
+        ShuffleReadMetrics shuffleReadMetrics = this.shuffleReader.getShuffleReadMetrics();
+        for (IInputMessageBuffer<?> listener : this.fetchListeners) {
+            EventMetrics eventMetrics = ((AbstractMessageBuffer<?>) listener).getEventMetrics();
+            eventMetrics.addShuffleReadBytes(shuffleReadMetrics.getDecodeBytes());
         }
     }
 

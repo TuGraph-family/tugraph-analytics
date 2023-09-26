@@ -26,7 +26,6 @@ import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.processor.Processor;
 import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
 import com.antgroup.geaflow.runtime.core.context.EventContext;
-import com.antgroup.geaflow.runtime.core.scheduler.PipelineMaster;
 import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
 import java.util.List;
 
@@ -46,8 +45,7 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
     protected String driverId;
     protected MetricGroup metricGroup;
     protected EventMetrics eventMetrics;
-    protected PipelineMaster schedulerRpcRef;
-    protected List<ICollector> collectors;
+    protected List<ICollector<?>> collectors;
     protected long windowId;
     protected RuntimeContext runtimeContext;
 
@@ -64,14 +62,14 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
         cycleId = context.getCycleId();
         pipelineId = context.getPipelineId();
         pipelineName = context.getPipelineName();
-        schedulerRpcRef = new PipelineMaster(context.getDriverId());
+        driverId = context.getDriverId();
         ioDescriptor = context.getIoDescriptor();
         executionTask = context.getExecutionTask();
         processor = executionTask.getProcessor();
         taskId = executionTask.getTaskId();
-        eventMetrics = new EventMetrics();
         windowId = context.getWindowId();
         runtimeContext = createRuntimeContext();
+        this.initEventMetrics();
     }
 
     /**
@@ -79,7 +77,7 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
      */
     private RuntimeContext createRuntimeContext() {
         return DefaultRuntimeContext.build(config)
-            .setExecutionTask(executionTask)
+            .setTaskArgs(this.executionTask.buildTaskArgs())
             .setPipelineId(pipelineId)
             .setPipelineName(pipelineName)
             .setMetricGroup(metricGroup)
@@ -95,8 +93,8 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
         this.currentWindowId = currentWindowId;
     }
 
-    public PipelineMaster getPipelineMaster() {
-        return schedulerRpcRef;
+    public String getDriverId() {
+        return driverId;
     }
 
     public void setTaskId(int taskId) {
@@ -123,11 +121,11 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
         return eventMetrics;
     }
 
-    public List<ICollector> getCollectors() {
+    public List<ICollector<?>> getCollectors() {
         return collectors;
     }
 
-    public void setCollectors(List<ICollector> collectors) {
+    public void setCollectors(List<ICollector<?>> collectors) {
         this.collectors = collectors;
     }
 
@@ -158,4 +156,16 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
     public RuntimeContext getRuntimeContext() {
         return runtimeContext;
     }
+
+    public boolean isIterativeTask() {
+        return this.executionTask.isIterative();
+    }
+
+    public void initEventMetrics() {
+        this.eventMetrics = new EventMetrics(
+            this.executionTask.getVertexId(),
+            this.executionTask.getParallelism(),
+            this.executionTask.getIndex());
+    }
+
 }

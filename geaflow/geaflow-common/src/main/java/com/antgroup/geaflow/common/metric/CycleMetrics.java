@@ -144,6 +144,34 @@ public class CycleMetrics implements Serializable {
         this.outputKb = outputKb;
     }
 
+    public static CycleMetrics build(String metricName,
+                                     String pipelineName,
+                                     String opName,
+                                     int taskNum,
+                                     int slowestTask,
+                                     long startTime,
+                                     long duration,
+                                     long totalExecuteTime,
+                                     long totalGcTime,
+                                     long slowestTaskExecuteTime,
+                                     long totalInputRecords,
+                                     long totalInputBytes,
+                                     long totalOutputRecords,
+                                     long totalOutputBytes) {
+        CycleMetrics cycleMetrics = new CycleMetrics(metricName, pipelineName, opName);
+        cycleMetrics.setStartTime(startTime);
+        cycleMetrics.setTotalTasks(taskNum);
+        cycleMetrics.setSlowestTask(slowestTask);
+        cycleMetrics.setDuration(duration);
+        cycleMetrics.setAvgExecuteTime(totalExecuteTime / taskNum);
+        cycleMetrics.setAvgGcTime(totalGcTime / taskNum);
+        cycleMetrics.setSlowestTaskExecuteTime(slowestTaskExecuteTime);
+        cycleMetrics.setInputRecords(totalInputRecords);
+        cycleMetrics.setInputKb(totalInputBytes / 1024);
+        cycleMetrics.setOutputRecords(totalOutputRecords);
+        cycleMetrics.setOutputKb(totalOutputBytes / 1024);
+        return cycleMetrics;
+    }
 
     @Override
     public String toString() {

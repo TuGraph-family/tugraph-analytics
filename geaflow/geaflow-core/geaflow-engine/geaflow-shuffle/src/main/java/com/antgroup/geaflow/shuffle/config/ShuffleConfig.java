@@ -28,13 +28,21 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_SERVER_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_SERVER_THREADS_NUM;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_THREAD_CACHE_ENABLE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_CACHE_SPILL_THRESHOLD;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_COMPRESSION_ENABLE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_EMIT_BUFFER_SIZE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_EMIT_QUEUE_SIZE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_QUEUE_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_TIMEOUT_MS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_SLICE_MAX_SPILL_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_STORAGE_TYPE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_WRITE_BUFFER_SIZE_BYTES;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.shuffle.StorageLevel;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +63,14 @@ public class ShuffleConfig {
     private final int clientThreads;
     private final long maxSpillSizePerSlice;
 
+    private final boolean memoryPoolEnable;
+    private final int fetchQueueSize;
+    private final int emitQueueSize;
+    private final int emitBufferSize;
+    private final int writeBufferSizeBytes;
+    private final int flushBufferTimeoutMs;
+    private final double cacheSpillThreshold;
+
     private final Configuration configuration;
 
     private boolean compressionEnabled;
@@ -74,19 +90,30 @@ public class ShuffleConfig {
         this.serverThreads = config.getInteger(NETTY_SERVER_THREADS_NUM);
         this.clientThreads = config.getInteger(NETTY_CLIENT_THREADS_NUM);
 
+        this.memoryPoolEnable = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
+        this.fetchQueueSize = config.getInteger(SHUFFLE_FETCH_QUEUE_SIZE);
+        this.emitQueueSize = config.getInteger(SHUFFLE_EMIT_QUEUE_SIZE);
+        this.emitBufferSize = config.getInteger(SHUFFLE_EMIT_BUFFER_SIZE);
+        this.writeBufferSizeBytes = config.getInteger(SHUFFLE_WRITE_BUFFER_SIZE_BYTES);
+        this.flushBufferTimeoutMs = config.getInteger(SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS);
+        this.cacheSpillThreshold = config.getDouble(SHUFFLE_CACHE_SPILL_THRESHOLD);
+
         this.compressionEnabled = config.getBoolean(SHUFFLE_COMPRESSION_ENABLE);
 
         this.configuration = config;
         LOGGER.info("init shuffle config: {}", config);
     }
 
-
-
     public static synchronized ShuffleConfig getInstance(Configuration config) {
         if (INSTANCE == null) {
             INSTANCE = new ShuffleConfig(config);
         }
         return INSTANCE;
+    }
+
+    @VisibleForTesting
+    public static synchronized void reset(Configuration config) {
+        INSTANCE = new ShuffleConfig(config);
     }
 
     public static ShuffleConfig getInstance() {
@@ -161,6 +188,34 @@ public class ShuffleConfig {
 
     public int getConnectMaxBackoffMs() {
         return configuration.getInteger(NETTY_CONNECT_MAX_BACKOFF_MS);
+    }
+
+    public boolean isMemoryPoolEnable() {
+        return this.memoryPoolEnable;
+    }
+
+    public int getFetchQueueSize() {
+        return this.fetchQueueSize;
+    }
+
+    public int getEmitQueueSize() {
+        return this.emitQueueSize;
+    }
+
+    public int getEmitBufferSize() {
+        return this.emitBufferSize;
+    }
+
+    public int getWriteBufferSizeBytes() {
+        return this.writeBufferSizeBytes;
+    }
+
+    public int getFlushBufferTimeoutMs() {
+        return this.flushBufferTimeoutMs;
+    }
+
+    public double getCacheSpillThreshold() {
+        return this.cacheSpillThreshold;
     }
 
     public Configuration getConfig() {

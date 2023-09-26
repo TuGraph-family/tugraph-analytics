@@ -63,6 +63,11 @@ public class ShuffleReadMetrics implements Serializable {
         this.decodeBytes = decodeBytes;
     }
 
+    public void increaseDecodeBytes(long decodeBytes) {
+        this.decodeBytes += decodeBytes;
+    }
+
+
     public long getFetchWaitMs() {
         return fetchWaitMs;
     }

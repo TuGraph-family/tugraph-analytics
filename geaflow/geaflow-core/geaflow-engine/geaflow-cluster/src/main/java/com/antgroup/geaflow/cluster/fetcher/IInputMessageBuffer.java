@@ -12,23 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.runtime.core.scheduler;
+package com.antgroup.geaflow.cluster.fetcher;
 
-import com.antgroup.geaflow.cluster.protocol.IEvent;
-import com.antgroup.geaflow.cluster.rpc.RpcClient;
+import com.antgroup.geaflow.cluster.protocol.InputMessage;
+import com.antgroup.geaflow.io.IMessageBuffer;
+import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 
-public class PipelineMaster {
+public interface IInputMessageBuffer<T> extends IMessageBuffer<InputMessage<T>> {
 
-    private String driverId;
+    void onMessage(PipelineMessage<T> message);
 
-    public PipelineMaster(String driverId) {
-        this.driverId = driverId;
-    }
-    
-    /**
-     * Send event to scheduler in worker.
-     */
-    public void send(IEvent event) {
-        RpcClient.getInstance().processPipeline(driverId, event);
-    }
+    void onBarrier(long windowId, long windowCount);
+
 }

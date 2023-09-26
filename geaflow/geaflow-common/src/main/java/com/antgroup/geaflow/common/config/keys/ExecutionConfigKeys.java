@@ -384,6 +384,11 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(600000)
         .description("shuffle fetch timeout in milliseconds");
 
+    public static final ConfigKey SHUFFLE_FETCH_QUEUE_SIZE = ConfigKeys
+        .key("geaflow.shuffle.fetch.queue.size")
+        .defaultValue(1)
+        .description("size of shuffle fetch queue");
+
     /** shuffle write config. */
 
     public static final ConfigKey SHUFFLE_SPILL_RECORDS = ConfigKeys
@@ -396,15 +401,25 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(1610612736L) // 1.5G
         .description("max size of each spill per slice in Bytes");
 
-    public static final ConfigKey SHUFFLE_WRITE_BUFFER_SIZE = ConfigKeys
-        .key("geaflow.shuffle.write.buffer.size")
-        .defaultValue(15360)
+    public static final ConfigKey SHUFFLE_WRITE_BUFFER_SIZE_BYTES = ConfigKeys
+        .key("geaflow.shuffle.write.buffer.size.bytes")
+        .defaultValue(128 * 1024)
         .description("size of shuffle write buffer");
 
-    public static final ConfigKey SHUFFLE_FLUSH_BUFFER_TIMEOUT = ConfigKeys
-        .key("geaflow.shuffle.flush.buffer.timeout")
+    public static final ConfigKey SHUFFLE_EMIT_BUFFER_SIZE = ConfigKeys
+        .key("geaflow.shuffle.emit.buffer.size")
+        .defaultValue(1024)
+        .description("size of shuffle emit buffer of java object");
+
+    public static final ConfigKey SHUFFLE_EMIT_QUEUE_SIZE = ConfigKeys
+        .key("geaflow.shuffle.emit.queue.size")
+        .defaultValue(1)
+        .description("size of shuffle emit queue");
+
+    public static final ConfigKey SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.shuffle.flush.buffer.timeout.ms")
         .defaultValue(100)
-        .description("shuffle flush buffer timeout");
+        .description("shuffle flush buffer timeout ms");
 
     public static final ConfigKey SHUFFLE_CACHE_SPILL_THRESHOLD = ConfigKeys
         .key("geaflow.shuffle.cache.spill.threshold")

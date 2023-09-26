@@ -12,25 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.runtime.core.worker.context;
+package com.antgroup.geaflow.cluster.protocol;
 
-import com.antgroup.geaflow.cluster.task.ITaskContext;
-import com.antgroup.geaflow.collector.ICollector;
+public abstract class AbstractMessage<T> implements IMessage<T> {
 
-public class WorkerContext extends AbstractWorkerContext {
+    private final long windowId;
 
-    public WorkerContext(ITaskContext taskContext) {
-        super(taskContext);
+    public AbstractMessage(long windowId) {
+        this.windowId = windowId;
     }
 
-    /**
-     * Release worker resource.
-     */
+    public long getWindowId() {
+        return this.windowId;
+    }
+
     @Override
-    public void close() {
-        for (ICollector<?> collector : collectors) {
-            collector.close();
-        }
-        processor.close();
+    public EventType getEventType() {
+        return EventType.MESSAGE;
     }
+
 }

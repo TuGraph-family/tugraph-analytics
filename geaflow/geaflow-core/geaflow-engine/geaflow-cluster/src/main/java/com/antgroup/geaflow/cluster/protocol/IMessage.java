@@ -17,5 +17,13 @@ package com.antgroup.geaflow.cluster.protocol;
 /**
  * A message is the event of data flow among cycle scheduling.
  */
-public interface IMessage extends IEvent {
+public interface IMessage<T> extends IEvent {
+
+    /**
+     * Get the message content.
+     *
+     * @return message
+     */
+    T getMessage();
+
 }

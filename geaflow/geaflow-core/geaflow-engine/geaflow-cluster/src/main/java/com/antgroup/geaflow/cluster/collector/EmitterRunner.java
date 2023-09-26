@@ -15,39 +15,37 @@
 package com.antgroup.geaflow.cluster.collector;
 
 import com.antgroup.geaflow.cluster.task.runner.AbstractTaskRunner;
-import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EmitterRunner extends AbstractTaskRunner<IEmitterRequest> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmitterRunner.class);
+    private final PipelineOutputEmitter outputEmitter;
 
-    private final List<ICollector> collectors;
-
-    public EmitterRunner() {
-        this.collectors = new ArrayList<>();
+    public EmitterRunner(Configuration configuration, int index) {
+        this.outputEmitter = new PipelineOutputEmitter(configuration, index);
     }
 
     @Override
     protected void process(IEmitterRequest request) {
         switch (request.getRequestType()) {
             case INIT:
-                InitEmitterRequest initEmitRequest = (InitEmitterRequest) request;
-                initEmitRequest.initEmitter(this.collectors);
+                this.outputEmitter.init((InitEmitterRequest) request);
+                break;
+            case UPDATE:
+                this.outputEmitter.update((UpdateEmitterRequest) request);
                 break;
             case CLOSE:
-                CloseEmitterRequest closeEmitterRequest = (CloseEmitterRequest) request;
-                closeEmitterRequest.closeEmitter(this.collectors);
+                this.outputEmitter.close((CloseEmitterRequest) request);
+                break;
+            case CLEAR:
+                this.outputEmitter.clear();
                 break;
             default:
                 throw new GeaflowRuntimeException(
                     RuntimeErrors.INST.requestTypeNotSupportError(request.getRequestType().name()));
         }
     }
+
 }

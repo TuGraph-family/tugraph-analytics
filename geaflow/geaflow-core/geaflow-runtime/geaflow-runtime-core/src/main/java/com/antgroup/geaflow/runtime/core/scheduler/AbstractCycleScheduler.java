@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler;
 
+import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.result.ExecutionResult;
@@ -27,17 +28,16 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
 
     protected IExecutionCycle cycle;
     protected ICycleSchedulerContext context;
-    protected String cycleLogTag;
 
     @Override
     public void init(ICycleSchedulerContext context) {
         this.cycle = context.getCycle();
         this.context = context;
-        this.cycleLogTag = context.getCycle().getPipelineName();
     }
 
     public IExecutionResult<R, E> execute() {
 
+        String cycleLogTag = LoggerFormatter.getCycleTag(cycle.getPipelineName(), cycle.getCycleId());
         try {
             long finishedIterationId = 0;
             while (!context.isCycleFinished()) {
@@ -45,7 +45,6 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
                 // Submit tasks to cycle head until run out of on the fly permits.
                 while (context.hasNextIteration()) {
                     long iterationId = context.getNextIterationId();
-                    LOGGER.info("{} execute iterationId:{}", cycleLogTag, iterationId);
                     execute(iterationId);
                 }
 

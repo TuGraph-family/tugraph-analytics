@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.runtime.core.protocol;
 
+import com.antgroup.geaflow.cluster.collector.ClearEmitterRequest;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
@@ -25,8 +26,8 @@ public class CleanEnvEvent extends AbstractCleanCommand {
     private final long pipelineId;
     private final String driverId;
 
-    public CleanEnvEvent(int workerId, int cycleId, long iterationId, long pipelineId, String driverId) {
-        super(workerId, cycleId, iterationId);
+    public CleanEnvEvent(int workerId, int cycleId, long windowId, long pipelineId, String driverId) {
+        super(workerId, cycleId, windowId);
         this.pipelineId = pipelineId;
         this.driverId = driverId;
     }
@@ -36,7 +37,8 @@ public class CleanEnvEvent extends AbstractCleanCommand {
         super.execute(taskContext);
         ShuffleDataManager.getInstance().release(pipelineId);
         WorkerContextManager.clear();
-        sendDoneEvent(cycleId, windowId, EventType.CLEAN_ENV);
+        this.emitterRunner.add(ClearEmitterRequest.INSTANCE);
+        this.sendDoneEvent(this.driverId, EventType.CLEAN_ENV, null, false);
     }
 
     @Override
@@ -58,8 +60,8 @@ public class CleanEnvEvent extends AbstractCleanCommand {
     }
 
     @Override
-    protected void sendDoneEvent(int cycleId, long windowId, EventType eventType) {
-        DoneEvent doneEvent = new DoneEvent(cycleId, windowId, 0, eventType);
+    protected <T> void sendDoneEvent(String driverId, EventType sourceEventType, T result, boolean sendMetrics) {
+        DoneEvent<T> doneEvent = new DoneEvent<>(this.cycleId, this.windowId, 0, sourceEventType, result);
         RpcClient.getInstance().processPipeline(driverId, doneEvent);
     }
 

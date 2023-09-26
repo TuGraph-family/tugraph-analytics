@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.runtime.core.context;
 
 import com.antgroup.geaflow.cluster.protocol.IEventContext;
-import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.processor.Processor;
 import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
@@ -133,9 +132,6 @@ public class EventContext implements IEventContext {
 
         public EventContextBuilder withPipelineName(String pipelineName) {
             this.pipelineName = pipelineName;
-            String taskName = LoggerFormatter.getTaskLog(pipelineName, cycleId,
-                currentWindowId, executionTask.getIndex());
-            executionTask.setTaskName(taskName);
             return this;
         }
 

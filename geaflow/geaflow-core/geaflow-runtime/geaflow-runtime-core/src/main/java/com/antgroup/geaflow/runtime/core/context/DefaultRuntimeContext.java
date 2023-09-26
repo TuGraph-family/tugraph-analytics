@@ -18,17 +18,12 @@ import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.task.TaskArgs;
 import com.antgroup.geaflow.context.AbstractRuntimeContext;
-import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DefaultRuntimeContext extends AbstractRuntimeContext {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRuntimeContext.class);
 
     private long pipelineId;
     private String pipelineName;
@@ -66,22 +61,13 @@ public class DefaultRuntimeContext extends AbstractRuntimeContext {
     }
 
     public DefaultRuntimeContext setTaskArgs(TaskArgs taskArgs) {
-        this.taskArgs = new TaskArgs(taskArgs.getTaskId(),
-            taskArgs.getTaskIndex(), taskArgs.getTaskName(),
-            taskArgs.getParallelism(), taskArgs.getMaxParallelism());
+        this.taskArgs = taskArgs;
         return this;
     }
 
     @Override
     public Configuration getConfiguration() {
         return this.jobConfig;
-    }
-
-    public DefaultRuntimeContext setExecutionTask(ExecutionTask task) {
-        this.taskArgs = new TaskArgs(task.getTaskId(), task.getIndex(),
-            task.getTaskName(), task.getParallelism(),
-            task.getMaxParallelism());
-        return this;
     }
 
     public DefaultRuntimeContext setIoDescriptor(IoDescriptor ioDescriptor) {

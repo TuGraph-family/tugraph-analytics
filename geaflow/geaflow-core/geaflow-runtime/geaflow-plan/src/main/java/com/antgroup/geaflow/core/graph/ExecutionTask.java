@@ -15,6 +15,8 @@
 package com.antgroup.geaflow.core.graph;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
+import com.antgroup.geaflow.common.task.TaskArgs;
+import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.processor.Processor;
 
 import java.io.Serializable;
@@ -30,6 +32,7 @@ public class ExecutionTask implements Serializable {
     private WorkerInfo workerInfo;
     private Processor processor;
     private ExecutionTaskType executionTaskType;
+    private boolean iterative;
 
     private long startTime;
     private long duration;
@@ -126,12 +129,33 @@ public class ExecutionTask implements Serializable {
         this.executionTaskType = executionTaskType;
     }
 
+    public void setIterative(boolean iterative) {
+        this.iterative = iterative;
+    }
+
+    public boolean isIterative() {
+        return this.iterative;
+    }
+
     public String getTaskName() {
         return taskName;
     }
 
-    public void setTaskName(String taskName) {
-        this.taskName = taskName;
+    public void buildTaskName(String pipelineName, int cycleId, long windowId) {
+        this.taskName = this.iterative
+            ? LoggerFormatter.getTaskTag(
+                pipelineName, cycleId, windowId, this.taskId, this.vertexId, this.index, this.parallelism)
+            : LoggerFormatter.getTaskTag(
+                pipelineName, cycleId, this.taskId, this.vertexId, this.index, this.parallelism);
+    }
+
+    public TaskArgs buildTaskArgs() {
+        return new TaskArgs(
+            this.taskId,
+            this.index,
+            this.taskName,
+            this.parallelism,
+            this.maxParallelism);
     }
 
     @Override
