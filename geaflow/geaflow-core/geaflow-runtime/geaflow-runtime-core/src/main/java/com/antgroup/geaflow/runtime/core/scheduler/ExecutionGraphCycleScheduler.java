@@ -26,6 +26,7 @@ import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.exception.GeaflowDispatchException;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.metric.PipelineMetrics;
+import com.antgroup.geaflow.common.utils.FutureUtil;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.runtime.core.protocol.CleanEnvEvent;
 import com.antgroup.geaflow.runtime.core.protocol.CleanStashEnvEvent;
@@ -46,12 +47,14 @@ import com.antgroup.geaflow.shuffle.message.ShuffleId;
 import com.antgroup.geaflow.shuffle.service.IShuffleMaster;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,6 +177,7 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
         cleanEnvWaitingResponse = new CountDownLatch(usedWorkers.size());
         LOGGER.info("{} start wait {} clean env response for iteration {}, need clean worker context {}",
             cycleLogTag, usedWorkers.size(), iterationId, needCleanWorkerContext);
+        List<Future<IEvent>> submitFutures = new ArrayList<>(usedWorkers.size());
         for (WorkerInfo worker : usedWorkers) {
             IEvent cleanEvent;
             if (needCleanWorkerContext) {
@@ -183,8 +187,11 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
                 cleanEvent = new CleanStashEnvEvent(worker.getWorkerIndex(),
                     cycle.getCycleId(), iterationId, pipelineId, cycle.getDriverId());
             }
-            RpcClient.getInstance().processContainer(worker.getContainerName(), cleanEvent);
+            Future<IEvent> future = RpcClient.getInstance()
+                .processContainer(worker.getContainerName(), cleanEvent);
+            submitFutures.add(future);
         }
+        FutureUtil.wait(submitFutures);
 
         try {
             cleanEnvWaitingResponse.await();

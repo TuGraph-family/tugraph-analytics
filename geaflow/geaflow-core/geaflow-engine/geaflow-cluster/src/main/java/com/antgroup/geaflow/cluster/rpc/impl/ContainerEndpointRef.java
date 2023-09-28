@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.rpc.IContainerEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.RpcResponseFuture;
 import com.antgroup.geaflow.rpc.proto.Container.Request;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.ContainerServiceGrpc;
@@ -26,6 +27,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class ContainerEndpointRef extends AbstractRpcEndpointRef implements IContainerEndpointRef {
 
@@ -43,10 +45,11 @@ public class ContainerEndpointRef extends AbstractRpcEndpointRef implements ICon
     }
 
     @Override
-    public void process(IEvent request) {
+    public Future<IEvent> process(IEvent request) {
         ensureChannelAlive();
-        Request taskEvent = buildRequest(request);
-        blockingStub.process(taskEvent);
+        Request req = buildRequest(request);
+        ListenableFuture<Response> future = stub.process(req);
+        return new RpcResponseFuture(future);
     }
 
     @Override

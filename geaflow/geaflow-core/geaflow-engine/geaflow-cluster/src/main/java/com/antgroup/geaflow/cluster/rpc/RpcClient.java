@@ -46,6 +46,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,8 +98,8 @@ public class RpcClient implements Serializable {
     }
 
     // container endpoint ref
-    public void processContainer(String containerId, IEvent event) {
-        doRpcWithRetry(() -> connectContainer(containerId).process(event), containerId, CONTAINER);
+    public Future processContainer(String containerId, IEvent event) {
+        return doRpcWithRetry(() -> connectContainer(containerId).process(event), containerId, CONTAINER);
     }
 
     public void processContainer(String containerId, IEvent event, RpcCallback<Response> callback) {
