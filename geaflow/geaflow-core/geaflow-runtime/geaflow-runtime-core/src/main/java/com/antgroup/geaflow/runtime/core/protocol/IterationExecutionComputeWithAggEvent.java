@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
-import com.antgroup.geaflow.cluster.protocol.Message;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.model.record.RecordArgs;
 import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
@@ -32,7 +31,7 @@ import java.util.List;
  */
 public class IterationExecutionComputeWithAggEvent extends AbstractIterationComputeCommand {
 
-    private InputDescriptor inputDescriptor;
+    private final InputDescriptor inputDescriptor;
 
     public IterationExecutionComputeWithAggEvent(int workerId, int cycleId, long windowId,
                                                  long fetchWindowId, long fetchCount,
@@ -43,7 +42,7 @@ public class IterationExecutionComputeWithAggEvent extends AbstractIterationComp
 
     @Override
     public void execute(ITaskContext taskContext) {
-        ((AbstractAlignedWorker) taskContext.getWorker()).getInputReader().add(fetchAggResult());
+        ((AbstractAlignedWorker) taskContext.getWorker()).getInputReader().onMessage(fetchAggResult());
         super.execute(taskContext);
     }
 
@@ -57,20 +56,19 @@ public class IterationExecutionComputeWithAggEvent extends AbstractIterationComp
         return EventType.ITERATIVE_COMPUTE_WITH_AGGREGATE;
     }
 
-    private Message fetchAggResult() {
-        List aggRecords = new ArrayList();
+    private PipelineMessage<?> fetchAggResult() {
+        List<?> aggRecords = new ArrayList<>();
         for (IInputDesc inputDesc : inputDescriptor.getInputDescMap().values()) {
             aggRecords.addAll(inputDesc.getInput());
         }
-        Message message = new Message(fetchWindowId,
-            new PipelineMessage(fetchWindowId, RecordArgs.GraphRecordNames.Aggregate.name(),
-                new DataMessageIterator(aggRecords)));
-        return message;
+        return new PipelineMessage<>(this.fetchWindowId,
+            RecordArgs.GraphRecordNames.Aggregate.name(),
+            new DataMessageIterator<>(aggRecords));
     }
 
     private class DataMessageIterator<T> implements IMessageIterator<T> {
 
-        private Iterator<T> iterator;
+        private final Iterator<T> iterator;
         private long size = 0;
 
         public DataMessageIterator(List<T> data) {

@@ -14,9 +14,11 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
+import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 public class PipelineWriter<T, R> implements IShuffleWriter<T, R> {
@@ -42,8 +44,18 @@ public class PipelineWriter<T, R> implements IShuffleWriter<T, R> {
     }
 
     @Override
+    public void emit(long batchId, List<T> data, boolean isRetract, int channel) throws IOException {
+        this.shardBuffer.emit(batchId, data, channel);
+    }
+
+    @Override
     public Optional<R> flush(long batchId) throws IOException {
         return shardBuffer.finish(batchId);
+    }
+
+    @Override
+    public ShuffleWriteMetrics getShuffleWriteMetrics() {
+        return this.shardBuffer.getShuffleWriteMetrics();
     }
 
     @Override

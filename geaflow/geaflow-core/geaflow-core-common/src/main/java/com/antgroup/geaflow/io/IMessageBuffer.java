@@ -12,20 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.fetcher;
+package com.antgroup.geaflow.io;
 
-import com.antgroup.geaflow.shuffle.message.PipelineMessage;
+import java.util.concurrent.TimeUnit;
 
-public interface FetchListener {
-
-    /**
-     * Trigger processor to process message.
-     */
-    void onMessage(PipelineMessage message);
+public interface IMessageBuffer<M> {
 
     /**
-     * Trigger processor to process barrier.
+     * Push a message to this pipe.
+     *
+     * @param message message
      */
-    void onCompleted(long windowId, long windowCount);
+    void offer(M message);
+
+    /**
+     * Pull a record from this pipe with timeout.
+     *
+     * @param timeout timeout number
+     * @param unit timeout unit
+     * @return message
+     */
+    M poll(long timeout, TimeUnit unit);
 
 }

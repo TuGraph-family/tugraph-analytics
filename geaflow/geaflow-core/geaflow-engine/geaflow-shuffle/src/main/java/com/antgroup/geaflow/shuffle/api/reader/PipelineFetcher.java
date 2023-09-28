@@ -98,6 +98,7 @@ public class PipelineFetcher extends AbstractFetcher<PipelineSliceMeta> {
                     return barrier;
                 } else {
                     int edgeId = buffer.getSliceId().getEdgeId();
+                    this.readMetrics.increaseDecodeBytes(buffer.getBufferSize());
                     IMessageIterator<?> msgIterator = this.getMessageIterator(edgeId, buffer.getBuffer());
                     return new PipelineMessage<>(buffer.getBatchId(), buffer.getStreamName(), msgIterator);
                 }
@@ -181,14 +182,6 @@ public class PipelineFetcher extends AbstractFetcher<PipelineSliceMeta> {
             return inputEdgeSet.containsAll(edgeSet);
         }
         return false;
-    }
-
-    public long getInputQueueSize() {
-        long inputQueueSize = 0;
-        if (inputFetcher != null) {
-            inputQueueSize = inputFetcher.getNumberOfQueuedBuffers();
-        }
-        return inputQueueSize;
     }
 
 }

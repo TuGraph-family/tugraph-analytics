@@ -14,13 +14,9 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_CACHE_SPILL_THRESHOLD;
-
-import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineShard;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineSlice;
-import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
@@ -30,7 +26,6 @@ import com.antgroup.geaflow.shuffle.message.ShuffleId;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.message.WriterId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,8 +42,6 @@ public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
     protected WriterId writerId;
     protected ShuffleId shuffleId;
 
-    protected ShuffleWriteMetrics writeMetrics;
-    protected ShuffleConfig shuffleConfig;
     protected IWriterContext writerContext;
     protected IConnectionManager connectionManager;
     protected int taskId;
@@ -70,9 +63,6 @@ public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
 
         this.writerContext = writerContext;
         this.taskId = writerContext.getTaskId();
-        this.shuffleConfig = ShuffleConfig.getInstance(config);
-
-        this.writeMetrics = new ShuffleWriteMetrics();
 
         this.cacheEnabled = writerContext.getShuffleDescriptor().isCacheEnabled();
         if (cacheEnabled) {
@@ -85,7 +75,7 @@ public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
         int refCount = cacheEnabled ? Integer.MAX_VALUE : 1;
         initResultSlices(channels, refCount);
 
-        this.cacheSpillThreshold = config.getDouble(SHUFFLE_CACHE_SPILL_THRESHOLD);
+        this.cacheSpillThreshold = this.shuffleConfig.getCacheSpillThreshold();
     }
 
     private void initResultSlices(int channels, int refCount) {
@@ -110,9 +100,7 @@ public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
         for (int i = 0; i < slices.size(); i++) {
             ISliceMeta sliceMeta = slices.get(i);
             if (sliceMeta.getRecordNum() > 0) {
-                writeMetrics.increaseWrittenChannels();
-                writeMetrics.increaseRecords(sliceMeta.getRecordNum());
-                writeMetrics.increaseEncodedSize(sliceMeta.getEncodedSize());
+                this.writeMetrics.increaseWrittenChannels();
                 if (sliceMeta.getEncodedSize() > maxSliceSize) {
                     maxSliceSize = sliceMeta.getEncodedSize();
                 }
@@ -120,12 +108,12 @@ public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
             buffers.get(i).close();
         }
 
-        writeMetrics.setMaxSliceKB(maxSliceSize / 1024);
-        writeMetrics.setNumChannels(slices.size());
+        this.writeMetrics.setMaxSliceKB(maxSliceSize / 1024);
+        this.writeMetrics.setNumChannels(slices.size());
         long flushTime = System.currentTimeMillis() - beginTime;
-        writeMetrics.setFlushMs(flushTime);
+        this.writeMetrics.setFlushMs(flushTime);
         LOGGER.info("taskId {} {} flush batchId:{} useTime:{}ms {}", taskId, taskLogTag, batchId,
-            flushTime, writeMetrics);
+            flushTime, this.writeMetrics);
 
         buffers.clear();
         buffers = null;
@@ -159,11 +147,6 @@ public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
                 new PipelineShard(taskLogTag, resultSlices, writtenChannels));
         }
         return slices;
-    }
-
-    @VisibleForTesting
-    public ShuffleWriteMetrics getWriteMetrics() {
-        return writeMetrics;
     }
 
     @Override

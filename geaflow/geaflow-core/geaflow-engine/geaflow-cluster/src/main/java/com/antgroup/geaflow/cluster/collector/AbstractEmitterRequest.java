@@ -14,28 +14,24 @@
 
 package com.antgroup.geaflow.cluster.collector;
 
-import java.io.Serializable;
+public abstract class AbstractEmitterRequest implements IEmitterRequest {
 
-public interface IEmitterRequest extends Serializable {
+    private final int taskId;
+    private final long windowId;
 
-    /**
-     *  Return the task id of the emitter request.
-     *
-     * @return task id.
-     */
-    int getTaskId();
+    public AbstractEmitterRequest(int taskId, long windowId) {
+        this.taskId = taskId;
+        this.windowId = windowId;
+    }
 
-    /**
-     * Return the window id of the emitter request.
-     *
-     * @return window id.
-     */
-    long getWindowId();
+    @Override
+    public int getTaskId() {
+        return this.taskId;
+    }
 
-    /**
-     * Return the request type of the emitter request.
-     *
-     * @return request type.
-     */
-    RequestType getRequestType();
+    @Override
+    public long getWindowId() {
+        return this.windowId;
+    }
+
 }

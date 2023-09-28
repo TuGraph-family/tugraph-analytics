@@ -89,7 +89,6 @@ public class SliceRequestServerHandler extends SimpleChannelInboundHandler<Netty
 
     private void respondWithError(ChannelHandlerContext ctx, Throwable error,
                                   ChannelId sourceId) {
-        LOGGER.error("Responding with error: {}.", error.getClass());
         ctx.writeAndFlush(new ErrorResponse(sourceId, error));
     }
 

@@ -22,14 +22,14 @@ import com.antgroup.geaflow.shuffle.IOutputDesc;
 
 public class CollectorFactory {
 
-    public static ICollector create(IOutputDesc outputDesc) {
+    public static <T> ICollector<T> create(IOutputDesc outputDesc) {
         switch (outputDesc.getType()) {
             case FORWARD:
-                return new ForwardOutputCollector((ForwardOutputDesc) outputDesc);
+                return new ForwardOutputCollector<>((ForwardOutputDesc) outputDesc);
             case LOOP:
-                return new IterationOutputCollector((ForwardOutputDesc) outputDesc);
+                return new IterationOutputCollector<>((ForwardOutputDesc) outputDesc);
             case RESPONSE:
-                return new CollectResponseCollector((ResponseOutputDesc) outputDesc);
+                return new CollectResponseCollector<>((ResponseOutputDesc) outputDesc);
             default:
                 throw new GeaflowRuntimeException("not support output type {}" + outputDesc.getType());
 

@@ -57,7 +57,7 @@ public class SpillableShardBufferTest {
         Shard shard = optional.get();
         Assert.assertNotNull(shard);
 
-        ShuffleWriteMetrics writeMetrics = shardBuffer.getWriteMetrics();
+        ShuffleWriteMetrics writeMetrics = shardBuffer.getShuffleWriteMetrics();
         Assert.assertEquals(writeMetrics.getSpillNum(), 0);
         Assert.assertEquals(writeMetrics.getSpillDisk(), 0);
         long usedMemory = ShuffleMemoryTracker.getInstance().getUsedMemory();

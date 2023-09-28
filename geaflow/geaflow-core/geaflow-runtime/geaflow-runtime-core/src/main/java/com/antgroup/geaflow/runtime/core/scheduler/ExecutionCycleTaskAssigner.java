@@ -43,6 +43,7 @@ public class ExecutionCycleTaskAssigner {
                 for (int i = 0; i < vertex.getParallelism(); i++) {
                     ExecutionTask task = new ExecutionTask(taskId.getAndIncrement(),
                         i, vertex.getParallelism(), vertex.getMaxParallelism(), vertex.getNumPartitions(), vertex.getVertexId());
+                    task.setIterative(vertexGroup.getCycleGroupMeta().isIterative());
                     tasks.add(task);
                     taskIds.add(task.getTaskId());
                 }

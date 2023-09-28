@@ -196,7 +196,7 @@ public class KryoSerializer implements ISerializer {
 
     private void registerClass(Kryo kryo, String className, int kryoId) {
         try {
-            LOGGER.info("register class:{} id:{}", className, kryoId);
+            LOGGER.debug("register class:{} id:{}", className, kryoId);
             Class<?> clazz = ClassUtil.classForName(className);
             kryo.register(clazz, kryoId);
         } catch (GeaflowRuntimeException e) {
@@ -211,7 +211,7 @@ public class KryoSerializer implements ISerializer {
 
     private void registerClass(Kryo kryo, String className, String serializerClassName, int kryoId) {
         try {
-            LOGGER.info("register class:{} id:{}", className, kryoId);
+            LOGGER.debug("register class:{} id:{}", className, kryoId);
             Class<?> clazz = ClassUtil.classForName(className);
             Class<?> serializerClazz = ClassUtil.classForName(serializerClassName);
             Serializer serializer = (Serializer) serializerClazz.newInstance();

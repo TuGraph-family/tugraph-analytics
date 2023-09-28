@@ -14,114 +14,188 @@
 
 package com.antgroup.geaflow.common.metric;
 
+import com.antgroup.geaflow.common.utils.GcUtil;
 import java.io.Serializable;
 
 public class EventMetrics implements Serializable {
 
     /**
-     * execute compute event time cost.
+     * Meta.
      */
-    private long executeTime;
+    private final int vertexId;
+    private final int parallelism;
+    private final int index;
 
     /**
-     * gc time in total during current task execution.
+     * Execution.
      */
-    private long gcTime;
-
-    /**
-     * finish time of process certain windowId.
-     */
+    private long startTime;
     private long finishTime;
+    private long executeCostMs;
+    private long processCostMs;
+    private long gcCostMs;
 
     /**
-     * total input records.
+     * Shuffle.
      */
-    private long inputRecords;
-    private long inputBytes;
+    private long shuffleReadRecords;
+    private long shuffleReadBytes;
+    private long shuffleReadCostMs;
 
-    /**
-     * total output records.
-     */
-    private long outputRecords;
-    private long outputBytes;
-
-    private transient long startTs;
+    private long shuffleWriteRecords;
+    private long shuffleWriteBytes;
+    private long shuffleWriteCostMs;
 
     private transient long startGcTs;
 
-    public EventMetrics() {
+    public EventMetrics(int vertexId, int parallelism, int index) {
+        this.vertexId = vertexId;
+        this.parallelism = parallelism;
+        this.index = index;
+        this.startTime = System.currentTimeMillis();
+        this.startGcTs = GcUtil.computeCurrentTotalGcTime();
     }
 
-    public long getExecuteTime() {
-        return executeTime;
+    public int getVertexId() {
+        return this.vertexId;
     }
 
-    public void setExecuteTime(long executeTime) {
-        this.executeTime = executeTime;
+    public int getParallelism() {
+        return this.parallelism;
     }
 
-    public long getGcTime() {
-        return gcTime;
+    public int getIndex() {
+        return this.index;
     }
 
-    public void setGcTime(long gcTime) {
-        this.gcTime = gcTime;
+    public long getStartTime() {
+        return this.startTime;
     }
 
-    public long getStartTs() {
-        return startTs;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
     }
 
-    public void setStartTs(long startTs) {
-        this.startTs = startTs;
+    public long getFinishTime() {
+        return this.finishTime;
     }
 
-    public long getStartGcTs() {
-        return startGcTs;
+    public void setFinishTime(long finishTime) {
+        this.finishTime = finishTime;
+        this.executeCostMs = this.finishTime - this.startTime;
+    }
+
+    public long getExecuteCostMs() {
+        return this.executeCostMs;
+    }
+
+    public long getProcessCostMs() {
+        return this.processCostMs;
+    }
+
+    public void setProcessCostMs(long processCostMs) {
+        this.processCostMs = processCostMs;
+    }
+
+    public void addProcessCostMs(long processCostMs) {
+        this.processCostMs += processCostMs;
+    }
+
+    public long getGcCostMs() {
+        return this.gcCostMs;
+    }
+
+    public long getShuffleReadRecords() {
+        return this.shuffleReadRecords;
+    }
+
+    public void setShuffleReadRecords(long shuffleReadRecords) {
+        this.shuffleReadRecords = shuffleReadRecords;
+    }
+
+    public void addShuffleReadRecords(long shuffleReadRecords) {
+        this.shuffleReadRecords += shuffleReadRecords;
+    }
+
+    public long getShuffleReadBytes() {
+        return this.shuffleReadBytes;
+    }
+
+    public void setShuffleReadBytes(long shuffleReadBytes) {
+        this.shuffleReadBytes = shuffleReadBytes;
+    }
+
+    public void addShuffleReadBytes(long shuffleReadBytes) {
+        this.shuffleReadBytes += shuffleReadBytes;
+    }
+
+    public long getShuffleReadCostMs() {
+        return this.shuffleReadCostMs;
+    }
+
+    public void setShuffleReadCostMs(long shuffleReadCostMs) {
+        this.shuffleReadCostMs = shuffleReadCostMs;
+    }
+
+    public void addShuffleReadCostMs(long shuffleReadCostMs) {
+        this.shuffleReadCostMs += shuffleReadCostMs;
+    }
+
+    public long getShuffleWriteRecords() {
+        return this.shuffleWriteRecords;
+    }
+
+    public void setShuffleWriteRecords(long shuffleWriteRecords) {
+        this.shuffleWriteRecords = shuffleWriteRecords;
+    }
+
+    public void addShuffleWriteRecords(long shuffleWriteRecords) {
+        this.shuffleWriteRecords += shuffleWriteRecords;
+    }
+
+    public long getShuffleWriteBytes() {
+        return this.shuffleWriteBytes;
+    }
+
+    public void setShuffleWriteBytes(long shuffleWriteBytes) {
+        this.shuffleWriteBytes = shuffleWriteBytes;
+    }
+
+    public void addShuffleWriteBytes(long shuffleWriteBytes) {
+        this.shuffleWriteBytes += shuffleWriteBytes;
+    }
+
+    public long getShuffleWriteCostMs() {
+        return this.shuffleWriteCostMs;
+    }
+
+    public void addShuffleWriteCostMs(long shuffleWriteCostMs) {
+        this.shuffleWriteCostMs += shuffleWriteCostMs;
     }
 
     public void setStartGcTs(long startGcTs) {
         this.startGcTs = startGcTs;
     }
 
-    public long getInputRecords() {
-        return inputRecords;
+    public void setFinishGcTs(long finishGcTs) {
+        this.gcCostMs = finishGcTs - this.startGcTs;
     }
 
-    public void setInputRecords(long inputRecords) {
-        this.inputRecords = inputRecords;
-    }
-
-    public long getFinishTime() {
-        return finishTime;
-    }
-
-    public void setFinishTime(long finishTime) {
-        this.finishTime = finishTime;
-    }
-
-    public long getOutputRecords() {
-        return outputRecords;
-    }
-
-    public void setOutputRecords(long outputRecords) {
-        this.outputRecords = outputRecords;
-    }
-
-    public long getInputBytes() {
-        return inputBytes;
-    }
-
-    public void setInputBytes(long inputBytes) {
-        this.inputBytes = inputBytes;
-    }
-
-    public long getOutputBytes() {
-        return outputBytes;
-    }
-
-    public void setOutputBytes(long outputBytes) {
-        this.outputBytes = outputBytes;
+    @Override
+    public String toString() {
+        return "EventMetrics{"
+            + "startTime=" + startTime
+            + ", finishTime=" + finishTime
+            + ", executeCostMs=" + executeCostMs
+            + ", processCostMs=" + processCostMs
+            + ", gcCostMs=" + gcCostMs
+            + ", shuffleReadRecords=" + shuffleReadRecords
+            + ", shuffleReadBytes=" + shuffleReadBytes
+            + ", shuffleReadCostMs=" + shuffleReadCostMs
+            + ", shuffleWriteRecords=" + shuffleWriteRecords
+            + ", shuffleWriteBytes=" + shuffleWriteBytes
+            + ", shuffleWriteCostMs=" + shuffleWriteCostMs
+            + '}';
     }
 
 }

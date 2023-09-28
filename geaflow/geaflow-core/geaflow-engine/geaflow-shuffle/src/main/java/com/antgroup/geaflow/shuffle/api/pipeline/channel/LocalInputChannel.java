@@ -68,7 +68,7 @@ public class LocalInputChannel extends AbstractInputChannel implements PipelineS
                     if (increaseBackoff()) {
                         retriggerRequest = true;
                     } else {
-                        LOGGER.error("not found slice:{}", inputSliceId);
+                        LOGGER.warn("not found slice:{}", inputSliceId);
                         throw notFound;
                     }
                 }

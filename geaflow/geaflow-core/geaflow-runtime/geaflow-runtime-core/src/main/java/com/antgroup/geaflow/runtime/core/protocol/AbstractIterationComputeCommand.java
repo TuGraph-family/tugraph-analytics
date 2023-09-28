@@ -17,6 +17,7 @@ package com.antgroup.geaflow.runtime.core.protocol;
 import com.antgroup.geaflow.cluster.fetcher.ReFetchRequest;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
+import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import java.util.HashMap;
 import java.util.List;
@@ -43,11 +44,13 @@ public abstract class AbstractIterationComputeCommand extends AbstractExecutable
 
     @Override
     public void execute(ITaskContext taskContext) {
+        final long start = System.currentTimeMillis();
         super.execute(taskContext);
         AbstractAlignedWorker alignedWorker = (AbstractAlignedWorker) worker;
         alignedWorker.init(windowId);
         fetcherRunner.add(new ReFetchRequest(fetchWindowId, fetchCount));
         alignedWorker.alignedProcess(fetchCount);
+        ((AbstractWorkerContext) this.context).getEventMetrics().addProcessCostMs(System.currentTimeMillis() - start);
     }
 
 }

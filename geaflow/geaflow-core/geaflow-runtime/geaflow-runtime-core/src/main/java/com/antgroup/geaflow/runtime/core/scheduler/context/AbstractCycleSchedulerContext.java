@@ -94,7 +94,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
         this.workerManager.init(cycle);
 
-        LOGGER.info("init cycle {} context onTheFlyThreshold {}, currentIterationId {}, "
+        LOGGER.info("{} init cycle context onTheFlyThreshold {}, currentIterationId {}, "
                 + "iterationCount {}, finishIterationId {}, initialIterationId {}",
             cycle.getPipelineName(), cycle.getFlyingCount(), this.currentIterationId,
             cycle.getIterationCount(), this.finishIterationId, this.initialIterationId);

@@ -35,7 +35,7 @@ public class InitFetchRequest implements IFetchRequest {
     private int vertexId;
 
     private ShuffleDescriptor descriptor;
-    private List<FetchListener> fetchListeners;
+    private List<IInputMessageBuffer<?>> fetchListeners;
     private Map<Integer, String> inputStreamMap;
     private Map<Integer, List<ISliceMeta>> inputSlices;
     private Map<Integer, IEncoder<?>> encoders;
@@ -79,7 +79,7 @@ public class InitFetchRequest implements IFetchRequest {
         return descriptor;
     }
 
-    public List<FetchListener> getFetchListeners() {
+    public List<IInputMessageBuffer<?>> getFetchListeners() {
         return fetchListeners;
     }
 
@@ -91,7 +91,7 @@ public class InitFetchRequest implements IFetchRequest {
         return totalSliceNum;
     }
 
-    public void addListener(FetchListener listener) {
+    public void addListener(IInputMessageBuffer<?> listener) {
         fetchListeners.add(listener);
     }
 

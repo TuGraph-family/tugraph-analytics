@@ -15,29 +15,28 @@
 package com.antgroup.geaflow.cluster.collector;
 
 import com.antgroup.geaflow.cluster.task.service.AbstractTaskService;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EmitterService extends AbstractTaskService<IEmitterRequest, EmitterRunner> implements Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmitterService.class);
-
     private static final String EMITTER_FORMAT = "geaflow-emitter-%d";
 
-    private int slots;
+    private final int slots;
+    private final Configuration configuration;
 
-    public EmitterService(int slots) {
+    public EmitterService(int slots, Configuration configuration) {
         super(EMITTER_FORMAT);
         this.slots = slots;
+        this.configuration = configuration;
     }
 
     protected EmitterRunner[] buildTaskRunner() {
         Preconditions.checkArgument(slots > 0, "fetcher pool should be larger than 0");
         EmitterRunner[] emitterRunners = new EmitterRunner[slots];
         for (int i = 0; i < slots; i++) {
-            EmitterRunner runner = new EmitterRunner();
+            EmitterRunner runner = new EmitterRunner(this.configuration, i);
             emitterRunners[i] = runner;
         }
         return emitterRunners;

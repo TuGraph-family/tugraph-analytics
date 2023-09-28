@@ -14,24 +14,15 @@
 
 package com.antgroup.geaflow.cluster.collector;
 
-import com.antgroup.geaflow.collector.ICollector;
-import java.util.List;
+public class CloseEmitterRequest extends AbstractEmitterRequest {
 
-public class CloseEmitterRequest implements IEmitterRequest {
-
-    /**
-     * Close output collector.
-     */
-    public void closeEmitter(List<ICollector> collectors) {
-        if (collectors != null) {
-            for (ICollector collector : collectors) {
-                collector.close();
-            }
-        }
+    public CloseEmitterRequest(int taskId, long windowId) {
+        super(taskId, windowId);
     }
 
     @Override
     public RequestType getRequestType() {
         return RequestType.CLOSE;
     }
+
 }

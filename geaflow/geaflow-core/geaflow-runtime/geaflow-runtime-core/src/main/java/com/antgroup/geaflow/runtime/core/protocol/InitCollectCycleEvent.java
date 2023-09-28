@@ -14,15 +14,15 @@
 
 package com.antgroup.geaflow.runtime.core.protocol;
 
-import com.antgroup.geaflow.cluster.collector.InitCollectEmitterRequest;
+import com.antgroup.geaflow.cluster.collector.CollectResponseCollector;
 import com.antgroup.geaflow.cluster.collector.InitEmitterRequest;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.io.ResponseOutputDesc;
-import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
 import com.google.common.base.Preconditions;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,24 +31,20 @@ import java.util.List;
  */
 public class InitCollectCycleEvent extends InitCycleEvent {
 
+    private static final int COLLECT_BUCKET_NUM = 1;
+
     public InitCollectCycleEvent(int workerId, int cycleId, long iterationId,
                                  long pipelineId, String pipelineName,
                                  ExecutionTask task, HighAvailableLevel haLevel, long nestedWindowId) {
         super(workerId, cycleId, iterationId, pipelineId, pipelineName, task, haLevel, nestedWindowId);
     }
 
-    /**
-     * Init output emitter.
-     */
-    protected List<ICollector> initEmitterRequest(OutputDescriptor outputDescriptor) {
-
-        Preconditions.checkArgument(outputDescriptor.getOutputDescList().size() == 1,
+    @Override
+    protected List<ICollector<?>> buildCollectors(OutputDescriptor outputDescriptor, InitEmitterRequest request) {
+        Preconditions.checkArgument(outputDescriptor.getOutputDescList().size() == COLLECT_BUCKET_NUM,
             "only support one collect output info yet");
-        InitEmitterRequest request = new InitCollectEmitterRequest(
-            (ResponseOutputDesc) outputDescriptor.getOutputDescList().get(0));
-        emitterRunner.add(request);
-        ((AbstractAlignedWorker) worker).getOutputWriter()
-            .setCollectors(request.getCollectors());
-        return request.getCollectors();
+        ResponseOutputDesc outputDesc = (ResponseOutputDesc) outputDescriptor.getOutputDescList().get(0);
+        return Collections.singletonList(new CollectResponseCollector<>(outputDesc));
     }
+
 }

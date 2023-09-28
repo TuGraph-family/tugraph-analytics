@@ -14,13 +14,14 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
+import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.HeapBuffer.HeapBufferBuilder;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineSlice;
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.serialize.EncoderRecordSerializer;
@@ -30,11 +31,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class ShardBuffer<T, R> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ShardBuffer.class);
+
+    protected ShuffleConfig shuffleConfig;
 
     protected long pipelineId;
     protected int edgeId;
@@ -43,18 +43,19 @@ public abstract class ShardBuffer<T, R> {
 
     protected int targetChannels;
     protected String taskLogTag;
-    protected Configuration config;
     protected List<BufferBuilder> buffers;
     protected PipelineSlice[] resultSlices;
     protected int[] batchCounter;
     protected long[] bytesCounter;
     protected ShuffleMemoryTracker memoryTracker;
+    protected ShuffleWriteMetrics writeMetrics;
     protected long maxBufferSize;
     protected IRecordSerializer<T> recordSerializer;
 
     public void init(IWriterContext writerContext) {
-        this.config = writerContext.getConfig();
+        this.shuffleConfig = ShuffleConfig.getInstance();
         this.memoryTracker = ShuffleMemoryTracker.getInstance();
+        this.writeMetrics = new ShuffleWriteMetrics();
 
         this.targetChannels = writerContext.getTargetChannelNum();
         this.pipelineId = writerContext.getPipelineInfo().getPipelineId();
@@ -66,6 +67,7 @@ public abstract class ShardBuffer<T, R> {
 
         this.batchCounter = new int[targetChannels];
         this.bytesCounter = new long[targetChannels];
+        this.maxBufferSize = this.shuffleConfig.getWriteBufferSizeBytes();
         buildBufferBuilder(targetChannels);
     }
 
@@ -91,6 +93,18 @@ public abstract class ShardBuffer<T, R> {
         }
     }
 
+    public void emit(long batchId, List<T> data, int channel) {
+        BufferBuilder outBuffer = this.buffers.get(channel);
+        int size = data.size();
+        for (int i = 0; i < size; i++) {
+            this.recordSerializer.serialize(data.get(i), false, outBuffer);
+            this.batchCounter[channel]++;
+        }
+        if (outBuffer.getBufferSize() >= maxBufferSize) {
+            send(channel, outBuffer.build(), batchId);
+        }
+    }
+
     protected void send(int selectChannel, OutBuffer outBuffer, long batchId) {
         sendBuffer(selectChannel, outBuffer, batchId);
         this.bytesCounter[selectChannel] += outBuffer.getBufferSize();
@@ -103,6 +117,10 @@ public abstract class ShardBuffer<T, R> {
 
     public abstract Optional<R> finish(long batchId) throws IOException;
 
+    public ShuffleWriteMetrics getShuffleWriteMetrics() {
+        return this.writeMetrics;
+    }
+
     public void close() {
     }
 
@@ -114,33 +132,18 @@ public abstract class ShardBuffer<T, R> {
 
     protected void notify(PipelineBarrier barrier, int channel) {
         long batchId = barrier.getWindowId();
-        int counter = batchCounter[channel];
-        batchCounter[channel] = 0;
-        bytesCounter[channel] = 0;
-        sendBarrier(channel, batchId, counter, barrier.isFinish());
+        int recordCount = this.batchCounter[channel];
+        sendBarrier(channel, batchId, recordCount, barrier.isFinish());
+
+        this.writeMetrics.increaseRecords(recordCount);
+        this.writeMetrics.increaseEncodedSize(this.bytesCounter[channel]);
+        this.batchCounter[channel] = 0;
+        this.bytesCounter[channel] = 0;
     }
 
     protected void sendBarrier(int sliceIndex, long batchId, int count, boolean isFinish) {
         PipelineSlice resultSlice = resultSlices[sliceIndex];
         resultSlice.add(new PipeBuffer(batchId, count, false, isFinish));
-    }
-
-    public long getOutputQueueSize() {
-        PipelineSlice[] slices = resultSlices;
-        long queueSize = 0;
-        if (slices != null) {
-            for (int retry = 0; retry < 3; retry++) {
-                try {
-                    for (int i = 0; i < slices.length; i++) {
-                        queueSize += slices[i].getNumberOfBuffers();
-                    }
-                } catch (Throwable e) {
-                    LOGGER.warn("get slice buffer number failed", e);
-                    // ignore
-                }
-            }
-        }
-        return queueSize;
     }
 
     @SuppressWarnings("unchecked")

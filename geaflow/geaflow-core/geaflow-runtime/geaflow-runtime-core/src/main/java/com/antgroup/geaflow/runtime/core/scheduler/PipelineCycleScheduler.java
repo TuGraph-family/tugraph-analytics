@@ -24,10 +24,12 @@ import com.antgroup.geaflow.cluster.response.IResult;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.metric.CycleMetrics;
+import com.antgroup.geaflow.common.metric.EventMetrics;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.common.utils.FutureUtil;
 import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
+import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.runtime.core.protocol.ComposeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.DoneEvent;
@@ -44,6 +46,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -57,18 +60,19 @@ public class PipelineCycleScheduler<E>
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineCycleScheduler.class);
 
-    private static final String FINISH_TAG = "FINISH";
-
     private ExecutionNodeCycle nodeCycle;
     private CycleResultManager resultManager;
 
     private boolean enableSchedulerDebug = false;
     private CycleResponseEventPool<IEvent> responseEventPool;
     private HashMap<Long, List<IEvent>> iterationIdToFinishedTasks;
-    private HashMap<Long, CycleMetrics> iterationIdToMetrics;
+    private Map<Integer, EventMetrics[]> vertexIdToMetrics;
     private Map<Integer, ExecutionTask> cycleTasks;
     private Map<Integer, Long> taskIdToFinishedSourceIds;
+    private String pipelineName;
     private long pipelineId;
+    private int cycleId;
+    private long scheduleStartTime;
     private boolean isIteration;
 
     private DataExchangeMode inputExchangeMode;
@@ -76,6 +80,7 @@ public class PipelineCycleScheduler<E>
 
     private SchedulerEventBuilder eventBuilder;
     private SchedulerGraphAggregateProcessor aggregator;
+    private String cycleLogTag;
 
     public PipelineCycleScheduler() {
     }
@@ -85,14 +90,16 @@ public class PipelineCycleScheduler<E>
         super.init(context);
         this.responseEventPool = new CycleResponseEventPool<>();
         this.iterationIdToFinishedTasks = new HashMap<>();
-        this.iterationIdToMetrics = new HashMap<>();
         this.taskIdToFinishedSourceIds = new HashMap<>();
         this.nodeCycle = (ExecutionNodeCycle) context.getCycle();
-        this.cycleLogTag = LoggerFormatter.getCycleTag(nodeCycle.getPipelineName(), nodeCycle.getCycleId());
         this.cycleTasks = nodeCycle.getTasks().stream().collect(Collectors.toMap(t -> t.getTaskId(), t -> t));
         this.isIteration = nodeCycle.getVertexGroup().getCycleGroupMeta().isIterative();
+        this.pipelineName = nodeCycle.getPipelineName();
         this.pipelineId = nodeCycle.getPipelineId();
+        this.cycleId = nodeCycle.getCycleId();
         this.resultManager = context.getResultManager();
+        this.cycleLogTag = LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId);
+        this.initMetrics();
 
         inputExchangeMode = DataExchangeMode.BATCH;
         if (nodeCycle.isPipelineDataLoop()) {
@@ -112,6 +119,17 @@ public class PipelineCycleScheduler<E>
         }
     }
 
+    private void initMetrics() {
+        this.scheduleStartTime = System.currentTimeMillis();
+        this.vertexIdToMetrics = new HashMap<>();
+        Map<Integer, ExecutionVertex> vertexMap = this.nodeCycle.getVertexGroup().getVertexMap();
+        for (Map.Entry<Integer, ExecutionVertex> entry : vertexMap.entrySet()) {
+            Integer vertexId = entry.getKey();
+            ExecutionVertex vertex = entry.getValue();
+            this.vertexIdToMetrics.put(vertexId, new EventMetrics[vertex.getParallelism()]);
+        }
+    }
+
     @Override
     public void close() {
         super.close();
@@ -124,7 +142,7 @@ public class PipelineCycleScheduler<E>
         if (((AbstractCycleSchedulerContext) context).getParentContext() == null) {
             context.close();
         }
-        LOGGER.info("cycle {} closed", cycleLogTag);
+        LOGGER.info("{} closed", cycleLogTag);
     }
 
     @Override
@@ -145,7 +163,7 @@ public class PipelineCycleScheduler<E>
 
                             ICycleSchedulerContext parentContext = ((AbstractCycleSchedulerContext) context).getParentContext();
                             if (parentContext != null) {
-                                DoneEvent cycleDoneEvent = new DoneEvent(parentContext.getCycle().getCycleId(),
+                                DoneEvent<?> cycleDoneEvent = new DoneEvent<>(parentContext.getCycle().getCycleId(),
                                     doneEvent.getWindowId(), doneEvent.getTaskId(),
                                     EventType.LAUNCH_SOURCE, doneEvent.getCycleId());
                                 RpcClient.getInstance().processPipeline(cycle.getDriverId(), cycleDoneEvent);
@@ -170,11 +188,6 @@ public class PipelineCycleScheduler<E>
         String iterationLogTag = getCycleIterationTag(iterationId);
         LOGGER.info("{} execute", iterationLogTag);
         iterationIdToFinishedTasks.put(iterationId, new ArrayList<>());
-        CycleMetrics cycleMetrics = new CycleMetrics(LoggerFormatter.getCycleName(cycle.getCycleId(), iterationId),
-            cycle.getPipelineName(),
-            nodeCycle.getName());
-        cycleMetrics.setStartTime(System.currentTimeMillis());
-        iterationIdToMetrics.put(iterationId, cycleMetrics);
         List<ICycleSchedulerContext.SchedulerState> schedulerStates = context.getSchedulerState(iterationId);
         Map<Integer, IEvent> events;
         if (schedulerStates == null) {
@@ -188,10 +201,16 @@ public class PipelineCycleScheduler<E>
         for (Map.Entry<Integer, IEvent> entry : events.entrySet()) {
             ExecutionTask task = cycleTasks.get(entry.getKey());
 
+            String taskTag = this.isIteration
+                ? LoggerFormatter.getTaskTag(this.pipelineName, this.cycleId, iterationId,
+                task.getTaskId(), task.getVertexId(), task.getIndex(), task.getParallelism())
+                : LoggerFormatter.getTaskTag(this.pipelineName, this.cycleId, task.getTaskId(),
+                task.getVertexId(), task.getIndex(), task.getParallelism());
             LOGGER.info("{} submit event {} on worker {} host {} process {}",
-                getCycleTaskLogTag(iterationId, task.getIndex()),
+                taskTag,
                 entry.getValue(),
-                task.getWorkerInfo().getWorkerIndex(), task.getWorkerInfo().getHost(),
+                task.getWorkerInfo().getWorkerIndex(),
+                task.getWorkerInfo().getHost(),
                 task.getWorkerInfo().getProcessId());
 
             Future<IEvent> future = RpcClient.getInstance()
@@ -232,14 +251,6 @@ public class PipelineCycleScheduler<E>
                         iterationIdToFinishedTasks.keySet()));
             }
             iterationIdToFinishedTasks.get(currentTaskIterationId).add(response);
-            LOGGER.info("{} receive event {}, iterationId {}, current response iterationId {}, "
-                    + "received response {}/{}, duration {}ms",
-                cycleLogTag, event,
-                iterationId,
-                currentTaskIterationId,
-                iterationIdToFinishedTasks.get(currentTaskIterationId).size(),
-                expectedResponseSize,
-                System.currentTimeMillis() - iterationIdToMetrics.get(iterationId).getStartTime());
         }
 
         // Get current iteration result.
@@ -248,16 +259,16 @@ public class PipelineCycleScheduler<E>
             registerResults((DoneEvent) e);
         }
 
-        CycleMetrics cycleMetrics = iterationIdToMetrics.remove(iterationId);
-        collectEventMetrics(cycleMetrics, responses);
-        StatsCollectorFactory.getInstance().getPipelineStatsCollector().reportCycleMetrics(cycleMetrics);
-        LOGGER.info("{} finished iterationId {}, {}", iterationLogTag, iterationId, cycleMetrics);
+        if (this.isIteration) {
+            this.collectEventMetrics(responses, iterationId);
+        }
+        LOGGER.info("{} finished iterationId {}", iterationLogTag, iterationId);
     }
 
     protected List<IResult> finish() {
-        String finishLogTag = getCycleFinishTag();
-        CycleMetrics cycleMetrics = new CycleMetrics(getCycleFinishName(), cycle.getPipelineName(), nodeCycle.getName());
-        cycleMetrics.setStartTime(System.currentTimeMillis());
+        long finishIterationId = this.isIteration
+            ? this.context.getFinishIterationId() + 1 : this.context.getFinishIterationId();
+        String finishLogTag = this.getCycleIterationTag(finishIterationId);
 
         Map<Integer, IEvent> events = eventBuilder.build(ICycleSchedulerContext.SchedulerState.FINISH,
             context.getCurrentIterationId());
@@ -274,15 +285,17 @@ public class PipelineCycleScheduler<E>
         // Need receive all tail responses.
         int responseCount = 0;
 
-        List<IEvent> responses = new ArrayList<>();
+        List<IEvent> resultResponses = new ArrayList<>(this.cycleTasks.size());
+        List<IEvent> metricResponses = new ArrayList<>(this.cycleTasks.size());
         while (true) {
             IEvent e = responseEventPool.waitEvent();
             DoneEvent<List<IResult>> event = (DoneEvent) e;
             switch (event.getSourceEvent()) {
                 case EXECUTE_COMPUTE:
-                    responses.add(event);
+                    resultResponses.add(event);
                     break;
                 default:
+                    metricResponses.add(event);
                     responseCount++;
                     break;
             }
@@ -291,14 +304,14 @@ public class PipelineCycleScheduler<E>
                 break;
             }
         }
-        if (!responses.isEmpty()) {
-            for (IEvent e : responses) {
+        if (!resultResponses.isEmpty()) {
+            for (IEvent e : resultResponses) {
                 registerResults((DoneEvent) e);
             }
-
-            collectEventMetrics(cycleMetrics, responses);
-            StatsCollectorFactory.getInstance().getPipelineStatsCollector().reportCycleMetrics(cycleMetrics);
-            LOGGER.info("{} finished {}", finishLogTag, cycleMetrics);
+        }
+        if (!metricResponses.isEmpty()) {
+            this.collectEventMetrics(metricResponses, finishIterationId);
+            LOGGER.info("{} finished", finishLogTag);
         }
 
         return context.getResultManager().getDataResponse();
@@ -320,43 +333,83 @@ public class PipelineCycleScheduler<E>
         }
     }
 
-    private void collectEventMetrics(CycleMetrics cycleMetrics, List<IEvent> responses) {
+    private void collectEventMetrics(List<IEvent> responses, long windowId) {
+        Map<Integer, List<EventMetrics>> vertexId2metrics = responses.stream()
+            .map(e -> ((DoneEvent<?>) e).getEventMetrics())
+            .filter(Objects::nonNull)
+            .collect(Collectors.groupingBy(EventMetrics::getVertexId));
 
-        final long duration = System.currentTimeMillis() - cycleMetrics.getStartTime();
-        final int totalTaskNum = responses.size();
-        long totalExecuteTime = 0;
-        long totalGcTime = 0;
-        long slowestTaskExecuteTime = 0;
-        int slowestTaskId = 0;
-        long totalInputRecords = 0;
-        long totalInputBytes = 0;
-        long totalOutputRecords = 0;
-        long totalOutputBytes = 0;
+        long duration = System.currentTimeMillis() - this.scheduleStartTime;
+        for (Map.Entry<Integer, List<EventMetrics>> entry : vertexId2metrics.entrySet()) {
+            Integer vertexId = entry.getKey();
+            List<EventMetrics> metrics = entry.getValue();
+            EventMetrics[] previousMetrics = this.vertexIdToMetrics.get(vertexId);
 
-        for (IEvent response : responses) {
-            DoneEvent event = (DoneEvent) response;
-            if (event.getEventMetrics() != null) {
-                totalExecuteTime += event.getEventMetrics().getExecuteTime();
-                totalExecuteTime += event.getEventMetrics().getGcTime();
-                totalGcTime += event.getEventMetrics().getGcTime();
-                if (event.getEventMetrics().getExecuteTime() > slowestTaskExecuteTime) {
-                    slowestTaskExecuteTime = event.getEventMetrics().getExecuteTime();
-                    slowestTaskId = event.getTaskId();
+            int taskNum = previousMetrics.length;
+            int slowestTask = 0;
+            long executeCostMs = 0;
+            long totalExecuteTime = 0;
+            long totalGcTime = 0;
+            long slowestTaskExecuteTime = 0;
+            long totalInputRecords = 0;
+            long totalInputBytes = 0;
+            long totalOutputRecords = 0;
+            long totalOutputBytes = 0;
+
+            for (EventMetrics eventMetrics : metrics) {
+                int index = eventMetrics.getIndex();
+                EventMetrics previous = previousMetrics[index];
+                if (previous == null) {
+                    executeCostMs = eventMetrics.getProcessCostMs();
+                    totalExecuteTime += executeCostMs;
+                    totalGcTime += eventMetrics.getGcCostMs();
+                    totalInputRecords += eventMetrics.getShuffleReadRecords();
+                    totalInputBytes += eventMetrics.getShuffleReadBytes();
+                    totalOutputRecords += eventMetrics.getShuffleWriteRecords();
+                    totalOutputBytes += eventMetrics.getShuffleWriteBytes();
+                } else {
+                    executeCostMs = eventMetrics.getProcessCostMs() - previous.getProcessCostMs();
+                    totalExecuteTime += executeCostMs;
+                    totalGcTime += eventMetrics.getGcCostMs() - previous.getGcCostMs();
+                    totalInputRecords += eventMetrics.getShuffleReadRecords() - previous.getShuffleReadRecords();
+                    totalInputBytes += eventMetrics.getShuffleReadBytes() - previous.getShuffleReadBytes();
+                    totalOutputRecords += eventMetrics.getShuffleWriteRecords() - previous.getShuffleWriteRecords();
+                    totalOutputBytes += eventMetrics.getShuffleWriteBytes() - previous.getShuffleWriteBytes();
                 }
-                totalInputRecords += event.getEventMetrics().getInputRecords();
-                totalInputBytes += event.getEventMetrics().getInputBytes();
-                totalOutputRecords += event.getEventMetrics().getOutputRecords();
-                totalOutputBytes += event.getEventMetrics().getOutputBytes();
+                if (executeCostMs > slowestTaskExecuteTime) {
+                    slowestTaskExecuteTime = executeCostMs;
+                    slowestTask = index;
+                }
+                if (this.isIteration) {
+                    previousMetrics[index] = eventMetrics;
+                }
             }
+
+            String metricName = this.isIteration
+                ? LoggerFormatter.getCycleMetricName(this.cycleId, windowId, vertexId)
+                : LoggerFormatter.getCycleMetricName(this.cycleId, vertexId);
+            String opName = this.nodeCycle.getVertexGroup().getVertexMap().get(vertexId).getName();
+            CycleMetrics cycleMetrics = CycleMetrics.build(
+                metricName,
+                this.pipelineName,
+                opName,
+                taskNum,
+                slowestTask,
+                this.scheduleStartTime,
+                duration,
+                totalExecuteTime,
+                totalGcTime,
+                slowestTaskExecuteTime,
+                totalInputRecords,
+                totalInputBytes,
+                totalOutputRecords,
+                totalOutputBytes
+            );
+            LOGGER.info("collect metric {} {}", metricName, cycleMetrics);
+            StatsCollectorFactory.getInstance().getPipelineStatsCollector().reportCycleMetrics(cycleMetrics);
         }
-        cycleMetrics.setTotalTasks(responses.size());
-        cycleMetrics.setDuration(duration);
-        cycleMetrics.setAvgGcTime(totalGcTime / totalTaskNum);
-        cycleMetrics.setAvgExecuteTime(totalExecuteTime / totalTaskNum);
-        cycleMetrics.setSlowestTaskExecuteTime(slowestTaskExecuteTime);
-        cycleMetrics.setSlowestTask(slowestTaskId);
-        cycleMetrics.setOutputRecords(totalOutputRecords);
-        cycleMetrics.setOutputKb(totalOutputBytes / 1024);
+
+        this.scheduleStartTime = System.currentTimeMillis();
     }
 
     private Map<Integer, IEvent> mergeEvents(List<Map<Integer, IEvent>> list) {
@@ -380,38 +433,9 @@ public class PipelineCycleScheduler<E>
         return result;
     }
 
-    private String getCycleName(long iterationId) {
-        return LoggerFormatter.getCycleTag(nodeCycle.getPipelineName(), nodeCycle.getCycleId(), iterationId);
-    }
-
-    private String getCycleTaskName(int vertexId, int taskIndex) {
-        return LoggerFormatter.getTaskLog(nodeCycle.getPipelineName(), nodeCycle.getCycleId(), vertexId, taskIndex);
-    }
-
-    private String getCycleTaskLogTag(long iterationId, int taskIndex) {
-        if (isIteration) {
-            return LoggerFormatter.getTaskLog(nodeCycle.getPipelineName(),
-                nodeCycle.getCycleId(), iterationId, taskIndex);
-        } else {
-            return LoggerFormatter.getTaskLog(nodeCycle.getPipelineName(),
-                nodeCycle.getCycleId(), taskIndex);
-        }
-    }
-
     private String getCycleIterationTag(long iterationId) {
-        if (!isIteration) {
-            return cycleLogTag;
-        } else {
-            return LoggerFormatter.getCycleTag(cycle.getPipelineName(), cycle.getCycleId(), iterationId);
-
-        }
-    }
-
-    private String getCycleFinishTag() {
-        return LoggerFormatter.getCycleTag(cycle.getPipelineName(), cycle.getCycleId(), FINISH_TAG);
-    }
-
-    private String getCycleFinishName() {
-        return LoggerFormatter.getCycleName(cycle.getCycleId(), FINISH_TAG);
+        return this.isIteration
+            ? LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId, iterationId)
+            : LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId);
     }
 }
