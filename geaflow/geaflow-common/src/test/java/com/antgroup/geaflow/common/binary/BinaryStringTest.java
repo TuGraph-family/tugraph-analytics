@@ -40,4 +40,19 @@ public class BinaryStringTest {
         Assert.assertFalse(splitStr.contains(BinaryString.fromString("21")));
         Assert.assertTrue(splitStr.startsWith(BinaryString.fromString("123")));
     }
+
+    @Test
+    public void testStartWith() {
+        BinaryString str = BinaryString.fromString("abcabc");
+        Assert.assertTrue(str.startsWith(BinaryString.fromString("abc")));
+        Assert.assertFalse(str.startsWith(BinaryString.fromString("c")));
+    }
+
+    @Test
+    public void testEndsWith() {
+        BinaryString str = BinaryString.fromString("abcabc");
+        Assert.assertTrue(str.endsWith(BinaryString.fromString("abc")));
+        Assert.assertTrue(str.endsWith(BinaryString.fromString("c")));
+        Assert.assertFalse(str.endsWith(BinaryString.fromString("d")));
+    }
 }

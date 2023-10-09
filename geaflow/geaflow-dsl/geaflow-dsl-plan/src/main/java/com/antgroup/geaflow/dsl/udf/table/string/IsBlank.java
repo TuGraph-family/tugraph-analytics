@@ -24,5 +24,4 @@ public class IsBlank extends UDF {
     public Boolean eval(String s) {
         return StringUtils.isBlank(s);
     }
-
 }

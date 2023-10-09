@@ -218,7 +218,7 @@ public class UDFStringTest {
         LTrim test = new LTrim();
         test.open(null);
         assertEquals(test.eval("    facebook   "), "facebook   ");
-        assertNull(test.eval(null));
+        assertNull(test.eval((String) null));
     }
 
     @Test
@@ -267,7 +267,7 @@ public class UDFStringTest {
         RTrim test = new RTrim();
         test.open(null);
         assertEquals(test.eval("  AntGroup "), "  AntGroup");
-        assertNull(test.eval(null));
+        assertNull(test.eval((String) null));
     }
 
     @Test

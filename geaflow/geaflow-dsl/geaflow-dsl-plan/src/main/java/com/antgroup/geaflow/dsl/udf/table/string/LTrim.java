@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.table.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 import org.apache.commons.lang3.StringUtils;
@@ -26,5 +27,20 @@ public class LTrim extends UDF {
             return null;
         }
         return StringUtils.stripStart(s, " ");
+    }
+
+    public BinaryString eval(BinaryString s) {
+        if (s == null) {
+            return null;
+        }
+        int l = 0;
+        while (l < s.getLength()) {
+            if (s.getByte(l) == ' ') {
+                l++;
+            } else {
+                break;
+            }
+        }
+        return s.substring(l, s.getLength());
     }
 }
