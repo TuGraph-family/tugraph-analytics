@@ -65,7 +65,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 0xF5..0xFF - disallowed in UTF-8
     };
 
-    public static final BinaryString EMPTY_UTF8 = BinaryString.fromString("");
+    public static final BinaryString EMPTY_STRING = BinaryString.fromString("");
 
     public BinaryString() {
 
@@ -185,7 +185,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return numBytes - other.numBytes;
     }
 
-    private byte getByte(int i) {
+    public byte getByte(int i) {
         return BinaryOperations.getByte(binaryObject, offset + i);
     }
 
@@ -253,7 +253,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
 
     public static BinaryString concatWs(BinaryString separator, BinaryString... inputs) {
         if (Objects.isNull(separator)) {
-            separator = EMPTY_UTF8;
+            separator = EMPTY_STRING;
         }
 
         // total number of bytes from inputs
@@ -328,10 +328,48 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return matchAt(prefix, 0);
     }
 
+    public boolean endsWith(final BinaryString suffix) {
+        return matchAt(suffix, numBytes - suffix.numBytes);
+    }
+
     private static int numBytesForFirstByte(final byte b) {
         final int offset = b & 0xFF;
         byte numBytes = bytesOfCodePointInUTF8[offset];
         return (numBytes == 0) ? 1 : numBytes; // Skip the first byte disallowed in UTF-8
+    }
+
+    public BinaryString substring(final int start) {
+        return substring(start, getLength());
+    }
+
+    /**
+     * This method is an adaptation of Spark's BinaryString#substring.
+     */
+    public BinaryString substring(final int start, final int end) {
+        if (end <= start || start >= numBytes) {
+            return EMPTY_STRING;
+        }
+
+        int i = 0;
+        int c = 0;
+        while (i < numBytes && c < start) {
+            i += numBytesForFirstByte(getByte(i));
+            c += 1;
+        }
+
+        int j = i;
+        while (i < numBytes && c < end) {
+            i += numBytesForFirstByte(getByte(i));
+            c += 1;
+        }
+
+        if (i > j) {
+            byte[] bytes = new byte[i - j];
+            copyMemory(binaryObject, offset + j, bytes, 0, i - j);
+            return fromBytes(bytes);
+        } else {
+            return EMPTY_STRING;
+        }
     }
 
     @Override

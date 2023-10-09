@@ -28,7 +28,7 @@ public class ConcatWS extends UDF {
     }
 
     public BinaryString eval(String separator, BinaryString... args) {
-        BinaryString sep = Objects.isNull(separator) ? BinaryString.EMPTY_UTF8 :
+        BinaryString sep = Objects.isNull(separator) ? BinaryString.EMPTY_STRING :
                            BinaryString.fromString(separator);
         return BinaryString.concatWs(sep, args);
     }

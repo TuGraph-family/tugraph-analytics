@@ -1861,4 +1861,33 @@ public final class GeaFlowBuiltinFunctions {
                 throw new UnsupportedOperationException("Not support trim flag: " + flag);
         }
     }
+
+    public static BinaryString trim(Integer flag,
+                              BinaryString removeStr, BinaryString str) {
+        if (flag == null || removeStr == null || str == null) {
+            return null;
+        }
+        switch (flag) {
+            case TRIM_BOTH:
+                while (str.startsWith(removeStr)) {
+                    str = str.substring(removeStr.getLength());
+                }
+                while (str.endsWith(removeStr)) {
+                    str = str.substring(0, str.getLength() - removeStr.getLength());
+                }
+                return str;
+            case TRIM_LEFT:
+                while (str.startsWith(removeStr)) {
+                    str = str.substring(removeStr.getLength());
+                }
+                return str;
+            case TRIM_RIGHT:
+                while (str.endsWith(removeStr)) {
+                    str = str.substring(0, str.getLength() - removeStr.getLength());
+                }
+                return str;
+            default:
+                throw new UnsupportedOperationException("Not support trim flag: " + flag);
+        }
+    }
 }
