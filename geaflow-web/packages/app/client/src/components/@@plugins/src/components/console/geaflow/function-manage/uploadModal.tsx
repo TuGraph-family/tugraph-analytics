@@ -80,20 +80,7 @@ export const AddTemplateModal: React.FC<AddTemplateProps> = ({
   };
 
   const props = {
-    beforeUpload: (file) => {
-      const isJar = file.type === "application/java-archive";
-      if (!isJar) {
-        message.error(
-          $i18n.get(
-            {
-              id: "openpiece-geaflow.geaflow.function-manage.uploadModal.FilenameIsNotAJar",
-              dm: "{fileName} 不是jar文件类型!",
-            },
-            { fileName: file.name }
-          )
-        );
-        return Upload.LIST_IGNORE;
-      }
+    beforeUpload: () => {
       return false;
     },
   };
