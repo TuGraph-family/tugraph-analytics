@@ -28,6 +28,7 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.ArrayType;
 import com.antgroup.geaflow.dsl.common.util.FunctionCallUtils;
 import java.lang.reflect.Array;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Locale;
 
@@ -59,6 +60,9 @@ public class FieldReaderFactory {
                 return (baseObject, offset) -> BinaryOperations.getInt(baseObject, offset) == 1;
             case Types.TYPE_NAME_TIMESTAMP:
                 return (baseObject, offset) -> new Timestamp(BinaryOperations.getLong(baseObject,
+                    offset));
+            case Types.TYPE_NAME_DATE:
+                return (baseObject, offset) -> new Date(BinaryOperations.getLong(baseObject,
                     offset));
             case Types.TYPE_NAME_OBJECT:
             case Types.TYPE_NAME_VERTEX:

@@ -18,6 +18,7 @@ import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.IType;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class TypeCastUtil {
@@ -146,7 +147,13 @@ public class TypeCastUtil {
                 return BinaryString.fromString(o.toString());
             }
             if (targetType == Timestamp.class) {
+                if (isInteger((String) o)) {
+                    return new Timestamp(Long.parseLong((String) o));
+                }
                 return Timestamp.valueOf((String) o);
+            }
+            if (targetType == Date.class) {
+                return Date.valueOf((String) o);
             }
         }
         if (o.getClass() == BinaryString.class) {
@@ -166,7 +173,13 @@ public class TypeCastUtil {
                 return o.toString();
             }
             if (targetType == Timestamp.class) {
+                if (isInteger((BinaryString) o)) {
+                    return new Timestamp(Long.parseLong(o.toString()));
+                }
                 return Timestamp.valueOf(o.toString());
+            }
+            if (targetType == Date.class) {
+                return Date.valueOf(o.toString());
             }
         }
         if (o.getClass() == Double.class) {
@@ -198,5 +211,29 @@ public class TypeCastUtil {
             }
         }
         throw new IllegalArgumentException("Cannot cast " + o + " from " + o.getClass() + " to " + targetType);
+    }
+
+    public static boolean isInteger(String s) {
+        if (s == null) {
+            return false;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isInteger(BinaryString s) {
+        if (s == null) {
+            return false;
+        }
+        for (int i = 0; i < s.getLength(); i++) {
+            if (!Character.isDigit(s.getByte(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
