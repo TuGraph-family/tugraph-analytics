@@ -18,6 +18,7 @@ import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.primitive.BinaryStringType;
 import com.antgroup.geaflow.common.type.primitive.BooleanType;
 import com.antgroup.geaflow.common.type.primitive.ByteType;
+import com.antgroup.geaflow.common.type.primitive.DateType;
 import com.antgroup.geaflow.common.type.primitive.DecimalType;
 import com.antgroup.geaflow.common.type.primitive.DoubleType;
 import com.antgroup.geaflow.common.type.primitive.FloatType;
@@ -28,6 +29,7 @@ import com.antgroup.geaflow.common.type.primitive.StringType;
 import com.antgroup.geaflow.common.type.primitive.TimestampType;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Locale;
 
@@ -52,6 +54,7 @@ public class Types {
     public static final String TYPE_NAME_OBJECT = "OBJECT";
     public static final String TYPE_NAME_BINARY_STRING = "BINARY_STRING";
     public static final String TYPE_NAME_TIMESTAMP = "TIMESTAMP";
+    public static final String TYPE_NAME_DATE = "DATE";
 
     public static final IType<Boolean> BOOLEAN = BooleanType.INSTANCE;
     public static final IType<Byte> BYTE = ByteType.INSTANCE;
@@ -64,6 +67,7 @@ public class Types {
     public static final IType<BigDecimal> DECIMAL = DecimalType.INSTANCE;
     public static final IType<BinaryString> BINARY_STRING = BinaryStringType.INSTANCE;
     public static final IType<Timestamp> TIMESTAMP = TimestampType.INSTANCE;
+    public static final IType<Date> DATE = DateType.INSTANCE;
 
     public static final ImmutableMap<Class, IType> TYPE_IMMUTABLE_MAP =
         ImmutableMap.<Class, IType>builder()
@@ -78,6 +82,7 @@ public class Types {
             .put(DECIMAL.getTypeClass(), DECIMAL)
             .put(BINARY_STRING.getTypeClass(), BINARY_STRING)
             .put(TIMESTAMP.getTypeClass(), TIMESTAMP)
+            .put(DATE.getTypeClass(), DATE)
             .build();
 
     public static <T> IType<T> getType(Class<T> type) {
@@ -109,6 +114,8 @@ public class Types {
                 return BINARY_STRING;
             case TYPE_NAME_TIMESTAMP:
                 return TIMESTAMP;
+            case TYPE_NAME_DATE:
+                return DATE;
             default:
                 throw new IllegalArgumentException("Not support typeName: " + typeName);
         }
