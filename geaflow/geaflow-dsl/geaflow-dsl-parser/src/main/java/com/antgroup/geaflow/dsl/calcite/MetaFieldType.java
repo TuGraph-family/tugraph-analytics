@@ -219,6 +219,10 @@ public class MetaFieldType extends RelDataTypeImpl {
         return metaField;
     }
 
+    public RelDataType getType() {
+        return type;
+    }
+
     public enum MetaField {
         VERTEX_ID,
         VERTEX_TYPE,

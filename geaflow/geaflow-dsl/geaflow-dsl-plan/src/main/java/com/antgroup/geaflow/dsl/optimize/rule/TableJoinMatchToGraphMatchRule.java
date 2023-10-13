@@ -15,10 +15,16 @@
 package com.antgroup.geaflow.dsl.optimize.rule;
 
 import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphMatch;
+import com.antgroup.geaflow.dsl.util.GQLRelUtil;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.JoinInfo;
+import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
+import org.apache.calcite.rex.RexNode;
 
 public class TableJoinMatchToGraphMatchRule extends AbstractJoinToGraphRule {
 
@@ -26,18 +32,55 @@ public class TableJoinMatchToGraphMatchRule extends AbstractJoinToGraphRule {
 
     private TableJoinMatchToGraphMatchRule() {
         super(operand(LogicalJoin.class,
-            operand(LogicalTableScan.class, any()),
-            operand(LogicalProject.class, operand(LogicalGraphMatch.class, any()))));
+            operand(RelNode.class, any()),
+            operand(RelNode.class, any())));
+    }
+
+    @Override
+    public boolean matches(RelOptRuleCall call) {
+        LogicalJoin join = call.rel(0);
+        if (!join.getJoinType().equals(JoinRelType.INNER)) {
+            // non-INNER joins is not supported.
+            return false;
+        }
+        RelNode leftInput = call.rel(1);
+        RelNode rightInput = call.rel(2);
+        return isSingleChainFromLogicalTableScan(leftInput)
+            && isSingleChainFromGraphMatch(rightInput);
     }
 
     @Override
     public void onMatch(RelOptRuleCall call) {
-        processMatchTableJoinToGraphMatch(
+        RelNode leftInput = call.rel(1);
+        RelNode leftTableScan = leftInput;
+        while (!(leftTableScan instanceof LogicalTableScan)) {
+            leftTableScan = GQLRelUtil.toRel(leftTableScan.getInput(0));
+        }
+        RelNode rightInput = call.rel(2);
+        RelNode graphMatchProject = null;
+        RelNode rightGraphMatch = rightInput;
+        while (rightGraphMatch != null && !(rightGraphMatch instanceof LogicalGraphMatch)) {
+            graphMatchProject = rightGraphMatch;
+            rightGraphMatch = GQLRelUtil.toRel(rightGraphMatch.getInput(0));
+        }
+        RelNode tail = processMatchTableJoinToGraphMatch(
             call,
             call.rel(0),
-            call.rel(3),
-            call.rel(2),
-            call.rel(1)
+            (LogicalGraphMatch)rightGraphMatch,
+            (LogicalProject)graphMatchProject,
+            (LogicalTableScan)leftTableScan,
+            leftInput, leftTableScan, rightInput, rightGraphMatch, false
         );
+        if (tail == null) {
+            return;
+        }
+        LogicalJoin join = call.rel(0);
+        // add remain filter.
+        JoinInfo joinInfo = join.analyzeCondition();
+        RexNode remainFilter = joinInfo.getRemaining(join.getCluster().getRexBuilder());
+        if (remainFilter != null && !remainFilter.isAlwaysTrue()) {
+            tail = LogicalFilter.create(tail, remainFilter);
+        }
+        call.transformTo(tail);
     }
 }

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS tbl_result_10 (
+CREATE TABLE IF NOT EXISTS match_join_vertex_002_result (
 	s_id bigint,
 	c_id bigint,
   c_name varchar
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS tbl_result_10 (
 
 USE GRAPH g_student;
 
-INSERT INTO tbl_result_10
+INSERT INTO match_join_vertex_002_result
 SELECT s.id, sc.targetId, c.name
 FROM student s, selectCourse sc, course c
 WHERE s.id = sc.srcId AND c.id = sc.targetId AND srcId < 1004

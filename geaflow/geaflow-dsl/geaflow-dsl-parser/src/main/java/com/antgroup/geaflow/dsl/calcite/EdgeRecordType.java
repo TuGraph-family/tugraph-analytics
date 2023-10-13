@@ -119,7 +119,7 @@ public class EdgeRecordType extends RelRecordType {
 
     public EdgeRecordType add(String fieldName, RelDataType type, boolean caseSensitive) {
         if (type instanceof MetaFieldType) {
-            throw new IllegalArgumentException("Cannot add MetaFieldType");
+            type = ((MetaFieldType) type).getType();
         }
         List<RelDataTypeField> fields = new ArrayList<>(getFieldList());
 
@@ -188,9 +188,10 @@ public class EdgeRecordType extends RelRecordType {
 
     public static EdgeRecordType emptyEdgeType(RelDataType idType, RelDataTypeFactory typeFactory) {
         List<RelDataTypeField> fields = new ArrayList<>();
-        fields.add(new RelDataTypeFieldImpl(EdgeType.DEFAULT_SRC_ID_NAME, EdgeType.SRC_ID_FIELD_POSITION, idType));
-        fields.add(
-            new RelDataTypeFieldImpl(EdgeType.DEFAULT_TARGET_ID_NAME, EdgeType.TARGET_ID_FIELD_POSITION, idType));
+        fields.add(new RelDataTypeFieldImpl(EdgeType.DEFAULT_SRC_ID_NAME,
+            EdgeType.SRC_ID_FIELD_POSITION, MetaFieldType.edgeSrcId(idType, typeFactory)));
+        fields.add(new RelDataTypeFieldImpl(EdgeType.DEFAULT_TARGET_ID_NAME,
+            EdgeType.TARGET_ID_FIELD_POSITION, MetaFieldType.edgeTargetId(idType, typeFactory)));
         fields.add(new RelDataTypeFieldImpl(GraphSchema.LABEL_FIELD_NAME, EdgeType.LABEL_FIELD_POSITION,
             typeFactory.createSqlType(SqlTypeName.VARCHAR)));
         return EdgeRecordType.createEdgeType(fields, EdgeType.DEFAULT_SRC_ID_NAME,

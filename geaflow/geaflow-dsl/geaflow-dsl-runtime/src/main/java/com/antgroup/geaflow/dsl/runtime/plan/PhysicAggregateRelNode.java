@@ -252,7 +252,7 @@ public class PhysicAggregateRelNode extends Aggregate implements PhysicRelNode<R
     /**
      * A wrapper for distinct aggregate function.
      */
-    private static class DistinctUDAF extends UDAF<Object, Object, Object> {
+    public static class DistinctUDAF extends UDAF<Object, Object, Object> {
 
         private final UDAF<Object, Object, Object> baseUDAF;
 

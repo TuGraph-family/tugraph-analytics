@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.util;
 
 import com.antgroup.geaflow.common.type.IType;
+import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.MetaFieldType;
 import com.antgroup.geaflow.dsl.calcite.MetaFieldType.MetaField;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
@@ -404,6 +405,34 @@ public class GQLRexUtil {
         });
     }
 
+
+    public static RexNode swapReverseEdgeRef(RexNode rexNode, String reverseEdgeName,
+                                             RexBuilder rexBuilder) {
+        return GQLRexUtil.replace(rexNode,
+            node -> {
+                if (node instanceof RexFieldAccess
+                    && ((RexFieldAccess) node).getReferenceExpr() instanceof PathInputRef) {
+                    RexFieldAccess fieldAccess = (RexFieldAccess) node;
+                    PathInputRef pathInputRef = (PathInputRef) fieldAccess.getReferenceExpr();
+                    if (pathInputRef.getLabel().equals(reverseEdgeName)
+                        && fieldAccess.getType() instanceof MetaFieldType) {
+                        if (((MetaFieldType)fieldAccess.getType()).getMetaField()
+                            .equals(MetaField.EDGE_SRC_ID)) {
+                            return rexBuilder.makeFieldAccess(pathInputRef,
+                                ((EdgeRecordType) pathInputRef.getType()).getTargetIdField()
+                                    .getIndex());
+                        } else if (((MetaFieldType)fieldAccess.getType()).getMetaField()
+                            .equals(MetaField.EDGE_TARGET_ID)) {
+                            return rexBuilder.makeFieldAccess(pathInputRef,
+                                ((EdgeRecordType) pathInputRef.getType()).getSrcIdField()
+                                    .getIndex());
+                        }
+                    }
+                }
+                return node;
+            });
+    }
+
     public static RexNode removeIdCondition(RexNode condition, VertexRecordType vertexRecordType) {
         if (condition instanceof RexCall) {
             RexCall call = (RexCall) condition;
@@ -575,9 +604,7 @@ public class GQLRexUtil {
             if (op.getReferenceExpr() instanceof PathInputRef
                 && op.getType() instanceof MetaFieldType) {
                 MetaFieldType opType = (MetaFieldType) op.getType();
-                if (opType.getMetaField() == MetaField.VERTEX_ID) {
-                    return true;
-                }
+                return opType.getMetaField() == MetaField.VERTEX_ID;
             }
         }
         return false;

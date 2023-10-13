@@ -101,6 +101,10 @@ public abstract class PathModify extends SingleRel {
             return leftVar.getIndex();
         }
 
+        public PathInputRef getLeftVar() {
+            return leftVar;
+        }
+
         public RexObjectConstruct getObjectConstruct() {
             return expression;
         }

@@ -45,9 +45,13 @@ public class StepJoinOperator extends AbstractStepOperator<StepJoinFunction, Ver
 
     private long rightInputOpId;
 
-    public StepJoinOperator(long id, StepJoinFunction function, PathType inputJoinPathSchema) {
+    private boolean isLocalJoin;
+
+    public StepJoinOperator(long id, StepJoinFunction function, PathType inputJoinPathSchema,
+                            boolean isLocalJoin) {
         super(id, function);
         this.inputJoinPathSchema = Objects.requireNonNull(inputJoinPathSchema);
+        this.isLocalJoin = isLocalJoin;
     }
 
     @Override
@@ -62,11 +66,16 @@ public class StepJoinOperator extends AbstractStepOperator<StepJoinFunction, Ver
     protected void processRecord(VertexRecord record) {
         RowVertex vertex = record.getVertex();
         RowKey joinKey = (RowKey) vertex.getId();
-        JoinPathMessage pathMessage = context.getMessage(MessageType.JOIN_PATH);
-
-        ITreePath leftTree = pathMessage.getTreePath(leftInputOpId);
-        ITreePath rightTree = pathMessage.getTreePath(rightInputOpId);
-
+        ITreePath leftTree;
+        ITreePath rightTree;
+        if (isLocalJoin) {
+            leftTree = context.getInputOperatorId() == leftInputOpId ? record.getTreePath() : null;
+            rightTree = context.getInputOperatorId() == rightInputOpId ? record.getTreePath() : null;
+        } else {
+            JoinPathMessage pathMessage = context.getMessage(MessageType.JOIN_PATH);
+            leftTree = pathMessage.getTreePath(leftInputOpId);
+            rightTree = pathMessage.getTreePath(rightInputOpId);
+        }
         cachedLeftAndRightTreePaths
             .computeIfAbsent(context.getRequestId(), k -> new HashMap<>())
             .computeIfAbsent(joinKey, k -> new JoinTree())
@@ -110,7 +119,7 @@ public class StepJoinOperator extends AbstractStepOperator<StepJoinFunction, Ver
 
     @Override
     public StepOperator<VertexRecord, VertexRecord> copyInternal() {
-        return new StepJoinOperator(id, function, inputJoinPathSchema);
+        return new StepJoinOperator(id, function, inputJoinPathSchema, isLocalJoin);
     }
 
     @Override

@@ -18,7 +18,9 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
+import com.antgroup.geaflow.dsl.rel.match.MatchAggregate;
 import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
+import com.antgroup.geaflow.dsl.rel.match.MatchExtend;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathModify;
@@ -189,10 +191,20 @@ public abstract class GraphMatch extends SingleRel {
         }
 
         @Override
+        public String visitExtend(MatchExtend matchExtend) {
+            return visit(matchExtend.getInput()) + " MatchExtend(" + matchExtend.expressions + ")";
+        }
+
+        @Override
         public String visitSort(MatchPathSort pathSort) {
             return visit(pathSort.getInput()) + " order by "
                 + StringUtils.join(pathSort.orderByExpressions, ",")
                 + " limit " + pathSort.getLimit();
+        }
+
+        @Override
+        public String visitAggregate(MatchAggregate matchAggregate) {
+            return visit(matchAggregate.getInput()) + " aggregate ";
         }
     }
 

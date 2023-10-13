@@ -117,9 +117,9 @@ public class DagTopologyGroupTest {
             + "1 [label= \"MatchVertex-1 [a]\"]\n" + "0 [label= \"StepSource-0()\"]\n" + "\n"
             + "8 -> 9 [label= \"chain = false\"]\n" + "7 -> 8 [label= \"\"]\n"
             + "6 -> 7 [label= \"\"]\n" + "5 -> 6 [label= \"\"]\n" + "4 -> 5 [label= \"\"]\n"
-            + "9 [label= \"StepGlobalAggregate-9\"]\n" + "8 [label= \"StepExchange-8\"]\n"
-            + "7 [label= \"StepLocalAggregate-7\"]\n" + "6 [label= \"MatchEdge-6(OUT) [e1]\"]\n"
-            + "5 [label= \"MatchVertex-5 [b]\"]\n"
+            + "9 [label= \"StepGlobalSingleValueAggregate-9\"]\n"
+            + "8 [label= \"StepExchange-8\"]\n" + "7 [label= \"StepLocalSingleValueAggregate-7\"]\n"
+            + "6 [label= \"MatchEdge-6(OUT) [e1]\"]\n" + "5 [label= \"MatchVertex-5 [b]\"]\n"
             + "4 [label= \"StepSubQueryStart-4(name=SubQuery1)\"]\n" + "}");
         DagTopology mainDag = dagGroup.getMainDag();
         Assert.assertTrue(mainDag.getEntryOperator().getClass().isAssignableFrom(StepSourceOperator.class));

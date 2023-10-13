@@ -55,8 +55,8 @@ public class JoinToGraphTest {
             .withConfig(FileConfigKeys.PERSISTENT_TYPE.getKey(), "DFS")
             .withConfig(FileConfigKeys.ROOT.getKey(), TEST_GRAPH_PATH)
             .withConfig(FileConfigKeys.JSON_CONFIG.getKey(), "{\"fs.defaultFS\":\"local\"}")
-            .withQueryPath("/sql2graph/graph_student_insert.sql")
-            .execute();
+            .withQueryPath("/sql2graph/graph_student_v_insert.sql").execute()
+            .withQueryPath("/sql2graph/graph_student_e_insert.sql").execute();
     }
 
     @AfterClass
@@ -134,6 +134,17 @@ public class JoinToGraphTest {
     }
 
     @Test
+    public void testMatchJoinVertex_003() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/match_join_vertex_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testMatchJoinEdge_001() throws Exception {
         QueryTester
             .build()
@@ -151,6 +162,39 @@ public class JoinToGraphTest {
             .withConfig(testConfig)
             .withGraphDefine("/sql2graph/graph_student.sql")
             .withQueryPath("/sql2graph/match_join_edge_002.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testMatchJoinEdge_003() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/match_join_edge_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testMatchJoinEdge_004() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/match_join_edge_004.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testMatchJoinEdge_005() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/match_join_edge_005.sql")
             .execute()
             .checkSinkResult();
     }
@@ -195,6 +239,116 @@ public class JoinToGraphTest {
             .withConfig(testConfig)
             .withGraphDefine("/sql2graph/graph_student.sql")
             .withQueryPath("/sql2graph/join_to_match_004.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinToMatch_005() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_005.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinToMatch_006() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_006.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinToMatch_007() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_007.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinToMatch_008() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_008.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void  testJoinToMatch_009() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_009.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinToMatch_010() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_010.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinToMatch_011() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/join_to_match_011.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAggregateToMatch_001() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/aggregate_to_match_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAggregateToMatch_002() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/aggregate_to_match_002.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAggregateToMatch_003() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/aggregate_to_match_003.sql")
             .execute()
             .checkSinkResult();
     }

@@ -98,6 +98,15 @@ public class EdgeType extends StructType {
         return getFields().subList(getValueOffset(), size());
     }
 
+    public IType<?>[] getValueTypes() {
+        IType<?>[] valueTypes = new IType[size() - getValueOffset()];
+        List<TableField> valueFields = getValueFields();
+        for (int i = 0; i < valueFields.size(); i++) {
+            valueTypes[i ] = valueFields.get(i).getType();
+        }
+        return valueTypes;
+    }
+
     public static EdgeType emptyEdge(IType<?> idType) {
         TableField srcField = new TableField(DEFAULT_SRC_ID_NAME, idType, false);
         TableField targetField = new TableField(DEFAULT_TARGET_ID_NAME, idType, false);
