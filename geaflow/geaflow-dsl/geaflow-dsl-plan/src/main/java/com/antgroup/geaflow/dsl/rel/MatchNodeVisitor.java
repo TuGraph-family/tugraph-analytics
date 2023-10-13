@@ -16,7 +16,9 @@ package com.antgroup.geaflow.dsl.rel;
 
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
+import com.antgroup.geaflow.dsl.rel.match.MatchAggregate;
 import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
+import com.antgroup.geaflow.dsl.rel.match.MatchExtend;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathModify;
@@ -49,7 +51,11 @@ public interface MatchNodeVisitor<T> {
 
     T visitPathModify(MatchPathModify pathModify);
 
+    T visitExtend(MatchExtend matchExtend);
+
     T visitSort(MatchPathSort pathSort);
+
+    T visitAggregate(MatchAggregate matchAggregate);
 
     T visit(RelNode node);
 }

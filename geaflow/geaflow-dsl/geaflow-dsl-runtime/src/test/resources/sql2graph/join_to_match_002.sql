@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS tbl_result_04 (
+CREATE TABLE IF NOT EXISTS join_to_match_002_result (
 	s_id bigint,
 	c_id bigint,
   c_name varchar,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tbl_result_04 (
 
 USE GRAPH g_student;
 
-INSERT INTO tbl_result_04
+INSERT INTO join_to_match_002_result
 SELECT sc.srcId, c.id, c.name, hasTeacher.targetId
 FROM selectCourse sc, course c, hasTeacher
 WHERE c.id = sc.targetId AND c.id = hasTeacher.srcId AND sc.srcId < 1004

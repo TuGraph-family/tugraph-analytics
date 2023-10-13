@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.dsl.optimize.rule;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.plan.RelOptRule;
@@ -46,13 +46,27 @@ public class PushJoinFilterConditionRule extends RelOptRule {
             return;
         }
         List<RexNode> splitRexNodes = RelOptUtil.conjunctions(filter.getCondition());
-        splitRexNodes = splitRexNodes.stream().filter(n -> n.getKind().equals(SqlKind.EQUALS)).collect(
-            Collectors.toList());
-        splitRexNodes.add(join.getCondition());
+        final List<RexNode> joinRexNodes = new ArrayList<>();
+        final List<RexNode> remainRexNodes = new ArrayList<>();
+        splitRexNodes.stream().map(n -> {
+            if (n.getKind().equals(SqlKind.EQUALS)) {
+                joinRexNodes.add(n);
+            } else {
+                remainRexNodes.add(n);
+            }
+            return n;
+        }).collect(Collectors.toList());
+        joinRexNodes.add(join.getCondition());
         RexNode equalRexNode = RexUtil.composeConjunction(
-            new RexBuilder(call.builder().getTypeFactory()), splitRexNodes);
+            new RexBuilder(call.builder().getTypeFactory()), joinRexNodes);
+        RexNode remainRexNode = RexUtil.composeConjunction(
+            new RexBuilder(call.builder().getTypeFactory()), remainRexNodes);
         LogicalJoin newJoin = join.copy(join.getTraitSet(), equalRexNode, join.getLeft(),
             join.getRight(), join.getJoinType(), join.isSemiJoinDone());
-        call.transformTo(filter.copy(filter.getTraitSet(), Collections.singletonList(newJoin)));
+        if (remainRexNode.isAlwaysTrue()) {
+            call.transformTo(newJoin);
+        } else {
+            call.transformTo(filter.copy(filter.getTraitSet(), newJoin, remainRexNode));
+        }
     }
 }

@@ -25,6 +25,7 @@ import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphMatch;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphScan;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
+import com.antgroup.geaflow.dsl.rel.match.SingleMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.VertexMatch;
 import com.antgroup.geaflow.dsl.rex.PathInputRef;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
@@ -32,18 +33,28 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.sqlnode.SqlMatchEdge.EdgeDirection;
+import com.antgroup.geaflow.dsl.util.GQLRelUtil;
+import com.antgroup.geaflow.dsl.util.GQLRexUtil;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.JoinInfo;
+import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 
@@ -53,15 +64,38 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
 
     private TableJoinTableToGraphRule() {
         super(operand(LogicalJoin.class,
-            operand(LogicalTableScan.class, any()),
-            operand(LogicalTableScan.class, any())));
+            operand(RelNode.class, any()),
+            operand(RelNode.class, any())));
+    }
+
+    @Override
+    public boolean matches(RelOptRuleCall call) {
+        LogicalJoin join = call.rel(0);
+        if (!join.getJoinType().equals(JoinRelType.INNER)) {
+            // non-INNER joins is not supported.
+            return false;
+        }
+        RelNode leftInput = call.rel(1);
+        RelNode rightInput = call.rel(2);
+        return isSingleChainFromLogicalTableScan(leftInput) && isSingleChainFromLogicalTableScan(rightInput);
     }
 
     @Override
     public void onMatch(RelOptRuleCall call) {
-        LogicalTableScan leftTableScan = call.rel(1);
-        LogicalTableScan rightTableScan = call.rel(2);
-
+        RelNode leftInput = call.rel(1);
+        RelNode leftHead = null;
+        RelNode leftTableScan = leftInput;
+        while (!(leftTableScan instanceof LogicalTableScan)) {
+            leftHead = leftTableScan;
+            leftTableScan = GQLRelUtil.toRel(leftTableScan.getInput(0));
+        }
+        RelNode rightInput = call.rel(2);
+        RelNode rightHead = null;
+        RelNode rightTableScan = rightInput;
+        while (!(rightTableScan instanceof LogicalTableScan)) {
+            rightHead = rightTableScan;
+            rightTableScan = GQLRelUtil.toRel(rightTableScan.getInput(0));
+        }
         GeaFlowTable leftTable = leftTableScan.getTable().unwrap(GeaFlowTable.class);
         GeaFlowTable rightTable = rightTableScan.getTable().unwrap(GeaFlowTable.class);
 
@@ -84,69 +118,85 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
 
         LogicalJoin join = call.rel(0);
         GraphJoinType graphJoinType = getJoinType(join);
+        RelNode tail = null;
         switch (graphJoinType) {
             case VERTEX_JOIN_EDGE:
-                RelNode graphMatch;
                 if (leftTable instanceof VertexTable
                     && rightTable instanceof EdgeTable) {
                     VertexTable vertexTable = (VertexTable) leftTable;
                     EdgeTable edgeTable = (EdgeTable) rightTable;
-                    graphMatch = vertexJoinEdgeSrc(vertexTable, edgeTable, call, true);
+                    tail = vertexJoinEdgeSrc(vertexTable, edgeTable, call, true,
+                        leftInput, leftHead, rightInput, rightHead);
                 } else if (leftTable instanceof EdgeTable
                     && rightTable instanceof VertexTable) {
                     VertexTable vertexTable = (VertexTable) rightTable;
                     EdgeTable edgeTable = (EdgeTable) leftTable;
-                    graphMatch = vertexJoinEdgeSrc(vertexTable, edgeTable, call, false);
-                } else {
-                    graphMatch = null;
+                    tail = vertexJoinEdgeSrc(vertexTable, edgeTable, call, false,
+                        leftInput, leftHead, rightInput, rightHead);
                 }
-                if (graphMatch == null) {
+                if (tail == null) {
                     return;
                 }
-                call.transformTo(graphMatch);
                 break;
             case EDGE_JOIN_VERTEX:
                 if (leftTable instanceof VertexTable
                     && rightTable instanceof EdgeTable) {
                     VertexTable vertexTable = (VertexTable) leftTable;
                     EdgeTable edgeTable = (EdgeTable) rightTable;
-                    graphMatch = edgeTargetJoinVertex(vertexTable, edgeTable, call, true);
+                    tail = edgeTargetJoinVertex(vertexTable, edgeTable, call, true,
+                        leftInput, leftHead, rightInput, rightHead);
                 } else if (leftTable instanceof EdgeTable
                     && rightTable instanceof VertexTable) {
                     VertexTable vertexTable = (VertexTable) rightTable;
                     EdgeTable edgeTable = (EdgeTable) leftTable;
-                    graphMatch = edgeTargetJoinVertex(vertexTable, edgeTable, call, false);
-                } else {
-                    graphMatch = null;
+                    tail = edgeTargetJoinVertex(vertexTable, edgeTable, call, false,
+                        leftInput, leftHead, rightInput, rightHead);
                 }
-                if (graphMatch == null) {
+                if (tail == null) {
                     return;
                 }
-                call.transformTo(graphMatch);
                 break;
             default:
         }
+        if (tail == null) {
+            return;
+        }
+        // add remain filter.
+        JoinInfo joinInfo = join.analyzeCondition();
+        RexNode remainFilter = joinInfo.getRemaining(join.getCluster().getRexBuilder());
+        if (remainFilter != null && !remainFilter.isAlwaysTrue()) {
+            tail = LogicalFilter.create(tail, remainFilter);
+        }
+        call.transformTo(tail);
     }
 
     private RelNode vertexJoinEdgeSrc(VertexTable vertexTable,
                                       EdgeTable edgeTable,
                                       RelOptRuleCall call,
-                                      boolean isLeftTableVertex) {
-        return vertexJoinEdge(vertexTable, edgeTable, call, EdgeDirection.OUT, isLeftTableVertex);
+                                      boolean isLeftTableVertex,
+                                      RelNode leftInput, RelNode leftHead,
+                                      RelNode rightInput, RelNode rightHead) {
+        return vertexJoinEdge(vertexTable, edgeTable, call, EdgeDirection.OUT, isLeftTableVertex,
+            leftInput, leftHead, rightInput, rightHead);
     }
 
     private RelNode edgeTargetJoinVertex(VertexTable vertexTable,
                                          EdgeTable edgeTable,
                                          RelOptRuleCall call,
-                                         boolean isLeftTableVertex) {
-        return vertexJoinEdge(vertexTable, edgeTable, call, EdgeDirection.IN, isLeftTableVertex);
+                                         boolean isLeftTableVertex,
+                                         RelNode leftInput, RelNode leftHead,
+                                         RelNode rightInput, RelNode rightHead) {
+        return vertexJoinEdge(vertexTable, edgeTable, call, EdgeDirection.IN, isLeftTableVertex,
+            leftInput, leftHead, rightInput, rightHead);
     }
 
     private RelNode vertexJoinEdge(VertexTable vertexTable,
                                    EdgeTable edgeTable,
                                    RelOptRuleCall call,
                                    EdgeDirection direction,
-                                   boolean isLeftTableVertex) {
+                                   boolean isLeftTableVertex,
+                                   RelNode leftInput, RelNode leftHead,
+                                   RelNode rightInput, RelNode rightHead) {
         LogicalJoin join = call.rel(0);
         RelOptCluster cluster = join.getCluster();
         RelDataType vertexRelType = vertexTable.getRowType(call.builder().getTypeFactory());
@@ -159,15 +209,53 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
         EdgeMatch edgeMatch;
         IMatchNode matchNode;
         boolean swapSrcTargetId;
+        List<RexNode> projects = new ArrayList<>();
+        int leftFieldCount;
+        RexBuilder rexBuilder = call.builder().getRexBuilder();
+        List<RexNode> rexLeftNodeMap = new ArrayList<>();
+        List<RexNode> rexRightNodeMap = new ArrayList<>();
         if (isLeftTableVertex) {
             pathRecordType = pathRecordType.addField(nodeName, vertexRelType, false);
             vertexMatch = VertexMatch.create(cluster, null, nodeName,
                 Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
-            pathRecordType = pathRecordType.addField(edgeName, edgeRelType, false);
-            edgeMatch = EdgeMatch.create(cluster, vertexMatch, edgeName,
+            IMatchNode afterLeft = rebuildInput(call.builder(), leftInput, leftHead, vertexMatch, rexLeftNodeMap);
+            //Add vertex fields
+            if (rexLeftNodeMap.size() > 0) {
+                projects.addAll(rexLeftNodeMap);
+            } else {
+                RelDataTypeField field = afterLeft.getPathSchema().getField(nodeName, true, false);
+                PathInputRef vertexRef = new PathInputRef(nodeName, field.getIndex(), field.getType());
+                for (int i = 0; i < leftInput.getRowType().getFieldCount(); i++) {
+                    projects.add(rexBuilder.makeFieldAccess(vertexRef, i));
+                }
+            }
+            leftFieldCount = projects.size();
+
+            pathRecordType = afterLeft.getPathSchema();
+            pathRecordType = pathRecordType.addField(edgeName, edgeRelType, true);
+            edgeMatch = EdgeMatch.create(cluster, (SingleMatchNode) afterLeft, edgeName,
                 Collections.singletonList(edgeTable.getName()), direction, edgeRelType, pathRecordType);
             swapSrcTargetId = direction.equals(EdgeDirection.IN);
-            matchNode = edgeMatch;
+            IMatchNode afterRight = rebuildInput(call.builder(), rightInput, rightHead, edgeMatch, rexRightNodeMap);
+            //Add edge fields
+            if (rexRightNodeMap.size() > 0) {
+                // In the case of converting match out edges to in edges, swap the source and
+                // target id references of the edge.
+                if (swapSrcTargetId) {
+                    rexRightNodeMap = rexRightNodeMap.stream()
+                        .map(rex -> GQLRexUtil.swapReverseEdgeRef(rex, edgeName, rexBuilder))
+                        .collect(Collectors.toList());
+                    swapSrcTargetId = false;
+                }
+                projects.addAll(rexRightNodeMap);
+            } else {
+                RelDataTypeField field = afterRight.getPathSchema().getField(edgeName, true, false);
+                PathInputRef edgeRef = new PathInputRef(edgeName, field.getIndex(), field.getType());
+                for (int i = 0; i < rightInput.getRowType().getFieldCount(); i++) {
+                    projects.add(rexBuilder.makeFieldAccess(edgeRef, i));
+                }
+            }
+            matchNode = afterRight;
         } else {
             GQLJavaTypeFactory typeFactory = (GQLJavaTypeFactory) call.builder().getTypeFactory();
             GeaFlowGraph graph = typeFactory.getCurrentGraph();
@@ -187,50 +275,55 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
             }
             String dummyNodeName = dummyVertex.getName();
             RelDataType dummyVertexRelType = dummyVertex.getRowType(call.builder().getTypeFactory());
-            pathRecordType = pathRecordType.addField(dummyNodeName, dummyVertexRelType, false);
+            pathRecordType = pathRecordType.addField(dummyNodeName, dummyVertexRelType, true);
             VertexMatch dummyVertexMatch = VertexMatch.create(cluster, null, dummyNodeName,
                 Collections.singletonList(dummyVertex.getName()), dummyVertexRelType, pathRecordType);
-            pathRecordType = pathRecordType.addField(edgeName, edgeRelType, false);
+            pathRecordType = pathRecordType.addField(edgeName, edgeRelType, true);
             EdgeDirection reverseDirection = EdgeDirection.reverse(direction);
             edgeMatch = EdgeMatch.create(cluster, dummyVertexMatch, edgeName,
                 Collections.singletonList(edgeTable.getName()),
                 reverseDirection, edgeRelType, pathRecordType);
             swapSrcTargetId = reverseDirection.equals(EdgeDirection.IN);
+            IMatchNode afterLeft = rebuildInput(call.builder(), leftInput, leftHead, edgeMatch, rexLeftNodeMap);
+
+            //Add edge fields
+            if (rexLeftNodeMap.size() > 0) {
+                // In the case of converting match out edges to in edges, swap the source and
+                // target id references of the edge.
+                if (swapSrcTargetId) {
+                    rexLeftNodeMap = rexLeftNodeMap.stream()
+                        .map(rex -> GQLRexUtil.swapReverseEdgeRef(rex, edgeName, rexBuilder))
+                        .collect(Collectors.toList());
+                    swapSrcTargetId = false;
+                }
+                projects.addAll(rexLeftNodeMap);
+            } else {
+                RelDataTypeField field = afterLeft.getPathSchema().getField(edgeName, true, false);
+                PathInputRef edgeRef = new PathInputRef(edgeName, field.getIndex(), field.getType());
+                for (int i = 0; i < leftInput.getRowType().getFieldCount(); i++) {
+                    projects.add(rexBuilder.makeFieldAccess(edgeRef, i));
+                }
+            }
+            leftFieldCount = projects.size();
+
+            pathRecordType = afterLeft.getPathSchema();
             pathRecordType = pathRecordType.addField(nodeName, vertexRelType, false);
-            vertexMatch = VertexMatch.create(cluster, edgeMatch, nodeName,
+            vertexMatch = VertexMatch.create(cluster, (SingleMatchNode) afterLeft, nodeName,
                 Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
-            matchNode = vertexMatch;
+            IMatchNode afterRight = rebuildInput(call.builder(), rightInput, rightHead, vertexMatch, rexRightNodeMap);
+            //Add vertex fields
+            if (rexRightNodeMap.size() > 0) {
+                projects.addAll(rexRightNodeMap);
+            } else {
+                RelDataTypeField field = afterRight.getPathSchema().getField(nodeName, true, false);
+                PathInputRef vertexRef = new PathInputRef(nodeName, field.getIndex(), field.getType());
+                for (int i = 0; i < rightInput.getRowType().getFieldCount(); i++) {
+                    projects.add(rexBuilder.makeFieldAccess(vertexRef, i));
+                }
+            }
+            matchNode = afterRight;
         }
 
-        RelDataType joinOutputType = join.getRowType();
-        List<String> fieldNames = new ArrayList<>(joinOutputType.getFieldNames());
-        List<RexNode> projects = new ArrayList<>(fieldNames.size());
-        RexBuilder rexBuilder = call.builder().getRexBuilder();
-        if (isLeftTableVertex) {
-            //Add vertex fields
-            PathInputRef vertexRef = new PathInputRef(vertexMatch.getLabel(), 0,
-                vertexRelType);
-            for (int i = 0; i < vertexRelType.getFieldCount(); i++) {
-                projects.add(rexBuilder.makeFieldAccess(vertexRef, i));
-            }
-            //Add edge fields
-            PathInputRef edgeRef = new PathInputRef(edgeMatch.getLabel(), 1, edgeRelType);
-            for (int i = 0; i < edgeRelType.getFieldCount(); i++) {
-                projects.add(rexBuilder.makeFieldAccess(edgeRef, i));
-            }
-        } else {
-            //Add edge fields
-            PathInputRef edgeRef = new PathInputRef(edgeMatch.getLabel(), 1, edgeRelType);
-            for (int i = 0; i < edgeRelType.getFieldCount(); i++) {
-                projects.add(rexBuilder.makeFieldAccess(edgeRef, i));
-            }
-            //Add vertex fields
-            PathInputRef vertexRef = new PathInputRef(vertexMatch.getLabel(), 2,
-                vertexRelType);
-            for (int i = 0; i < vertexRelType.getFieldCount(); i++) {
-                projects.add(rexBuilder.makeFieldAccess(vertexRef, i));
-            }
-        }
         //In the case of reverse matching in the IN direction, the positions of the source
         // vertex and the destination vertex are swapped.
         if (swapSrcTargetId) {
@@ -242,20 +335,29 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
                 f -> f.getType() instanceof MetaFieldType
                         && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_TARGET_ID))
                 .collect(Collectors.toList()).get(0).getIndex();
-            int baseOffset = isLeftTableVertex ? vertexRelType.getFieldCount() : 0;
+            int baseOffset = isLeftTableVertex ? leftFieldCount : 0;
             Collections.swap(projects, baseOffset + edgeSrcIdIndex, baseOffset + edgeTargetIdIndex);
-            Collections.swap(fieldNames, baseOffset + edgeSrcIdIndex, baseOffset + edgeTargetIdIndex);
         }
 
-        assert projects.size() == fieldNames.size();
         GQLJavaTypeFactory typeFactory = (GQLJavaTypeFactory) call.builder().getTypeFactory();
         GeaFlowGraph graph = typeFactory.getCurrentGraph();
         LogicalGraphScan graphScan = LogicalGraphScan.create(cluster, graph);
-        // add remain filter.
-        matchNode = addRemainFilter(join, matchNode);
         LogicalGraphMatch graphMatch = LogicalGraphMatch.create(cluster, graphScan,
             matchNode, matchNode.getPathSchema());
-        return LogicalProject.create(graphMatch, projects, joinOutputType);
-    }
 
+        List<RelDataTypeField> matchTypeFields = new ArrayList<>();
+        List<String> newFieldNames = getNewFieldNames(projects.size(), new HashSet<>());
+        for (int i = 0; i < projects.size(); i++) {
+            matchTypeFields.add(new RelDataTypeFieldImpl(newFieldNames.get(i), i ,
+                projects.get(i).getType()));
+        }
+        RelNode tail = LogicalProject.create(graphMatch, projects, new RelRecordType(matchTypeFields));
+
+        // Complete the Join projection.
+        final RelNode finalTail = tail;
+        List<RexNode> joinProjects = IntStream.range(0, projects.size())
+            .mapToObj(i -> rexBuilder.makeInputRef(finalTail, i)).collect(Collectors.toList());
+        tail = LogicalProject.create(tail, joinProjects, join.getRowType());
+        return tail;
+    }
 }

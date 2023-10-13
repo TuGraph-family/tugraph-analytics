@@ -148,7 +148,8 @@ public class StepPlanTest {
         ;
         StepKeyFunction keyFunction = new StepKeyFunctionImpl(new int[]{}, new IType[]{});
         StepLogicalPlan joinPlan = leftPlan.join(rightPlan, keyFunction, keyFunction,
-            new StepJoinFunctionImpl(JoinRelType.INNER, new IType[]{}, new IType[]{}), PathType.EMPTY)
+            new StepJoinFunctionImpl(JoinRelType.INNER, new IType[]{}, new IType[]{}),
+                PathType.EMPTY, false)
             .withOutputPathSchema(new PathType());
 
         StepLogicalPlanSet logicalPlanSet = new StepLogicalPlanSet(joinPlan);

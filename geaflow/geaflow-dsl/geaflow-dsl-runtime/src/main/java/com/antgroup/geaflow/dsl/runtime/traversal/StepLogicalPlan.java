@@ -44,9 +44,12 @@ import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepEndOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepExchangeOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepFilterOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepGlobalAggregateOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepGlobalSingleValueAggregateOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepGlobalSortOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepJoinOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLocalAggregateOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLocalExchangeOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLocalSingleValueAggregateOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLoopUntilOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepMapOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepMapRowOperator;
@@ -314,15 +317,29 @@ public class StepLogicalPlan implements Serializable {
             ;
     }
 
-    public StepLogicalPlan join(StepLogicalPlan right, StepKeyFunction leftKey, StepKeyFunction rightKey,
-                                StepJoinFunction joinFunction, PathType inputJoinPathSchema) {
-        StepLogicalPlan leftExchange = this.exchange(leftKey);
-        StepLogicalPlan rightExchange = right.exchange(rightKey);
+    public StepLogicalPlan localExchange(StepKeyFunction keyFunction) {
+        StepLocalExchangeOperator exchange = new StepLocalExchangeOperator(nextPlanId(), keyFunction);
+        return new StepLogicalPlan(this, exchange)
+            .withGraphSchema(getGraphSchema())
+            .withInputPathSchema(getOutputPathSchema())
+            .withOutputPathSchema(getOutputPathSchema())
+            .withOutputType(getOutputType())
+            ;
+    }
+
+    public StepLogicalPlan join(StepLogicalPlan right, StepKeyFunction leftKey,
+                                StepKeyFunction rightKey, StepJoinFunction joinFunction,
+                                PathType inputJoinPathSchema, boolean isLocalJoin) {
+        StepLogicalPlan leftExchange = isLocalJoin
+                                       ? this.localExchange(leftKey) : this.exchange(leftKey);
+        StepLogicalPlan rightExchange = isLocalJoin
+                                        ? right.localExchange(rightKey) : right.exchange(rightKey);
 
         List<PathType> joinInputPaths = Lists.newArrayList(leftExchange.getOutputPathSchema(),
             rightExchange.getOutputPathSchema());
 
-        StepJoinOperator joinOperator = new StepJoinOperator(nextPlanId(), joinFunction, inputJoinPathSchema);
+        StepJoinOperator joinOperator = new StepJoinOperator(nextPlanId(), joinFunction,
+            inputJoinPathSchema, isLocalJoin);
         return new StepLogicalPlan(Lists.newArrayList(leftExchange, rightExchange), joinOperator)
             .withGraphSchema(getGraphSchema())
             .withInputPathSchema(joinInputPaths)
@@ -350,7 +367,7 @@ public class StepLogicalPlan implements Serializable {
     }
 
     public StepLogicalPlan aggregate(StepAggregateFunction aggFunction) {
-        StepLocalAggregateOperator localAggOp = new StepLocalAggregateOperator(nextPlanId(), aggFunction);
+        StepLocalSingleValueAggregateOperator localAggOp = new StepLocalSingleValueAggregateOperator(nextPlanId(), aggFunction);
         IType<?> localAggOutputType = ObjectType.INSTANCE;
         StepLogicalPlan localAggPlan = new StepLogicalPlan(this, localAggOp)
             .withGraphSchema(this.getGraphSchema())
@@ -359,13 +376,36 @@ public class StepLogicalPlan implements Serializable {
             .withOutputType(StructType.singleValue(localAggOutputType, false));
 
         StepLogicalPlan exchangePlan = localAggPlan.exchange(new StepKeyFunctionImpl(new int[0], new IType[0]));
-        StepGlobalAggregateOperator globalAggOp = new StepGlobalAggregateOperator(nextPlanId(), localAggOutputType,
+        StepGlobalSingleValueAggregateOperator globalAggOp = new StepGlobalSingleValueAggregateOperator(nextPlanId(), localAggOutputType,
             aggFunction);
 
         return new StepLogicalPlan(exchangePlan, globalAggOp)
             .withGraphSchema(this.getGraphSchema())
             .withInputPathSchema(exchangePlan.getOutputPathSchema())
             .withOutputPathSchema(PathType.EMPTY)
+            ;
+    }
+
+    public StepLogicalPlan aggregate(PathType inputPath, PathType outputPath,
+                                     StepKeyFunction keyFunction,
+                                     StepAggregateFunction aggFn) {
+        StepLocalAggregateOperator localAggOp = new StepLocalAggregateOperator(nextPlanId(),
+            keyFunction, aggFn);
+        StepLogicalPlan localAggPlan = new StepLogicalPlan(this, localAggOp)
+            .withGraphSchema(this.getGraphSchema())
+            .withInputPathSchema(inputPath)
+            .withOutputPathSchema(inputPath)
+            .withOutputType(getOutputType())
+            ;
+        StepLogicalPlan exchangePlan = localAggPlan.exchange(keyFunction);
+        StepGlobalAggregateOperator globalAggOp = new StepGlobalAggregateOperator(nextPlanId(),
+            keyFunction, aggFn);
+
+        return new StepLogicalPlan(exchangePlan, globalAggOp)
+            .withGraphSchema(this.getGraphSchema())
+            .withInputPathSchema(outputPath)
+            .withOutputPathSchema(outputPath)
+            .withOutputType(this.getOutputType())
             ;
     }
 

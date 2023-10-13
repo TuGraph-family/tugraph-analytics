@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS tbl_result_07 (
+CREATE TABLE IF NOT EXISTS match_join_edge_001_result (
 	s_id bigint,
 	c_id bigint,
   c_name varchar,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tbl_result_07 (
 
 USE GRAPH g_student;
 
-INSERT INTO tbl_result_07
+INSERT INTO match_join_edge_001_result
 SELECT sc.srcId as student, sc.targetId as courseId, c.name as course, t.name as teacherName
 FROM teacher t, hasTeacher, course c, selectCourse sc
 WHERE c.id = sc.targetId AND c.id = hasTeacher.srcId AND t.id = hasTeacher.targetId

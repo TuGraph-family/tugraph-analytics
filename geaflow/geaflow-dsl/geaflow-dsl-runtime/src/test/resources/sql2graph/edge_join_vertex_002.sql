@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS tbl_result_02 (
+CREATE TABLE IF NOT EXISTS edge_join_vertex_002_result (
 	s_id bigint,
 	c_id bigint,
 	ts bigint,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS tbl_result_02 (
 
 USE GRAPH g_student;
 
-INSERT INTO tbl_result_02
+INSERT INTO edge_join_vertex_002_result
 SELECT sc.srcId, sc.targetId, sc.ts, c.id, c.name
 FROM course c, selectCourse sc
 WHERE c.id = sc.targetId AND srcId < 1004

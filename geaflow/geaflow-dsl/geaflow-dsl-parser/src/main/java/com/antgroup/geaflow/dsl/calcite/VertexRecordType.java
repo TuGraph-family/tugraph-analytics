@@ -84,7 +84,7 @@ public class VertexRecordType extends RelRecordType {
 
     public VertexRecordType add(String fieldName, RelDataType type, boolean caseSensitive) {
         if (type instanceof MetaFieldType) {
-            throw new IllegalArgumentException("Cannot add MetaFieldType");
+            type = ((MetaFieldType) type).getType();
         }
         List<RelDataTypeField> fields = new ArrayList<>(getFieldList());
 
