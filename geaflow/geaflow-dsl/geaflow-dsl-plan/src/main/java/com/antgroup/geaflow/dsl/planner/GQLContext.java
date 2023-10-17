@@ -529,6 +529,14 @@ public class GQLContext {
         return shortKeyMapping.getOrDefault(key, key);
     }
 
+    public Map<String, String> keyMapping(Map<String, String> input) {
+        Map<String, String> keyMapping = new HashMap<>();
+        for (Map.Entry<String, String> entry : input.entrySet()) {
+            keyMapping.put(keyMapping(entry.getKey()), entry.getValue());
+        }
+        return keyMapping;
+    }
+
     /**
      * Register table to catalog.
      */
@@ -740,7 +748,9 @@ public class GQLContext {
         Table graphTable = catalog.getGraph(currentInstance, currentGraph);
         if (graphTable instanceof GeaFlowGraph) {
             this.currentGraph = currentGraph;
-            getTypeFactory().setCurrentGraph((GeaFlowGraph) graphTable);
+            GeaFlowGraph geaFlowGraph = (GeaFlowGraph) graphTable;
+            geaFlowGraph.getConfig().putAll(keyMapping(geaFlowGraph.getConfig().getConfigMap()));
+            getTypeFactory().setCurrentGraph(geaFlowGraph);
         } else {
             throw new GeaFlowDSLException("Graph: {} is not exists.", currentGraph);
         }

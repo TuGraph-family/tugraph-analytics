@@ -165,15 +165,27 @@ CREATE TABLE tbl_result (
 
 INSERT INTO tbl_result
 SELECT personMsgCount as messageCount, COUNT(personId) as personCount
-FROM (
-  MATCH (post:Post)<-[:replyOf]-{0,}(msg:Post|Comment)
-  WHERE msg.creationDate > 1673798400000
-    and (msg.content is not null and length(msg.content) > 0 or msg.imageFile is not null)
-    and msg.length < 30
-    and post.lang = 'en'
-  MATCH (msg:Post|Comment)-[:hasCreator]->(person)
-  RETURN person.id as personId, COUNT(msg.id) as personMsgCount
-  GROUP BY personId
+FROM
+(
+    SELECT personId, MAX(personMsgCount) as personMsgCount FROM
+    (
+        (
+          MATCH (post:Post)<-[:replyOf]-{0,}(msg:Post|Comment)
+          WHERE msg.creationDate > 1673798400000
+            and (msg.content is not null and length(msg.content) > 0 or msg.imageFile is not null)
+            and msg.length < 30
+            and post.lang = 'en'
+          MATCH (msg:Post|Comment)-[:hasCreator]->(person)
+          RETURN person.id as personId, COUNT(msg.id) as personMsgCount
+          GROUP BY personId
+        )
+        UNION ALL
+        (
+          MATCH (person:Person)
+          RETURN person.id as personId, cast(0 as bigint) as personMsgCount
+        )
+    )
+    GROUP BY personId
 )
 GROUP BY personMsgCount
 ORDER BY personCount DESC, personMsgCount DESC

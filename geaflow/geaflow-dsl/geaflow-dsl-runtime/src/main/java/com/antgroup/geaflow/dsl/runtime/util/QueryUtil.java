@@ -77,15 +77,18 @@ public class QueryUtil {
                     SqlIdentifier insertName = gqlContext.completeCatalogObjName(
                         (SqlIdentifier) insert.getTargetTable());
                     SqlIdentifier insertGraphName = GQLNodeUtil.getGraphTableName(insertName);
+                    String simpleGraphName = insertName.getComponent(insertName.names.size() - 1,
+                        insertName.names.size()).getSimple();
                     if (createGraphs.containsKey(insertGraphName.toString())) {
                         SqlCreateGraph createGraph = createGraphs.get(insertGraphName.toString());
                         GeaFlowGraph graph = gqlContext.convertToGraph(createGraph);
                         preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, config));
                     } else {
-                        Table graph = gqlContext.getCatalog().getGraph(gqlContext.getCurrentInstance(),
-                            insertGraphName.toString());
+                        Table graph = gqlContext.getCatalog().getGraph(
+                            gqlContext.getCurrentInstance(), simpleGraphName);
                         if (graph != null) {
                             GeaFlowGraph geaFlowGraph = (GeaFlowGraph) graph;
+                            geaFlowGraph.getConfig().putAll(gqlContext.keyMapping(geaFlowGraph.getConfig().getConfigMap()));
                             preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(geaFlowGraph, config));
                         }
                     }

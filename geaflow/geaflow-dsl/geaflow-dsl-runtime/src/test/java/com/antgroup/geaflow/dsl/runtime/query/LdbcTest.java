@@ -534,6 +534,7 @@ public class LdbcTest {
             .build()
             .withQueryPath("/ldbc/is_06.sql")
             .withConfig(testConfig)
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE.getKey(), String.valueOf(true))
             .execute()
             .checkSinkResult();
     }
@@ -551,6 +552,7 @@ public class LdbcTest {
             .build()
             .withQueryPath("/ldbc/is_07.sql")
             .withConfig(testConfig)
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE.getKey(), String.valueOf(true))
             .execute()
             .checkSinkResult();
     }

@@ -64,7 +64,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         this.name = name;
         this.vertexTables = vertexTables;
         this.edgeTables = edgeTables;
-        this.config = ImmutableMap.copyOf(config);
+        this.config = new HashMap<>(config);
         this.usingTables = ImmutableMap.copyOf(usingTables);
         this.ifNotExists = ifNotExists;
         this.isTemporary = isTemporary;
