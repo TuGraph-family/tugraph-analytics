@@ -21,5 +21,5 @@ INSERT INTO output_console
 SELECT DISTINCT
 	f1,
 	f2,
-	f3
+	if (f3 is not null, f3, null)
 FROM users;
