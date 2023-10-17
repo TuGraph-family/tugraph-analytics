@@ -167,15 +167,14 @@ CREATE TABLE tbl_result (
 
 --GQL
 INSERT INTO tbl_result
-SELECT personId, firstName, lastName, threadCount, threadCount + messageCount as messageCount
+SELECT personId, firstName, lastName, threadCount, messageCount as messageCount
 FROM (
   --2023-01-01 ~ 2023-10-01
   MATCH (person:Person)<-[:hasCreator]-(post:Post where creationDate between 1672502400000 and 1696160400000)
-    |+| (person:Person)<-[:hasCreator]-(post:Post where creationDate between 1672502400000 and 1696160400000)
-                       <-[:replyOf]-{1,}(comment:Comment)
-  WHERE comment is null or comment.creationDate between 1672502400000 and 1696160400000
+                       <-[:replyOf]-{0,}(comment:Comment)
+  WHERE comment.creationDate between 1672502400000 and 1696160400000
   RETURN person.id as personId, person.firstName, person.lastName,
-         COUNT(DISTINCT post.id) as threadCount, COUNT(1) as messageCount
+         COUNT(DISTINCT post) as threadCount, COUNT(comment) as messageCount
   GROUP BY personId, firstName, lastName
 )
 ORDER BY messageCount DESC, personId LIMIT 100

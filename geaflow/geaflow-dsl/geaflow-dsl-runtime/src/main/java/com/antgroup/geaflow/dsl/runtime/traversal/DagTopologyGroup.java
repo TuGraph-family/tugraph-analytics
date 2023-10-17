@@ -145,7 +145,8 @@ public class DagTopologyGroup {
 
         if (stepOperator instanceof StepLoopUntilOperator) {
             StepLoopUntilOperator loopUntilOperator = (StepLoopUntilOperator)stepOperator;
-            currentDepth = addIteration(currentDepth, loopUntilOperator.getMaxLoopCount());
+            currentDepth = addIteration(currentDepth,
+                addIteration(loopUntilOperator.getMaxLoopCount(), 1));
         }
         int depth = currentDepth;
         for (Object op : stepOperator.getNextOperators()) {

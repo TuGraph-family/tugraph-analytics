@@ -37,6 +37,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,8 @@ public abstract class AbstractVertexScanSourceFunction<K> extends RichFunction i
 
     private long windSize;
 
+    private static final AtomicInteger storeCounter = new AtomicInteger(0);
+
     public AbstractVertexScanSourceFunction(GraphViewDesc graphViewDesc) {
         this.graphViewDesc = Objects.requireNonNull(graphViewDesc);
     }
@@ -65,8 +68,11 @@ public abstract class AbstractVertexScanSourceFunction<K> extends RichFunction i
         this.windSize = this.runtimeContext.getConfiguration().getLong(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE);
         Configuration rewriteConfiguration = runtimeContext.getConfiguration();
         String jobName = rewriteConfiguration.getString(ExecutionConfigKeys.JOB_APP_NAME);
+        // A read-only graph copy will be created locally for the VertexScan.
+        // To avoid conflicts with other VertexScans or Ops, an independent copy name is
+        // constructed using the job name to differentiate the storage path.
         rewriteConfiguration.put(ExecutionConfigKeys.JOB_APP_NAME.getKey(),
-            "VertexScanSourceFunction_" + jobName);
+            "VertexScanSourceFunction_" + jobName + "_" + storeCounter.getAndIncrement());
         GraphStateDescriptor<K, ?, ?> desc = buildGraphStateDesc();
         desc.withMetricGroup(runtimeContext.getMetric());
         this.graphState = StateFactory.buildGraphState(desc, runtimeContext.getConfiguration());
