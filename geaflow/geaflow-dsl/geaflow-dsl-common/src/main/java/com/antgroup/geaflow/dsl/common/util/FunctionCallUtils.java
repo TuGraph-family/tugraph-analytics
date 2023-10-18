@@ -161,6 +161,9 @@ public class FunctionCallUtils {
         if (defineType == callType) {
             return 1d;
         } else {
+            if (callType == null) { // the input parameter is null
+                return 1d;
+            }
             int typeDegreeIndex = findTypeDegreeIndex(defineType, callType);
 
             if (typeDegreeIndex != -1) {
