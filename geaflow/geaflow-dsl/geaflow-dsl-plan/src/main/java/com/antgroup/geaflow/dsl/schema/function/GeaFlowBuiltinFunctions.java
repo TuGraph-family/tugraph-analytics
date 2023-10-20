@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.schema.function;
 
 import com.antgroup.geaflow.common.binary.BinaryString;
-import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -1730,10 +1729,6 @@ public final class GeaFlowBuiltinFunctions {
 
     public static Timestamp currentTimestamp() {
         return new Timestamp(System.currentTimeMillis());
-    }
-
-    public static Object cast(Object o, Class<?> type) {
-        return TypeCastUtil.cast(o, type);
     }
 
     public static final int TRIM_BOTH = 0;

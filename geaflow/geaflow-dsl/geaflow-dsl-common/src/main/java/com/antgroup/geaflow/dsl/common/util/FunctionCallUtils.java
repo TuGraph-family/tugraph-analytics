@@ -372,7 +372,11 @@ public class FunctionCallUtils {
                 castParams[i] = TypeCastUtil.cast(params[i], getBoxType(defineTypes[i]));
             }
         }
-        return method.invoke(target, castParams);
+        Object result = method.invoke(target, castParams);
+        if (result instanceof String) { // convert string to binary string if the udf return string type.
+            result = BinaryString.fromString((String) result);
+        }
+        return result;
     }
 
     public static Class<?> typeClass(Class<?> type, boolean useBinary) {

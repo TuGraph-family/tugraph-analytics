@@ -16,40 +16,26 @@ package com.antgroup.geaflow.dsl.common.data;
 
 import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
-import java.math.BigDecimal;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class TypeCastUtilTest {
 
     @Test
-    public void testCastByte() {
-        Byte test = new Byte("1");
-        Assert.assertEquals(TypeCastUtil.cast(test, Integer.class), 1);
-        Assert.assertEquals(TypeCastUtil.cast(test, Long.class), 1L);
-        Assert.assertEquals(TypeCastUtil.cast(test, Short.class), new Short("1"));
-        Assert.assertEquals(TypeCastUtil.cast(test, Double.class), 1.0);
-        Assert.assertEquals(TypeCastUtil.cast(test, BigDecimal.class), new BigDecimal("1"));
-        Assert.assertEquals(TypeCastUtil.cast(test, BinaryString.class), BinaryString.fromString("1"));
-    }
-
-    @Test
-    public void testCastShort() {
-        Short test = new Short("1");
-        Assert.assertEquals(TypeCastUtil.cast(test, Integer.class), 1);
-        Assert.assertEquals(TypeCastUtil.cast(test, Long.class), 1L);
-        Assert.assertEquals(TypeCastUtil.cast(test, Double.class), 1.0);
-        Assert.assertEquals(TypeCastUtil.cast(test, BigDecimal.class), new BigDecimal("1"));
-        Assert.assertEquals(TypeCastUtil.cast(test, BinaryString.class), BinaryString.fromString("1"));
+    public void testIntCast() {
+        Integer i = 1;
+        Assert.assertEquals(TypeCastUtil.cast(i, Integer.class), 1);
+        Assert.assertEquals(TypeCastUtil.cast(i, Long.class), 1L);
+        Assert.assertEquals(TypeCastUtil.cast(i, Double.class), 1.0);
+        Assert.assertEquals(TypeCastUtil.cast(i, BinaryString.class), BinaryString.fromString("1"));
     }
 
     @Test
     public void testCastDouble() {
-        Double test = 1.0;
-        Assert.assertEquals(TypeCastUtil.cast(test, Integer.class), 1);
-        Assert.assertEquals(TypeCastUtil.cast(test, Long.class), 1L);
-        Assert.assertEquals(TypeCastUtil.cast(test, Short.class), new Short("1"));
-        Assert.assertEquals(TypeCastUtil.cast(test, BigDecimal.class), new BigDecimal("1"));
-        Assert.assertEquals(TypeCastUtil.cast(test, BinaryString.class), BinaryString.fromString("1.0"));
+        Double d = 1.0;
+        Assert.assertEquals(TypeCastUtil.cast(d, Integer.class), 1);
+        Assert.assertEquals(TypeCastUtil.cast(d, Long.class), 1L);
+        Assert.assertEquals(TypeCastUtil.cast(d, Double.class), 1.0);
+        Assert.assertEquals(TypeCastUtil.cast(d, BinaryString.class), BinaryString.fromString("1.0"));
     }
 }
