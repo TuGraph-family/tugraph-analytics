@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.connector.file.source;
 import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_JAVA_RESOURCE;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
@@ -53,6 +54,9 @@ public class JarFileReadHandler extends AbstractFileReadHandler {
         @Override
         public InputStream openStream(Configuration conf) throws IOException {
             URL url = getClass().getResource(getPath());
+            if (url == null) {
+                throw new GeaFlowDSLException("Resource: {} not found", getPath());
+            }
             return url.openStream();
         }
     }
