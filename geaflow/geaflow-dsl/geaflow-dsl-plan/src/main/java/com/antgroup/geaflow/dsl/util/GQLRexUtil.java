@@ -57,6 +57,7 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexTableInputRef;
 import org.apache.calcite.rex.RexVisitor;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.fun.SqlTrimFunction;
 import org.apache.calcite.sql.fun.SqlTrimFunction.Flag;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -740,5 +741,15 @@ public class GQLRexUtil {
             }
             return other;
         }
+    }
+
+    public static RexNode and(List<RexNode> conditions, RexBuilder builder) {
+        if (conditions == null) {
+            return null;
+        }
+        if (conditions.size() == 1) {
+            return conditions.get(0);
+        }
+        return builder.makeCall(SqlStdOperatorTable.AND, conditions);
     }
 }

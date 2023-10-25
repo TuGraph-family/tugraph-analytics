@@ -63,7 +63,7 @@ public class MatchJoinTableToGraphMatchRule extends AbstractJoinToGraphRule {
         while (!(rightTableScan instanceof LogicalTableScan)) {
             rightTableScan = GQLRelUtil.toRel(rightTableScan.getInput(0));
         }
-        RelNode tail = processMatchTableJoinToGraphMatch(
+        RelNode tail = processGraphMatchJoinTable(
             call,
             call.rel(0),
             (LogicalGraphMatch)leftGraphMatch,
