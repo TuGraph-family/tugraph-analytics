@@ -218,7 +218,7 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
             pathRecordType = pathRecordType.addField(nodeName, vertexRelType, false);
             vertexMatch = VertexMatch.create(cluster, null, nodeName,
                 Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
-            IMatchNode afterLeft = rebuildInput(call.builder(), leftInput, leftHead, vertexMatch, rexLeftNodeMap);
+            IMatchNode afterLeft = concatToMatchNode(call.builder(), leftInput, leftHead, vertexMatch, rexLeftNodeMap);
             //Add vertex fields
             if (rexLeftNodeMap.size() > 0) {
                 projects.addAll(rexLeftNodeMap);
@@ -236,7 +236,7 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
             edgeMatch = EdgeMatch.create(cluster, (SingleMatchNode) afterLeft, edgeName,
                 Collections.singletonList(edgeTable.getName()), direction, edgeRelType, pathRecordType);
             swapSrcTargetId = direction.equals(EdgeDirection.IN);
-            IMatchNode afterRight = rebuildInput(call.builder(), rightInput, rightHead, edgeMatch, rexRightNodeMap);
+            IMatchNode afterRight = concatToMatchNode(call.builder(), rightInput, rightHead, edgeMatch, rexRightNodeMap);
             //Add edge fields
             if (rexRightNodeMap.size() > 0) {
                 // In the case of converting match out edges to in edges, swap the source and
@@ -284,7 +284,7 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
                 Collections.singletonList(edgeTable.getName()),
                 reverseDirection, edgeRelType, pathRecordType);
             swapSrcTargetId = reverseDirection.equals(EdgeDirection.IN);
-            IMatchNode afterLeft = rebuildInput(call.builder(), leftInput, leftHead, edgeMatch, rexLeftNodeMap);
+            IMatchNode afterLeft = concatToMatchNode(call.builder(), leftInput, leftHead, edgeMatch, rexLeftNodeMap);
 
             //Add edge fields
             if (rexLeftNodeMap.size() > 0) {
@@ -310,7 +310,7 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
             pathRecordType = pathRecordType.addField(nodeName, vertexRelType, false);
             vertexMatch = VertexMatch.create(cluster, (SingleMatchNode) afterLeft, nodeName,
                 Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
-            IMatchNode afterRight = rebuildInput(call.builder(), rightInput, rightHead, vertexMatch, rexRightNodeMap);
+            IMatchNode afterRight = concatToMatchNode(call.builder(), rightInput, rightHead, vertexMatch, rexRightNodeMap);
             //Add vertex fields
             if (rexRightNodeMap.size() > 0) {
                 projects.addAll(rexRightNodeMap);

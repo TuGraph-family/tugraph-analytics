@@ -15,6 +15,8 @@
 package com.antgroup.geaflow.dsl.optimize;
 
 import com.antgroup.geaflow.dsl.optimize.rule.AddVertexResetRule;
+import com.antgroup.geaflow.dsl.optimize.rule.FilterMatchNodeTransposeRule;
+import com.antgroup.geaflow.dsl.optimize.rule.FilterToMatchRule;
 import com.antgroup.geaflow.dsl.optimize.rule.GQLAggregateProjectMergeRule;
 import com.antgroup.geaflow.dsl.optimize.rule.GQLMatchUnionMergeRule;
 import com.antgroup.geaflow.dsl.optimize.rule.GQLProjectRemoveRule;
@@ -89,7 +91,9 @@ public class OptimizeRules {
         MatchJoinMatchMergeRule.INSTANCE,
         MatchJoinTableToGraphMatchRule.INSTANCE,
         TableJoinMatchToGraphMatchRule.INSTANCE,
-        MatchJoinMatchMergeRule.INSTANCE
+        MatchJoinMatchMergeRule.INSTANCE,
+        FilterToMatchRule.INSTANCE,
+        FilterMatchNodeTransposeRule.INSTANCE
     );
 
     private static final List<RelOptRule> POST_OPTIMIZE_RULES = ImmutableList.of(

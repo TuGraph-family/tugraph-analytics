@@ -63,7 +63,7 @@ public class TableJoinMatchToGraphMatchRule extends AbstractJoinToGraphRule {
             graphMatchProject = rightGraphMatch;
             rightGraphMatch = GQLRelUtil.toRel(rightGraphMatch.getInput(0));
         }
-        RelNode tail = processMatchTableJoinToGraphMatch(
+        RelNode tail = processGraphMatchJoinTable(
             call,
             call.rel(0),
             (LogicalGraphMatch)rightGraphMatch,

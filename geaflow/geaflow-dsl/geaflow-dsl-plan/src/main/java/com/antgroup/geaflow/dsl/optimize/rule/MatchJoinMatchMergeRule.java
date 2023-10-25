@@ -85,9 +85,9 @@ public class MatchJoinMatchMergeRule extends AbstractJoinToGraphRule {
         List<RexNode> rexLeftNodeMap = new ArrayList<>();
         List<RexNode> rexRightNodeMap = new ArrayList<>();
         IMatchNode leftPathPattern = ((GraphMatch)leftGraphMatch).getPathPattern();
-        leftPathPattern = rebuildInput(relBuilder, leftInput, leftGraphMatch, leftPathPattern, rexLeftNodeMap);
+        leftPathPattern = concatToMatchNode(relBuilder, leftInput, leftGraphMatch, leftPathPattern, rexLeftNodeMap);
         IMatchNode rightPathPattern = ((GraphMatch)rightGraphMatch).getPathPattern();
-        rightPathPattern = rebuildInput(relBuilder, rightInput, rightGraphMatch, rightPathPattern, rexRightNodeMap);
+        rightPathPattern = concatToMatchNode(relBuilder, rightInput, rightGraphMatch, rightPathPattern, rexRightNodeMap);
         if (leftPathPattern == null || rightPathPattern == null) {
             return;
         }
