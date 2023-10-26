@@ -114,7 +114,7 @@ public class MatchFilter extends SingleRel implements SingleMatchNode {
         return condition;
     }
 
-    public static MatchFilter create(IMatchNode input, RexNode condition, PathRecordType pathType) {
+    public static MatchFilter create(RelNode input, RexNode condition, PathRecordType pathType) {
         return new MatchFilter(input.getCluster(), input.getTraitSet(), input, condition, pathType);
     }
 }

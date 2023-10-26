@@ -87,4 +87,14 @@ public class GQLFilterTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testFilter_008() throws Exception {
+        QueryTester
+            .build()
+            .withGraphDefine("/query/modern_graph.sql")
+            .withQueryPath("/query/gql_filter_008.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }
