@@ -54,6 +54,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
     protected Map<Integer, ContainerInfo> containerInfos;
     protected Map<Integer, DriverInfo> driverInfos;
     protected IFailoverStrategy foStrategy;
+
     protected Map<Integer, Future<DriverInfo>> driverFutureMap;
     protected long driverTimeoutSec;
     private AtomicInteger idGenerator;
@@ -213,6 +214,10 @@ public abstract class AbstractClusterManager implements IClusterManager {
 
     public ClusterContext getClusterContext() {
         return clusterContext;
+    }
+
+    public int getTotalContainers() {
+        return clusterContext.getContainerIds().size();
     }
 
     public Map<Integer, ContainerInfo> getContainerInfos() {

@@ -23,6 +23,7 @@ import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.IAllocator;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.RoundRobinAllocator;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
+import com.antgroup.geaflow.cluster.web.metrics.ResourceMetrics;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.SleepUtils;
@@ -326,6 +327,14 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
             }
             SleepUtils.sleepMilliSecond(DEFAULT_SLEEP_MS);
         }
+    }
+
+    public ResourceMetrics getResourceMetrics() {
+        ResourceMetrics metrics = new ResourceMetrics();
+        metrics.setPendingWorkers(pendingWorkerCounter.get());
+        metrics.setAvailableWorkers(availableWorkers.size());
+        metrics.setTotalWorkers(allocatedWorkerNum);
+        return metrics;
     }
 
     @VisibleForTesting

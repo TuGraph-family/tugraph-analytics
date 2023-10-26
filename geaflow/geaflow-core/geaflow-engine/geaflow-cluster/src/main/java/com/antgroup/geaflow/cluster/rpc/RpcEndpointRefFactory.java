@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RPC_AS
 import com.antgroup.geaflow.cluster.rpc.impl.ContainerEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.DriverEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.PipelineMasterEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -118,6 +119,17 @@ public class RpcEndpointRefFactory implements Serializable {
         }
     }
 
+    public MetricEndpointRef connectMetricServer(String host, int port) {
+        EndpointRefID refID = new EndpointRefID(host, port, EndpointType.METRIC);
+        try {
+            return (MetricEndpointRef) endpointRefMap
+                .computeIfAbsent(refID, key -> new MetricEndpointRef(host, port, executorService));
+        } catch (Throwable t) {
+            endpointRefMap.remove(refID);
+            throw new RuntimeException("connect container error, host " + host + " port " + port, t);
+        }
+    }
+
     public void invalidateEndpointCache(String host, int port, EndpointType endpointType) {
         EndpointRefID refID = new EndpointRefID(host, port, endpointType);
         endpointRefMap.remove(refID);
@@ -137,7 +149,9 @@ public class RpcEndpointRefFactory implements Serializable {
         /** Pipeline endpoint. */
         PIPELINE_MANAGER,
         /** Container endpoint. */
-        CONTAINER
+        CONTAINER,
+        /** Metric query endpoint. */
+        METRIC
     }
 
     public static class EndpointRefID {

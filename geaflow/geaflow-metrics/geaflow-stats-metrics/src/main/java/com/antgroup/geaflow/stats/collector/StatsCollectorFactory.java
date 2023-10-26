@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.stats.collector;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.stats.model.MetricCache;
 import com.antgroup.geaflow.stats.sink.IStatsWriter;
 import com.antgroup.geaflow.stats.sink.StatsWriterFactory;
 
@@ -25,13 +26,15 @@ public class StatsCollectorFactory {
     private final ProcessStatsCollector processStatsCollector;
     private final MetricMetaCollector metricMetaCollector;
     private final HeartbeatCollector heartbeatCollector;
+    private final MetricCache metricCache;
     private static StatsCollectorFactory INSTANCE;
 
     private StatsCollectorFactory(Configuration configuration) {
         IStatsWriter statsWriter = StatsWriterFactory.getStatsWriter(configuration);
         IStatsWriter syncWriter = StatsWriterFactory.getStatsWriter(configuration, true);
+        this.metricCache = new MetricCache(configuration);
         this.exceptionCollector = new ExceptionCollector(syncWriter, configuration);
-        this.pipelineStatsCollector = new PipelineStatsCollector(statsWriter, configuration);
+        this.pipelineStatsCollector = new PipelineStatsCollector(statsWriter, configuration, metricCache);
         this.metricMetaCollector = new MetricMetaCollector(statsWriter, configuration);
         this.processStatsCollector = new ProcessStatsCollector(configuration);
         this.heartbeatCollector = new HeartbeatCollector(statsWriter, configuration);
@@ -66,6 +69,10 @@ public class StatsCollectorFactory {
 
     public ProcessStatsCollector getProcessStatsCollector() {
         return processStatsCollector;
+    }
+
+    public MetricCache getMetricCache() {
+        return metricCache;
     }
 
 }

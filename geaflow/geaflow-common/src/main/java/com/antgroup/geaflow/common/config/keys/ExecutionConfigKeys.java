@@ -504,6 +504,16 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(5)
         .description("metric meta report max retry times");
 
+    public static final ConfigKey METRIC_MAX_CACHED_PIPELINES = ConfigKeys
+        .key("geaflow.metric.max.cached.pipelines")
+        .defaultValue(50)
+        .description("max cached pipeline metrics");
+
+    public static final ConfigKey METRIC_SERVICE_PORT = ConfigKeys
+        .key("geaflow.metric.service.port")
+        .defaultValue(0)
+        .description("metric service port");
+
     public static final ConfigKey STATS_METRIC_STORE_TYPE = ConfigKeys
         .key("geaflow.metric.stats.type")
         .defaultValue("MEMORY")
