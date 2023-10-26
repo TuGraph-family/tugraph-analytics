@@ -97,12 +97,12 @@ public class InfluxdbReporter extends AbstractReporter implements ScheduledRepor
     private Point buildPoint(String name, Object value) {
         if (value instanceof Number) {
             return Point.measurement(name)
-                .addTags(this.metricTags.getOrDefault(name, EMPTY_TAGS))
+                .addTags(this.globalTags)
                 .time(System.currentTimeMillis(), WritePrecision.MS)
                 .addField(FIELD, (Number) value);
         } else {
             return Point.measurement(name)
-                .addTags(this.metricTags.getOrDefault(name, EMPTY_TAGS))
+                .addTags(this.globalTags)
                 .time(System.currentTimeMillis(), WritePrecision.MS)
                 .addField(FIELD, String.valueOf(value));
         }
