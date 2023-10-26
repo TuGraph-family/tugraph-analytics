@@ -51,6 +51,31 @@ public class EdgeRecordType extends RelRecordType {
     public static EdgeRecordType createEdgeType(List<RelDataTypeField> fields, String srcIdField,
                                                 String targetIdField, String timestampField,
                                                 RelDataTypeFactory typeFactory) {
+
+        boolean hasMultiSrcIdFields = fields.stream()
+            .filter(f -> f.getType() instanceof MetaFieldType
+                && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_SRC_ID))
+            .count() > 1;
+        if (hasMultiSrcIdFields) {
+            srcIdField = EdgeType.DEFAULT_SRC_ID_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.EDGE_SRC_ID, srcIdField);
+        }
+        boolean hasMultiTargetIdFields = fields.stream()
+            .filter(f -> f.getType() instanceof MetaFieldType
+                && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_TARGET_ID))
+            .count() > 1;
+        if (hasMultiTargetIdFields) {
+            targetIdField = EdgeType.DEFAULT_TARGET_ID_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.EDGE_TARGET_ID, targetIdField);
+        }
+        boolean hasMultiTsFields = fields.stream()
+            .filter(f -> f.getType() instanceof MetaFieldType
+                && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_TS))
+            .count() > 1;
+        if (hasMultiTsFields) {
+            timestampField = EdgeType.DEFAULT_TS_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.EDGE_TS, timestampField);
+        }
         List<RelDataTypeField> reorderFields = reorderFields(fields, srcIdField, targetIdField, timestampField,
             typeFactory);
         return new EdgeRecordType(reorderFields, timestampField != null);

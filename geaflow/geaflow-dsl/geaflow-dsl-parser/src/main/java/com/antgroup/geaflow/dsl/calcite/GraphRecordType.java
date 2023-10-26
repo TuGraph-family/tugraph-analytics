@@ -14,13 +14,20 @@
 
 package com.antgroup.geaflow.dsl.calcite;
 
+import com.antgroup.geaflow.dsl.calcite.MetaFieldType.MetaField;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.common.types.EdgeType;
+import com.antgroup.geaflow.dsl.common.types.VertexType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -31,7 +38,23 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 public class GraphRecordType extends RelRecordType {
 
+    private static final Set<String> META_FIELD_NAMES = new HashSet<String>() {
+        {
+            add(VertexType.DEFAULT_ID_FIELD_NAME.toUpperCase(Locale.ROOT));
+            add(EdgeType.DEFAULT_SRC_ID_NAME.toUpperCase(Locale.ROOT));
+            add(EdgeType.DEFAULT_TARGET_ID_NAME.toUpperCase(Locale.ROOT));
+            add(EdgeType.DEFAULT_LABEL_NAME.toUpperCase(Locale.ROOT));
+            add(EdgeType.DEFAULT_TS_NAME.toUpperCase(Locale.ROOT));
+        }
+    };
+
     private final String graphName;
+
+    public static void validateFieldName(String name) {
+        if (META_FIELD_NAMES.contains(name.toUpperCase(Locale.ROOT))) {
+            throw new GeaFlowDSLException("Field {} cannot use in graph as field name.", name);
+        }
+    }
 
     public GraphRecordType(String graphName, List<RelDataTypeField> fields) {
         super(StructKind.PEEK_FIELDS, fields);
@@ -103,10 +126,6 @@ public class GraphRecordType extends RelRecordType {
                 chkVertexId = vertexType.getIdField().getName();
                 chkVertexIdType = vertexType.getIdField().getType();
             } else {
-                if (!vertexType.getIdField().getName().equals(chkVertexId)) {
-                    throw new GeaFlowDSLException("Id field name should be same between vertex "
-                        + "tables");
-                }
                 if (!vertexType.getIdField().getType().equals(chkVertexIdType)) {
                     throw new GeaFlowDSLException("Id field type should be same between vertex "
                         + "tables");
@@ -137,6 +156,7 @@ public class GraphRecordType extends RelRecordType {
                 }
             }
         }
+
         return VertexRecordType.createVertexType(combineFields, idField, typeFactory);
     }
 
@@ -179,10 +199,6 @@ public class GraphRecordType extends RelRecordType {
                 chkSourceId = edgeType.getSrcIdField().getName();
                 chkSourceIdType = edgeType.getSrcIdField().getType();
             } else {
-                if (!edgeType.getSrcIdField().getName().equals(chkSourceId)) {
-                    throw new GeaFlowDSLException("SOURCE ID field name should be same between "
-                        + "edge tables");
-                }
                 if (!edgeType.getSrcIdField().getType().equals(chkSourceIdType)) {
                     throw new GeaFlowDSLException("SOURCE ID field type should be same between edge "
                         + "tables");
@@ -192,10 +208,6 @@ public class GraphRecordType extends RelRecordType {
                 chkDestinationId = edgeType.getTargetIdField().getName();
                 chkDestinationIdType = edgeType.getTargetIdField().getType();
             } else {
-                if (!edgeType.getTargetIdField().getName().equals(chkDestinationId)) {
-                    throw new GeaFlowDSLException("DESTINATION ID field name should be same "
-                        + "between edge tables");
-                }
                 if (!edgeType.getTargetIdField().getType().equals(chkDestinationIdType)) {
                     throw new GeaFlowDSLException("DESTINATION ID field type should be same "
                         + "between edge tables");
@@ -211,10 +223,6 @@ public class GraphRecordType extends RelRecordType {
                     chkTimestamp = edgeType.getTimestampField().get().getName();
                     chkTimestampType = edgeType.getTimestampField().get().getType();
                 } else {
-                    if (!edgeType.getTimestampField().get().getName().equals(chkTimestamp)) {
-                        throw new GeaFlowDSLException("TIMESTAMP field name should be same between "
-                            + "edge tables");
-                    }
                     if (!edgeType.getTimestampField().get().getType().equals(chkTimestampType)) {
                         throw new GeaFlowDSLException("TIMESTAMP field type should be same between edge "
                             + "tables");
@@ -253,6 +261,30 @@ public class GraphRecordType extends RelRecordType {
         }
 
         return EdgeRecordType.createEdgeType(combineFields, srcIdField, targetField, tsField, typeFactory);
+    }
+
+    public static List<RelDataTypeField> renameMetaField(List<RelDataTypeField> fields,
+                                                         MetaField metaType,
+                                                         String newFieldName) {
+        List<RelDataTypeField> metaFields = new ArrayList<>();
+        return fields.stream().filter(f -> {
+            if (f.getType() instanceof MetaFieldType
+                && ((MetaFieldType)f.getType()).getMetaField().equals(metaType)) {
+                if (metaFields.isEmpty()) {
+                    metaFields.add(f);
+                    return true;
+                }
+                return false;
+            }
+            return true;
+        }).map(f -> {
+            if (f.getType() instanceof MetaFieldType
+                && ((MetaFieldType)f.getType()).getMetaField().equals(metaType)) {
+                return new RelDataTypeFieldImpl(newFieldName, f.getIndex(), f.getType());
+            } else {
+                return f;
+            }
+        }).collect(Collectors.toList());
     }
 
     /**

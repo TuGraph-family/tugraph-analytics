@@ -90,9 +90,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         if (this.vertexTables.size() > 0) {
             TableField commonVertexIdField = this.vertexTables.get(0).getIdField();
             for (VertexTable vertexTable : this.vertexTables) {
-                if (!vertexTable.getIdFieldName().equals(commonVertexIdField.getName())) {
-                    throw new GeaFlowDSLException("Id field name should be same between vertex " + "tables");
-                } else if (!vertexTable.getIdField().getType().equals(commonVertexIdField.getType())) {
+                if (!vertexTable.getIdField().getType().equals(commonVertexIdField.getType())) {
                     throw new GeaFlowDSLException("Id field type should be same between vertex " + "tables");
                 }
             }
@@ -103,15 +101,9 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
             Optional<TableField> commonTsField =
                 Optional.ofNullable(this.edgeTables.get(0).getTimestampField());
             for (EdgeTable edgeTable : this.edgeTables) {
-                if (!edgeTable.getSrcIdFieldName().equals(commonSrcIdField.getName())) {
-                    throw new GeaFlowDSLException("SOURCE ID field name should be same between "
-                        + "edge tables");
-                } else if (!edgeTable.getSrcIdField().getType().equals(commonSrcIdField.getType())) {
+                if (!edgeTable.getSrcIdField().getType().equals(commonSrcIdField.getType())) {
                     throw new GeaFlowDSLException("SOURCE ID field type should be same between edge "
                         + "tables");
-                } else if (!edgeTable.getTargetIdFieldName().equals(commonTargetIdField.getName())) {
-                    throw new GeaFlowDSLException("DESTINATION ID field name should be same "
-                        + "between edge tables");
                 } else if (!edgeTable.getTargetIdField().getType().equals(commonTargetIdField.getType())) {
                     throw new GeaFlowDSLException("DESTINATION ID field type should be same "
                         + "between edge tables");
@@ -120,9 +112,6 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
                 if (commonTsField.isPresent()) {
                     if (edgeTable.getTimestampField() == null) {
                         throw new GeaFlowDSLException("TIMESTAMP should defined or not defined in all edge tables");
-                    } else if (!edgeTable.getTimestampFieldName().equals(commonTsField.get().getName())) {
-                        throw new GeaFlowDSLException("TIMESTAMP field name should be same between "
-                            + "edge tables");
                     } else if (!edgeTable.getTimestampField().getType().equals(commonTsField.get().getType())) {
                         throw new GeaFlowDSLException("TIMESTAMP field type should be same between edge "
                             + "tables");
@@ -307,6 +296,9 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         }
 
         private void checkFields() {
+            for (TableField field : getFields()) {
+                GraphRecordType.validateFieldName(field.getName());
+            }
             Set<String> fieldNames = getFields().stream().map(TableField::getName)
                 .collect(Collectors.toSet());
             if (fieldNames.size() != super.getFields().size()) {
@@ -378,6 +370,9 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         }
 
         private void checkFields() {
+            for (TableField field : getFields()) {
+                GraphRecordType.validateFieldName(field.getName());
+            }
             Set<String> fieldNames = getFields().stream().map(TableField::getName)
                 .collect(Collectors.toSet());
             if (fieldNames.size() != getFields().size()) {

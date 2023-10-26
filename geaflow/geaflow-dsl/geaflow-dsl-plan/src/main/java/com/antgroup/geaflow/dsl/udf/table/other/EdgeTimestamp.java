@@ -14,28 +14,27 @@
 
 package com.antgroup.geaflow.dsl.udf.table.other;
 
-import com.antgroup.geaflow.common.binary.BinaryString;
-import com.antgroup.geaflow.dsl.common.data.RowEdge;
-import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.util.GraphSchemaUtil;
+import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
 import org.apache.calcite.rel.type.RelDataType;
 
-@Description(name = "label", description = "Returns label for edge or vertex")
-public class Label extends UDF implements GraphMetaFieldAccessFunction {
+@Description(name = "ts", description = "Returns ts for edge with timestamp")
+public class EdgeTimestamp extends UDF implements GraphMetaFieldAccessFunction {
 
-    public BinaryString eval(RowEdge edge) {
-        return edge.getBinaryLabel();
-    }
-
-    public BinaryString eval(RowVertex vertex) {
-        return vertex.getBinaryLabel();
+    public Long eval(IGraphElementWithTimeField edge) {
+        return edge.getTime();
     }
 
     @Override
     public RelDataType getReturnRelDataType(GQLJavaTypeFactory typeFactory) {
-        return GraphSchemaUtil.getCurrentGraphLabelType(typeFactory);
+        if (GraphSchemaUtil.getCurrentGraphEdgeTimestampType(typeFactory).isPresent()) {
+            return GraphSchemaUtil.getCurrentGraphEdgeTimestampType(typeFactory).get();
+        } else {
+            throw new GeaFlowDSLException("Cannot find timestamp type");
+        }
     }
 }

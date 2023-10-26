@@ -85,7 +85,7 @@ public class GQLValidateGraphRecordTypeTest {
             .expectException("Same name field between edge tables shouldn't have different type.");
     }
 
-    @Test
+    @Test (enabled = false)
     public void testSameIdFieldNameValidation() {
         String graphDDL = "create graph g1("
             + "vertex user("
@@ -116,7 +116,7 @@ public class GQLValidateGraphRecordTypeTest {
             .expectException("Id field name should be same between vertex tables");
     }
 
-    @Test
+    @Test (enabled = false)
     public void testSameSourceIdFieldNameValidation() {
         String graphDDL = "create graph g1("
             + "vertex user("
@@ -146,7 +146,7 @@ public class GQLValidateGraphRecordTypeTest {
             .expectException("SOURCE ID field name should be same between edge tables");
     }
 
-    @Test
+    @Test (enabled = false)
     public void testSameDestinationIdFieldNameValidation() {
         String graphDDL = "create graph g1("
             + "vertex user("
@@ -178,7 +178,7 @@ public class GQLValidateGraphRecordTypeTest {
     }
 
 
-    @Test
+    @Test (enabled = false)
     public void testSameTimestampFieldNameValidation() {
         String graphDDL = "create graph g1("
             + "vertex user("
