@@ -17,7 +17,6 @@ package com.antgroup.geaflow.cluster.k8s.config;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesClientRunner;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
@@ -83,7 +82,7 @@ public class KubernetesClientParam extends AbstractKubernetesParam {
         Map<String, String> workerPodLabels = new HashMap<>();
         workerPodLabels.put(K8SConstants.LABEL_APP_KEY, clusterId);
         workerPodLabels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_CLIENT);
-        workerPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS.getKey()));
+        workerPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS));
         return workerPodLabels;
     }
 

@@ -86,11 +86,12 @@ public class RayClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void doStartDriver(int driverId) {
-        DriverContext driverContext = new RayDriverContext(driverId, clusterConfig.getConfig());
+    public void doStartDriver(int driverId, int driverIndex) {
+        DriverContext driverContext = new RayDriverContext(driverId, driverIndex,
+            clusterConfig.getConfig());
         ActorHandle<RayDriverRunner> driver = RayClient.createDriver(clusterConfig, driverContext);
         actors.put(driverId, driver);
-        LOGGER.info("call driver start");
+        LOGGER.info("call driver start id:{} index:{}", driverId, driverIndex);
     }
 
     @Override

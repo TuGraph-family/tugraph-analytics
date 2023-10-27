@@ -1144,6 +1144,12 @@ public final class Master {
      * @return The payload.
      */
     com.google.protobuf.ByteString getPayload();
+
+    /**
+     * <code>bool isDriver = 2;</code>
+     * @return The isDriver.
+     */
+    boolean getIsDriver();
   }
   /**
    * Protobuf type {@code RegisterRequest}
@@ -1196,6 +1202,11 @@ public final class Master {
               payload_ = input.readBytes();
               break;
             }
+            case 16: {
+
+              isDriver_ = input.readBool();
+              break;
+            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -1239,6 +1250,17 @@ public final class Master {
       return payload_;
     }
 
+    public static final int ISDRIVER_FIELD_NUMBER = 2;
+    private boolean isDriver_;
+    /**
+     * <code>bool isDriver = 2;</code>
+     * @return The isDriver.
+     */
+    @java.lang.Override
+    public boolean getIsDriver() {
+      return isDriver_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1256,6 +1278,9 @@ public final class Master {
       if (!payload_.isEmpty()) {
         output.writeBytes(1, payload_);
       }
+      if (isDriver_ != false) {
+        output.writeBool(2, isDriver_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -1268,6 +1293,10 @@ public final class Master {
       if (!payload_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, payload_);
+      }
+      if (isDriver_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, isDriver_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -1286,6 +1315,8 @@ public final class Master {
 
       if (!getPayload()
           .equals(other.getPayload())) return false;
+      if (getIsDriver()
+          != other.getIsDriver()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -1299,6 +1330,9 @@ public final class Master {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + PAYLOAD_FIELD_NUMBER;
       hash = (53 * hash) + getPayload().hashCode();
+      hash = (37 * hash) + ISDRIVER_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsDriver());
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1434,6 +1468,8 @@ public final class Master {
         super.clear();
         payload_ = com.google.protobuf.ByteString.EMPTY;
 
+        isDriver_ = false;
+
         return this;
       }
 
@@ -1461,6 +1497,7 @@ public final class Master {
       public com.antgroup.geaflow.rpc.proto.Master.RegisterRequest buildPartial() {
         com.antgroup.geaflow.rpc.proto.Master.RegisterRequest result = new com.antgroup.geaflow.rpc.proto.Master.RegisterRequest(this);
         result.payload_ = payload_;
+        result.isDriver_ = isDriver_;
         onBuilt();
         return result;
       }
@@ -1511,6 +1548,9 @@ public final class Master {
         if (other == com.antgroup.geaflow.rpc.proto.Master.RegisterRequest.getDefaultInstance()) return this;
         if (other.getPayload() != com.google.protobuf.ByteString.EMPTY) {
           setPayload(other.getPayload());
+        }
+        if (other.getIsDriver() != false) {
+          setIsDriver(other.getIsDriver());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -1571,6 +1611,37 @@ public final class Master {
       public Builder clearPayload() {
         
         payload_ = getDefaultInstance().getPayload();
+        onChanged();
+        return this;
+      }
+
+      private boolean isDriver_ ;
+      /**
+       * <code>bool isDriver = 2;</code>
+       * @return The isDriver.
+       */
+      @java.lang.Override
+      public boolean getIsDriver() {
+        return isDriver_;
+      }
+      /**
+       * <code>bool isDriver = 2;</code>
+       * @param value The isDriver to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsDriver(boolean value) {
+        
+        isDriver_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool isDriver = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsDriver() {
+        
+        isDriver_ = false;
         onChanged();
         return this;
       }
@@ -2211,6 +2282,12 @@ public final class Master {
      * @return The payload.
      */
     com.google.protobuf.ByteString getPayload();
+
+    /**
+     * <code>bytes name = 4;</code>
+     * @return The name.
+     */
+    com.google.protobuf.ByteString getName();
   }
   /**
    * Protobuf type {@code HeartbeatRequest}
@@ -2226,6 +2303,7 @@ public final class Master {
     }
     private HeartbeatRequest() {
       payload_ = com.google.protobuf.ByteString.EMPTY;
+      name_ = com.google.protobuf.ByteString.EMPTY;
     }
 
     @java.lang.Override
@@ -2271,6 +2349,11 @@ public final class Master {
             case 26: {
 
               payload_ = input.readBytes();
+              break;
+            }
+            case 34: {
+
+              name_ = input.readBytes();
               break;
             }
             default: {
@@ -2338,6 +2421,17 @@ public final class Master {
       return payload_;
     }
 
+    public static final int NAME_FIELD_NUMBER = 4;
+    private com.google.protobuf.ByteString name_;
+    /**
+     * <code>bytes name = 4;</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getName() {
+      return name_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2361,6 +2455,9 @@ public final class Master {
       if (!payload_.isEmpty()) {
         output.writeBytes(3, payload_);
       }
+      if (!name_.isEmpty()) {
+        output.writeBytes(4, name_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -2381,6 +2478,10 @@ public final class Master {
       if (!payload_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(3, payload_);
+      }
+      if (!name_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, name_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -2403,6 +2504,8 @@ public final class Master {
           != other.getTimestamp()) return false;
       if (!getPayload()
           .equals(other.getPayload())) return false;
+      if (!getName()
+          .equals(other.getName())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -2421,6 +2524,8 @@ public final class Master {
           getTimestamp());
       hash = (37 * hash) + PAYLOAD_FIELD_NUMBER;
       hash = (53 * hash) + getPayload().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2560,6 +2665,8 @@ public final class Master {
 
         payload_ = com.google.protobuf.ByteString.EMPTY;
 
+        name_ = com.google.protobuf.ByteString.EMPTY;
+
         return this;
       }
 
@@ -2589,6 +2696,7 @@ public final class Master {
         result.id_ = id_;
         result.timestamp_ = timestamp_;
         result.payload_ = payload_;
+        result.name_ = name_;
         onBuilt();
         return result;
       }
@@ -2645,6 +2753,9 @@ public final class Master {
         }
         if (other.getPayload() != com.google.protobuf.ByteString.EMPTY) {
           setPayload(other.getPayload());
+        }
+        if (other.getName() != com.google.protobuf.ByteString.EMPTY) {
+          setName(other.getName());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -2770,6 +2881,40 @@ public final class Master {
         onChanged();
         return this;
       }
+
+      private com.google.protobuf.ByteString name_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>bytes name = 4;</code>
+       * @return The name.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getName() {
+        return name_;
+      }
+      /**
+       * <code>bytes name = 4;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        name_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bytes name = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+        
+        name_ = getDefaultInstance().getName();
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -2859,22 +3004,20 @@ public final class Master {
     java.lang.String[] descriptorData = {
       "\n\014master.proto\032\033google/protobuf/empty.pr" +
       "oto\"!\n\016ContainerInfos\022\017\n\007payload\030\001 \001(\014\"#" +
-      "\n\014ContainerIds\022\023\n\013containerId\030\001 \003(\005\"\"\n\017R" +
-      "egisterRequest\022\017\n\007payload\030\001 \001(\014\"4\n\020Regis" +
-      "terResponse\022\017\n\007success\030\001 \001(\010\022\017\n\007payload\030" +
-      "\002 \001(\014\"B\n\020HeartbeatRequest\022\n\n\002id\030\001 \001(\005\022\021\n" +
-      "\ttimestamp\030\002 \001(\003\022\017\n\007payload\030\003 \001(\0142\371\002\n\rMa" +
-      "sterService\0224\n\020getContainerInfo\022\r.Contai" +
-      "nerIds\032\017.ContainerInfos\"\000\022A\n\024getAllConta" +
-      "inerInfos\022\026.google.protobuf.Empty\032\017.Cont" +
-      "ainerInfos\"\000\022:\n\021registerContainer\022\020.Regi" +
-      "sterRequest\032\021.RegisterResponse\"\000\0227\n\016regi" +
-      "sterDriver\022\020.RegisterRequest\032\021.RegisterR" +
-      "esponse\"\000\022?\n\020receiveHeartbeat\022\021.Heartbea" +
-      "tRequest\032\026.google.protobuf.Empty\"\000\0229\n\005cl" +
-      "ose\022\026.google.protobuf.Empty\032\026.google.pro" +
-      "tobuf.Empty\"\000B\"\n\036com.antgroup.geaflow.rp" +
-      "c.protoP\000b\006proto3"
+      "\n\014ContainerIds\022\023\n\013containerId\030\001 \003(\005\"4\n\017R" +
+      "egisterRequest\022\017\n\007payload\030\001 \001(\014\022\020\n\010isDri" +
+      "ver\030\002 \001(\010\"4\n\020RegisterResponse\022\017\n\007success" +
+      "\030\001 \001(\010\022\017\n\007payload\030\002 \001(\014\"P\n\020HeartbeatRequ" +
+      "est\022\n\n\002id\030\001 \001(\005\022\021\n\ttimestamp\030\002 \001(\003\022\017\n\007pa" +
+      "yload\030\003 \001(\014\022\014\n\004name\030\004 \001(\0142\210\002\n\rMasterServ" +
+      "ice\022:\n\021registerContainer\022\020.RegisterReque" +
+      "st\032\021.RegisterResponse\"\000\022?\n\020receiveHeartb" +
+      "eat\022\021.HeartbeatRequest\032\026.google.protobuf" +
+      ".Empty\"\000\022?\n\020receiveException\022\021.Heartbeat" +
+      "Request\032\026.google.protobuf.Empty\"\000\0229\n\005clo" +
+      "se\022\026.google.protobuf.Empty\032\026.google.prot" +
+      "obuf.Empty\"\000B\"\n\036com.antgroup.geaflow.rpc" +
+      ".protoP\000b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -2898,7 +3041,7 @@ public final class Master {
     internal_static_RegisterRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RegisterRequest_descriptor,
-        new java.lang.String[] { "Payload", });
+        new java.lang.String[] { "Payload", "IsDriver", });
     internal_static_RegisterResponse_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_RegisterResponse_fieldAccessorTable = new
@@ -2910,7 +3053,7 @@ public final class Master {
     internal_static_HeartbeatRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_HeartbeatRequest_descriptor,
-        new java.lang.String[] { "Id", "Timestamp", "Payload", });
+        new java.lang.String[] { "Id", "Timestamp", "Payload", "Name", });
     com.google.protobuf.EmptyProto.getDescriptor();
   }
 

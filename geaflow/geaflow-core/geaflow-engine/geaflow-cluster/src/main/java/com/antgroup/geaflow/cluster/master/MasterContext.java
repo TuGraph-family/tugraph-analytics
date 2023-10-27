@@ -14,33 +14,22 @@
 
 package com.antgroup.geaflow.cluster.master;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
+
+import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
+import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.env.IEnvironment.EnvType;
-import java.io.Serializable;
 
-public class MasterContext implements Serializable {
+public class MasterContext extends ReliableContainerContext {
 
-    private boolean isRecover;
     private Configuration configuration;
     private IClusterManager clusterManager;
-    private EnvType envType;
+    private ClusterContext clusterContext;
 
     public MasterContext(Configuration configuration) {
+        super(DEFAULT_MASTER_ID, configuration);
         this.configuration = configuration;
-    }
-
-    public MasterContext(Configuration configuration, IClusterManager clusterManager) {
-        this.configuration = configuration;
-        this.clusterManager = clusterManager;
-    }
-
-    public boolean isRecover() {
-        return isRecover;
-    }
-
-    public void setRecover(boolean recover) {
-        isRecover = recover;
     }
 
     public Configuration getConfiguration() {
@@ -59,11 +48,19 @@ public class MasterContext implements Serializable {
         this.clusterManager = clusterManager;
     }
 
-    public EnvType getEnvType() {
-        return envType;
+    public ClusterContext getClusterContext() {
+        return clusterContext;
     }
 
-    public void setEnvType(EnvType envType) {
-        this.envType = envType;
+    @Override
+    public boolean isRecover() {
+        return clusterContext.isRecover();
     }
+
+    @Override
+    public void load() {
+        this.clusterContext = new ClusterContext(configuration);
+        this.clusterContext.load();
+    }
+
 }

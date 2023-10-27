@@ -33,7 +33,7 @@ public class LocalFailoverStrategy implements IFailoverStrategy {
     }
 
     @Override
-    public void doFailover(int componentId) {
+    public void doFailover(int componentId, Throwable cause) {
         LOGGER.info("component {} do failover", componentId);
     }
 

@@ -30,11 +30,6 @@ public interface KubernetesParam {
     String getServiceAccount();
 
     /**
-     * Get service name.
-     */
-    String getServiceName(String clusterId);
-
-    /**
      * Get all key-value pair labels for service.
      */
     Map<String, String> getServiceLabels();

@@ -37,10 +37,11 @@ public class RetryCommand {
             } catch (Exception e) {
                 retryCount--;
                 if (retryCount == 0) {
-                    LOGGER.error("Retry failed and reached the maximum retried times.");
+                    LOGGER.error("Retry failed and reached the maximum retried times.", e);
                     throw new GeaflowRuntimeException(e);
                 }
-                LOGGER.warn("Retry failed, will retry {} times with interval {} ms.", retryCount, retryIntervalMs);
+                LOGGER.warn("Retry failed, will retry {} times with interval {} ms.", retryCount,
+                    retryIntervalMs);
                 try {
                     Thread.sleep(retryIntervalMs);
                 } catch (InterruptedException e1) {

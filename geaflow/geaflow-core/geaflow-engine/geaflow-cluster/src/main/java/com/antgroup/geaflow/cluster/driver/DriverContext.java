@@ -30,14 +30,17 @@ public class DriverContext extends ReliableContainerContext {
 
     private Pipeline pipeline;
     private List<Integer> finishedPipelineTasks;
+    private int index;
 
-    public DriverContext(int index, Configuration config) {
-        super(index, config);
+    public DriverContext(int id, int index, Configuration config) {
+        super(id, config);
+        this.index = index;
         this.finishedPipelineTasks = new ArrayList<>();
     }
 
-    public DriverContext(int index, Configuration config, boolean isRecover) {
-        super(index, config);
+    public DriverContext(int id, int index, Configuration config, boolean isRecover) {
+        super(id, config);
+        this.index = index;
         this.isRecover = isRecover;
         this.finishedPipelineTasks = new ArrayList<>();
     }
@@ -64,6 +67,10 @@ public class DriverContext extends ReliableContainerContext {
         if (!pipeline.equals(this.pipeline)) {
             this.pipeline = pipeline;
         }
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     public List<Integer> getFinishedPipelineTasks() {

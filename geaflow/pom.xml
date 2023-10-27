@@ -65,10 +65,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <metrics.version>4.2.0</metrics.version>
         <high-scale-lib>1.0.0</high-scale-lib>
-        <jedis.version>3.0.1</jedis.version>
+        <jedis.version>3.3.0</jedis.version>
         <jedis-mock.version>1.0.4</jedis-mock.version>
         <yaml.version>1.29</yaml.version>
         <jetty.version>9.4.43.v20210629</jetty.version>
+        <jersey.version>2.40</jersey.version>
         <joda-time.version>2.12.1</joda-time.version>
         <jackson.version>2.11.2</jackson.version>
         <maven.version>3.6.3</maven.version>
@@ -160,6 +161,10 @@
                     <exclusion>
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.sun.jersey</groupId>
+                        <artifactId>jersey-core</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

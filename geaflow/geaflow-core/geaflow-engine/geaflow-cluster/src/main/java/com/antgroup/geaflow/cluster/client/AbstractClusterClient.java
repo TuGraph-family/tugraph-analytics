@@ -15,11 +15,9 @@
 package com.antgroup.geaflow.cluster.client;
 
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_STARTED_CALLBACK_URL;
 
+import com.antgroup.geaflow.cluster.client.callback.ClusterCallbackFactory;
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback;
-import com.antgroup.geaflow.cluster.client.callback.RestClusterStartedCallback;
-import com.antgroup.geaflow.cluster.client.callback.SimpleClusterStartedCallback;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.env.ctx.IEnvironmentContext;
@@ -46,14 +44,6 @@ public abstract class AbstractClusterClient implements IClusterClient {
         }
         this.masterId = MASTER_ID;
         this.config.setMasterId(masterId);
-        this.callback = createClusterStartedCallback(config);
-    }
-
-    private ClusterStartedCallback createClusterStartedCallback(Configuration configuration) {
-        String callbackUrl = configuration.getString(CLUSTER_STARTED_CALLBACK_URL);
-        if (StringUtils.isNotBlank(callbackUrl)) {
-            return new RestClusterStartedCallback(configuration, callbackUrl);
-        }
-        return new SimpleClusterStartedCallback();
+        this.callback = ClusterCallbackFactory.createClusterStartCallback(config);
     }
 }

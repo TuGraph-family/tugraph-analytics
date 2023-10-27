@@ -21,7 +21,7 @@ public class Heartbeat implements Serializable {
 
     private int containerId;
     private long timestamp;
-    private String namePrefix;
+    private String containerName;
     private ProcessMetrics processMetrics;
 
     public Heartbeat(int resourceId) {
@@ -53,12 +53,12 @@ public class Heartbeat implements Serializable {
         this.processMetrics = processMetrics;
     }
 
-    public String getNamePrefix() {
-        return namePrefix;
+    public String getContainerName() {
+        return containerName;
     }
 
-    public void setNamePrefix(String namePrefix) {
-        this.namePrefix = namePrefix;
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
     }
 
     @Override

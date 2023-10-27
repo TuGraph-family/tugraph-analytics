@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.driver;
 
 import com.antgroup.geaflow.cluster.common.AbstractContainer;
 import com.antgroup.geaflow.cluster.common.ExecutionIdGenerator;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.exception.ComponentUncaughtExceptionHandler;
 import com.antgroup.geaflow.cluster.executor.IPipelineExecutor;
 import com.antgroup.geaflow.cluster.executor.PipelineExecutorContext;
@@ -25,7 +26,6 @@ import com.antgroup.geaflow.cluster.rpc.impl.DriverEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.PipelineMasterEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.RpcServiceImpl;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.pipeline.callback.TaskCallBack;
@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory;
 public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Driver.class);
-    private static final String DRIVER_PREFIX = "driver-";
     private static final String DRIVER_EXECUTOR = "driver-executor";
     private static final AtomicInteger pipelineTaskIdGenerator = new AtomicInteger(0);
 
@@ -64,7 +63,8 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
 
     @Override
     public void init(DriverContext driverContext) {
-        super.init(driverContext.getId(), DRIVER_PREFIX, driverContext.getConfig());
+        super.init(driverContext.getId(), ClusterConstants.getDriverName(driverContext.getId()),
+            driverContext.getConfig());
         this.driverContext = driverContext;
         this.eventDispatcher = new DriverEventDispatcher();
         this.executorService = Executors.newFixedThreadPool(
@@ -151,13 +151,10 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
         LOGGER.info("driver {} closed", name);
     }
 
+    @Override
     protected DriverInfo buildComponentInfo() {
         DriverInfo driverInfo = new DriverInfo();
-        driverInfo.setId(id);
-        driverInfo.setName(name);
-        driverInfo.setHost(ProcessUtil.getHostIp());
-        driverInfo.setPid(ProcessUtil.getProcessId());
-        driverInfo.setRpcPort(rpcPort);
+        buildComponentInfo(driverInfo);
         return driverInfo;
     }
 }

@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractHAService implements IHAService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractHAService.class);
-    private static final int DEFAULT_TIMEOUT = 3000;
     protected static final String TABLE_PREFIX = "WORKERS_";
 
+    protected int connectTimeout;
     protected int recoverTimeout;
     protected Map<String, ResourceData> resourceDataCache;
     protected IKVStore<String, ResourceData> kvStore;
@@ -43,6 +43,7 @@ public abstract class AbstractHAService implements IHAService {
     @Override
     public void open(Configuration configuration) {
         this.recoverTimeout = configuration.getInteger(ExecutionConfigKeys.FO_TIMEOUT_MS);
+        this.connectTimeout = configuration.getInteger(ExecutionConfigKeys.RPC_CONNECT_TIMEOUT_MS);
     }
 
     @Override
@@ -81,12 +82,11 @@ public abstract class AbstractHAService implements IHAService {
             currentTime = System.currentTimeMillis();
             if (currentTime - checkTime > 2000) {
                 long elapsedTime = currentTime - startTime;
-                LOGGER.warn("failed to resolve resource:{} resourceData:{}", resourceId,
-                    resourceData, throwable);
                 checkTime = currentTime;
                 if (elapsedTime > recoverTimeout) {
-                    String msg = String.format("load resource %s timeout after %sms", resourceId,
-                        elapsedTime);
+                    String reason = throwable != null ? throwable.getMessage() : null;
+                    String msg = String.format("load resource %s timeout after %sms, reason:%s",
+                        resourceId, elapsedTime, reason);
                     LOGGER.error(msg);
                     throw new GeaflowRuntimeException(msg);
                 }
@@ -108,7 +108,7 @@ public abstract class AbstractHAService implements IHAService {
     private void checkServiceAvailable(String hostName, int port) throws IOException {
         try (Socket socket = new Socket()) {
             InetSocketAddress socketAddress = new InetSocketAddress(hostName, port);
-            socket.connect(socketAddress, DEFAULT_TIMEOUT);
+            socket.connect(socketAddress, connectTimeout);
         } catch (IOException ex) {
             throw ex;
         }

@@ -53,32 +53,16 @@ public class ContainerContext extends ReliableContainerContext {
 
     @Override
     public void load() {
-        if (isRecover()) {
-            List<IEvent> events = ClusterMetaStore.getInstance(id, config)
-                .getEvents();
-            if (events == null) {
-                LOGGER.info("container {} not found any events to recover", id);
-            } else {
-                LOGGER.info("container {} recover events {}", id, events);
-                reliableEvents = events;
-            }
+        List<IEvent> events = ClusterMetaStore.getInstance(id, config).getEvents();
+        if (events != null) {
+            LOGGER.info("container {} recover events {}", id, events);
+            reliableEvents = events;
         }
         if (waitingCheckpointEvents == null) {
             waitingCheckpointEvents = new ArrayList<>();
         } else {
             waitingCheckpointEvents.clear();
         }
-    }
-
-    public static ContainerContext build(int id, Configuration config, boolean isRecover) {
-        List<IEvent> events = ClusterMetaStore.getInstance(id, config).getEvents();
-        if (events == null) {
-            LOGGER.info("container {} not found any events to recover", id);
-            return new ContainerContext(id, config, isRecover);
-        }
-        LOGGER.info("container {} recover events {}", id, events);
-        ContainerContext context = new ContainerContext(id, config, true, events);
-        return context;
     }
 
     public List<IEvent> getReliableEvents() {

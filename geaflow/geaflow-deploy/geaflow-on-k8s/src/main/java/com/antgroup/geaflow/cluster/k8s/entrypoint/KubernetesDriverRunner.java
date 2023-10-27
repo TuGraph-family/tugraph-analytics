@@ -16,10 +16,9 @@ package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
 import com.antgroup.geaflow.cluster.driver.Driver;
 import com.antgroup.geaflow.cluster.driver.DriverContext;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesDriverParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.k8s.utils.ProgramRunner;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -36,39 +35,45 @@ public class KubernetesDriverRunner {
     private static final Map<String, String> ENV = System.getenv();
 
     private final int driverId;
+    private final int driverIndex;
     private final Configuration config;
+    private Driver driver;
 
-    public KubernetesDriverRunner(int driverId, Configuration config) {
+    public KubernetesDriverRunner(int driverId, int driverIndex, Configuration config) {
         this.driverId = driverId;
+        this.driverIndex = driverIndex;
         this.config = config;
     }
 
     public void run() {
         KubernetesDriverParam driverParam = new KubernetesDriverParam(config);
-        DriverContext driverContext = new DriverContext(driverId, config);
-        Driver driver = new Driver(driverParam.getRpcPort());
+        DriverContext driverContext = new DriverContext(driverId, driverIndex, config);
+        driver = new Driver(driverParam.getRpcPort());
         driverContext.load();
         driver.init(driverContext);
+    }
 
+    private void waitForTermination() {
         LOGGER.info("wait for service terminating");
         driver.waitTermination();
     }
 
     public static void main(String[] args) throws Exception {
         try {
-            // Infer the resource identifier from the environment variable
+            final long startTime = System.currentTimeMillis();
             String id = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
+            String index = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_INDEX);
             String masterId = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
-            LOGGER.info("ResourceID assigned for this driver:{} masterId:{}", id, masterId);
+            LOGGER.info("ResourceID assigned for this driver id:{} index:{} masterId:{}", id,
+                index, masterId);
 
             Configuration config = KubernetesUtils.loadConfiguration();
             config.setMasterId(masterId);
-
-            ProgramRunner.run(config, () -> {
-                KubernetesDriverRunner kubernetesDriverRunner =
-                    new KubernetesDriverRunner(Integer.parseInt(id), config);
-                kubernetesDriverRunner.run();
-            });
+            KubernetesDriverRunner kubernetesDriverRunner =
+                new KubernetesDriverRunner(Integer.parseInt(id), Integer.parseInt(index), config);
+            kubernetesDriverRunner.run();
+            LOGGER.info("Completed driver init in {} ms", System.currentTimeMillis() - startTime);
+            kubernetesDriverRunner.waitForTermination();
         } catch (Throwable e) {
             LOGGER.error("FETAL: process exits", e);
             throw e;

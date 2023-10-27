@@ -18,6 +18,7 @@ import com.antgroup.geaflow.cluster.exception.ExceptionClient;
 import com.antgroup.geaflow.cluster.exception.ExceptionCollectService;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatClient;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 
 public abstract class AbstractContainer extends AbstractComponent {
@@ -30,13 +31,12 @@ public abstract class AbstractContainer extends AbstractComponent {
     }
 
     @Override
-    public void init(int id, String containerNamePrefix, Configuration configuration) {
-        this.name = String.format("%s%s", containerNamePrefix, id);
+    public void init(int id, String name, Configuration configuration) {
         super.init(id, name, configuration);
 
         startRpcService();
         ShuffleManager.init(configuration);
-        ExceptionClient.init(id, masterId);
+        ExceptionClient.init(id, name, masterId);
         this.heartbeatClient = new HeartbeatClient(id, name, configuration);
         this.exceptionCollectService = new ExceptionCollectService();
     }
@@ -45,8 +45,19 @@ public abstract class AbstractContainer extends AbstractComponent {
         this.heartbeatClient.registerToMaster(masterId, buildComponentInfo());
     }
 
+    protected abstract void startRpcService();
+
     protected abstract ComponentInfo buildComponentInfo();
 
+    protected void buildComponentInfo(ComponentInfo componentInfo) {
+        componentInfo.setId(id);
+        componentInfo.setName(name);
+        componentInfo.setHost(ProcessUtil.getHostIp());
+        componentInfo.setPid(ProcessUtil.getProcessId());
+        componentInfo.setRpcPort(rpcPort);
+    }
+
+    @Override
     public void close() {
         super.close();
         if (exceptionCollectService != null) {

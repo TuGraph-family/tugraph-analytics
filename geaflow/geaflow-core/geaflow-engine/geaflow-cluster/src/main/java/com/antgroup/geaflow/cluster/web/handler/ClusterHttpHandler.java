@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,7 +53,7 @@ public class ClusterHttpHandler extends AbstractHttpHandler {
         try {
             Map<Integer, Heartbeat> heartbeatMap = heartbeatManager.getHeartBeatMap();
             Map<Integer, ContainerInfo> containerMap = clusterManager.getContainerInfos();
-            Set<Integer> containerIndex = clusterManager.getContainerIds();
+            Map<Integer, String> containerIndex = clusterManager.getContainerIds();
             int totalContainerNum = containerIndex.size();
             List<JSONObject> containerList = new ArrayList<>();
             int activeContainers = 0;

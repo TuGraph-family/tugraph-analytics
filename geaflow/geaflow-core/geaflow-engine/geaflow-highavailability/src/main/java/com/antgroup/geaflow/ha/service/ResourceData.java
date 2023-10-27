@@ -20,8 +20,8 @@ public class ResourceData implements Serializable {
 
     private String host;
     private int processId;
-
     /** rpc service port.*/
+
     private int rpcPort;
     /** shuffle service port.*/
     private int shufflePort;

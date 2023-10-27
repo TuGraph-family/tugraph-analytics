@@ -7,19 +7,8 @@ option java_package = "com.antgroup.geaflow.rpc.proto";
 
 service MasterService {
 
-    //根据id获取container信息
-    rpc getContainerInfo(ContainerIds) returns (ContainerInfos) {
-    }
-
-    rpc getAllContainerInfos(google.protobuf.Empty) returns (ContainerInfos) {
-    }
-
-    //提交注册container
+    //提交注册container/driver
     rpc registerContainer(RegisterRequest) returns (RegisterResponse) {
-    }
-
-    //提交注册container
-    rpc registerDriver(RegisterRequest) returns (RegisterResponse) {
     }
 
     //处理executor/driver发送的心跳信息
@@ -45,6 +34,7 @@ message ContainerIds {
 
 message RegisterRequest {
     bytes payload = 1;
+    bool isDriver = 2;
 }
 
 message RegisterResponse {
@@ -56,4 +46,5 @@ message HeartbeatRequest {
     int32 id = 1;
     int64 timestamp = 2;
     bytes payload = 3;
+    bytes name = 4;
 }

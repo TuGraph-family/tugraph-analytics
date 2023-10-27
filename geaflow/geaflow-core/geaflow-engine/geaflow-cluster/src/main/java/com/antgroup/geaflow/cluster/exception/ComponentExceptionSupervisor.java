@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.exception;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
+
 import com.antgroup.geaflow.cluster.task.runner.AbstractTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +38,7 @@ public class ComponentExceptionSupervisor extends AbstractTaskRunner<ComponentEx
         }
         // Exit current process if supervisor is running.
         if (running) {
-            System.exit(1);
+            System.exit(EXIT_CODE);
         } else {
             LOGGER.info("{} ignore exception because supervisor is shutdown", exceptionElement.thread);
         }

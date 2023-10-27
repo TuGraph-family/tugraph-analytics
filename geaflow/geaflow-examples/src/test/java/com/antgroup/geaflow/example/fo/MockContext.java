@@ -39,7 +39,7 @@ public class MockContext {
         private boolean isRecover;
 
         public MockDriverContext(int index, Configuration config, boolean isRecover) {
-            super(index, config);
+            super(index, 0, config);
             this.isRecover = isRecover;
         }
 

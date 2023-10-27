@@ -39,7 +39,13 @@ public class RedisConfigKeys {
         .defaultValue(500)
         .description("geaflow store redis retry interval ms");
 
-    public static final ConfigKey REDIS_PASSWORD = ConfigKeys.key("geaflow.store.redis.password")
+    public static final ConfigKey REDIS_USER = ConfigKeys
+        .key("geaflow.store.redis.user")
+        .defaultValue("")
+        .description("redis connect user name");
+
+    public static final ConfigKey REDIS_PASSWORD = ConfigKeys
+        .key("geaflow.store.redis.password")
         .defaultValue("")
         .description("redis connect password");
 

@@ -14,20 +14,28 @@
 
 package com.antgroup.geaflow.cluster.k8s.utils;
 
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ADDRESS_SEPARATOR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_KV_SEPARATOR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_LIST_SEPARATOR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.DRIVER_SERVICE_NAME_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USE_IP_IN_HOST_NETWORK;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.CONFIG_KV_SEPARATOR;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_RPC_HOST;
 
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
+import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.common.config.ConfigKey;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.HostAlias;
 import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Toleration;
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,6 +49,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +97,10 @@ public class KubernetesUtils {
             template = template.replace("%" + variable.getKey() + "%", variable.getValue());
         }
         return template;
+    }
+
+    public static Map<String, String> getPairsConf(Configuration config, ConfigKey configKey) {
+        return getPairsConf(config, configKey.getKey());
     }
 
     public static Map<String, String> getPairsConf(Configuration config, String configKey) {
@@ -244,7 +257,7 @@ public class KubernetesUtils {
                         continue;
                     }
 
-                    LOGGER.info("Loading configuration property: {}, {}", key, value);
+                    LOGGER.info("Loading property: {}, {}", key, value);
                     config.put(key, value);
                 }
             }
@@ -346,4 +359,33 @@ public class KubernetesUtils {
         return matchExpressionList;
     }
 
+    @Nullable
+    public static String extractComponentId(Pod pod) {
+        return pod.getMetadata().getLabels().get(K8SConstants.LABEL_COMPONENT_ID_KEY);
+    }
+
+    public static String encodeRpcAddressMap(Map<String, ?> addressMap) {
+        return Joiner.on(CONFIG_LIST_SEPARATOR).withKeyValueSeparator(ADDRESS_SEPARATOR).join(addressMap);
+    }
+
+    public static Map<String, RpcAddress> decodeRpcAddressMap(String str) {
+        Map<String, RpcAddress> map = new HashMap<>();
+        for (String entry : str.trim().split(CONFIG_LIST_SEPARATOR)) {
+            String[] pair = entry.split(ADDRESS_SEPARATOR);
+            map.put(pair[0], RpcAddress.build(pair[1]));
+        }
+        return map;
+    }
+
+    public static String getMasterServiceName(String clusterId) {
+        return clusterId + K8SConstants.SERVICE_NAME_SUFFIX;
+    }
+
+    public static String getMasterClientServiceName(String clusterId) {
+        return clusterId + K8SConstants.CLIENT_SERVICE_NAME_SUFFIX;
+    }
+
+    public static String getDriverServiceName(String clusterId, int driverIndex) {
+        return clusterId + DRIVER_SERVICE_NAME_SUFFIX + driverIndex;
+    }
 }

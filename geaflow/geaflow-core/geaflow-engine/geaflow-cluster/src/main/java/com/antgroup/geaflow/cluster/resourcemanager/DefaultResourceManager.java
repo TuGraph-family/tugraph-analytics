@@ -19,6 +19,7 @@ import com.antgroup.geaflow.cluster.clustermanager.ContainerExecutorInfo;
 import com.antgroup.geaflow.cluster.clustermanager.ExecutorRegisterException;
 import com.antgroup.geaflow.cluster.clustermanager.ExecutorRegisteredCallback;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.IAllocator;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.RoundRobinAllocator;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
@@ -60,6 +61,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
     private final Map<IAllocator.AllocateStrategy, IAllocator<String, WorkerInfo>> allocators = new HashMap<>();
     protected final IClusterManager clusterManager;
     protected final ClusterMetaStore metaKeeper;
+    protected int allocatedWorkerNum;
 
     private final Map<WorkerInfo.WorkerId, WorkerInfo> availableWorkers = new HashMap<>();
     private final Map<String, ResourceSession> sessions = new HashMap<>();
@@ -79,6 +81,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
         this.recovering.set(isRecover);
         int workerNum = clusterContext.getClusterConfig().getContainerNum()
             * clusterContext.getClusterConfig().getContainerWorkerNum();
+        this.allocatedWorkerNum += workerNum;
         this.pendingWorkerCounter.set(workerNum);
         LOGGER.info("init worker number {}, isRecover {}", workerNum, isRecover);
         if (isRecover) {
@@ -224,32 +227,28 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
                 worker = WorkerInfo.build(
                     host, rpcPort, shufflePort, processId, workerIndex, containerName);
                 this.availableWorkers.put(worker.generateWorkerId(), worker);
-                int pending = this.pendingWorkerCounter.addAndGet(-1);
-                LOGGER.info("allocate {} worker from cluster manager container {}, host {}, "
-                        + "processId {}, workerIndex {}, pending {}",
-                    executorIds.size(), containerName, host, processId, workerIndex, pending);
+                this.pendingWorkerCounter.addAndGet(-1);
             } else {
                 worker.setHost(host);
                 worker.setProcessId(processId);
                 worker.setRpcPort(rpcPort);
                 worker.setShufflePort(shufflePort);
-                int pending = this.pendingWorkerCounter.get();
-                LOGGER.info("recover {} worker from cluster manager container {}, host {}, "
-                        + "processId {}, workerIndex {}, pending {}",
-                    executorIds.size(), containerName, host, processId, workerIndex, pending);
             }
         }
         int pending = this.pendingWorkerCounter.get();
+        LOGGER.info("register {} worker from cluster manager container:{}, host:{}, processId:{},"
+                + " pending:{}", executorIds.size(), containerName, host, processId, pending);
+
         int used = this.sessions.values().stream().mapToInt(s -> s.getWorkers().size()).sum();
         if (pending <= 0) {
             this.recovering.set(false);
             LOGGER.info("register worker over, available/used : {}/{}, pending {}",
                 this.availableWorkers.size(), used, pending);
+            persist();
         } else {
-            LOGGER.info("still pending : {}, available/used : {}/{}",
-                pending, this.availableWorkers.size(), used);
+            LOGGER.debug("still pending : {}, available/used : {}/{}", pending,
+                this.availableWorkers.size(), used);
         }
-        persist();
     }
 
     @Override
@@ -307,14 +306,15 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
         }
         int availableWorkerNum = this.availableWorkers.size();
 
-        this.pendingWorkerCounter.addAndGet(- availableWorkerNum - usedWorkerNum);
-        LOGGER.info("recover {}/{} workers, pending {}, costs {}ms",
-            availableWorkerNum, usedWorkerNum, pendingWorkerCounter.get(), System.currentTimeMillis() - start);
+        this.pendingWorkerCounter.addAndGet(-availableWorkerNum - usedWorkerNum);
+        LOGGER.info("recover {}/{} workers, pending {}, costs {}ms", availableWorkerNum,
+            usedWorkerNum, pendingWorkerCounter.get(), System.currentTimeMillis() - start);
         if (this.pendingWorkerCounter.get() <= 0) {
             this.recovering.set(false);
-            LOGGER.info("recover worker over, available/used : {}/{}",
-                this.availableWorkers.size(), usedWorkerNum);
+            LOGGER.info("recover worker over, available/used : {}/{}", this.availableWorkers.size(),
+                usedWorkerNum);
         }
+        clusterManager.doFailover(ClusterConstants.DEFAULT_MASTER_ID, null);
     }
 
     private void waitForInit() {

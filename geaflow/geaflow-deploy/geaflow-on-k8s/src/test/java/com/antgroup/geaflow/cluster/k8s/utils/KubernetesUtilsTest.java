@@ -18,11 +18,14 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLUST
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.REPORTER_LIST;
 
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
+import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
 import io.fabric8.kubernetes.api.model.Toleration;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
@@ -87,5 +90,16 @@ public class KubernetesUtilsTest {
         configuration.put(KubernetesConfigKeys.MATCH_EXPRESSION_LIST, "key1:In:value1,key2:In:-");
         matchExpressions = KubernetesUtils.getMatchExpressions(configuration);
         Assert.assertEquals(matchExpressions.size(), 2);
+    }
+
+    @Test
+    public void testAddressEncoding() {
+        Map<String, RpcAddress> map = new HashMap<>();
+        for (int i = 0; i < 3; i++) {
+            map.put(ClusterConstants.getDriverName(i), new RpcAddress("127.0.0.1", 80));
+        }
+        String encodedStr = KubernetesUtils.encodeRpcAddressMap(map);
+        Map<String, RpcAddress> map2 = KubernetesUtils.decodeRpcAddressMap(encodedStr);
+        Assert.assertEquals(map, map2);
     }
 }

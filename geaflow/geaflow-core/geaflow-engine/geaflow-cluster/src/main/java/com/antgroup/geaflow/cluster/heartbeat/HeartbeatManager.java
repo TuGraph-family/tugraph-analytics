@@ -22,6 +22,7 @@ import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.exception.GeaflowHeartbeatException;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.common.heartbeat.HeartbeatInfo;
 import com.antgroup.geaflow.common.heartbeat.HeartbeatInfo.ContainerHeartbeatInfo;
@@ -30,10 +31,8 @@ import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -86,10 +85,19 @@ public class HeartbeatManager implements Serializable {
 
     public void checkHeartBeat() {
         long checkTime = System.currentTimeMillis();
-        for (Integer componentId : this.getComponentIds()) {
-            if (!senderMap.containsKey(componentId) || checkTime > senderMap.get(componentId).getTimestamp() + heartbeatCheckMs) {
-                LOGGER.warn("Component#{} heartbeat missing.", componentId);
-                doClusterFO(componentId);
+        AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
+        checkTimeout(cm.getContainerIds(), checkTime);
+        checkTimeout(cm.getDriverIds(), checkTime);
+    }
+
+    private void checkTimeout(Map<Integer, String> map, long checkTime) {
+        GeaflowHeartbeatException exception = new GeaflowHeartbeatException();
+        for (Map.Entry<Integer, String> entry : map.entrySet()) {
+            int componentId = entry.getKey();
+            Heartbeat heartbeat = senderMap.get(componentId);
+            if (heartbeat == null || checkTime > heartbeat.getTimestamp() + heartbeatCheckMs) {
+                LOGGER.error("{} heartbeat missing.", entry.getValue());
+                clusterManager.doFailover(componentId, exception);
             }
         }
     }
@@ -105,7 +113,8 @@ public class HeartbeatManager implements Serializable {
     protected HeartbeatInfo buildHeartbeatInfo() {
         Map<Integer, Heartbeat> heartbeatMap = getHeartBeatMap();
         Map<Integer, ContainerInfo> containerMap = ((AbstractClusterManager) clusterManager).getContainerInfos();
-        Set<Integer> containerIndex = ((AbstractClusterManager) clusterManager).getContainerIds();
+        Map<Integer, String> containerIndex =
+            ((AbstractClusterManager) clusterManager).getContainerIds();
         int totalContainerNum = containerIndex.size();
         List<ContainerHeartbeatInfo> containerList = new ArrayList<>();
         int activeContainers = 0;
@@ -130,22 +139,6 @@ public class HeartbeatManager implements Serializable {
         heartbeatInfo.setActiveNum(activeContainers);
         heartbeatInfo.setContainers(containerList);
         return heartbeatInfo;
-    }
-
-    protected Set<Integer> getComponentIds() {
-        Set<Integer> componentIds = new HashSet<>();
-        componentIds.addAll(((AbstractClusterManager) clusterManager).getContainerIds());
-        componentIds.addAll(((AbstractClusterManager) clusterManager).getDriverIds());
-        return componentIds;
-    }
-
-    protected void doClusterFO(int containerId) {
-        try {
-            ((AbstractClusterManager) clusterManager).clusterFailover(containerId);
-        } catch (Throwable e) {
-            LOGGER.error("Cluster failover failed.", e);
-            throw e;
-        }
     }
 
     public void close() {

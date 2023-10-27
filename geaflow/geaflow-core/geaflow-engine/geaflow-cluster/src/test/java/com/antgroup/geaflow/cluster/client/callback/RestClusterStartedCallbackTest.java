@@ -16,11 +16,14 @@ package com.antgroup.geaflow.cluster.client.callback;
 
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
 import com.antgroup.geaflow.cluster.client.callback.RestClusterStartedCallback.HttpRequest;
+import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -58,7 +61,9 @@ public class RestClusterStartedCallbackTest {
         Configuration configuration = new Configuration();
         String url = URI.create(baseUrl).resolve("/v1/cluster").toString();
         RestClusterStartedCallback callback = new RestClusterStartedCallback(configuration, url);
-        ClusterMeta clusterMeta = new ClusterMeta("driver1", "master1");
+        Map<String, RpcAddress> addressList = new HashMap<>();
+        addressList.put("1", new RpcAddress());
+        ClusterMeta clusterMeta = new ClusterMeta(addressList, "master1");
         callback.onSuccess(clusterMeta);
 
         // confirm that your app made the HTTP requests you were expecting.

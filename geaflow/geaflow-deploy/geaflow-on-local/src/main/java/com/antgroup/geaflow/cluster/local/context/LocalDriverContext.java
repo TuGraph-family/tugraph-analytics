@@ -19,8 +19,8 @@ import com.antgroup.geaflow.common.config.Configuration;
 
 public class LocalDriverContext extends DriverContext {
 
-    public LocalDriverContext(int index, Configuration config) {
-        super(index, config);
+    public LocalDriverContext(int id, int index, Configuration config) {
+        super(id, index, config);
     }
 
     public boolean isRecover() {

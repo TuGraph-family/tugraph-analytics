@@ -49,6 +49,10 @@
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-on-k8s</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-on-local</artifactId>
         </dependency>
         <dependency>

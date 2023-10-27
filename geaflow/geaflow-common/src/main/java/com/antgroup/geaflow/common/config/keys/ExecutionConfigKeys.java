@@ -113,8 +113,13 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey RPC_RETRY_INTERVAL_MS = ConfigKeys
         .key("geaflow.rpc.retry.interval.ms")
-        .defaultValue(3000)
+        .defaultValue(1000)
         .description("retry interval of rpc connection in ms");
+
+    public static final ConfigKey RPC_CONNECT_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.rpc.connect.timeout.ms")
+        .defaultValue(5000)
+        .description("rpc connect timeout");
 
     // ------------------------------------------------------------------------
     // cluster

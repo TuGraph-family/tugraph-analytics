@@ -26,8 +26,11 @@ import com.antgroup.geaflow.metrics.common.MetricGroupRegistry;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractComponent {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractComponent.class);
 
     protected int id;
     protected String name;
@@ -62,9 +65,13 @@ public abstract class AbstractComponent {
         StatsCollectorFactory.init(configuration);
     }
 
-    protected abstract void startRpcService();
-
     protected void registerHAService() {
+        ResourceData resourceData = buildResourceData();
+        LOGGER.info("register {}: {}", name, resourceData);
+        haService.register(name, resourceData);
+    }
+    
+    protected ResourceData buildResourceData() {
         ResourceData resourceData = new ResourceData();
         resourceData.setProcessId(ProcessUtil.getProcessId());
         resourceData.setHost(ProcessUtil.getHostIp());
@@ -73,15 +80,15 @@ public abstract class AbstractComponent {
         if (shuffleManager != null) {
             resourceData.setShufflePort(shuffleManager.getShufflePort());
         }
-        haService.register(name, resourceData);
+        return resourceData;
     }
 
     public void close() {
         if (haService != null) {
             haService.close();
         }
-        if (this.rpcService != null) {
-            this.rpcService.stopService();
+        if (rpcService != null) {
+            rpcService.stopService();
         }
         ClusterMetaStore.close();
     }

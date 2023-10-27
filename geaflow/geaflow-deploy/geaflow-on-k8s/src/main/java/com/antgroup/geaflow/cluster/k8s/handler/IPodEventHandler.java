@@ -12,18 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.rpc;
+package com.antgroup.geaflow.cluster.k8s.handler;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import io.fabric8.kubernetes.api.model.Pod;
 
-public class RpcAddressTest {
+public interface IPodEventHandler {
 
-    @Test
-    public void testAddress() {
-        RpcAddress address = new RpcAddress("localhost", 0);
-        RpcAddress newAddr = RpcAddress.build(address.toString());
-        Assert.assertEquals(address, newAddr);
-    }
+    void handle(Pod pod);
 
 }

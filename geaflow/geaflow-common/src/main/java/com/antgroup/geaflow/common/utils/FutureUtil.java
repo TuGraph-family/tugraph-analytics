@@ -16,6 +16,7 @@ package com.antgroup.geaflow.common.utils;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -27,11 +28,16 @@ public class FutureUtil {
     }
 
     public static <T> List<T> wait(List<Future<T>> futureList, int timeoutMs) {
+        return wait(futureList, timeoutMs, TimeUnit.MILLISECONDS);
+    }
+
+    public static <T> List<T> wait(Collection<Future<T>> futureList, long timeout,
+                                   TimeUnit timeUnit) {
         List<T> result = new ArrayList<>();
         for (Future<T> future : futureList) {
             try {
-                if (timeoutMs > 0) {
-                    result.add(future.get(timeoutMs, TimeUnit.MILLISECONDS));
+                if (timeout > 0) {
+                    result.add(future.get(timeout, timeUnit));
                 } else {
                     result.add(future.get());
                 }

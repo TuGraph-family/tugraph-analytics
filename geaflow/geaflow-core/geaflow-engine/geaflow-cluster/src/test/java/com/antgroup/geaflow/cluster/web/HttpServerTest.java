@@ -20,6 +20,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import java.net.URI;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -36,17 +37,19 @@ public class HttpServerTest {
         AbstractClusterManager clusterManager = Mockito.mock(AbstractClusterManager.class);
         HeartbeatManager heartbeatManager = new HeartbeatManager(configuration, clusterManager);
         HttpServer httpServer = new HttpServer(configuration, clusterManager, heartbeatManager);
+        CountDownLatch latch = new CountDownLatch(1);
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 httpServer.start();
-                SleepUtils.sleepSecond(3);
+                latch.countDown();
             }
         }).start();
 
         Mockito.when(clusterManager.getContainerInfos()).thenReturn(Collections.EMPTY_MAP);
 
-        SleepUtils.sleepSecond(1);
+        latch.await();
         doGet("http://localhost:8090/", "rest/cluster");
         httpServer.stop();
     }

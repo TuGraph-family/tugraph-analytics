@@ -50,7 +50,7 @@ public class LocalClusterClient extends AbstractClusterClient {
             ClusterMeta clusterMeta = new ClusterMeta(clusterInfo);
             callback.onSuccess(clusterMeta);
             LOGGER.info("cluster info: {}", clusterInfo);
-            return new PipelineClient(clusterInfo.getDriverAddress(), clusterContext.getConfig());
+            return new PipelineClient(clusterInfo.getDriverAddresses(), clusterContext.getConfig());
         } catch (Throwable e) {
             LOGGER.error("deploy cluster failed", e);
             callback.onFailure(e);

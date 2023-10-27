@@ -20,8 +20,8 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
+import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.AutoRestartPolicy;
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesMasterRunner;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
@@ -36,7 +36,7 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
 
     public static final String MASTER_NODE_SELECTOR = "kubernetes.master.node-selector";
 
-    public static final String CONTAINERIZED_MASTER_ENV_PREFIX = "containerized.master.env.";
+    public static final String MASTER_ENV_PREFIX = "kubernetes.master.env.";
 
     public static final String MASTER_LOG_SUFFIX = "master.log";
 
@@ -50,7 +50,7 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
 
     @Override
     public String getAutoRestart() {
-        return DEFAULT_AUTO_RESTART;
+        return AutoRestartPolicy.UNEXPECTED.getValue();
     }
 
     public String getContainerName() {
@@ -80,7 +80,7 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
 
     @Override
     public String getPodNamePrefix(String clusterId) {
-        return clusterId + K8SConstants.DRIVER_LABEL_SUFFIX + K8SConstants.NAME_SEPARATOR;
+        return clusterId + K8SConstants.MASTER_NAME_SUFFIX + K8SConstants.NAME_SEPARATOR;
     }
 
     @Override
@@ -96,7 +96,7 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
     @Override
     public Map<String, String> getAdditionEnvs() {
         return KubernetesUtils
-            .getVariablesWithPrefix(CONTAINERIZED_MASTER_ENV_PREFIX, config.getConfigMap());
+            .getVariablesWithPrefix(MASTER_ENV_PREFIX, config.getConfigMap());
     }
 
     @Override
@@ -109,7 +109,7 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
         Map<String, String> labels = new HashMap<>();
         labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
         labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_MASTER);
-        labels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS.getKey()));
+        labels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS));
         return labels;
     }
 

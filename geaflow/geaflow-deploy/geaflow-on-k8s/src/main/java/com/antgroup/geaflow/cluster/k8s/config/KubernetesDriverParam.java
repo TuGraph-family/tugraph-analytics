@@ -21,7 +21,6 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesDriverRunner;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
@@ -30,11 +29,11 @@ import java.util.Map;
 
 public class KubernetesDriverParam extends AbstractKubernetesParam {
 
+    public static final String DRIVER_ENV_PREFIX = "kubernetes.driver.env.";
+
     public static final String DRIVER_USER_ANNOTATIONS = "kubernetes.driver.user.annotations";
 
     public static final String DRIVER_NODE_SELECTOR = "kubernetes.driver.node-selector";
-
-    public static final String DRIVER_SERVICE_NAME_SUFFIX = "-driver-service";
 
     public static final String DRIVER_LOG_SUFFIX = "driver.log";
 
@@ -69,6 +68,12 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     }
 
     @Override
+    public Map<String, String> getAdditionEnvs() {
+        return KubernetesUtils
+            .getVariablesWithPrefix(DRIVER_ENV_PREFIX, config.getConfigMap());
+    }
+
+    @Override
     public String getPodNamePrefix(String clusterId) {
         return clusterId + K8SConstants.DRIVER_NAME_SUFFIX + K8SConstants.NAME_SEPARATOR;
     }
@@ -76,11 +81,6 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     @Override
     public String getConfigMapName(String clusterId) {
         return clusterId + K8SConstants.WORKER_CONFIG_MAP_SUFFIX;
-    }
-
-    @Override
-    public String getServiceName(String clusterId) {
-        return clusterId + DRIVER_SERVICE_NAME_SUFFIX;
     }
 
     @Override
@@ -97,7 +97,7 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
         Map<String, String> driverPodLabels = new HashMap<>();
         driverPodLabels.put(K8SConstants.LABEL_APP_KEY, clusterId);
         driverPodLabels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_DRIVER);
-        driverPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS.getKey()));
+        driverPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS));
         return driverPodLabels;
     }
 

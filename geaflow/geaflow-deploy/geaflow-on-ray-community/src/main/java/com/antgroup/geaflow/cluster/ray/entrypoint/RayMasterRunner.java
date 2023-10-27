@@ -18,9 +18,7 @@ import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.master.Master;
 import com.antgroup.geaflow.cluster.master.MasterContext;
 import com.antgroup.geaflow.cluster.ray.clustermanager.RayClusterManager;
-import com.antgroup.geaflow.cluster.ray.utils.RaySystemFunc;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.env.IEnvironment.EnvType;
 
 public class RayMasterRunner {
 
@@ -29,9 +27,8 @@ public class RayMasterRunner {
     public RayMasterRunner(Configuration configuration) {
         master = new Master();
         MasterContext context = new MasterContext(configuration);
-        context.setRecover(RaySystemFunc.isRestarted());
         context.setClusterManager(new RayClusterManager());
-        context.setEnvType(EnvType.RAY_COMMUNITY);
+        context.load();
         master.init(context);
     }
 

@@ -14,14 +14,16 @@
 
 package com.antgroup.geaflow.cluster.master;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
+
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.common.AbstractComponent;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
+import com.antgroup.geaflow.cluster.resourcemanager.DefaultResourceManager;
 import com.antgroup.geaflow.cluster.resourcemanager.IResourceManager;
 import com.antgroup.geaflow.cluster.resourcemanager.ResourceManagerContext;
-import com.antgroup.geaflow.cluster.resourcemanager.ResourceManagerFactory;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpoint;
@@ -29,6 +31,7 @@ import com.antgroup.geaflow.cluster.rpc.impl.RpcServiceImpl;
 import com.antgroup.geaflow.cluster.web.HttpServer;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,7 @@ public class Master extends AbstractComponent implements IMaster {
     private HeartbeatManager heartbeatManager;
     private RpcAddress masterAddress;
     private HttpServer httpServer;
+    private ClusterContext clusterContext;
 
     public Master() {
         this(0);
@@ -51,41 +55,43 @@ public class Master extends AbstractComponent implements IMaster {
 
     @Override
     public void init(MasterContext context) {
-        super.init(0, context.getConfiguration().getMasterId(), context.getConfiguration());
+        super.init(DEFAULT_MASTER_ID, context.getConfiguration().getMasterId(),
+            context.getConfiguration());
+
         this.clusterManager = context.getClusterManager();
-        this.resourceManager = ResourceManagerFactory.build(context);
-
-        startRpcService();
-        this.masterAddress = new RpcAddress(ProcessUtil.getHostIp(), rpcPort);
+        this.clusterContext = context.getClusterContext();
         this.heartbeatManager = new HeartbeatManager(configuration, clusterManager);
-        registerHAService();
-
-        ClusterContext clusterContext = new ClusterContext(configuration);
-        clusterContext.setHeartbeatManager(heartbeatManager);
+        this.resourceManager = new DefaultResourceManager(clusterManager);
+        this.clusterContext.setHeartbeatManager(heartbeatManager);
+        this.clusterContext.load();
         this.clusterManager.init(clusterContext);
-        this.resourceManager.init(ResourceManagerContext.build(context, clusterContext));
-        this.masterAddress = new RpcAddress(ProcessUtil.getHostIp(), rpcPort);
+        startRpcService(clusterManager, resourceManager);
 
-        if (!context.getConfiguration().getBoolean(ExecutionConfigKeys.RUN_LOCAL_MODE)) {
+        // Register service info and initialize cluster.
+        registerHAService();
+        resourceManager.init(ResourceManagerContext.build(context, clusterContext));
+
+        if (!configuration.getBoolean(ExecutionConfigKeys.RUN_LOCAL_MODE)) {
             httpServer = new HttpServer(configuration, clusterManager, heartbeatManager);
             httpServer.start();
         }
     }
 
-    @Override
-    protected void startRpcService() {
+    private void startRpcService(IClusterManager clusterManager,
+                                 IResourceManager resourceManager) {
         this.rpcService = new RpcServiceImpl(rpcPort, configuration);
         this.rpcService.addEndpoint(new MasterEndpoint(this, clusterManager));
         this.rpcService.addEndpoint(new ResourceManagerEndpoint(resourceManager));
         this.rpcPort = rpcService.startService();
+        this.masterAddress = new RpcAddress(ProcessUtil.getHostIp(), rpcPort);
     }
 
     public ClusterInfo startCluster() {
-        RpcAddress driverAddress = clusterManager.startDriver();
         ClusterInfo clusterInfo = new ClusterInfo();
         clusterInfo.setMasterAddress(masterAddress);
-        clusterInfo.setDriverAddress(driverAddress);
-        LOGGER.info("init with info: {}", clusterInfo);
+        Map<String, RpcAddress> driverAddresses = clusterManager.startDrivers();
+        clusterInfo.setDriverAddresses(driverAddresses);
+        LOGGER.info("init cluster with info: {}", clusterInfo);
         return clusterInfo;
     }
 

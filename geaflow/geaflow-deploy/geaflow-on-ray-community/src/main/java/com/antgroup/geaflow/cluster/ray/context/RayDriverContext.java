@@ -20,8 +20,8 @@ import com.antgroup.geaflow.common.config.Configuration;
 
 public class RayDriverContext extends DriverContext {
 
-    public RayDriverContext(int index, Configuration config) {
-        super(index, config);
+    public RayDriverContext(int id, int index, Configuration config) {
+        super(id, index, config);
     }
 
     public boolean isRecover() {

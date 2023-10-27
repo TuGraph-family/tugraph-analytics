@@ -67,10 +67,11 @@ public class LocalClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void doStartDriver(int driverId) {
-        DriverContext driverContext = new LocalDriverContext(driverId, clusterConfig.getConfig());
+    public void doStartDriver(int driverId, int driverIndex) {
+        DriverContext driverContext = new LocalDriverContext(driverId,
+            driverIndex, clusterConfig.getConfig());
         LocalClient.createDriver(clusterConfig, driverContext);
-        LOGGER.info("call driver start");
+        LOGGER.info("call driver start id:{} index:{}", driverId, driverIndex);
     }
 
     @Override

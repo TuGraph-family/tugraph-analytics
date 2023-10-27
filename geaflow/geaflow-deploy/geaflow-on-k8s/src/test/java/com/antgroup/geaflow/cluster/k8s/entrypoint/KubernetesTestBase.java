@@ -20,6 +20,7 @@ import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
@@ -68,8 +69,9 @@ public class KubernetesTestBase {
 
     private void createService(Configuration configuration) {
         KubernetesMasterParam param = new KubernetesMasterParam(configuration);
+        String serviceName = KubernetesUtils.getMasterServiceName(clusterId);
         Service service = KubernetesResourceBuilder
-            .createService(param.getServiceName(clusterId), ServiceExposedType.CLUSTER_IP,
+            .createService(serviceName, ServiceExposedType.CLUSTER_IP,
                 new HashMap<>(), null, param);
         geaflowKubeClient.createService(service);
     }

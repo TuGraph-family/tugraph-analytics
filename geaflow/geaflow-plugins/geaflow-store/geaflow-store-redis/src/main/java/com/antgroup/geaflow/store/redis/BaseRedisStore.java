@@ -14,10 +14,12 @@
 
 package com.antgroup.geaflow.store.redis;
 
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.store.AbstractBaseStore;
 import com.antgroup.geaflow.store.IBaseStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.primitives.Bytes;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
@@ -32,12 +34,17 @@ public abstract class BaseRedisStore extends AbstractBaseStore implements IBaseS
     protected int retryIntervalMs;
 
     public void init(StoreContext storeContext) {
-        this.retryTimes = storeContext.getConfig().getInteger(RedisConfigKeys.REDIS_RETRY_TIMES);
-        this.retryIntervalMs = storeContext.getConfig().getInteger(RedisConfigKeys.REDIS_RETRY_INTERVAL_MS);
-        String host = storeContext.getConfig().getString(RedisConfigKeys.REDIS_HOST);
-        int port = storeContext.getConfig().getInteger(RedisConfigKeys.REDIS_PORT);
+        Configuration config = storeContext.getConfig();
+        this.retryTimes = config.getInteger(RedisConfigKeys.REDIS_RETRY_TIMES);
+        this.retryIntervalMs = config.getInteger(RedisConfigKeys.REDIS_RETRY_INTERVAL_MS);
+        String host = config.getString(RedisConfigKeys.REDIS_HOST);
+        int port = config.getInteger(RedisConfigKeys.REDIS_PORT);
         LOGGER.info("redis connect {}:{}", host, port);
-        this.jedisPool = new JedisPool(host, port);
+        GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+        int connectTimeout = config.getInteger(RedisConfigKeys.REDIS_CONNECT_TIMEOUT);
+        String user = config.getString(RedisConfigKeys.REDIS_USER.getKey());
+        String password = config.getString(RedisConfigKeys.REDIS_PASSWORD.getKey());
+        this.jedisPool = new JedisPool(poolConfig, host, port, connectTimeout, user, password);
         String prefixStr = storeContext.getName() + REDIS_NAMESPACE_SPLITTER;
         this.prefix = prefixStr.getBytes();
     }

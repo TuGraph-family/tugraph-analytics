@@ -20,15 +20,14 @@ import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.KubernetesClusterManager;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.KubernetesResourceBuilder;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.cluster.master.Master;
 import com.antgroup.geaflow.cluster.master.MasterContext;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.env.IEnvironment.EnvType;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import java.io.IOException;
 import java.util.HashMap;
@@ -44,24 +43,27 @@ public class KubernetesMasterRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesMasterRunner.class);
     private static final Map<String, String> ENV = System.getenv();
     private final Configuration config;
+    private Master master;
 
     public KubernetesMasterRunner(Configuration config) {
         this.config = config;
     }
 
     public void init() {
-        Master master = new Master();
-        MasterContext context = new MasterContext(config, new KubernetesClusterManager());
-        context.setEnvType(EnvType.K8S);
+        master = new Master();
+        MasterContext context = new MasterContext(config);
+        context.setClusterManager(new KubernetesClusterManager());
+        context.load();
         master.init(context);
         ClusterInfo clusterInfo = master.startCluster();
 
         Map<String, String> updatedConfig = new HashMap<>();
         RpcAddress masterAddress = clusterInfo.getMasterAddress();
-        updatedConfig.put(KubernetesConfig.MASTER_EXPOSED_ADDRESS, masterAddress.getAddress());
+        updatedConfig.put(KubernetesConfig.MASTER_EXPOSED_ADDRESS, masterAddress.toString());
 
-        RpcAddress driverAddress = clusterInfo.getDriverAddress();
-        updatedConfig.put(KubernetesConfig.DRIVER_EXPOSED_ADDRESS, driverAddress.getAddress());
+        Map<String, RpcAddress> driverAddresses = clusterInfo.getDriverAddresses();
+        updatedConfig.put(KubernetesConfig.DRIVER_EXPOSED_ADDRESS,
+            KubernetesUtils.encodeRpcAddressMap(driverAddresses));
 
         GeaflowKubeClient client = new GeaflowKubeClient(config);
         String clusterId = config.getString(CLUSTER_ID);
@@ -72,18 +74,23 @@ public class KubernetesMasterRunner {
             updatedConfig);
         client.createOrReplaceConfigMap(updatedConfigMap);
         LOGGER.info("updated master configmap: {}", config);
+    }
 
+    private void waitForTermination() {
         LOGGER.info("waiting for finishing...");
         master.waitTermination();
     }
 
     public static void main(String[] args) throws IOException {
         try {
+            final long startTime = System.currentTimeMillis();
             Configuration config = KubernetesUtils.loadConfigurationFromFile();
             String masterId = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
             config.setMasterId(masterId);
             KubernetesMasterRunner masterRunner = new KubernetesMasterRunner(config);
             masterRunner.init();
+            LOGGER.info("Completed master init in {} ms", System.currentTimeMillis() - startTime);
+            masterRunner.waitForTermination();
         } catch (Throwable e) {
             LOGGER.error("init master failed: {}", e.getMessage(), e);
             throw e;

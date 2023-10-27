@@ -123,8 +123,21 @@ public class RpcEndpointRefFactory implements Serializable {
         endpointRefMap.remove(refID);
     }
 
+    public ExecutorService getExecutor() {
+        return executorService;
+    }
+
     enum EndpointType {
-        MASTER, RESOURCE_MANAGER, DRIVER, PIPELINE_MANAGER, CONTAINER
+        /** Master endpoint. */
+        MASTER,
+        /** ResourceManager endpoint. */
+        RESOURCE_MANAGER,
+        /** Driver endpoint. */
+        DRIVER,
+        /** Pipeline endpoint. */
+        PIPELINE_MANAGER,
+        /** Container endpoint. */
+        CONTAINER
     }
 
     public static class EndpointRefID {

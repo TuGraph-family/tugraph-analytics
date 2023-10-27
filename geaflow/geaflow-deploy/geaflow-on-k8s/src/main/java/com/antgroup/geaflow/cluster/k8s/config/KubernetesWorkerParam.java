@@ -18,7 +18,6 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_U
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesContainerRunner;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
@@ -31,7 +30,7 @@ public class KubernetesWorkerParam extends AbstractKubernetesParam {
 
     public static final String WORKER_NODE_SELECTOR = "kubernetes.worker.node-selector";
 
-    public static final String CONTAINERIZED_WORKER_ENV_PREFIX = "containerized.worker.env.";
+    public static final String WORKER_ENV_PREFIX = "kubernetes.worker.env.";
 
     public static final String WORKER_LOG_SUFFIX = "container.log";
 
@@ -68,12 +67,12 @@ public class KubernetesWorkerParam extends AbstractKubernetesParam {
     @Override
     public Map<String, String> getAdditionEnvs() {
         return KubernetesUtils
-            .getVariablesWithPrefix(CONTAINERIZED_WORKER_ENV_PREFIX, config.getConfigMap());
+            .getVariablesWithPrefix(WORKER_ENV_PREFIX, config.getConfigMap());
     }
 
     @Override
     public String getPodNamePrefix(String clusterId) {
-        return clusterId + K8SConstants.WORKER_LABEL_SUFFIX + K8SConstants.NAME_SEPARATOR;
+        return clusterId + K8SConstants.WORKER_NAME_SUFFIX + K8SConstants.NAME_SEPARATOR;
     }
 
     @Override
@@ -86,7 +85,7 @@ public class KubernetesWorkerParam extends AbstractKubernetesParam {
         Map<String, String> workerPodLabels = new HashMap<>();
         workerPodLabels.put(K8SConstants.LABEL_APP_KEY, clusterId);
         workerPodLabels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_WORKER);
-        workerPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS.getKey()));
+        workerPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS));
         return workerPodLabels;
     }
 

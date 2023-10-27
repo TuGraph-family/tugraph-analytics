@@ -12,18 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.rpc;
+package com.antgroup.geaflow.common.exception;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+public class GeaflowHeartbeatException extends RuntimeException {
 
-public class RpcAddressTest {
+    private static final String MESSAGE = "heartbeat timeout";
 
-    @Test
-    public void testAddress() {
-        RpcAddress address = new RpcAddress("localhost", 0);
-        RpcAddress newAddr = RpcAddress.build(address.toString());
-        Assert.assertEquals(address, newAddr);
+    public GeaflowHeartbeatException() {
+        super(MESSAGE);
     }
 
+    public GeaflowHeartbeatException(Throwable cause) {
+        super(MESSAGE, cause);
+    }
 }
