@@ -40,7 +40,7 @@ public class IterationRedoSchedulerContextTest extends BaseCycleSchedulerContext
     }
 
     protected ExecutionNodeCycle buildMockCycle(boolean isIterative, long iterationCount) {
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);

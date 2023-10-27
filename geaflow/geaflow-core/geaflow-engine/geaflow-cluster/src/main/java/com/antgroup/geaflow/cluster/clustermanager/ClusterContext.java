@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.cluster.clustermanager;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.getMasterName;
 
 import com.antgroup.geaflow.cluster.common.IReliableContext;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
@@ -42,7 +43,7 @@ public class ClusterContext extends ReliableContainerContext {
     private int maxComponentId;
 
     public ClusterContext(Configuration configuration) {
-        super(DEFAULT_MASTER_ID, configuration);
+        super(DEFAULT_MASTER_ID, getMasterName(), configuration);
         this.config = configuration;
         this.clusterConfig = ClusterConfig.build(configuration);
         this.callbacks = new ArrayList<>();
@@ -98,7 +99,7 @@ public class ClusterContext extends ReliableContainerContext {
 
     @Override
     public void load() {
-        ClusterMetaStore metaStore = ClusterMetaStore.getInstance(id, config);
+        ClusterMetaStore metaStore = ClusterMetaStore.getInstance(id, name, config);
         Map<Integer, String> drivers = metaStore.getDriverIds();
         Map<Integer, String> containerIds = metaStore.getContainerIds();
         if (drivers != null && !drivers.isEmpty() && containerIds != null && !containerIds
@@ -129,7 +130,7 @@ public class ClusterContext extends ReliableContainerContext {
             Map<Integer, String> containerIds = clusterContext.getContainerIds();
             Map<Integer, String> driverIds = clusterContext.getDriverIds();
             ClusterMetaStore metaStore = ClusterMetaStore
-                .getInstance(clusterContext.id, clusterContext.config);
+                .getInstance(clusterContext.id, clusterContext.name, clusterContext.config);
             if (containerIds != null && !containerIds.isEmpty() && driverIds != null && !driverIds
                 .isEmpty()) {
                 LOGGER.info("persist {} containers and {} drivers into metaStore",

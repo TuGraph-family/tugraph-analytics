@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.container;
 
 import com.antgroup.geaflow.cluster.common.IReliableContext;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IComposeEvent;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
@@ -36,7 +37,7 @@ public class ContainerContext extends ReliableContainerContext {
     private transient List<IEvent> waitingCheckpointEvents;
 
     public ContainerContext(int id, Configuration config) {
-        super(id, config);
+        super(id, ClusterConstants.getContainerName(id), config);
         this.reliableEvents = new ArrayList<>();
         this.waitingCheckpointEvents = new ArrayList<>();
     }
@@ -53,7 +54,7 @@ public class ContainerContext extends ReliableContainerContext {
 
     @Override
     public void load() {
-        List<IEvent> events = ClusterMetaStore.getInstance(id, config).getEvents();
+        List<IEvent> events = ClusterMetaStore.getInstance(id, name, config).getEvents();
         if (events != null) {
             LOGGER.info("container {} recover events {}", id, events);
             reliableEvents = events;

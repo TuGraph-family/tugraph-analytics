@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.constants;
 
 public class ClusterConstants {
 
+    private static final String MASTER_PREFIX = "master-";
     private static final String DRIVER_PREFIX = "driver-";
     private static final String CONTAINER_PREFIX = "container-";
     public static final String PORT_SEPARATOR = ":";
@@ -23,6 +24,10 @@ public class ClusterConstants {
     public static final String LOCAL_CLUSTER = "LOCAL";
     public static final int DEFAULT_MASTER_ID = 0;
     public static final int EXIT_CODE = -1;
+
+    public static String getMasterName() {
+        return String.format("%s%s", MASTER_PREFIX, DEFAULT_MASTER_ID);
+    }
 
     public static String getDriverName(int id) {
         return String.format("%s%s", DRIVER_PREFIX, id);

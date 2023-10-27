@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.driver;
 
 import com.antgroup.geaflow.cluster.common.IReliableContext;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.Pipeline;
@@ -33,21 +34,19 @@ public class DriverContext extends ReliableContainerContext {
     private int index;
 
     public DriverContext(int id, int index, Configuration config) {
-        super(id, config);
+        super(id, ClusterConstants.getDriverName(id), config);
         this.index = index;
         this.finishedPipelineTasks = new ArrayList<>();
     }
 
     public DriverContext(int id, int index, Configuration config, boolean isRecover) {
-        super(id, config);
-        this.index = index;
+        this(id, index, config);
         this.isRecover = isRecover;
-        this.finishedPipelineTasks = new ArrayList<>();
     }
 
     @Override
     public void load() {
-        Pipeline pipeline = ClusterMetaStore.getInstance(id, config).getPipeline();
+        Pipeline pipeline = ClusterMetaStore.getInstance(id, name, config).getPipeline();
         if (pipeline != null) {
             List<Integer> finishedPipelineTasks = ClusterMetaStore.getInstance().getPipelineTasks();
             if (finishedPipelineTasks == null) {

@@ -64,7 +64,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         config.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
         config.put(CONTAINER_HEAP_SIZE_MB.getKey(), String.valueOf(1024));
         configuration = new Configuration(config);
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
     }
 
     @AfterMethod

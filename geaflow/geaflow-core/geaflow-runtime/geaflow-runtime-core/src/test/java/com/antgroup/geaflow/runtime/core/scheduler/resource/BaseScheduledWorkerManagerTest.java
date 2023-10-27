@@ -33,7 +33,7 @@ public abstract class BaseScheduledWorkerManagerTest {
         Configuration configuration = new Configuration();
         configuration.put(JOB_UNIQUE_ID, "test-scheduler-context");
         configuration.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         long finishIterationId = 100;
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);

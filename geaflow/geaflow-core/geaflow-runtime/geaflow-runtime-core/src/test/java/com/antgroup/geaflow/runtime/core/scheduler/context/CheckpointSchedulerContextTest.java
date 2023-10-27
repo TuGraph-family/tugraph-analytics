@@ -45,7 +45,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         // mock restart job
         ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         CheckpointSchedulerContext loaded2 = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> context);
         Assert.assertEquals(checkpointId + 1, loaded2.getCurrentIterationId());
@@ -55,7 +55,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
 
 
     private ExecutionNodeCycle buildMockCycle(boolean isIterative) {
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         long finishIterationId = 100;
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);

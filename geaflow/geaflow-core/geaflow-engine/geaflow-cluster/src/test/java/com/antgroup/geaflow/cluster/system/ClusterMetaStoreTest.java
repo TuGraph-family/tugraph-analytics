@@ -46,7 +46,7 @@ public class ClusterMetaStoreTest {
     @Test
     public void testMultiThreadSave() {
         int id = 0;
-        ClusterMetaStore metaStore = ClusterMetaStore.getInstance(id, configuration);
+        ClusterMetaStore metaStore = ClusterMetaStore.getInstance(id, "master-0", configuration);
         metaStore.getContainerIds();
 
         Thread thread = new Thread(() -> {

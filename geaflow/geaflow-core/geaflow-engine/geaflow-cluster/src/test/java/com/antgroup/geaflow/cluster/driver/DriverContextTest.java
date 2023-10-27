@@ -58,7 +58,7 @@ public class DriverContextTest {
     public void testRecoverContext() {
 
         int driverId = 1;
-        ClusterMetaStore.init(driverId, configuration);
+        ClusterMetaStore.init(driverId, "driver-0", configuration);
         DriverContext driverContext = new DriverContext(driverId, 0, configuration);
 
         Environment environment = Mockito.mock(Environment.class);
@@ -82,7 +82,7 @@ public class DriverContextTest {
         // cluster id is changed, re-init cluster metastore.
         ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
-        ClusterMetaStore.init(driverId, configuration);
+        ClusterMetaStore.init(driverId, "driver-0", configuration);
         // rebuild, context reliable event list is empty, and metastore is cleaned.
         DriverContext restarted = new DriverContext(driverId, 0, configuration);
         restarted.load();

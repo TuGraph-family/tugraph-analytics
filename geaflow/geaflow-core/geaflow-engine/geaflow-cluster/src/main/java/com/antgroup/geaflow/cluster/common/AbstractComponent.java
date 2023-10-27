@@ -61,7 +61,7 @@ public abstract class AbstractComponent {
         this.haService = HAServiceFactory.getService(configuration);
 
         RpcClient.init(configuration);
-        ClusterMetaStore.init(id, configuration);
+        ClusterMetaStore.init(id, name, configuration);
         StatsCollectorFactory.init(configuration);
     }
 

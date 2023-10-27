@@ -20,8 +20,10 @@ import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerSnapshot;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.Pipeline;
+import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,29 +38,36 @@ public class ClusterMetaStore {
     private static ClusterMetaStore INSTANCE;
 
     private final int componentId;
+    private final String componentName;
+    private final String clusterId;
     private final Configuration configuration;
+    private final IClusterMetaKVStore<String, Object> componentBackend;
+    private final Map<String, IClusterMetaKVStore<String, Object>> backends;
 
-    private IClusterMetaKVStore<String, Object> backend;
-    private IClusterMetaKVStore<String, Object> offsetBackend;
-
-    private ClusterMetaStore(int id, Configuration configuration) {
+    private ClusterMetaStore(int id, String name, Configuration configuration) {
         this.componentId = id;
+        this.componentName = name;
         this.configuration = configuration;
-        String clusterId = configuration.getString(CLUSTER_ID);
-        String storeKey = String.format("%s/%s/%s", CLUSTER_META_NAMESPACE_LABEL, CLUSTER_NAMESPACE_PREFIX, clusterId);
-        this.backend = ClusterMetaStoreFactory.create(storeKey, id, configuration);
-        LOGGER.info("create ClusterMetaStore, store key {}, id {}", storeKey, id);
+        this.backends = new ConcurrentHashMap<>();
+        this.clusterId = configuration.getString(CLUSTER_ID);
+        String namespace = String.format("%s/%s/%s", CLUSTER_NAMESPACE_PREFIX, clusterId, componentName);
+        this.componentBackend = createBackend(namespace);
+        this.backends.put(namespace, componentBackend);
     }
 
-    public static synchronized void init(int id, Configuration configuration) {
+    public static void init(int id, String name, Configuration configuration) {
         if (INSTANCE == null) {
-            INSTANCE = new ClusterMetaStore(id, configuration);
+            synchronized (ClusterMetaStore.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new ClusterMetaStore(id, name, configuration);
+                }
+            }
         }
     }
 
-    public static ClusterMetaStore getInstance(int id, Configuration configuration) {
+    public static ClusterMetaStore getInstance(int id, String name, Configuration configuration) {
         if (INSTANCE == null) {
-            init(id, configuration);
+            init(id, name, configuration);
         }
         return INSTANCE;
     }
@@ -70,23 +79,11 @@ public class ClusterMetaStore {
     public static synchronized void close() {
         LOGGER.info("close ClusterMetaStore");
         if (INSTANCE != null) {
-            INSTANCE.backend.close();
-            if (INSTANCE.offsetBackend != null) {
-                INSTANCE.offsetBackend.close();
+            for (IClusterMetaKVStore<String, Object> backend : INSTANCE.backends.values()) {
+                backend.close();
             }
             INSTANCE = null;
         }
-    }
-
-    private IClusterMetaKVStore<String, Object> getOffsetBackend() {
-        if (offsetBackend == null) {
-            synchronized (ClusterMetaStore.class) {
-                String storeKey = String.format("%s/%s", CLUSTER_META_NAMESPACE_LABEL, OFFSET_NAMESPACE);
-                offsetBackend = ClusterMetaStoreFactory.create(storeKey, componentId, configuration);
-                LOGGER.info("create ClusterMetaStore, store key {}, id {}", storeKey, componentId);
-            }
-        }
-        return offsetBackend;
     }
 
     public ClusterMetaStore savePipeline(Pipeline pipeline) {
@@ -99,10 +96,11 @@ public class ClusterMetaStore {
         return this;
     }
 
+    /**
+     * Auto flush after save value.
+     */
     public void saveWindowId(Long windowId) {
-        IClusterMetaKVStore<String, Object> offsetBackend = getOffsetBackend();
-        offsetBackend.put(ClusterMetaKey.WINDOW_ID.name(), windowId);
-        offsetBackend.flush();
+        save(ClusterMetaKey.WINDOW_ID, windowId);
     }
 
     public ClusterMetaStore saveCycle(Object cycle) {
@@ -115,9 +113,11 @@ public class ClusterMetaStore {
         return this;
     }
 
-    public ClusterMetaStore saveWorkers(WorkerSnapshot workers) {
+    /**
+     * Auto flush after save value.
+     */
+    public void saveWorkers(WorkerSnapshot workers) {
         save(ClusterMetaKey.WORKERS, workers);
-        return this;
     }
 
     public ClusterMetaStore saveContainerIds(Map<Integer, String> containerIds) {
@@ -144,8 +144,7 @@ public class ClusterMetaStore {
     }
 
     public Long getWindowId() {
-        IClusterMetaKVStore<String, Object> offsetBackend = getOffsetBackend();
-        return (Long) offsetBackend.get(ClusterMetaKey.WINDOW_ID.name());
+        return get(ClusterMetaKey.WINDOW_ID);
     }
 
     public Object getCycle() {
@@ -173,7 +172,7 @@ public class ClusterMetaStore {
     }
 
     public void flush() {
-        backend.flush();
+        componentBackend.flush();
     }
 
     public void clean() {
@@ -181,19 +180,42 @@ public class ClusterMetaStore {
     }
 
     private <T> void save(ClusterMetaKey key, T value) {
-        backend.put(key.name(), value);
-    }
-
-    private <T> void save(String key, T value) {
-        backend.put(key, value);
+        getBackend(key).put(key.name(), value);
     }
 
     private <T> T get(ClusterMetaKey key) {
-        return (T) backend.get(key.name());
+        return (T) getBackend(key).get(key.name());
     }
 
-    private <T> T get(String key) {
-        return (T) backend.get(key);
+    private IClusterMetaKVStore<String, Object> getBackend(ClusterMetaKey metaKey) {
+        String namespace;
+        switch (metaKey) {
+            case WORKERS:
+                namespace = String.format("%s/%s/%s", CLUSTER_NAMESPACE_PREFIX, clusterId, metaKey.name().toLowerCase());
+                break;
+            case WINDOW_ID:
+                namespace = OFFSET_NAMESPACE;
+                break;
+            default:
+                return componentBackend;
+        }
+        if (!backends.containsKey(namespace)) {
+            synchronized (ClusterMetaStore.class) {
+                if (!backends.containsKey(namespace)) {
+                    IClusterMetaKVStore<String, Object> backend = createBackend(namespace);
+                    backends.put(namespace, new ClusterMetaKVStoreProxy<>(backend));
+                }
+            }
+        }
+        return backends.get(namespace);
+    }
+
+    private IClusterMetaKVStore<String, Object> createBackend(String namespace) {
+        String storeKey = String.format("%s/%s", CLUSTER_META_NAMESPACE_LABEL, namespace);
+        IClusterMetaKVStore<String, Object> backend =
+            ClusterMetaStoreFactory.create(storeKey, componentId, configuration);
+        LOGGER.info("create ClusterMetaStore, store key {}, id {}", storeKey, componentId);
+        return backend;
     }
 
     public enum ClusterMetaKey {
@@ -207,5 +229,47 @@ public class ClusterMetaStore {
         CONTAINER_IDS,
         DRIVER_IDS,
         MAX_CONTAINER_ID
+    }
+
+    /**
+     * A proxy that flush immediately once put entry to store.
+     */
+    private class ClusterMetaKVStoreProxy<K, V> implements IClusterMetaKVStore<K, V> {
+
+        public ClusterMetaKVStoreProxy(IClusterMetaKVStore<K, V> store) {
+            this.store = store;
+        }
+
+        private IClusterMetaKVStore<K, V> store;
+
+        @Override
+        public void init(StoreContext storeContext) {
+            store.init(storeContext);
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() {
+            store.close();
+        }
+
+        @Override
+        public V get(K key) {
+            return store.get(key);
+        }
+
+        @Override
+        public void put(K key, V value) {
+            store.put(key, value);
+            store.flush();
+        }
+
+        @Override
+        public void remove(K key) {
+            store.remove(key);
+        }
     }
 }
