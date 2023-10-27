@@ -159,7 +159,7 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
         try {
             Map<String, String> jarIds = jobService.getJarIds(jobIds);
             for (String jobId : jobIds) {
-                remoteFileManager.deleteJobJar(jarIds.get(jobId), jobId);
+                remoteFileManager.deleteRefJar(jarIds.get(jobId), jobId, GeaflowResourceType.JOB);
             }
         } catch (Exception e) {
             log.info(e.getMessage());
@@ -206,7 +206,7 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
             GeaflowJob job = jobService.get(jobId);
             String oldJarId = job.getJarPackage().getId();
             try {
-                remoteFileManager.deleteJobJar(oldJarId, jobId);
+                remoteFileManager.deleteRefJar(oldJarId, jobId, GeaflowResourceType.JOB);
             } catch (Exception e) {
                 log.info("delete job jar fail, jobName: {}, jarId: {}", job.getName(), oldJarId);
             }

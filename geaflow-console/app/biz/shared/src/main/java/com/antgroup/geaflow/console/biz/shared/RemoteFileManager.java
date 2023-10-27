@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.biz.shared;
 
 import com.antgroup.geaflow.console.biz.shared.view.RemoteFileView;
 import com.antgroup.geaflow.console.common.dal.model.RemoteFileSearch;
+import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,9 +30,6 @@ public interface RemoteFileManager extends NameManager<RemoteFileView, RemoteFil
 
     boolean delete(String remoteFileId);
 
-    void deleteFunctionJar(String jarId, String functionId);
+    void deleteRefJar(String jarID, String refId, GeaflowResourceType resourceType);
 
-    void deleteJobJar(String jarId, String jobId);
-
-    void deleteVersionJar(String id);
 }

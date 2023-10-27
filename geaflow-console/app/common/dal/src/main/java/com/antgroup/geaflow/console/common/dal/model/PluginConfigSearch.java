@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.common.dal.model;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,7 +24,7 @@ public class PluginConfigSearch extends NameSearch {
 
     protected GeaflowPluginCategory category;
 
-    protected GeaflowPluginType type;
+    protected String type;
 
     protected String userId;
 }

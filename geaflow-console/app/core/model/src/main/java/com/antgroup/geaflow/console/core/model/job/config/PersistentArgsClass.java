@@ -56,7 +56,7 @@ public class PersistentArgsClass extends GeaflowConfigClass {
     private PluginConfigClass plugin;
 
     public PersistentArgsClass(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
 
         Class<? extends PersistentPluginConfigClass> configClass;
         switch (type) {
@@ -70,7 +70,7 @@ public class PersistentArgsClass extends GeaflowConfigClass {
                 configClass = OssPluginConfigClass.class;
                 break;
             default:
-                throw new GeaflowIllegalException("Persistent config type {} not supported", type);
+                throw new GeaflowIllegalException("Persistent config type {} not supported", pluginConfig.getType());
         }
 
         PersistentPluginConfigClass config = pluginConfig.getConfig().parse(configClass);

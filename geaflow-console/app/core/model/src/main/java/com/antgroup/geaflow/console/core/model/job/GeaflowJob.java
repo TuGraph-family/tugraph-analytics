@@ -21,6 +21,7 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +38,8 @@ public abstract class GeaflowJob extends GeaflowName {
     protected final Map<String, GeaflowGraph> graphs = new LinkedHashMap<>();
 
     protected List<GeaflowFunction> functions = new ArrayList<>();
+
+    protected List<GeaflowPlugin> plugins = new ArrayList<>();
 
     @Setter
     protected GeaflowJobType type;
@@ -89,6 +92,10 @@ public abstract class GeaflowJob extends GeaflowName {
 
     public void setFunctions(List<GeaflowFunction> functions) {
         this.functions = functions;
+    }
+
+    public void setPlugins(List<GeaflowPlugin> plugins) {
+        this.plugins = plugins;
     }
 
     @Override

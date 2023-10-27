@@ -16,7 +16,6 @@ package com.antgroup.geaflow.console.web.controller.api;
 
 import com.antgroup.geaflow.console.biz.shared.ConfigManager;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.config.ConfigDescItem;
 import com.antgroup.geaflow.console.web.api.GeaflowApiResponse;
 import java.util.List;
@@ -50,14 +49,14 @@ public class ConfigController {
     }
 
     @GetMapping("/plugin/categories/{category}/types")
-    public GeaflowApiResponse<List<GeaflowPluginType>> getPluginCategoryTypes(
+    public GeaflowApiResponse<List<String>> getPluginCategoryTypes(
         @PathVariable GeaflowPluginCategory category) {
         return GeaflowApiResponse.success(configManager.getPluginCategoryTypes(category));
     }
 
     @GetMapping("/plugin/categories/{category}/types/{type}")
     public GeaflowApiResponse<List<ConfigDescItem>> getPluginConfig(@PathVariable GeaflowPluginCategory category,
-                                                                    @PathVariable GeaflowPluginType type) {
+                                                                    @PathVariable String type) {
         return GeaflowApiResponse.success(configManager.getPluginConfig(category, type));
     }
 

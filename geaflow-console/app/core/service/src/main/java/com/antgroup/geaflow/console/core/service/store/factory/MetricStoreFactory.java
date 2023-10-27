@@ -30,12 +30,12 @@ public class MetricStoreFactory {
     ApplicationContext context;
 
     public GeaflowMetricStore getMetricStore(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
+        GeaflowPluginType type = GeaflowPluginType.of(pluginConfig.getType());
         switch (type) {
             case INFLUXDB:
                 return context.getBean(InfluxdbStore.class);
             default:
-                throw new GeaflowIllegalException("Not supported metric store type {}", type);
+                throw new GeaflowIllegalException("Not supported metric store type {}", pluginConfig.getType());
         }
     }
 

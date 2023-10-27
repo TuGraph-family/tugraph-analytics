@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface PluginManager extends NameManager<PluginView, PluginSearch> {
 
-    String createPlugin(PluginView pluginView, MultipartFile jarPackage);
+    String createPlugin(PluginView pluginView, MultipartFile jarPackage, String jarId);
 
     boolean updatePlugin(String pluginId, PluginView updateView, MultipartFile jarPackage);
 

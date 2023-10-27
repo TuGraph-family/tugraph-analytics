@@ -28,15 +28,15 @@ import org.apache.commons.collections.CollectionUtils;
 @SuppressWarnings("unchecked")
 public class ListUtil {
 
-    public static <T> List<T> join(List<T> left, List<T> right) {
+    public static <T> Collection<T> join(Collection<T> left, Collection<T> right) {
         if (left == null || right == null) {
             return null;
         }
 
-        return (List<T>) CollectionUtils.intersection(left, right);
+        return (Collection<T>) CollectionUtils.intersection(left, right);
     }
 
-    public static <T> List<T> union(List<T> left, List<T> right) {
+    public static <T> Collection<T> union(Collection<T> left, Collection<T> right) {
         if (left == null) {
             return right;
         }

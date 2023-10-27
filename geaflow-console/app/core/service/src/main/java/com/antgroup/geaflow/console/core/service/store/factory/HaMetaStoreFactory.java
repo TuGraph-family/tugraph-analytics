@@ -30,12 +30,12 @@ public class HaMetaStoreFactory {
     ApplicationContext context;
 
     public GeaflowHaMetaStore getHaMetaStore(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
+        GeaflowPluginType type = GeaflowPluginType.of(pluginConfig.getType());
         switch (type) {
             case REDIS:
                 return context.getBean(RedisStore.class);
             default:
-                throw new GeaflowIllegalException("Not supported HA meta store type {}", type);
+                throw new GeaflowIllegalException("Not supported HA meta store type {}", pluginConfig.getType());
         }
     }
 

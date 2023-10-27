@@ -7,6 +7,8 @@ ENV GEAFLOW_INSTALL_PATH=/opt
 ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
 ENV GEAFLOW_WEB_HOME=$GEAFLOW_INSTALL_PATH/geaflow-web
 
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # base packages
 RUN yum -y install wget ps vim curl
 RUN wget --no-check-certificate http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo

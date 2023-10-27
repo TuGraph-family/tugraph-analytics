@@ -24,9 +24,11 @@ import com.antgroup.geaflow.console.biz.shared.view.FunctionView;
 import com.antgroup.geaflow.console.biz.shared.view.RemoteFileView;
 import com.antgroup.geaflow.console.common.dal.entity.FunctionEntity;
 import com.antgroup.geaflow.console.common.dal.model.FunctionSearch;
+import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
+import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -141,11 +144,19 @@ public class FunctionManagerImpl extends DataManagerImpl<GeaflowFunction, Functi
             return false;
         }
 
+        // check plugin is used by jobs
+        List<String> jobIds = jobService.getJobByResources(function.getName(), function.getInstanceId(),
+            GeaflowResourceType.FUNCTION);
+        if (CollectionUtils.isNotEmpty(jobIds)) {
+            List<String> jobNames = ListUtil.convert(jobIds, e -> jobService.getNameById(e));
+            throw new GeaflowException("Function {} is used by job: {}", function.getName(), String.join(",", jobNames));
+        }
+
         GeaflowRemoteFile file = function.getJarPackage();
         if (file != null) {
             // do not delete if file is used by others
             try {
-                remoteFileManager.deleteFunctionJar(file.getId(), function.getId());
+                remoteFileManager.deleteRefJar(file.getId(), function.getId(), GeaflowResourceType.FUNCTION);
 
             } catch (Exception e) {
                 log.info(" Delete function -> delete file {} failed ", file.getName(), e);

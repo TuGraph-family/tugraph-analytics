@@ -42,7 +42,7 @@ public abstract class GeaflowTaskHandle {
         }
 
         JSONObject json = JSON.parseObject(text);
-        GeaflowPluginType clusterType = GeaflowPluginType.valueOf(json.get("clusterType").toString());
+        GeaflowPluginType clusterType = GeaflowPluginType.of(json.get("clusterType").toString());
         switch (clusterType) {
             case CONTAINER:
                 return json.toJavaObject(ContainerTaskHandle.class);

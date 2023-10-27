@@ -31,6 +31,10 @@ public abstract class IdService<M extends GeaflowId, E extends IdEntity, S exten
     protected abstract IdConverter<M, E> getConverter();
 
     private E build(M model) {
+        if (model == null) {
+            return null;
+        }
+
         return getConverter().convert(model);
     }
 
@@ -39,6 +43,10 @@ public abstract class IdService<M extends GeaflowId, E extends IdEntity, S exten
     }
 
     protected final M parse(E entity) {
+        if (entity == null) {
+            return null;
+        }
+
         List<M> models = parse(Collections.singletonList(entity));
         return models.isEmpty() ? null : models.get(0);
     }

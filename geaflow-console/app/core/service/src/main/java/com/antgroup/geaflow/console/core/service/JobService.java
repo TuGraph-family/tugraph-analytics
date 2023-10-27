@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.console.core.service;
 
+import static com.antgroup.geaflow.console.core.service.PluginService.PLUGIN_DEFAULT_INSTANCE_ID;
+
 import com.antgroup.geaflow.console.common.dal.dao.JobDao;
 import com.antgroup.geaflow.console.common.dal.dao.JobResourceMappingDao;
 import com.antgroup.geaflow.console.common.dal.dao.NameDao;
@@ -29,19 +31,23 @@ import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowAuthorityType;
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import com.antgroup.geaflow.console.core.model.data.GeaflowData;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
+import com.antgroup.geaflow.console.core.model.data.GeaflowTable;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.security.GeaflowAuthorization;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.converter.JobConverter;
 import com.antgroup.geaflow.console.core.service.converter.NameConverter;
 import com.antgroup.geaflow.console.core.service.factory.GeaflowDataFactory;
+import com.antgroup.geaflow.console.core.service.file.FileRefService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,12 +56,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
+@Slf4j
+public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> implements FileRefService {
 
     private final Map<GeaflowResourceType, DataService> serviceMap = new HashMap<>();
     @Autowired
@@ -83,6 +91,9 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
     private FunctionService functionService;
 
     @Autowired
+    private PluginService pluginService;
+
+    @Autowired
     private VersionService versionService;
 
     @Autowired
@@ -97,8 +108,6 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
     @Autowired
     private RemoteFileService remoteFileService;
 
-    @Autowired
-    private TaskService taskService;
 
     protected NameDao<JobEntity, JobSearch> getDao() {
         return jobDao;
@@ -115,10 +124,12 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
             List<GeaflowStruct> structs = getJobStructs(e.getId());
             List<GeaflowGraph> graphs = getJobGraphs(e.getId());
             List<GeaflowFunction> functions = getJobFunctions(e.getId());
+            List<GeaflowPlugin> plugins = getJobPlugins(e.getId());
             GeaflowRemoteFile remoteFile = remoteFileService.get(e.getJarPackageId());
-            return jobConverter.convert(e, structs, graphs, functions, remoteFile);
+            return jobConverter.convert(e, structs, graphs, functions, plugins, remoteFile);
         }).collect(Collectors.toList());
     }
+
 
     @Override
     @Transactional
@@ -131,7 +142,7 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
         List<String> ids = super.create(models);
         // save resourceMappings
         for (GeaflowJob job : models) {
-            createJobResources(job.getId(), job.getStructs(), job.getGraphs(), job.getFunctions());
+            createJobResources(job.getId(), job.getStructs(), job.getGraphs(), job.getFunctions(), job.getPlugins());
         }
         // save authorizations
         List<GeaflowAuthorization> authorizations = ListUtil.convert(ids,
@@ -172,9 +183,15 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
             List<GeaflowFunction> addFunctions = ListUtil.diff(newFunctions, oldFunctions, this::getResourceKey);
             List<GeaflowFunction> removeFunctions = ListUtil.diff(oldFunctions, newFunctions, this::getResourceKey);
 
+            // calculate subset of functions
+            List<GeaflowPlugin> oldJobPlugins = oldJob.getPlugins();
+            List<GeaflowPlugin> newJobPlugins = newJob.getPlugins();
+            List<GeaflowPlugin> addPlugins = ListUtil.diff(newJobPlugins, oldJobPlugins, e -> e.getType() + e.getCategory());
+            List<GeaflowPlugin> removePlugins = ListUtil.diff(oldJobPlugins, newJobPlugins, e -> e.getType() + e.getCategory());
+
             // add resources
-            createJobResources(jobId, addStructs, addGraphs, addFunctions);
-            removeJobResources(jobId, removeStructs, removeGraphs, removeFunctions);
+            createJobResources(jobId, addStructs, addGraphs, addFunctions, addPlugins);
+            removeJobResources(jobId, removeStructs, removeGraphs, removeFunctions, removePlugins);
         }
 
         return super.update(jobs);
@@ -209,7 +226,7 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
     }
 
     private void createJobResources(String jobId, List<GeaflowStruct> structs, List<GeaflowGraph> graphs,
-                                    List<GeaflowFunction> functions) {
+                                    List<GeaflowFunction> functions, List<GeaflowPlugin> plugins) {
         List<JobResourceMappingEntity> entities = new ArrayList<>();
 
         structs.forEach(e -> {
@@ -230,6 +247,12 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
             entities.add(entity);
         });
 
+        plugins.forEach(e -> {
+            JobResourceMappingEntity entity = new JobResourceMappingEntity(jobId, e.getName(), GeaflowResourceType.PLUGIN,
+                PLUGIN_DEFAULT_INSTANCE_ID);
+            entities.add(entity);
+        });
+
         if (!entities.isEmpty()) {
             jobResourceMappingDao.create(entities);
         }
@@ -243,6 +266,18 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
         return getResourcesByJobId(id, GeaflowResourceType.FUNCTION);
     }
 
+    private List<GeaflowPlugin> getJobPlugins(String id) {
+        List<JobResourceMappingEntity> entities = jobResourceMappingDao.getResourcesByJobId(id, GeaflowResourceType.PLUGIN);
+        return ListUtil.convert(entities, e -> {
+            GeaflowPlugin plugin = pluginService.getByName(e.getResourceName());
+            if (plugin == null) {
+                throw new GeaflowException("Plugin {} not found", e.getResourceName());
+            }
+            return plugin;
+        });
+    }
+
+
     private List<GeaflowStruct> getJobStructs(String jobId) {
         List<GeaflowStruct> res = new ArrayList<>();
         res.addAll(getResourcesByJobId(jobId, GeaflowResourceType.TABLE));
@@ -254,9 +289,10 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
     private void parseUserCode(GeaflowJob job, GeaflowVersion version) {
         if (job instanceof GeaflowProcessJob) {
             // parse user functions
-            Set<FunctionInfo> functionInfos = releaseService.parseFunctions(job, version);
-            List<GeaflowFunction> functions = getByFunctionInfos(functionInfos);
-            job.setFunctions(functions);
+            handleFunctions(job, version);
+            //parse user plugins
+            handlePlugins(job, version);
+
             // compile the code
             CompileResult result = releaseService.compile(job, version, null);
             // set job structs and graphs
@@ -273,6 +309,48 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
             job.setGraph(graphs);
 
         }
+    }
+
+    private void handleFunctions(GeaflowJob job, GeaflowVersion version) {
+        Set<FunctionInfo> functionInfos = releaseService.parseFunctions(job, version);
+        List<GeaflowFunction> functions = getByFunctionInfos(functionInfos);
+        job.setFunctions(functions);
+    }
+
+    private void handlePlugins(GeaflowJob job, GeaflowVersion version) {
+        // parse declared table with plugin in dsl
+        Set<String> dslPluginTypes = releaseService.parseDeclaredPlugins(job, version);
+
+        // get Unresolved tables in dsl
+        Set<TableInfo> unresolvedTables = releaseService.getUnResolvedTables(job, version);
+
+        for (TableInfo tableInfo : unresolvedTables) {
+            String instanceId = instanceService.getIdByName(tableInfo.getInstanceName());
+            GeaflowTable table = tableService.getByName(instanceId, tableInfo.getTableName());
+            // get plugin used in unresolved table
+            if (table != null) {
+                String type = table.getPluginConfig().getType();
+                dslPluginTypes.add(type);
+            }
+        }
+
+        // filter user plugins which are not in engine
+        Set<String> filteredPluginTypes = dslPluginTypes.stream().filter(e -> !pluginService.pluginTypeInEngine(e, version))
+            .collect(Collectors.toSet());
+        log.info("{} used plugins: {}", job.getName(), String.join(",", filteredPluginTypes));
+        List<GeaflowPlugin> plugins = getByPluginTypes(filteredPluginTypes);
+        job.setPlugins(plugins);
+    }
+
+    private List<GeaflowPlugin> getByPluginTypes(Set<String> pluginTypes) {
+        return ListUtil.convert(pluginTypes, type -> {
+            // only support TABLE category plugin currently
+            GeaflowPlugin plugin = pluginService.getPlugin(type, GeaflowPluginCategory.TABLE);
+            if (plugin == null) {
+                throw new GeaflowException("Plugin type {} not found, please create first", type);
+            }
+            return plugin;
+        });
     }
 
     private List<GeaflowStruct> getByTableInfos(Collection<TableInfo> tableInfos) {
@@ -316,13 +394,15 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
     }
 
     private void removeJobResources(String jobId, List<GeaflowStruct> removeStructs, List<GeaflowGraph> removeGraphs,
-                                    List<GeaflowFunction> removeFunctions) {
+                                    List<GeaflowFunction> removeFunctions, List<GeaflowPlugin> removePlugins) {
         List<JobResourceMappingEntity> removeEntities = ListUtil.convert(removeGraphs,
             e -> new JobResourceMappingEntity(jobId, e.getName(), GeaflowResourceType.GRAPH, e.getInstanceId()));
         removeEntities.addAll(ListUtil.convert(removeStructs,
             e -> new JobResourceMappingEntity(jobId, e.getName(), GeaflowResourceType.valueOf(e.getType().name()), e.getInstanceId())));
         removeEntities.addAll(ListUtil.convert(removeFunctions,
             e -> new JobResourceMappingEntity(jobId, e.getName(), GeaflowResourceType.FUNCTION, e.getInstanceId())));
+        removeEntities.addAll(ListUtil.convert(removePlugins,
+            e -> new JobResourceMappingEntity(jobId, e.getName(), GeaflowResourceType.PLUGIN, PLUGIN_DEFAULT_INSTANCE_ID)));
         jobResourceMappingDao.removeJobResources(removeEntities);
     }
 
@@ -330,6 +410,8 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> {
         return e.getInstanceId() + "-" + e.getName();
     }
 
-
+    public List<String> getJobByResources(String resourceName, String instanceId, GeaflowResourceType resourceType) {
+        List<JobResourceMappingEntity> resources = jobResourceMappingDao.getJobByResources(resourceName, instanceId, resourceType);
+        return ListUtil.convert(resources, JobResourceMappingEntity::getJobId);
+    }
 }
-

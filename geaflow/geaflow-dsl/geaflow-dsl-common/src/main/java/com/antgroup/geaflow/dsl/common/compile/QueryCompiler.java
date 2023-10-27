@@ -27,4 +27,10 @@ public interface QueryCompiler {
      * Get the UnResolved functions in the dsl script.
      */
     Set<FunctionInfo> getUnResolvedFunctions(String script, CompileContext context);
+
+    Set<String> getDeclaredTablePlugins(String script, CompileContext context);
+
+    Set<String> getEnginePlugins();
+
+    Set<TableInfo> getUnResolvedTables(String script, CompileContext context);
 }

@@ -23,14 +23,18 @@ import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.task.schedule.GeaflowSchedule;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections.CollectionUtils;
@@ -129,7 +133,7 @@ public class GeaflowTask extends GeaflowId {
         GeaflowJob job = release.getJob();
         GeaflowRemoteFile jarPackage = job.getJarPackage();
         List<GeaflowFunction> functions = job.getFunctions();
-
+        List<GeaflowPlugin> plugins = job.getPlugins();
         if (jarPackage != null) {
             jars.add(jarPackage);
         }
@@ -142,7 +146,18 @@ public class GeaflowTask extends GeaflowId {
             });
         }
 
-        return jars;
+        if (CollectionUtils.isNotEmpty(plugins)) {
+            plugins.forEach(plugin -> {
+                GeaflowRemoteFile pluginJarPackage = plugin.getJarPackage();
+                Preconditions.checkNotNull(pluginJarPackage, "Invalid jar of plugin %s", plugin.getName());
+                jars.add(pluginJarPackage);
+            });
+        }
+
+        List<GeaflowRemoteFile> newList = jars.stream().collect(Collectors.collectingAndThen(
+            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(GeaflowRemoteFile::getMd5))), ArrayList::new));
+
+        return newList;
     }
 
     public String getStartupNotifyUrl(String gatewayUrl) {

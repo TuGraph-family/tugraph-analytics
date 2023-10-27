@@ -22,7 +22,6 @@ import com.antgroup.geaflow.console.common.dal.entity.PluginConfigEntity;
 import com.antgroup.geaflow.console.common.dal.model.PluginConfigSearch;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.service.NameService;
 import com.antgroup.geaflow.console.core.service.PluginConfigService;
@@ -74,7 +73,7 @@ public class PluginConfigManagerImpl extends
     }
 
     @Override
-    public List<PluginConfigView> getPluginConfigs(GeaflowPluginCategory category, GeaflowPluginType type) {
+    public List<PluginConfigView> getPluginConfigs(GeaflowPluginCategory category, String type) {
         return build(pluginConfigService.getPluginConfigs(category, type));
     }
 }

@@ -51,8 +51,8 @@ public class RuntimeMetaArgsClass extends GeaflowConfigClass {
     private PluginConfigClass plugin;
 
     public RuntimeMetaArgsClass(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
-        this.offsetMetaType = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
+        this.offsetMetaType = GeaflowPluginType.of(pluginConfig.getType());
         this.table = RUNTIME_META_TABLE_NAME;
 
         Class<? extends PluginConfigClass> configClass;
@@ -61,7 +61,7 @@ public class RuntimeMetaArgsClass extends GeaflowConfigClass {
                 configClass = JdbcPluginConfigClass.class;
                 break;
             default:
-                throw new GeaflowIllegalException("Runtime meta config type {} not supported", type);
+                throw new GeaflowIllegalException("Runtime meta config type {} not supported", pluginConfig.getType());
         }
 
         this.plugin = pluginConfig.getConfig().parse(configClass);
