@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -26,7 +25,7 @@ public interface IMasterEndpointRef extends Serializable {
     /**
      * Register container into master.
      */
-    <T> void registerContainer(T request, RpcCallback<RegisterResponse> listener);
+    <T> ListenableFuture<RegisterResponse> registerContainer(T request);
 
     /**
      * Send heartbeat.

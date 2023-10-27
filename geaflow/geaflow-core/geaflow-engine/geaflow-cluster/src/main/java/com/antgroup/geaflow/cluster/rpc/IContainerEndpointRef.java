@@ -15,20 +15,15 @@
 package com.antgroup.geaflow.cluster.rpc;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Serializable;
-import java.util.concurrent.Future;
 
 public interface IContainerEndpointRef extends Serializable {
 
     /**
      * Process event request.
      */
-    Future<IEvent> process(IEvent request);
+    ListenableFuture<Response> process(IEvent request);
 
-    /**
-     * Process event request with callback.
-     */
-    void process(IEvent request, RpcCallback<Response> callback);
 }

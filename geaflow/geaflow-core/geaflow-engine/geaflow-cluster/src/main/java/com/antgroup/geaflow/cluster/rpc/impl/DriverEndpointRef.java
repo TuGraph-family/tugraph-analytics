@@ -16,18 +16,17 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.client.PipelineResult;
 import com.antgroup.geaflow.cluster.rpc.IDriverEndpointRef;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineReq;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
 import com.antgroup.geaflow.rpc.proto.DriverServiceGrpc;
-import com.antgroup.geaflow.rpc.proto.DriverServiceGrpc.DriverServiceFutureStub;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,16 +34,14 @@ public class DriverEndpointRef extends AbstractRpcEndpointRef implements IDriver
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DriverEndpointRef.class);
 
-    private DriverServiceFutureStub stub;
     private DriverServiceGrpc.DriverServiceBlockingStub blockingStub;
 
-    public DriverEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public DriverEndpointRef(String host, int port, Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
     protected void createStub(ManagedChannel channel) {
-        this.stub = DriverServiceGrpc.newFutureStub(channel);
         this.blockingStub = DriverServiceGrpc.newBlockingStub(channel);
     }
 

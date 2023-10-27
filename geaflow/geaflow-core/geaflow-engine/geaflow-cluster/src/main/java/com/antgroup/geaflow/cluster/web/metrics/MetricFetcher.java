@@ -17,7 +17,6 @@ package com.antgroup.geaflow.cluster.web.metrics;
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory;
 import com.antgroup.geaflow.cluster.rpc.impl.RpcMessageEncoder;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
@@ -52,7 +51,7 @@ public class MetricFetcher implements Serializable {
         this.metricCache = metricCache;
         this.updateIntervalMs = DEFAULT_TIMEOUT;
         RpcClient.init(configuration);
-        executorService = RpcEndpointRefFactory.getInstance().getExecutor();
+        executorService = RpcClient.getInstance().getExecutor();
     }
 
     public synchronized void update() {

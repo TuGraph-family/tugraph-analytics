@@ -15,36 +15,30 @@
 package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractRpcEndpointRef implements RpcEndpointRef {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRpcEndpointRef.class);
-    private static final int DEFAULT_TIMEOUT_MS = 30000;
     private static final int DEFAULT_MAX_RETRY_TIMES = 10;
 
     protected final String host;
     protected final int port;
     protected final int timeoutMs;
-    protected final ExecutorService executorService;
     protected ManagedChannel channel;
 
-    public AbstractRpcEndpointRef(String host, int port, ExecutorService executorService) {
+    public AbstractRpcEndpointRef(String host, int port, Configuration configuration) {
         this.host = host;
         this.port = port;
-        this.timeoutMs = DEFAULT_TIMEOUT_MS;
+        this.timeoutMs = configuration.getInteger(ExecutionConfigKeys.RPC_CONNECT_TIMEOUT_MS);
         this.channel = buildChannel(host, port, timeoutMs);
-        this.executorService = executorService;
         createStub(channel);
     }
 
@@ -66,22 +60,6 @@ public abstract class AbstractRpcEndpointRef implements RpcEndpointRef {
     }
 
     protected abstract void createStub(ManagedChannel channel);
-
-    protected <T> void handleFutureCallback(ListenableFuture<T> future,
-                                            RpcCallback<T> listener) {
-        Futures.addCallback(future, new FutureCallback<T>() {
-            @Override
-            public void onSuccess(@Nullable T result) {
-                listener.onSuccess(result);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                LOGGER.error("rpc call failed", t);
-                listener.onFailure(t);
-            }
-        }, executorService);
-    }
 
     @Override
     public void close() {

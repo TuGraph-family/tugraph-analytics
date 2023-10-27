@@ -18,10 +18,12 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTB
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_INTERVAL_MS;
 
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
+import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.common.utils.ExecutorUtil;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
+import com.google.protobuf.Empty;
 import java.io.Serializable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -55,7 +57,17 @@ public class HeartbeatSender implements Serializable {
             try {
                 message = heartbeatTrigger.get();
                 if (message != null) {
-                    RpcClient.getInstance().sendHeartBeat(masterId, message);
+                    RpcClient.getInstance().sendHeartBeat(masterId, message, new RpcEndpointRef.RpcCallback<Empty>() {
+
+                        @Override
+                        public void onSuccess(Empty event) {
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            LOGGER.error("Send heartbeat failed.", t);
+                        }
+                    });
                 }
             } catch (Throwable e) {
                 LOGGER.error("send heartbeat {} failed", message, e);

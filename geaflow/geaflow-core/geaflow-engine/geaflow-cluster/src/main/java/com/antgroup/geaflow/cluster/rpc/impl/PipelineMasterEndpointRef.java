@@ -16,19 +16,20 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.rpc.IPipelineManagerEndpointRef;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.rpc.proto.Container;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public class PipelineMasterEndpointRef extends ContainerEndpointRef implements
     IPipelineManagerEndpointRef {
 
-    public PipelineMasterEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public PipelineMasterEndpointRef(String host, int port,
+                                     Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
-    public Future<IEvent> process(IEvent request) {
+    public ListenableFuture<Container.Response> process(IEvent request) {
         ensureChannelAlive();
         Container.Request taskEvent = buildRequest(request);
         blockingStub.process(taskEvent);

@@ -20,13 +20,13 @@ import com.antgroup.geaflow.cluster.resourcemanager.RequireResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.rpc.IResourceEndpointRef;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Resource;
 import com.antgroup.geaflow.rpc.proto.ResourceServiceGrpc;
 import io.grpc.ManagedChannel;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implements
@@ -34,8 +34,9 @@ public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implement
 
     private ResourceServiceGrpc.ResourceServiceBlockingStub stub;
 
-    public ResourceManagerEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public ResourceManagerEndpointRef(String host, int port,
+                                      Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
