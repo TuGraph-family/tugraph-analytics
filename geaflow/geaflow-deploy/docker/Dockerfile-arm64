@@ -21,6 +21,11 @@ ENV GEAFLOW_LIB_DIR=$GEAFLOW_HOME/lib \
     PATH=$PATH:$GEAFLOW_HOME/bin JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
 ENV PATH=$JAVA_HOME/bin:${PATH}
 
+# geaflow-engine-tar is the *.tar.gz file built by maven
+ARG geaflow_engine_tar=NOT_SET
+# Copy engine jar if exist
+ADD $geaflow_engine_tar $GEAFLOW_INSTALL_PATH
+
 RUN mkdir -p /home/admin/logs
 
 WORKDIR $GEAFLOW_HOME

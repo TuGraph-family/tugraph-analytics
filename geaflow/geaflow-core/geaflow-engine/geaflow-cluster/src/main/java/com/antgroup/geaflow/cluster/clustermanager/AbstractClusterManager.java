@@ -223,11 +223,11 @@ public abstract class AbstractClusterManager implements IClusterManager {
     }
 
     public Map<Integer, ContainerInfo> getContainerInfos() {
-        return new HashMap<>(containerInfos);
+        return containerInfos;
     }
 
     public Map<Integer, DriverInfo> getDriverInfos() {
-        return new HashMap<>(driverInfos);
+        return driverInfos;
     }
 
     public Map<Integer, String> getContainerIds() {

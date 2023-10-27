@@ -28,6 +28,7 @@ import com.antgroup.geaflow.common.heartbeat.HeartbeatInfo;
 import com.antgroup.geaflow.common.heartbeat.HeartbeatInfo.ContainerHeartbeatInfo;
 import com.antgroup.geaflow.common.utils.ExecutorUtil;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -75,8 +76,10 @@ public class HeartbeatManager implements Serializable {
         this.clusterManager = clusterManager;
     }
 
-    public void receivedHeartbeat(Heartbeat heartbeat) {
+    public HeartbeatResponse receivedHeartbeat(Heartbeat heartbeat) {
         senderMap.put(heartbeat.getContainerId(), heartbeat);
+        boolean registered = isComponentRegistered(heartbeat.getContainerId());
+        return HeartbeatResponse.newBuilder().setSuccess(true).setRegistered(registered).build();
     }
 
     public Map<Integer, Heartbeat> getHeartBeatMap() {
@@ -108,6 +111,11 @@ public class HeartbeatManager implements Serializable {
         if (collectorFactory != null) {
             collectorFactory.getHeartbeatCollector().reportHeartbeat(heartbeatInfo);
         }
+    }
+
+    protected boolean isComponentRegistered(int componentId) {
+        AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
+        return cm.getContainerInfos().containsKey(componentId) || cm.getDriverInfos().containsKey(componentId);
     }
 
     protected HeartbeatInfo buildHeartbeatInfo() {

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.heartbeat;
 
+import com.antgroup.geaflow.cluster.common.ComponentInfo;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -25,7 +26,7 @@ import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HeartbeatClient implements Serializable {
+public class HeartbeatClient<T extends ComponentInfo> implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatClient.class);
 
     private final int containerId;
@@ -33,6 +34,8 @@ public class HeartbeatClient implements Serializable {
     private final Configuration config;
     private HeartbeatSender heartbeatSender;
     private final ProcessStatsCollector statsCollector;
+    private T info;
+    private String masterId;
 
     public HeartbeatClient(int containerId, String containerName, Configuration config) {
         this.containerId = containerId;
@@ -41,19 +44,25 @@ public class HeartbeatClient implements Serializable {
         this.statsCollector = StatsCollectorFactory.getInstance().getProcessStatsCollector();
     }
 
-    public <T> void registerToMaster(String masterId, T info) {
+    public void init(String masterId, T info) {
+        this.masterId = masterId;
+        this.info = info;
+        registerToMaster();
+        startHeartBeat(masterId);
+    }
+
+    public void registerToMaster() {
         LOGGER.info("register: {}", info);
         RpcClient.init(config);
         doRegister(masterId, info);
     }
 
-    private <T> void doRegister(String masterId, T info) {
+    private void doRegister(String masterId, T info) {
         RpcClient.getInstance().registerContainer(masterId, info, new RpcCallback<RegisterResponse>() {
 
             @Override
             public void onSuccess(RegisterResponse event) {
                 LOGGER.info("{} registered success:{}", containerName, event.getSuccess());
-                startHeartBeat(masterId);
             }
 
             @Override
@@ -73,7 +82,7 @@ public class HeartbeatClient implements Serializable {
                 heartbeat.setProcessMetrics(statsCollector.collect());
             }
             return heartbeat;
-        }, config);
+        }, config, this);
 
         this.heartbeatSender.start();
     }

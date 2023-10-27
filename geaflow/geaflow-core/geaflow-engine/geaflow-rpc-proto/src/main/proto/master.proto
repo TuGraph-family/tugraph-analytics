@@ -12,7 +12,7 @@ service MasterService {
     }
 
     //处理executor/driver发送的心跳信息
-    rpc receiveHeartbeat(HeartbeatRequest) returns (google.protobuf.Empty) {
+    rpc receiveHeartbeat(HeartbeatRequest) returns (HeartbeatResponse) {
     }
 
     //处理executor/driver发送的异常信息
@@ -47,4 +47,10 @@ message HeartbeatRequest {
     int64 timestamp = 2;
     bytes payload = 3;
     bytes name = 4;
+}
+
+message HeartbeatResponse {
+    bool success = 1;
+    bool registered = 2;
+    bytes payload = 3;
 }

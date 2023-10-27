@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.cluster.rpc;
 
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
@@ -30,7 +31,7 @@ public interface IMasterEndpointRef extends Serializable {
     /**
      * Send heartbeat.
      */
-    ListenableFuture sendHeartBeat(Heartbeat request);
+    ListenableFuture<HeartbeatResponse> sendHeartBeat(Heartbeat heartbeat);
 
     /**
      * Send exception.

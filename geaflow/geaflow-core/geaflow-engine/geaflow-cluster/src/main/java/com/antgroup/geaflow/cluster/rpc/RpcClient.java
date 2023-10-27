@@ -48,6 +48,7 @@ import com.antgroup.geaflow.ha.service.ResourceData;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
@@ -115,9 +116,9 @@ public class RpcClient implements Serializable {
         }, masterId, MASTER);
     }
 
-    public void sendHeartBeat(String masterId, Heartbeat heartbeat, RpcCallback<Empty> callback) {
+    public void sendHeartBeat(String masterId, Heartbeat heartbeat, RpcCallback<HeartbeatResponse> callback) {
         doRpcWithRetry(() -> {
-            ListenableFuture<Empty> future = connectMaster(masterId).sendHeartBeat(heartbeat);
+            ListenableFuture<HeartbeatResponse> future = connectMaster(masterId).sendHeartBeat(heartbeat);
             handleFutureCallback(future, callback, masterId);
         }, masterId, MASTER);
     }

@@ -56,8 +56,13 @@ function createDirIfNeed() {
 
 # 2. Download the engine jar package
 function downloadEngineJars() {
-  createDirIfNeed $GEAFLOW_LIB_DIR
-  su root -c "eval python /tmp/udf-downloader.py $BASE_LOG_PATH $GEAFLOW_LIB_DIR 'GEAFLOW_ENGINE_JAR' >> $BASE_LOG_PATH 2>&1"
+  JARS=$(find ${GEAFLOW_LIB_DIR} -type f -name "[!.]*.jar" 2>/dev/null)
+  if [[ -n ${JARS} ]]; then
+    echo "Default engine jar ${JARS} already exists, skip downloading engine jar."
+  else
+    createDirIfNeed $GEAFLOW_LIB_DIR
+    su root -c "eval python /tmp/udf-downloader.py $BASE_LOG_PATH $GEAFLOW_LIB_DIR 'GEAFLOW_ENGINE_JAR' >> $BASE_LOG_PATH 2>&1"
+  fi
 }
 
 # 3. Download the udf and extract the zip

@@ -25,11 +25,11 @@ import com.antgroup.geaflow.ha.service.HAServiceFactory;
 import com.antgroup.geaflow.ha.service.IHAService;
 import com.antgroup.geaflow.ha.service.ResourceData;
 import com.antgroup.geaflow.rpc.proto.Container;
+import com.antgroup.geaflow.rpc.proto.Master;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Empty;
 import io.grpc.StatusRuntimeException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -74,12 +74,12 @@ public class RpcEndpointRefTest {
 
         AtomicReference<String> msg = new AtomicReference<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        ListenableFuture<Empty> future = masterEndpointRef.sendHeartBeat(new Heartbeat(1));
+        ListenableFuture<Master.HeartbeatResponse> future = masterEndpointRef.sendHeartBeat(new Heartbeat(1));
 
-        RpcClient.getInstance().handleFutureCallback(future, new RpcEndpointRef.RpcCallback<Empty>() {
+        RpcClient.getInstance().handleFutureCallback(future, new RpcEndpointRef.RpcCallback<Master.HeartbeatResponse>() {
 
             @Override
-            public void onSuccess(Empty event) {
+            public void onSuccess(Master.HeartbeatResponse event) {
                 LOGGER.info("on success");
                 msg.set("success");
                 countDownLatch.countDown();
