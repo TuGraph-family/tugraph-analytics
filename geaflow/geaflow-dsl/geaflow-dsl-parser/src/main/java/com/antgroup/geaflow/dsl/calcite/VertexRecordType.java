@@ -44,6 +44,12 @@ public class VertexRecordType extends RelRecordType {
 
     public static VertexRecordType createVertexType(List<RelDataTypeField> fields, String idField,
                                                     RelDataTypeFactory typeFactory) {
+        boolean hasMultiIdFields = fields.stream().filter(f -> f.getType() instanceof MetaFieldType
+            && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.VERTEX_ID)).count() > 1;
+        if (hasMultiIdFields) {
+            idField = VertexType.DEFAULT_ID_FIELD_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.VERTEX_ID, idField);
+        }
         List<RelDataTypeField> reorderFields = reorderFields(fields, idField, typeFactory);
         return new VertexRecordType(reorderFields);
     }

@@ -121,6 +121,27 @@ public class SchemaUtil {
         for (int i = 0; i < outputType.size(); i++) {
             String outputField = outputType.getField(i).getName();
             mapping[i] = inputType.indexOf(outputField);
+            if (mapping[i] < 0) {
+                switch (outputField) {
+                    case VertexType.DEFAULT_ID_FIELD_NAME:
+                        mapping[i] = VertexType.ID_FIELD_POSITION;
+                        break;
+                    case EdgeType.DEFAULT_SRC_ID_NAME:
+                        mapping[i] = EdgeType.SRC_ID_FIELD_POSITION;
+                        break;
+                    case EdgeType.DEFAULT_TARGET_ID_NAME:
+                        mapping[i] = EdgeType.TARGET_ID_FIELD_POSITION;
+                        break;
+                    case EdgeType.DEFAULT_TS_NAME:
+                        mapping[i] = EdgeType.TIME_FIELD_POSITION;
+                        break;
+                    default:
+                        if (mapping[i] < -1) {
+                            throw new GeaFlowDSLException("Cannot find field {}, illegal index {}",
+                                outputField, mapping[i]);
+                        }
+                }
+            }
         }
         return mapping;
     }

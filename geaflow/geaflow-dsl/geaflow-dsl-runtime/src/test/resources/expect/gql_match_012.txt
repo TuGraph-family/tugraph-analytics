@@ -1,0 +1,6 @@
+3,3,3,1,1,1,software,created
+5,5,5,4,4,4,software,created
+3,3,3,4,4,4,software,created
+4,4,4,1,1,1,person,knows
+2,2,2,1,1,1,person,knows
+3,3,3,6,6,6,software,created

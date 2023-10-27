@@ -46,8 +46,12 @@ import com.antgroup.geaflow.dsl.udf.table.date.Year;
 import com.antgroup.geaflow.dsl.udf.table.math.E;
 import com.antgroup.geaflow.dsl.udf.table.math.Log2;
 import com.antgroup.geaflow.dsl.udf.table.math.Round;
+import com.antgroup.geaflow.dsl.udf.table.other.EdgeSrcId;
+import com.antgroup.geaflow.dsl.udf.table.other.EdgeTargetId;
+import com.antgroup.geaflow.dsl.udf.table.other.EdgeTimestamp;
 import com.antgroup.geaflow.dsl.udf.table.other.If;
 import com.antgroup.geaflow.dsl.udf.table.other.Label;
+import com.antgroup.geaflow.dsl.udf.table.other.VertexId;
 import com.antgroup.geaflow.dsl.udf.table.string.Ascii2String;
 import com.antgroup.geaflow.dsl.udf.table.string.Base64Decode;
 import com.antgroup.geaflow.dsl.udf.table.string.Base64Encode;
@@ -158,6 +162,10 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             // udf.table.other
             .add(GeaFlowFunction.of(If.class))
             .add(GeaFlowFunction.of(Label.class))
+            .add(GeaFlowFunction.of(VertexId.class))
+            .add(GeaFlowFunction.of(EdgeSrcId.class))
+            .add(GeaFlowFunction.of(EdgeTargetId.class))
+            .add(GeaFlowFunction.of(EdgeTimestamp.class))
             // UDGA
             .add(GeaFlowFunction.of(SingleSourceShortestPath.class))
             .add(GeaFlowFunction.of(PageRank.class))

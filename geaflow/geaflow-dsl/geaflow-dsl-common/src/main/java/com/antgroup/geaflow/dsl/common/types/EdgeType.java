@@ -48,6 +48,8 @@ public class EdgeType extends StructType {
 
     public static final String DEFAULT_LABEL_NAME = "~label";
 
+    public static final String DEFAULT_TS_NAME = "~ts";
+
     public EdgeType(List<TableField> fields, boolean hasTimestamp) {
         super(fields);
         this.hasTimestamp = hasTimestamp;

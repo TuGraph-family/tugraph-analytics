@@ -27,6 +27,10 @@ public class GeaFlowDSLException extends RuntimeException {
         super(message);
     }
 
+    public GeaFlowDSLException(Throwable e, String message, Object... parameters) {
+        super(MessageFormatter.arrayFormat(message, parameters).getMessage(), e);
+    }
+
     public GeaFlowDSLException(SqlParserPos position, String message, Object... parameters) {
         super("At " + position + ": " + MessageFormatter.arrayFormat(message, parameters).getMessage());
     }

@@ -33,6 +33,8 @@ public class VertexType extends StructType {
 
     private static final int NUM_META_FIELDS = 2;
 
+    public static final String DEFAULT_ID_FIELD_NAME = "~id";
+
     public VertexType(List<TableField> fields) {
         super(fields);
     }
