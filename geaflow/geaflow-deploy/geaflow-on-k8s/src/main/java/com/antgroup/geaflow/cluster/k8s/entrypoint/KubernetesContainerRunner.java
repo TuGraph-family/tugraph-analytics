@@ -16,10 +16,9 @@ package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
 import com.antgroup.geaflow.cluster.container.Container;
 import com.antgroup.geaflow.cluster.container.ContainerContext;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesWorkerParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.k8s.utils.ProgramRunner;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -36,6 +35,7 @@ public class KubernetesContainerRunner {
     private static final Map<String, String> ENV = System.getenv();
 
     private final ContainerContext containerContext;
+    private Container container;
 
     public KubernetesContainerRunner(ContainerContext containerContext) {
         this.containerContext = containerContext;
@@ -44,17 +44,19 @@ public class KubernetesContainerRunner {
     public void run() {
         Configuration config = containerContext.getConfig();
         KubernetesWorkerParam workerParam = new KubernetesWorkerParam(config);
-        Container container = new Container(workerParam.getRpcPort());
+        container = new Container(workerParam.getRpcPort());
         containerContext.load();
         container.init(containerContext);
+    }
 
+    private void waitForTermination() {
         LOGGER.info("wait for service terminating");
         container.waitTermination();
     }
 
     public static void main(String[] args) throws Exception {
         try {
-            // Infer the resource identifier from the environment variable
+            final long startTime = System.currentTimeMillis();
             String id = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
             String masterId = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
             boolean isRecover = Boolean.parseBoolean(KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_IS_RECOVER));
@@ -63,14 +65,12 @@ public class KubernetesContainerRunner {
 
             Configuration config = KubernetesUtils.loadConfiguration();
             config.setMasterId(masterId);
-
-            ProgramRunner.run(config, () -> {
-                ContainerContext context = new ContainerContext(Integer.parseInt(id), config, isRecover);
-                KubernetesContainerRunner kubernetesContainerRunner = new KubernetesContainerRunner(
-                    context);
-
-                kubernetesContainerRunner.run();
-            });
+            ContainerContext context = new ContainerContext(Integer.parseInt(id), config, isRecover);
+            KubernetesContainerRunner kubernetesContainerRunner = new KubernetesContainerRunner(
+                context);
+            kubernetesContainerRunner.run();
+            LOGGER.info("Completed container init in {}ms", System.currentTimeMillis() - startTime);
+            kubernetesContainerRunner.waitForTermination();
         } catch (Throwable e) {
             LOGGER.error("FETAL: process exits", e);
             throw e;

@@ -33,7 +33,6 @@ public class HeartbeatClient implements Serializable {
     private final Configuration config;
     private HeartbeatSender heartbeatSender;
     private final ProcessStatsCollector statsCollector;
-    private String masterId;
 
     public HeartbeatClient(int containerId, String containerName, Configuration config) {
         this.containerId = containerId;
@@ -43,8 +42,7 @@ public class HeartbeatClient implements Serializable {
     }
 
     public <T> void registerToMaster(String masterId, T info) {
-        this.masterId = masterId;
-        LOGGER.info("register {} info:{}", containerName, info);
+        LOGGER.info("register: {}", info);
         RpcClient.init(config);
         doRegister(masterId, info);
     }
@@ -71,6 +69,7 @@ public class HeartbeatClient implements Serializable {
             Heartbeat heartbeat = null;
             if (containerName != null) {
                 heartbeat = new Heartbeat(containerId);
+                heartbeat.setContainerName(containerName);
                 heartbeat.setProcessMetrics(statsCollector.collect());
             }
             return heartbeat;

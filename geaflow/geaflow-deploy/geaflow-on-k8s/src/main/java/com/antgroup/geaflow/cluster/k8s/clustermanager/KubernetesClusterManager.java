@@ -14,25 +14,21 @@
 
 package com.antgroup.geaflow.cluster.k8s.clustermanager;
 
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ENV_IS_RECOVER;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.CLIENT_SERVICE_NAME_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.ENV_IS_RECOVER;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.LABEL_COMPONENT_DRIVER;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.LABEL_COMPONENT_MASTER;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.LABEL_COMPONENT_WORKER;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WATCHER_CHECK_INTERVAL;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.FO_STRATEGY;
 
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
-import com.antgroup.geaflow.cluster.container.ContainerInfo;
-import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyFactory;
 import com.antgroup.geaflow.cluster.failover.IFailoverStrategy;
 import com.antgroup.geaflow.cluster.k8s.config.AbstractKubernetesParam;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DockerNetworkType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedType;
@@ -40,14 +36,14 @@ import com.antgroup.geaflow.cluster.k8s.config.KubernetesDriverParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesWorkerParam;
 import com.antgroup.geaflow.cluster.k8s.failover.AbstractKubernetesFailoverStrategy;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
-import com.antgroup.geaflow.cluster.rpc.RpcUtil;
-import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
+import com.antgroup.geaflow.cluster.k8s.handler.IPodEventHandler;
+import com.antgroup.geaflow.cluster.k8s.handler.PodEvictHandler;
+import com.antgroup.geaflow.cluster.k8s.handler.PodOOMHandler;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
-import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
@@ -55,13 +51,20 @@ import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.Watcher.Action;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.Map.Entry;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +91,10 @@ public class KubernetesClusterManager extends AbstractClusterManager {
     private GeaflowKubeClient kubernetesClient;
     private Configuration config;
 
-    private static final String LABEL_DRIVER_INDEX_PATTERN = "driver-index-%s";
+    private Watch watcher;
+    private int checkInterval;
+    private volatile boolean watcherClosed;
+    private List<IPodEventHandler> eventHandlers;
 
     @Override
     public void init(ClusterContext context) {
@@ -97,13 +103,14 @@ public class KubernetesClusterManager extends AbstractClusterManager {
 
     public void init(ClusterContext context, GeaflowKubeClient kubernetesClient) {
         super.init(context);
-        Configuration config = context.getConfig();
+        this.config = context.getConfig();
         this.kubernetesClient = kubernetesClient;
         this.dockerNetworkType = KubernetesConfig.getDockerNetworkType(config);
         this.serviceExposedType = KubernetesConfig.getServiceExposedType(config);
         this.masterParam = new KubernetesMasterParam(clusterConfig);
         this.clusterId = config.getString(CLUSTER_ID);
-        this.config = config;
+        this.checkInterval = config.getInteger(WATCHER_CHECK_INTERVAL);
+        this.watcherClosed = true;
 
         if (config.contains(KubernetesConfig.CLUSTER_START_TIME)) {
             this.workerParam = new KubernetesWorkerParam(clusterConfig);
@@ -114,6 +121,8 @@ public class KubernetesClusterManager extends AbstractClusterManager {
             this.driverStartCommand = driverParam.getContainerShellCommand();
             setupOwnerReference();
             setupConfigMap();
+            createPodEventHandlers();
+            createAndStartPodsWatcher();
         }
     }
 
@@ -137,12 +146,12 @@ public class KubernetesClusterManager extends AbstractClusterManager {
 
     private void setupOwnerReference() {
         try {
-            String serviceName = workerParam.getServiceName(clusterId);
+            String serviceName = KubernetesUtils.getMasterServiceName(clusterId);
             Service service = kubernetesClient.getService(serviceName);
             if (service != null) {
                 ownerReference = KubernetesResourceBuilder.createOwnerReference(service);
             } else {
-                throw new RuntimeException("Failed to get service " + clusterId + K8SConstants.SERVICE_NAME_SUFFIX);
+                throw new RuntimeException("Failed to get service: " + serviceName);
             }
         } catch (Exception e) {
             throw new RuntimeException("Could not setup owner reference.", e);
@@ -159,71 +168,10 @@ public class KubernetesClusterManager extends AbstractClusterManager {
         }
     }
 
-    public RegisterResponse registerContainer(ContainerInfo request) {
-        LOGGER.info("received container registration. {}", request);
-        ContainerInfo containerInfo = containerInfos.put(request.getId(), request);
-        boolean registered = (containerInfo == null);
-        RegisterResponse response = RegisterResponse.newBuilder().setSuccess(registered).build();
-        RpcUtil.asyncExecute(() -> openContainer(request));
-        LOGGER.info("container registration success. {}", request);
-        return response;
-    }
-
-    public RegisterResponse registerDriver(DriverInfo driverInfo) {
-        LOGGER.info("received driver registration. {}", driverInfo);
-        driverInfos.put(driverInfo.getId(), driverInfo);
-        boolean registered = driverFuture.complete(driverInfo);
-        LOGGER.info("driver is registered:{}", driverInfo);
-        return RegisterResponse.newBuilder().setSuccess(registered).build();
-    }
-
-    @Override
-    public void restartContainer(int containerId) {
-        // kill the pod before start a new one.
-        Map<String, String> labels = new HashMap<>();
-        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
-        labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_WORKER);
-        labels.put(K8SConstants.LABEL_COMPONENT_ID_KEY, String.valueOf(containerId));
-        kubernetesClient.deletePod(labels);
-        doStartContainer(containerId, true);
-    }
-
-    public void killMaster() {
-        LOGGER.info("Kill master pod caused by Failover.");
-        Map<String, String> labels = new HashMap<>();
-        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
-        labels.put(K8SConstants.LABEL_COMPONENT_KEY, LABEL_COMPONENT_MASTER);
-        kubernetesClient.deletePod(labels);
-    }
-
-    public void killDriver() {
-        // Kill the driver pod before start a new one.
-        LOGGER.info("Kill driver pod caused by Failover.");
-        Map<String, String> labels = new HashMap<>();
-        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
-        labels.put(K8SConstants.LABEL_COMPONENT_KEY, LABEL_COMPONENT_DRIVER);
-        kubernetesClient.deletePod(labels);
-    }
-
-    public void killAllContainers() {
-        LOGGER.info("Kill all container pods caused by Failover.");
-        Map<String, String> labels = new HashMap<>();
-        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
-        labels.put(K8SConstants.LABEL_COMPONENT_KEY, LABEL_COMPONENT_WORKER);
-        kubernetesClient.deletePod(labels);
-    }
-
-    public void startAllContainersByFailover() {
-        for (Integer index : this.containerIds) {
-            LOGGER.info("Restart container {} caused by Failover.", index);
-            doStartContainer(index, true);
-        }
-    }
-
     @Override
     public void doStartContainer(int containerId, boolean isRecover) {
         try {
-            // create container
+            // Create container.
             String podName = workerPodNamePrefix + containerId;
             Map<String, String> additionalEnvs = workerParam.getAdditionEnvs();
             additionalEnvs.put(ENV_IS_RECOVER, String.valueOf(isRecover));
@@ -231,7 +179,7 @@ public class KubernetesClusterManager extends AbstractClusterManager {
                 .createContainer(podName, String.valueOf(containerId), masterId, workerParam,
                     workerStartCommand, additionalEnvs, dockerNetworkType);
 
-            // create pod
+            // Create pod.
             Pod workerPod = KubernetesResourceBuilder
                 .createPod(clusterId, podName, String.valueOf(containerId), ownerReference,
                     workerConfigMap, workerParam, container);
@@ -243,33 +191,33 @@ public class KubernetesClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void doStartDriver(int driverId) {
-
-        String serviceName = driverParam.getServiceName(clusterId);
+    public void doStartDriver(int driverId, int driverIndex) {
+        String serviceName = KubernetesUtils.getDriverServiceName(clusterId, driverIndex);
         Service service = kubernetesClient.getService(serviceName);
         if (service != null) {
             LOGGER.info("driver service {} already exists, skip starting driver", serviceName);
             return;
         }
 
-        // create container
+        // 1. Create container.
         String podName  = driverPodNamePrefix + driverId;
         Map<String, String> additionalEnvs = driverParam.getAdditionEnvs();
+        additionalEnvs.put(K8SConstants.ENV_CONTAINER_INDEX, String.valueOf(driverIndex));
         Container container = KubernetesResourceBuilder
             .createContainer(podName, String.valueOf(driverId), masterId, driverParam,
                 driverStartCommand, additionalEnvs, dockerNetworkType);
 
-        // 3. create replication controller.
-        String rcName = clusterId + K8SConstants.DRIVER_RS_NAME_SUFFIX;
+        // 2. Create deployment.
+        String rcName = clusterId + K8SConstants.DRIVER_RS_NAME_SUFFIX + driverIndex;
         Deployment deployment = KubernetesResourceBuilder
             .createDeployment(clusterId, rcName, container, workerConfigMap,
                 driverParam, dockerNetworkType);
 
-        // 3. create the service.
-        createService(driverParam.getServiceName(clusterId), ServiceExposedType.CLUSTER_IP,
+        // 3. Create the service.
+        createService(serviceName, serviceExposedType,
             driverParam.getPodLabels(clusterId), ownerReference, driverParam);
 
-        // 4. set owner reference.
+        // 4. Set owner reference.
         deployment.getMetadata().setOwnerReferences(Collections.singletonList(ownerReference));
 
         kubernetesClient.createDeployment(deployment);
@@ -299,12 +247,13 @@ public class KubernetesClusterManager extends AbstractClusterManager {
                 dockerNetworkType);
 
         // 3. create the service.
-        Service service = createService(masterParam.getServiceName(clusterId),
+        String serviceName = KubernetesUtils.getMasterServiceName(clusterId);
+        Service service = createService(serviceName,
             ServiceExposedType.CLUSTER_IP, labels, null, masterParam);
         OwnerReference ownerReference = KubernetesResourceBuilder.createOwnerReference(service);
 
         if (!serviceExposedType.equals(ServiceExposedType.CLUSTER_IP)) {
-            String serviceName = clusterId + CLIENT_SERVICE_NAME_SUFFIX;
+            serviceName = KubernetesUtils.getMasterClientServiceName(clusterId);
             createService(serviceName, ServiceExposedType.NODE_PORT, labels, ownerReference,
                 masterParam);
         }
@@ -324,9 +273,10 @@ public class KubernetesClusterManager extends AbstractClusterManager {
         String command = masterParam.getContainerShellCommand();
         LOGGER.info("master start command: {}", command);
 
+        Map<String, String> additionalEnvs = masterParam.getAdditionEnvs();
         return KubernetesResourceBuilder
             .createContainer(containerName, containerId, masterId, masterParam, command,
-                masterParam.getAdditionEnvs(), networkType);
+                additionalEnvs, networkType);
     }
 
     /**
@@ -357,29 +307,98 @@ public class KubernetesClusterManager extends AbstractClusterManager {
         return kubernetesClient.createService(service);
     }
 
-    @Override
-    public RpcAddress startDriver() {
+    public void restartDriver(int driverId) {
+        LOGGER.info("Kill driver pod: {}.", driverId);
+        Map<String, String> labels = new HashMap<>();
+        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
+        labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_DRIVER);
+        labels.put(K8SConstants.LABEL_COMPONENT_ID_KEY, String.valueOf(driverId));
+        kubernetesClient.deletePod(labels);
+    }
 
-        String driverIndexLabel = String.format(LABEL_DRIVER_INDEX_PATTERN, clusterId);
-        Set<Integer> driverIndex = ClusterMetaStore.getInstance().getComponentIds(driverIndexLabel);
-        LOGGER.info("Get driver index {} of label {} from backend.", driverIndex, driverIndexLabel);
-        boolean isRecover = driverIndex != null;
-        RpcAddress rpcAddress;
-        if (isRecover) {
-            try {
-                super.setDriverIds(driverIndex);
-                DriverInfo driverInfo = driverFuture.get(driverTimeoutSec, TimeUnit.SECONDS);
-                rpcAddress = new RpcAddress(driverInfo.getHost(), driverInfo.getRpcPort());
-            } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                throw new GeaflowRuntimeException(e);
-            }
-        } else {
-            rpcAddress = super.startDriver();
-            driverIndex = super.getDriverIds();
-            ClusterMetaStore.getInstance().saveComponentIndex(driverIndexLabel, driverIndex);
-            LOGGER.info("Saved driver index {} of label {} to backend.", driverIndex, driverIndexLabel);
+    @Override
+    public void restartContainer(int containerId) {
+        // Kill the pod before start a new one.
+        Map<String, String> labels = new HashMap<>();
+        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
+        labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_WORKER);
+        labels.put(K8SConstants.LABEL_COMPONENT_ID_KEY, String.valueOf(containerId));
+        kubernetesClient.deletePod(labels);
+        doStartContainer(containerId, true);
+    }
+
+    /**
+     * Kill all driver processes and the killed process will be restarted by k8s.
+     */
+    public void restartAllDrivers() {
+        Map<String, String> labels = new HashMap<>();
+        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
+        labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_DRIVER);
+        kubernetesClient.deletePod(labels);
+    }
+
+    public void restartAllContainers() {
+        Map<Integer, String> containerIds = clusterContext.getContainerIds();
+        LOGGER.info("Restart {} containers caused by failover.", containerIds.keySet().size());
+        Map<String, String> labels = new HashMap<>();
+        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
+        labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_WORKER);
+        kubernetesClient.deletePod(labels);
+        for (Entry<Integer, String> entry : containerIds.entrySet()) {
+            doStartContainer(entry.getKey(), true);
         }
-        return rpcAddress;
+    }
+
+    /**
+     * Kill all container processes.
+     */
+    public void killAllContainers() {
+        Map<String, String> labels = new HashMap<>();
+        labels.put(K8SConstants.LABEL_APP_KEY, clusterId);
+        labels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_WORKER);
+        kubernetesClient.deletePod(labels);
+    }
+
+    private void createPodEventHandlers() {
+        eventHandlers = new ArrayList<>();
+        eventHandlers.add(new PodOOMHandler());
+        eventHandlers.add(new PodEvictHandler(config));
+    }
+
+    private void createAndStartPodsWatcher() {
+        BiConsumer<Action, Pod> eventHandler = this::handlePodMessage;
+        Consumer<Exception> exceptionHandler = (exception) -> {
+            watcherClosed = true;
+            LOGGER.warn("watch exception: {}", exception.getMessage(), exception);
+        };
+
+        ScheduledExecutorService executorService =
+            Executors.newSingleThreadScheduledExecutor(ThreadUtil.namedThreadFactory(true, "watcher-creator"));
+        executorService.scheduleAtFixedRate(() -> {
+            if (watcherClosed) {
+                if (watcher != null) {
+                    watcher.close();
+                }
+                watcher = kubernetesClient.createPodsWatcher(workerParam.getPodLabels(clusterId),
+                    eventHandler, exceptionHandler);
+                if (watcher != null) {
+                    watcherClosed = false;
+                }
+            }
+        }, checkInterval, checkInterval, TimeUnit.SECONDS);
+    }
+
+    protected void handlePodMessage(Watcher.Action action, Pod pod) {
+        String componentId = KubernetesUtils.extractComponentId(pod);
+        if (componentId == null) {
+            LOGGER.warn("Unexpected pod {} event:{}", pod.getMetadata().getName(), action);
+            return;
+        }
+        if (action == Action.MODIFIED) {
+            eventHandlers.forEach(h -> h.handle(pod));
+        } else {
+            LOGGER.info("Skip handling {} event for pod {}", action, pod.getMetadata().getName());
+        }
     }
 
     @Override

@@ -42,7 +42,7 @@ public class KubernetesConfigTest {
     public void testJarDownloadPath() {
         Configuration configuration = new Configuration();
         String path = KubernetesConfig.getJarDownloadPath(configuration);
-        Assert.assertEquals(path, "/tmp/jar");
+        Assert.assertEquals(path, "/home/admin/geaflow/tmp/jar");
     }
 
 }

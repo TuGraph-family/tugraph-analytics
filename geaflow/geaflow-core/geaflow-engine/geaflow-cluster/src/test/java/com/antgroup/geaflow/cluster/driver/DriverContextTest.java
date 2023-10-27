@@ -59,7 +59,7 @@ public class DriverContextTest {
 
         int driverId = 1;
         ClusterMetaStore.init(driverId, configuration);
-        DriverContext driverContext = new DriverContext(driverId, configuration);
+        DriverContext driverContext = new DriverContext(driverId, 0, configuration);
 
         Environment environment = Mockito.mock(Environment.class);
         Mockito.doNothing().when(environment).addPipeline(any());
@@ -70,7 +70,7 @@ public class DriverContextTest {
         driverContext.checkpoint(new DriverContext.PipelineCheckpointFunction());
         driverContext.checkpoint(new DriverContext.PipelineTaskCheckpointFunction());
 
-        DriverContext newContext = new DriverContext(driverId, configuration);
+        DriverContext newContext = new DriverContext(driverId, 0, configuration);
         newContext.load();
 
         Assert.assertNotNull(pipeline);
@@ -84,7 +84,7 @@ public class DriverContextTest {
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
         ClusterMetaStore.init(driverId, configuration);
         // rebuild, context reliable event list is empty, and metastore is cleaned.
-        DriverContext restarted = new DriverContext(driverId, configuration);
+        DriverContext restarted = new DriverContext(driverId, 0, configuration);
         restarted.load();
         Assert.assertNull(restarted.getPipeline());
         Assert.assertTrue(restarted.getFinishedPipelineTasks().isEmpty());

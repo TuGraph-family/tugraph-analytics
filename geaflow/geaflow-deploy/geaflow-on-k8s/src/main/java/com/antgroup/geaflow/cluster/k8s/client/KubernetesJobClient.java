@@ -14,15 +14,15 @@
 
 package com.antgroup.geaflow.cluster.k8s.client;
 
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.CLIENT_NAME_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.SERVICE_NAME_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CLIENT_NAME_SUFFIX;
 
 import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.KubernetesResourceBuilder;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesClientParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DockerNetworkType;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
@@ -79,7 +79,7 @@ public class KubernetesJobClient {
             // create container
             String podName = clusterId + CLIENT_NAME_SUFFIX;
             Container container = KubernetesResourceBuilder
-                .createContainer(podName, String.valueOf(0), null, clientParam,
+                .createContainer(podName, podName, null, clientParam,
                     clientParam.getContainerShellCommand(), clientParam.getAdditionEnvs(),
                     dockerNetworkType);
 
@@ -120,13 +120,13 @@ public class KubernetesJobClient {
     }
 
     public void stopJob() {
-        geaflowKubeClient.destroyCluster(clusterId);
         String clientConfigMap = clientParam.getConfigMapName(clusterId);
         geaflowKubeClient.deleteConfigMap(clientConfigMap);
+        geaflowKubeClient.destroyCluster(clusterId);
     }
 
     public Service getMasterService() {
-        String masterServiceName = clusterId + SERVICE_NAME_SUFFIX;
+        String masterServiceName = KubernetesUtils.getMasterServiceName(clusterId);
         return geaflowKubeClient.getService(masterServiceName);
     }
 

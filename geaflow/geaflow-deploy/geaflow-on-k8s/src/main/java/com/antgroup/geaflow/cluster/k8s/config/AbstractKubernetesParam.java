@@ -27,7 +27,6 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVI
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.config.ClusterJvmOptions;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import io.fabric8.kubernetes.api.model.Quantity;
@@ -42,8 +41,6 @@ public abstract class AbstractKubernetesParam implements KubernetesParam {
 
     protected Configuration config;
     protected ClusterConfig clusterConfig;
-
-    protected static final String DEFAULT_AUTO_RESTART = "unexpected";
 
     public AbstractKubernetesParam(Configuration config) {
         this.config = config;
@@ -63,16 +60,12 @@ public abstract class AbstractKubernetesParam implements KubernetesParam {
         return config.getString(CONTAINER_IMAGE_PULL_POLICY);
     }
 
-    public String getServiceName(String clusterId) {
-        return clusterId + K8SConstants.SERVICE_NAME_SUFFIX;
-    }
-
     public String getServiceAccount() {
         return config.getString(SERVICE_ACCOUNT);
     }
 
     public Map<String, String> getServiceLabels() {
-        return KubernetesUtils.getPairsConf(config, SERVICE_USER_LABELS.getKey());
+        return KubernetesUtils.getPairsConf(config, SERVICE_USER_LABELS);
     }
 
     @Override

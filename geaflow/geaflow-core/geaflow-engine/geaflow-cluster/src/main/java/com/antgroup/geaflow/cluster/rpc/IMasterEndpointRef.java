@@ -14,14 +14,12 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
 import java.io.Serializable;
-import java.util.List;
 
 public interface IMasterEndpointRef extends Serializable {
 
@@ -38,11 +36,6 @@ public interface IMasterEndpointRef extends Serializable {
     /**
      * Send exception.
      */
-    Empty sendException(Integer containerId, String message);
-
-    /**
-     * Get container info.
-     */
-    List<ContainerInfo> getContainerInfo(List<String> containerIds);
+    Empty sendException(Integer containerId, String containerName, String message);
 
 }

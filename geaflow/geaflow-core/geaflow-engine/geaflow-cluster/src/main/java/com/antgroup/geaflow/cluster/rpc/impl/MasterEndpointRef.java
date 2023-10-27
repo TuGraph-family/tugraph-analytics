@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.cluster.rpc.impl;
 
-import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.rpc.IMasterEndpointRef;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
@@ -27,7 +26,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMasterEndpointRef {
@@ -48,12 +46,12 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
     public <T> void registerContainer(T info, RpcCallback<RegisterResponse> listener) {
         ensureChannelAlive();
         ByteString payload = RpcMessageEncoder.encode(info);
-        RegisterRequest register = RegisterRequest.newBuilder().setPayload(payload).build();
+        RegisterRequest.Builder register = RegisterRequest.newBuilder().setPayload(payload);
         ListenableFuture<RegisterResponse> future;
         if (info instanceof DriverInfo) {
-            future = stub.registerDriver(register);
+            future = stub.registerContainer(register.setIsDriver(true).build());
         } else {
-            future = stub.registerContainer(register);
+            future = stub.registerContainer(register.setIsDriver(false).build());
         }
         handleFutureCallback(future, listener);
     }
@@ -64,25 +62,21 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
         HeartbeatRequest heartbeatRequest = HeartbeatRequest.newBuilder()
             .setId(heartbeat.getContainerId())
             .setTimestamp(heartbeat.getTimestamp())
+            .setName(RpcMessageEncoder.encode(heartbeat.getContainerName()))
             .setPayload(RpcMessageEncoder.encode(heartbeat.getProcessMetrics()))
             .build();
         return stub.receiveHeartbeat(heartbeatRequest);
     }
 
     @Override
-    public Empty sendException(Integer containerId, String message) {
+    public Empty sendException(Integer containerId, String containerName, String message) {
         ensureChannelAlive();
         HeartbeatRequest heartbeatRequest = HeartbeatRequest.newBuilder()
             .setId(containerId)
+            .setName(RpcMessageEncoder.encode(containerName))
             .setPayload(RpcMessageEncoder.encode(message))
             .build();
         return blockingStub.receiveException(heartbeatRequest);
-    }
-
-    @Override
-    public List<ContainerInfo> getContainerInfo(List<String> containerIds) {
-        //TODO
-        return null;
     }
 
     @Override

@@ -15,8 +15,11 @@
 package com.antgroup.geaflow.cluster.client.callback;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
+import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public interface ClusterStartedCallback extends Serializable {
 
@@ -33,19 +36,18 @@ public interface ClusterStartedCallback extends Serializable {
     class ClusterMeta implements Serializable {
 
         private String masterAddress;
-        private String driverAddress;
         private String clientAddress;
+        private Map<String, RpcAddress> driverAddresses;
 
         public ClusterMeta() {
         }
 
         public ClusterMeta(ClusterInfo clusterInfo) {
-            this(clusterInfo.getDriverAddress().getAddress(),
-                clusterInfo.getMasterAddress().getAddress());
+            this(clusterInfo.getDriverAddresses(), clusterInfo.getMasterAddress().toString());
         }
 
-        public ClusterMeta(String driverAddress, String masterAddress) {
-            this.driverAddress = driverAddress;
+        public ClusterMeta(Map<String, RpcAddress> addressList, String masterAddress) {
+            this.driverAddresses = new HashMap<>(addressList);
             this.masterAddress = masterAddress;
             this.clientAddress = ProcessUtil.getHostAndIp();
         }
@@ -58,12 +60,12 @@ public interface ClusterStartedCallback extends Serializable {
             this.masterAddress = masterAddress;
         }
 
-        public String getDriverAddress() {
-            return driverAddress;
+        public Map<String, RpcAddress> getDriverAddresses() {
+            return driverAddresses;
         }
 
-        public void setDriverAddress(String driverAddress) {
-            this.driverAddress = driverAddress;
+        public void setDriverAddresses(Map<String, RpcAddress> driverAddresses) {
+            this.driverAddresses = driverAddresses;
         }
 
         public String getClientAddress() {

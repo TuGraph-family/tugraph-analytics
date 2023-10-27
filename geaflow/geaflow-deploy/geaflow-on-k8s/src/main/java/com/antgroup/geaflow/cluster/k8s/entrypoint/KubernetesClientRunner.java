@@ -15,14 +15,16 @@
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CLUSTER_TYPE;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.EXIT_WAIT_TIME;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USER_CLASS_ARGS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USER_MAIN_CLASS;
 
+import com.antgroup.geaflow.cluster.client.callback.ClusterCallbackFactory;
+import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesClientParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.k8s.utils.ProgramRunner;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
@@ -48,6 +50,7 @@ public class KubernetesClientRunner {
 
     public void run(String classArgs) {
         String userClass = null;
+        ClusterStartedCallback callback = ClusterCallbackFactory.createClusterStartCallback(config);
         try {
             System.setProperty(CLUSTER_TYPE, EnvType.K8S.name());
             userClass = config.getString(USER_MAIN_CLASS);
@@ -57,29 +60,34 @@ public class KubernetesClientRunner {
             mainMethod.invoke(mainClazz, (Object) new String[] {classArgs});
         } catch (Throwable e) {
             LOGGER.error("execute mainClass {} failed: {}", userClass, e.getMessage());
+            callback.onFailure(e);
             throw new GeaflowRuntimeException(e);
         } finally {
-            LOGGER.info("try delete client config map.");
-            try {
-                SleepUtils.sleepSecond(5);
-                deleteClientConfigMap();
-            } catch (Throwable e) {
-                LOGGER.error("delete client config map failed: {}", e.getMessage(), e);
-            }
+            cleanAndExit();
         }
     }
 
     public static void main(String[] args) throws IOException {
         try {
+            final long startTime = System.currentTimeMillis();
             Configuration config = KubernetesUtils.loadConfigurationFromFile();
             final String classArgs = StringEscapeUtils.escapeJava(config.getString(USER_CLASS_ARGS));
-            ProgramRunner.run(config, () -> {
-                KubernetesClientRunner clientRunner = new KubernetesClientRunner(config);
-                clientRunner.run(classArgs);
-            });
+            KubernetesClientRunner clientRunner = new KubernetesClientRunner(config);
+            clientRunner.run(classArgs);
+            LOGGER.info("Completed client init in {} ms", System.currentTimeMillis() - startTime);
         } catch (Throwable e) {
             LOGGER.error("init client runner failed: {}", e.getMessage(), e);
             throw e;
+        }
+    }
+
+    private void cleanAndExit() {
+        LOGGER.info("Try to delete client config map.");
+        try {
+            SleepUtils.sleepSecond(EXIT_WAIT_TIME);
+            deleteClientConfigMap();
+        } catch (Throwable e) {
+            LOGGER.error("delete client config map failed: {}", e.getMessage(), e);
         }
     }
 

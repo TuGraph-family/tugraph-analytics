@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.k8s.client;
 
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.CLIENT_NAME_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CLIENT_NAME_SUFFIX;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLIENT_DISK_GB;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_MEMORY_MB;
 import static junit.framework.TestCase.assertEquals;
@@ -22,9 +22,9 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
 import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.utils.SleepUtils;

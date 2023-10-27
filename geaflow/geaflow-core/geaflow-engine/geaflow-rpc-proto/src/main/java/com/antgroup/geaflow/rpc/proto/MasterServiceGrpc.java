@@ -34,39 +34,12 @@ public class MasterServiceGrpc {
 
   // Static method descriptors that strictly reflect the proto.
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
-  public static final io.grpc.MethodDescriptor<com.antgroup.geaflow.rpc.proto.Master.ContainerIds,
-      com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> METHOD_GET_CONTAINER_INFO =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "MasterService", "getContainerInfo"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.ContainerIds.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.ContainerInfos.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
-  public static final io.grpc.MethodDescriptor<com.google.protobuf.Empty,
-      com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> METHOD_GET_ALL_CONTAINER_INFOS =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "MasterService", "getAllContainerInfos"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.ContainerInfos.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.antgroup.geaflow.rpc.proto.Master.RegisterRequest,
       com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> METHOD_REGISTER_CONTAINER =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
           generateFullMethodName(
               "MasterService", "registerContainer"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.RegisterResponse.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
-  public static final io.grpc.MethodDescriptor<com.antgroup.geaflow.rpc.proto.Master.RegisterRequest,
-      com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> METHOD_REGISTER_DRIVER =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "MasterService", "registerDriver"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.RegisterResponse.getDefaultInstance()));
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
@@ -126,20 +99,7 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Obtain container information based on the id.
-     * </pre>
-     */
-    public void getContainerInfo(com.antgroup.geaflow.rpc.proto.Master.ContainerIds request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> responseObserver);
-
-    /**
-     */
-    public void getAllContainerInfos(com.google.protobuf.Empty request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> responseObserver);
-
-    /**
-     * <pre>
-     * Submit registered container.
+     *提交注册container/driver
      * </pre>
      */
     public void registerContainer(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request,
@@ -147,15 +107,7 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Submit registered driver.
-     * </pre>
-     */
-    public void registerDriver(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> responseObserver);
-
-    /**
-     * <pre>
-     * Process heartbeat messages sent by executor/driver.
+     *处理executor/driver发送的心跳信息
      * </pre>
      */
     public void receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
@@ -163,15 +115,15 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Handle exception messages sent by executor/driver.
+     *处理executor/driver发送的异常信息
      * </pre>
      */
     public void receiveException(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
-                                 io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
 
     /**
      * <pre>
-     * Close end master.
+     * 关闭结束master
      * </pre>
      */
     public void close(com.google.protobuf.Empty request,
@@ -182,27 +134,9 @@ public class MasterServiceGrpc {
   public static abstract class MasterServiceImplBase implements MasterService, io.grpc.BindableService {
 
     @java.lang.Override
-    public void getContainerInfo(com.antgroup.geaflow.rpc.proto.Master.ContainerIds request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_GET_CONTAINER_INFO, responseObserver);
-    }
-
-    @java.lang.Override
-    public void getAllContainerInfos(com.google.protobuf.Empty request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_GET_ALL_CONTAINER_INFOS, responseObserver);
-    }
-
-    @java.lang.Override
     public void registerContainer(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request,
         io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_REGISTER_CONTAINER, responseObserver);
-    }
-
-    @java.lang.Override
-    public void registerDriver(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_REGISTER_DRIVER, responseObserver);
     }
 
     @java.lang.Override
@@ -213,7 +147,7 @@ public class MasterServiceGrpc {
 
     @java.lang.Override
     public void receiveException(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
-                                 io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_RECEIVE_EXCEPTION, responseObserver);
     }
 
@@ -234,44 +168,28 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Obtain container information based on the id.
-     * </pre>
-     */
-    public com.antgroup.geaflow.rpc.proto.Master.ContainerInfos getContainerInfo(com.antgroup.geaflow.rpc.proto.Master.ContainerIds request);
-
-    public com.antgroup.geaflow.rpc.proto.Master.ContainerInfos getAllContainerInfos(com.google.protobuf.Empty request);
-
-    /**
-     * <pre>
-     * Submit registered container.
+     *提交注册container/driver
      * </pre>
      */
     public com.antgroup.geaflow.rpc.proto.Master.RegisterResponse registerContainer(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request);
 
     /**
      * <pre>
-     * Submit registered container.
-     * </pre>
-     */
-    public com.antgroup.geaflow.rpc.proto.Master.RegisterResponse registerDriver(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request);
-
-    /**
-     * <pre>
-     * Process heartbeat messages sent by executor/driver.
+     *处理executor/driver发送的心跳信息
      * </pre>
      */
     public com.google.protobuf.Empty receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request);
 
     /**
      * <pre>
-     * Handle exception messages sent by executor/driver.
+     *处理executor/driver发送的异常信息
      * </pre>
      */
     public com.google.protobuf.Empty receiveException(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request);
 
     /**
      * <pre>
-     * Close end master.
+     * 关闭结束master
      * </pre>
      */
     public com.google.protobuf.Empty close(com.google.protobuf.Empty request);
@@ -283,20 +201,7 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Obtain container information based on the id.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> getContainerInfo(
-        com.antgroup.geaflow.rpc.proto.Master.ContainerIds request);
-
-    /**
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> getAllContainerInfos(
-        com.google.protobuf.Empty request);
-
-    /**
-     * <pre>
-     * Submit registered container.
+     *提交注册container/driver
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> registerContainer(
@@ -304,15 +209,7 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Submit registered container.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> registerDriver(
-        com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request);
-
-    /**
-     * <pre>
-     * Process heartbeat messages sent by executor/driver.
+     *处理executor/driver发送的心跳信息
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> receiveHeartbeat(
@@ -320,7 +217,7 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Handle exception messages sent by executor/driver.
+     *处理executor/driver发送的异常信息
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> receiveException(
@@ -328,7 +225,7 @@ public class MasterServiceGrpc {
 
     /**
      * <pre>
-     * Close end master.
+     * 关闭结束master
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> close(
@@ -353,31 +250,10 @@ public class MasterServiceGrpc {
     }
 
     @java.lang.Override
-    public void getContainerInfo(com.antgroup.geaflow.rpc.proto.Master.ContainerIds request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> responseObserver) {
-      asyncUnaryCall(
-          getChannel().newCall(METHOD_GET_CONTAINER_INFO, getCallOptions()), request, responseObserver);
-    }
-
-    @java.lang.Override
-    public void getAllContainerInfos(com.google.protobuf.Empty request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> responseObserver) {
-      asyncUnaryCall(
-          getChannel().newCall(METHOD_GET_ALL_CONTAINER_INFOS, getCallOptions()), request, responseObserver);
-    }
-
-    @java.lang.Override
     public void registerContainer(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request,
         io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_REGISTER_CONTAINER, getCallOptions()), request, responseObserver);
-    }
-
-    @java.lang.Override
-    public void registerDriver(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request,
-        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> responseObserver) {
-      asyncUnaryCall(
-          getChannel().newCall(METHOD_REGISTER_DRIVER, getCallOptions()), request, responseObserver);
     }
 
     @java.lang.Override
@@ -387,7 +263,7 @@ public class MasterServiceGrpc {
           getChannel().newCall(METHOD_RECEIVE_HEARTBEAT, getCallOptions()), request, responseObserver);
     }
 
-    @Override
+    @java.lang.Override
     public void receiveException(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
@@ -420,27 +296,9 @@ public class MasterServiceGrpc {
     }
 
     @java.lang.Override
-    public com.antgroup.geaflow.rpc.proto.Master.ContainerInfos getContainerInfo(com.antgroup.geaflow.rpc.proto.Master.ContainerIds request) {
-      return blockingUnaryCall(
-          getChannel(), METHOD_GET_CONTAINER_INFO, getCallOptions(), request);
-    }
-
-    @java.lang.Override
-    public com.antgroup.geaflow.rpc.proto.Master.ContainerInfos getAllContainerInfos(com.google.protobuf.Empty request) {
-      return blockingUnaryCall(
-          getChannel(), METHOD_GET_ALL_CONTAINER_INFOS, getCallOptions(), request);
-    }
-
-    @java.lang.Override
     public com.antgroup.geaflow.rpc.proto.Master.RegisterResponse registerContainer(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_REGISTER_CONTAINER, getCallOptions(), request);
-    }
-
-    @java.lang.Override
-    public com.antgroup.geaflow.rpc.proto.Master.RegisterResponse registerDriver(com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request) {
-      return blockingUnaryCall(
-          getChannel(), METHOD_REGISTER_DRIVER, getCallOptions(), request);
     }
 
     @java.lang.Override
@@ -480,31 +338,10 @@ public class MasterServiceGrpc {
     }
 
     @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> getContainerInfo(
-        com.antgroup.geaflow.rpc.proto.Master.ContainerIds request) {
-      return futureUnaryCall(
-          getChannel().newCall(METHOD_GET_CONTAINER_INFO, getCallOptions()), request);
-    }
-
-    @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos> getAllContainerInfos(
-        com.google.protobuf.Empty request) {
-      return futureUnaryCall(
-          getChannel().newCall(METHOD_GET_ALL_CONTAINER_INFOS, getCallOptions()), request);
-    }
-
-    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> registerContainer(
         com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_REGISTER_CONTAINER, getCallOptions()), request);
-    }
-
-    @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse> registerDriver(
-        com.antgroup.geaflow.rpc.proto.Master.RegisterRequest request) {
-      return futureUnaryCall(
-          getChannel().newCall(METHOD_REGISTER_DRIVER, getCallOptions()), request);
     }
 
     @java.lang.Override
@@ -531,13 +368,10 @@ public class MasterServiceGrpc {
 
   @java.lang.Deprecated public static abstract class AbstractMasterService extends MasterServiceImplBase {}
 
-  private static final int METHODID_GET_CONTAINER_INFO = 0;
-  private static final int METHODID_GET_ALL_CONTAINER_INFOS = 1;
-  private static final int METHODID_REGISTER_CONTAINER = 2;
-  private static final int METHODID_REGISTER_DRIVER = 3;
-  private static final int METHODID_RECEIVE_HEARTBEAT = 4;
-  private static final int METHODID_RECEIVE_EXCEPTION = 5;
-  private static final int METHODID_CLOSE = 6;
+  private static final int METHODID_REGISTER_CONTAINER = 0;
+  private static final int METHODID_RECEIVE_HEARTBEAT = 1;
+  private static final int METHODID_RECEIVE_EXCEPTION = 2;
+  private static final int METHODID_CLOSE = 3;
 
   private static class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -556,20 +390,8 @@ public class MasterServiceGrpc {
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
-        case METHODID_GET_CONTAINER_INFO:
-          serviceImpl.getContainerInfo((com.antgroup.geaflow.rpc.proto.Master.ContainerIds) request,
-              (io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos>) responseObserver);
-          break;
-        case METHODID_GET_ALL_CONTAINER_INFOS:
-          serviceImpl.getAllContainerInfos((com.google.protobuf.Empty) request,
-              (io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.ContainerInfos>) responseObserver);
-          break;
         case METHODID_REGISTER_CONTAINER:
           serviceImpl.registerContainer((com.antgroup.geaflow.rpc.proto.Master.RegisterRequest) request,
-              (io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse>) responseObserver);
-          break;
-        case METHODID_REGISTER_DRIVER:
-          serviceImpl.registerDriver((com.antgroup.geaflow.rpc.proto.Master.RegisterRequest) request,
               (io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.RegisterResponse>) responseObserver);
           break;
         case METHODID_RECEIVE_HEARTBEAT:
@@ -602,10 +424,7 @@ public class MasterServiceGrpc {
 
   public static io.grpc.ServiceDescriptor getServiceDescriptor() {
     return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_GET_CONTAINER_INFO,
-        METHOD_GET_ALL_CONTAINER_INFOS,
         METHOD_REGISTER_CONTAINER,
-        METHOD_REGISTER_DRIVER,
         METHOD_RECEIVE_HEARTBEAT,
         METHOD_RECEIVE_EXCEPTION,
         METHOD_CLOSE);
@@ -615,33 +434,12 @@ public class MasterServiceGrpc {
       final MasterService serviceImpl) {
     return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
         .addMethod(
-          METHOD_GET_CONTAINER_INFO,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.antgroup.geaflow.rpc.proto.Master.ContainerIds,
-              com.antgroup.geaflow.rpc.proto.Master.ContainerInfos>(
-                serviceImpl, METHODID_GET_CONTAINER_INFO)))
-        .addMethod(
-          METHOD_GET_ALL_CONTAINER_INFOS,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.protobuf.Empty,
-              com.antgroup.geaflow.rpc.proto.Master.ContainerInfos>(
-                serviceImpl, METHODID_GET_ALL_CONTAINER_INFOS)))
-        .addMethod(
           METHOD_REGISTER_CONTAINER,
           asyncUnaryCall(
             new MethodHandlers<
               com.antgroup.geaflow.rpc.proto.Master.RegisterRequest,
               com.antgroup.geaflow.rpc.proto.Master.RegisterResponse>(
                 serviceImpl, METHODID_REGISTER_CONTAINER)))
-        .addMethod(
-          METHOD_REGISTER_DRIVER,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.antgroup.geaflow.rpc.proto.Master.RegisterRequest,
-              com.antgroup.geaflow.rpc.proto.Master.RegisterResponse>(
-                serviceImpl, METHODID_REGISTER_DRIVER)))
         .addMethod(
           METHOD_RECEIVE_HEARTBEAT,
           asyncUnaryCall(
@@ -655,7 +453,7 @@ public class MasterServiceGrpc {
             new MethodHandlers<
               com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest,
               com.google.protobuf.Empty>(
-              serviceImpl, METHODID_RECEIVE_EXCEPTION)))
+                serviceImpl, METHODID_RECEIVE_EXCEPTION)))
         .addMethod(
           METHOD_CLOSE,
           asyncUnaryCall(

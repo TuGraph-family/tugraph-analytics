@@ -17,20 +17,16 @@ package com.antgroup.geaflow.cluster.ray.failover;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
 import com.antgroup.geaflow.cluster.ray.utils.RayConfig;
-import io.ray.api.options.ActorCreationOptions;
 
 public class RayDisableFailoverStrategy extends AbstractRayFailoverStrategy {
 
     @Override
     public void init(ClusterContext context) {
         System.setProperty(RayConfig.RAY_TASK_RETURN_TASK_EXCEPTION, Boolean.FALSE.toString());
-        context.getClusterConfig().setFoEnable(Boolean.FALSE);
-        // Reset restart times to disable fo.
-        context.getClusterConfig().setMaxRestarts(ActorCreationOptions.NO_RESTART);
     }
 
     @Override
-    public void doFailover(int componentId) {
+    public void doFailover(int componentId, Throwable cause) {
     }
 
     @Override

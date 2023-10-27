@@ -15,23 +15,29 @@
 package com.antgroup.geaflow.cluster.client;
 
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory;
-import com.antgroup.geaflow.cluster.rpc.impl.DriverEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class PipelineClient implements IPipelineClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineClient.class);
+    protected RpcClient rpcClient;
+    protected Map<String, RpcAddress> driverAddresses;
 
-    private final DriverEndpointRef driverEndpointRef;
-
-    public PipelineClient(RpcAddress driverAddress, Configuration config) {
-        this.driverEndpointRef = RpcEndpointRefFactory.getInstance(config)
-            .connectDriver(driverAddress.getHost(), driverAddress.getPort());
+    public PipelineClient(Map<String, RpcAddress> driverAddresses, Configuration config) {
+        this.rpcClient = RpcClient.init(config);
+        this.driverAddresses = driverAddresses;
     }
 
     @Override
     public IPipelineResult submit(Pipeline pipeline) {
-        return this.driverEndpointRef.executePipeline(pipeline);
+        Map.Entry<String, RpcAddress> entry = driverAddresses.entrySet().iterator().next();
+        LOGGER.info("submit pipeline to driver {}: {}", entry.getKey(), entry.getValue());
+        return rpcClient.executePipeline(entry.getKey(), pipeline);
     }
 }

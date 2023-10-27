@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -394,7 +395,7 @@ public class DefaultResourceManagerTest {
 
         DefaultResourceManager recoverRm = new DefaultResourceManager(clusterManager);
         MasterContext recoverMasterContext = new MasterContext(config);
-        recoverMasterContext.setRecover(true);
+        clusterContext.setRecover(true);
         recoverRm.init(ResourceManagerContext.build(recoverMasterContext, clusterContext));
 
         pending = recoverRm.getPendingWorkerCounter();
@@ -440,7 +441,7 @@ public class DefaultResourceManagerTest {
 
         DefaultResourceManager recoverRm = new DefaultResourceManager(clusterManager);
         MasterContext recoverMasterContext = new MasterContext(config);
-        recoverMasterContext.setRecover(true);
+        clusterContext.setRecover(true);
         recoverRm.init(ResourceManagerContext.build(recoverMasterContext, clusterContext));
 
         pending = recoverRm.getPendingWorkerCounter();
@@ -494,7 +495,7 @@ public class DefaultResourceManagerTest {
 
         DefaultResourceManager recoverRm = new DefaultResourceManager(clusterManager);
         MasterContext recoverMasterContext = new MasterContext(config);
-        recoverMasterContext.setRecover(true);
+        clusterContext.setRecover(true);
         recoverRm.init(ResourceManagerContext.build(recoverMasterContext, clusterContext));
 
         pending = recoverRm.getPendingWorkerCounter();
@@ -600,7 +601,7 @@ public class DefaultResourceManagerTest {
         }
 
         @Override
-        public RpcAddress startDriver() {
+        public Map<String, RpcAddress> startDrivers() {
             return null;
         }
 
@@ -619,6 +620,10 @@ public class DefaultResourceManagerTest {
 
         @Override
         public void restartContainer(int containerId) {
+        }
+
+        @Override
+        public void doFailover(int componentId, Throwable cause) {
         }
 
         @Override

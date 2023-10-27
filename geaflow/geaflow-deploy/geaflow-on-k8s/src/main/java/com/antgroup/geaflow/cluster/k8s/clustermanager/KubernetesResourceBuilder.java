@@ -14,21 +14,23 @@
 
 package com.antgroup.geaflow.cluster.k8s.clustermanager;
 
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_KV_SEPARATOR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_LIST_SEPARATOR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.LABEL_COMPONENT_ID_KEY;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLUSTER_NAME;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_CONF_FILES;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DNS_SEARCH_DOMAINS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.ENGINE_JAR_FILES;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USER_JAR_FILES;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.CONFIG_KV_SEPARATOR;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.LABEL_COMPONENT_ID_KEY;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
 import static com.antgroup.geaflow.common.config.keys.DSLConfigKeys.GEAFLOW_DSL_CATALOG_TOKEN_KEY;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.GEAFLOW_GW_ENDPOINT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WORK_PATH;
 
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DockerNetworkType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.file.FileConfigKeys;
@@ -57,14 +59,19 @@ import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KubernetesResourceBuilder {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesResourceBuilder.class);
 
     public static Container createContainer(String containerName, String containerId,
                                             String masterId, KubernetesParam param, String command,
@@ -82,7 +89,7 @@ public class KubernetesResourceBuilder {
         String pullPolicy = param.getContainerImagePullPolicy();
         String confDir = param.getConfDir();
         String logDir = param.getLogDir();
-        String jobWorkPath = config.getString(JOB_WORK_PATH);
+        String jobWorkPath = config.getString(WORK_DIR);
         String jarDownloadPath = KubernetesConfig.getJarDownloadPath(config);
         String udfList = config.getString(USER_JAR_FILES);
         String engineJar = config.getString(ENGINE_JAR_FILES);
@@ -244,6 +251,19 @@ public class KubernetesResourceBuilder {
             .withMetadata(metaBuilder.build())
             .addToData(K8SConstants.ENV_CONFIG_FILE, confContent.toString());
 
+        String files = param.getConfig().getString(CONTAINER_CONF_FILES);
+        if (StringUtils.isNotEmpty(files)) {
+            for (String filePath : files.split(CONFIG_LIST_SEPARATOR)) {
+                String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
+                String fileContent = KubernetesUtils.getContentFromFile(filePath);
+                if (fileContent != null) {
+                    configMapBuilder.addToData(fileName, fileContent);
+                } else {
+                    LOGGER.info("File {} not exist, will not add to configMap", filePath);
+                }
+            }
+        }
+
         return configMapBuilder.build();
     }
 
@@ -357,7 +377,7 @@ public class KubernetesResourceBuilder {
     }
 
     public static Deployment createDeployment(String clusterId,
-                                              String replicatorName,
+                                              String rcName,
                                               Container container,
                                               ConfigMap configMap,
                                               KubernetesParam param,
@@ -367,13 +387,13 @@ public class KubernetesResourceBuilder {
 
         Map<String, String> labels = param.getPodLabels(clusterId);
         Map<String, String> annotations = getAnnotations(param);
-
         List<KeyToPath> configMapItems = configMap.getData().keySet().stream()
             .map(e -> new KeyToPath(e, null, e)).collect(Collectors.toList());
 
         DeploymentBuilder deploymentBuilder = new DeploymentBuilder()
             .editOrNewMetadata()
-                .withName(replicatorName)
+                .withName(rcName)
+                .withLabels(labels)
                 .endMetadata()
             .editOrNewSpec()
                 .withReplicas(1)

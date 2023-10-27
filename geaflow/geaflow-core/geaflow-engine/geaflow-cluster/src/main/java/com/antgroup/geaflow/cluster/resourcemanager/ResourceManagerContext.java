@@ -27,7 +27,7 @@ public class ResourceManagerContext {
     private ResourceManagerContext(MasterContext masterContext, ClusterContext clusterContext) {
         this.config = masterContext.getConfiguration();
         this.clusterContext = clusterContext;
-        this.recover = masterContext.isRecover();
+        this.recover = clusterContext.isRecover();
     }
 
     public Configuration getConfig() {

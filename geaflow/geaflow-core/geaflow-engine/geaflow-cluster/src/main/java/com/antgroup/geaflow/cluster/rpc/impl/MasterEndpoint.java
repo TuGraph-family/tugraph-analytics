@@ -22,8 +22,6 @@ import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
 import com.antgroup.geaflow.cluster.master.Master;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
-import com.antgroup.geaflow.rpc.proto.Master.ContainerIds;
-import com.antgroup.geaflow.rpc.proto.Master.ContainerInfos;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
@@ -49,9 +47,14 @@ public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase impl
     public void registerContainer(RegisterRequest request,
                                   StreamObserver<RegisterResponse> responseObserver) {
         try {
-            ContainerInfo containerInfo = RpcMessageEncoder.decode(request.getPayload());
-            RegisterResponse response = ((AbstractClusterManager) clusterManager)
-                .registerContainer(containerInfo);
+            RegisterResponse response;
+            if (request.getIsDriver()) {
+                DriverInfo driverInfo = RpcMessageEncoder.decode(request.getPayload());
+                response = ((AbstractClusterManager) clusterManager).registerDriver(driverInfo);
+            } else {
+                ContainerInfo containerInfo = RpcMessageEncoder.decode(request.getPayload());
+                response = ((AbstractClusterManager) clusterManager).registerContainer(containerInfo);
+            }
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Throwable t) {
@@ -61,28 +64,16 @@ public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase impl
     }
 
     @Override
-    public void registerDriver(RegisterRequest request,
-                               StreamObserver<RegisterResponse> responseObserver) {
+    public void receiveHeartbeat(HeartbeatRequest request,
+                                 StreamObserver<Empty> responseObserver) {
         try {
-            DriverInfo driverInfo = RpcMessageEncoder.decode(request.getPayload());
-            RegisterResponse response = ((AbstractClusterManager) clusterManager)
-                .registerDriver(driverInfo);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Throwable t) {
-            LOGGER.error("register driver failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
-        }
-    }
-
-    @Override
-    public void receiveHeartbeat(HeartbeatRequest request, StreamObserver<Empty> responseObserver) {
-        try {
-            HeartbeatManager heartbeatManager = ((AbstractClusterManager) clusterManager).getClusterContext()
-                .getHeartbeatManager();
             Heartbeat heartbeat = new Heartbeat(request.getId());
             heartbeat.setTimestamp(request.getTimestamp());
+            heartbeat.setContainerName(RpcMessageEncoder.decode(request.getName()));
             heartbeat.setProcessMetrics(RpcMessageEncoder.decode(request.getPayload()));
+
+            HeartbeatManager heartbeatManager = ((AbstractClusterManager) clusterManager)
+                .getClusterContext().getHeartbeatManager();
             heartbeatManager.receivedHeartbeat(heartbeat);
             responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
@@ -97,8 +88,10 @@ public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase impl
                                  StreamObserver<Empty> responseObserver) {
         try {
             int containerId = request.getId();
-            LOGGER.info("received exception from container/driver {}, {}", containerId, RpcMessageEncoder.decode(request.getPayload()));
-            ((AbstractClusterManager) clusterManager).clusterFailover(containerId);
+            String containerName = RpcMessageEncoder.decode(request.getName());
+            String errMessage = RpcMessageEncoder.decode(request.getPayload());
+            LOGGER.info("received exception from {}: {}", containerName, errMessage);
+            clusterManager.doFailover(containerId, new RuntimeException(errMessage));
             responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Throwable t) {
@@ -107,24 +100,7 @@ public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase impl
         }
     }
 
-    @Override
-    public void getContainerInfo(ContainerIds request,
-                                 StreamObserver<ContainerInfos> responseObserver) {
-        //TODO
-        responseObserver.onNext(ContainerInfos.newBuilder().build());
-        responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getAllContainerInfos(Empty request,
-                                     StreamObserver<ContainerInfos> responseObserver) {
-        //TODO
-        responseObserver.onNext(ContainerInfos.newBuilder().build());
-        responseObserver.onCompleted();
-    }
-
-    public void close(Empty request,
-                      StreamObserver<Empty> responseObserver) {
+    public void close(Empty request, StreamObserver<Empty> responseObserver) {
         try {
             master.close();
             responseObserver.onNext(Empty.newBuilder().build());

@@ -65,13 +65,9 @@ public class RpcAddress implements Serializable {
         return Objects.hash(host, port);
     }
 
-    public String getAddress() {
-        return host + PORT_SEPARATOR + port;
-    }
-
     @Override
     public String toString() {
-        return "RpcAddress{" + "host='" + host + '\'' + ", port=" + port + '}';
+        return host + PORT_SEPARATOR + port;
     }
 
     public static RpcAddress build(String address) {

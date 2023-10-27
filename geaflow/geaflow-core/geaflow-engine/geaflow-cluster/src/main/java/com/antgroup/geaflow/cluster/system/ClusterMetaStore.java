@@ -21,7 +21,7 @@ import com.antgroup.geaflow.cluster.resourcemanager.WorkerSnapshot;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,8 +120,18 @@ public class ClusterMetaStore {
         return this;
     }
 
-    public ClusterMetaStore saveComponentIndex(String key, Set<Integer> componentIds) {
-        save(key, componentIds);
+    public ClusterMetaStore saveContainerIds(Map<Integer, String> containerIds) {
+        save(ClusterMetaKey.CONTAINER_IDS, containerIds);
+        return this;
+    }
+
+    public ClusterMetaStore saveDriverIds(Map<Integer, String> driverIds) {
+        save(ClusterMetaKey.DRIVER_IDS, driverIds);
+        return this;
+    }
+
+    public ClusterMetaStore saveMaxContainerId(int containerId) {
+        save(ClusterMetaKey.MAX_CONTAINER_ID, containerId);
         return this;
     }
 
@@ -150,8 +160,16 @@ public class ClusterMetaStore {
         return get(ClusterMetaKey.WORKERS);
     }
 
-    public Set<Integer> getComponentIds(String componentIndexLabel) {
-        return get(componentIndexLabel);
+    public int getMaxContainerId() {
+        return get(ClusterMetaKey.MAX_CONTAINER_ID);
+    }
+
+    public Map<Integer, String> getContainerIds() {
+        return get(ClusterMetaKey.CONTAINER_IDS);
+    }
+
+    public Map<Integer, String> getDriverIds() {
+        return get(ClusterMetaKey.DRIVER_IDS);
     }
 
     public void flush() {
@@ -186,5 +204,8 @@ public class ClusterMetaStore {
         CYCLE,
         EVENTS,
         WORKERS,
+        CONTAINER_IDS,
+        DRIVER_IDS,
+        MAX_CONTAINER_ID
     }
 }

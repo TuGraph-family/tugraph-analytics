@@ -27,9 +27,8 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WORK_PATH;
 
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
@@ -106,6 +105,27 @@ public class KubernetesConfig {
         }
     }
 
+    public enum AutoRestartPolicy {
+        /** the process will not be autorestarted. */
+        FALSE("false"),
+
+        /** the process will always be autorestarted. */
+        TRUE("true"),
+
+        /** the process will be autorestarted when exits with unexpected codes. */
+        UNEXPECTED("unexpected");
+
+        private final String value;
+
+        AutoRestartPolicy(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
     public static String getClientMasterUrl(Configuration config) {
         String url = config.getString(CLIENT_MASTER_URL);
         if (StringUtils.isNotBlank(url)) {
@@ -138,7 +158,7 @@ public class KubernetesConfig {
     }
 
     public static String getServiceName(Configuration config) {
-        return config.getString(CLUSTER_ID) + K8SConstants.SERVICE_NAME_SUFFIX;
+        return KubernetesUtils.getMasterServiceName(config.getString(CLUSTER_ID));
     }
 
     public static String getServiceNameWithNamespace(Configuration config) {
@@ -167,7 +187,7 @@ public class KubernetesConfig {
     }
 
     public static String getJarDownloadPath(Configuration config) {
-        return FileUtils.getFile(config.getString(JOB_WORK_PATH), "jar").toString();
+        return FileUtils.getFile(config.getString(WORK_DIR), "jar").toString();
     }
 
 }

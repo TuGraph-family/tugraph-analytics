@@ -14,19 +14,21 @@
 
 package com.antgroup.geaflow.cluster.k8s.failover;
 
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.PROCESS_AUTO_RESTART;
+
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
+import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.AutoRestartPolicy;
 
 public class KubernetesDisableFailoverStrategy extends AbstractKubernetesFailoverStrategy {
 
     @Override
     public void init(ClusterContext context) {
-
+        context.getConfig().put(PROCESS_AUTO_RESTART, AutoRestartPolicy.FALSE.getValue());
     }
 
     @Override
-    public void doFailover(int componentId) {
-
+    public void doFailover(int componentId, Throwable cause) {
     }
 
     @Override

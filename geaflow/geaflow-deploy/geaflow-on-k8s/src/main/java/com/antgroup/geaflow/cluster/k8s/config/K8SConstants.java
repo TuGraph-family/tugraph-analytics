@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.k8s.utils;
+package com.antgroup.geaflow.cluster.k8s.config;
 
 /**
  * Constants for kubernetes.
@@ -25,29 +25,31 @@ public final class K8SConstants {
 
     public static final String NAME_SEPARATOR = "-";
 
-    public static final String FILES_SEPARATOR = ",";
-
     public static final String NAMESPACE_SEPARATOR = ".";
 
     public static final String CONFIG_KV_SEPARATOR = ":";
 
+    public static final String ADDRESS_SEPARATOR = "=";
+
+    public static final String CONFIG_LIST_SEPARATOR = ",";
+
     public static final String MASTER_RS_NAME_SUFFIX = "-master-rs";
 
-    public static final String DRIVER_RS_NAME_SUFFIX = "-driver-rs";
+    public static final String DRIVER_RS_NAME_SUFFIX = "-driver-rs-";
 
     public static final String CLIENT_NAME_SUFFIX = "-client";
 
     public static final String MASTER_NAME_SUFFIX = "-master";
 
-    public static final String SERVICE_NAME_SUFFIX = "-service";
-
     public static final String DRIVER_NAME_SUFFIX = "-driver";
+
+    public static final String WORKER_NAME_SUFFIX = "-container";
+
+    public static final String SERVICE_NAME_SUFFIX = "-service";
 
     public static final String CLIENT_SERVICE_NAME_SUFFIX = "-client-service";
 
-    public static final String WORKER_LABEL_SUFFIX = "-container";
-
-    public static final String DRIVER_LABEL_SUFFIX = "-driver";
+    public static final String DRIVER_SERVICE_NAME_SUFFIX = "-driver-service-";
 
     public static final String MASTER_CONFIG_MAP_SUFFIX = "-master-conf-map";
 
@@ -75,13 +77,11 @@ public final class K8SConstants {
 
     public static final String RESOURCE_NAME_EPHEMERAL_STORAGE = "ephemeral-storage";
 
-    public static final String EPHEMERAL_STORAGE_PREFIX = "ephemeral-storage";
+    public static final String RESOURCE_NAME_PERSISTENT_VOLUME = "pv";
 
     public static final String POD_RESTART_POLICY = "Always";
 
     public static final String HOST_ALIASES_CONFIG_MAP_NAME = "host-aliases";
-
-    public static final String PERSISTENT_VOLUME_PREFIX = "pv";
 
     public static final String HOST_NETWORK_DNS_POLICY = "ClusterFirstWithHostNet";
 
@@ -119,13 +119,9 @@ public final class K8SConstants {
 
     public static final String ENV_GEAFLOW_CLASSPATH = "GEAFLOW_CLASSPATH";
 
-    /** The environment variable name which contains the location of the configuration directory. */
     public static final String ENV_CONF_DIR = "GEAFLOW_CONF_DIR";
 
     public static final String ENV_LOG_DIR = "GEAFLOW_LOG_DIR";
-
-    /** The environment variable name which contains the location of the lib folder. */
-    public static final String ENV_TMP_DIR = "GEAFLOW_TMP_DIR";
 
     public static final String ENV_JOB_WORK_PATH = "GEAFLOW_JOB_WORK_PATH";
 
@@ -145,6 +141,8 @@ public final class K8SConstants {
 
     public static final String ENV_CONTAINER_ID = "GEAFLOW_CONTAINER_ID";
 
+    public static final String ENV_CONTAINER_INDEX = "GEAFLOW_CONTAINER_INDEX";
+
     public static final String ENV_CONTAINER_TYPE = "CONTAINER_TYPE";
 
     public static final String ENV_CONTAINER_TYPE_K8S = "K8S";
@@ -160,8 +158,6 @@ public final class K8SConstants {
 
     public static final String ENV_MASTER_ID = "GEAFLOW_MASTER_ID";
 
-    public static final String ENV_CLUSTER_START_TIME = "GEAFLOW_CLUSTER_START_TIME";
-
     public static final String ENV_CONFIG_FILE = "geaflow-conf.yml";
 
     public static final String CONFIG_FILE_LOG4J_NAME = "log4j.properties";
@@ -171,5 +167,7 @@ public final class K8SConstants {
     public static final String GEAFLOW_LOG_VOLUME = "geaflow-log-volume";
 
     public static final String GEAFLOW_FILE_VOLUME = "geaflow-file-volume";
+
+    public static final int EXIT_WAIT_TIME = 5;
 
 }

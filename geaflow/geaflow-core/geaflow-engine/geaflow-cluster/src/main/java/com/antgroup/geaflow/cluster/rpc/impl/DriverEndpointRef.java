@@ -51,7 +51,7 @@ public class DriverEndpointRef extends AbstractRpcEndpointRef implements IDriver
     @Override
     public IPipelineResult executePipeline(Pipeline pipeline) {
         ensureChannelAlive();
-        LOGGER.info("send pipeline to driver, driver host:{}, port:{}. {}", super.host, super.port,
+        LOGGER.info("send pipeline to driver {}:{}. {}", super.host, super.port,
             pipeline);
         ByteString payload = RpcMessageEncoder.encode(pipeline);
         Iterator<PipelineRes> iterator =

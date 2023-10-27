@@ -32,13 +32,16 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_VCORES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.FO_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.FO_MAX_RESTARTS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.FO_STRATEGY;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_DISK_GB;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_JVM_OPTIONS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_MEMORY_MB;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_VCORES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.REGISTER_TIMEOUT;
 
+import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
@@ -123,10 +126,16 @@ public class ClusterConfig implements Serializable {
         clusterConfig.setContainerJvmOptions(containerJvmOptions);
         config.put(CONTAINER_HEAP_SIZE_MB, String.valueOf(containerJvmOptions.getMaxHeapMB()));
 
-        clusterConfig.setFoEnable(config.getBoolean(FO_ENABLE));
-
-        // set fo_max_restarts to 0 if FO disabled
+        boolean isFoEnabled = config.getBoolean(FO_ENABLE);
+        clusterConfig.setFoEnable(isFoEnabled);
         clusterConfig.setMaxRestarts(config.getInteger(FO_MAX_RESTARTS));
+
+        FailoverStrategyType strategyType =
+            FailoverStrategyType.valueOf(config.getString(FO_STRATEGY));
+        if (!isFoEnabled || strategyType == FailoverStrategyType.disable_fo) {
+            clusterConfig.setMaxRestarts(0);
+            config.put(ExecutionConfigKeys.FO_STRATEGY, FailoverStrategyType.disable_fo.name());
+        }
         clusterConfig.setConfig(config);
 
         return clusterConfig;

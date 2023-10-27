@@ -15,14 +15,13 @@
 package com.antgroup.geaflow.cluster.k8s.client;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.PORT_SEPARATOR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.EXIT_WAIT_TIME;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DRIVER_EXPOSED_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.MASTER_EXPOSED_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedType.CLUSTER_IP;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesDriverParam.DRIVER_SERVICE_NAME_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.CLIENT_SERVICE_NAME_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.SERVICE_NAME_SUFFIX;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_NUM;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WORK_PATH;
 
 import com.antgroup.geaflow.cluster.client.AbstractClusterClient;
@@ -32,27 +31,22 @@ import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.Clust
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.KubernetesClusterManager;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DockerNetworkType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.utils.RetryCommand;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.env.ctx.IEnvironmentContext;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -89,70 +83,48 @@ public class KubernetesClusterClient extends AbstractClusterClient {
     public IPipelineClient startCluster() {
         try {
             this.clusterId = clusterManager.startMaster().getHandler();
-            Configuration config = getClientConfig(clusterId);
-            LOGGER.info("Cluster info: {}.", config);
-            String driverAddress = config.getString(DRIVER_EXPOSED_ADDRESS);
-            Preconditions.checkArgument(StringUtils.isNoneEmpty(driverAddress),
-                "Driver address is empty.");
-            // waiting for driver rpc connection ready
-            RpcAddress driverRpcAddress = RpcAddress.build(driverAddress);
-            checkRpcConnection(driverRpcAddress);
-            ClusterMeta clusterMeta = new ClusterMeta(driverAddress,
+            Map<String, RpcAddress> driverAddresses = waitForDriverStarted(clusterId);
+            ClusterMeta clusterMeta = new ClusterMeta(driverAddresses,
                 config.getString(MASTER_EXPOSED_ADDRESS));
             callback.onSuccess(clusterMeta);
-            return new PipelineClient(driverRpcAddress, config);
+            LOGGER.info("Cluster info: {}.", config);
+            return new PipelineClient(driverAddresses, config);
         } catch (Throwable e) {
             LOGGER.error("Deploy failed.", e);
             callback.onFailure(e);
-            SleepUtils.sleepSecond(5);
+            SleepUtils.sleepSecond(EXIT_WAIT_TIME);
             kubernetesClient.destroyCluster(clusterId);
             throw new GeaflowRuntimeException(e);
         }
     }
 
-    @VisibleForTesting
-    public void checkRpcConnection(RpcAddress rpcAddress) {
-        LOGGER.info("Try checking rpc connection to address {}.", rpcAddress.getAddress());
-        RetryCommand.run(() -> {
-            checkSocketConnection(rpcAddress.getHost(), rpcAddress.getPort());
-            return null;
-        }, 5, 5000);
-        LOGGER.info("Check rpc connection to address {} success.", rpcAddress.getAddress());
-    }
-
-    private void checkSocketConnection(String ip, Integer port)  throws IOException {
-        Socket socket = new Socket();
-        try {
-            socket.connect(new InetSocketAddress(ip, port), 3000);
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                LOGGER.error("Close socket error.", e);
-            }
-        }
-    }
-
-    private Configuration getClientConfig(String clusterId) throws TimeoutException {
-        Configuration config = masterParam.getConfig();
+    private Map<String, RpcAddress> waitForDriverStarted(String clusterId) throws TimeoutException {
         DockerNetworkType networkType = KubernetesConfig.getDockerNetworkType(config);
+        Map<String, String> updatedConfig = waitForMasterConfigUpdated(clusterId);
+        config.putAll(updatedConfig);
+
+        Map<String, RpcAddress> driverMap;
         if (networkType == DockerNetworkType.HOST) {
-            Map<String, String> masterConfig = waitForConfigMapUpdated(clusterId);
-            config.putAll(masterConfig);
+            driverMap = parseDriverAddressFromConfig(config);
         } else {
-            Map<String, String> serviceConfig = setupExposedServiceAddress(clusterId);
-            config.putAll(serviceConfig);
-            waitForConfigMapUpdated(clusterId);
+            driverMap = updateExposedServiceAddress(clusterId);
         }
-        return config;
+        return driverMap;
     }
 
-    private Map<String, String> waitForConfigMapUpdated(String clusterId) throws TimeoutException {
+    private Map<String, RpcAddress> parseDriverAddressFromConfig(Configuration config) {
+        String driverAddress = config.getString(DRIVER_EXPOSED_ADDRESS);
+        Preconditions.checkArgument(StringUtils.isNoneEmpty(driverAddress),
+            "Driver address is empty.");
+        return KubernetesUtils.decodeRpcAddressMap(driverAddress);
+    }
+
+    private Map<String, String> waitForMasterConfigUpdated(String clusterId) throws TimeoutException {
         Map<String, String> configuration;
         final long startTime = System.currentTimeMillis();
         while (true) {
-            ConfigMap configMap = kubernetesClient
-                .getConfigMap(masterParam.getConfigMapName(clusterId));
+            String configName = masterParam.getConfigMapName(clusterId);
+            ConfigMap configMap = kubernetesClient.getConfigMap(configName);
             configuration = KubernetesUtils
                 .loadConfigurationFromString(configMap.getData().get(K8SConstants.ENV_CONFIG_FILE));
             if (configuration.containsKey(DRIVER_EXPOSED_ADDRESS)) {
@@ -177,25 +149,32 @@ public class KubernetesClusterClient extends AbstractClusterClient {
         kubernetesClient.destroyCluster(clusterId);
     }
 
-    private Map<String, String> setupExposedServiceAddress(String clusterId)
+    private Map<String, RpcAddress> updateExposedServiceAddress(String clusterId)
         throws TimeoutException {
         ServiceExposedType serviceType = KubernetesConfig.getServiceExposedType(config);
         String masterServiceName;
         if (serviceType == CLUSTER_IP) {
-            masterServiceName = clusterId + SERVICE_NAME_SUFFIX;
+            masterServiceName = KubernetesUtils.getMasterServiceName(clusterId);
         } else {
-            masterServiceName = clusterId + CLIENT_SERVICE_NAME_SUFFIX;
+            masterServiceName = KubernetesUtils.getMasterClientServiceName(clusterId);
         }
         String serviceAddress = setupExposedServiceAddress(serviceType, masterServiceName,
             K8SConstants.HTTP_PORT);
-        Map<String, String> config = new HashMap<>();
         config.put(MASTER_EXPOSED_ADDRESS, serviceAddress);
 
-        String driverServiceName = clusterId + DRIVER_SERVICE_NAME_SUFFIX;
-        serviceAddress = setupExposedServiceAddress(CLUSTER_IP, driverServiceName,
-            K8SConstants.RPC_PORT);
-        config.put(DRIVER_EXPOSED_ADDRESS, serviceAddress);
-        return config;
+        int driverNum = this.config.getInteger(DRIVER_NUM);
+        Map<String, RpcAddress> driverAddresses = new HashMap<>(driverNum);
+        Map<String, RpcAddress> originalDriverAddresses = parseDriverAddressFromConfig(config);
+        int driverIndex = 0;
+        for (String driverId : originalDriverAddresses.keySet()) {
+            String driverServiceName = KubernetesUtils.getDriverServiceName(clusterId, driverIndex);
+            RpcAddress rpcAddress = RpcAddress.build(setupExposedServiceAddress(serviceType,
+                driverServiceName, K8SConstants.RPC_PORT));
+            driverAddresses.put(driverId, rpcAddress);
+            driverIndex++;
+        }
+        config.put(DRIVER_EXPOSED_ADDRESS, KubernetesUtils.encodeRpcAddressMap(driverAddresses));
+        return driverAddresses;
     }
 
     private String setupExposedServiceAddress(ServiceExposedType serviceType, String serviceName,
@@ -280,7 +259,6 @@ public class KubernetesClusterClient extends AbstractClusterClient {
             }
             SleepUtils.sleepMilliSecond(DEFAULT_SLEEP_MS);
         }
-        // just return the first one load balancer ip
         return ipList.get(0);
     }
 
@@ -301,6 +279,5 @@ public class KubernetesClusterClient extends AbstractClusterClient {
         }
         return service;
     }
-
 
 }

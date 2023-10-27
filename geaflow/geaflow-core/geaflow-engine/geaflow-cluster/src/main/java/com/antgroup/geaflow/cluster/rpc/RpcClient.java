@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.cluster.rpc;
 
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.CONTAINER;
+import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.DRIVER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.MASTER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.PIPELINE_MANAGER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.RESOURCE_MANAGER;
@@ -40,6 +41,8 @@ import com.antgroup.geaflow.common.utils.RetryCommand;
 import com.antgroup.geaflow.ha.service.HAServiceFactory;
 import com.antgroup.geaflow.ha.service.IHAService;
 import com.antgroup.geaflow.ha.service.ResourceData;
+import com.antgroup.geaflow.pipeline.IPipelineResult;
+import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -53,19 +56,20 @@ import org.slf4j.LoggerFactory;
 public class RpcClient implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RpcClient.class);
+    private static final int RPC_RETRY_EXTRA_MS = 30000;
 
     private static IHAService haService;
     private static RpcEndpointRefFactory refFactory;
     private static RpcClient INSTANCE;
     private static int RPC_RETRY_TIMES;
     private static int RPC_RETRY_INTERVAL_MS;
-    private static int RPC_RETRY_EXTRA_MS = 30000;
 
     private RpcClient(Configuration configuration) {
         // ensure total retry time be longer than (heartbeat timeout + 30s).
         RPC_RETRY_INTERVAL_MS = configuration.getInteger(ExecutionConfigKeys.RPC_RETRY_INTERVAL_MS);
         int heartbeatCheckMs = configuration.getInteger(HEARTBEAT_TIMEOUT_MS);
-        int minTimes = (int) Math.ceil((double) (heartbeatCheckMs + RPC_RETRY_EXTRA_MS) / RPC_RETRY_INTERVAL_MS);
+        int minTimes = (int) Math
+            .ceil((double) (heartbeatCheckMs + RPC_RETRY_EXTRA_MS) / RPC_RETRY_INTERVAL_MS);
         int retryTimes = configuration.getInteger(ExecutionConfigKeys.RPC_RETRY_TIMES);
         RPC_RETRY_TIMES = Math.max(minTimes, retryTimes);
         refFactory = RpcEndpointRefFactory.getInstance(configuration);
@@ -92,9 +96,10 @@ public class RpcClient implements Serializable {
         return doRpcWithRetry(() -> connectMaster(masterId).sendHeartBeat(heartbeat), masterId, MASTER);
     }
 
-    public Empty sendException(String masterId, Integer containerId,
-                                                 Throwable throwable) {
-        return doRpcWithRetry(() -> connectMaster(masterId).sendException(containerId, throwable.getMessage()), masterId, MASTER);
+    public Empty sendException(String masterId, Integer containerId, String containerName,
+                               Throwable throwable) {
+        return doRpcWithRetry(() -> connectMaster(masterId)
+            .sendException(containerId, containerName, throwable.getMessage()), masterId, MASTER);
     }
 
     // container endpoint ref
@@ -108,7 +113,13 @@ public class RpcClient implements Serializable {
 
     // pipeline endpoint ref
     public void processPipeline(String driverId, IEvent event) {
-        doRpcWithRetry(() -> connectPipelineManager(driverId).process(event), driverId, PIPELINE_MANAGER);
+        doRpcWithRetry(() -> connectPipelineManager(driverId).process(event), driverId,
+            PIPELINE_MANAGER);
+    }
+
+    public IPipelineResult executePipeline(String driverId, Pipeline pipeline) {
+        return doRpcWithRetry(() -> connectDriver(driverId).executePipeline(pipeline), driverId,
+            DRIVER);
     }
 
     public void processPipeline(String driverId, IEvent event, RpcCallback<Response> callback) {
@@ -117,14 +128,15 @@ public class RpcClient implements Serializable {
 
     // resource manager endpoint ref
     public RequireResponse requireResource(String masterId, RequireResourceRequest request) {
-        return doRpcWithRetry(() -> connectRM(masterId).requireResource(request), masterId, RESOURCE_MANAGER);
+        return doRpcWithRetry(() -> connectRM(masterId).requireResource(request), masterId,
+            RESOURCE_MANAGER);
     }
 
     public ReleaseResponse releaseResource(String masterId, ReleaseResourceRequest request) {
-        return doRpcWithRetry(() -> connectRM(masterId).releaseResource(request), masterId, RESOURCE_MANAGER);
+        return doRpcWithRetry(() -> connectRM(masterId).releaseResource(request), masterId,
+            RESOURCE_MANAGER);
     }
 
-    // close endpoint connection
     public void closeMasterConnection(String masterId) {
         connectMaster(masterId).close();
     }
@@ -184,12 +196,14 @@ public class RpcClient implements Serializable {
         }, RPC_RETRY_TIMES, RPC_RETRY_INTERVAL_MS);
     }
 
-    private Exception handleRpcException(String resourceId, EndpointType endpointType, Throwable t) {
+    private Exception handleRpcException(String resourceId, EndpointType endpointType,
+                                         Throwable t) {
         try {
             invalidateEndpointCache(resourceId, endpointType);
         } catch (Throwable e) {
-            String errorMsg = String.format("get resource data failed caused by %s while "
-                + "invalidate endpoint cache: #%s", t.getMessage(), resourceId);
+            String errorMsg = String.format(
+                "get resource data failed caused by %s while " + "invalidate endpoint cache: #%s",
+                t.getMessage(), resourceId);
             return new GeaflowRuntimeException(errorMsg, e);
         }
         invalidateResourceData(resourceId);
@@ -203,7 +217,8 @@ public class RpcClient implements Serializable {
 
     protected void invalidateEndpointCache(String resourceId, EndpointType endpointType) {
         ResourceData resourceData = getResourceData(resourceId);
-        refFactory.invalidateEndpointCache(resourceData.getHost(), resourceData.getRpcPort(), endpointType);
+        refFactory.invalidateEndpointCache(resourceData.getHost(), resourceData.getRpcPort(),
+            endpointType);
     }
 
     protected ResourceData getResourceData(String resourceId) {

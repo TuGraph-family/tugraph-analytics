@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.cluster.clustermanager;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.failover.IFailoverStrategy;
@@ -26,20 +27,18 @@ import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory;
 import com.antgroup.geaflow.cluster.rpc.RpcUtil;
 import com.antgroup.geaflow.cluster.rpc.impl.ContainerEndpointRef;
-import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
+import com.antgroup.geaflow.common.utils.FutureUtil;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,11 +53,8 @@ public abstract class AbstractClusterManager implements IClusterManager {
     protected ClusterId clusterInfo;
     protected Map<Integer, ContainerInfo> containerInfos;
     protected Map<Integer, DriverInfo> driverInfos;
-    protected Set<Integer> containerIds;
-    protected Set<Integer> driverIds;
     protected IFailoverStrategy foStrategy;
-
-    protected CompletableFuture<DriverInfo> driverFuture;
+    protected Map<Integer, Future<DriverInfo>> driverFutureMap;
     protected long driverTimeoutSec;
     private AtomicInteger idGenerator;
 
@@ -66,58 +62,71 @@ public abstract class AbstractClusterManager implements IClusterManager {
     public void init(ClusterContext clusterContext) {
         this.clusterConfig = clusterContext.getClusterConfig();
         this.driverTimeoutSec = clusterConfig.getDriverRegisterTimeoutSec();
-        this.containerInfos = new HashMap<>();
-        this.driverInfos = new HashMap<>();
+        this.containerInfos = new ConcurrentHashMap<>();
+        this.driverInfos = new ConcurrentHashMap<>();
         this.clusterContext = clusterContext;
-        this.idGenerator = new AtomicInteger(0);
+        this.idGenerator = new AtomicInteger(clusterContext.getMaxComponentId());
         this.masterId = clusterContext.getConfig().getMasterId();
-        this.driverFuture = new CompletableFuture<>();
-        this.containerIds = new HashSet<>();
-        this.driverIds = new HashSet<>();
         this.foStrategy = buildFailoverStrategy();
         Preconditions.checkNotNull(masterId, "masterId is not set");
+        this.driverFutureMap = new ConcurrentHashMap<>();
+        if (clusterContext.isRecover()) {
+            for (Integer driverId : clusterContext.getDriverIds().keySet()) {
+                driverFutureMap.put(driverId, new CompletableFuture<>());
+            }
+        }
     }
-
-    public ClusterContext getClusterContext() {
-        return clusterContext;
-    }
-
-    protected abstract IFailoverStrategy buildFailoverStrategy();
 
     @Override
     public void allocateWorkers(int workerNum) {
         int workersPerContainer = clusterConfig.getContainerWorkerNum();
         int containerNum = (workerNum + workersPerContainer - 1) / workersPerContainer;
-        LOGGER.info("allocate {} workers in {} containers[{}]", workerNum, containerNum,
-            workersPerContainer);
+        LOGGER.info("allocate {} containers with {} workers", containerNum, workerNum);
         startContainers(containerNum);
+        doCheckpoint();
     }
 
     private void startContainers(int containerNum) {
+        Map<Integer, String> containerIds = new HashMap<>();
         for (int i = 0; i < containerNum; i++) {
-            int containerId = idGenerator.incrementAndGet();
+            int containerId = generateNextComponentId();
             doStartContainer(containerId, false);
-            this.containerIds.add(containerId);
+            containerIds.put(containerId, ClusterConstants.getContainerName(containerId));
         }
+        clusterContext.getContainerIds().putAll(containerIds);
     }
 
     @Override
-    public RpcAddress startDriver() {
-        try {
-            int driverId = idGenerator.incrementAndGet();
-            doStartDriver(driverId);
-            this.driverIds.add(driverId);
-            DriverInfo driverInfo = driverFuture.get(driverTimeoutSec, TimeUnit.SECONDS);
-            return new RpcAddress(driverInfo.getHost(), driverInfo.getRpcPort());
-        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            throw new GeaflowRuntimeException(e);
+    public Map<String, RpcAddress> startDrivers() {
+        int driverNum = clusterConfig.getDriverNum();
+        if (!clusterContext.isRecover()) {
+            Map<Integer, String> driverIds = new HashMap<>();
+            for (int driverIndex = 0; driverIndex < driverNum; driverIndex++) {
+                int driverId = generateNextComponentId();
+                driverFutureMap.put(driverId, new CompletableFuture<>());
+                doStartDriver(driverId, driverIndex);
+                driverIds.put(driverId, ClusterConstants.getDriverName(driverId));
+            }
+            clusterContext.getDriverIds().putAll(driverIds);
+            doCheckpoint();
         }
+        Map<String, RpcAddress> driverAddresses = new HashMap<>(driverNum);
+        List<DriverInfo> driverInfoList = FutureUtil
+            .wait(driverFutureMap.values(), driverTimeoutSec, TimeUnit.SECONDS);
+        driverInfoList.forEach(driverInfo -> driverAddresses
+            .put(driverInfo.getName(), new RpcAddress(driverInfo.getHost(),
+                driverInfo.getRpcPort())));
+        return driverAddresses;
+    }
+
+    @Override
+    public void doFailover(int componentId, Throwable cause) {
+        foStrategy.doFailover(componentId, cause);
     }
 
     @Override
     public void close() {
         if (clusterInfo != null) {
-            // close master
             LOGGER.info("close master {}", masterId);
             RpcClient.getInstance().closeMasterConnection(masterId);
         }
@@ -133,16 +142,26 @@ public abstract class AbstractClusterManager implements IClusterManager {
         }
     }
 
-    public void clusterFailover(int componentId) {
-        foStrategy.doFailover(componentId);
+    private int generateNextComponentId() {
+        int id = idGenerator.incrementAndGet();
+        clusterContext.setMaxComponentId(id);
+        return id;
     }
 
     public RegisterResponse registerContainer(ContainerInfo request) {
-        ContainerInfo containerInfo = containerInfos.put(request.getId(), request);
-        boolean registered = (containerInfo == null);
-        RegisterResponse response = RegisterResponse.newBuilder().setSuccess(registered).build();
+        LOGGER.info("register container:{}", request);
+        containerInfos.put(request.getId(), request);
         RpcUtil.asyncExecute(() -> openContainer(request));
-        return response;
+        return RegisterResponse.newBuilder().setSuccess(true).build();
+    }
+
+    public RegisterResponse registerDriver(DriverInfo driverInfo) {
+        LOGGER.info("register driver:{}", driverInfo);
+        driverInfos.put(driverInfo.getId(), driverInfo);
+        CompletableFuture<DriverInfo> completableFuture =
+            (CompletableFuture<DriverInfo>) driverFutureMap.get(driverInfo.getId());
+        completableFuture.complete(driverInfo);
+        return RegisterResponse.newBuilder().setSuccess(true).build();
     }
 
     protected void openContainer(ContainerInfo containerInfo) {
@@ -153,7 +172,8 @@ public abstract class AbstractClusterManager implements IClusterManager {
             @Override
             public void onSuccess(Response response) {
                 byte[] payload = response.getPayload().toByteArray();
-                OpenContainerResponseEvent openResult = (OpenContainerResponseEvent) SerializerFactory
+                OpenContainerResponseEvent openResult =
+                    (OpenContainerResponseEvent) SerializerFactory
                     .getKryoSerializer().deserialize(payload);
                 ContainerExecutorInfo executorInfo = new ContainerExecutorInfo(containerInfo,
                     openResult.getFirstWorkerIndex(), workerNum);
@@ -165,17 +185,6 @@ public abstract class AbstractClusterManager implements IClusterManager {
                 handleRegisterResponse(null, null, t);
             }
         });
-    }
-
-    public RegisterResponse registerDriver(DriverInfo driverInfo) {
-        driverInfos.put(driverInfo.getId(), driverInfo);
-        boolean registered = driverFuture.complete(driverInfo);
-        LOGGER.info("driver is registered:{}", driverInfo);
-        return RegisterResponse.newBuilder().setSuccess(registered).build();
-    }
-
-    public Map<Integer, ContainerInfo> getContainerInfos() {
-        return new HashMap<>(containerInfos);
     }
 
     private void handleRegisterResponse(ContainerExecutorInfo executorInfo,
@@ -192,23 +201,34 @@ public abstract class AbstractClusterManager implements IClusterManager {
         }
     }
 
+    private synchronized void doCheckpoint() {
+        clusterContext.checkpoint(new ClusterContext.ClusterCheckpointFunction());
+    }
+
+    protected abstract IFailoverStrategy buildFailoverStrategy();
+
     protected abstract void doStartContainer(int containerId, boolean isRecover);
 
-    protected abstract void doStartDriver(int driverId);
+    protected abstract void doStartDriver(int driverId, int driverIndex);
 
-    public Set<Integer> getContainerIds() {
-        return new HashSet<>(containerIds);
+    public ClusterContext getClusterContext() {
+        return clusterContext;
     }
 
-    public Set<Integer> getDriverIds() {
-        return new HashSet<>(driverIds);
+    public Map<Integer, ContainerInfo> getContainerInfos() {
+        return new HashMap<>(containerInfos);
     }
 
-    public void setContainerIds(Set<Integer> containerIds) {
-        this.containerIds = containerIds;
+    public Map<Integer, DriverInfo> getDriverInfos() {
+        return new HashMap<>(driverInfos);
     }
 
-    public void setDriverIds(Set<Integer> driverIds) {
-        this.driverIds = driverIds;
+    public Map<Integer, String> getContainerIds() {
+        return clusterContext.getContainerIds();
     }
+
+    public Map<Integer, String> getDriverIds() {
+        return clusterContext.getDriverIds();
+    }
+
 }

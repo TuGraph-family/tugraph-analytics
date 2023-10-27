@@ -38,20 +38,35 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class AsyncRpcTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncRpcTest.class);
 
+    private Server server;
+
+    @BeforeMethod
+    public void setup() {
+        server = new Server();
+        server.startServer();
+    }
+
+    @AfterMethod
+    public void cleanUp() {
+        if (server != null) {
+            server.stopServer();
+        }
+    }
+
     @Test
     public void testAsyncRpc() throws Exception {
-
-        Server server = new Server();
-        server.startServer();
-        ExecutorService  executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
-        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort, executorService);
+        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
+            executorService);
 
         int eventCount = 100;
         List<IEvent> request = new ArrayList<>();
@@ -67,19 +82,18 @@ public class AsyncRpcTest {
 
     @Test(expectedExceptions = ExecutionException.class)
     public void testShutdownChannel() throws Exception {
-
-        Server server = new Server();
-        server.startServer();
-        ExecutorService  executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
-        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort, executorService);
+        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
+            executorService);
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 SleepUtils.sleepMilliSecond(300);
                 LOGGER.info("shutdown channel");
-                ManagedChannel channel = (ManagedChannel) ReflectionUtil.getField(client, "channel");
+                ManagedChannel channel = (ManagedChannel) ReflectionUtil.getField(client,
+                    "channel");
                 channel.shutdownNow();
                 LOGGER.info("shutdown channel finish ");
             }
@@ -104,12 +118,10 @@ public class AsyncRpcTest {
 
     @Test(expectedExceptions = ExecutionException.class)
     public void testServerError() throws Exception {
-
-        Server server = new Server();
-        server.startServer();
-        ExecutorService  executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
-        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort, executorService);
+        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
+            executorService);
 
         int eventCount = 100;
         List<Future<IEvent>> results = new ArrayList<>();
@@ -124,13 +136,15 @@ public class AsyncRpcTest {
         validateResult(results, eventCount, 5000);
     }
 
-    public void validateResult(List<Future<IEvent>> results, int count, int waitTimeMs) throws Exception {
+    public void validateResult(List<Future<IEvent>> results, int count, int waitTimeMs)
+        throws Exception {
         List<Integer> eventIds = new ArrayList<>();
         List<Integer> processedIds = new ArrayList<>();
         LOGGER.info("validate result");
         for (int i = 0; i < count; i++) {
             eventIds.add(i);
-            processedIds.add(((TestEvent) (results.get(i).get(waitTimeMs, TimeUnit.MILLISECONDS))).id);
+            processedIds.add(
+                ((TestEvent) (results.get(i).get(waitTimeMs, TimeUnit.MILLISECONDS))).id);
         }
         Assert.assertEquals(processedIds, eventIds);
         LOGGER.info("validate finish");
@@ -140,6 +154,7 @@ public class AsyncRpcTest {
      * Mock event with dummy info.
      */
     public class TestEvent implements IEvent {
+
         private int id;
         private int processTimeMs;
         private boolean isException;
@@ -156,9 +171,7 @@ public class AsyncRpcTest {
 
         @Override
         public String toString() {
-            return "TestEvent{" +
-                "id=" + id +
-                '}';
+            return "TestEvent{" + "id=" + id + '}';
         }
     }
 
@@ -183,8 +196,8 @@ public class AsyncRpcTest {
     /**
      * Mock endpoint to process events.
      */
-    public class MockContainerEndpoint extends ContainerServiceGrpc.ContainerServiceImplBase implements
-        RpcEndpoint {
+    public class MockContainerEndpoint extends
+        ContainerServiceGrpc.ContainerServiceImplBase implements RpcEndpoint {
 
         public MockContainerEndpoint() {
         }
@@ -200,7 +213,8 @@ public class AsyncRpcTest {
                     LOGGER.info("on error: mock exception");
                     responseObserver.onError(new GeaflowRuntimeException("occur mock exception"));
                 } else {
-                    com.antgroup.geaflow.rpc.proto.Container.Response.Builder builder = com.antgroup.geaflow.rpc.proto.Container.Response.newBuilder();
+                    com.antgroup.geaflow.rpc.proto.Container.Response.Builder builder =
+                        com.antgroup.geaflow.rpc.proto.Container.Response.newBuilder();
                     builder.setPayload(request.getPayload());
                     responseObserver.onNext(builder.build());
                     responseObserver.onCompleted();
@@ -211,8 +225,7 @@ public class AsyncRpcTest {
             }
         }
 
-        public void close(Empty request,
-                          StreamObserver<Empty> responseObserver) {
+        public void close(Empty request, StreamObserver<Empty> responseObserver) {
             try {
                 LOGGER.info("close");
                 responseObserver.onNext(Empty.newBuilder().build());

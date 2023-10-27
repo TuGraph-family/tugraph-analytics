@@ -26,7 +26,7 @@ public class RayComponentFailoverStrategy extends AbstractRayFailoverStrategy {
     }
 
     @Override
-    public void doFailover(int componentId) {
+    public void doFailover(int componentId, Throwable cause) {
     }
 
     @Override

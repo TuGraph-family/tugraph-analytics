@@ -27,7 +27,7 @@ public interface IFailoverStrategy {
     /**
      * Trigger failover by input component id.
      */
-    void doFailover(int componentId);
+    void doFailover(int componentId, Throwable cause);
 
     /**
      * Get failover strategy name.

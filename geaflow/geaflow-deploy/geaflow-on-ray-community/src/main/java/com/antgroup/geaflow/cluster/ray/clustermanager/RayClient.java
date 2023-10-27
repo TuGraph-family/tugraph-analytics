@@ -44,9 +44,9 @@ public class RayClient implements Serializable {
             .setMaxRestarts(clusterConfig.getMaxRestarts())
             .setLifetime(ActorLifetime.DETACHED)
             .setJvmOptions(jvmOptions).remote();
-        LOGGER.info("master actor:{}, memoryMB:{}, jvmOptions:{}, isRestartAllFo:{}, foRestartTimes:{}",
+        LOGGER.info("master actor:{}, memoryMB:{}, jvmOptions:{}, foRestartTimes:{}",
             masterRayActor.getId().toString(), totalMemoryMb, jvmOptions,
-            clusterConfig.isFoEnable(), clusterConfig.getMaxRestarts());
+            clusterConfig.getMaxRestarts());
         return masterRayActor;
     }
 
@@ -67,9 +67,9 @@ public class RayClient implements Serializable {
             .setMaxRestarts(clusterConfig.getMaxRestarts())
             .setLifetime(ActorLifetime.DETACHED)
             .setJvmOptions(jvmOptions).remote();
-        LOGGER.info("driver actor:{}, memoryMB:{}, jvmOptions:{}, isRestartAllFo:{}, foRestartTimes:{}",
+        LOGGER.info("driver actor:{}, memoryMB:{}, jvmOptions:{}, foRestartTimes:{}",
             driverRayActor.getId().toString(), totalMemoryMb, jvmOptions,
-            clusterConfig.isFoEnable(), clusterConfig.getMaxRestarts());
+            clusterConfig.getMaxRestarts());
         return driverRayActor;
     }
 
@@ -80,8 +80,8 @@ public class RayClient implements Serializable {
             .setMaxRestarts(clusterConfig.getMaxRestarts())
             .setLifetime(ActorLifetime.DETACHED)
             .remote();
-        LOGGER.info("worker actor {} isDisableFo {}", rayContainer.getId().toString(),
-            clusterConfig.isFoEnable());
+        LOGGER.info("worker actor {} maxRestarts {}", rayContainer.getId().toString(),
+            clusterConfig.getMaxRestarts());
         return rayContainer;
     }
 
