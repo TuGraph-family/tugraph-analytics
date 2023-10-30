@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.rpc.IMasterEndpointRef;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
@@ -26,15 +27,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
-import java.util.concurrent.ExecutorService;
 
 public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMasterEndpointRef {
 
     private MasterServiceFutureStub stub;
     private MasterServiceGrpc.MasterServiceBlockingStub blockingStub;
 
-    public MasterEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public MasterEndpointRef(String host, int port, Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
         this.blockingStub = MasterServiceGrpc.newBlockingStub(channel);
     }
 
-    public <T> void registerContainer(T info, RpcCallback<RegisterResponse> listener) {
+    public <T> ListenableFuture<RegisterResponse> registerContainer(T info) {
         ensureChannelAlive();
         ByteString payload = RpcMessageEncoder.encode(info);
         RegisterRequest.Builder register = RegisterRequest.newBuilder().setPayload(payload);
@@ -53,7 +53,7 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
         } else {
             future = stub.registerContainer(register.setIsDriver(false).build());
         }
-        handleFutureCallback(future, listener);
+        return future;
     }
 
     @Override

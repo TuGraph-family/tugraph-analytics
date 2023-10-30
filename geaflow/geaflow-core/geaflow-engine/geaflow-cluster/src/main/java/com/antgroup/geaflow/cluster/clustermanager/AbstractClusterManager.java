@@ -32,6 +32,7 @@ import com.antgroup.geaflow.common.utils.FutureUtil;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -169,13 +170,14 @@ public abstract class AbstractClusterManager implements IClusterManager {
         ContainerEndpointRef endpointRef = RpcEndpointRefFactory.getInstance()
             .connectContainer(containerInfo.getHost(), containerInfo.getRpcPort());
         int workerNum = clusterConfig.getContainerWorkerNum();
-        endpointRef.process(new OpenContainerEvent(workerNum), new RpcCallback<Response>() {
+        ListenableFuture<Response> future = endpointRef.process(new OpenContainerEvent(workerNum));
+        RpcClient.getInstance().handleFutureCallback(future, new RpcCallback<Response>() {
             @Override
             public void onSuccess(Response response) {
                 byte[] payload = response.getPayload().toByteArray();
                 OpenContainerResponseEvent openResult =
                     (OpenContainerResponseEvent) SerializerFactory
-                    .getKryoSerializer().deserialize(payload);
+                        .getKryoSerializer().deserialize(payload);
                 ContainerExecutorInfo executorInfo = new ContainerExecutorInfo(containerInfo,
                     openResult.getFirstWorkerIndex(), workerNum);
                 handleRegisterResponse(executorInfo, openResult, null);
@@ -185,7 +187,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
             public void onFailure(Throwable t) {
                 handleRegisterResponse(null, null, t);
             }
-        });
+        }, null);
     }
 
     private void handleRegisterResponse(ContainerExecutorInfo executorInfo,

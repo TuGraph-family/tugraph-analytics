@@ -15,19 +15,19 @@
 package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.rpc.IMetricEndpointRef;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.rpc.proto.MetricServiceGrpc;
 import com.antgroup.geaflow.rpc.proto.MetricServiceGrpc.MetricServiceFutureStub;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
-import java.util.concurrent.ExecutorService;
 
 public class MetricEndpointRef extends AbstractRpcEndpointRef implements IMetricEndpointRef {
     private MetricServiceFutureStub stub;
 
-    public MetricEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public MetricEndpointRef(String host, int port, Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override

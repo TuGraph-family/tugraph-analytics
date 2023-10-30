@@ -14,8 +14,6 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RPC_ASYNC_THREADS;
-
 import com.antgroup.geaflow.cluster.rpc.impl.ContainerEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.DriverEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpointRef;
@@ -23,29 +21,21 @@ import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.PipelineMasterEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.utils.ThreadUtil;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class RpcEndpointRefFactory implements Serializable {
 
     private final Map<EndpointRefID, RpcEndpointRef> endpointRefMap;
-    private final ExecutorService executorService;
+    private final Configuration configuration;
 
     private static RpcEndpointRefFactory INSTANCE;
 
     private RpcEndpointRefFactory(Configuration config) {
         this.endpointRefMap = new ConcurrentHashMap<>();
-        int threads = config.getInteger(RPC_ASYNC_THREADS);
-        this.executorService = new ThreadPoolExecutor(threads, threads, Long.MAX_VALUE,
-            TimeUnit.MINUTES, new LinkedBlockingQueue<>(),
-            ThreadUtil.namedThreadFactory(true, "rpc-executor"));
+        this.configuration = config;
     }
 
     public static synchronized RpcEndpointRefFactory getInstance(Configuration config) {
@@ -64,7 +54,7 @@ public class RpcEndpointRefFactory implements Serializable {
         try {
             return (MasterEndpointRef) endpointRefMap
                 .computeIfAbsent(refID,
-                    key -> new MasterEndpointRef(host, port, executorService));
+                    key -> new MasterEndpointRef(host, port, configuration));
         } catch (Throwable t) {
             endpointRefMap.remove(refID);
             throw new RuntimeException("connect master error, host " + host + " port " + port, t);
@@ -76,7 +66,7 @@ public class RpcEndpointRefFactory implements Serializable {
         try {
             return (ResourceManagerEndpointRef) endpointRefMap
                 .computeIfAbsent(refID,
-                    key -> new ResourceManagerEndpointRef(host, port, executorService));
+                    key -> new ResourceManagerEndpointRef(host, port, configuration));
         } catch (Throwable t) {
             endpointRefMap.remove(refID);
             throw new RuntimeException("connect rm error, host " + host + " port " + port, t);
@@ -88,7 +78,7 @@ public class RpcEndpointRefFactory implements Serializable {
         try {
             return (DriverEndpointRef) endpointRefMap
                 .computeIfAbsent(refID,
-                    key -> new DriverEndpointRef(host, port, executorService));
+                    key -> new DriverEndpointRef(host, port, configuration));
         } catch (Throwable t) {
             endpointRefMap.remove(refID);
             throw new RuntimeException("connect driver error, host " + host + " port " + port, t);
@@ -100,7 +90,7 @@ public class RpcEndpointRefFactory implements Serializable {
         try {
             return (PipelineMasterEndpointRef) endpointRefMap
                 .computeIfAbsent(refID,
-                    key -> new PipelineMasterEndpointRef(host, port, executorService));
+                    key -> new PipelineMasterEndpointRef(host, port, configuration));
         } catch (Throwable t) {
             endpointRefMap.remove(refID);
             throw new RuntimeException("connect pipeline master error, host " + host + " port " + port, t);
@@ -112,7 +102,7 @@ public class RpcEndpointRefFactory implements Serializable {
         try {
             return (ContainerEndpointRef) endpointRefMap
                 .computeIfAbsent(refID,
-                    key -> new ContainerEndpointRef(host, port, executorService));
+                    key -> new ContainerEndpointRef(host, port, configuration));
         } catch (Throwable t) {
             endpointRefMap.remove(refID);
             throw new RuntimeException("connect container error, host " + host + " port " + port, t);
@@ -123,7 +113,7 @@ public class RpcEndpointRefFactory implements Serializable {
         EndpointRefID refID = new EndpointRefID(host, port, EndpointType.METRIC);
         try {
             return (MetricEndpointRef) endpointRefMap
-                .computeIfAbsent(refID, key -> new MetricEndpointRef(host, port, executorService));
+                .computeIfAbsent(refID, key -> new MetricEndpointRef(host, port, configuration));
         } catch (Throwable t) {
             endpointRefMap.remove(refID);
             throw new RuntimeException("connect container error, host " + host + " port " + port, t);
@@ -133,10 +123,6 @@ public class RpcEndpointRefFactory implements Serializable {
     public void invalidateEndpointCache(String host, int port, EndpointType endpointType) {
         EndpointRefID refID = new EndpointRefID(host, port, endpointType);
         endpointRefMap.remove(refID);
-    }
-
-    public ExecutorService getExecutor() {
-        return executorService;
     }
 
     enum EndpointType {

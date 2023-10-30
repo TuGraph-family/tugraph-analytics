@@ -66,7 +66,7 @@ public class AsyncRpcTest {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
-            executorService);
+            new Configuration());
 
         int eventCount = 100;
         List<IEvent> request = new ArrayList<>();
@@ -74,18 +74,50 @@ public class AsyncRpcTest {
         for (int i = 0; i < eventCount; i++) {
             IEvent event = new TestEvent(i);
             request.add(event);
-            events.add(client.process(event));
+            events.add(new RpcResponseFuture(client.process(event)));
         }
         validateResult(events, eventCount, 5000);
         LOGGER.info("send event finish");
     }
 
-    @Test(expectedExceptions = ExecutionException.class)
+    @Test
     public void testShutdownChannel() throws Exception {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
-            executorService);
+            new Configuration());
+
+        int eventCount = 1000;
+        List<Future<IEvent>> events = new ArrayList<>();
+
+        List<Integer> eventIds = new ArrayList<>();
+        List<Integer> processedIds = new ArrayList<>();
+        for (int i = 0; i < eventCount; i++) {
+            TestEvent event = new TestEvent(i);
+            event.processTimeMs = 1;
+            Future<IEvent> future = new RpcResponseFuture(client.process(event));
+            processedIds.add(((TestEvent) (future.get(1000, TimeUnit.MILLISECONDS))).id);
+            eventIds.add(i);
+            // Do shutdown.
+            if (i % 100 == 0) {
+                LOGGER.info("shutdown channel");
+                ManagedChannel channel = (ManagedChannel) ReflectionUtil.getField(client, "channel");
+                channel.shutdownNow();
+                LOGGER.info("shutdown channel finish");
+                SleepUtils.sleepMilliSecond(10);
+            }
+        }
+
+        Assert.assertEquals(processedIds, eventIds);
+        LOGGER.info("send event finish");
+    }
+
+    @Test(expectedExceptions = ExecutionException.class)
+    public void testShutdownChannelWithBatchGet() throws Exception {
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        String host = ProcessUtil.getHostIp();
+        ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
+            new Configuration());
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -108,9 +140,7 @@ public class AsyncRpcTest {
             request.add(event);
             event.processTimeMs = 100;
             SleepUtils.sleepMilliSecond(1);
-            if (i % 100 == 0) {
-            }
-            events.add(client.process(event));
+            events.add(new RpcResponseFuture(client.process(event)));
         }
         validateResult(events, eventCount, 5000);
         LOGGER.info("send event finish");
@@ -121,7 +151,7 @@ public class AsyncRpcTest {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
-            executorService);
+            new Configuration());
 
         int eventCount = 100;
         List<Future<IEvent>> results = new ArrayList<>();
@@ -130,7 +160,7 @@ public class AsyncRpcTest {
             if (i == 50) {
                 event.isException = true;
             }
-            results.add(client.process(event));
+            results.add(new RpcResponseFuture(client.process(event)));
         }
         LOGGER.info("send event finish");
         validateResult(results, eventCount, 5000);

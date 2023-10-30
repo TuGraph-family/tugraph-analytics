@@ -16,7 +16,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.rpc.IContainerEndpointRef;
-import com.antgroup.geaflow.cluster.rpc.RpcResponseFuture;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.rpc.proto.Container.Request;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.ContainerServiceGrpc;
@@ -26,16 +26,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 public class ContainerEndpointRef extends AbstractRpcEndpointRef implements IContainerEndpointRef {
 
     protected ContainerServiceFutureStub stub;
     protected ContainerServiceBlockingStub blockingStub;
 
-    public ContainerEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public ContainerEndpointRef(String host, int port, Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
@@ -45,19 +43,10 @@ public class ContainerEndpointRef extends AbstractRpcEndpointRef implements ICon
     }
 
     @Override
-    public Future<IEvent> process(IEvent request) {
+    public ListenableFuture<Response> process(IEvent request) {
         ensureChannelAlive();
         Request req = buildRequest(request);
-        ListenableFuture<Response> future = stub.process(req);
-        return new RpcResponseFuture(future);
-    }
-
-    @Override
-    public void process(IEvent request, RpcCallback<Response> callback) {
-        ensureChannelAlive();
-        Request req = buildRequest(request);
-        ListenableFuture<Response> future = stub.process(req);
-        handleFutureCallback(future, callback);
+        return stub.process(req);
     }
 
     @Override
