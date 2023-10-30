@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.rpc;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.CONTAINER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.DRIVER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.MASTER;
+import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.METRIC;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.PIPELINE_MANAGER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.RESOURCE_MANAGER;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_TIMEOUT_MS;
@@ -31,6 +32,7 @@ import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType;
 import com.antgroup.geaflow.cluster.rpc.impl.ContainerEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.DriverEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.PipelineMasterEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -45,6 +47,8 @@ import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
+import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
+import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
 import java.io.Serializable;
@@ -137,6 +141,11 @@ public class RpcClient implements Serializable {
             RESOURCE_MANAGER);
     }
 
+    public ListenableFuture<MetricQueryResponse> requestMetrics(String id, MetricQueryRequest request) {
+        return doRpcWithRetry(() -> connectMetricServer(id).queryMetrics(request), id, METRIC);
+    }
+
+    // close endpoint connection
     public void closeMasterConnection(String masterId) {
         connectMaster(masterId).close();
     }
@@ -172,6 +181,11 @@ public class RpcClient implements Serializable {
     private PipelineMasterEndpointRef connectPipelineManager(String id) {
         ResourceData resourceData = getResourceData(id);
         return refFactory.connectPipelineManager(resourceData.getHost(), resourceData.getRpcPort());
+    }
+
+    private MetricEndpointRef connectMetricServer(String id) {
+        ResourceData resourceData = getResourceData(id);
+        return refFactory.connectMetricServer(resourceData.getHost(), resourceData.getMetricPort());
     }
 
     private <T> T doRpcWithRetry(Callable<T> function, String resourceId,

@@ -62,6 +62,7 @@ public class Master extends AbstractComponent implements IMaster {
         this.clusterContext = context.getClusterContext();
         this.heartbeatManager = new HeartbeatManager(configuration, clusterManager);
         this.resourceManager = new DefaultResourceManager(clusterManager);
+
         this.clusterContext.setHeartbeatManager(heartbeatManager);
         this.clusterContext.load();
         this.clusterManager.init(clusterContext);
@@ -72,7 +73,7 @@ public class Master extends AbstractComponent implements IMaster {
         resourceManager.init(ResourceManagerContext.build(context, clusterContext));
 
         if (!configuration.getBoolean(ExecutionConfigKeys.RUN_LOCAL_MODE)) {
-            httpServer = new HttpServer(configuration, clusterManager, heartbeatManager);
+            httpServer = new HttpServer(configuration, clusterManager, heartbeatManager, resourceManager);
             httpServer.start();
         }
     }

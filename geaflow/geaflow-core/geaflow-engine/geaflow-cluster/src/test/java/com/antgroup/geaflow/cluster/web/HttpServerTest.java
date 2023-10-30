@@ -14,10 +14,14 @@
 
 package com.antgroup.geaflow.cluster.web;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HA_SERVICE_TYPE;
+
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
+import com.antgroup.geaflow.cluster.resourcemanager.DefaultResourceManager;
+import com.antgroup.geaflow.cluster.resourcemanager.IResourceManager;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.utils.SleepUtils;
+import com.antgroup.geaflow.ha.service.HAServiceType;
 import java.net.URI;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -34,9 +38,12 @@ public class HttpServerTest {
     @Test
     public void test() throws Exception {
         Configuration configuration = new Configuration();
+        configuration.put(HA_SERVICE_TYPE, HAServiceType.memory.name());
         AbstractClusterManager clusterManager = Mockito.mock(AbstractClusterManager.class);
         HeartbeatManager heartbeatManager = new HeartbeatManager(configuration, clusterManager);
-        HttpServer httpServer = new HttpServer(configuration, clusterManager, heartbeatManager);
+        IResourceManager resourceManager = new DefaultResourceManager(clusterManager);
+        HttpServer httpServer = new HttpServer(configuration, clusterManager, heartbeatManager,
+            resourceManager);
         CountDownLatch latch = new CountDownLatch(1);
 
         new Thread(new Runnable() {
@@ -50,7 +57,12 @@ public class HttpServerTest {
         Mockito.when(clusterManager.getContainerInfos()).thenReturn(Collections.EMPTY_MAP);
 
         latch.await();
-        doGet("http://localhost:8090/", "rest/cluster");
+        doGet("http://localhost:8090/", "rest/overview");
+        doGet("http://localhost:8090/", "rest/containers");
+        doGet("http://localhost:8090/", "rest/drivers");
+        doGet("http://localhost:8090/", "rest/master/configuration");
+        doGet("http://localhost:8090/", "rest/pipelines");
+        doGet("http://localhost:8090/", "rest/pipelines/1/cycles");
         httpServer.stop();
     }
 

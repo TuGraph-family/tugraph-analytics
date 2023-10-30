@@ -25,6 +25,8 @@ public class ResourceData implements Serializable {
     private int rpcPort;
     /** shuffle service port.*/
     private int shufflePort;
+    /** shuffle service port.*/
+    private int metricPort;
 
     public String getHost() {
         return host;
@@ -58,9 +60,18 @@ public class ResourceData implements Serializable {
         this.shufflePort = shufflePort;
     }
 
+    public int getMetricPort() {
+        return metricPort;
+    }
+
+    public void setMetricPort(int metricPort) {
+        this.metricPort = metricPort;
+    }
+
     @Override
     public String toString() {
         return "ResourceData{" + "host='" + host + '\'' + ", processId=" + processId + ", rpcPort="
-            + rpcPort + ", shufflePort=" + shufflePort + '}';
+            + rpcPort + ", shufflePort=" + shufflePort + ", metricPort=" + metricPort + '}';
     }
+
 }

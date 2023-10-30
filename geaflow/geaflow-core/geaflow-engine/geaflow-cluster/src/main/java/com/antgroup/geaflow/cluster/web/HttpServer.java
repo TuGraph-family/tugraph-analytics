@@ -18,19 +18,25 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER
 
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
-import com.antgroup.geaflow.cluster.web.handler.ClusterHttpHandler;
+import com.antgroup.geaflow.cluster.resourcemanager.IResourceManager;
+import com.antgroup.geaflow.cluster.web.handler.ClusterRestHandler;
+import com.antgroup.geaflow.cluster.web.handler.MasterRestHandler;
+import com.antgroup.geaflow.cluster.web.handler.PipelineRestHandler;
+import com.antgroup.geaflow.cluster.web.metrics.MetricFetcher;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.stats.model.MetricCache;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,17 +46,14 @@ public class HttpServer {
     private static final String SERVER_NAME = "jetty-server";
     private static final int DEFAULT_ACCEPT_QUEUE_SIZE = 8;
 
-    private final ClusterHttpHandler clusterHandler;
     private final Server server;
     private final int httpPort;
     private final QueuedThreadPool threadPool;
     private final ScheduledExecutorScheduler serverExecutor;
 
     public HttpServer(Configuration configuration, IClusterManager clusterManager,
-                      HeartbeatManager heartbeatManager) {
-        this.clusterHandler = new ClusterHttpHandler(clusterManager, heartbeatManager);
-        this.httpPort = configuration.getInteger(MASTER_HTTP_PORT);
-
+                      HeartbeatManager heartbeatManager, IResourceManager resourceManager) {
+        httpPort = configuration.getInteger(MASTER_HTTP_PORT);
         threadPool = new QueuedThreadPool();
         threadPool.setDaemon(true);
         threadPool.setName(SERVER_NAME);
@@ -61,19 +64,25 @@ public class HttpServer {
         errorHandler.setServer(server);
         server.addBean(errorHandler);
 
+        MetricCache metricCache = new MetricCache();
+        MetricFetcher metricFetcher = new MetricFetcher(configuration, clusterManager,
+            metricCache);
+
+        ResourceConfig resourceConfig = new ResourceConfig();
+        resourceConfig.register(new MasterRestHandler(configuration));
+        resourceConfig.register(new ClusterRestHandler(clusterManager, heartbeatManager,
+            resourceManager, metricFetcher));
+        resourceConfig.register(new PipelineRestHandler(metricCache, metricFetcher));
+
+        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        handler.setContextPath("/");
+        handler.addServlet(new ServletHolder(new ServletContainer(resourceConfig)), "/rest/*");
+        server.setHandler(handler);
+
         serverExecutor = new ScheduledExecutorScheduler("jetty-scheduler", true);
     }
 
     public void start() {
-        ContextHandlerCollection contexts = new ContextHandlerCollection();
-        server.setHandler(contexts);
-
-        //add servlet
-        ServletContextHandler contextHandler = new ServletContextHandler(
-            ServletContextHandler.SESSIONS);
-        contextHandler.addServlet(new ServletHolder(clusterHandler), "/rest/cluster");
-        contexts.addHandler(contextHandler);
-
         try {
             ServerConnector connector = newConnector(server, serverExecutor, null, httpPort);
             connector.setName(SERVER_NAME);

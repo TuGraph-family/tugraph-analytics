@@ -17,14 +17,18 @@ package com.antgroup.geaflow.cluster.common;
 import com.antgroup.geaflow.cluster.exception.ExceptionClient;
 import com.antgroup.geaflow.cluster.exception.ExceptionCollectService;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatClient;
+import com.antgroup.geaflow.cluster.web.metrics.MetricServer;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
+import com.antgroup.geaflow.ha.service.ResourceData;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 
 public abstract class AbstractContainer extends AbstractComponent {
 
     protected HeartbeatClient heartbeatClient;
     protected ExceptionCollectService exceptionCollectService;
+    protected MetricServer metricServer;
+    protected int metricPort;
 
     public AbstractContainer(int rpcPort) {
         super(rpcPort);
@@ -39,10 +43,19 @@ public abstract class AbstractContainer extends AbstractComponent {
         ExceptionClient.init(id, name, masterId);
         this.heartbeatClient = new HeartbeatClient(id, name, configuration);
         this.exceptionCollectService = new ExceptionCollectService();
+        this.metricServer = new MetricServer(configuration);
+        this.metricPort = metricServer.start();
     }
 
     protected void registerToMaster() {
         this.heartbeatClient.registerToMaster(masterId, buildComponentInfo());
+    }
+
+    @Override
+    protected ResourceData buildResourceData() {
+        ResourceData resourceData = super.buildResourceData();
+        resourceData.setMetricPort(metricPort);
+        return resourceData;
     }
 
     protected abstract void startRpcService();
@@ -55,9 +68,9 @@ public abstract class AbstractContainer extends AbstractComponent {
         componentInfo.setHost(ProcessUtil.getHostIp());
         componentInfo.setPid(ProcessUtil.getProcessId());
         componentInfo.setRpcPort(rpcPort);
+        componentInfo.setMetricPort(metricPort);
     }
 
-    @Override
     public void close() {
         super.close();
         if (exceptionCollectService != null) {
@@ -65,6 +78,9 @@ public abstract class AbstractContainer extends AbstractComponent {
         }
         if (heartbeatClient != null) {
             heartbeatClient.close();
+        }
+        if (metricServer != null) {
+            metricServer.stop();
         }
     }
 
