@@ -248,10 +248,7 @@ CREATE TABLE IF NOT EXISTS `geaflow_plugin` (
 `plugin_type` varchar(32) NOT NULL COMMENT 'Plugin Type',
 `plugin_category` varchar(32) NOT NULL COMMENT 'Plugin Category',
 `jar_package_id` char(64) DEFAULT NULL COMMENT 'JAR ID',
-`version` varchar(128) DEFAULT NULL COMMENT 'Version',
-`data_plugin_id` char(64) DEFAULT NULL COMMENT 'Data Plugin ID',
 `system` tinyint(4) DEFAULT NULL COMMENT 'System Level',
-`entry_class` varchar(256) DEFAULT NULL COMMENT 'Entry Class',
 PRIMARY KEY (`id`),
 UNIQUE KEY `uk_guid` (`guid`),
 UNIQUE KEY `uk_name` (`tenant_id`, `name`)

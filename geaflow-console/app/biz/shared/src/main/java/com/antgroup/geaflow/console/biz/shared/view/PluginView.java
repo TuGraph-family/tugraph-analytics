@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.biz.shared.view;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,15 +24,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PluginView extends NameView {
 
-    private GeaflowPluginType type;
+    private String type;
 
     private GeaflowPluginCategory category;
 
-    private String version;
-
     private RemoteFileView jarPackage;
 
-    private String dataPluginId;
-
-    private String entryClass;
+    private boolean system;
 }

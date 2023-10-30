@@ -29,6 +29,7 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,8 +52,8 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
     }
 
 
-    public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions
-        , GeaflowRemoteFile jarPackage) {
+    public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions,
+         List<GeaflowPlugin> plugins, GeaflowRemoteFile jarPackage) {
         GeaflowJobType jobType = entity.getType();
         GeaflowJob job;
         switch (jobType) {
@@ -72,6 +73,7 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
                 GeaflowCode geaflowCode = new GeaflowCode(entity.getUserCode());
                 processJob.setUserCode(geaflowCode);
                 processJob.setFunctions(functions);
+                processJob.setPlugins(plugins);
                 processJob.setStructs(structs);
                 processJob.setGraph(graphs);
                 job = processJob;

@@ -25,18 +25,27 @@ import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.Md5Util;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowFileType;
+import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.service.FunctionService;
 import com.antgroup.geaflow.console.core.service.JobService;
 import com.antgroup.geaflow.console.core.service.NameService;
+import com.antgroup.geaflow.console.core.service.PluginService;
 import com.antgroup.geaflow.console.core.service.RemoteFileService;
 import com.antgroup.geaflow.console.core.service.VersionService;
+import com.antgroup.geaflow.console.core.service.file.FileRefService;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import com.google.common.base.Preconditions;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +75,19 @@ public class RemoteFileManagerImpl extends
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private PluginService pluginService;
+
+    private final Map<GeaflowResourceType, FileRefService> fileServiceMap = new HashMap<>();
+
+    @PostConstruct
+    public void init() {
+        fileServiceMap.put(GeaflowResourceType.JOB, jobService);
+        fileServiceMap.put(GeaflowResourceType.ENGINE_VERSION, versionService);
+        fileServiceMap.put(GeaflowResourceType.FUNCTION, functionService);
+        fileServiceMap.put(GeaflowResourceType.PLUGIN, pluginService);
+    }
+
     @Override
     protected NameViewConverter<GeaflowRemoteFile, RemoteFileView> getConverter() {
         return remoteFileViewConverter;
@@ -81,12 +103,21 @@ public class RemoteFileManagerImpl extends
         return ListUtil.convert(views, v -> remoteFileViewConverter.convert(v));
     }
 
+    private boolean checkFileName(String str) {
+        String pattern = "^[A-Za-z0-9@!#$%^&*()_+\\-=\\[\\]{};:'\"\\,\\.\\/\\?\\\\|`~\\s]+$";
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(str);
+        return matcher.matches();
+    }
+
     @Transactional
     @Override
     public String create(RemoteFileView view, MultipartFile multipartFile) {
         String name = Optional.ofNullable(view.getName()).orElse(multipartFile.getOriginalFilename());
+        if (!checkFileName(name)) {
+            throw new GeaflowException("File name is illegal, {}", name);
+        }
         String path = Preconditions.checkNotNull(view.getPath(), "Invalid path");
-
         String remoteFileId;
         try {
             view.setName(name);
@@ -179,65 +210,36 @@ public class RemoteFileManagerImpl extends
         return super.get(ids);
     }
 
+
     @Override
-    public void deleteFunctionJar(String jarId, String functionId) {
-        if (jarId == null) {
+    public void deleteRefJar(String jarId, String refId, GeaflowResourceType resourceType) {
+        if (jarId == null || !fileServiceMap.containsKey(resourceType)) {
             return;
         }
 
-        long functionCount = functionService.getFileRefCount(jarId, functionId);
-        if (functionCount > 0) {
-            return;
-        }
-
-        long jobCount = jobService.getFileRefCount(jarId, null);
-        if (jobCount > 0) {
-            return;
+        // version jar is only used by a version, do not filter
+        if (resourceType != GeaflowResourceType.ENGINE_VERSION) {
+            for (Entry<GeaflowResourceType, FileRefService> entry : fileServiceMap.entrySet()) {
+                FileRefService fileRefService = entry.getValue();
+                // exclude itself when current type is the resourceType
+                long refCount = entry.getKey() == resourceType ? fileRefService.getFileRefCount(jarId, refId) :
+                                fileRefService.getFileRefCount(jarId, null);
+                if (refCount > 0) {
+                    return;
+                }
+            }
         }
 
         deleteFile(jarId);
     }
-
-    @Override
-    public void deleteJobJar(String jarId, String jobId) {
-        if (jarId == null) {
-            return;
-        }
-
-        long functionCount = functionService.getFileRefCount(jarId, null);
-        if (functionCount > 0) {
-            return;
-        }
-
-        long jobCount = jobService.getFileRefCount(jarId, jobId);
-        if (jobCount > 0) {
-            return;
-        }
-
-        deleteFile(jarId);
-    }
-
-    @Override
-    public void deleteVersionJar(String jarId) {
-        // version jar is only used by a version
-        deleteFile(jarId);
-    }
-
 
     private void checkFileUsed(String remoteFileId) {
-        long functionCount = functionService.getFileRefCount(remoteFileId, null);
-        if (functionCount > 0) {
-            throw new GeaflowException("file is used by functions, count:{}", remoteFileId, functionCount);
-        }
-
-        long jobCount = jobService.getFileRefCount(remoteFileId, null);
-        if (jobCount > 0) {
-            throw new GeaflowException("file is used by jobs, count:{}", remoteFileId, jobCount);
-        }
-
-        long versionCount = versionService.getFileRefCount(remoteFileId, null);
-        if (versionCount > 0) {
-            throw new GeaflowException("file is used by versions, count:{}", remoteFileId, versionCount);
+        for (Entry<GeaflowResourceType, FileRefService> entry : fileServiceMap.entrySet()) {
+            long functionCount = entry.getValue().getFileRefCount(remoteFileId, null);
+            if (functionCount > 0) {
+                throw new GeaflowException("file {} is used by {}, count:{}",
+                    remoteFileId, entry.getKey().name(), functionCount);
+            }
         }
     }
 

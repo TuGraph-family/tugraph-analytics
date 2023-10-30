@@ -19,17 +19,18 @@ import com.antgroup.geaflow.console.common.dal.mapper.PluginConfigMapper;
 import com.antgroup.geaflow.console.common.dal.model.PluginConfigSearch;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class PluginConfigDao extends UserLevelDao<PluginConfigMapper, PluginConfigEntity> implements
     NameDao<PluginConfigEntity, PluginConfigSearch> {
 
-    public List<PluginConfigEntity> getPluginConfigs(GeaflowPluginCategory category, GeaflowPluginType type) {
-        return lambdaQuery().eq(PluginConfigEntity::getCategory, category).eq(PluginConfigEntity::getType, type).list();
+    public List<PluginConfigEntity> getPluginConfigs(GeaflowPluginCategory category, String type) {
+        return lambdaQuery().eq(category != null, PluginConfigEntity::getCategory, category)
+            .eq(StringUtils.isNotEmpty(type), PluginConfigEntity::getType, type).list();
     }
 
     @Override

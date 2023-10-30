@@ -66,11 +66,11 @@ public class PluginConfigService extends NameService<GeaflowPluginConfig, Plugin
         return ListUtil.convert(entities, e -> pluginConfigConverter.convert(e));
     }
 
-    public List<GeaflowPluginConfig> getPluginConfigs(GeaflowPluginCategory category, GeaflowPluginType type) {
+    public List<GeaflowPluginConfig> getPluginConfigs(GeaflowPluginCategory category, String type) {
         return parse(pluginConfigDao.getPluginConfigs(category, type));
     }
 
-    public GeaflowPluginConfig getDefaultPluginConfig(GeaflowPluginCategory category, GeaflowPluginType type) {
+    public GeaflowPluginConfig getDefaultPluginConfig(GeaflowPluginCategory category, String type) {
         List<GeaflowPluginConfig> pluginConfigs = getPluginConfigs(category, type);
         if (pluginConfigs.isEmpty()) {
             throw new GeaflowException("At least one plugin config for {} plugin type {} needed", category, type);
@@ -103,7 +103,7 @@ public class PluginConfigService extends NameService<GeaflowPluginConfig, Plugin
             return null;
         }
 
-        GeaflowPluginType type = plugins.get(0).getType();
+        String type = plugins.get(0).getType();
         List<GeaflowPluginConfig> pluginConfigs = getPluginConfigs(category, type);
         if (pluginConfigs.isEmpty()) {
             return null;
@@ -114,7 +114,7 @@ public class PluginConfigService extends NameService<GeaflowPluginConfig, Plugin
 
     @Transactional
     public String createDefaultPluginConfig(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
+        String type = pluginConfig.getType();
         GeaflowPluginCategory category = pluginConfig.getCategory();
 
         // check plugin config
@@ -144,7 +144,7 @@ public class PluginConfigService extends NameService<GeaflowPluginConfig, Plugin
     }
 
     public void testConnection(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
+        GeaflowPluginType type = GeaflowPluginType.valueOf(pluginConfig.getType());
         GeaflowConfig config = pluginConfig.getConfig();
 
         GeaflowConfigDesc configDesc = ConfigDescFactory.get(type);

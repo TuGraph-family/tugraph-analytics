@@ -27,5 +27,5 @@ public class PluginSearch extends NameSearch {
 
     private GeaflowPluginCategory pluginCategory;
 
-    private boolean system;
+    private String keyword;
 }

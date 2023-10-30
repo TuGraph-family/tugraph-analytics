@@ -41,7 +41,7 @@ public class MetricArgsClass extends GeaflowConfigClass {
     private PluginConfigClass plugin;
 
     public MetricArgsClass(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
 
         Class<? extends PluginConfigClass> configClass;
         switch (type) {
@@ -49,7 +49,7 @@ public class MetricArgsClass extends GeaflowConfigClass {
                 configClass = InfluxdbPluginConfigClass.class;
                 break;
             default:
-                throw new GeaflowIllegalException("Metric meta config type {} not supported", type);
+                throw new GeaflowIllegalException("Metric meta config type {} not supported", pluginConfig.getType());
         }
 
         this.plugin = pluginConfig.getConfig().parse(configClass);

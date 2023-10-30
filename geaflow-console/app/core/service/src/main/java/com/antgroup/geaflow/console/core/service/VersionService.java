@@ -22,13 +22,15 @@ import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.converter.NameConverter;
 import com.antgroup.geaflow.console.core.service.converter.VersionConverter;
+import com.antgroup.geaflow.console.core.service.file.FileRefService;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class VersionService extends NameService<GeaflowVersion, VersionEntity, VersionSearch> {
+public class VersionService extends NameService<GeaflowVersion, VersionEntity, VersionSearch> implements FileRefService {
 
     @Autowired
     private VersionDao versionDao;
@@ -60,6 +62,7 @@ public class VersionService extends NameService<GeaflowVersion, VersionEntity, V
 
     public GeaflowVersion getDefaultVersion() {
         VersionEntity version = versionDao.getDefaultVersion();
+        Preconditions.checkNotNull(version, "No default published version found");
         return parse(version);
     }
 
@@ -67,6 +70,7 @@ public class VersionService extends NameService<GeaflowVersion, VersionEntity, V
         return parse(versionDao.getPublishVersionByName(name));
     }
 
+    @Override
     public long getFileRefCount(String fileId, String versionId) {
         return versionDao.getFileRefCount(fileId, versionId);
     }

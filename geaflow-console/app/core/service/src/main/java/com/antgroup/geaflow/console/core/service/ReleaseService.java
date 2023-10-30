@@ -22,6 +22,7 @@ import com.antgroup.geaflow.console.common.service.integration.engine.CompileCon
 import com.antgroup.geaflow.console.common.service.integration.engine.CompileResult;
 import com.antgroup.geaflow.console.common.service.integration.engine.FunctionInfo;
 import com.antgroup.geaflow.console.common.service.integration.engine.GeaflowCompiler;
+import com.antgroup.geaflow.console.common.service.integration.engine.TableInfo;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowCompileException;
@@ -32,6 +33,7 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowInstance;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.config.CompileContextClass;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.config.DeployConfig;
@@ -123,12 +125,14 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
 
     public CompileResult compile(GeaflowJob job, GeaflowVersion version, Map<String, Integer> parallelisms) {
         VersionClassLoader classLoader = versionFactory.getClassLoader(version);
-        List<GeaflowRemoteFile> jars = ListUtil.convert(job.getFunctions(), GeaflowFunction::getJarPackage);
-        if (CollectionUtils.isNotEmpty(jars)) {
+        List<GeaflowRemoteFile> udfs = ListUtil.convert(job.getFunctions(), GeaflowFunction::getJarPackage);
+        List<GeaflowRemoteFile> plugins = ListUtil.convert(job.getPlugins(), GeaflowPlugin::getJarPackage);
+        udfs.addAll(plugins);
+        if (CollectionUtils.isNotEmpty(udfs)) {
             // use FunctionClassLoader if job has udf
             FunctionClassLoader functionLoader = null;
             try {
-                functionLoader = new FunctionClassLoader(classLoader, jars);
+                functionLoader = new FunctionClassLoader(classLoader, udfs);
                 return compile(functionLoader, job, parallelisms);
             } finally {
                 if (functionLoader != null) {
@@ -177,6 +181,32 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
             }
         }
         releaseDao.dropByJobIds(ids);
+    }
+
+    public Set<String> parseDeclaredPlugins(GeaflowJob job, GeaflowVersion version) {
+        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
+        CompileContext context = classLoader.newInstance(CompileContext.class);
+        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
+        setContextConfig(context, job.getInstanceId(), CatalogType.MEMORY);
+
+        try {
+            return compiler.getDeclaredTablePlugins(job.generateCode().getText(), context);
+        } catch (Exception e) {
+            throw new GeaflowCompileException("Parse plugins failed", e);
+        }
+    }
+
+    public Set<TableInfo> getUnResolvedTables(GeaflowJob job, GeaflowVersion version) {
+        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
+        CompileContext context = classLoader.newInstance(CompileContext.class);
+        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
+        setContextConfig(context, job.getInstanceId(), CatalogType.MEMORY);
+
+        try {
+            return compiler.getUnResolvedTables(job.generateCode().getText(), context);
+        } catch (Exception e) {
+            throw new GeaflowCompileException("Parse plugins failed", e);
+        }
     }
 }
 

@@ -210,7 +210,7 @@ public class InstallManagerImpl implements InstallManager {
 
         // init meta table
         GeaflowPluginConfig runtimeMetaConfig = install.getRuntimeMetaConfig();
-        if (GeaflowPluginType.JDBC.equals(runtimeMetaConfig.getType())) {
+        if (GeaflowPluginType.JDBC.name().equals(runtimeMetaConfig.getType())) {
             JdbcPluginConfigClass jdbcConfig = runtimeMetaConfig.getConfig().parse(JdbcPluginConfigClass.class);
             datasourceService.executeResource(jdbcConfig, "runtimemeta.init.sql");
         }
@@ -224,7 +224,7 @@ public class InstallManagerImpl implements InstallManager {
         // setup influxdb
         if (deployConfig.isLocalMode()) {
             GeaflowPluginConfig metricConfig = install.getMetricConfig();
-            if (GeaflowPluginType.INFLUXDB.equals(metricConfig.getType())) {
+            if (GeaflowPluginType.INFLUXDB.name().equals(metricConfig.getType())) {
                 InfluxdbPluginConfigClass influxdbConfig = metricConfig.getConfig()
                     .parse(InfluxdbPluginConfigClass.class);
                 if (influxdbConfig.getUrl().contains(deployConfig.getHost())) {

@@ -24,6 +24,7 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.service.converter.DataConverter;
 import com.antgroup.geaflow.console.core.service.converter.FunctionConverter;
+import com.antgroup.geaflow.console.core.service.file.FileRefService;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FunctionService extends DataService<GeaflowFunction, FunctionEntity, FunctionSearch> {
+public class FunctionService extends DataService<GeaflowFunction, FunctionEntity, FunctionSearch> implements FileRefService {
 
     @Autowired
     private FunctionDao functionDao;
@@ -67,6 +68,7 @@ public class FunctionService extends DataService<GeaflowFunction, FunctionEntity
         }).collect(Collectors.toList());
     }
 
+    @Override
     public long getFileRefCount(String fileId, String excludeFunctionId) {
         return functionDao.getFileRefCount(fileId, excludeFunctionId);
     }

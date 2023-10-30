@@ -23,4 +23,11 @@ public interface GeaflowCompiler {
     CompileResult compile(String script, CompileContext context);
 
     Set<FunctionInfo> getUnResolvedFunctions(String script, CompileContext context);
+
+    Set<String> getDeclaredTablePlugins(String type, CompileContext context);
+
+    Set<String> getEnginePlugins();
+
+    Set<TableInfo> getUnResolvedTables(String script, CompileContext context);
+
 }

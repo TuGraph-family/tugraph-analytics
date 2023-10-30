@@ -14,6 +14,9 @@
 
 package com.antgroup.geaflow.console.common.util.type;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public enum GeaflowPluginType {
     KAFKA,
 
@@ -45,5 +48,27 @@ public enum GeaflowPluginType {
 
     CONTAINER,
 
-    RAY
+    RAY,
+
+    /**
+     * just for custom define or unknown type, not a specific type.
+     */
+    None;
+
+
+    public static GeaflowPluginType of(String type) {
+        try {
+            return GeaflowPluginType.valueOf(type);
+        } catch (Exception e) {
+            return GeaflowPluginType.None;
+        }
+    }
+
+    public static String getName(String type) {
+        if (type == null) {
+            return null;
+        }
+        GeaflowPluginType typeEnum = GeaflowPluginType.of(type.toUpperCase());
+        return typeEnum == None ? type : typeEnum.name();
+    }
 }

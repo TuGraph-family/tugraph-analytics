@@ -37,6 +37,15 @@ public class FunctionClassLoader implements CompileClassLoader {
         this.functionLoader = createFunctionLoader(jars);
     }
 
+    public FunctionClassLoader(VersionClassLoader versionClassLoader, URL[] urls) {
+        this.versionClassLoader = versionClassLoader;
+        this.functionLoader = createFunctionLoader(urls);
+    }
+
+    private URLClassLoader createFunctionLoader(URL[] urls) {
+        return new URLClassLoader(urls, versionClassLoader.getClassLoader());
+    }
+
     private URLClassLoader createFunctionLoader(List<GeaflowRemoteFile> userJars) {
         List<URL> userUrls = ListUtil.convert(userJars, jar -> {
             try {

@@ -19,12 +19,17 @@ import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
 import com.antgroup.geaflow.dsl.common.compile.FunctionInfo;
 import com.antgroup.geaflow.dsl.common.compile.QueryCompiler;
+import com.antgroup.geaflow.dsl.common.compile.TableInfo;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.connector.api.TableConnector;
 import com.antgroup.geaflow.dsl.parser.GeaFlowDSLParser;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.runtime.command.IQueryCommand;
 import com.antgroup.geaflow.dsl.runtime.engine.GeaFlowQueryEngine;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateFunction;
+import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
+import com.antgroup.geaflow.dsl.sqlnode.SqlCreateTable;
+import com.antgroup.geaflow.dsl.sqlnode.SqlTableProperty;
 import com.antgroup.geaflow.dsl.sqlnode.SqlUseInstance;
 import com.antgroup.geaflow.dsl.util.SqlNodeUtil;
 import com.antgroup.geaflow.plan.PipelinePlanBuilder;
@@ -32,13 +37,19 @@ import com.antgroup.geaflow.plan.graph.PipelineGraph;
 import com.antgroup.geaflow.plan.visualization.JsonPlanGraphVisualization;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskContext;
+import com.google.common.collect.ImmutableList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.util.NlsString;
 
 public class QueryClient implements QueryCompiler {
 
@@ -146,6 +157,84 @@ public class QueryClient implements QueryCompiler {
                 }
             }
             return functions;
+        } catch (Exception e) {
+            throw new GeaFlowDSLException("Error in parser dsl", e);
+        }
+    }
+
+    @Override
+    public Set<String> getEnginePlugins() {
+        Set<String> typs = new HashSet<>();
+        ServiceLoader<TableConnector> connectors = ServiceLoader.load(TableConnector.class);
+        for (TableConnector connector : connectors) {
+            typs.add(connector.getType().toUpperCase());
+        }
+        return typs;
+    }
+
+    @Override
+    public Set<String> getDeclaredTablePlugins(String script, CompileContext context) {
+        try {
+            List<SqlNode> sqlNodes = parser.parseMultiStatement(script);
+            Set<String> plugins = new HashSet<>();
+
+            for (SqlNode sqlNode : sqlNodes) {
+                if (sqlNode instanceof SqlCreateTable) {
+                    SqlNodeList properties = ((SqlCreateTable) sqlNode).getProperties();
+                    for (SqlNode property : properties) {
+                        if (property instanceof SqlTableProperty) {
+                            ImmutableList<String> names = ((SqlTableProperty) property).getKey().names;
+                            String key = names.get(0);
+                            if (key.equals("type")) {
+                                NlsString nlsString =
+                                    (NlsString) ((SqlCharStringLiteral) ((SqlTableProperty) property).getValue()).getValue();
+                                plugins.add(nlsString.getValue());
+                            }
+                        }
+                    }
+                }
+            }
+            return plugins;
+        } catch (Exception e) {
+            throw new GeaFlowDSLException("Error in parser dsl", e);
+        }
+    }
+
+    @Override
+    public Set<TableInfo> getUnResolvedTables(String script, CompileContext context) {
+        try {
+            List<SqlNode> sqlNodes = parser.parseMultiStatement(script);
+            GQLContext gqlContext = GQLContext.create(new Configuration(context.getConfig()), true);
+
+            Set<TableInfo> declaredTables = new HashSet<>();
+            Set<TableInfo> unResolvedTables = new HashSet<>();
+            for (SqlNode sqlNode : sqlNodes) {
+                if (sqlNode instanceof SqlCreateTable) {
+                    ImmutableList<String> names = ((SqlCreateTable) sqlNode).getName().names;
+                    String tableName = names.get(0);
+                    String instanceName = gqlContext.getCurrentInstance();
+                    declaredTables.add(new TableInfo(instanceName, tableName));
+
+                } else if (sqlNode instanceof SqlCreateGraph) {
+                    ImmutableList<String> names = ((SqlCreateGraph) sqlNode).getName().names;
+                    String tableName = names.get(0);
+                    String instanceName = gqlContext.getCurrentInstance();
+                    declaredTables.add(new TableInfo(instanceName, tableName));
+
+                } else if (sqlNode instanceof SqlUseInstance) {
+                    SqlUseInstance useInstance = (SqlUseInstance) sqlNode;
+                    String instanceName = useInstance.getInstance().toString();
+                    gqlContext.setCurrentInstance(instanceName);
+
+                } else {
+                    Set<String> usedTables = SqlNodeUtil.findUsedTables(sqlNode);
+                    String instanceName = gqlContext.getCurrentInstance();
+                    for (String usedTable : usedTables) {
+                        unResolvedTables.add(new TableInfo(instanceName, usedTable));
+                    }
+                }
+            }
+            return unResolvedTables.stream().filter(e -> !declaredTables.contains(e)).collect(Collectors.toSet());
         } catch (Exception e) {
             throw new GeaFlowDSLException("Error in parser dsl", e);
         }

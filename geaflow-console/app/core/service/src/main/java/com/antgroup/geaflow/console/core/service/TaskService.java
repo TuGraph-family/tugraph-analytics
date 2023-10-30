@@ -23,7 +23,6 @@ import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowOperationType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
@@ -130,10 +129,10 @@ public class TaskService extends IdService<GeaflowTask, TaskEntity, TaskSearch> 
         GeaflowPluginCategory runtime = GeaflowPluginCategory.RUNTIME_META;
         GeaflowPluginCategory data = GeaflowPluginCategory.DATA;
 
-        GeaflowPluginType haType = pluginService.getDefaultPlugin(ha).getType();
-        GeaflowPluginType metricType = pluginService.getDefaultPlugin(metric).getType();
-        GeaflowPluginType runtimeType = pluginService.getDefaultPlugin(runtime).getType();
-        GeaflowPluginType dataType = pluginService.getDefaultPlugin(data).getType();
+        String haType = pluginService.getDefaultPlugin(ha).getType();
+        String metricType = pluginService.getDefaultPlugin(metric).getType();
+        String runtimeType = pluginService.getDefaultPlugin(runtime).getType();
+        String dataType = pluginService.getDefaultPlugin(data).getType();
 
         GeaflowPluginConfig haConfig = pluginConfigService.getDefaultPluginConfig(ha, haType);
         GeaflowPluginConfig metricConfig = pluginConfigService.getDefaultPluginConfig(metric, metricType);

@@ -23,13 +23,15 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@Slf4j
 public class GeaflowPluginConfig extends GeaflowName {
 
-    private GeaflowPluginType type;
+    private String type;
 
     private GeaflowPluginCategory category;
 
@@ -37,7 +39,7 @@ public class GeaflowPluginConfig extends GeaflowName {
 
     public GeaflowPluginConfig(GeaflowPluginCategory category, PluginConfigClass pluginConfigClass) {
         this.category = category;
-        this.type = pluginConfigClass.getType();
+        this.type = pluginConfigClass.getType().name();
         this.config = pluginConfigClass.build();
     }
 
@@ -45,7 +47,7 @@ public class GeaflowPluginConfig extends GeaflowName {
                                GeaflowConfig config) {
         super.name = name;
         super.comment = comment;
-        this.type = type;
+        this.type = type.name();
         this.category = category;
         this.config = config;
     }
@@ -56,6 +58,11 @@ public class GeaflowPluginConfig extends GeaflowName {
         Preconditions.checkNotNull(type, "Invalid plugin type");
         Preconditions.checkNotNull(category, "Invalid category");
         Preconditions.checkNotNull(config, "Invalid plugin config");
-        ConfigDescFactory.get(type).validateConfig(config);
+
+        GeaflowPluginType geaflowPluginType = GeaflowPluginType.of(type);
+        if (geaflowPluginType != GeaflowPluginType.None) {
+            ConfigDescFactory.get(geaflowPluginType).validateConfig(config);
+        }
+
     }
 }

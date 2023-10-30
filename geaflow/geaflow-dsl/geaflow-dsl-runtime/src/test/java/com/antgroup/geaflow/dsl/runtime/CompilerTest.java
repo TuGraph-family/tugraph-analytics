@@ -18,6 +18,7 @@ import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
 import com.antgroup.geaflow.dsl.common.compile.FunctionInfo;
 import com.antgroup.geaflow.dsl.common.compile.QueryCompiler;
+import com.antgroup.geaflow.dsl.common.compile.TableInfo;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -93,5 +94,223 @@ public class CompilerTest {
         Assert.assertEquals(functions.get(1), "instance0.f2");
         Assert.assertEquals(functions.get(2), "default.f1");
         Assert.assertEquals(functions.get(3), "default.f0");
+    }
+
+    @Test
+    public void testFindUnResolvedPlugins() {
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script = "CREATE GRAPH IF NOT EXISTS dy_modern (\n"
+            + "  Vertex person (\n"
+            + "    id bigint ID,\n"
+            + "    name varchar\n"
+            + "  ),\n"
+            + "  Edge knows (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID,\n"
+            + "    weight double\n"
+            + "  )\n"
+            + ") WITH (\n"
+            + "  storeType='rocksdb',\n"
+            + "  shardCount = 1\n"
+            + ");\n"
+            + "\n"
+            + "\n"
+            + "CREATE TABLE hive (\n"
+            + "  id BIGINT,\n"
+            + "  name VARCHAR,\n"
+            + "  age INT\n"
+            + ") WITH (\n"
+            + "    type='hive',\n"
+            + "    geaflow.dsl.kafka.servers = 'localhost:9092',\n"
+            + "    geaflow.dsl.kafka.topic = 'read-topic'\n"
+            + ");\n"
+            + "\n"
+            + "CREATE TABLE kafka_sink (\n"
+            + "  id BIGINT,\n"
+            + "  name VARCHAR,\n"
+            + "  age INT\n"
+            + ") WITH (\n"
+            + "    type='kafka',\n"
+            + "    geaflow.dsl.kafka.servers = 'localhost:9092',\n"
+            + "    geaflow.dsl.kafka.topic = 'write-topic'\n"
+            + ");\n"
+            + "\n"
+            + "CREATE TABLE kafka_123(\n"
+            + "  id BIGINT,\n"
+            + "  name VARCHAR,\n"
+            + "  age INT\n"
+            + ") WITH (\n"
+            + "    type='kafka123',\n"
+            + "    geaflow.dsl.kafka.servers = 'localhost:9092',\n"
+            + "    geaflow.dsl.kafka.topic = 'write-topic'\n"
+            + ");\n"
+            + "\n"
+            + "INSERT INTO kafka_sink\n"
+            + "SELECT * FROM kafka_source;";
+
+        Set<String> plugins = compiler.getDeclaredTablePlugins(script, context);
+        Set<String> enginePlugins = compiler.getEnginePlugins();
+        Assert.assertEquals(plugins.size(), 3);
+        List<String> filteredSet = plugins.stream().filter(e -> !enginePlugins.contains(e.toUpperCase()))
+            .collect(Collectors.toList());
+        Assert.assertEquals(filteredSet.size(), 1);
+
+        Assert.assertEquals(filteredSet.get(0), "kafka123");
+    }
+
+    @Test
+    public void testFindTables() {
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script = "insert into t1(id,name) select 1,\"tom\";\n"
+            + "insert into t2 select id,name from t1;\n"
+            + "insert into t4 select * from t3;";
+
+        Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
+        Assert.assertEquals(tables.size(), 4);
+        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t3")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t4")));
+    }
+
+    @Test
+    public void testFindTables2(){
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script = "CREATE GRAPH dy_modern (\n"
+            + "\tVertex person (\n"
+            + "\t  id bigint ID,\n"
+            + "\t  name varchar,\n"
+            + "\t  age int\n"
+            + "\t),\n"
+            + "\tVertex software (\n"
+            + "\t  id bigint ID,\n"
+            + "\t  name varchar,\n"
+            + "\t  lang varchar\n"
+            + "\t),\n"
+            + "\tEdge knows (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID,\n"
+            + "\t  weight double\n"
+            + "\t),\n"
+            + "\tEdge created (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "  \ttargetId bigint DESTINATION ID,\n"
+            + "  \tweight double\n"
+            + "\t)\n"
+            + ") WITH (\n"
+            + "\tstoreType='rocksdb',\n"
+            + "\tshardCount = 2\n"
+            + ");\n"
+            + "\n"
+            + "CREATE TABLE tbl_result (\n"
+            + "  a_id bigint,\n"
+            + "  weight double,\n"
+            + "  b_id bigint\n"
+            + ") WITH (\n"
+            + "\ttype='file',\n"
+            + "\tgeaflow.dsl.file.path='${target}'\n"
+            + ");\n"
+            + "\n"
+            + "USE GRAPH dy_modern;\n"
+            + "\n"
+            + "INSERT INTO dy_modern.person(id, name, age)\n"
+            + "SELECT 1, 'jim', 20\n"
+            + "UNION ALL\n"
+            + "SELECT 2, 'kate', 22\n"
+            + ";\n"
+            + "\n"
+            + "INSERT INTO dy_modern.knows\n"
+            + "SELECT 1, 2, 0.2\n"
+            + ";\n"
+            + "\n"
+            + "\n"
+            + "INSERT INTO dy_modern(person.id, person.name, knows.srcId, knows.targetId)\n"
+            + "SELECT 3, 'jim', 3, 2\n"
+            + ";\n"
+            + "\n"
+            + "INSERT INTO tbl_result\n"
+            + "SELECT a_id, weight, b_id\n"
+            + "FROM (\n"
+            + "  MATCH (a:person where id = 1) -[e:knows]->(b:person)\n"
+            + "  RETURN a.id as a_id, e.weight as weight, b.id as b_id\n"
+            + ");\n"
+            + "\n"
+            + "INSERT INTO t1 select * from t2;\n";
+
+        Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
+        Assert.assertEquals(tables.size(), 2);
+        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
+        Assert.assertFalse(tables.contains(new TableInfo("default","tbl_result")));
+        Assert.assertFalse(tables.contains(new TableInfo("default","dy_modern")));
+    }
+
+    @Test
+    public void testFindTables3(){
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script = "insert into t1(id) select * from (select name from t2);";
+
+        Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
+        Assert.assertEquals(tables.size(), 2);
+        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
+    }
+
+    @Test
+    public void testFindTables4(){
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script = "insert into t1(id) select t2.id from t2 join t3 on t2.id = t3.id;";
+
+        Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
+        Assert.assertEquals(tables.size(), 3);
+        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t3")));
+    }
+
+    @Test
+    public void testFindTables5(){
+        QueryCompiler compiler = new QueryClient();
+        CompileContext context = new CompileContext();
+
+        String script="CREATE TABLE tbl_result (\n"
+            + "  a_id bigint,\n"
+            + "  b_id bigint,\n"
+            + "  weight double\n"
+            + ") WITH (\n"
+            + "\ttype='file',\n"
+            + "\tgeaflow.dsl.file.path='${target}'\n"
+            + ");\n"
+            + "\n"
+            + "USE GRAPH modern;\n"
+            + "\n"
+            + "INSERT INTO tbl_result\n"
+            + "SELECT\n"
+            + "\ta_id,\n"
+            + "\tb_id,\n"
+            + "\tweight\n"
+            + "FROM (\n"
+            + "  WITH p AS (\n"
+            + "    SELECT * FROM t2 AS t(id, weight)\n"
+            + "  )\n"
+            + "  MATCH (a:person where a.id = p.id) -[e where weight > p.weight + 0.1]->(b)\n"
+            + "  RETURN a.id as a_id, e.weight as weight, b.id as b_id\n"
+            + ")";
+
+        Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
+        Assert.assertEquals(tables.size(), 2);
+        Assert.assertTrue(tables.contains(new TableInfo("default","p")));
+        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
+        Assert.assertFalse(tables.contains(new TableInfo("default","tbl_result")));
     }
 }

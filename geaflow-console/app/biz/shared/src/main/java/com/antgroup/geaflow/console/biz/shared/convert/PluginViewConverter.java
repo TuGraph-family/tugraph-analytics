@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.biz.shared.convert;
 
 import com.antgroup.geaflow.console.biz.shared.view.PluginView;
-import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.Optional;
@@ -31,12 +30,9 @@ public class PluginViewConverter extends NameViewConverter<GeaflowPlugin, Plugin
     @Override
     public void merge(PluginView view, PluginView updateView) {
         super.merge(view, updateView);
-        Optional.ofNullable(updateView.getDataPluginId()).ifPresent(view::setDataPluginId);
         Optional.ofNullable(updateView.getJarPackage()).ifPresent(view::setJarPackage);
-        Optional.ofNullable(updateView.getVersion()).ifPresent(view::setVersion);
         Optional.ofNullable(updateView.getType()).ifPresent(view::setType);
         Optional.ofNullable(updateView.getCategory()).ifPresent(view::setCategory);
-        Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
     }
 
     @Override
@@ -44,11 +40,8 @@ public class PluginViewConverter extends NameViewConverter<GeaflowPlugin, Plugin
         PluginView view = super.modelToView(model);
         view.setType(model.getType());
         view.setCategory(model.getCategory());
-        view.setVersion(model.getVersion());
-        view.setEntryClass(model.getEntryClass());
         view.setJarPackage(Optional.ofNullable(model.getJarPackage()).map(e -> remoteFileViewConverter.convert(e)).orElse(null));
-        view.setDataPluginId(Optional.ofNullable(model.getDataPlugin()).map(GeaflowId::getId).orElse(null));
-
+        view.setSystem(model.isSystem());
         return view;
     }
 
@@ -57,14 +50,11 @@ public class PluginViewConverter extends NameViewConverter<GeaflowPlugin, Plugin
         GeaflowPlugin model = super.viewToModel(view);
         model.setType(view.getType());
         model.setCategory(view.getCategory());
-        model.setVersion(view.getVersion());
-        model.setEntryClass(view.getEntryClass());
         return model;
     }
 
-    public GeaflowPlugin convert(PluginView view, GeaflowPlugin dataPlugin, GeaflowRemoteFile jarPackage) {
+    public GeaflowPlugin convert(PluginView view, GeaflowRemoteFile jarPackage) {
         GeaflowPlugin model = viewToModel(view);
-        model.setDataPlugin(dataPlugin);
         model.setJarPackage(jarPackage);
         return model;
     }

@@ -30,14 +30,14 @@ public class DataStoreFactory {
     ApplicationContext context;
 
     public GeaflowDataStore getDataStore(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
+        GeaflowPluginType type = GeaflowPluginType.of(pluginConfig.getType());
         switch (type) {
             case LOCAL:
             case DFS:
             case OSS:
                 return context.getBean(PersistentDataStore.class);
             default:
-                throw new GeaflowIllegalException("Not supported data store type {}", type);
+                throw new GeaflowIllegalException("Not supported data store type {}", pluginConfig.getType());
         }
     }
 

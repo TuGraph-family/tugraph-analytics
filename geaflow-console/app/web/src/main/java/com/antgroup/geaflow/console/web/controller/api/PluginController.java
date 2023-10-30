@@ -50,8 +50,9 @@ public class PluginController {
 
     @PostMapping
     public GeaflowApiResponse<String> createPlugin(PluginView pluginView,
-                                                   @RequestParam(required = false) MultipartFile jarFile) {
-        return GeaflowApiResponse.success(pluginManager.createPlugin(pluginView, jarFile));
+                                                   @RequestParam(required = false) MultipartFile jarFile,
+                                                   @RequestParam(required = false) String fileId) {
+        return GeaflowApiResponse.success(pluginManager.createPlugin(pluginView, jarFile, fileId));
     }
 
     @PutMapping("/{pluginId}")

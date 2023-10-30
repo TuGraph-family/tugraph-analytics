@@ -36,6 +36,9 @@ public class ConfigDescFactory {
     static {
         String packageName = PluginConfigClass.class.getPackage().getName();
         for (GeaflowPluginType type : GeaflowPluginType.values()) {
+            if (type == GeaflowPluginType.None) {
+                continue;
+            }
             String prefix = type.name().charAt(0) + type.name().substring(1).toLowerCase();
             String className = Fmt.as("{}.{}PluginConfigClass", packageName, prefix);
 
