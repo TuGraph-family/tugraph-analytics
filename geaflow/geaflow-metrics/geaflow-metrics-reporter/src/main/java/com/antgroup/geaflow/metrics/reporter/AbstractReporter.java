@@ -42,7 +42,6 @@ public abstract class AbstractReporter implements MetricReporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 
     public static final String TAG_JOB_NAME = "jobName";
-    public static final String TAG_NAMESPACE = "namespace";
     public static final String TAG_WORKER = "worker";
     public static final String TAG_ENGINE = "engine";
 
@@ -50,14 +49,11 @@ public abstract class AbstractReporter implements MetricReporter {
     public static final String KEY_METRIC = "metric";
     public static final String KEY_AGGREGATOR = "aggregator";
     public static final String KEY_DOWN_SAMPLE = "downsample";
-
-    public static final String VALUE_ALL = "*";
-    public static final String VALUE_GEAFLOW = "Geaflow";
+    public static final String KEY_GEAFLOW = "Geaflow";
 
     protected MetricRegistry metricRegistry;
     private MetricMetaClient metricMetaClient;
     protected Map<String, String> globalTags;
-    protected Map<String, Map<String, String>> metricTags;
     protected String jobName;
 
     public void open(Configuration config, MetricRegistry metricRegistry) {
@@ -66,8 +62,7 @@ public abstract class AbstractReporter implements MetricReporter {
         this.globalTags = new HashMap<>();
         this.globalTags.put(TAG_JOB_NAME, jobName);
         this.globalTags.put(TAG_WORKER, ProcessUtil.getHostAndPid());
-        this.globalTags.put(TAG_ENGINE, VALUE_GEAFLOW);
-        this.metricTags = new HashMap<>();
+        this.globalTags.put(TAG_ENGINE, KEY_GEAFLOW);
     }
 
     protected void addMetricRegisterListener(Configuration config) {
@@ -96,21 +91,18 @@ public abstract class AbstractReporter implements MetricReporter {
         public void onGaugeAdded(String metricName, Gauge<?> gauge) {
             String query = wrapQuery(metricName, DownSample.AVG, AggType.AVG);
             metricMetaClient.registerMetricMeta(metricName, MetricType.GAUGE, query);
-            updateMetricTags(metricName);
         }
 
         @Override
         public void onCounterAdded(String metricName, Counter counter) {
             String query = wrapQuery(metricName, DownSample.SUM, AggType.SUM);
             metricMetaClient.registerMetricMeta(metricName, MetricType.COUNTER, query);
-            updateMetricTags(metricName);
         }
 
         @Override
         public void onMeterAdded(String metricName, Meter meter) {
             String query = wrapQuery(metricName, DownSample.SUM, AggType.SUM);
             metricMetaClient.registerMetricMeta(metricName, MetricType.METER, query);
-            updateMetricTags(metricName);
         }
 
         @Override
@@ -130,13 +122,6 @@ public abstract class AbstractReporter implements MetricReporter {
 
             metricMetaClient.registerMetricMeta(metricName, MetricType.HISTOGRAM,
                 JSON.toJSONString(histogramQueries, SerializerFeature.DisableCircularReferenceDetect));
-            updateMetricTags(metricName);
-        }
-
-        private void updateMetricTags(String metricName) {
-            Map<String, String> tags = new HashMap<>(globalTags);
-            tags.put(TAG_NAMESPACE,  metricName);
-            metricTags.put(metricName, tags);
         }
 
         private String wrapQuery(String metricName, DownSample downSample, AggType aggregator) {
@@ -157,7 +142,6 @@ public abstract class AbstractReporter implements MetricReporter {
     private JSONObject buildQueryTags() {
         JSONObject tags = new JSONObject();
         tags.put(TAG_JOB_NAME, this.jobName);
-        tags.put(TAG_NAMESPACE, VALUE_ALL);
         return tags;
     }
 
