@@ -26,7 +26,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WO
 
 import com.antgroup.geaflow.cluster.client.AbstractClusterClient;
 import com.antgroup.geaflow.cluster.client.IPipelineClient;
-import com.antgroup.geaflow.cluster.client.PipelineClient;
+import com.antgroup.geaflow.cluster.client.PipelineClientFactory;
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
@@ -88,7 +88,7 @@ public class KubernetesClusterClient extends AbstractClusterClient {
                 config.getString(MASTER_EXPOSED_ADDRESS));
             callback.onSuccess(clusterMeta);
             LOGGER.info("Cluster info: {}.", config);
-            return new PipelineClient(driverAddresses, config);
+            return PipelineClientFactory.createPipelineClient(driverAddresses, config);
         } catch (Throwable e) {
             LOGGER.error("Deploy failed.", e);
             callback.onFailure(e);

@@ -539,4 +539,14 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(false)
         .description("if enable detail job metric");
 
+    public static final ConfigKey SERVICE_DISCOVERY_TYPE = ConfigKeys
+        .key("geaflow.service.discovery.type")
+        .defaultValue("zookeeper")
+        .description("service discovery type");
+
+    public static final ConfigKey JOB_MODE = ConfigKeys
+        .key("geaflow.job.mode")
+        .defaultValue("compute")
+        .description("job mode, e.g.[compute, olap service, state service]");
+
 }

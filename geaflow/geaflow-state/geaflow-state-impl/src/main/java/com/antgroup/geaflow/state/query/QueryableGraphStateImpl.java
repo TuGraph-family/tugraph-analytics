@@ -23,6 +23,7 @@ import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
 import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.iterator.StandardIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
+import com.antgroup.geaflow.state.pushdown.KeyGroupStatePushDown;
 import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.FilterHelper;
@@ -94,6 +95,13 @@ public class QueryableGraphStateImpl<K, VV, EV, R> implements QueryableGraphStat
         return Lists.newArrayList(iterator());
     }
 
+    @Override
+    public Iterator<K> idIterator() {
+        return version < 0
+               ? this.graphManager.getStaticGraphTrait().vertexIDIterator(getPushDown())
+               : this.graphManager.getDynamicGraphTrait().vertexIDIterator(version, getPushDown());
+    }
+
     private Map<K, IFilter> buildMapFilter() {
         Map<K, IFilter> mapFilters = new HashMap<>(queryCondition.stateFilters.length);
         Preconditions.checkArgument(queryCondition.stateFilters.length == queryCondition.queryIds.size());
@@ -105,9 +113,10 @@ public class QueryableGraphStateImpl<K, VV, EV, R> implements QueryableGraphStat
     }
 
     protected StatePushDown getPushDown() {
-        StatePushDown pushDown = StatePushDown.of()
-            .withEdgeLimit(queryCondition.limit)
-            .withOrderField(queryCondition.order);
+        StatePushDown pushDown = queryCondition.keyGroup == null ? StatePushDown.of() :
+                                 KeyGroupStatePushDown.of(queryCondition.keyGroup);
+
+        pushDown.withEdgeLimit(queryCondition.limit).withOrderField(queryCondition.order);
 
         if (queryCondition.stateFilters.length > 1) {
             pushDown.withFilters(buildMapFilter());

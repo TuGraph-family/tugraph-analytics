@@ -16,17 +16,21 @@ package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical;
 
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
 import com.antgroup.geaflow.state.GraphState;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Iterator;
 
 public class StaticTraversalVertexQueryImpl<K, VV, EV> extends StaticVertexQueryImpl<K, VV, EV>
     implements TraversalVertexQuery<K, VV> {
 
-    public StaticTraversalVertexQueryImpl(K vertexId, GraphState<K, VV, EV> graphState) {
-        super(vertexId, graphState);
+    public StaticTraversalVertexQueryImpl(K vertexId, GraphState<K, VV, EV> graphState, KeyGroup keyGroup) {
+        super(vertexId, graphState, keyGroup);
     }
 
     @Override
     public Iterator<K> loadIdIterator() {
-        return graphState.staticGraph().V().idIterator();
+        if (keyGroup == null) {
+            return graphState.staticGraph().V().idIterator();
+        }
+        return graphState.staticGraph().V().query(keyGroup).idIterator();
     }
 }

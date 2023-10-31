@@ -574,7 +574,7 @@ public class DefaultResourceManagerTest {
         List<WorkerInfo> workers = new ArrayList<>();
         for (Integer workerIndex : executorIds) {
             WorkerInfo worker = WorkerInfo.build(
-                host, rpcPort, shufflePort, processId, workerIndex, containerName);
+                host, rpcPort, shufflePort, processId, 0, workerIndex, containerName);
             workers.add(worker);
         }
         return workers;

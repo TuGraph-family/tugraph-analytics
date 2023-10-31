@@ -175,6 +175,12 @@ public interface RuntimeErrorCode {
         action = "Please contact admin for help.")
     String resourceNotReadyError(String info);
 
+    @ErrorFactory.ErrCode(codeId = "RUN-04000006",
+        cause = "analyticsClientError, error message: {0}",
+        details = "",
+        action = "Please contact admin for help.")
+    String analyticsClientError(String info);
+
     // DSL module.
     // RUN-05xxxxxx.
     /**

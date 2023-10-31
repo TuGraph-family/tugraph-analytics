@@ -46,8 +46,8 @@ public interface ClusterStartedCallback extends Serializable {
             this(clusterInfo.getDriverAddresses(), clusterInfo.getMasterAddress().toString());
         }
 
-        public ClusterMeta(Map<String, RpcAddress> addressList, String masterAddress) {
-            this.driverAddresses = new HashMap<>(addressList);
+        public ClusterMeta(Map<String, RpcAddress> driverAddresses, String masterAddress) {
+            this.driverAddresses = new HashMap<>(driverAddresses);
             this.masterAddress = masterAddress;
             this.clientAddress = ProcessUtil.getHostAndIp();
         }

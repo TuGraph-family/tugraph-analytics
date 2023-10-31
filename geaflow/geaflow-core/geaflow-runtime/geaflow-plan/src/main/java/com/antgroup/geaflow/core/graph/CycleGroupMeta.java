@@ -23,13 +23,13 @@ public class CycleGroupMeta {
 
     private long iterationCount;
     private int flyingCount;
-    private boolean isIterative;
+    private CycleGroupType groupType;
     private AffinityLevel affinityLevel;
 
     public CycleGroupMeta() {
         this.iterationCount = 1;
         this.flyingCount = 1;
-        this.isIterative = false;
+        this.groupType = CycleGroupType.pipelined;
         this.affinityLevel = AffinityLevel.worker;
     }
 
@@ -50,11 +50,15 @@ public class CycleGroupMeta {
     }
 
     public boolean isIterative() {
-        return isIterative;
+        return groupType == CycleGroupType.incremental || groupType == CycleGroupType.statical;
     }
 
-    public void setIterative(boolean iterative) {
-        isIterative = iterative;
+    public CycleGroupType getGroupType() {
+        return groupType;
+    }
+
+    public void setGroupType(CycleGroupType groupType) {
+        this.groupType = groupType;
     }
 
     public AffinityLevel getAffinityLevel() {
@@ -70,7 +74,7 @@ public class CycleGroupMeta {
         return "CycleGroupMeta{"
             + "iterationCount=" + iterationCount
             + ", flyingCount=" + flyingCount
-            + ", isIterative=" + isIterative
+            + ", groupType=" + groupType
             + '}';
     }
 }

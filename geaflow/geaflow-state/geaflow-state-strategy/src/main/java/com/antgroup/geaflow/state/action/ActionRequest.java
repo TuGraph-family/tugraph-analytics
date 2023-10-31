@@ -17,6 +17,7 @@ package com.antgroup.geaflow.state.action;
 public class ActionRequest<T> {
 
     private T request;
+    private int shard;
 
     public ActionRequest() {}
 
@@ -26,5 +27,13 @@ public class ActionRequest<T> {
 
     public T getRequest() {
         return this.request;
+    }
+
+    public int getShard() {
+        return shard;
+    }
+
+    public void setShard(int shard) {
+        this.shard = shard;
     }
 }

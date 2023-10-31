@@ -39,6 +39,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_VCORES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.REGISTER_TIMEOUT;
 
+import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
@@ -104,7 +105,9 @@ public class ClusterConfig implements Serializable {
         clusterConfig.setDriverVcores(config.getDouble(DRIVER_VCORES));
 
         int driverNum = config.getInteger(DRIVER_NUM);
-        Preconditions.checkArgument(driverNum == 1, "only one driver is allowed");
+        Preconditions.checkArgument(
+            driverNum == 1 || driverNum > 1 && PipelineUtil.isAsync(config),
+            "only one driver is allowed in no-share mode");
         clusterConfig.setDriverNum(driverNum);
 
         clusterConfig.setContainerMemoryMB(config.getInteger(CONTAINER_MEMORY_MB));

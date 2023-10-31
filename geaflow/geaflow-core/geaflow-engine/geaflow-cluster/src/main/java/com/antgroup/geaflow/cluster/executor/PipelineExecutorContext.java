@@ -23,14 +23,16 @@ public class PipelineExecutorContext {
     private DriverEventDispatcher eventDispatcher;
     private Configuration envConfig;
     private String driverId;
+    private int driverIndex;
     private AtomicInteger idGenerator;
 
-    public PipelineExecutorContext(String driverId, DriverEventDispatcher eventDispatcher,
+    public PipelineExecutorContext(String driverId, int driverIndex, DriverEventDispatcher eventDispatcher,
                                    Configuration envConfig,
                                    AtomicInteger idGenerator) {
         this.eventDispatcher = eventDispatcher;
         this.envConfig = envConfig;
         this.driverId = driverId;
+        this.driverIndex = driverIndex;
         this.idGenerator = idGenerator;
     }
 
@@ -44,6 +46,10 @@ public class PipelineExecutorContext {
 
     public String getDriverId() {
         return driverId;
+    }
+
+    public int getDriverIndex() {
+        return driverIndex;
     }
 
     public AtomicInteger getIdGenerator() {

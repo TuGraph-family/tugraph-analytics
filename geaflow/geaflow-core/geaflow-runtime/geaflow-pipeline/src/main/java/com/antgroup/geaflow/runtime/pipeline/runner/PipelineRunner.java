@@ -45,23 +45,24 @@ public class PipelineRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineRunner.class);
 
     private DriverEventDispatcher eventDispatcher;
+    private ICycleSchedulerContext context;
 
     public PipelineRunner(DriverEventDispatcher eventDispatcher) {
         this.eventDispatcher = eventDispatcher;
     }
 
-    public IExecutionResult executePipelineGraph(String name, String driverId,
+    public IExecutionResult executePipelineGraph(String name, String driverId, int driverIndex,
                                                  Configuration config, TaskCallBack taskCallBack,
                                                  PipelineGraph pipelineGraph) {
-        ICycleSchedulerContext context = CycleSchedulerContextFactory.build(() -> {
+        context = CycleSchedulerContextFactory.build(() -> {
             ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
             ExecutionGraph graph = builder.buildExecutionGraph(config);
 
             Map<Integer, List<ExecutionTask>> vertex2Tasks = ExecutionCycleTaskAssigner.assign(graph);
 
             IExecutionCycle cycle = ExecutionCycleBuilder.buildExecutionCycle(graph, vertex2Tasks,
-                config, ExecutionIdGenerator.getInstance().generateId(), name, driverId);
-            return CycleSchedulerContextFactory.create(cycle, null);
+                config, ExecutionIdGenerator.getInstance().generateId(), name, driverId, driverIndex);
+            return CycleSchedulerContextFactory.create(cycle, context);
         });
         if (taskCallBack != null) {
             ((AbstractCycleSchedulerContext) context).setCallbackFunction(taskCallBack.getCallbackFunction());
@@ -82,18 +83,19 @@ public class PipelineRunner {
     public void runPipelineGraph(PipelineGraph pipelineGraph, TaskCallBack taskCallBack,
                                  PipelineTaskExecutorContext taskExecutorContext) {
         IExecutionResult result = executePipelineGraph(taskExecutorContext.getPipelineTaskName(),
-            taskExecutorContext.getDriverId(), taskExecutorContext.getPipelineContext().getConfig(), 
+            taskExecutorContext.getDriverId(), 0, taskExecutorContext.getPipelineContext().getConfig(),
             taskCallBack, pipelineGraph);
         if (!result.isSuccess()) {
             throw new GeaflowRuntimeException("run pipeline task failed, cause: " + result.getError());
         }
     }
 
-    public void runPipelineGraph(PipelineGraph pipelineGraph,
+    public IExecutionResult runPipelineGraph(PipelineGraph pipelineGraph,
                                  PipelineServiceExecutorContext serviceExecutorContext) {
         //TODO Service task callback.
-        executePipelineGraph(serviceExecutorContext.getPipelineTaskName(),
+        return executePipelineGraph(serviceExecutorContext.getPipelineTaskName(),
             serviceExecutorContext.getDriverId(),
+            serviceExecutorContext.getDriverIndex(),
             serviceExecutorContext.getPipelineContext().getConfig(), null, pipelineGraph );
     }
 }

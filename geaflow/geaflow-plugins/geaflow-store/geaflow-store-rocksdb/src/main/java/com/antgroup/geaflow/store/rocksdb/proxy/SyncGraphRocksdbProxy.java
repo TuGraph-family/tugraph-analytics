@@ -150,6 +150,15 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
     }
 
     @Override
+    public Iterator<K> vertexIDIterator(IStatePushDown pushDown) {
+        if (pushDown.getFilter() == null) {
+            return vertexIDIterator();
+        } else {
+            return new IteratorWithFn<>(getVertexIterator(pushDown), IVertex::getId);
+        }
+    }
+
+    @Override
     public Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         flush();
         RocksdbIterator it = new RocksdbIterator(rocksdbClient.getIterator(VERTEX_CF));

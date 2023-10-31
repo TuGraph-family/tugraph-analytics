@@ -97,6 +97,9 @@ public class MemoryDynamicGraphStateTest {
         List<String> idList = Lists.newArrayList(idIterator);
         Assert.assertEquals(idList.size(), 2);
 
+        idIterator = graphState.dynamicGraph().V().query(2L, new KeyGroup(1, 1)).idIterator();
+        Assert.assertEquals(Iterators.size(idIterator), 1);
+
         graphState.manage().operate().close();
         graphState.manage().operate().drop();
     }
@@ -105,8 +108,8 @@ public class MemoryDynamicGraphStateTest {
         Map<String, String> config = new HashMap<>();
 
         GraphStateDescriptor desc = GraphStateDescriptor.build(testName, StoreType.MEMORY.name());
-        desc.withDataModel(DataModel.DYNAMIC_GRAPH).withKeyGroup(new KeyGroup(0, 0))
-            .withKeyGroupAssigner(new DefaultKeyGroupAssigner(1));
+        desc.withDataModel(DataModel.DYNAMIC_GRAPH).withKeyGroup(new KeyGroup(0, 1))
+            .withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
         GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc,
             new Configuration(config));
 

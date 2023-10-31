@@ -14,43 +14,19 @@
 
 package com.antgroup.geaflow.pipeline.service;
 
-import com.antgroup.geaflow.api.function.io.SourceFunction;
-import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
-import com.antgroup.geaflow.api.window.IWindow;
-import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.view.graph.PGraphView;
-import java.io.Serializable;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 
-public interface IPipelineServiceContext extends Serializable {
+public interface IPipelineServiceContext extends IPipelineJobContext {
 
     /**
-     * Returns session id.
-     */
-    long sessionId();
-
-    /**
-     * Get the request.
+     * Returns request from client.
      */
     Object getRequest();
 
     /**
-     * Collect response.
+     * Sets the response.
      */
     void response(Object response);
 
-    /**
-     * Returns configuration of pipeline service context.
-     */
-    Configuration getConfig();
-
-    /**
-     * Build window source with corresponding source function and window.
-     */
-    <T> PWindowSource<T> buildSource(SourceFunction<T> sourceFunction, IWindow<T> window);
-
-    /**
-     * Build graph view with view name.
-     */
-    <K, VV, EV> PGraphView<K, VV, EV> buildGraphView(String viewName);
 
 }

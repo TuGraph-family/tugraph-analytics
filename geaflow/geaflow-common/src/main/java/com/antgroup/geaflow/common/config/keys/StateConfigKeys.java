@@ -61,4 +61,20 @@ public class StateConfigKeys implements Serializable {
         .key("geaflow.state.kv.encoder.edge.order")
         .defaultValue("")
         .description("state kv encoder edge atom order, splitter ,");
+
+    // for read only state.
+    public static final ConfigKey STATE_RECOVER_LATEST_VERSION_ENABLE = ConfigKeys
+        .key("geaflow.state.recover.latest.version.enable")
+        .defaultValue(false)
+        .description("enable recover latest version, default false");
+
+    public static final ConfigKey STATE_BACKGROUND_SYNC_ENABLE = ConfigKeys
+        .key("geaflow.state.background.sync.enable")
+        .defaultValue(false)
+        .description("enable state background sync, default false");
+
+    public static final ConfigKey STATE_SYNC_GAP_MS = ConfigKeys
+        .key("geaflow.state.sync.gap.ms")
+        .defaultValue(600000)
+        .description("state background sync ms, default 600000ms");
 }

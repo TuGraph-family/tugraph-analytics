@@ -18,16 +18,16 @@ import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.runtime.SinkDataView;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import java.util.List;
 
 public class GeaFlowSinkDataView implements SinkDataView {
 
-    private final IPipelineTaskContext context;
+    private final IPipelineJobContext context;
 
     private final PStreamSink<Row> sink;
 
-    public GeaFlowSinkDataView(IPipelineTaskContext context, PStreamSink<Row> sink) {
+    public GeaFlowSinkDataView(IPipelineJobContext context, PStreamSink<Row> sink) {
         this.context = context;
         this.sink = sink;
     }

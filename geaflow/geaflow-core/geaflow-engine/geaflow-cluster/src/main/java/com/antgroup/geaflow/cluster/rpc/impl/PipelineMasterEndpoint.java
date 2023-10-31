@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.driver.Driver;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.rpc.proto.Container.Request;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.ContainerServiceGrpc;

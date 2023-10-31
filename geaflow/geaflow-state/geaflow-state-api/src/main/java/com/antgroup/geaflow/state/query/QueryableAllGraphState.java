@@ -19,7 +19,7 @@ import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 public interface QueryableAllGraphState<K, VV, EV, R> extends QueryableGraphState<K, VV, EV, R> {
 
     /**
-     * query by a filter, sharing by all the keys.
+     * Query by a filter, sharing by all the keys.
      */
     QueryableGraphState<K, VV, EV, R> by(IFilter filter);
 }

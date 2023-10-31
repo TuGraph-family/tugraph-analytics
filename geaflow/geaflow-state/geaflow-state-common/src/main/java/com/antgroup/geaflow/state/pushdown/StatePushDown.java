@@ -23,12 +23,12 @@ import java.util.Map;
 
 public class StatePushDown<K, T, R> implements IStatePushDown {
 
-    private IProjector<T, R> projector;
-    private IFilter filter = EmptyGraphFilter.of();
-    private Map<K, IFilter> filters;
-    private IEdgeLimit edgeLimit;
-    private EdgeAtom orderField;
-    private PushDownType pushdownType = PushDownType.NORMAL;
+    protected IProjector<T, R> projector;
+    protected IFilter filter = EmptyGraphFilter.of();
+    protected Map<K, IFilter> filters;
+    protected IEdgeLimit edgeLimit;
+    protected EdgeAtom orderField;
+    protected PushDownType pushdownType = PushDownType.NORMAL;
 
     protected StatePushDown() {}
 

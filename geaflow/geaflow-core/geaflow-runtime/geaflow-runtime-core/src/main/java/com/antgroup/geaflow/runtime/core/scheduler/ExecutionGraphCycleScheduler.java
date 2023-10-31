@@ -21,7 +21,6 @@ import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.ICycleResponseEvent;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
-import com.antgroup.geaflow.cluster.response.IResult;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.exception.GeaflowDispatchException;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
@@ -75,7 +74,7 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
     private long pipelineId;
     private String pipelineName;
     private PipelineMetrics pipelineMetrics;
-    private List<IResult> results;
+    private List<Object> results;
 
     @Override
     public void init(ICycleSchedulerContext context) {
@@ -135,6 +134,9 @@ public class ExecutionGraphCycleScheduler<R> extends AbstractCycleScheduler impl
                 if (!result.isSuccess()) {
                     throw new GeaflowRuntimeException(String.format("%s schedule execute %s failed ",
                         pipelineName, cycle.getCycleId())) ;
+                }
+                if (result.getResult() != null) {
+                    results.add(result.getResult());
                 }
                 scheduleStrategy.finish(cycle);
                 LOGGER.info("{} schedule {} finished, cost {}ms",

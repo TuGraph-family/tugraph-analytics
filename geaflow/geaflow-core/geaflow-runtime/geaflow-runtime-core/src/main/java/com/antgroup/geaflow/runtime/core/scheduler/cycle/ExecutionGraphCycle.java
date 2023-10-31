@@ -25,6 +25,7 @@ import java.util.Map;
 public class ExecutionGraphCycle extends AbstractExecutionCycle {
 
     private final String driverId;
+    private final int driverIndex;
     private final Map<Integer, IExecutionCycle> cycleMap;
     private final Map<Integer, List<Integer>> cycleChildren;
     private final Map<Integer, List<Integer>> cycleParents;
@@ -32,9 +33,10 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
 
     public ExecutionGraphCycle(long pipelineId, String pipelineName, int cycleId,
                                int flyingCount, long iterationCount,
-                               Configuration config, String driverId) {
+                               Configuration config, String driverId, int driverIndex) {
         super(pipelineId, pipelineName, cycleId, flyingCount, iterationCount, config);
         this.driverId = driverId;
+        this.driverIndex = driverIndex;
         this.cycleMap = new HashMap<>();
         this.cycleChildren = new HashMap<>();
         this.cycleParents = new HashMap<>();
@@ -61,6 +63,11 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
     @Override
     public String getDriverId() {
         return driverId;
+    }
+
+    @Override
+    public int getDriverIndex() {
+        return driverIndex;
     }
 
     @Override

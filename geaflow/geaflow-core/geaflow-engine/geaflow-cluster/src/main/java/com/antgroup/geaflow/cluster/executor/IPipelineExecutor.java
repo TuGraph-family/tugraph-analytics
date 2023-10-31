@@ -41,4 +41,9 @@ public interface IPipelineExecutor {
      * Trigger to start pipeline service.
      */
     void startPipelineService(PipelineService pipelineService);
+
+    /**
+     * Stop pipeline service server.
+     */
+    void stopPipelineService(PipelineService pipelineService);
 }

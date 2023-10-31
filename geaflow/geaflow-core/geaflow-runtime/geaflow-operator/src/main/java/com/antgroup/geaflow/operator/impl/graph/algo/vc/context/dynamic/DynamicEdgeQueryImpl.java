@@ -22,6 +22,7 @@ import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.InEdgeFilter;
 import com.antgroup.geaflow.state.pushdown.filter.OutEdgeFilter;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.List;
 
 public class DynamicEdgeQueryImpl<K, VV, EV> implements EdgeQuery<K, EV> {
@@ -29,11 +30,20 @@ public class DynamicEdgeQueryImpl<K, VV, EV> implements EdgeQuery<K, EV> {
     protected K vId;
     private long versionId;
     private GraphState<K, VV, EV> graphState;
+    protected KeyGroup keyGroup;
 
     public DynamicEdgeQueryImpl(K vId, long versionId, GraphState<K, VV, EV> graphState) {
         this.vId = vId;
         this.versionId = versionId;
         this.graphState = graphState;
+    }
+
+    public DynamicEdgeQueryImpl(K vId, long versionId, GraphState<K, VV, EV> graphState,
+                                KeyGroup keyGroup) {
+        this.vId = vId;
+        this.versionId = versionId;
+        this.graphState = graphState;
+        this.keyGroup = keyGroup;
     }
 
     @Override

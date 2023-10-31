@@ -35,8 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore
-    implements IGraphStore<K, VV, EV> {
+public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore implements IGraphStore<K, VV, EV> {
 
     private IGraphRocksdbProxy<K, VV, EV> proxy;
     private EdgeAtom sortAtom;
@@ -85,6 +84,11 @@ public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore
     @Override
     public Iterator<K> vertexIDIterator() {
         return this.proxy.vertexIDIterator();
+    }
+
+    @Override
+    public Iterator<K> vertexIDIterator(IStatePushDown pushDown) {
+        return proxy.vertexIDIterator(pushDown);
     }
 
     @Override

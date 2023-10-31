@@ -19,8 +19,9 @@ import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
-import com.antgroup.geaflow.cluster.master.Master;
+import com.antgroup.geaflow.cluster.master.IMaster;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
@@ -36,10 +37,10 @@ public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase impl
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MasterEndpoint.class);
 
-    private final Master master;
+    private final IMaster master;
     private final IClusterManager clusterManager;
 
-    public MasterEndpoint(Master master, IClusterManager clusterManager) {
+    public MasterEndpoint(IMaster master, IClusterManager clusterManager) {
         this.master = master;
         this.clusterManager = clusterManager;
     }

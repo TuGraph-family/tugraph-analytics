@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.client.PipelineResult;
 import com.antgroup.geaflow.cluster.rpc.IDriverEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;

@@ -20,7 +20,7 @@ import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.runtime.expression.Expression;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import java.util.Collection;
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public interface QueryEngine {
 
     Map<String, String> getConfig();
 
-    IPipelineTaskContext getContext();
+    IPipelineJobContext getContext();
 
     RuntimeTable createRuntimeTable(QueryContext context, GeaFlowTable table, Expression pushFilter);
 

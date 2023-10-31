@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM
 
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
@@ -39,8 +40,7 @@ public abstract class BaseScheduledWorkerManagerTest {
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(false);
-
+        vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         int taskNum = parallelism;
         vertex.setParallelism(taskNum);
@@ -50,7 +50,7 @@ public abstract class BaseScheduledWorkerManagerTest {
             ExecutionTask task = new ExecutionTask(i, i, taskNum, taskNum, taskNum, 0);
             tasks.add(task);
         }
-        ExecutionNodeCycle cycle =  new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        ExecutionNodeCycle cycle =  new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
         cycle.setTasks(tasks);
         return cycle;
     }

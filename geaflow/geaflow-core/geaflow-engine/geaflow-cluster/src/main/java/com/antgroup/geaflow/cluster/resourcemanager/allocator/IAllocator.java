@@ -25,7 +25,13 @@ public interface IAllocator<G, W> {
         /**
          * Round-robin.
          */
-        ROUND_ROBIN
+        ROUND_ROBIN,
+
+        /**
+         * Allocate same number of workers on every JVM process.
+         * Require number should be a multiple of the number of JVM, or else return zero.
+         */
+        PROCESS_FAIR
     }
 
     @FunctionalInterface

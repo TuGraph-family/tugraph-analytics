@@ -320,7 +320,7 @@ public class RocksdbPersistClient {
             //if there is no data, the directory will not exist.
             sstFileStatuses = persistIO.listStatus(new Path(remotePath, DATAS));
         } catch (Exception e) {
-            LOGGER.warn("{} do not have data, just ignore, {}", remotePath, e);
+            LOGGER.warn("{} do not have data, just ignore", remotePath);
         }
 
         Path path = new Path(remotePath);

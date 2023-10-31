@@ -29,6 +29,7 @@ import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ReflectionUtil;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
@@ -201,7 +202,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
     private ExecutionGraphCycle buildMockGraphCycle() {
 
         ExecutionGraphCycle graphCycle = new ExecutionGraphCycle(0, "graph_cycle", 0,
-            1, 10, configuration, "driver_id");
+            1, 10, configuration, "driver_id", 0);
         ExecutionNodeCycle nodeCycle = buildMockIterationNodeCycle(configuration);
 
         graphCycle.addCycle(nodeCycle);
@@ -220,7 +221,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(false);
+        vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(1);
         vertexGroup.getVertexMap().put(0, vertex);
@@ -236,7 +237,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

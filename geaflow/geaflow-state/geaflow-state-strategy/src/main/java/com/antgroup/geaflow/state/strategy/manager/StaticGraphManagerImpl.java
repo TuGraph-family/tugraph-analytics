@@ -24,6 +24,7 @@ import com.antgroup.geaflow.state.iterator.IteratorWithFilter;
 import com.antgroup.geaflow.state.iterator.MultiIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,6 +81,19 @@ public class StaticGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
     }
 
     @Override
+    public Iterator<K> vertexIDIterator(IStatePushDown pushdown) {
+        List<Iterator<K>> iterators = new ArrayList<>();
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        for (int shard = shardGroup.getStartKeyGroup(); shard <= shardGroup.getEndKeyGroup(); shard++) {
+            StaticGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            Iterator<K> iterator = trait.vertexIDIterator(pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, k -> k) : iterator);
+        }
+        return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
+    }
+
+    @Override
     public Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         return getIterator(IVertex::getId, pushdown, StaticGraphTrait::getVertexIterator);
     }
@@ -126,9 +140,12 @@ public class StaticGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
     @Override
     public Map<K, Long> getAggResult(IStatePushDown pushdown) {
         Map<Integer, Map<K, Long>> map = new HashMap<>();
-        for (Entry<Integer, StaticGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            map.put(entry.getKey(), entry.getValue().getAggResult(pushdown));
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        for (int shard = shardGroup.getStartKeyGroup(); shard <= shardGroup.getEndKeyGroup(); shard++) {
+            map.put(shard, traitMap.get(shard).getAggResult(pushdown));
         }
+
         Map<K, Long> res = new HashMap<>();
         for (Entry<Integer, Map<K, Long>> partRes : map.entrySet()) {
             int keyGroupId = partRes.getKey();
@@ -170,20 +187,21 @@ public class StaticGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
 
-
     private <R> Iterator<R> getIterator(
         Function<R, K> keyExtractor,
         IStatePushDown pushdown,
         BiFunction<StaticGraphTrait<K, VV, EV>, IStatePushDown, Iterator<R>> function) {
         List<Iterator<R>> iterators = new ArrayList<>();
 
-        int startShard = this.shardGroup.getStartKeyGroup();
-        int endShard = this.shardGroup.getEndKeyGroup();
-        for (Entry<Integer, StaticGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            if (entry.getKey() >= startShard && entry.getKey() <= endShard) {
-                Iterator<R> iterator = function.apply(entry.getValue(), pushdown);
-                iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), keyExtractor) : iterator);
-            }
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        int startShard = shardGroup.getStartKeyGroup();
+        int endShard = shardGroup.getEndKeyGroup();
+
+        for (int shard = startShard; shard <= endShard; shard++) {
+            StaticGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            Iterator<R> iterator = function.apply(trait, pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, keyExtractor) : iterator);
         }
 
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());

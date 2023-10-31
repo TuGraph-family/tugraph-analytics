@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
+
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricAggTraversalFunction;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
@@ -32,8 +34,6 @@ import java.util.Objects;
 public class GeaFlowAlgorithmDynamicAggTraversalFunction
     implements IncVertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg,
         ITraversalAgg>, RichIteratorFunction {
-
-    private static final long VERSION = 0L;
 
     private final AlgorithmUserFunction<Object, Object> userFunction;
 
@@ -79,12 +79,12 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
     public void evolve(Object vertexId, TemporaryGraph<Object, Row, Row> temporaryGraph) {
         IVertex<Object, Row> vertex = temporaryGraph.getVertex();
         if (vertex != null) {
-            mutableGraph.addVertex(VERSION, vertex);
+            mutableGraph.addVertex(GRAPH_VERSION, vertex);
         }
         List<IEdge<Object, Row>> edges = temporaryGraph.getEdges();
         if (edges != null) {
             for (IEdge<Object, Row> edge : edges) {
-                mutableGraph.addEdge(VERSION, edge);
+                mutableGraph.addEdge(GRAPH_VERSION, edge);
             }
         }
     }

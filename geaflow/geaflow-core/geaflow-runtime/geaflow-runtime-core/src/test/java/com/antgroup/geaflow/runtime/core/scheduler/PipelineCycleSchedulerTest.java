@@ -23,6 +23,7 @@ import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
@@ -195,7 +196,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(false);
+        vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(1);
         vertexGroup.getVertexMap().put(0, vertex);
@@ -211,7 +212,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.operator.impl.graph.materialize;
 
+import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
+
 import com.antgroup.geaflow.api.graph.materialize.GraphMaterializeFunction;
 import com.antgroup.geaflow.api.trait.CheckpointTrait;
 import com.antgroup.geaflow.api.trait.TransactionTrait;
@@ -152,9 +154,7 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
         }
     }
 
-    private static class DynamicGraphMaterializeFunction<K, VV, EV> implements GraphMaterializeFunction<K, VV, EV> {
-
-        public static final long VERSION = 0L;
+    public static class DynamicGraphMaterializeFunction<K, VV, EV> implements GraphMaterializeFunction<K, VV, EV> {
 
         private final GraphState<K, VV, EV> graphState;
 
@@ -164,12 +164,12 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
 
         @Override
         public void materializeVertex(IVertex<K, VV> vertex) {
-            graphState.dynamicGraph().V().add(VERSION, vertex);
+            graphState.dynamicGraph().V().add(GRAPH_VERSION, vertex);
         }
 
         @Override
         public void materializeEdge(IEdge<K, EV> edge) {
-            graphState.dynamicGraph().E().add(VERSION, edge);
+            graphState.dynamicGraph().E().add(GRAPH_VERSION, edge);
         }
 
     }

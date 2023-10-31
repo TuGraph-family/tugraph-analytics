@@ -14,37 +14,50 @@
 
 package com.antgroup.geaflow.runtime.pipeline.service;
 
-
 import com.antgroup.geaflow.api.function.io.SourceFunction;
+import com.antgroup.geaflow.api.graph.PGraphWindow;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
+import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.api.window.IWindow;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.pdata.graph.view.IncGraphView;
+import com.antgroup.geaflow.pdata.graph.window.WindowStreamGraph;
 import com.antgroup.geaflow.pdata.stream.window.WindowStreamSource;
 import com.antgroup.geaflow.pipeline.service.IPipelineServiceContext;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.view.IViewDesc;
+import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.graph.PGraphView;
 
 public class PipelineServiceContext implements IPipelineServiceContext {
 
     private long sessionId;
     private PipelineContext pipelineContext;
+    private Object request;
 
     public PipelineServiceContext(long sessionId,
-                               PipelineContext pipelineContext) {
+                                  PipelineContext pipelineContext) {
         this.sessionId = sessionId;
         this.pipelineContext = pipelineContext;
     }
 
+    public PipelineServiceContext(long sessionId,
+                                  PipelineContext pipelineContext,
+                                  Object request) {
+        this(sessionId, pipelineContext);
+        this.request = request;
+    }
+
     @Override
-    public long sessionId() {
+    public long getId() {
         return sessionId;
     }
 
     @Override
     public Object getRequest() {
-        return null;
+        return request;
     }
 
     @Override
@@ -63,8 +76,24 @@ public class PipelineServiceContext implements IPipelineServiceContext {
     }
 
     @Override
-    public <K, VV, EV> PGraphView<K, VV, EV> buildGraphView(String viewName) {
+    public <K, VV, EV> PGraphView<K, VV, EV> getGraphView(String viewName) {
         IViewDesc viewDesc = pipelineContext.getViewDesc(viewName);
         return new IncGraphView<>(pipelineContext, viewDesc);
+    }
+
+    @Override
+    public <K, VV, EV> PGraphView<K, VV, EV> createGraphView(IViewDesc viewDesc) {
+        return new IncGraphView<>(pipelineContext, viewDesc);
+    }
+
+    @Override
+    public <K, VV, EV> PGraphWindow<K, VV, EV> buildWindowStreamGraph(PWindowStream<IVertex<K, VV>> vertexWindowSteam,
+                                                                      PWindowStream<IEdge<K, EV>> edgeWindowStream,
+                                                                      GraphViewDesc graphViewDesc) {
+        return new WindowStreamGraph(
+            graphViewDesc,
+            pipelineContext,
+            vertexWindowSteam,
+            edgeWindowStream);
     }
 }

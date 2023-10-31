@@ -14,6 +14,9 @@
 
 package com.antgroup.geaflow.common.utils;
 
+import com.google.common.base.Joiner;
+import java.io.File;
+
 public class FileUtil {
 
     public static String concatPath(String baseDir, String fileName) {
@@ -24,5 +27,9 @@ public class FileUtil {
             return baseDir + fileName;
         }
         return baseDir + "/" + fileName;
+    }
+
+    public static String constitutePath(String... args) {
+        return File.separator + Joiner.on(File.separator).join(args);
     }
 }

@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.commons.io.FileUtils;
 
 public class ProcessStatsCollector {
@@ -58,7 +60,7 @@ public class ProcessStatsCollector {
 
     private long preTimeNano = System.nanoTime();
     private long preCpuTimeNano = -1;
-    private Map<Long, Long> threadMap = new HashMap<>();
+    private Map<Long, Long> threadMap = new ConcurrentHashMap<>();
 
     private final Counter totalUsedHeapMB;
     private final Counter totalMemoryMB;
@@ -132,7 +134,7 @@ public class ProcessStatsCollector {
         return workerMetrics;
     }
 
-    private double getCpuUsage() {
+    private synchronized double getCpuUsage() {
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
         // total CPU time for threads in nanoseconds.

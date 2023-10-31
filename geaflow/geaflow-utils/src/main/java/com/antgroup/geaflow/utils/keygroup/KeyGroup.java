@@ -52,6 +52,14 @@ public class KeyGroup implements Serializable {
         return endKeyGroup;
     }
 
+    public boolean contains(KeyGroup other) {
+        return this.startKeyGroup <= other.startKeyGroup && this.endKeyGroup >= other.endKeyGroup;
+    }
+
+    public boolean contains(int keyGroupId) {
+        return this.startKeyGroup <= keyGroupId && this.endKeyGroup >= keyGroupId;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(startKeyGroup, endKeyGroup);

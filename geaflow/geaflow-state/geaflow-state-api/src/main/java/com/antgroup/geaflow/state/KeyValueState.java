@@ -23,17 +23,17 @@ import com.antgroup.geaflow.state.key.KeyValueTrait;
 public interface KeyValueState<K, V> extends KeyValueTrait<K, V>, IState {
 
     /**
-     * get the value.
+     * Get the value.
      */
     V get(K key);
 
     /**
-     * update the value.
+     * Update the value.
      */
     void put(K key, V value);
 
     /**
-     * remove key.
+     * Remove key.
      */
     void remove(K key);
 

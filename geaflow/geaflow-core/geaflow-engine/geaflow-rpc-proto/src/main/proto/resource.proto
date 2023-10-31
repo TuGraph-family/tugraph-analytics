@@ -16,6 +16,7 @@ service ResourceService {
 enum AllocateStrategy
 {
   ROUND_ROBIN = 0;
+  PROCESS_FAIR = 1;
 }
 
 message RequireResourceRequest {
@@ -49,4 +50,5 @@ message Worker {
   int32 shufflePort = 4;
   int32 workerId = 5;
   string containerId = 6;
+  int32 processIndex = 7;
 }

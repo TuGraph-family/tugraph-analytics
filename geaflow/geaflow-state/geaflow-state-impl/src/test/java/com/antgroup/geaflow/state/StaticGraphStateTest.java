@@ -118,6 +118,17 @@ public class StaticGraphStateTest {
         IVertex<String, String> vertex = graphState.staticGraph().V().query("1").get();
         Assert.assertEquals(vertex.getValue(), "3");
 
+        // keyGroup get
+        iterator = graphState.staticGraph().V().query(new KeyGroup(0, 0)).iterator();
+        Assert.assertEquals(Iterators.size(iterator), 1);
+
+        Iterator<String> idIterator =
+            graphState.staticGraph().V().query(new KeyGroup(0, 0)).idIterator();
+        Assert.assertEquals(Iterators.size(idIterator), 1);
+
+        list = graphState.staticGraph().E().query(new KeyGroup(0, 0)).asList();
+        Assert.assertEquals(list.size(), 2);
+
         graphState.manage().operate().close();
         graphState.manage().operate().drop();
     }

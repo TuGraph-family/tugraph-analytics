@@ -18,7 +18,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WO
 
 import com.antgroup.geaflow.cluster.client.AbstractClusterClient;
 import com.antgroup.geaflow.cluster.client.IPipelineClient;
-import com.antgroup.geaflow.cluster.client.PipelineClient;
+import com.antgroup.geaflow.cluster.client.PipelineClientFactory;
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
@@ -56,7 +56,8 @@ public class RayClusterClient extends AbstractClusterClient {
             ClusterMeta clusterMeta = new ClusterMeta(clusterInfo);
             callback.onSuccess(clusterMeta);
             LOGGER.info("cluster info: {}", clusterInfo);
-            return new PipelineClient(clusterInfo.getDriverAddresses(), clusterContext.getConfig());
+            return PipelineClientFactory.createPipelineClient(
+                clusterInfo.getDriverAddresses(), clusterContext.getConfig());
         } catch (Throwable e) {
             LOGGER.error("deploy cluster failed", e);
             callback.onFailure(e);

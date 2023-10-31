@@ -55,9 +55,10 @@ public class StaticGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R,
     public Iterator<ITraversalRequest<K>> getTraversalRequests() {
         List<ITraversalRequest<K>> currentTaskRequest = new ArrayList<>();
         for (ITraversalRequest<K> traversalRequest : traversalRequests) {
-            int maxParallelism = runtimeContext.getTaskArgs().getMaxParallelism();
-            int currentKeyGroup = KeyGroupAssignment.assignToKeyGroup(traversalRequest.getVId(),
-                maxParallelism);
+            int maxParallelism = graphViewDesc.getShardNum();
+            int currentKeyGroup = KeyGroupAssignment.assignToKeyGroup(traversalRequest.getVId(), maxParallelism);
+            LOGGER.info("maxParallelism {}", maxParallelism);
+
             if (currentKeyGroup >= keyGroup.getStartKeyGroup() && currentKeyGroup <= keyGroup.getEndKeyGroup()) {
                 currentTaskRequest.add(traversalRequest);
             }

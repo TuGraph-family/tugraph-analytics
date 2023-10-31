@@ -31,7 +31,7 @@ public interface IClusterManager extends Serializable {
     ClusterId startMaster();
 
     /**
-     * Start driver.
+     * Start drivers and returns rpc address map.
      */
     Map<String, RpcAddress> startDrivers();
 

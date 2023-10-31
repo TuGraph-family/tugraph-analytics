@@ -73,4 +73,8 @@ public abstract class AbstractPipelineContext implements IPipelineContext, Seria
         return actions.stream().collect(Collectors.toList());
     }
 
+    public Map<String, IViewDesc> getViewDescMap() {
+        return viewDescMap;
+    }
+
 }

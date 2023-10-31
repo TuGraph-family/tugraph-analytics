@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.state.action;
 
 public enum ActionType {
+    LOAD,
     ARCHIVE,
     RECOVER,
     FINISH,

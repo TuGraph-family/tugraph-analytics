@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.cluster.rpc;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
-import com.antgroup.geaflow.cluster.rpc.impl.RpcMessageEncoder;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.rpc.proto.Container;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;

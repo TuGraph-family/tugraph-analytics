@@ -16,6 +16,7 @@ package com.antgroup.geaflow.state;
 
 import com.antgroup.geaflow.state.query.QueryableAllGraphState;
 import com.antgroup.geaflow.state.query.QueryableKeysGraphState;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,6 +29,11 @@ public interface StaticQueryableState<K, VV, EV, R> {
      * Returns the all graph handler.
      */
     QueryableAllGraphState<K, VV, EV, R> query();
+
+    /**
+     * Returns the all graph handler by KeyGroup.
+     */
+    QueryableAllGraphState<K, VV, EV, R> query(KeyGroup keyGroup);
 
     /**
      * Returns the point query graph handler.

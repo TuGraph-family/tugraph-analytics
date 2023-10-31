@@ -26,37 +26,42 @@ import java.util.Map;
 public interface QueryableGraphState<K, VV, EV, R> {
 
     /**
-     * query by some projector.
+     * Query by some projector.
      */
     <U> QueryableGraphState<K, VV, EV, U> select(IProjector<R, U> projector);
 
     /**
-     * query by edge limit.
+     * Query by edge limit.
      */
     QueryableGraphState<K, VV, EV, R> limit(long out, long in);
 
     /**
-     * query by some order.
+     * Query by some order.
      */
     QueryableGraphState<K, VV, EV, R> orderBy(EdgeAtom atom);
 
     /**
-     * query a aggregate result.
+     * Query a aggregate result.
      */
     Map<K, Long> aggregate();
 
     /**
-     * query result is a list.
+     * Query result is a list.
      */
     List<R> asList();
 
     /**
-     * query result is a iterator.
+     * Get id Iterator.
+     */
+    Iterator<K> idIterator();
+
+    /**
+     * Query result is a iterator.
      */
     Iterator<R> iterator();
 
     /**
-     * get a simple result like a vertex.
+     * Get a simple result like a vertex.
      */
     R get();
 }

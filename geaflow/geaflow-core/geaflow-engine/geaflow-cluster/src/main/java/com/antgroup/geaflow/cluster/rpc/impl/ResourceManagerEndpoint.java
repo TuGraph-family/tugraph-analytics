@@ -78,6 +78,9 @@ public class ResourceManagerEndpoint extends ResourceServiceGrpc.ResourceService
             case ROUND_ROBIN:
                 strategy = IAllocator.AllocateStrategy.ROUND_ROBIN;
                 break;
+            case PROCESS_FAIR:
+                strategy = IAllocator.AllocateStrategy.PROCESS_FAIR;
+                break;
             default:
                 String msg = "unrecognized allocate strategy" + request.getAllocStrategy();
                 throw new GeaflowRuntimeException(RuntimeErrors.INST.resourceError(msg));
@@ -100,6 +103,7 @@ public class ResourceManagerEndpoint extends ResourceServiceGrpc.ResourceService
             Resource.Worker worker = Resource.Worker.newBuilder()
                 .setHost(workerInfo.getHost())
                 .setProcessId(workerInfo.getProcessId())
+                .setProcessIndex(workerInfo.getProcessIndex())
                 .setRpcPort(workerInfo.getRpcPort())
                 .setShufflePort(workerInfo.getShufflePort())
                 .setWorkerId(workerInfo.getWorkerIndex())
@@ -114,7 +118,7 @@ public class ResourceManagerEndpoint extends ResourceServiceGrpc.ResourceService
         Resource.ReleaseResourceRequest request) {
         List<WorkerInfo> workerInfoList = request.getWorkerList().stream().map(
             w -> WorkerInfo.build(w.getHost(), w.getRpcPort(), w.getShufflePort(),
-                w.getProcessId(), w.getWorkerId(), w.getContainerId()))
+                w.getProcessId(), w.getProcessIndex(), w.getWorkerId(), w.getContainerId()))
             .collect(Collectors.toList());
         return ReleaseResourceRequest.build(request.getReleaseId(), workerInfoList);
     }

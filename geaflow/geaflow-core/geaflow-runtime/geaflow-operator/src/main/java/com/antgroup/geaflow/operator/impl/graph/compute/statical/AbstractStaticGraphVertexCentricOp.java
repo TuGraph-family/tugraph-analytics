@@ -62,4 +62,8 @@ public abstract class AbstractStaticGraphVertexCentricOp<K, VV, EV, M, FUNC exte
         }
         return desc;
     }
+
+    public GraphViewDesc getGraphViewDesc() {
+        return graphViewDesc;
+    }
 }

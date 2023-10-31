@@ -32,6 +32,7 @@
         <module>geaflow-engine</module>
         <module>geaflow-runtime</module>
         <module>geaflow-core-common</module>
+        <module>geaflow-metaserver</module>
     </modules>
 
 </project>

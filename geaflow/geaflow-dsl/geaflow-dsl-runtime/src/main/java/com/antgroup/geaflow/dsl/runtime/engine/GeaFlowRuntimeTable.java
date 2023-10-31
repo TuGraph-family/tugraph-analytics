@@ -68,9 +68,10 @@ import com.antgroup.geaflow.dsl.runtime.plan.PhysicRelNode.PhysicRelNodeName;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.google.common.collect.Lists;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,11 +83,11 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
 
     private final QueryContext queryContext;
 
-    private final IPipelineTaskContext context;
+    private final IPipelineJobContext context;
 
     private final PWindowStream<Row> pStream;
 
-    public GeaFlowRuntimeTable(QueryContext queryContext, IPipelineTaskContext context,
+    public GeaFlowRuntimeTable(QueryContext queryContext, IPipelineJobContext context,
                                PWindowStream<Row> pStream) {
         this.queryContext = Objects.requireNonNull(queryContext);
         this.context = Objects.requireNonNull(context);
@@ -105,7 +106,8 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
 
     @Override
     public List<Row> take() {
-        throw new GeaFlowDSLException("take() has not support currently.");
+        pStream.collect();
+        return new ArrayList<>();
     }
 
     @Override

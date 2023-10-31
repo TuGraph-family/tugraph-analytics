@@ -60,6 +60,11 @@ public interface DynamicGraphTrait<K, VV, EV> {
     Iterator<K> vertexIDIterator();
 
     /**
+     * Fetch the iterator of the ids of all graph vertices by pushdown condition.
+     */
+    Iterator<K> vertexIDIterator(long version, IStatePushDown pushdown);
+
+    /**
      * Fetch the iterator of the graph vertices according to the version and pushdown condition.
      */
     Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown);

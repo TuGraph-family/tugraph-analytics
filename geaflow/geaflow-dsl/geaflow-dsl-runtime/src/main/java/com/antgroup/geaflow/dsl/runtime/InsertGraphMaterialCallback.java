@@ -19,7 +19,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.runtime.util.SchemaUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.graph.PGraphView;
 import com.antgroup.geaflow.view.graph.PIncGraphView;
@@ -44,7 +44,7 @@ public class InsertGraphMaterialCallback implements QueryCallback {
             queryContext.updateVertexAndEdgeToGraph(graphName, graph, vertexStream, edgeStream);
 
             GraphViewDesc graphViewDesc = SchemaUtil.buildGraphViewDesc(graph, queryContext.getGlobalConf());
-            IPipelineTaskContext pipelineContext = queryContext.getEngineContext().getContext();
+            IPipelineJobContext pipelineContext = queryContext.getEngineContext().getContext();
             PGraphView<Object, RowVertex, RowEdge> graphView = pipelineContext.createGraphView(graphViewDesc);
             PIncGraphView<Object, RowVertex, RowEdge> incGraphView =
                 graphView.appendGraph((PWindowStream) vertexStream, (PWindowStream) edgeStream);

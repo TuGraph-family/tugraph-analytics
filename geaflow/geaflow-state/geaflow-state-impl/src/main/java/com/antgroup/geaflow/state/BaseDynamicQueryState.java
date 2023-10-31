@@ -23,6 +23,7 @@ import com.antgroup.geaflow.state.query.QueryableKeysGraphStateImpl;
 import com.antgroup.geaflow.state.query.QueryableVersionGraphState;
 import com.antgroup.geaflow.state.query.QueryableVersionGraphStateImpl;
 import com.antgroup.geaflow.state.strategy.manager.IGraphManager;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,6 +43,15 @@ public abstract class BaseDynamicQueryState<K, VV, EV, R> implements
     @Override
     public QueryableAllGraphState<K, VV, EV, R> query(long version) {
         QueryCondition<K> queryCondition = new QueryCondition<>();
+        queryCondition.queryIds = null;
+        queryCondition.isFullScan = true;
+        return new QueryableAllGraphStateImpl<>(version, queryType, graphManager, queryCondition);
+    }
+
+    @Override
+    public QueryableAllGraphState<K, VV, EV, R> query(long version, KeyGroup keyGroup) {
+        QueryCondition<K> queryCondition = new QueryCondition<>();
+        queryCondition.keyGroup = keyGroup;
         queryCondition.queryIds = null;
         queryCondition.isFullScan = true;
         return new QueryableAllGraphStateImpl<>(version, queryType, graphManager, queryCondition);

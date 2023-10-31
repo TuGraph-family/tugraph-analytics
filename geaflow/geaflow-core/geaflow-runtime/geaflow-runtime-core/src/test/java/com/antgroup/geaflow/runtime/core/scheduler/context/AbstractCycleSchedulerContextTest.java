@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM
 
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
@@ -136,11 +137,15 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(isIterative);
+        if (isIterative) {
+            vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.incremental);
+        } else {
+            vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
+        }
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(2);
         vertexGroup.getVertexMap().put(0, vertex);
 
-        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
     }
 }

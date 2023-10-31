@@ -20,7 +20,9 @@ import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.DataType;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
+import com.antgroup.geaflow.state.iterator.IteratorWithFilterThenFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFlatFn;
+import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
 import com.antgroup.geaflow.store.BaseGraphStore;
@@ -177,6 +179,16 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
     @Override
     public Iterator<K> vertexIDIterator() {
         return vertexId2Vertex.keySet().iterator();
+    }
+
+    @Override
+    public Iterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
+        if (pushdown.getFilter() == null) {
+            return new IteratorWithFilterThenFn<>(vertexId2Vertex.entrySet().iterator(),
+                entry -> entry.getValue().containsKey(version), Entry::getKey);
+        } else {
+            return new IteratorWithFn<>(getVertexIterator(version, pushdown), IVertex::getId);
+        }
     }
 
     @Override

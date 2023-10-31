@@ -16,6 +16,7 @@ package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic;
 
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.state.GraphState;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 
 public class DynamicTraversalEdgeQueryImpl<K, VV, EV> extends DynamicEdgeQueryImpl<K, VV, EV>
     implements TraversalEdgeQuery<K, EV> {
@@ -23,6 +24,12 @@ public class DynamicTraversalEdgeQueryImpl<K, VV, EV> extends DynamicEdgeQueryIm
     public DynamicTraversalEdgeQueryImpl(K vId, long versionId,
                                          GraphState<K, VV, EV> graphState) {
         super(vId, versionId, graphState);
+    }
+
+
+    public DynamicTraversalEdgeQueryImpl(K vId, long versionId,
+                                         GraphState<K, VV, EV> graphState, KeyGroup keyGroup) {
+        super(vId, versionId, graphState, keyGroup);
     }
 
     @Override

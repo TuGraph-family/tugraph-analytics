@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.rpc.IMetricEndpoint;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.rpc.proto.MetricServiceGrpc.MetricServiceImplBase;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;

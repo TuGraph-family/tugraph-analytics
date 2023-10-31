@@ -28,18 +28,26 @@ public class StateOperatorImpl implements StateOperator {
     }
 
     @Override
+    public void load(LoadOption loadOption) {
+        if (loadOption.getCheckPointId() == 0) {
+            loadOption.withCheckpointId(this.checkpointId);
+        }
+        this.stateManager.doStoreAction(ActionType.LOAD, new ActionRequest(loadOption));
+    }
+
+    @Override
     public void setCheckpointId(long checkpointId) {
         this.checkpointId = checkpointId;
     }
 
     @Override
     public void finish() {
-        this.stateManager.doStoreAction(ActionType.FINISH, null);
+        this.stateManager.doStoreAction(ActionType.FINISH, new ActionRequest());
     }
 
     @Override
     public void compact() {
-        this.stateManager.doStoreAction(ActionType.COMPACT, null);
+        this.stateManager.doStoreAction(ActionType.COMPACT, new ActionRequest());
     }
 
     @Override
@@ -54,11 +62,11 @@ public class StateOperatorImpl implements StateOperator {
 
     @Override
     public void close() {
-        this.stateManager.doStoreAction(ActionType.CLOSE, null);
+        this.stateManager.doStoreAction(ActionType.CLOSE, new ActionRequest());
     }
 
     @Override
     public void drop() {
-        this.stateManager.doStoreAction(ActionType.DROP, null);
+        this.stateManager.doStoreAction(ActionType.DROP, new ActionRequest());
     }
 }

@@ -1,0 +1,2 @@
+com.antgroup.geaflow.analytics.service.server.rpc.RpcAnalyticsServiceServer
+com.antgroup.geaflow.analytics.service.server.http.HttpAnalyticsServiceServer

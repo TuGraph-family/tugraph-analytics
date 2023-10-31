@@ -179,5 +179,14 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
         return new IteratorWithFn<>(getVertexIterator(), IVertex::getId);
     }
 
+    @Override
+    public Iterator<K> vertexIDIterator(IStatePushDown pushDown) {
+        if (pushDown.getFilter() == null) {
+            return vertexIDIterator();
+        } else {
+            return new IteratorWithFn<>(getVertexIterator(pushDown), IVertex::getId);
+        }
+    }
+
     protected abstract Iterator<K> getKeyIterator();
 }

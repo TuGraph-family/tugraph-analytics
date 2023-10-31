@@ -31,11 +31,17 @@ public class RetryCommand {
     }
 
     public static <T> T run(Callable<T> function, int retryCount, long retryIntervalMs) {
+        return run(function, null, retryCount, retryIntervalMs);
+    }
+
+    public static <T> T run(Callable<T> function, Callable retryFunction, int retryCount,
+                            long retryIntervalMs) {
         while (0 < retryCount) {
             try {
                 return function.call();
             } catch (Exception e) {
                 retryCount--;
+
                 if (retryCount == 0) {
                     LOGGER.error("Retry failed and reached the maximum retried times.", e);
                     throw new GeaflowRuntimeException(e);
@@ -43,8 +49,11 @@ public class RetryCommand {
                 LOGGER.warn("Retry failed, will retry {} times with interval {} ms.", retryCount,
                     retryIntervalMs);
                 try {
+                    if (retryFunction != null) {
+                        retryFunction.call();
+                    }
                     Thread.sleep(retryIntervalMs);
-                } catch (InterruptedException e1) {
+                } catch (Exception e1) {
                     throw new RuntimeException(e1);
                 }
             }

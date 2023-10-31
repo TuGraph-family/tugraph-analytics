@@ -22,6 +22,7 @@ import com.antgroup.geaflow.state.query.QueryableKeysGraphState;
 import com.antgroup.geaflow.state.query.QueryableKeysGraphStateImpl;
 import com.antgroup.geaflow.state.query.QueryableOneKeyGraphStateImpl;
 import com.antgroup.geaflow.state.strategy.manager.IGraphManager;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +40,15 @@ public abstract class BaseQueryState<K, VV, EV, R> implements StaticQueryableSta
     @Override
     public QueryableAllGraphState<K, VV, EV, R> query() {
         QueryCondition<K> queryCondition = new QueryCondition<>();
+        queryCondition.queryIds = null;
+        queryCondition.isFullScan = true;
+        return new QueryableAllGraphStateImpl<>(queryType, graphManager, queryCondition);
+    }
+
+    @Override
+    public QueryableAllGraphState<K, VV, EV, R> query(KeyGroup keyGroup) {
+        QueryCondition<K> queryCondition = new QueryCondition<>();
+        queryCondition.keyGroup = keyGroup;
         queryCondition.queryIds = null;
         queryCondition.isFullScan = true;
         return new QueryableAllGraphStateImpl<>(queryType, graphManager, queryCondition);

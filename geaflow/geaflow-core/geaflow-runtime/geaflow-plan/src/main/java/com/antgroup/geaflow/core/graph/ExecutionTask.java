@@ -155,7 +155,8 @@ public class ExecutionTask implements Serializable {
             this.index,
             this.taskName,
             this.parallelism,
-            this.maxParallelism);
+            this.maxParallelism,
+            this.workerInfo.getProcessIndex());
     }
 
     @Override

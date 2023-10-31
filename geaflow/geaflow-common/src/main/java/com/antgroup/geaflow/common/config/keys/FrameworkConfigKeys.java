@@ -64,5 +64,26 @@ public class FrameworkConfigKeys implements Serializable {
         .key("geaflow.inc.stream.materialize.disable")
         .defaultValue(false)
         .description("inc stream materialize, enabled by default");
+
+    public static final ConfigKey SERVICE_SERVER_TYPE = ConfigKeys
+        .key("geaflow.analytics.service.server.type")
+        .defaultValue("analytics_rpc")
+        .description("analytics service server type, e.g., [analytics_rpc, analytics_http, storage]");
+
+    public static final ConfigKey SERVICE_SHARE_ENABLE = ConfigKeys
+        .key("geaflow.analytics.service.share.enable")
+        .defaultValue(false)
+        .description("whether enable analytics service using share mode, default is false");
+
+    public static final ConfigKey CLIENT_QUERY_TIMEOUT = ConfigKeys
+        .key("geaflow.analytics.client.query.timeout")
+        .noDefaultValue()
+        .description("analytics client query max run time");
+
+    public static final ConfigKey CLIENT_REQUEST_TIMEOUT_MILLISECOND = ConfigKeys
+        .key("geaflow.analytics.client.request.timeout.millisecond")
+        .defaultValue(2 * 60 * 1000)
+        .description("analytics client request max run time");
+
 }
 

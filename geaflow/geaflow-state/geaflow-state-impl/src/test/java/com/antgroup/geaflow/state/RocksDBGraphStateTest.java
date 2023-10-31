@@ -47,6 +47,7 @@ import com.antgroup.geaflow.state.pushdown.filter.OutEdgeFilter;
 import com.antgroup.geaflow.state.pushdown.project.DstIdProjector;
 import com.antgroup.geaflow.utils.keygroup.DefaultKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.io.File;
@@ -79,7 +80,7 @@ public class RocksDBGraphStateTest {
 
     private <T> GraphState<T, T, T> getGraphState(IType<T> type, String name,
                                                   Map<String, String> conf) {
-        return getGraphState(type, name, conf, new KeyGroup(0, 0), 1);
+        return getGraphState(type, name, conf, new KeyGroup(0, 1), 2);
     }
 
     private <T> GraphState<T, T, T> getGraphState(IType<T> type, String name,
@@ -199,6 +200,13 @@ public class RocksDBGraphStateTest {
         it = graphState.staticGraph().V().query("122", "151").iterator();
         vertices = Lists.newArrayList(it);
         Assert.assertEquals(vertices.size(), 2);
+
+        it = graphState.staticGraph().V().query(new KeyGroup(1, 1)).iterator();
+        Assert.assertEquals(Iterators.size(it), 73);
+
+        Iterator<String> idIt =
+            graphState.staticGraph().V().query(new KeyGroup(1, 1)).idIterator();
+        Assert.assertEquals(Iterators.size(idIt), 73);
 
         Iterator<OneDegreeGraph<String, String, String>> it2 = graphState.staticGraph().VE().query()
             .iterator();
