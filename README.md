@@ -11,7 +11,7 @@
 [![EN](https://shields.io/badge/Docs-English-blue?logo=readme)](https://tugraph-analytics.readthedocs.io/en/latest/docs-en/introduction/)
 [![Blog](https://badgen.net/static/Blog/github.io/orange?icon=rss)](https://tugraph-analytics.github.io/)
 
-[中文文档](README_cn.md) 
+<img style="margin:-2px auto;" src="https://gw.alipayobjects.com/zos/antfincdn/R8sN%24GNdh6/language.svg" width="18" />&nbsp;English │ [中文](README_cn.md)
 
 <!--intro-start-->
 ## Introduction
