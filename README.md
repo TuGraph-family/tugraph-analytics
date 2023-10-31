@@ -93,7 +93,7 @@ JOIN student s ON sc.srcId = s.id
 ## Contribution
 Thank you very much for contributing to GeaFlow, whether it's bug reporting, documentation improvement, or major feature development, we warmly welcome all contributions. 
 
-For more information:[Contribution](docs/docs-en/contribution.md).
+For more information: [Contribution](docs/docs-en/contribution.md).
 
 ## Contact Us
 You can contact us through the following methods:
