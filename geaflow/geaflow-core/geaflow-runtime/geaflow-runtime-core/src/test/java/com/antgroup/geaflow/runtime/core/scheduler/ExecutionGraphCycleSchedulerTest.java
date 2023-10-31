@@ -83,7 +83,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
 
     @Test
     public void testSimplePipeline() {
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
         ExecutionGraphCycleScheduler scheduler = new ExecutionGraphCycleScheduler();
         processor.register(scheduler);
 
@@ -138,7 +138,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
     private void testPipelineAfterRecover() {
 
         configuration.put(CLUSTER_ID, "restart");
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
         ClusterMetaStore.getInstance().saveWindowId(5L);
 
         ExecutionGraphCycleScheduler scheduler = new ExecutionGraphCycleScheduler();

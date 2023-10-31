@@ -31,8 +31,6 @@ import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -63,7 +61,7 @@ public class AsyncRpcTest {
 
     @Test
     public void testAsyncRpc() throws Exception {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
             new Configuration());
@@ -82,7 +80,6 @@ public class AsyncRpcTest {
 
     @Test
     public void testShutdownChannel() throws Exception {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
             new Configuration());
@@ -114,7 +111,6 @@ public class AsyncRpcTest {
 
     @Test(expectedExceptions = ExecutionException.class)
     public void testShutdownChannelWithBatchGet() throws Exception {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
             new Configuration());
@@ -148,7 +144,7 @@ public class AsyncRpcTest {
 
     @Test(expectedExceptions = ExecutionException.class)
     public void testServerError() throws Exception {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+
         String host = ProcessUtil.getHostIp();
         ContainerEndpointRef client = new ContainerEndpointRef(host, server.rpcPort,
             new Configuration());

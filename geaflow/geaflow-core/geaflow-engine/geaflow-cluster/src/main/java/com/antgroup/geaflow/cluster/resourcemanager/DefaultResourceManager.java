@@ -285,7 +285,6 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
         List<ResourceSession> sessions = new ArrayList<>(this.sessions.values());
         int used = sessions.stream().mapToInt(s -> s.getWorkers().size()).sum();
         this.metaKeeper.saveWorkers(new WorkerSnapshot(available, sessions));
-        this.metaKeeper.flush();
         LOGGER.info("persist {}/{} workers costs {}ms",
             this.availableWorkers.size(), used, System.currentTimeMillis() - start);
     }

@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MA
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.common.config.Configuration;
 
 public class MasterContext extends ReliableContainerContext {
@@ -28,7 +29,7 @@ public class MasterContext extends ReliableContainerContext {
     private ClusterContext clusterContext;
 
     public MasterContext(Configuration configuration) {
-        super(DEFAULT_MASTER_ID, configuration);
+        super(DEFAULT_MASTER_ID, ClusterConstants.getMasterName(), configuration);
         this.configuration = configuration;
     }
 
