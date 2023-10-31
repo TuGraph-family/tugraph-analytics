@@ -1,5 +1,6 @@
 # GeaFlow简介
 ## GeaFlow起源
+
 早期的大数据分析主要以离线处理为主，以Hadoop为代表的技术栈很好的解决了大规模数据的分析问题。然而数据处理的时效性不足，
 很难满足高实时需求的场景。以Storm为代表的流式计算引擎的出现则很好的解决了数据实时处理的问题，提高了数据处理的时效性。
 然而，Storm本身不提供状态管理的能力， 对于聚合等有状态的计算显得无能为力。Flink
@@ -16,33 +17,8 @@
 边代表关系，数据存储层面点边存放在一起。因此，图模型天然定义了数据的关系同时存储层面物化了点边关系。基于图模型，我们实现了新一代实时计算
 引擎GeaFlow，很好的解决了复杂关系运算实时化的问题。目前GeaFlow已广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
 
-## 主要特点
-* 以图为模型的分布式流式计算引擎
-* 高可用和exactly once保障
-* 图表一体化分析处理
-* 提供SQL + ISO/GQL开发语言
-* UDF/图算法/Connector插件支持
-* 高阶API开发支持
-* 一站式图研发平台支持
-* 云原生部署支持
+## 技术架构
 
-[为什么使用图进行关联运算比表Join更具吸引力？](./principle/vs_join.md)
-[![total_time](../static/img/vs_join_total_time_cn.jpg)](./principle/vs_join.md)
-
-和传统流计算引擎如Flink的异同点如下：
-
-| 特性 | GeaFlow | Flink |
-| -------- | -------- | -------- |
-|  数据模型    | 以图为基本数据模型的流式计算引擎，能同时处理表模型数据     | 以表模型为基础的流式计算引擎     |
-| 状态管理 | 同时支持流式状态管理和图数据状态管理| 支持流状态管理|
-| Exactly once |支持 | 支持|
-| Join支持 | 支持复杂多度Join关联运算 | 不适合复杂Join |
-| 图算法支持| 原生支持图算法 | Flink gelly模块支持(目前已移除)|
-| 查询语言| SQL + ISO/GQL| SQL |
-
-GeaFlow相关设计参考论文：[GeaFlow: A Graph Extended and Accelerated Dataflow System](https://dl.acm.org/doi/abs/10.1145/3589771)
-
-## 技术概览
 GeaFlow整体架构如下所示：
 
 ![GeaFlow架构](../static/img/geaflow_arch_new.png)
