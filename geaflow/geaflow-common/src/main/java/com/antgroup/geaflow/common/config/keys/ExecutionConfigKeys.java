@@ -72,6 +72,10 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(8090)
         .description("master http port");
 
+    public static final ConfigKey AGENT_HTTP_PORT = ConfigKeys.key("geaflow.agent.http.port")
+        .defaultValue(8088)
+        .description("agent http port");
+
     public static final ConfigKey DRIVER_RPC_PORT = ConfigKeys.key("geaflow.driver.rpc.port")
         .defaultValue(6123)
         .description("driver rpc port");

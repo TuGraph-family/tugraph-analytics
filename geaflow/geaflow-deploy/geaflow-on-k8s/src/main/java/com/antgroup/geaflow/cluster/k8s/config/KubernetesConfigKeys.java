@@ -225,7 +225,7 @@ public class KubernetesConfigKeys {
 
     public static final ConfigKey PROCESS_AUTO_RESTART = ConfigKeys.key("kubernetes.cluster.process.auto-restart")
         .defaultValue("unexpected")
-        .defaultValue("where to restart process automatically");
+        .description("whether to restart process automatically");
 
     public static final ConfigKey CLIENT_KEY_ALGO = ConfigKeys.key("kubernetes.certs.client.key.algo")
         .defaultValue("")

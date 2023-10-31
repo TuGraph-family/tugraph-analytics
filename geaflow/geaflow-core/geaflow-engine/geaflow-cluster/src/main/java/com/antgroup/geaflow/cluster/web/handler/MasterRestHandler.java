@@ -14,8 +14,13 @@
 
 package com.antgroup.geaflow.cluster.web.handler;
 
+import com.antgroup.geaflow.cluster.common.ComponentInfo;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
+import com.antgroup.geaflow.cluster.web.api.ApiResponse;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.metric.ProcessMetrics;
+import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.io.Serializable;
 import java.util.Map;
@@ -23,9 +28,15 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/master")
 public class MasterRestHandler implements Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MasterRestHandler.class);
+
+    private static final String MASTER_NAME = "master";
 
     private final Configuration configuration;
 
@@ -36,15 +47,43 @@ public class MasterRestHandler implements Serializable {
     @GET
     @Path("/configuration")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, String> queryConfiguration() {
-        return configuration.getConfigMap();
+    public ApiResponse<Map<String, String>> queryConfiguration() {
+        try {
+            return ApiResponse.success(configuration.getConfigMap());
+        } catch (Throwable t) {
+            LOGGER.error("Query master configuration failed. {}", t.getMessage(), t);
+            return ApiResponse.error(t);
+        }
     }
 
     @GET
     @Path("/metrics")
     @Produces(MediaType.APPLICATION_JSON)
-    public ProcessMetrics queryProcessMetrics() {
-        return StatsCollectorFactory.init(configuration).getProcessStatsCollector().collect();
+    public ApiResponse<ProcessMetrics> queryProcessMetrics() {
+        try {
+            return ApiResponse.success(StatsCollectorFactory.init(configuration).getProcessStatsCollector().collect());
+        } catch (Throwable t) {
+            LOGGER.error("Query master process metrics failed. {}", t.getMessage(), t);
+            return ApiResponse.error(t);
+        }
+    }
+
+    @GET
+    @Path("/info")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiResponse<ComponentInfo> queryMasterInfo() {
+        try {
+            ComponentInfo componentInfo = new ComponentInfo();
+            componentInfo.setId(ClusterConstants.DEFAULT_MASTER_ID);
+            componentInfo.setName(MASTER_NAME);
+            componentInfo.setHost(ProcessUtil.getHostIp());
+            componentInfo.setPid(ProcessUtil.getProcessId());
+            componentInfo.setAgentPort(configuration.getInteger(ExecutionConfigKeys.AGENT_HTTP_PORT));
+            return ApiResponse.success(componentInfo);
+        } catch (Throwable t) {
+            LOGGER.error("Query master process metrics failed. {}", t.getMessage(), t);
+            return ApiResponse.error(t);
+        }
     }
 
 }

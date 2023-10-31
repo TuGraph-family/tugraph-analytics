@@ -90,6 +90,7 @@
         <module>geaflow-metrics</module>
         <module>geaflow-plugins</module>
         <module>geaflow-collection</module>
+        <module>geaflow-dashboard</module>
         <module>geaflow-analytics-service</module>
     </modules>
 
@@ -303,6 +304,11 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-proxy</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
@@ -549,6 +555,12 @@
                 <artifactId>geaflow-store-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-dashboard</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!-- meta server -->
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>

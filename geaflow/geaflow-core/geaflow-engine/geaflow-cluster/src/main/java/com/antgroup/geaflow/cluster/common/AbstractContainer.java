@@ -19,6 +19,7 @@ import com.antgroup.geaflow.cluster.exception.ExceptionCollectService;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatClient;
 import com.antgroup.geaflow.cluster.web.metrics.MetricServer;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.ha.service.ResourceData;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
@@ -69,6 +70,7 @@ public abstract class AbstractContainer extends AbstractComponent {
         componentInfo.setPid(ProcessUtil.getProcessId());
         componentInfo.setRpcPort(rpcPort);
         componentInfo.setMetricPort(metricPort);
+        componentInfo.setAgentPort(configuration.getInteger(ExecutionConfigKeys.AGENT_HTTP_PORT));
     }
 
     public void close() {

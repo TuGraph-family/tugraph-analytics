@@ -32,8 +32,10 @@ import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -80,10 +82,6 @@ public class HeartbeatManager implements Serializable {
         senderMap.put(heartbeat.getContainerId(), heartbeat);
         boolean registered = isComponentRegistered(heartbeat.getContainerId());
         return HeartbeatResponse.newBuilder().setSuccess(true).setRegistered(registered).build();
-    }
-
-    public Map<Integer, Heartbeat> getHeartBeatMap() {
-        return senderMap;
     }
 
     public void checkHeartBeat() {
@@ -147,6 +145,33 @@ public class HeartbeatManager implements Serializable {
         heartbeatInfo.setActiveNum(activeContainers);
         heartbeatInfo.setContainers(containerList);
         return heartbeatInfo;
+    }
+
+    public Map<Integer, Heartbeat> getHeartBeatMap() {
+        return senderMap;
+    }
+
+    public Set<Integer> getActiveContainerIds() {
+        Map<Integer, String> containerIdMap = ((AbstractClusterManager) clusterManager).getContainerIds();
+        return getActiveComponentIds(containerIdMap);
+    }
+
+    public Set<Integer> getActiveDriverIds() {
+        Map<Integer, String> driverIdMap = ((AbstractClusterManager) clusterManager).getDriverIds();
+        return getActiveComponentIds(driverIdMap);
+    }
+
+    private Set<Integer> getActiveComponentIds(Map<Integer, String> map) {
+        long checkTime = System.currentTimeMillis();
+        Set<Integer> activeComponentIds = new HashSet<>();
+        for (Map.Entry<Integer, String> entry : map.entrySet()) {
+            int componentId = entry.getKey();
+            Heartbeat heartbeat = senderMap.get(componentId);
+            if (heartbeat != null && checkTime <= heartbeat.getTimestamp() + heartbeatCheckMs) {
+                activeComponentIds.add(componentId);
+            }
+        }
+        return activeComponentIds;
     }
 
     public void close() {

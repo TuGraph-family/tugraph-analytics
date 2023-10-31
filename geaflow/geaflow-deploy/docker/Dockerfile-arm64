@@ -21,6 +21,13 @@ ENV GEAFLOW_LIB_DIR=$GEAFLOW_HOME/lib \
     PATH=$PATH:$GEAFLOW_HOME/bin JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
 ENV PATH=$JAVA_HOME/bin:${PATH}
 
+ARG ASYNC_PROFILER_DIR_NAME=async-profiler-2.8.1-linux-x64
+ARG ASYNC_PROFILER_TAR_NAME=${ASYNC_PROFILER_DIR_NAME}.tar.gz
+RUN wget https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.8.1/${ASYNC_PROFILER_TAR_NAME} \
+    && tar zxvf ${ASYNC_PROFILER_TAR_NAME} -C ${GEAFLOW_INSTALL_PATH} \
+    && rm ${ASYNC_PROFILER_TAR_NAME}
+ENV ASYNC_PROFILER_SHELL_PATH=${GEAFLOW_INSTALL_PATH}/${ASYNC_PROFILER_DIR_NAME}/profiler.sh
+
 # geaflow-engine-tar is the *.tar.gz file built by maven
 ARG geaflow_engine_tar=NOT_SET
 # Copy engine jar if exist
@@ -31,10 +38,13 @@ RUN mkdir -p /home/admin/logs
 WORKDIR $GEAFLOW_HOME
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY config.sh $GEAFLOW_HOME/bin/
 COPY start-process.sh $GEAFLOW_HOME/bin/
-COPY udf-downloader.py /tmp/
+COPY start-agent.sh $GEAFLOW_HOME/bin/
+COPY udf-downloader.py $GEAFLOW_HOME/bin/
 COPY init-docker.sh /tmp/
 ADD geaflow-service.conf /etc/supervisor/conf.d/geaflow.conf
+ADD geaflow-agent.conf /etc/supervisor/conf.d/geaflow-agent.conf
 
 RUN /bin/sh /tmp/init-docker.sh
 

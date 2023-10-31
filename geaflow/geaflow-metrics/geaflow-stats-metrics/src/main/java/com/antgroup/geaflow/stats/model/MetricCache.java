@@ -60,7 +60,7 @@ public class MetricCache implements Serializable {
     }
 
     public synchronized void addCycleMetrics(CycleMetrics cycleMetrics) {
-        PipelineMetricCache cache = pipelineMetricCacheMap.computeIfAbsent(cycleMetrics.getName(),
+        PipelineMetricCache cache = pipelineMetricCacheMap.computeIfAbsent(cycleMetrics.getPipelineName(),
             key -> new PipelineMetricCache());
         cache.addCycleMetrics(cycleMetrics);
     }
