@@ -25,6 +25,8 @@ import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphMatch;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphScan;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
+import com.antgroup.geaflow.dsl.rel.match.OptionalEdgeMatch;
+import com.antgroup.geaflow.dsl.rel.match.OptionalVertexMatch;
 import com.antgroup.geaflow.dsl.rel.match.SingleMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.VertexMatch;
 import com.antgroup.geaflow.dsl.rex.PathInputRef;
@@ -40,6 +42,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.calcite.plan.RelOptCluster;
@@ -57,8 +60,12 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TableJoinTableToGraphRule.class);
 
     public static final TableJoinTableToGraphRule INSTANCE = new TableJoinTableToGraphRule();
 
@@ -71,7 +78,7 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
     @Override
     public boolean matches(RelOptRuleCall call) {
         LogicalJoin join = call.rel(0);
-        if (!join.getJoinType().equals(JoinRelType.INNER)) {
+        if (!isSupportJoinType(join.getJoinType())) {
             // non-INNER joins is not supported.
             return false;
         }
@@ -218,7 +225,8 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
             pathRecordType = pathRecordType.addField(nodeName, vertexRelType, false);
             vertexMatch = VertexMatch.create(cluster, null, nodeName,
                 Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
-            IMatchNode afterLeft = concatToMatchNode(call.builder(), leftInput, leftHead, vertexMatch, rexLeftNodeMap);
+            IMatchNode afterLeft = concatToMatchNode(call.builder(), null, leftInput, leftHead,
+                vertexMatch, rexLeftNodeMap);
             //Add vertex fields
             if (rexLeftNodeMap.size() > 0) {
                 projects.addAll(rexLeftNodeMap);
@@ -233,10 +241,26 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
 
             pathRecordType = afterLeft.getPathSchema();
             pathRecordType = pathRecordType.addField(edgeName, edgeRelType, true);
-            edgeMatch = EdgeMatch.create(cluster, (SingleMatchNode) afterLeft, edgeName,
-                Collections.singletonList(edgeTable.getName()), direction, edgeRelType, pathRecordType);
+            //When joining vertex and edge in a LEFT JOIN, the vertex is forcibly retained.
+            switch (join.getJoinType()) {
+                case LEFT:
+                    edgeMatch = OptionalEdgeMatch.create(cluster, (SingleMatchNode) afterLeft, edgeName,
+                        Collections.singletonList(edgeTable.getName()), direction, edgeRelType,
+                        pathRecordType);
+                    break;
+                case INNER:
+                    edgeMatch = EdgeMatch.create(cluster, (SingleMatchNode) afterLeft, edgeName,
+                        Collections.singletonList(edgeTable.getName()), direction, edgeRelType,
+                        pathRecordType);
+                    break;
+                case RIGHT:
+                case FULL:
+                default:
+                    throw new GeaFlowDSLException("Illegal join type: {}", join.getJoinType());
+            }
             swapSrcTargetId = direction.equals(EdgeDirection.IN);
-            IMatchNode afterRight = concatToMatchNode(call.builder(), rightInput, rightHead, edgeMatch, rexRightNodeMap);
+            IMatchNode afterRight = concatToMatchNode(call.builder(), afterLeft,
+                rightInput, rightHead, edgeMatch, rexRightNodeMap);
             //Add edge fields
             if (rexRightNodeMap.size() > 0) {
                 // In the case of converting match out edges to in edges, swap the source and
@@ -284,7 +308,8 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
                 Collections.singletonList(edgeTable.getName()),
                 reverseDirection, edgeRelType, pathRecordType);
             swapSrcTargetId = reverseDirection.equals(EdgeDirection.IN);
-            IMatchNode afterLeft = concatToMatchNode(call.builder(), leftInput, leftHead, edgeMatch, rexLeftNodeMap);
+            IMatchNode afterLeft = concatToMatchNode(call.builder(), null, leftInput, leftHead,
+                edgeMatch, rexLeftNodeMap);
 
             //Add edge fields
             if (rexLeftNodeMap.size() > 0) {
@@ -308,9 +333,16 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
 
             pathRecordType = afterLeft.getPathSchema();
             pathRecordType = pathRecordType.addField(nodeName, vertexRelType, false);
-            vertexMatch = VertexMatch.create(cluster, (SingleMatchNode) afterLeft, nodeName,
-                Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
-            IMatchNode afterRight = concatToMatchNode(call.builder(), rightInput, rightHead, vertexMatch, rexRightNodeMap);
+            if (join.getJoinType().equals(JoinRelType.LEFT)) {
+                vertexMatch = OptionalVertexMatch.create(cluster, (SingleMatchNode) afterLeft, nodeName,
+                    Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
+            } else {
+                vertexMatch = VertexMatch.create(cluster, (SingleMatchNode) afterLeft, nodeName,
+                    Collections.singletonList(vertexTable.getName()), vertexRelType, pathRecordType);
+            }
+
+            IMatchNode afterRight = concatToMatchNode(call.builder(), afterLeft, rightInput, rightHead,
+                vertexMatch, rexRightNodeMap);
             //Add vertex fields
             if (rexRightNodeMap.size() > 0) {
                 projects.addAll(rexRightNodeMap);
@@ -346,7 +378,7 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
             matchNode, matchNode.getPathSchema());
 
         List<RelDataTypeField> matchTypeFields = new ArrayList<>();
-        List<String> newFieldNames = getNewFieldNames(projects.size(), new HashSet<>());
+        List<String> newFieldNames = this.generateFieldNames("f", projects.size(), new HashSet<>());
         for (int i = 0; i < projects.size(); i++) {
             matchTypeFields.add(new RelDataTypeFieldImpl(newFieldNames.get(i), i ,
                 projects.get(i).getType()));
@@ -357,6 +389,18 @@ public class TableJoinTableToGraphRule extends AbstractJoinToGraphRule {
         final RelNode finalTail = tail;
         List<RexNode> joinProjects = IntStream.range(0, projects.size())
             .mapToObj(i -> rexBuilder.makeInputRef(finalTail, i)).collect(Collectors.toList());
+        AtomicInteger offset = new AtomicInteger();
+        // Make the project type nullable the same as the output type of the join.
+        joinProjects = joinProjects.stream().map(prj -> {
+            int i = offset.getAndIncrement();
+            boolean joinFieldNullable = join.getRowType().getFieldList().get(i).getType().isNullable();
+            if ((prj.getType().isNullable() && !joinFieldNullable)
+                || (!prj.getType().isNullable() && joinFieldNullable)) {
+                RelDataType type = rexBuilder.getTypeFactory().createTypeWithNullability(prj.getType(), joinFieldNullable);
+                return rexBuilder.makeCast(type, prj);
+            }
+            return prj;
+        }).collect(Collectors.toList());
         tail = LogicalProject.create(tail, joinProjects, join.getRowType());
         return tail;
     }

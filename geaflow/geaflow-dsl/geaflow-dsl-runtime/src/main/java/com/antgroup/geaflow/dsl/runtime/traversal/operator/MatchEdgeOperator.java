@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dsl.runtime.traversal.operator;
 
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.runtime.function.graph.MatchEdgeFunction;
+import com.antgroup.geaflow.dsl.runtime.function.graph.MatchEdgeFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroupRecord;
@@ -33,8 +34,12 @@ public class MatchEdgeOperator extends AbstractStepOperator<MatchEdgeFunction, V
     private Histogram loadEdgeHg;
     private Histogram loadEdgeRt;
 
+    private final boolean isOptionMatch;
+
     public MatchEdgeOperator(long id, MatchEdgeFunction function) {
         super(id, function);
+        isOptionMatch = function instanceof MatchEdgeFunctionImpl
+            && ((MatchEdgeFunctionImpl) function).isOptionalMatchEdge();
     }
 
     @Override
@@ -71,6 +76,10 @@ public class MatchEdgeOperator extends AbstractStepOperator<MatchEdgeFunction, V
                 }
                 numEdge++;
             }
+            if (numEdge == 0 && isOptionMatch) {
+                ITreePath newPath = vertex.getTreePath().extendTo((RowEdge) null);
+                targetTreePaths.put(null, newPath);
+            }
             loadEdgeHg.update(numEdge);
         } else {
             if (!vertex.isPathEmpty()) { // inherit input path.
@@ -78,6 +87,9 @@ public class MatchEdgeOperator extends AbstractStepOperator<MatchEdgeFunction, V
                 for (RowEdge edge : edgeGroup) {
                     targetTreePaths.put(edge.getTargetId(), vertex.getTreePath());
                     numEdge++;
+                }
+                if (numEdge == 0 && isOptionMatch) {
+                    targetTreePaths.put(null, vertex.getTreePath());
                 }
                 loadEdgeHg.update(numEdge);
             }

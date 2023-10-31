@@ -18,13 +18,9 @@ import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphMatch;
 import com.antgroup.geaflow.dsl.util.GQLRelUtil;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.JoinInfo;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
-import org.apache.calcite.rex.RexNode;
 
 public class MatchJoinTableToGraphMatchRule extends AbstractJoinToGraphRule {
 
@@ -39,7 +35,7 @@ public class MatchJoinTableToGraphMatchRule extends AbstractJoinToGraphRule {
     @Override
     public boolean matches(RelOptRuleCall call) {
         LogicalJoin join = call.rel(0);
-        if (!join.getJoinType().equals(JoinRelType.INNER)) {
+        if (!isSupportJoinType(join.getJoinType())) {
             // non-INNER joins is not supported.
             return false;
         }
@@ -73,13 +69,6 @@ public class MatchJoinTableToGraphMatchRule extends AbstractJoinToGraphRule {
         );
         if (tail == null) {
             return;
-        }
-        LogicalJoin join = call.rel(0);
-        // add remain filter.
-        JoinInfo joinInfo = join.analyzeCondition();
-        RexNode remainFilter = joinInfo.getRemaining(join.getCluster().getRexBuilder());
-        if (remainFilter != null && !remainFilter.isAlwaysTrue()) {
-            tail = LogicalFilter.create(tail, remainFilter);
         }
         call.transformTo(tail);
     }

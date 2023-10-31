@@ -19,7 +19,6 @@ import com.antgroup.geaflow.dsl.util.GQLRelUtil;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.JoinInfo;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalProject;
@@ -39,7 +38,7 @@ public class TableJoinMatchToGraphMatchRule extends AbstractJoinToGraphRule {
     @Override
     public boolean matches(RelOptRuleCall call) {
         LogicalJoin join = call.rel(0);
-        if (!join.getJoinType().equals(JoinRelType.INNER)) {
+        if (!isSupportJoinType(join.getJoinType())) {
             // non-INNER joins is not supported.
             return false;
         }
