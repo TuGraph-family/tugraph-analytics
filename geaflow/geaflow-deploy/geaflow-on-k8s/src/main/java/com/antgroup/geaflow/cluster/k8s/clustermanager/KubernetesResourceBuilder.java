@@ -493,9 +493,8 @@ public class KubernetesResourceBuilder {
             metaBuilder.withOwnerReferences(ownerReference);
         }
         Map<String, String> serviceLabels = param.getServiceLabels();
-        if (serviceLabels != null) {
-            metaBuilder.withLabels(serviceLabels);
-        }
+        serviceLabels.putAll(labels);
+        metaBuilder.withLabels(serviceLabels);
         Map<String, String> serviceAnnotations = param.getServiceAnnotations();
         if (serviceAnnotations != null) {
             metaBuilder.withAnnotations(serviceAnnotations);

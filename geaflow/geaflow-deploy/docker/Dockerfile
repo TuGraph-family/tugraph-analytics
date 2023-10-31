@@ -22,6 +22,11 @@ ENV PATH=$JAVA_HOME/bin:${PATH}
 
 RUN mkdir -p /home/admin/logs
 
+# geaflow-engine-tar is the *.tar.gz file built by maven
+ARG geaflow_engine_tar=NOT_SET
+# Copy engine jar if exist
+ADD $geaflow_engine_tar $GEAFLOW_INSTALL_PATH
+
 WORKDIR $GEAFLOW_HOME
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf

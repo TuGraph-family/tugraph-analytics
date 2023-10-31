@@ -161,16 +161,39 @@ function buildGeaflowImage() {
   checkMinikube
   MINIKUBE_INSTALLED=$?
 
+  TMPDIR=${GEAFLOW_DOCKER_DIR}/_TMP_
+  PACKAGE_NAME=geaflow
+
+  cleanup() {
+      echo "cleanup:${TMPDIR}"
+      rm -rf "${TMPDIR}"
+  }
+  trap cleanup EXIT
+
+  mkdir -p "${TMPDIR}"
+
+  cp "${ARCHIVE}" "${TMPDIR}/"
+  GEAFLOW_ENGINE_FILE=$(find ${TMPDIR} -name 'geaflow-*-bin.tar.gz')
+  tar -zxvf ${GEAFLOW_ENGINE_FILE} -C ${TMPDIR}
+  rm -rf ${GEAFLOW_ENGINE_FILE}
+  dirname=`ls ${TMPDIR}`
+  mv ${TMPDIR}/$dirname ${TMPDIR}/$PACKAGE_NAME
+
+  GEAFLOW_ENGINE_FILE=${TMPDIR}/geaflow.tar.gz
+  tar -zcvf ${GEAFLOW_ENGINE_FILE} -C ${TMPDIR} $PACKAGE_NAME
+
+  GEAFLOW_ENGINE_TAR=_TMP_/geaflow.tar.gz
+
   cd $GEAFLOW_DOCKER_DIR
   if [[ $MINIKUBE_INSTALLED = "0" ]]; then
     echo "build geaflow image in minikube env"
     eval $(minikube docker-env 2> /dev/null) &> /dev/null
-    docker build -f $DOCKER_FILE --network=host -t $GEAFLOW_IMAGE_NAME:0.1 .
+    docker build -f $DOCKER_FILE --network=host --build-arg geaflow_engine_tar=${GEAFLOW_ENGINE_TAR} -t $GEAFLOW_IMAGE_NAME:0.1 .
     RETURN_CODE=$?
     eval $(minikube docker-env --unset 2> /dev/null) &> /dev/null
   else
     echo -e '\033[31mbuild geaflow image in local env\033[0m'
-    docker build -f $DOCKER_FILE --network=host -t $GEAFLOW_IMAGE_NAME:0.1 .
+    docker build -f $DOCKER_FILE --network=host --build-arg geaflow_engine_tar=${GEAFLOW_ENGINE_TAR} -t $GEAFLOW_IMAGE_NAME:0.1 .
     RETURN_CODE=$?
   fi
 

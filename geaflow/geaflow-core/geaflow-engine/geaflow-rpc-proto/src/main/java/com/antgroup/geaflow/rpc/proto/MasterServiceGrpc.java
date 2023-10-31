@@ -44,13 +44,13 @@ public class MasterServiceGrpc {
           io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.RegisterResponse.getDefaultInstance()));
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest,
-      com.google.protobuf.Empty> METHOD_RECEIVE_HEARTBEAT =
+      com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse> METHOD_RECEIVE_HEARTBEAT =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
           generateFullMethodName(
               "MasterService", "receiveHeartbeat"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse.getDefaultInstance()));
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest,
       com.google.protobuf.Empty> METHOD_RECEIVE_EXCEPTION =
@@ -111,7 +111,7 @@ public class MasterServiceGrpc {
      * </pre>
      */
     public void receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse> responseObserver);
 
     /**
      * <pre>
@@ -141,7 +141,7 @@ public class MasterServiceGrpc {
 
     @java.lang.Override
     public void receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_RECEIVE_HEARTBEAT, responseObserver);
     }
 
@@ -178,7 +178,7 @@ public class MasterServiceGrpc {
      *处理executor/driver发送的心跳信息
      * </pre>
      */
-    public com.google.protobuf.Empty receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request);
+    public com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request);
 
     /**
      * <pre>
@@ -212,7 +212,7 @@ public class MasterServiceGrpc {
      *处理executor/driver发送的心跳信息
      * </pre>
      */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> receiveHeartbeat(
+    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse> receiveHeartbeat(
         com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request);
 
     /**
@@ -258,7 +258,7 @@ public class MasterServiceGrpc {
 
     @java.lang.Override
     public void receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_RECEIVE_HEARTBEAT, getCallOptions()), request, responseObserver);
     }
@@ -302,7 +302,7 @@ public class MasterServiceGrpc {
     }
 
     @java.lang.Override
-    public com.google.protobuf.Empty receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request) {
+    public com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse receiveHeartbeat(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_RECEIVE_HEARTBEAT, getCallOptions(), request);
     }
@@ -345,7 +345,7 @@ public class MasterServiceGrpc {
     }
 
     @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> receiveHeartbeat(
+    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse> receiveHeartbeat(
         com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_RECEIVE_HEARTBEAT, getCallOptions()), request);
@@ -396,7 +396,7 @@ public class MasterServiceGrpc {
           break;
         case METHODID_RECEIVE_HEARTBEAT:
           serviceImpl.receiveHeartbeat((com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest) request,
-              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+              (io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse>) responseObserver);
           break;
         case METHODID_RECEIVE_EXCEPTION:
           serviceImpl.receiveException((com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest) request,
@@ -445,7 +445,7 @@ public class MasterServiceGrpc {
           asyncUnaryCall(
             new MethodHandlers<
               com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest,
-              com.google.protobuf.Empty>(
+              com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse>(
                 serviceImpl, METHODID_RECEIVE_HEARTBEAT)))
         .addMethod(
           METHOD_RECEIVE_EXCEPTION,

@@ -19,6 +19,7 @@ import com.antgroup.geaflow.cluster.rpc.IMasterEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.antgroup.geaflow.rpc.proto.MasterServiceGrpc;
@@ -57,7 +58,7 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
     }
 
     @Override
-    public ListenableFuture<Empty> sendHeartBeat(Heartbeat heartbeat) {
+    public ListenableFuture<HeartbeatResponse> sendHeartBeat(Heartbeat heartbeat) {
         ensureChannelAlive();
         HeartbeatRequest heartbeatRequest = HeartbeatRequest.newBuilder()
             .setId(heartbeat.getContainerId())

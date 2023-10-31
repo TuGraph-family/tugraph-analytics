@@ -23,6 +23,7 @@ import com.antgroup.geaflow.cluster.master.Master;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.antgroup.geaflow.rpc.proto.MasterServiceGrpc;
@@ -65,17 +66,17 @@ public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase impl
 
     @Override
     public void receiveHeartbeat(HeartbeatRequest request,
-                                 StreamObserver<Empty> responseObserver) {
+                                 StreamObserver<HeartbeatResponse> responseObserver) {
         try {
             Heartbeat heartbeat = new Heartbeat(request.getId());
             heartbeat.setTimestamp(request.getTimestamp());
             heartbeat.setContainerName(RpcMessageEncoder.decode(request.getName()));
             heartbeat.setProcessMetrics(RpcMessageEncoder.decode(request.getPayload()));
 
-            HeartbeatManager heartbeatManager = ((AbstractClusterManager) clusterManager)
-                .getClusterContext().getHeartbeatManager();
-            heartbeatManager.receivedHeartbeat(heartbeat);
-            responseObserver.onNext(Empty.newBuilder().build());
+            HeartbeatManager heartbeatManager =
+                ((AbstractClusterManager) clusterManager).getClusterContext().getHeartbeatManager();
+            HeartbeatResponse response = heartbeatManager.receivedHeartbeat(heartbeat);
+            responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Throwable t) {
             LOGGER.error("process {} heartbeat failed: {}", request.getId(), t.getMessage(), t);

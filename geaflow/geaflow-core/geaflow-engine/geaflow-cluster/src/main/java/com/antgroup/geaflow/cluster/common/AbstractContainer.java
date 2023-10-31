@@ -48,7 +48,7 @@ public abstract class AbstractContainer extends AbstractComponent {
     }
 
     protected void registerToMaster() {
-        this.heartbeatClient.registerToMaster(masterId, buildComponentInfo());
+        this.heartbeatClient.init(masterId, buildComponentInfo());
     }
 
     @Override
