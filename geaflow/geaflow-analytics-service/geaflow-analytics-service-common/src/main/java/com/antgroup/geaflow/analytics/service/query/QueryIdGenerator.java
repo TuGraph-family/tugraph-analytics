@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.execution.QueryIdGenerator.
+ */
 public class QueryIdGenerator {
 
     private static final char[] BASE_32 = {

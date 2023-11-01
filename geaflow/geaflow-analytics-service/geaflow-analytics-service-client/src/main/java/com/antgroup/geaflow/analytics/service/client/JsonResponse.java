@@ -35,6 +35,9 @@ import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.client.JsonResponse.
+ */
 public class JsonResponse {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonResponse.class);

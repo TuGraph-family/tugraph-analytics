@@ -20,6 +20,9 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import java.util.Optional;
 import java.util.Properties;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.jdbc.ConnectionProperty.
+ */
 public interface ConnectProperty<T> {
 
     String getPropertyKey();
