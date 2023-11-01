@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.web.handler;
 
+import com.antgroup.geaflow.cluster.web.api.ApiResponse;
 import com.antgroup.geaflow.cluster.web.metrics.MetricFetcher;
 import com.antgroup.geaflow.common.metric.CycleMetrics;
 import com.antgroup.geaflow.common.metric.PipelineMetrics;
@@ -29,9 +30,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/pipelines")
 public class PipelineRestHandler implements Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineRestHandler.class);
 
     private final MetricCache metricCache;
     private final MetricFetcher metricFetcher;
@@ -44,25 +49,38 @@ public class PipelineRestHandler implements Serializable {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PipelineMetrics> queryPipelineList() {
-        metricFetcher.update();
-        List<PipelineMetrics> list = new ArrayList<>();
-        for (PipelineMetricCache cache : metricCache.getPipelineMetricCaches().values()) {
-            list.add(cache.getPipelineMetrics());
+    public ApiResponse<List<PipelineMetrics>> queryPipelineList() {
+        try {
+            metricFetcher.update();
+            List<PipelineMetrics> list = new ArrayList<>();
+            for (PipelineMetricCache cache : metricCache.getPipelineMetricCaches().values()) {
+                if (cache.getPipelineMetrics() != null) {
+                    list.add(cache.getPipelineMetrics());
+                }
+            }
+            return ApiResponse.success(list);
+        } catch (Throwable t) {
+            LOGGER.error("Query pipeline list failed. {}", t.getMessage(), t);
+            return ApiResponse.error(t);
         }
-        return list;
     }
 
     @GET
     @Path("/{pipelineName}/cycles")
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<CycleMetrics> queryCycleList(@PathParam("pipelineName") String pipelineName) {
-        metricFetcher.update();
-        PipelineMetricCache cache = metricCache.getPipelineMetricCaches().get(pipelineName);
-        if (cache == null) {
-            return Collections.EMPTY_LIST;
+    public ApiResponse<Collection<CycleMetrics>> queryCycleList(@PathParam("pipelineName") String pipelineName) {
+        try {
+            metricFetcher.update();
+            PipelineMetricCache cache = metricCache.getPipelineMetricCaches().get(pipelineName);
+            if (cache == null) {
+                return ApiResponse.success(Collections.EMPTY_LIST);
+            }
+            return ApiResponse.success(cache.getCycleMetricList().values());
+        } catch (Throwable t) {
+            LOGGER.error("Query cycle metric list of pipeline {} failed. {}", pipelineName,
+                t.getMessage(), t);
+            return ApiResponse.error(t);
         }
-        return cache.getCycleMetricList().values();
     }
 
 }

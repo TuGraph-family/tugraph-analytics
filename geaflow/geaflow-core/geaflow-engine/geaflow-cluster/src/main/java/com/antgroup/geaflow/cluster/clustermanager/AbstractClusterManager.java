@@ -222,6 +222,10 @@ public abstract class AbstractClusterManager implements IClusterManager {
         return clusterContext.getContainerIds().size();
     }
 
+    public int getTotalDrivers() {
+        return clusterContext.getDriverIds().size();
+    }
+
     public Map<Integer, ContainerInfo> getContainerInfos() {
         return containerInfos;
     }

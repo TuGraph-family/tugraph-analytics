@@ -63,7 +63,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
     private final Map<IAllocator.AllocateStrategy, IAllocator<String, WorkerInfo>> allocators = new HashMap<>();
     protected final IClusterManager clusterManager;
     protected final ClusterMetaStore metaKeeper;
-    protected int allocatedWorkerNum;
+    protected int totalWorkerNum;
 
     private final Map<WorkerInfo.WorkerId, WorkerInfo> availableWorkers = new HashMap<>();
     private final Map<String, ResourceSession> sessions = new HashMap<>();
@@ -84,7 +84,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
         this.recovering.set(isRecover);
         int workerNum = clusterContext.getClusterConfig().getContainerNum()
             * clusterContext.getClusterConfig().getContainerWorkerNum();
-        this.allocatedWorkerNum += workerNum;
+        this.totalWorkerNum += workerNum;
         this.pendingWorkerCounter.set(workerNum);
         LOGGER.info("init worker number {}, isRecover {}", workerNum, isRecover);
         if (isRecover) {
@@ -334,7 +334,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
         ResourceMetrics metrics = new ResourceMetrics();
         metrics.setPendingWorkers(pendingWorkerCounter.get());
         metrics.setAvailableWorkers(availableWorkers.size());
-        metrics.setTotalWorkers(allocatedWorkerNum);
+        metrics.setTotalWorkers(totalWorkerNum);
         return metrics;
     }
 

@@ -24,6 +24,7 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.ENGIN
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USER_JAR_FILES;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
 import static com.antgroup.geaflow.common.config.keys.DSLConfigKeys.GEAFLOW_DSL_CATALOG_TOKEN_KEY;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.AGENT_HTTP_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.GEAFLOW_GW_ENDPOINT;
 
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
@@ -89,6 +90,7 @@ public class KubernetesResourceBuilder {
         String pullPolicy = param.getContainerImagePullPolicy();
         String confDir = param.getConfDir();
         String logDir = param.getLogDir();
+        String agentServerPort = config.getString(AGENT_HTTP_PORT);
         String jobWorkPath = config.getString(WORK_DIR);
         String jarDownloadPath = KubernetesConfig.getJarDownloadPath(config);
         String udfList = config.getString(USER_JAR_FILES);
@@ -106,6 +108,8 @@ public class KubernetesResourceBuilder {
                 .withName(K8SConstants.ENV_CONF_DIR).withValue(confDir).endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_LOG_DIR).withValue(logDir).endEnv()
+            .addNewEnv()
+                .withName(K8SConstants.ENV_AGENT_SERVER_PORT).withValue(agentServerPort).endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_JOB_WORK_PATH).withValue(jobWorkPath).endEnv()
             .addNewEnv()

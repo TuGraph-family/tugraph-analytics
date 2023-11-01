@@ -123,6 +123,10 @@ public final class K8SConstants {
 
     public static final String ENV_LOG_DIR = "GEAFLOW_LOG_DIR";
 
+    public static final String ENV_DEPLOY_LOG_PATH = "GEAFLOW_DEPLOY_LOG_PATH";
+
+    public static final String ENV_AGENT_SERVER_PORT = "GEAFLOW_AGENT_SERVER_PORT";
+
     public static final String ENV_JOB_WORK_PATH = "GEAFLOW_JOB_WORK_PATH";
 
     public static final String ENV_JAR_DOWNLOAD_PATH = "GEAFLOW_JAR_DOWNLOAD_PATH";
