@@ -99,6 +99,10 @@ CREATE GRAPH IF NOT EXISTS g_student (
     srcId from student SOURCE ID,
     targetId from student DESTINATION ID
   ),
+  Edge inClass (
+    srcId from student SOURCE ID,
+    targetId from gradeClass DESTINATION ID
+  ),
   Edge hasTeacher (
     srcId from course SOURCE ID,
     targetId from teacher DESTINATION ID
@@ -107,6 +111,7 @@ CREATE GRAPH IF NOT EXISTS g_student (
 	storeType='rocksdb',
 	shardCount = 2
 );
+
 
 
 INSERT INTO g_student.student SELECT * FROM v_student;

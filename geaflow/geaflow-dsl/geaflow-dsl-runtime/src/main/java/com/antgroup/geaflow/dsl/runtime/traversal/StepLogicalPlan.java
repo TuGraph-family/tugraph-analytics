@@ -339,7 +339,7 @@ public class StepLogicalPlan implements Serializable {
             rightExchange.getOutputPathSchema());
 
         StepJoinOperator joinOperator = new StepJoinOperator(nextPlanId(), joinFunction,
-            inputJoinPathSchema, isLocalJoin);
+            inputJoinPathSchema, joinInputPaths, isLocalJoin);
         return new StepLogicalPlan(Lists.newArrayList(leftExchange, rightExchange), joinOperator)
             .withGraphSchema(getGraphSchema())
             .withInputPathSchema(joinInputPaths)

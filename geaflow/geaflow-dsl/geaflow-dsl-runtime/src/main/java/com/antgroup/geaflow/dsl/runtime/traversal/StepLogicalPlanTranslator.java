@@ -44,6 +44,8 @@ import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathModify;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathSort;
 import com.antgroup.geaflow.dsl.rel.match.MatchUnion;
+import com.antgroup.geaflow.dsl.rel.match.OptionalEdgeMatch;
+import com.antgroup.geaflow.dsl.rel.match.OptionalVertexMatch;
 import com.antgroup.geaflow.dsl.rel.match.SubQueryStart;
 import com.antgroup.geaflow.dsl.rel.match.VertexMatch;
 import com.antgroup.geaflow.dsl.rel.match.VirtualEdgeMatch;
@@ -215,7 +217,9 @@ public class StepLogicalPlanTranslator {
                 }
             }
             PathType outputPath = (PathType) SqlTypeUtil.convertType(vertexMatch.getPathSchema());
-            MatchVertexFunction mvf = new MatchVertexFunctionImpl(nodeTypes, label);
+            boolean isOptionalMatch = vertexMatch instanceof OptionalVertexMatch
+                && SqlTypeUtil.convertType(vertexMatch.getNodeType()) != null;
+            MatchVertexFunction mvf = new MatchVertexFunctionImpl(nodeTypes, isOptionalMatch, label);
             StepLogicalPlan plan = input.vertexMatch(mvf)
                 .withModifyGraphSchema(input.getModifyGraphSchema())
                 .withOutputPathSchema(outputPath)
@@ -261,10 +265,12 @@ public class StepLogicalPlanTranslator {
             Set<BinaryString> edgeTypes = edgeMatch.getTypes().stream()
                 .map(s -> (BinaryString) BinaryUtil.toBinaryForString(s))
                 .collect(Collectors.toSet());
+            boolean isOptionalMatch = edgeMatch instanceof OptionalEdgeMatch
+                && SqlTypeUtil.convertType(edgeMatch.getNodeType()) != null;
             MatchEdgeFunction mef =
                 pushDownFilter == null ? new MatchEdgeFunctionImpl(edgeMatch.getDirection(),
-                    edgeTypes, label) :
-                new MatchEdgeFunctionImpl(edgeMatch.getDirection(), edgeTypes,
+                    edgeTypes, isOptionalMatch, label) :
+                new MatchEdgeFunctionImpl(edgeMatch.getDirection(), edgeTypes, isOptionalMatch,
                     label, pushDownFilter);
 
             StepLogicalPlan plan = input.edgeMatch(mef)
@@ -322,7 +328,6 @@ public class StepLogicalPlanTranslator {
                         .getFieldList().get(index).getType()))
                 .collect(Collectors.toList())
                 .toArray(new IType[]{});
-
             StepKeyFunction leftKeyFn = new StepKeyFunctionImpl(toIntArray(joinInfo.leftKeys), leftKeyTypes);
             StepKeyFunction rightKeyFn = new StepKeyFunctionImpl(toIntArray(joinInfo.rightKeys), rightKeyTypes);
 
@@ -331,12 +336,15 @@ public class StepLogicalPlanTranslator {
             IType<?>[] leftPathTypes = leftPlan.getOutputPathSchema().getTypes();
             IType<?>[] rightPathTypes = rightPlan.getOutputPathSchema().getTypes();
 
+            Expression joinConditionExp =
+                ExpressionTranslator.of(join.getPathSchema()).translate(join.getCondition());
             StepJoinFunction joinFunction = new StepJoinFunctionImpl(join.getJoinType(),
-                leftPathTypes, rightPathTypes);
+                leftPathTypes, rightPathTypes, joinConditionExp);
 
             PathType inputJoinPath = (PathType) SqlTypeUtil.convertType(leftPathType.join(rightPathType,
                 join.getCluster().getTypeFactory()));
             PathType joinOutputPath = (PathType) SqlTypeUtil.convertType(join.getPathSchema());
+
             List<StepLogicalPlan> leftChainableVertex =
                 StepLogicalPlanTranslator.getChainableVertexMatch(leftPlan);
             List<StepLogicalPlan> rightChainableVertex =
@@ -352,18 +360,9 @@ public class StepLogicalPlanTranslator {
                     isLocalJoin = true;
                 }
             }
-            StepLogicalPlan joinPlan = leftPlan
+            return leftPlan
                 .join(rightPlan, leftKeyFn, rightKeyFn, joinFunction, inputJoinPath, isLocalJoin)
                 .withOutputPathSchema(joinOutputPath);
-
-            if (!joinInfo.isEqui()) {
-                RexNode nonEqFilter = joinInfo.getRemaining(join.getCluster().getRexBuilder());
-                Expression nonEqFilterExp = ExpressionTranslator.of(join.getPathSchema()).translate(nonEqFilter);
-
-                StepBoolFunction filterFn = new StepBoolFunctionImpl(nonEqFilterExp);
-                return joinPlan.filter(filterFn).withOutputPathSchema(joinOutputPath);
-            }
-            return joinPlan;
         }
 
         @Override
@@ -555,9 +554,9 @@ public class StepLogicalPlanTranslator {
             List<StepAggCall> aggFnCalls = new ArrayList<>();
             for (MatchAggregateCall aggCall : aggCalls) {
                 String name = aggCall.getName();
-                Expression[] argFields = aggCall.getArgList().stream().map(rex ->
-                    ExpressionTranslator.of(inputRelDataType, logicalPlanSet).translate(rex))
-                    .collect(Collectors.toList()).toArray(new Expression[0]);
+                Expression[] argFields = aggCall.getArgList().stream().map(
+                    rex -> ExpressionTranslator.of(inputRelDataType, logicalPlanSet).translate(rex))
+                    .toArray(Expression[]::new);
                 IType<?>[] argFieldTypes = Arrays.stream(argFields).map(Expression::getOutputType)
                     .toArray(IType<?>[]::new);
                 Class<? extends UDAF<?, ?, ?>> udafClass =

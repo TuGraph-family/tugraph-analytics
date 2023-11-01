@@ -19,7 +19,10 @@ import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.StepRecord;
 import com.antgroup.geaflow.dsl.common.data.StepRecord.StepRecordType;
 import com.antgroup.geaflow.dsl.common.data.VirtualId;
+import com.antgroup.geaflow.dsl.common.data.impl.VertexEdgeFactory;
+import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.dsl.runtime.function.graph.MatchVertexFunction;
+import com.antgroup.geaflow.dsl.runtime.function.graph.MatchVertexFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroupRecord;
@@ -34,8 +37,12 @@ public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunctio
 
     private Histogram loadVertexRt;
 
+    private final boolean isOptionMatch;
+
     public MatchVertexOperator(long id, MatchVertexFunction function) {
         super(id, function);
+        isOptionMatch = function instanceof MatchVertexFunctionImpl
+            && ((MatchVertexFunctionImpl) function).isOptionalMatchVertex();
     }
 
     @Override
@@ -64,23 +71,29 @@ public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunctio
                 graphSchema,
                 addingVertexFieldTypes);
             loadVertexRt.update(System.currentTimeMillis() - startTs);
-            if (vertex == null) { // load a non-exists vertex, just skip.
+            if (vertex == null && !isOptionMatch) {
+                // load a non-exists vertex, just skip.
                 return;
             }
         }
 
-        if (!function.getVertexTypes().isEmpty()
-            && !function.getVertexTypes().contains(vertex.getBinaryLabel())) {
-            // filter by the vertex types.
-            return;
+        if (vertex != null) {
+            if (!function.getVertexTypes().isEmpty()
+                && !function.getVertexTypes().contains(vertex.getBinaryLabel())) {
+                // filter by the vertex types.
+                return;
+            }
+            vertex = alignToOutputSchema(vertex);
         }
-        vertex = alignToOutputSchema(vertex);
 
         ITreePath currentPath;
         if (needAddToPath) {
             currentPath = vertexRecord.getTreePath().extendTo(vertex);
         } else {
             currentPath = vertexRecord.getTreePath();
+        }
+        if (vertex == null) {
+            vertex = VertexEdgeFactory.createVertex((VertexType) getOutputType());
         }
         collect(VertexRecord.of(vertex, currentPath));
     }
@@ -97,6 +110,13 @@ public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunctio
                 context.setVertex(vertex);
                 // process new vertex.
                 processVertex(VertexRecord.of(vertex, treePath));
+            } else if (isOptionMatch) {
+                vertex = VertexEdgeFactory.createVertex((VertexType) getOutputType());
+                ITreePath treePath = edgeGroupRecord.getPathById(targetId);
+                // set current vertex.
+                context.setVertex(vertex);
+                // process new vertex.
+                processVertex(VertexRecord.of(null, treePath));
             }
         }
     }

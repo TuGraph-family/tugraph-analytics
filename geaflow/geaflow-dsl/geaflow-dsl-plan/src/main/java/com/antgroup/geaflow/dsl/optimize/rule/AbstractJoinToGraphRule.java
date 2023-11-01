@@ -23,7 +23,6 @@ import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
 import com.antgroup.geaflow.dsl.common.descriptor.EdgeDescriptor;
 import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
-import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.rel.GraphMatch;
@@ -35,6 +34,8 @@ import com.antgroup.geaflow.dsl.rel.match.MatchAggregate;
 import com.antgroup.geaflow.dsl.rel.match.MatchExtend;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
+import com.antgroup.geaflow.dsl.rel.match.OptionalEdgeMatch;
+import com.antgroup.geaflow.dsl.rel.match.OptionalVertexMatch;
 import com.antgroup.geaflow.dsl.rel.match.SingleMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.VertexMatch;
 import com.antgroup.geaflow.dsl.rex.MatchAggregateCall;
@@ -49,6 +50,7 @@ import com.antgroup.geaflow.dsl.sqlnode.SqlMatchEdge.EdgeDirection;
 import com.antgroup.geaflow.dsl.util.GQLRelUtil;
 import com.antgroup.geaflow.dsl.util.GQLRexUtil;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.calcite.plan.RelOptRule;
@@ -80,8 +83,12 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractJoinToGraphRule extends RelOptRule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJoinToGraphRule.class);
 
     public AbstractJoinToGraphRule(RelOptRuleOperand operand) {
         super(operand);
@@ -93,7 +100,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
     protected static GraphJoinType getJoinType(LogicalJoin join) {
         JoinInfo joinInfo = join.analyzeCondition();
         // only support inner join and equal-join currently.
-        if (!joinInfo.isEqui() || join.getJoinType() != JoinRelType.INNER) {
+        if (!joinInfo.isEqui() || !isSupportJoinType(join.getJoinType())) {
             return GraphJoinType.NONE_GRAPH_JOIN;
         }
 
@@ -117,6 +124,10 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
             }
         }
         return graphJoinType;
+    }
+
+    protected static boolean isSupportJoinType(JoinRelType type) {
+        return type == JoinRelType.INNER || type == JoinRelType.LEFT;
     }
 
     private static GraphJoinType getJoinType(int leftIndex, RelDataType leftType, int rightIndex,
@@ -192,12 +203,12 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
      * into the input. Rebuild a MatchNode, and sequentially place all the accessible fields
      * into the returned rexNodeMap.
      */
-    protected IMatchNode concatToMatchNode(RelBuilder builder, RelNode from, RelNode to,
-                                           IMatchNode input, List<RexNode> rexNodeMap) {
+    protected IMatchNode concatToMatchNode(RelBuilder builder, IMatchNode left, RelNode from, RelNode to,
+                                      IMatchNode input, List<RexNode> rexNodeMap) {
         if (from instanceof LogicalFilter) {
             LogicalFilter filter = (LogicalFilter) from;
             List<RexNode> inputRexNode2RexInfo = new ArrayList<>();
-            IMatchNode filterInput = from == to ? input : concatToMatchNode(builder,
+            IMatchNode filterInput = from == to ? input : concatToMatchNode(builder, left,
                 GQLRelUtil.toRel(filter.getInput()), to, input, inputRexNode2RexInfo);
             int lastNodeIndex = filterInput.getPathSchema().getFieldCount() - 1;
             if (lastNodeIndex < 0) {
@@ -231,7 +242,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
         } else if (from instanceof LogicalProject) {
             LogicalProject project = (LogicalProject) from;
             List<RexNode> inputRexNode2RexInfo = new ArrayList<>();
-            IMatchNode projectInput = from == to ? input : concatToMatchNode(builder,
+            IMatchNode projectInput = from == to ? input : concatToMatchNode(builder, left,
                 GQLRelUtil.toRel(project.getInput()), to, input, inputRexNode2RexInfo);
 
             int lastNodeIndex = projectInput.getPathSchema().getFieldCount() - 1;
@@ -240,8 +251,8 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
             }
             String lastNodeLabel = projectInput.getPathSchema().getFieldList().get(lastNodeIndex)
                 .getName();
-            RelDataType oldType = projectInput.getPathSchema().getFieldList().get(lastNodeIndex)
-                .getType();
+            RelDataType lastNodeType =
+                projectInput.getPathSchema().getFieldList().get(lastNodeIndex).getType();
             List<RexNode> replacedProjects = new ArrayList<>();
             //Rewrite the projects by the rex mapping table returned through input reconstructing.
             if (!inputRexNode2RexInfo.isEmpty()) {
@@ -255,7 +266,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                 replacedProjects.addAll(project.getProjects().stream().map(prj -> GQLRexUtil.replace(prj, rex -> {
                     if (rex instanceof RexInputRef) {
                         return builder.getRexBuilder().makeFieldAccess(
-                            new PathInputRef(lastNodeLabel, lastNodeIndex, oldType),
+                            new PathInputRef(lastNodeLabel, lastNodeIndex, lastNodeType),
                             ((RexInputRef) rex).getIndex());
                     }
                     return rex;
@@ -271,9 +282,10 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                 .collect(Collectors.toList());
 
             EdgeRecordType edgeNewType;
-            String newEdgeName;
+            String edgeName;
             VertexRecordType vertexNewType;
-            String newVertexName;
+            String vertexName;
+            RelDataType oldType = projectInput.getPathSchema().firstField().get().getType();
             PathRecordType newPathRecordType = ((PathRecordType) projectInput.getRowType());
             int extendNodeIndex;
             String extendNodeLabel;
@@ -282,61 +294,24 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
             Map<RexNode, VariableInfo> rex2VariableInfo = new HashMap<>();
             RexBuilder rexBuilder = builder.getRexBuilder();
             if (addFieldProjects.size() > 0) {
+                //Paths start with a vertex, add fields on the vertex and add a vertex extension.
                 if (oldType instanceof VertexRecordType) {
-                    //Paths ending with a vertex, add an edge and a vertex extension.
-                    edgeNewType = EdgeRecordType.emptyEdgeType(
-                        ((VertexRecordType) oldType).getIdField().getType(),
-                        builder.getTypeFactory());
-                    addFieldNames = getNewFieldNames(addFieldProjects.size(),
-                        new HashSet<>(edgeNewType.getFieldNames()));
+                    vertexNewType = (VertexRecordType)oldType;
+                    addFieldNames = this.generateFieldNames("f", addFieldProjects.size(),
+                        new HashSet<>(vertexNewType.getFieldNames()));
                     for (int i = 0; i < addFieldNames.size(); i++) {
-                        edgeNewType = edgeNewType.add(addFieldNames.get(i),
+                        vertexNewType = vertexNewType.add(addFieldNames.get(i),
                             addFieldProjects.get(i).getType(), true);
                     }
-                    vertexNewType = (VertexRecordType) oldType;
-                    newEdgeName = getNewFieldNames(1,
-                        new HashSet<>(newPathRecordType.getFieldNames())).get(0);
-                    newPathRecordType = newPathRecordType.addField(newEdgeName, edgeNewType, true);
-                    newVertexName = getNewFieldNames(1,
-                        new HashSet<>(newPathRecordType.getFieldNames())).get(0);
-                    newPathRecordType = newPathRecordType.addField(newVertexName, vertexNewType,
-                        true);
-                    extendNodeIndex = newPathRecordType.getField(newEdgeName, true, false)
-                        .getIndex();
-                    extendNodeLabel = newPathRecordType.getFieldList().get(extendNodeIndex)
-                        .getName();
+                    vertexName = projectInput.getPathSchema().firstField().get().getName();
+                    newPathRecordType = newPathRecordType.addField(vertexName, vertexNewType, true);
+                    extendNodeIndex = newPathRecordType.getField(vertexName, true, false).getIndex();
+                    extendNodeLabel = newPathRecordType.getFieldList().get(extendNodeIndex).getName();
 
-                    PathInputRef refPathInput = new PathInputRef(lastNodeLabel, lastNodeIndex,
-                        oldType);
-                    RelDataType idType = ((MetaFieldType) ((VertexRecordType) oldType).getIdField()
-                        .getType()).getType();
-                    RexNode srcIdRefRex = builder.getRexBuilder()
-                        .makeCast(MetaFieldType.edgeSrcId(idType, builder.getTypeFactory()),
-                            builder.getRexBuilder()
-                                .makeFieldAccess(refPathInput, VertexType.ID_FIELD_POSITION));
-                    operands.add(srcIdRefRex);
-                    rex2VariableInfo.put(srcIdRefRex,
-                        new VariableInfo(false, edgeNewType.getSrcIdField().getName()));
-                    RexNode targetIdRefRex = builder.getRexBuilder()
-                        .makeCast(MetaFieldType.edgeTargetId(idType, builder.getTypeFactory()),
-                            builder.getRexBuilder().makeCast(idType, builder.getRexBuilder()
-                                .makeFieldAccess(refPathInput, VertexType.ID_FIELD_POSITION)));
-                    operands.add(targetIdRefRex);
-                    rex2VariableInfo.put(targetIdRefRex,
-                        new VariableInfo(false, edgeNewType.getTargetIdField().getName()));
-
-                    RelDataType labelType =
-                        ((MetaFieldType) ((VertexRecordType) oldType).getLabelField()
-                        .getType()).getType();
-                    RexNode labelRefRex = builder.getRexBuilder()
-                        .makeCast(MetaFieldType.edgeType(labelType, builder.getTypeFactory()),
-                            builder.getRexBuilder()
-                                .makeFieldAccess(refPathInput, VertexType.LABEL_FIELD_POSITION));
-                    operands.add(labelRefRex);
-                    rex2VariableInfo.put(labelRefRex,
-                        new VariableInfo(false, edgeNewType.getLabelField().getName()));
+                    int firstFieldIndex = projectInput.getPathSchema().firstField().get().getIndex();
+                    PathInputRef refPathInput = new PathInputRef(vertexName, firstFieldIndex, oldType);
                     PathInputRef leftRex = new PathInputRef(extendNodeLabel, extendNodeIndex,
-                        edgeNewType);
+                        vertexNewType);
                     for (RelDataTypeField field : leftRex.getType().getFieldList()) {
                         VariableInfo variableInfo;
                         RexNode operand;
@@ -346,20 +321,26 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                             operand = builder.getRexBuilder()
                                 .makeCast(field.getType(), addFieldProjects.get(indexOfAddFields));
                             variableInfo = new VariableInfo(false, field.getName());
-                            operands.add(operand);
-                            rex2VariableInfo.put(operand, variableInfo);
                             rexNodeMap.set(addFieldIndices.get(indexOfAddFields),
                                 rexBuilder.makeFieldAccess(leftRex, field.getIndex()));
+                        } else {
+                            operand = rexBuilder.makeFieldAccess(refPathInput, field.getIndex());
+                            variableInfo = new VariableInfo(false, field.getName());
                         }
+                        operands.add(operand);
+                        rex2VariableInfo.put(operand, variableInfo);
                     }
                     // Construct RexObjectConstruct for dynamic field append expression.
-                    RexObjectConstruct rightRex = new RexObjectConstruct(edgeNewType, operands,
+                    RexObjectConstruct rightRex = new RexObjectConstruct(vertexNewType, operands,
                         rex2VariableInfo);
                     List<PathModifyExpression> pathModifyExpressions = new ArrayList<>();
                     pathModifyExpressions.add(new PathModifyExpression(leftRex, rightRex));
 
-                    PathInputRef leftRex2 = new PathInputRef(newVertexName,
-                        newPathRecordType.getFieldList().size() - 1, vertexNewType);
+                    vertexName = this.generateFieldNames("f", 1,
+                        new HashSet<>(newPathRecordType.getFieldNames())).get(0);
+                    newPathRecordType = newPathRecordType.addField(vertexName, oldType, true);
+                    extendNodeIndex = newPathRecordType.getField(vertexName, true, false).getIndex();
+                    PathInputRef leftRex2 = new PathInputRef(vertexName, extendNodeIndex, oldType);
                     Map<RexNode, VariableInfo> vertexRex2VariableInfo = new HashMap<>();
                     List<RexNode> vertexOperands = refPathInput.getType().getFieldList().stream()
                         .map(f -> {
@@ -372,6 +353,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     RexObjectConstruct rightRex2 = new RexObjectConstruct(leftRex2.getType(),
                         vertexOperands, vertexRex2VariableInfo);
                     pathModifyExpressions.add(new PathModifyExpression(leftRex2, rightRex2));
+
                     GQLJavaTypeFactory gqlJavaTypeFactory =
                         (GQLJavaTypeFactory) builder.getTypeFactory();
                     GeaFlowGraph currentGraph = gqlJavaTypeFactory.getCurrentGraph();
@@ -380,21 +362,20 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     return MatchExtend.create(projectInput, pathModifyExpressions,
                         newPathRecordType, graphSchema);
                 } else {
-                    //Paths ending with an edge, add fields on the edge and add an edge extension.
+                    //Paths start with an edge, add fields on the edge and add an edge extension.
                     edgeNewType = (EdgeRecordType) oldType;
-                    addFieldNames = getNewFieldNames(addFieldProjects.size(),
+                    addFieldNames = this.generateFieldNames("f", addFieldProjects.size(),
                         new HashSet<>(edgeNewType.getFieldNames()));
                     for (int i = 0; i < addFieldNames.size(); i++) {
                         edgeNewType = edgeNewType.add(addFieldNames.get(i),
                             addFieldProjects.get(i).getType(), true);
                     }
-                    extendNodeIndex = lastNodeIndex;
-                    extendNodeLabel = newPathRecordType.getFieldList().get(extendNodeIndex)
-                        .getName();
-                    PathInputRef leftRex = new PathInputRef(extendNodeLabel, extendNodeIndex,
-                        edgeNewType);
-                    newPathRecordType = newPathRecordType.addField(
-                        newPathRecordType.getFieldNames().get(lastNodeIndex), edgeNewType, true);
+
+                    edgeName = projectInput.getPathSchema().firstField().get().getName();
+                    newPathRecordType = newPathRecordType.addField(edgeName, edgeNewType, true);
+                    extendNodeIndex = newPathRecordType.getField(edgeName, true, false).getIndex();
+                    extendNodeLabel = newPathRecordType.getFieldList().get(extendNodeIndex).getName();
+                    PathInputRef leftRex = new PathInputRef(extendNodeLabel, extendNodeIndex, edgeNewType);
 
                     for (RelDataTypeField field : leftRex.getType().getFieldList()) {
                         VariableInfo variableInfo;
@@ -420,41 +401,24 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     List<PathModifyExpression> pathModifyExpressions = new ArrayList<>();
                     pathModifyExpressions.add(new PathModifyExpression(leftRex, rightRex));
 
-                    edgeNewType = EdgeRecordType.emptyEdgeType(
-                        ((EdgeRecordType) oldType).getSrcIdField().getType(),
-                        builder.getTypeFactory());
-                    newEdgeName = getNewFieldNames(1,
+                    edgeName = this.generateFieldNames("f", 1,
                         new HashSet<>(newPathRecordType.getFieldNames())).get(0);
-                    newPathRecordType = newPathRecordType.addField(newEdgeName, edgeNewType, true);
-                    RexNode srcIdRefRex = builder.getRexBuilder()
-                        .makeFieldAccess(leftRex, EdgeType.SRC_ID_FIELD_POSITION);
-                    List<RexNode> extendOperands = new ArrayList<>();
-                    Map<RexNode, VariableInfo> extendRex2VariableInfo = new HashMap<>();
-                    extendOperands.add(srcIdRefRex);
-                    extendRex2VariableInfo.put(srcIdRefRex,
-                        new VariableInfo(false, edgeNewType.getSrcIdField().getName()));
-                    RexNode targetIdRefRex = builder.getRexBuilder()
-                        .makeFieldAccess(leftRex, EdgeType.TARGET_ID_FIELD_POSITION);
-                    extendOperands.add(targetIdRefRex);
-                    extendRex2VariableInfo.put(targetIdRefRex,
-                        new VariableInfo(false, edgeNewType.getTargetIdField().getName()));
-                    RexNode labelRefRex = builder.getRexBuilder()
-                        .makeFieldAccess(leftRex, EdgeType.LABEL_FIELD_POSITION);
-                    extendOperands.add(labelRefRex);
-                    extendRex2VariableInfo.put(labelRefRex,
-                        new VariableInfo(false, edgeNewType.getLabelField().getName()));
-                    if (edgeNewType.getTimestampField().isPresent()) {
-                        RexNode timestampRex = builder.getRexBuilder()
-                            .makeFieldAccess(leftRex, EdgeType.TIME_FIELD_POSITION);
-                        extendOperands.add(timestampRex);
-                        extendRex2VariableInfo.put(timestampRex, new VariableInfo(false,
-                            edgeNewType.getTimestampField().get().getName()));
-                    }
-                    extendNodeIndex++;
-                    PathInputRef leftRex2 = new PathInputRef(newEdgeName, extendNodeIndex,
-                        edgeNewType);
-                    RexObjectConstruct rightRex2 = new RexObjectConstruct(edgeNewType,
-                        extendOperands, extendRex2VariableInfo);
+                    newPathRecordType = newPathRecordType.addField(edgeName, oldType, true);
+                    extendNodeIndex = newPathRecordType.getField(edgeName, true, false).getIndex();
+                    PathInputRef leftRex2 = new PathInputRef(edgeName, extendNodeIndex, oldType);
+                    Map<RexNode, VariableInfo> vertexRex2VariableInfo = new HashMap<>();
+                    int firstFieldIndex = projectInput.getPathSchema().firstField().get().getIndex();
+                    PathInputRef refPathInput = new PathInputRef(edgeName, firstFieldIndex, oldType);
+                    List<RexNode> vertexOperands = refPathInput.getType().getFieldList().stream()
+                        .map(f -> {
+                            RexNode operand = builder.getRexBuilder()
+                                .makeFieldAccess(refPathInput, f.getIndex());
+                            VariableInfo variableInfo = new VariableInfo(false, f.getName());
+                            vertexRex2VariableInfo.put(operand, variableInfo);
+                            return operand;
+                        }).collect(Collectors.toList());
+                    RexObjectConstruct rightRex2 = new RexObjectConstruct(leftRex2.getType(),
+                        vertexOperands, vertexRex2VariableInfo);
                     pathModifyExpressions.add(new PathModifyExpression(leftRex2, rightRex2));
 
                     GQLJavaTypeFactory gqlJavaTypeFactory =
@@ -471,7 +435,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
         } else if (from instanceof LogicalAggregate) {
             LogicalAggregate aggregate = (LogicalAggregate) from;
             List<RexNode> inputRexNode2RexInfo = new ArrayList<>();
-            IMatchNode aggregateInput = from == to ? input : concatToMatchNode(builder,
+            IMatchNode aggregateInput = from == to ? input : concatToMatchNode(builder, left,
                 GQLRelUtil.toRel(aggregate.getInput()), to, input, inputRexNode2RexInfo);
             int lastNodeIndex = aggregateInput.getPathSchema().getFieldCount() - 1;
             if (lastNodeIndex < 0) {
@@ -481,7 +445,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
             // but using RexNode instead.
             List<MatchAggregateCall> adjustAggCalls;
             List<RexNode> adjustGroupList;
-            Set<String> prunePathLabels = new HashSet<>();
+            Set<String> matchAggPathLabels = new HashSet<>();
             if (!inputRexNode2RexInfo.isEmpty()) {
                 adjustGroupList = aggregate.getGroupSet().asList().stream()
                     .map(inputRexNode2RexInfo::get).collect(Collectors.toList());
@@ -496,7 +460,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
             } else {
                 String lastNodeLabel = aggregateInput.getPathSchema().getFieldList()
                     .get(lastNodeIndex).getName();
-                prunePathLabels.add(lastNodeLabel);
+                matchAggPathLabels.add(lastNodeLabel);
                 RelDataType oldType = aggregateInput.getPathSchema().getFieldList()
                     .get(lastNodeIndex).getType();
                 adjustGroupList = aggregate.getGroupSet().asList().stream().map(idx -> builder.getRexBuilder()
@@ -511,6 +475,9 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
             }
 
             //Get the pruning path.
+            if (left != null) {
+                matchAggPathLabels.addAll(left.getPathSchema().getFieldNames());
+            }
             for (RelDataTypeField field : aggregateInput.getPathSchema().getFieldList()) {
                 if (field.getType() instanceof VertexRecordType && adjustGroupList.stream()
                     .anyMatch(rexNode -> ((PathInputRef) ((RexFieldAccess) rexNode)
@@ -520,7 +487,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                         .equals(MetaField.VERTEX_ID))) {
                     //The condition for preserving vertex in the after aggregating path is that the
                     // vertex ID appears in the Group.
-                    prunePathLabels.add(field.getName());
+                    matchAggPathLabels.add(field.getName());
                 } else if (field.getType() instanceof EdgeRecordType) {
                     //The condition for preserving edges in the after aggregating path is that
                     // the edge srcId, targetId, and timestamp appear in the Group.
@@ -548,19 +515,19 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                                 .equals(MetaField.EDGE_TS));
                     }
                     if (groupBySrcId && groupByTargetId && groupByTs) {
-                        prunePathLabels.add(field.getName());
+                        matchAggPathLabels.add(field.getName());
                     }
                 }
             }
-            if (prunePathLabels.isEmpty()) {
-                prunePathLabels.add(aggregateInput.getPathSchema().firstFieldName().get());
+            if (matchAggPathLabels.isEmpty()) {
+                matchAggPathLabels.add(aggregateInput.getPathSchema().firstFieldName().get());
             }
 
             PathRecordType aggPathType;
             if (adjustGroupList.size() > 0 || aggregate.getAggCallList().size() > 0) {
                 PathRecordType pathType = aggregateInput.getPathSchema();
                 PathRecordType prunePathType = new PathRecordType(pathType.getFieldList().stream()
-                    .filter(f -> prunePathLabels.contains(f.getName()))
+                    .filter(f -> matchAggPathLabels.contains(f.getName()))
                     .collect(Collectors.toList()));
                 //Prune the path, and add the aggregated value to the beginning of the path.
                 RelDataType firstNodeType = prunePathType.firstField().get().getType();
@@ -568,14 +535,14 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                 int offset;
                 if (firstNodeType instanceof VertexRecordType) {
                     VertexRecordType vertexNewType = (VertexRecordType) firstNodeType;
-                    List<String> addFieldNames = getNewFieldNames(adjustGroupList.size(),
+                    List<String> addFieldNames = this.generateFieldNames("f", adjustGroupList.size(),
                         new HashSet<>(vertexNewType.getFieldNames()));
                     offset = vertexNewType.getFieldCount();
                     for (int i = 0; i < adjustGroupList.size(); i++) {
                         RelDataType dataType = adjustGroupList.get(i).getType();
                         vertexNewType = vertexNewType.add(addFieldNames.get(i), dataType, true);
                     }
-                    addFieldNames = getNewAggFieldNames(aggregate.getAggCallList().size(),
+                    addFieldNames = generateFieldNames("agg", aggregate.getAggCallList().size(),
                         new HashSet<>(vertexNewType.getFieldNames()));
                     for (int i = 0; i < aggregate.getAggCallList().size(); i++) {
                         vertexNewType = vertexNewType.add(addFieldNames.get(i),
@@ -590,14 +557,14 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     aggPathType = aggPathType.concat(prunePathType, true);
                 } else if (firstNodeType instanceof EdgeRecordType) {
                     EdgeRecordType edgeNewType = (EdgeRecordType) firstNodeType;
-                    List<String> addFieldNames = getNewFieldNames(adjustGroupList.size(),
+                    List<String> addFieldNames = this.generateFieldNames("f", adjustGroupList.size(),
                         new HashSet<>(edgeNewType.getFieldNames()));
                     offset = edgeNewType.getFieldCount();
                     for (int i = 0; i < adjustGroupList.size(); i++) {
                         RelDataType dataType = adjustGroupList.get(i).getType();
                         edgeNewType = edgeNewType.add(addFieldNames.get(i), dataType, true);
                     }
-                    addFieldNames = getNewAggFieldNames(aggregate.getAggCallList().size(),
+                    addFieldNames = generateFieldNames("agg", aggregate.getAggCallList().size(),
                         new HashSet<>(edgeNewType.getFieldNames()));
                     for (int i = 0; i < aggregate.getAggCallList().size(); i++) {
                         edgeNewType = edgeNewType.add(addFieldNames.get(i),
@@ -623,35 +590,18 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
     }
 
     /**
-     * Generate n non-repeating field names with the format "f[$index_number]".
+     * Generate n non-repeating field names with the format "[$prefix][$index_number]".
      */
-    protected List<String> getNewFieldNames(int n, Set<String> exists) {
-        if (n <= 0) {
+    protected List<String> generateFieldNames(String prefix, int nameCount,
+                                              Collection<String> existsNames) {
+        if (nameCount <= 0) {
             return Collections.emptyList();
         }
-        List<String> validNames = new ArrayList<>(n);
+        Set<String> exists = new HashSet<>(existsNames);
+        List<String> validNames = new ArrayList<>(nameCount);
         int i = 0;
-        while (validNames.size() < n) {
-            String newName = "f" + i;
-            if (!exists.contains(newName)) {
-                validNames.add(newName);
-            }
-            i++;
-        }
-        return validNames;
-    }
-
-    /**
-     * Generate n non-repeating aggregate field names with the format "agg[$index_number]".
-     */
-    protected List<String> getNewAggFieldNames(int n, Set<String> exists) {
-        if (n <= 0) {
-            return Collections.emptyList();
-        }
-        List<String> validNames = new ArrayList<>(n);
-        int i = 0;
-        while (validNames.size() < n) {
-            String newName = "agg" + i;
+        while (validNames.size() < nameCount) {
+            String newName = prefix + i;
             if (!exists.contains(newName)) {
                 validNames.add(newName);
             }
@@ -762,31 +712,44 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     if (matchNode instanceof SingleMatchNode && GQLRelUtil.getLatestMatchNode(
                         (SingleMatchNode) matchNode) instanceof EdgeMatch) {
                         concatedLeftMatch =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, leftInput, leftHead,
-                                matchNode, rexLeftNodeMap)
-                                             : concatToMatchNode(relBuilder, rightInput, rightHead,
-                                                 matchNode, rexRightNodeMap);
+                            isMatchInLeft ? concatToMatchNode(relBuilder, null, leftInput,
+                                leftHead, matchNode, rexLeftNodeMap)
+                                             : concatToMatchNode(relBuilder, null, rightInput,
+                                                 rightHead, matchNode, rexRightNodeMap);
                         String nodeName = geaflowTable.getName();
                         PathRecordType pathRecordType =
                             concatedLeftMatch.getPathSchema().getFieldNames().contains(nodeName)
                             ? concatedLeftMatch.getPathSchema()
                             : concatedLeftMatch.getPathSchema().addField(nodeName, tableType, false);
-                        newPathPattern = VertexMatch.create(concatedLeftMatch.getCluster(),
-                            (SingleMatchNode) concatedLeftMatch, nodeName,
-                            Collections.singletonList(nodeName), tableType, pathRecordType);
+                        switch (join.getJoinType()) {
+                            case LEFT:
+                                newPathPattern = OptionalVertexMatch.create(concatedLeftMatch.getCluster(),
+                                    (SingleMatchNode) concatedLeftMatch, nodeName,
+                                    Collections.singletonList(nodeName), tableType, pathRecordType);
+                                break;
+                            case INNER:
+                                newPathPattern = VertexMatch.create(concatedLeftMatch.getCluster(),
+                                    (SingleMatchNode) concatedLeftMatch, nodeName,
+                                    Collections.singletonList(nodeName), tableType, pathRecordType);
+                                break;
+                            case RIGHT:
+                            case FULL:
+                            default:
+                                throw new GeaFlowDSLException("Illegal join type: {}", join.getJoinType());
+                        }
                         newPathPattern =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, rightInput, rightHead,
-                                newPathPattern, rexRightNodeMap)
-                                             : concatToMatchNode(relBuilder, leftInput, leftHead,
-                                                 newPathPattern, rexLeftNodeMap);
+                            isMatchInLeft ? concatToMatchNode(relBuilder, concatedLeftMatch, rightInput,
+                                rightHead, newPathPattern, rexRightNodeMap)
+                                             : concatToMatchNode(relBuilder, concatedLeftMatch, leftInput,
+                                                 leftHead, newPathPattern, rexLeftNodeMap);
                     } else {
                         String nodeName = geaflowTable.getName();
                         assert currentGraph.getVertexTables().stream()
                             .anyMatch(t -> t.getName().equalsIgnoreCase(geaflowTable.getName()));
                         concatedLeftMatch =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, leftInput, leftHead,
+                            isMatchInLeft ? concatToMatchNode(relBuilder, null, leftInput, leftHead,
                                 matchNode, rexLeftNodeMap)
-                                             : concatToMatchNode(relBuilder, rightInput, rightHead,
+                                             : concatToMatchNode(relBuilder, null, rightInput, rightHead,
                                                  matchNode, rexRightNodeMap);
                         RelDataType vertexRelType = geaflowTable.getRowType(
                             relBuilder.getTypeFactory());
@@ -796,13 +759,13 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                             nodeName, Collections.singletonList(geaflowTable.getName()),
                             vertexRelType, rightPathType);
                         IMatchNode matchJoinRight =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, rightInput, rightHead,
-                                rightVertexMatch, rexRightNodeMap)
-                                             : concatToMatchNode(relBuilder, leftInput, leftHead,
-                                                 rightVertexMatch, rexLeftNodeMap);
+                            isMatchInLeft ? concatToMatchNode(relBuilder, null, rightInput,
+                                rightHead, rightVertexMatch, rexRightNodeMap)
+                                             : concatToMatchNode(relBuilder, null, leftInput,
+                                                 leftHead, rightVertexMatch, rexLeftNodeMap);
                         MatchJoin matchJoin = MatchJoin.create(concatedLeftMatch.getCluster(),
                             concatedLeftMatch.getTraitSet(), concatedLeftMatch, matchJoinRight,
-                            relBuilder.getRexBuilder().makeLiteral(true), JoinRelType.INNER);
+                            relBuilder.getRexBuilder().makeLiteral(true), join.getJoinType());
 
                         PathInputRef vertexRef = new PathInputRef(nodeName,
                             matchJoin.getRowType().getField(nodeName, true, false).getIndex(),
@@ -826,9 +789,9 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     if (matchNode instanceof SingleMatchNode && GQLRelUtil.getLatestMatchNode(
                         (SingleMatchNode) matchNode) instanceof VertexMatch) {
                         concatedLeftMatch =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, leftInput, leftHead,
+                            isMatchInLeft ? concatToMatchNode(relBuilder, null, leftInput, leftHead,
                                 matchNode, rexLeftNodeMap)
-                                             : concatToMatchNode(relBuilder, rightInput, rightHead,
+                                             : concatToMatchNode(relBuilder, null, rightInput, rightHead,
                                                  matchNode, rexRightNodeMap);
                         isEdgeReverse = graphJoinType.equals(GraphJoinType.EDGE_JOIN_VERTEX);
                         EdgeDirection edgeDirection =
@@ -838,15 +801,32 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                             concatedLeftMatch.getPathSchema().getFieldNames().contains(edgeName)
                             ? concatedLeftMatch.getPathSchema()
                             : concatedLeftMatch.getPathSchema().addField(edgeName, tableType, false);
-                        newPathPattern = EdgeMatch.create(concatedLeftMatch.getCluster(),
-                            (SingleMatchNode) concatedLeftMatch, edgeName,
-                            Collections.singletonList(edgeName), edgeDirection, tableType,
-                            pathRecordType);
+                        switch (join.getJoinType()) {
+                            case LEFT:
+                                if (!isMatchInLeft) {
+                                    LOGGER.warn("Left table cannot be forcibly retained. Use INNER Join instead.");
+                                }
+                                newPathPattern = OptionalEdgeMatch.create(concatedLeftMatch.getCluster(),
+                                    (SingleMatchNode) concatedLeftMatch, edgeName,
+                                    Collections.singletonList(edgeName), edgeDirection, tableType,
+                                    pathRecordType);
+                                break;
+                            case INNER:
+                                newPathPattern = EdgeMatch.create(concatedLeftMatch.getCluster(),
+                                    (SingleMatchNode) concatedLeftMatch, edgeName,
+                                    Collections.singletonList(edgeName), edgeDirection, tableType,
+                                    pathRecordType);
+                                break;
+                            case RIGHT:
+                            case FULL:
+                            default:
+                                throw new GeaFlowDSLException("Illegal join type: {}", join.getJoinType());
+                        }
                         newPathPattern =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, rightInput, rightHead,
-                                newPathPattern, rexRightNodeMap)
-                                             : concatToMatchNode(relBuilder, leftInput, leftHead,
-                                                 newPathPattern, rexLeftNodeMap);
+                            isMatchInLeft ? concatToMatchNode(relBuilder, concatedLeftMatch, rightInput,
+                                rightHead, newPathPattern, rexRightNodeMap)
+                                             : concatToMatchNode(relBuilder, concatedLeftMatch, leftInput,
+                                                 leftHead, newPathPattern, rexLeftNodeMap);
 
                     } else {
                         String edgeName = geaflowTable.getName();
@@ -880,18 +860,18 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                             edgeRelType, pathRecordType);
 
                         concatedLeftMatch =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, leftInput, leftHead,
+                            isMatchInLeft ? concatToMatchNode(relBuilder, null, leftInput, leftHead,
                                 matchNode, rexLeftNodeMap)
-                                             : concatToMatchNode(relBuilder, rightInput, rightHead,
+                                             : concatToMatchNode(relBuilder, null, rightInput, rightHead,
                                                  matchNode, rexRightNodeMap);
                         IMatchNode matchJoinRight =
-                            isMatchInLeft ? concatToMatchNode(relBuilder, rightInput, rightHead,
-                                edgeMatch, rexRightNodeMap)
-                                             : concatToMatchNode(relBuilder, leftInput, leftHead,
-                                                 edgeMatch, rexLeftNodeMap);
+                            isMatchInLeft ? concatToMatchNode(relBuilder, null, rightInput,
+                                rightHead, edgeMatch, rexRightNodeMap)
+                                             : concatToMatchNode(relBuilder, null, leftInput,
+                                                 leftHead, edgeMatch, rexLeftNodeMap);
                         MatchJoin matchJoin = MatchJoin.create(matchNode.getCluster(),
                             matchNode.getTraitSet(), concatedLeftMatch, matchJoinRight,
-                            relBuilder.getRexBuilder().makeLiteral(true), JoinRelType.INNER);
+                            relBuilder.getRexBuilder().makeLiteral(true), join.getJoinType());
 
                         PathInputRef vertexRef = new PathInputRef(dummyNodeName,
                             matchJoin.getRowType().getField(dummyNodeName, true, false).getIndex(),
@@ -1003,7 +983,7 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
 
         // Complete the projection from Path to Row.
         List<RelDataTypeField> matchTypeFields = new ArrayList<>();
-        List<String> newFieldNames = getNewFieldNames(newProjects.size(), new HashSet<>());
+        List<String> newFieldNames = this.generateFieldNames("f", newProjects.size(), new HashSet<>());
         for (int i = 0; i < newProjects.size(); i++) {
             matchTypeFields.add(
                 new RelDataTypeFieldImpl(newFieldNames.get(i), i, newProjects.get(i).getType()));
@@ -1055,6 +1035,18 @@ public abstract class AbstractJoinToGraphRule extends RelOptRule {
                     .collect(Collectors.toList()));
             }
         }
+        AtomicInteger offset = new AtomicInteger();
+        // Make the project type nullable the same as the output type of the join.
+        joinProjects = joinProjects.stream().map(prj -> {
+            int i = offset.getAndIncrement();
+            boolean joinFieldNullable = join.getRowType().getFieldList().get(i).getType().isNullable();
+            if ((prj.getType().isNullable() && !joinFieldNullable)
+                || (!prj.getType().isNullable() && joinFieldNullable)) {
+                RelDataType type = rexBuilder.getTypeFactory().createTypeWithNullability(prj.getType(), joinFieldNullable);
+                return rexBuilder.makeCast(type, prj);
+            }
+            return prj;
+        }).collect(Collectors.toList());
         tail = LogicalProject.create(tail, joinProjects, join.getRowType());
         return tail;
     }

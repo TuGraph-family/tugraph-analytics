@@ -41,16 +41,30 @@ public class MatchEdgeFunctionImpl implements MatchEdgeFunction {
 
     private IFilter edgesFilter;
 
-    public MatchEdgeFunctionImpl(EdgeDirection direction, Set<BinaryString> edgeTypes, String label,
-                                 IFilter<?> edgeFilter) {
+    private final boolean isOptionalMatchEdge;
+
+    public MatchEdgeFunctionImpl(EdgeDirection direction, Set<BinaryString> edgeTypes,
+                                 boolean isOptionalMatchEdge, String label, IFilter<?> edgeFilter) {
         this.direction = direction;
         this.edgeTypes = edgeTypes;
         this.label = label;
         this.edgesFilter = edgeFilter;
+        this.isOptionalMatchEdge = isOptionalMatchEdge;
+    }
+
+    public MatchEdgeFunctionImpl(EdgeDirection direction, Set<BinaryString> edgeTypes, String label,
+                                 IFilter<?> edgeFilter) {
+        this(direction, edgeTypes, false, label, edgeFilter);
     }
 
     public MatchEdgeFunctionImpl(EdgeDirection direction, Set<BinaryString> edgeTypes, String label,
                                  IFilter ... pushDownFilter) {
+        this(direction, edgeTypes, false, label, pushDownFilter);
+    }
+
+    public MatchEdgeFunctionImpl(EdgeDirection direction, Set<BinaryString> edgeTypes,
+                                 boolean isOptionalMatchEdge, String label,
+                                  IFilter ... pushDownFilter) {
         this.direction = direction;
         this.edgeTypes = Objects.requireNonNull(edgeTypes);
         this.label = label;
@@ -77,6 +91,7 @@ public class MatchEdgeFunctionImpl implements MatchEdgeFunction {
             this.edgesFilter = this.edgesFilter == null ? andFilter :
                                this.edgesFilter.and(andFilter);
         }
+        this.isOptionalMatchEdge = isOptionalMatchEdge;
     }
 
     @Override
@@ -92,6 +107,10 @@ public class MatchEdgeFunctionImpl implements MatchEdgeFunction {
     @Override
     public Set<BinaryString> getEdgeTypes() {
         return edgeTypes;
+    }
+
+    public boolean isOptionalMatchEdge() {
+        return isOptionalMatchEdge;
     }
 
     @Override

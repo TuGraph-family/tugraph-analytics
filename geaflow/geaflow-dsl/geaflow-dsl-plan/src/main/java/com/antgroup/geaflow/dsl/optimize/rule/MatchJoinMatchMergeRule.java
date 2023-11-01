@@ -23,15 +23,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.JoinInfo;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
@@ -52,7 +53,7 @@ public class MatchJoinMatchMergeRule extends AbstractJoinToGraphRule {
     @Override
     public boolean matches(RelOptRuleCall call) {
         LogicalJoin join = call.rel(0);
-        if (!join.getJoinType().equals(JoinRelType.INNER)) {
+        if (!isSupportJoinType(join.getJoinType())) {
             // non-INNER joins is not supported.
             return false;
         }
@@ -85,16 +86,36 @@ public class MatchJoinMatchMergeRule extends AbstractJoinToGraphRule {
         List<RexNode> rexLeftNodeMap = new ArrayList<>();
         List<RexNode> rexRightNodeMap = new ArrayList<>();
         IMatchNode leftPathPattern = ((GraphMatch)leftGraphMatch).getPathPattern();
-        leftPathPattern = concatToMatchNode(relBuilder, leftInput, leftGraphMatch, leftPathPattern, rexLeftNodeMap);
+        leftPathPattern = concatToMatchNode(relBuilder, null, leftInput, leftGraphMatch,
+            leftPathPattern, rexLeftNodeMap);
         IMatchNode rightPathPattern = ((GraphMatch)rightGraphMatch).getPathPattern();
-        rightPathPattern = concatToMatchNode(relBuilder, rightInput, rightGraphMatch, rightPathPattern, rexRightNodeMap);
+        rightPathPattern = concatToMatchNode(relBuilder, null, rightInput, rightGraphMatch,
+            rightPathPattern, rexRightNodeMap);
         if (leftPathPattern == null || rightPathPattern == null) {
             return;
         }
         LogicalJoin join = call.rel(0);
         MatchJoin newPathPattern = MatchJoin.create(join.getCluster(), join.getTraitSet(),
-            leftPathPattern, rightPathPattern, join.getCondition(), JoinRelType.INNER);
+            leftPathPattern, rightPathPattern, join.getCondition(), join.getJoinType());
         GraphMatch newGraphMatch = ((GraphMatch)leftGraphMatch).copy(newPathPattern);
+
+        List<RexNode> newProjects = new ArrayList<>();
+        if (rexLeftNodeMap.size() > 0) {
+            newProjects.addAll(rexLeftNodeMap);
+        } else {
+            assert leftGraphMatchProject != null;
+            newProjects.addAll(adjustLeftRexNodes(
+                ((LogicalProject)leftGraphMatchProject).getProjects(), newGraphMatch, relBuilder));
+        }
+        if (rexRightNodeMap.size() > 0) {
+            newProjects.addAll(adjustRightRexNodes(rexRightNodeMap, newGraphMatch, relBuilder,
+                leftPathPattern, rightPathPattern));
+        } else {
+            assert rightGraphMatchProject != null;
+            newProjects.addAll(adjustRightRexNodes(
+                ((LogicalProject)rightGraphMatchProject).getProjects(), newGraphMatch, relBuilder,
+                leftPathPattern, rightPathPattern));
+        }
 
         JoinInfo joinInfo = join.analyzeCondition();
         List<RexNode> joinConditions = new ArrayList<>();
@@ -117,30 +138,25 @@ public class MatchJoinMatchMergeRule extends AbstractJoinToGraphRule {
                 newCondition, matchJoin.getLeft(), matchJoin.getRight(), matchJoin.getJoinType()));
         }
 
-        List<RexNode> newProjects = new ArrayList<>();
-        if (rexLeftNodeMap.size() > 0) {
-            newProjects.addAll(rexLeftNodeMap);
-        } else {
-            assert leftGraphMatchProject != null;
-            newProjects.addAll(adjustLeftRexNodes(
-                ((LogicalProject)leftGraphMatchProject).getProjects(), newGraphMatch, relBuilder));
-        }
-        if (rexRightNodeMap.size() > 0) {
-            newProjects.addAll(adjustRightRexNodes(rexRightNodeMap, newGraphMatch, relBuilder,
-                leftPathPattern, rightPathPattern));
-        } else {
-            assert rightGraphMatchProject != null;
-            newProjects.addAll(adjustRightRexNodes(
-                ((LogicalProject)rightGraphMatchProject).getProjects(), newGraphMatch, relBuilder,
-                leftPathPattern, rightPathPattern));
-        }
-        List<String> fieldNames = getNewFieldNames(newProjects.size(), new HashSet<>());
+        List<String> fieldNames = this.generateFieldNames("f", newProjects.size(), new HashSet<>());
         RelNode tail = LogicalProject.create(newGraphMatch, newProjects, fieldNames);
 
         // Complete the Join projection.
         final RelNode finalTail = tail;
         List<RexNode> joinProjects = IntStream.range(0, newProjects.size())
             .mapToObj(i -> rexBuilder.makeInputRef(finalTail, i)).collect(Collectors.toList());
+        AtomicInteger offset = new AtomicInteger();
+        // Make the project type nullable the same as the output type of the join.
+        joinProjects = joinProjects.stream().map(prj -> {
+            int i = offset.getAndIncrement();
+            boolean joinFieldNullable = join.getRowType().getFieldList().get(i).getType().isNullable();
+            if ((prj.getType().isNullable() && !joinFieldNullable)
+                || (!prj.getType().isNullable() && joinFieldNullable)) {
+                RelDataType type = rexBuilder.getTypeFactory().createTypeWithNullability(prj.getType(), joinFieldNullable);
+                return rexBuilder.makeCast(type, prj);
+            }
+            return prj;
+        }).collect(Collectors.toList());
         tail = LogicalProject.create(tail, joinProjects, join.getRowType());
         // Add remain filter.
         RexNode remainFilter = joinInfo.getRemaining(join.getCluster().getRexBuilder());

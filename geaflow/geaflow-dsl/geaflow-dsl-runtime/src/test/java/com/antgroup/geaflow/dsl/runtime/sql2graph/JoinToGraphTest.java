@@ -352,4 +352,94 @@ public class JoinToGraphTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testLeftJoin_001() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_002() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_002.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_003() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_004() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_004.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_005() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_005.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_006() throws Exception {
+        //di_join_001
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_006.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_007() throws Exception {
+        //di_join_0011
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_007.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testLeftJoin_008() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/left_join_008.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }

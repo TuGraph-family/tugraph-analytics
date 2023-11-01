@@ -66,6 +66,14 @@ CREATE TABLE IF NOT EXISTS e_knows (
 	geaflow.dsl.file.path = 'resource:///data/knows.txt'
 );
 
+CREATE TABLE IF NOT EXISTS e_inClass (
+  srcId bigint,
+  targetId bigint
+) WITH (
+	type='file',
+	geaflow.dsl.file.path = 'resource:///data/inClass.txt'
+);
+
 CREATE GRAPH IF NOT EXISTS g_student (
   Vertex student (
     id bigint ID,
@@ -99,6 +107,10 @@ CREATE GRAPH IF NOT EXISTS g_student (
     srcId from student SOURCE ID,
     targetId from student DESTINATION ID
   ),
+  Edge inClass (
+    srcId from student SOURCE ID,
+    targetId from gradeClass DESTINATION ID
+  ),
   Edge hasTeacher (
     srcId from course SOURCE ID,
     targetId from teacher DESTINATION ID
@@ -108,7 +120,9 @@ CREATE GRAPH IF NOT EXISTS g_student (
 	shardCount = 2
 );
 
+
 INSERT INTO g_student.selectCourse SELECT * FROM e_selectCourse;
 INSERT INTO g_student.hasTeacher SELECT * FROM e_hasTeacher;
 INSERT INTO g_student.hasMonitor SELECT * FROM e_hasMonitor;
 INSERT INTO g_student.knows SELECT * FROM e_knows;
+INSERT INTO g_student.inClass SELECT * FROM e_inClass;
