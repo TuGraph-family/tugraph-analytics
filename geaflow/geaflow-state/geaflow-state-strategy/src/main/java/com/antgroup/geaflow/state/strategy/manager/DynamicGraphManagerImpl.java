@@ -24,6 +24,7 @@ import com.antgroup.geaflow.state.iterator.IteratorWithFilter;
 import com.antgroup.geaflow.state.iterator.MultiIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,6 +76,19 @@ public class DynamicGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
         for (Entry<Integer, DynamicGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
             Iterator<K> iterator = entry.getValue().vertexIDIterator();
             iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), k -> k) : iterator);
+        }
+        return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
+    }
+
+    @Override
+    public Iterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
+        List<Iterator<K>> iterators = new ArrayList<>();
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        for (int shard = shardGroup.getStartKeyGroup(); shard <= shardGroup.getEndKeyGroup(); shard++) {
+            DynamicGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            Iterator<K> iterator = trait.vertexIDIterator(version, pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, k -> k) : iterator);
         }
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
@@ -140,13 +154,14 @@ public class DynamicGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
         BiFunction<DynamicGraphTrait<K, VV, EV>, IStatePushDown, Iterator<R>> function) {
         List<Iterator<R>> iterators = new ArrayList<>();
 
-        int startShard = this.shardGroup.getStartKeyGroup();
-        int endShard = this.shardGroup.getEndKeyGroup();
-        for (Entry<Integer, DynamicGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            if (entry.getKey() >= startShard && entry.getKey() <= endShard) {
-                Iterator<R> iterator = function.apply(entry.getValue(), pushdown);
-                iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), keyExtractor) : iterator);
-            }
+        KeyGroup shardGroup = getShardGroup(pushdown);
+        int startShard = shardGroup.getStartKeyGroup();
+        int endShard = shardGroup.getEndKeyGroup();
+
+        for (int shard = startShard; shard <= endShard; shard++) {
+            DynamicGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            Iterator<R> iterator = function.apply(trait, pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, keyExtractor) : iterator);
         }
 
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());

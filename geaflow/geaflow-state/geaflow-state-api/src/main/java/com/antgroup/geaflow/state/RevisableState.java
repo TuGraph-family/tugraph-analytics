@@ -22,27 +22,27 @@ import java.util.Collection;
 public interface RevisableState<K, R> {
 
     /**
-     * add state method with data.
+     * Add state method with data.
      */
     void add(R r);
 
     /**
-     * update state method with data.
+     * Update state method with data.
      */
     void update(R r);
 
     /**
-     * delete state method with data.
+     * Delete state method with data.
      */
     void delete(R r);
 
     /**
-     * delete state method with multi keys.
+     * Delete state method with multi keys.
      */
     void delete(K... ids);
 
     /**
-     * delete state method with multi keys.
+     * Delete state method with multi keys.
      */
     void delete(Collection<K> ids);
 }

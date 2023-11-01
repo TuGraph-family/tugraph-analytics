@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option java_multiple_files = false;
+option java_package = "com.antgroup.geaflow.rpc.proto";
+option java_outer_classname = "MetaServer";
+
+message ServiceRequestPb {
+    bytes request = 1;
+}
+
+message ServiceResultPb {
+    bytes result = 1;
+}

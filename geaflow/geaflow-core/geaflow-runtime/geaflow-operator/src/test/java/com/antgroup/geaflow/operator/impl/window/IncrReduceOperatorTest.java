@@ -56,7 +56,7 @@ public class IncrReduceOperatorTest {
         configuration.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
         RuntimeContext runtimeContext = mock(RuntimeContext.class);
         when(runtimeContext.getConfiguration()).thenReturn(configuration);
-        when(runtimeContext.getTaskArgs()).thenReturn(new TaskArgs(1, 0, "agg", 1, 1024));
+        when(runtimeContext.getTaskArgs()).thenReturn(new TaskArgs(1, 0, "agg", 1, 1024, 0));
         when(runtimeContext.clone(any(Map.class))).thenReturn(runtimeContext);
         Configuration config = new Configuration();
         config.put(ExecutionConfigKeys.REPORTER_LIST.getKey(), "");

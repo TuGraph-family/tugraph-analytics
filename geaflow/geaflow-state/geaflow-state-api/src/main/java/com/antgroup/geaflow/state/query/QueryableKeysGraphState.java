@@ -22,12 +22,12 @@ import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 public interface QueryableKeysGraphState<K, VV, EV, R> extends QueryableGraphState<K, VV, EV, R> {
 
     /**
-     * query by the filters, corresponding to the search keys.
+     * Query by the filters, corresponding to the search keys.
      */
     QueryableGraphState<K, VV, EV, R> by(IFilter... filter);
 
     /**
-     * query by a filter, sharing by the search keys.
+     * Query by a filter, sharing by the search keys.
      */
     QueryableGraphState<K, VV, EV, R> by(IFilter filter);
 }

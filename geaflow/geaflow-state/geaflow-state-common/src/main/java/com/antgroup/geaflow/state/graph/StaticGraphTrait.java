@@ -59,6 +59,11 @@ public interface StaticGraphTrait<K, VV, EV> {
     Iterator<K> vertexIDIterator();
 
     /**
+     * Fetch the iterator of the ids of all graph vertices by pushdown condition.
+     */
+    Iterator<K> vertexIDIterator(IStatePushDown pushDown);
+
+    /**
      * Fetch the iterator of the graph vertices according to the pushdown condition.
      */
     Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown);

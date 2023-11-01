@@ -16,12 +16,17 @@ package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical;
 
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.state.GraphState;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 
 public class StaticTraversalEdgeQueryImpl<K, VV, EV> extends StaticEdgeQueryImpl<K, VV, EV>
     implements TraversalEdgeQuery<K, EV> {
 
     public StaticTraversalEdgeQueryImpl(K vId, GraphState<K, VV, EV> graphState) {
         super(vId, graphState);
+    }
+
+    public StaticTraversalEdgeQueryImpl(K vId, GraphState<K, VV, EV> graphState, KeyGroup keyGroup) {
+        super(vId, graphState, keyGroup);
     }
 
     @Override

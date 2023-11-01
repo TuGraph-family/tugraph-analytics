@@ -18,6 +18,7 @@ package com.antgroup.geaflow.runtime.core.scheduler.io;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
@@ -68,7 +69,7 @@ public class IoDescriptorBuilderTest extends TestCase {
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(false);
+        vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(parallelism);
         vertexGroup.getVertexMap().put(0, vertex);
@@ -85,7 +86,7 @@ public class IoDescriptorBuilderTest extends TestCase {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

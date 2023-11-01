@@ -38,6 +38,7 @@ public class GeaFlowClient implements Serializable {
     }
 
     public void shutdown() {
+        this.pipelineClient.close();
         this.clusterClient.shutdown();
     }
 

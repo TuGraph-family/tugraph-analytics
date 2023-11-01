@@ -45,7 +45,7 @@ import com.antgroup.geaflow.dsl.runtime.plan.PhysicRelNode.PhysicRelNodeName;
 import com.antgroup.geaflow.dsl.runtime.util.SchemaUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.graph.PGraphView;
@@ -59,9 +59,9 @@ import java.util.stream.Collectors;
  */
 public class GeaFlowQueryEngine implements QueryEngine {
 
-    private final IPipelineTaskContext pipelineContext;
+    private final IPipelineJobContext pipelineContext;
 
-    public GeaFlowQueryEngine(IPipelineTaskContext pipelineContext) {
+    public GeaFlowQueryEngine(IPipelineJobContext pipelineContext) {
         this.pipelineContext = pipelineContext;
     }
 
@@ -71,7 +71,7 @@ public class GeaFlowQueryEngine implements QueryEngine {
     }
 
     @Override
-    public IPipelineTaskContext getContext() {
+    public IPipelineJobContext getContext() {
         return pipelineContext;
     }
 
@@ -170,7 +170,7 @@ public class GeaFlowQueryEngine implements QueryEngine {
         return new GeaFlowRuntimeGraph(context, pGraphView, graph, graphViewDesc);
     }
 
-    public IPipelineTaskContext getPipelineContext() {
+    public IPipelineJobContext getPipelineContext() {
         return pipelineContext;
     }
 

@@ -22,6 +22,7 @@ import com.antgroup.geaflow.state.action.close.CloseAction;
 import com.antgroup.geaflow.state.action.compact.CompactAction;
 import com.antgroup.geaflow.state.action.drop.DropAction;
 import com.antgroup.geaflow.state.action.finish.FinishAction;
+import com.antgroup.geaflow.state.action.load.LoadAction;
 import com.antgroup.geaflow.state.action.recovery.RecoveryAction;
 
 public class ActionBuilder {
@@ -40,6 +41,8 @@ public class ActionBuilder {
                 return new DropAction();
             case COMPACT:
                 return new CompactAction();
+            case LOAD:
+                return new LoadAction();
             default:
                 return new EmptyAction(actionType);
         }

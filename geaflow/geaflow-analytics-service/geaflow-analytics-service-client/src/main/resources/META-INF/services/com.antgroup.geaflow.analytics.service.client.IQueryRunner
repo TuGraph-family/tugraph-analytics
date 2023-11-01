@@ -1,0 +1,2 @@
+com.antgroup.geaflow.analytics.service.client.HttpQueryRunner
+com.antgroup.geaflow.analytics.service.client.RpcQueryRunner

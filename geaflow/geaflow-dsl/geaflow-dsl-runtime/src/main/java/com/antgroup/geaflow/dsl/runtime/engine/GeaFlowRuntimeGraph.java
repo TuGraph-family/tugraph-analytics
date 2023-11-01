@@ -58,7 +58,7 @@ import com.antgroup.geaflow.dsl.runtime.util.IDUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.graph.PGraphView;
 import com.antgroup.geaflow.view.graph.PIncGraphView;
@@ -73,7 +73,7 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
 
     private final QueryContext queryContext;
 
-    private final IPipelineTaskContext context;
+    private final IPipelineJobContext context;
 
     private final GeaFlowGraph graph;
 

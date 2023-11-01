@@ -26,6 +26,7 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
     private String name;
     private ExecutionCycleType type;
     private String driverId;
+    private int driverIndex;
     private HighAvailableLevel highAvailableLevel;
 
     private ExecutionVertexGroup vertexGroup;
@@ -38,7 +39,7 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
     private transient boolean workerAssigned;
 
     public ExecutionNodeCycle(long pipelineId, String pipelineName, ExecutionVertexGroup vertexGroup,
-                              Configuration config, String driverId) {
+                              Configuration config, String driverId, int driverIndex) {
         super(pipelineId, pipelineName, vertexGroup.getGroupId(),
             vertexGroup.getCycleGroupMeta().getFlyingCount(), vertexGroup.getCycleGroupMeta().getIterationCount(),
             config);
@@ -54,6 +55,7 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
         }
         this.isPipelineDataLoop = vertexGroup.getCycleGroupMeta().isIterative();
         this.driverId = driverId;
+        this.driverIndex = driverIndex;
         if (!vertexGroup.getCycleGroupMeta().isIterative() && vertexGroup.getCycleGroupMeta().getIterationCount() > 1) {
             this.highAvailableLevel = HighAvailableLevel.CHECKPOINT;
         } else {
@@ -113,6 +115,11 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
     @Override
     public String getDriverId() {
         return driverId;
+    }
+
+    @Override
+    public int getDriverIndex() {
+        return driverIndex;
     }
 
     @Override

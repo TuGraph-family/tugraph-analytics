@@ -29,19 +29,32 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StateFactory implements Serializable {
 
     private static final List<StoreType> SUPPORTED_KEY_STORE_TYPES =
         Arrays.asList(StoreType.ROCKSDB, StoreType.MEMORY);
 
+    private static final Map<String, GraphState> GRAPH_STATE_MAP = new ConcurrentHashMap<>();
+
     public static <K, VV, EV> GraphState<K, VV, EV> buildGraphState(
+        GraphStateDescriptor<K, VV, EV> descriptor, Configuration configuration) {
+        if (descriptor.isSingleton()) {
+            return GRAPH_STATE_MAP.computeIfAbsent(descriptor.getName(),
+                k -> getGraphState(descriptor, configuration));
+        }
+        return getGraphState(descriptor, configuration);
+    }
+
+    private static <K, VV, EV> GraphState<K, VV, EV> getGraphState(
         GraphStateDescriptor<K, VV, EV> descriptor, Configuration configuration) {
         if (descriptor.getDateModel() == null) {
             descriptor.withDataModel(DataModel.STATIC_GRAPH);
         }
         return new GraphStateImpl<>(new StateContext(descriptor, configuration));
     }
+
 
     public static <K, V> KeyValueState<K, V> buildKeyValueState(
         KeyValueStateDescriptor<K, V> descriptor, Configuration configuration) {

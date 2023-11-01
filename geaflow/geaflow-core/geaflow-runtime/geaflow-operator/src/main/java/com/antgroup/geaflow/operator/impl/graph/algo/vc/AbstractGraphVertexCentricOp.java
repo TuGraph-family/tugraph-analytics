@@ -20,6 +20,8 @@ import com.antgroup.geaflow.api.graph.function.vc.VertexCentricCombineFunction;
 import com.antgroup.geaflow.api.partition.graph.edge.IGraphVCPartition;
 import com.antgroup.geaflow.collector.AbstractCollector;
 import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.context.AbstractRuntimeContext;
 import com.antgroup.geaflow.metrics.common.MetricNameFormatter;
@@ -34,6 +36,8 @@ import com.antgroup.geaflow.operator.impl.iterator.IteratorOperator;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.StateFactory;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
+import com.antgroup.geaflow.state.graph.StateMode;
+import com.antgroup.geaflow.state.manage.LoadOption;
 import com.antgroup.geaflow.utils.keygroup.IKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignerFactory;
@@ -66,8 +70,10 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
     protected long windowId;
 
     protected KeyGroup keyGroup;
+    protected KeyGroup taskKeyGroup;
     protected GraphState<K, VV, EV> graphState;
     protected IGraphMsgBox<K, M> graphMsgBox;
+    protected boolean shareEnable;
 
     protected Map<String, ICollector> collectorMap;
     protected ICollector<IGraphMessage<K, M>> messageCollector;
@@ -90,17 +96,20 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
         this.msgMeter = this.metricGroup.meter(
             MetricNameFormatter.iterationMsgMetricName(this.getClass(), this.opArgs.getOpId()));
 
+        shareEnable = runtimeContext.getConfiguration().getBoolean(FrameworkConfigKeys.SERVICE_SHARE_ENABLE);
+
         GraphStateDescriptor<K, VV, EV> desc = buildGraphStateDesc(opArgs.getOpName());
         desc.withMetricGroup(runtimeContext.getMetric());
-        this.taskId = runtimeContext.getTaskArgs().getTaskId();
-        int taskIndex = runtimeContext.getTaskArgs().getTaskIndex();
-        LOGGER.info("opName:{} taskId:{} taskIndex:{} keyGroup:{}", this.opArgs.getOpName(),
-            taskId,
-            taskIndex,
-            desc.getKeyGroup());
-
         this.graphState = StateFactory.buildGraphState(desc, runtimeContext.getConfiguration());
-        recover();
+        if (!shareEnable) {
+            this.taskKeyGroup = keyGroup;
+            LOGGER.info("recovery graph state {}", graphState);
+            recover();
+        } else {
+            load();
+            LOGGER.info("processIndex {} taskIndex {} load shard {}, load graph state {}",
+                runtimeContext.getTaskArgs().getProcessIndex(), runtimeContext.getTaskArgs().getTaskIndex(), keyGroup, graphState);
+        }
 
         collectorMap = new HashMap<>();
         for (ICollector collector : this.collectors) {
@@ -114,8 +123,12 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
     }
 
     protected GraphStateDescriptor<K, VV, EV> buildGraphStateDesc(String name) {
-        int taskIndex = runtimeContext.getTaskArgs().getTaskIndex();
-        int taskPara = runtimeContext.getTaskArgs().getParallelism();
+        this.taskId = runtimeContext.getTaskArgs().getTaskId();
+
+        int containerNum = runtimeContext.getConfiguration().getInteger(ExecutionConfigKeys.CONTAINER_NUM);
+        int processIndex = runtimeContext.getTaskArgs().getProcessIndex();
+        int taskIndex = shareEnable ? processIndex : runtimeContext.getTaskArgs().getTaskIndex();
+        int taskPara = shareEnable ? containerNum : runtimeContext.getTaskArgs().getParallelism();
         BackendType backendType = graphViewDesc.getBackend();
         GraphStateDescriptor<K, VV, EV> desc = GraphStateDescriptor.build(graphViewDesc.getName()
             , backendType.name());
@@ -130,6 +143,15 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
             KeyGroupAssignerFactory.createKeyGroupAssigner(keyGroup, taskIndex, maxPara);
         desc.withKeyGroup(keyGroup);
         desc.withKeyGroupAssigner(keyGroupAssigner);
+        if (shareEnable) {
+            LOGGER.info("enable state singleton");
+            desc.withSingleton();
+            desc.withStateMode(StateMode.RDONLY);
+        }
+        LOGGER.info("opName:{} taskId:{} taskIndex:{} keyGroup:{} containerNum:{} processIndex: {} real taskIndex:{}", this.opArgs.getOpName(),
+            taskId,
+            taskIndex,
+            desc.getKeyGroup(), containerNum, processIndex, runtimeContext.getTaskArgs().getTaskIndex());
         return desc;
     }
 
@@ -181,28 +203,52 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
     public void close() {
         this.graphMsgBox.clearInBox();
         this.graphMsgBox.clearOutBox();
-        this.graphState.manage().operate().close();
+        if (!shareEnable) {
+            this.graphState.manage().operate().close();
+        }
     }
 
     protected void recover() {
-        LOGGER.info("opName: {} will do recover, windowId: {}", this.opArgs.getOpName(),
-            this.windowId);
-        long lastCheckPointId;
-        try {
-            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graphViewDesc.getName(),
-                this.runtimeContext.getConfiguration());
-            lastCheckPointId = keeper.getLatestViewVersion(graphViewDesc.getName());
-            LOGGER.info("opName: {} will do recover, ViewMetaBookKeeper version: {}",
-                this.opArgs.getOpName(), lastCheckPointId);
-        } catch (IOException e) {
-            throw new GeaflowRuntimeException(e);
-        }
+        LOGGER.info("opName: {} will do recover, windowId: {}", this.opArgs.getOpName(), this.windowId);
+        long lastCheckPointId = getLatestViewVersion();
         if (lastCheckPointId >= 0) {
             LOGGER.info("opName: {} do recover to state VersionId: {}", this.opArgs.getOpName(),
                 lastCheckPointId);
             graphState.manage().operate().setCheckpointId(lastCheckPointId);
             graphState.manage().operate().recover();
         }
+    }
+
+    protected void load() {
+        LOGGER.info("opName: {} will do load, windowId: {}", this.opArgs.getOpName(), this.windowId);
+        long lastCheckPointId = getLatestViewVersion();
+        long checkPointId = lastCheckPointId < 0 ? 0 : lastCheckPointId;
+        LOGGER.info("opName: {} do load, ViewMetaBookKeeper version: {}, checkPointId {}",
+            this.opArgs.getOpName(), lastCheckPointId, checkPointId);
+
+        LoadOption loadOption = LoadOption.of();
+        this.taskKeyGroup = KeyGroupAssignment.computeKeyGroupRangeForOperatorIndex(
+            graphViewDesc.getShardNum(),
+            runtimeContext.getTaskArgs().getParallelism(),
+            runtimeContext.getTaskArgs().getTaskIndex());
+        loadOption.withKeyGroup(this.taskKeyGroup);
+        loadOption.withCheckpointId(checkPointId);
+        graphState.manage().operate().load(loadOption);
+        LOGGER.info("opName: {} task key group {} do load successfully", this.opArgs.getOpName(), this.taskKeyGroup);
+    }
+
+    private long getLatestViewVersion() {
+        long lastCheckPointId;
+        try {
+            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graphViewDesc.getName(),
+                this.runtimeContext.getConfiguration());
+            lastCheckPointId = keeper.getLatestViewVersion(graphViewDesc.getName());
+            LOGGER.info("opName: {} will do recover or load, ViewMetaBookKeeper version: {}",
+                this.opArgs.getOpName(), lastCheckPointId);
+        } catch (IOException e) {
+            throw new GeaflowRuntimeException(e);
+        }
+        return lastCheckPointId;
     }
 
 }

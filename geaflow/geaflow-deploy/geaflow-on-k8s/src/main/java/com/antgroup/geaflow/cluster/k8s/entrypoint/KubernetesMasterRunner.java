@@ -24,8 +24,9 @@ import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.master.Master;
+import com.antgroup.geaflow.cluster.master.AbstractMaster;
 import com.antgroup.geaflow.cluster.master.MasterContext;
+import com.antgroup.geaflow.cluster.master.MasterFactory;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -43,14 +44,14 @@ public class KubernetesMasterRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesMasterRunner.class);
     private static final Map<String, String> ENV = System.getenv();
     private final Configuration config;
-    private Master master;
+    private AbstractMaster master;
 
     public KubernetesMasterRunner(Configuration config) {
         this.config = config;
     }
 
     public void init() {
-        master = new Master();
+        master = MasterFactory.create(config);
         MasterContext context = new MasterContext(config);
         context.setClusterManager(new KubernetesClusterManager());
         context.load();

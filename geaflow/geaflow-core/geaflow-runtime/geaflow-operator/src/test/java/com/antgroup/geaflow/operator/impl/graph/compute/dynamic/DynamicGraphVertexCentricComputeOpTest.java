@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.operator.impl.graph.compute.dynamic;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -111,7 +110,7 @@ public class DynamicGraphVertexCentricComputeOpTest {
 
         @Override
         public TaskArgs getTaskArgs() {
-            return new TaskArgs(0, 0, "test", 1, 1);
+            return new TaskArgs(0, 0, "test", 1, 1, 0);
         }
 
         @Override

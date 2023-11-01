@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.impl.RpcMessageEncoder;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Driver;
 import java.util.ArrayList;

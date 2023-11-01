@@ -47,7 +47,7 @@ public class AccessorBuilder {
             case RW:
                 return new RWStaticGraphAccessor<>();
             case RDONLY:
-                return new ReadOnlyGraphAccessor<>();
+                return new ReadOnlyStaticGraphAccessor<>();
             case COW:
                 return new COWGraphAccessor<>();
             default:
@@ -59,6 +59,8 @@ public class AccessorBuilder {
         switch (stateMode) {
             case RW:
                 return new RWDynamicGraphAccessor<>();
+            case RDONLY:
+                return new ReadOnlyDynamicGraphAccessor<>();
             default:
                 throw new GeaflowRuntimeException(RuntimeErrors.INST.unsupportedError());
         }

@@ -26,7 +26,7 @@ public class DropAction extends BaseAction {
 
     @Override
     public void apply(ActionRequest request) {
-        LOGGER.info("drop action trigger");
+        LOGGER.info("shard {} drop action trigger", request.getShard());
         context.getBaseStore().drop();
     }
 

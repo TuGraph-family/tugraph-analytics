@@ -55,6 +55,11 @@ public interface IExecutionCycle {
     String getDriverId();
 
     /**
+     * Returns driver index.
+     */
+    int getDriverIndex();
+
+    /**
      * Returns HA level.
      */
     HighAvailableLevel getHighAvailableLevel();

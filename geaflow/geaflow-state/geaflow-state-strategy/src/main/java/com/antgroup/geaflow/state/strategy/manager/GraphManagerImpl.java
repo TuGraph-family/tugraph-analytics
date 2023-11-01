@@ -18,6 +18,7 @@ import com.antgroup.geaflow.state.context.StateContext;
 import com.antgroup.geaflow.state.graph.DynamicGraphTrait;
 import com.antgroup.geaflow.state.graph.StaticGraphTrait;
 import com.antgroup.geaflow.state.pushdown.inner.IFilterConverter;
+import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
 import com.antgroup.geaflow.store.IBaseStore;
 import com.antgroup.geaflow.store.api.graph.IPushDownStore;
 import com.google.common.base.Preconditions;
@@ -39,12 +40,6 @@ public class GraphManagerImpl<K, VV, EV> extends BaseStateManager implements IGr
     @Override
     public void init(StateContext context) {
         super.init(context);
-        if (this.accessorMap.values().size() > 0) {
-            IBaseStore store = this.accessorMap.values().iterator().next().getStore();
-            if (store instanceof IPushDownStore) {
-                filterConverter = ((IPushDownStore) store).getFilterConverter();
-            }
-        }
     }
 
     @Override
@@ -65,6 +60,19 @@ public class GraphManagerImpl<K, VV, EV> extends BaseStateManager implements IGr
 
     @Override
     public IFilterConverter getFilterConverter() {
+        if (filterConverter == null) {
+            if (this.accessorMap.values().size() > 0) {
+                for (IAccessor value : this.accessorMap.values()) {
+                    IBaseStore store = value.getStore();
+                    if (store == null) {
+                        continue;
+                    }
+                    if (store instanceof IPushDownStore) {
+                        filterConverter = ((IPushDownStore) store).getFilterConverter();
+                    }
+                }
+            }
+        }
         return Preconditions.checkNotNull(filterConverter);
     }
 }

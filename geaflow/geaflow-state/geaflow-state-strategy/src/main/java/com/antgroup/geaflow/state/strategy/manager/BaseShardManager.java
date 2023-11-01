@@ -16,6 +16,8 @@ package com.antgroup.geaflow.state.strategy.manager;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.state.context.StateContext;
+import com.antgroup.geaflow.state.pushdown.IStatePushDown;
+import com.antgroup.geaflow.state.pushdown.KeyGroupStatePushDown;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
 import com.antgroup.geaflow.utils.keygroup.IKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
@@ -61,5 +63,15 @@ public abstract class BaseShardManager<K, T> {
 
         }
         return trait;
+    }
+
+    protected KeyGroup getShardGroup(IStatePushDown pushdown) {
+        KeyGroup queryShardGroup = this.shardGroup;
+        if (pushdown instanceof KeyGroupStatePushDown) {
+            queryShardGroup = ((KeyGroupStatePushDown) pushdown).getKeyGroup();
+            Preconditions.checkArgument(this.shardGroup.contains(queryShardGroup),
+                "state keyGroup %s, query keyGroup %s", this.shardGroup, queryShardGroup);
+        }
+        return queryShardGroup;
     }
 }

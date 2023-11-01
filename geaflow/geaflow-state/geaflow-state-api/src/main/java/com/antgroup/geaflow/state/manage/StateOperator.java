@@ -20,37 +20,42 @@ package com.antgroup.geaflow.state.manage;
 public interface StateOperator {
 
     /**
-     * set checkpoint id to state.
+     * Load state.
+     */
+    void load(LoadOption loadOption);
+
+    /**
+     * Set checkpoint id to state.
      */
     void setCheckpointId(long checkpointId);
 
     /**
-     * flush state to disk.
+     * Flush state to disk.
      */
     void finish();
 
     /**
-     * compact state data.
+     * Compact state data.
      */
     void compact();
 
     /**
-     * persist data.
+     * Persist data.
      */
     void archive();
 
     /**
-     * recover data from persistent storage.
+     * Recover data from persistent storage.
      */
     void recover();
 
     /**
-     * close state and release used resource.
+     * Close state and release used resource.
      */
     void close();
 
     /**
-     * drop disk data and close.
+     * Drop disk data and close.
      */
     void drop();
 }

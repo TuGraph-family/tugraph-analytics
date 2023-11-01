@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.rpc.IMasterEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;

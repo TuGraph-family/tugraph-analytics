@@ -31,6 +31,7 @@ import com.antgroup.geaflow.state.graph.encoder.IEdgeKVEncoder;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
 import com.antgroup.geaflow.state.graph.encoder.IVertexKVEncoder;
 import com.antgroup.geaflow.state.iterator.IteratorWithFlatFn;
+import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFnThenFilter;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
@@ -141,15 +142,22 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
 
         return new IteratorWithFnThenFilter<>(it,
             tuple2 -> vertexEncoder.getVertexID(getKeyFromKeyToVersion(tuple2.f0)),
-            new Predicate<K>() {
-                K last = null;
-                @Override
-                public boolean test(K k) {
-                    boolean res = k.equals(last);
-                    last = k;
-                    return !res;
-                }
-            });
+            new DudupPredicate<>());
+    }
+
+    @Override
+    public Iterator<K> vertexIDIterator(long version, IStatePushDown pushDown) {
+        if (pushDown.getFilter() == null) {
+            flush();
+            byte[] prefix = getVersionPrefix(version);
+            RocksdbIterator it = new RocksdbIterator(rocksdbClient.getIterator(VERTEX_CF), prefix);
+            return new IteratorWithFnThenFilter<>(it,
+                tuple2 -> vertexEncoder.getVertexID(getKeyFromVersionToKey(tuple2.f0)),
+                new DudupPredicate<>());
+
+        } else {
+            return new IteratorWithFn<>(getVertexIterator(version, pushDown), IVertex::getId);
+        }
     }
 
     @Override
@@ -300,5 +308,17 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
 
     protected byte[] concat(byte[] a, byte[] b) {
         return Bytes.concat(a, StateConfigKeys.DELIMITER, b);
+    }
+
+    protected static class DudupPredicate<K> implements Predicate<K> {
+
+        K last = null;
+
+        @Override
+        public boolean test(K k) {
+            boolean res = k.equals(last);
+            last = k;
+            return !res;
+        }
     }
 }

@@ -175,17 +175,17 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
         @Override
         public TraversalVertexQuery<K, VV> vertex() {
             if (graphViewDesc instanceof GraphSnapshotDesc) {
-                return new DynamicTraversalVertexQueryImpl<>(vertexId, 0L, graphState);
+                return new DynamicTraversalVertexQueryImpl<>(vertexId, 0L, graphState, taskKeyGroup);
             }
-            return new StaticTraversalVertexQueryImpl<>(vertexId, graphState);
+            return new StaticTraversalVertexQueryImpl<>(vertexId, graphState, taskKeyGroup);
         }
 
         @Override
         public TraversalEdgeQuery<K, EV> edges() {
             if (graphViewDesc instanceof GraphSnapshotDesc) {
-                return new DynamicTraversalEdgeQueryImpl<>(vertexId, 0L, graphState);
+                return new DynamicTraversalEdgeQueryImpl<>(vertexId, 0L, graphState, taskKeyGroup);
             }
-            return new StaticTraversalEdgeQueryImpl<>(vertexId, graphState);
+            return new StaticTraversalEdgeQueryImpl<>(vertexId, graphState, taskKeyGroup);
         }
 
         @Override

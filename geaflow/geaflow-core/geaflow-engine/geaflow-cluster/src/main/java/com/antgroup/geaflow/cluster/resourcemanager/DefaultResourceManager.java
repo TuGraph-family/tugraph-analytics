@@ -21,6 +21,7 @@ import com.antgroup.geaflow.cluster.clustermanager.ExecutorRegisteredCallback;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.IAllocator;
+import com.antgroup.geaflow.cluster.resourcemanager.allocator.ProcessFairAllocator;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.RoundRobinAllocator;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.cluster.web.metrics.ResourceMetrics;
@@ -75,6 +76,7 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
     @Override
     public void init(ResourceManagerContext context) {
         this.allocators.put(IAllocator.AllocateStrategy.ROUND_ROBIN, new RoundRobinAllocator());
+        this.allocators.put(IAllocator.AllocateStrategy.PROCESS_FAIR, new ProcessFairAllocator());
         ClusterContext clusterContext = context.getClusterContext();
         clusterContext.addExecutorRegisteredCallback(this);
 

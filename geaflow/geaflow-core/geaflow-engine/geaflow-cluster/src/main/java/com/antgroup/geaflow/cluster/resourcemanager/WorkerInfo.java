@@ -23,6 +23,7 @@ public class WorkerInfo implements Comparable<WorkerInfo>, Serializable {
     private int rpcPort;
     private int shufflePort;
     private int processId;
+    private int processIndex;
     private int workerIndex;
     private String containerName;
 
@@ -43,6 +44,17 @@ public class WorkerInfo implements Comparable<WorkerInfo>, Serializable {
         this.containerName = containerName;
     }
 
+    public WorkerInfo(String host,
+                      int rpcPort,
+                      int shufflePort,
+                      int processId,
+                      int processIndex,
+                      int workerId,
+                      String containerName) {
+        this(host, rpcPort, shufflePort, processId, workerId, containerName);
+        this.processIndex = processIndex;
+    }
+
     public String getHost() {
         return this.host;
     }
@@ -57,6 +69,14 @@ public class WorkerInfo implements Comparable<WorkerInfo>, Serializable {
 
     public void setProcessId(int processId) {
         this.processId = processId;
+    }
+
+    public int getProcessIndex() {
+        return processIndex;
+    }
+
+    public void setProcessIndex(int processIndex) {
+        this.processIndex = processIndex;
     }
 
     public int getRpcPort() {
@@ -133,6 +153,7 @@ public class WorkerInfo implements Comparable<WorkerInfo>, Serializable {
             + ", rpcPort=" + rpcPort
             + ", shufflePort=" + shufflePort
             + ", processId=" + processId
+            + ", processIndex=" + processIndex
             + ", workerIndex=" + workerIndex
             + ", containerName='" + containerName + '\''
             + '}';
@@ -145,6 +166,16 @@ public class WorkerInfo implements Comparable<WorkerInfo>, Serializable {
                                    int workerId,
                                    String containerName) {
         return new WorkerInfo(host, rpcPort, shufflePort, processId, workerId, containerName);
+    }
+
+    public static WorkerInfo build(String host,
+                                   int rpcPort,
+                                   int shufflePort,
+                                   int processId,
+                                   int processIndex,
+                                   int workerId,
+                                   String containerName) {
+        return new WorkerInfo(host, rpcPort, shufflePort, processId, processIndex, workerId, containerName);
     }
 
     public static class WorkerId {

@@ -20,6 +20,7 @@ import com.antgroup.geaflow.state.schema.GraphDataSchema;
 public class GraphStateDescriptor<K, VV, EV> extends BaseStateDescriptor {
 
     private GraphDataSchema graphSchema;
+    private boolean singleton = false;
 
     private GraphStateDescriptor(String name, String storeType) {
         super(name, storeType);
@@ -37,6 +38,15 @@ public class GraphStateDescriptor<K, VV, EV> extends BaseStateDescriptor {
     public GraphStateDescriptor<K, VV, EV> withGraphMeta(GraphMeta descriptor) {
         this.graphSchema = new GraphDataSchema(descriptor);
         return this;
+    }
+
+    public GraphStateDescriptor<K, VV, EV> withSingleton() {
+        this.singleton = true;
+        return this;
+    }
+
+    public boolean isSingleton() {
+        return this.singleton;
     }
 
     public GraphDataSchema getGraphSchema() {

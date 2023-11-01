@@ -30,6 +30,7 @@
         <module>geaflow-file</module>
         <module>geaflow-store</module>
         <module>geaflow-view-meta</module>
+        <module>geaflow-service-discovery</module>
     </modules>
 
 </project>

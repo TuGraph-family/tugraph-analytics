@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.context;
 
+import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
@@ -210,7 +211,9 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public void close() {
-        workerManager.close();
+        if (!PipelineUtil.isAsync(getConfig())) {
+            workerManager.close();
+        }
     }
 
     abstract void checkpoint(long windowId);

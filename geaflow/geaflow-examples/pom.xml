@@ -67,6 +67,23 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-dsl-runtime</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-service-discovery-zookeeper</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-analytics-service-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-analytics-service-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

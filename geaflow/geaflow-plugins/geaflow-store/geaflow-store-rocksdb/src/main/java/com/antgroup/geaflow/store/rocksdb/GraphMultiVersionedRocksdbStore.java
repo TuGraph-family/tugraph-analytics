@@ -85,6 +85,11 @@ public class GraphMultiVersionedRocksdbStore<K, VV, EV> extends BaseRocksdbGraph
     }
 
     @Override
+    public Iterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
+        return this.proxy.vertexIDIterator(version, pushdown);
+    }
+
+    @Override
     public Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
         return proxy.getVertexIterator(version, pushdown);
     }

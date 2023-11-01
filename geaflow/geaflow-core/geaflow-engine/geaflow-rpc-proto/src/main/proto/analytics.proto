@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = false;
+option java_package = "com.antgroup.geaflow.rpc.proto";
+
+service AnalyticsService {
+
+    // Execute query and return query result.
+    rpc executeQuery(QueryRequest) returns (QueryResult) {
+    }
+
+    // Cancel query which is specified by queryId in QueryCancelRequest.
+    rpc cancelQuery(QueryCancelRequest) returns (QueryCancelResult) {
+    }
+}
+
+message QueryRequest {
+    string query = 1;
+    bytes queryConfig = 2;
+}
+
+message QueryId {
+    string queryId = 1;
+}
+
+message QueryCancelRequest {
+    // The query which will be cancelled.
+    QueryId queryId = 1;
+}
+
+// Query result
+message QueryResult {
+    // The query result.
+    bytes queryResult = 1;
+}
+
+// Query cancel result
+message QueryCancelResult {
+    // The cancel result.
+    bytes cancelResult = 1;
+}

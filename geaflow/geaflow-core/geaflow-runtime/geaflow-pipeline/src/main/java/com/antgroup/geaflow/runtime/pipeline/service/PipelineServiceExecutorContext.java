@@ -14,31 +14,44 @@
 
 package com.antgroup.geaflow.runtime.pipeline.service;
 
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.pipeline.service.IPipelineServiceExecutorContext;
+import com.antgroup.geaflow.pipeline.service.PipelineService;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.runner.PipelineRunner;
 
-public class PipelineServiceExecutorContext {
+public class PipelineServiceExecutorContext implements IPipelineServiceExecutorContext {
 
     private String driverId;
+    private int driverIndex;
     private long pipelineTaskId;
     private String pipelineTaskName;
     private PipelineContext pipelineContext;
     private PipelineRunner pipelineRunner;
+    private PipelineService pipelineService;
 
     public PipelineServiceExecutorContext(String driverId,
+                                          int driverIndex,
                                           long pipelineTaskId,
                                           String pipelineTaskName,
                                           PipelineContext pipelineContext,
-                                          PipelineRunner pipelineRunner) {
+                                          PipelineRunner pipelineRunner,
+                                          PipelineService pipelineService) {
         this.driverId = driverId;
+        this.driverIndex = driverIndex;
         this.pipelineTaskId = pipelineTaskId;
         this.pipelineTaskName = pipelineTaskName;
         this.pipelineContext = pipelineContext;
         this.pipelineRunner = pipelineRunner;
+        this.pipelineService = pipelineService;
     }
 
     public String getDriverId() {
         return driverId;
+    }
+
+    public int getDriverIndex() {
+        return driverIndex;
     }
 
     public long getPipelineTaskId() {
@@ -57,4 +70,13 @@ public class PipelineServiceExecutorContext {
         return pipelineRunner;
     }
 
+    @Override
+    public Configuration getConfiguration() {
+        return pipelineContext.getConfig();
+    }
+
+    @Override
+    public PipelineService getPipelineService() {
+        return pipelineService;
+    }
 }

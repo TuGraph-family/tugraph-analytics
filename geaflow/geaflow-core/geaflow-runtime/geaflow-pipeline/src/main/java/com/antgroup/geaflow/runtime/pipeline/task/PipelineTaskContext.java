@@ -43,7 +43,7 @@ public class PipelineTaskContext implements IPipelineTaskContext {
     }
 
     @Override
-    public long getPipelineTaskId() {
+    public long getId() {
         return this.pipelineTaskId;
     }
 

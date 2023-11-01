@@ -55,6 +55,10 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-store-rocksdb</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-view-meta</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.testng</groupId>
