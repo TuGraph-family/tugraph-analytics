@@ -49,6 +49,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.client.StatementClientV1.
+ */
 public class AnalyticsManager implements IAnalyticsManager {
 
     private static final String USER_AGENT_VALUE = AnalyticsManager.class.getSimpleName() + "/" + firstNonNull(

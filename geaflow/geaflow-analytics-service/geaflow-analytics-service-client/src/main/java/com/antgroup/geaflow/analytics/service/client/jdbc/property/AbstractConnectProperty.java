@@ -31,6 +31,9 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.jdbc.AbstractConnectionProperty.
+ */
 public abstract class AbstractConnectProperty<T> implements ConnectProperty<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConnectProperty.class);

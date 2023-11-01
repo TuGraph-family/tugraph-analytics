@@ -16,6 +16,9 @@ package com.antgroup.geaflow.analytics.service.query;
 
 import java.io.Serializable;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.client.QueryResults.
+ */
 public class QueryResults implements QueryStatusInfo, Serializable {
 
     private static final String DEFAULT_QUERY_ID = "0";

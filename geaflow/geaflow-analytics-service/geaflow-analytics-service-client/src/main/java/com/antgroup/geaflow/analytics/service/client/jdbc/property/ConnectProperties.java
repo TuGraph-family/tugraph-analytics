@@ -27,6 +27,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.jdbc.ConnectionProperties.
+ */
 public class ConnectProperties {
 
     public static final ConnectProperty<String> USER = new User();

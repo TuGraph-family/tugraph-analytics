@@ -22,6 +22,9 @@ import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import javax.net.SocketFactory;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.client.SocketChannelSocketFactory.
+ */
 public class SocketChannelSocketFactory extends SocketFactory {
 
     @Override

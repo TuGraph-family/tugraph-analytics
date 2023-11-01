@@ -14,6 +14,9 @@
 
 package com.antgroup.geaflow.analytics.service.query;
 
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.client.QueryStatusInfo.
+ */
 public interface QueryStatusInfo {
 
     /**
