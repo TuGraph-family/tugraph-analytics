@@ -128,6 +128,7 @@ public class QueryContext {
             case GQL_RETURN:
             case INSERT:
             case ORDER_BY:
+            case WITH:
                 return new QueryCommand(node);
             case CREATE_TABLE:
                 return new CreateTableCommand((SqlCreateTable) node);
