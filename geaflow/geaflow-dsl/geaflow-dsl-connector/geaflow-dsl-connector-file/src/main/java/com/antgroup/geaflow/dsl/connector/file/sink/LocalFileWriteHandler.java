@@ -32,6 +32,8 @@ public class LocalFileWriteHandler implements FileWriteHandler {
 
     private final String baseDir;
 
+    protected String targetFile;
+
     private Writer writer;
 
     public LocalFileWriteHandler(String baseDir) {
@@ -48,9 +50,11 @@ public class LocalFileWriteHandler implements FileWriteHandler {
             }
             if (filePath.exists()) {
                 String newPath = filePath + "_" + System.currentTimeMillis();
+                targetFile = newPath;
                 this.writer = new BufferedWriter(new FileWriter(newPath));
                 LOGGER.info("path {} exists, create new file path {}", filePath, newPath);
             } else {
+                targetFile = filePath.getAbsolutePath();
                 this.writer = new BufferedWriter(new FileWriter(filePath));
                 LOGGER.info("create file path {}", filePath);
             }
