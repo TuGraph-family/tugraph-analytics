@@ -1,0 +1,244 @@
+################################################################################
+#  Copyright 2023 AntGroup CO., Ltd.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+################################################################################
+
+{{/*
+RBAC rules used to create the operator (cluster)role based on the scope
+*/}}
+{{- define "geaflow-operator.rbacRules" }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/status
+      - pods/log
+      - services
+      - services/status
+      - events
+      - configmaps
+      - secrets
+    verbs:
+      - "*"
+{{- if .Values.rbac.nodesRule.create }}
+  - apiGroups:
+    - ""
+    resources:
+      - nodes
+    verbs:
+      - list
+{{- end }}
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - deployments/finalizers
+      - replicasets
+    verbs:
+      - "*"
+  - apiGroups:
+      - extensions
+    resources:
+      - deployments
+      - ingresses
+    verbs:
+      - "*"
+  - apiGroups:
+      - geaflow.antgroup.com
+    resources:
+      - geaflowjobs
+      - geaflowjobs/status
+      - geaflownativejobs
+      - geaflownativejobs/status
+    verbs:
+      - "*"
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - "*"
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - "*"
+{{- end }}
+
+{{/*
+RBAC rules used to create the job (cluster)role based on the scope
+*/}}
+{{- define "geaflow-operator.jobRbacRules" }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/status
+      - pods/log
+      - configmaps
+      - services
+      - services/status
+      - endpoints
+      - endpoints/status
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - deployments/finalizers
+    verbs:
+      - '*'
+{{- end }}
+
+---
+{{- if .Values.rbac.create }}
+---
+{{/*
+Namespaced scoped RBAC.
+*/}}
+{{- if .Values.watchNamespaces }}
+{{- range .Values.watchNamespaces }}
+{{- if $.Values.rbac.operatorRole.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "geaflow-operator.roleName" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "geaflow-operator.labels" $ | nindent 4 }}
+{{- template "geaflow-operator.rbacRules" $ }}
+{{- end }}
+---
+{{- if $.Values.rbac.jobRole.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "geaflow-operator.jobRoleName" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "geaflow-operator.labels" $ | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
+{{- template "geaflow-operator.jobRbacRules" $ }}
+{{- end }}
+---
+{{- if $.Values.rbac.operatorRoleBinding.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "geaflow-operator.roleBindingName" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "geaflow-operator.labels" $ | nindent 4 }}
+roleRef:
+  kind: {{ $role := include "geaflow-operator.roleName" $ }}{{ include "geaflow-operator.roleScope" (dict "role" $role)}}
+  name: {{ include "geaflow-operator.roleName" $ }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "geaflow-operator.serviceAccountName" $ }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+---
+{{- if $.Values.rbac.jobRoleBinding.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "geaflow-operator.jobRoleBindingName" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "geaflow-operator.labels" $ | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
+roleRef:
+  kind: {{ $role := include "geaflow-operator.jobRoleName" $ }}{{ include "geaflow-operator.roleScope" (dict "role" $role)}}
+  name: {{ include "geaflow-operator.jobRoleName" $ }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "geaflow-operator.jobServiceAccountName" $ }}
+    namespace: {{ . }}
+{{- end }}
+---
+{{- end }}
+{{ else }}
+{{/*
+Cluster scoped RBAC.
+*/}}
+---
+{{- if .Values.rbac.operatorRole.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "geaflow-operator.roleName" $ }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "geaflow-operator.labels" . | nindent 4 }}
+{{- template "geaflow-operator.rbacRules" $ }}
+{{- end }}
+---
+{{- if .Values.rbac.jobRole.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "geaflow-operator.jobRoleName" $ }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "geaflow-operator.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
+{{- template "geaflow-operator.jobRbacRules" $ }}
+{{- end }}
+---
+{{- if .Values.rbac.operatorRoleBinding.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "geaflow-operator.roleBindingName" $ }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "geaflow-operator.labels" . | nindent 4 }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "geaflow-operator.roleName" $ }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "geaflow-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+---
+{{- if .Values.rbac.jobRoleBinding.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "geaflow-operator.jobRoleBindingName" $ }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "geaflow-operator.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
+roleRef:
+  kind: Role
+  name: {{ include "geaflow-operator.jobRoleName" $ }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "geaflow-operator.jobServiceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
+{{- end }}

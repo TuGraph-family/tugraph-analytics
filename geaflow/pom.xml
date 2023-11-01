@@ -394,7 +394,6 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${yaml.version}</version>
-                <scope>test</scope>
             </dependency>
 
             <!-- geaflow -->

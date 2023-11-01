@@ -26,9 +26,7 @@ public class ProxyHandler extends ProxyServlet {
 
     @Override
     protected String rewriteTarget(HttpServletRequest request) {
-        String target = getTargetUrl(request);
-        LOGGER.info("Rewrite proxy from {} to {}", request.getRequestURI(), target);
-        return target;
+        return getTargetUrl(request);
     }
 
     private String getTargetUrl(HttpServletRequest request) {

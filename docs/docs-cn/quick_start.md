@@ -165,6 +165,12 @@ socket 服务启动后，控制台显示如下信息：
 GeaFlow Console 是 GeaFlow 提供的图计算研发平台，我们将介绍如何在 Docker 容器里面启动 GeaFlow Console 平台，提交流图计算作业。文档地址：
 [文档](quick_start_docker.md)
 
+## GeaFlow Kubernetes Operator快速上手
+Geaflow Kubernetes Operator是一个可以快速将Geaflow应用部署到kubernetes集群中的部署工具。
+我们将介绍如何通过Helm安装geaflow-kubernetes-operator，通过yaml文件快速提交geaflow作业，
+并访问operator的dashboard页面查看集群下的作业状态。文档地址：
+[文档](quick_start_operator.md)
+
 ## 使用 G6VP 进行流图计算作业可视化
 
 G6VP 是一个可扩展的图可视分析平台，包括数据源管理、构图、图元素个性化配置、图可视分析等功能模块。使用 G6VP 能够很方便的对 Geaflow 计算结果进行可视化分析。文档地址：
