@@ -10,36 +10,7 @@ relational operations (i.e. stream join) increasingly become a challenge in real
 In Ant Financial's big data scenarios, particularly in financial risk control and real-time data warehousing, there 
 are a large number of join operations, and how to improve the efficiency and performance of joins has become an important challenge we face. We have introduced the graph model, which is a data model that describes entity relationships using a point-edge structure. In the graph model, points represent entities, and edges represent relationships, and the data is stored together at the point-edge level. Therefore, the graph model naturally defines relationships and simultaneously materializes point-edge relationships at the storage level. Based on the graph model, we have implemented the next-generation real-time computing engine, GeaFlow, which effectively addresses the problem of complex relationship operations that traditional streaming computing engines face. Currently, GeaFlow has been widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graphs, and social networks.
 
-## Features
-
-* Distribute streaming graph computing.
-* High availability and exactly once support.
-* Graph and table integrated processing.
-* Easy to develop with SQL + ISO/GQL.
-* Pluggable for UDF、graph algorithm and connector.
-* High level api support.
-* One-stop graph development platform
-* Cloud native deployment support.
-
-[Why using graphs for relational operations is more appealing than table joins?](./principle/vs_join.md)
-[![total_time](../static/img/vs_join_total_time_en.jpg)](./principle/vs_join.md)
-
-The similarities and differences between GeaFlow and traditional stream computing engine, such as Flink, are as follows:
-
-| Features | GeaFlow | Flink |
-| -------- | -------- | -------- |
-|  Data Model    | A graph-based stream computing engine that can handle both graph and table model data     | A stream computing engine based on the table model     |
-| State Management | Supports both stream and graph data state management | Supports stream state management |
-| Exactly once |Supported | Supported|
-| Join Support | Supports complex multi-degree join operations | Not suitable for complex joins |
-| Graph Algorithm Support| Native graph algorithm support | Flink Gelly module support (currently removed)|
-| Query Language| SQL + ISO/GQL| SQL |
-
-GeaFlow's relevant design reference papers are as follows: [GeaFlow: A Graph Extended and Accelerated Dataflow 
-System](https://dl.acm.org/doi/abs/10.1145/3589771)
-
-
-## Technical overview
+## Architecture
 
 The overall architecture of GeaFlow is as follows:
 
