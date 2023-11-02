@@ -25,4 +25,4 @@ The community committer will provide feedback on code specifications, code logic
 ## First contribution
 
 GeaFlow Project's issues provides a few simple issues for quick participation in community contributions. These 
-issues are labeled **good first issues **, and you can choose the issues you are interested in to contribute.
+issues are labeled **good first issues**, and you can choose the issues you are interested in to contribute.
