@@ -195,7 +195,7 @@ export const QuickInstall: React.FC<PluginPorps> = ({ redirectPath }) => {
       ),
     },
     {
-      title: t("Runtime Configuration"),
+      title: t("i18n.key.runtime.configuration"),
       status: "finish",
       icon: <SolutionOutlined />,
       content: <RuntimeConfig values={runtimeConfigData} form={form} />,

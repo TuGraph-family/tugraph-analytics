@@ -88,6 +88,7 @@ export const GeaflowLogin: React.FC<PluginPorps> = ({ redirectPath = [] }) => {
                     content: t("i18n.key.installation"),
                   });
                 } else {
+                  localStorage.setItem("HAS_EXEC_QUICK_INSTALL", "true");
                   const homeURL = redirectPath.find(
                     (d) => d.pathName === "图任务"
                   );

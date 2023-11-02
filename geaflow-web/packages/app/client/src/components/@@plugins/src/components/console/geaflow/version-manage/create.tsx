@@ -71,12 +71,17 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
   };
 
   const normFile = (e: any) => {
-    console.log("Upload event:", e);
     if (Array.isArray(e)) {
       return e;
     }
     setState({ ...state, fileList: e?.fileList });
     return e?.fileList.slice(-1);
+  };
+
+  const props = {
+    beforeUpload: (file) => {
+      return false;
+    },
   };
 
   return (
@@ -143,7 +148,7 @@ const CreateVersion: React.FC<CreateClusterProps> = ({
             getValueFromEvent={normFile}
             noStyle
           >
-            <Upload.Dragger name="files">
+            <Upload.Dragger name="files" {...props}>
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>

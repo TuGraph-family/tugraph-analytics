@@ -24,6 +24,7 @@ interface IProps {
   prefixName: string;
   form: FormInstance;
   readonly?: boolean;
+  currentItem?: any;
 }
 
 const DEFAULT_CATEGORY = {
@@ -35,6 +36,7 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
   prefixName,
   form,
   readonly,
+  currentItem,
 }) => {
   const [state, setState] = useImmer({
     list: [],
@@ -46,7 +48,6 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     customItemName: "",
     currentCategoryType: null,
   });
-
   const [typeValue, setTypeValue] = useState<string>("");
   const inputRef = useRef<InputRef>(null);
   const inputType = form.getFieldValue([prefixName, "type"]);
@@ -65,11 +66,27 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
       });
 
       // 如果没有默认值，则将第一个设为默认值
-      const originFormValue = form.getFieldsValue();
-
-      const defaultFomrValue = originFormValue[prefixName] || {};
-
-      if (!defaultFomrValue.type) {
+      if (!isEmpty(currentItem)) {
+        // 修改，设置表单初始值
+        const { pluginConfig } = currentItem;
+        const configArr = [];
+        for (const key in pluginConfig.config) {
+          const current = pluginConfig.config[key];
+          configArr.push({
+            key,
+            value: current,
+          });
+        }
+        form.setFieldsValue({
+          [prefixName]: {
+            type: pluginConfig.type,
+            config: configArr,
+          },
+        });
+        setState((draft) => {
+          draft.currentCategoryType = result.data[0];
+        });
+      } else {
         form.setFieldsValue({
           [prefixName]: {
             type: result.data[0],
@@ -107,7 +124,7 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
       const originFormValue = form.getFieldsValue();
       const originDefaultConfig =
         originFormValue[prefixName]?.config?.filter(
-          (d) => d.key && allListKeys.includes(d.key)
+          (d) => d.key && allListKeys.includes(d.key) && d.required
         ) || [];
       for (const rd of requiredList) {
         const { value, required, masked, defaultValue, type } = rd;
@@ -156,7 +173,7 @@ export const GraphDefinitionConfigPanel: React.FC<IProps> = ({
     if (DEFAULT_CATEGORY[prefixName]) {
       getPluginCategoriesValue(DEFAULT_CATEGORY[prefixName]);
     }
-  }, [DEFAULT_CATEGORY[prefixName]]);
+  }, [DEFAULT_CATEGORY[prefixName], currentItem]);
 
   const handleType = async (name, value) => {
     const result = await getPluginCategoriesConfig(name, value);

@@ -33,6 +33,17 @@ export const createVersion = async (params) => {
   return response;
 };
 
+export const updateVersion = async (versionName: string, publish: boolean) => {
+  const response = await request(
+    `${HTTP_SERVICE_URL}/api/versions/${versionName}`,
+    {
+      method: "put",
+      params: { publish },
+    }
+  );
+  return response;
+};
+
 export const deleteVersion = async (versionName: string) => {
   const response = await request(
     `${HTTP_SERVICE_URL}/api/versions/${versionName}`,

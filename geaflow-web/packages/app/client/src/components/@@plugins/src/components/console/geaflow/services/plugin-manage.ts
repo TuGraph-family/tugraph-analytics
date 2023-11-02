@@ -3,14 +3,11 @@ import { HTTP_SERVICE_URL } from "../constants";
 import { message } from "antd";
 import $i18n from "../../../../../../i18n";
 
-export const getFunctions = async (instanceName: string, name?: string) => {
-  const response = await request(
-    `${HTTP_SERVICE_URL}/api/instances/${instanceName}/functions/`,
-    {
-      method: "GET",
-      params: { name },
-    }
-  );
+export const getPlugins = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/plugins`, {
+    method: "GET",
+    params: params,
+  });
 
   if (!response?.success) {
     message.error(
@@ -27,15 +24,12 @@ export const getFunctions = async (instanceName: string, name?: string) => {
   return response?.data.list;
 };
 
-export const createFunction = async (instanceName: string, params: any) => {
-  const response = await request(
-    `${HTTP_SERVICE_URL}/api/instances/${instanceName}/functions`,
-    {
-      method: "post",
-      requestType: "form",
-      data: params,
-    }
-  );
+export const createPlugins = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/plugins`, {
+    method: "post",
+    requestType: "form",
+    data: params,
+  });
   return response;
 };
 export const getRemoteFiles = async () => {
@@ -46,12 +40,9 @@ export const getRemoteFiles = async () => {
   return response?.data?.list;
 };
 
-export const deleteFunction = async (
-  instanceName: string,
-  functionName: string
-) => {
+export const deletePlugin = async (pluginId: string) => {
   const response = await request(
-    `${HTTP_SERVICE_URL}/api/instances/${instanceName}/functions/${functionName}`,
+    `${HTTP_SERVICE_URL}/api/plugins/${pluginId}`,
     {
       method: "DELETE",
     }
