@@ -24,11 +24,8 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.PING_
 
 import com.antgroup.geaflow.common.config.Configuration;
 import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.utils.HttpClientUtils;
-import okhttp3.Dispatcher;
-import okhttp3.OkHttpClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -72,11 +69,9 @@ public class KubernetesClientFactory {
             clientConfig.withClientKeyAlgo(certKeyAlgo);
         }
 
-        Dispatcher dispatcher = new Dispatcher();
-        OkHttpClient httpClient = HttpClientUtils.createHttpClient(clientConfig.build())
-            .newBuilder().dispatcher(dispatcher).build();
-
-        return new DefaultKubernetesClient(httpClient, clientConfig.build());
+        return new KubernetesClientBuilder()
+            .withConfig(clientConfig.build())
+            .build();
     }
 
 }

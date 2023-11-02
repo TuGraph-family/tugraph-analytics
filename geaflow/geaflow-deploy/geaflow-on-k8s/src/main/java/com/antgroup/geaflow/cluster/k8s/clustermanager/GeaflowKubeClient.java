@@ -30,7 +30,9 @@ import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.Watcher.Action;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
@@ -174,12 +176,12 @@ public class GeaflowKubeClient implements Serializable {
 
     public void deletePod(Map<String, String> labels) {
         Callable<Void> action = () -> {
-            FilterWatchListDeletable<Pod, PodList> running = kubernetesClient.pods()
-                .withField("status.phase", "Running").withLabels(labels);
-            if (!running.list().getItems().isEmpty()) {
-                LOGGER.info("delete {} running pod with label:{}", running.list().getItems().size(),
+            FilterWatchListDeletable<Pod, PodList, PodResource> running = kubernetesClient.pods().withLabels(labels);
+            List<Pod> pods = running.list().getItems();
+            if (!pods.isEmpty()) {
+                LOGGER.info("delete {} running pod with label:{}", pods.size(),
                     labels);
-                running.delete();
+                pods.forEach(pod -> kubernetesClient.resource(pod).delete());
             }
             return null;
         };

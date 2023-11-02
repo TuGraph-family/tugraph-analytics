@@ -20,7 +20,7 @@ def main(logFilePath, jarPath, jarUrlEnvName):
     for jarUrl in urlList:
         try:
             url = jarUrl["url"]
-            md5 = jarUrl["md5"]
+            md5 = jarUrl["md5"] if jarUrl.has_key('md5') else ""
             jarName = getNameFromUrl(url)
             destination = os.path.join(jarPath, jarName)
             downloaded = downloadJarFile(url, destination, md5)

@@ -154,6 +154,13 @@ We can see that the new loop 3-4-5-6-3 is checked out:
 GeaFlow Console is a graph computing research and development platform provided by GeaFlow. In this document, we will introduce how to launch the GeaFlow Console platform in a Docker container and submit graph computing jobs. 
 Document address: [Running in Docker](quick_start_docker.md)
 
+## Running with GeaFlow Kubernetes Operator
+Geaflow Kubernetes Operator is a deployment tool that can quickly deploy Geaflow applications to kubernetes clusters.
+We will introduce how to install geaflow-kubernetes-operator through Helm and quickly submit 
+geaflow jobs through yaml files, and in addition, how to visit the operator's dashboard page to 
+view the job details in the cluster.
+Document address: [Running By kubernetes operator](quick_start_operator.md)
+
 ## Visualization of flow graph computation jobs using G6VP
 
 G6VP is an extensible visual analysis platform, including data source management, composition, personalized configuration of graphic elements, visual analysis and other functional modules. Using G6VP, it is easy to visualize the results of Geaflow calculations. Document address: [Document](visualization/collaborate_with_g6vp.md)

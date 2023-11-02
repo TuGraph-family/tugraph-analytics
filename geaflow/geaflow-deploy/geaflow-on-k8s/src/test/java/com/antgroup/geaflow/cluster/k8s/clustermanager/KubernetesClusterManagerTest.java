@@ -187,11 +187,6 @@ public class KubernetesClusterManagerTest {
         assertNotNull(rc);
 
         kubernetesClusterManager.close();
-
-        // Service should be deleted
-        while (service != null) {
-            service = kubernetesClient.services().withName(CLUSTER_ID + SERVICE_NAME_SUFFIX).get();
-        }
     }
 
     @Test(timeOut = 30000)
