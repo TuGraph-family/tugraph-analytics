@@ -531,8 +531,9 @@ public class GQLRexUtil {
             case FLOAT:
             case DOUBLE:
             case REAL:
-            case DECIMAL:
                 return ((BigDecimal) literal.getValue()).doubleValue();
+            case DECIMAL:
+                return literal.getValue();
 
             case CHAR:
             case VARCHAR:

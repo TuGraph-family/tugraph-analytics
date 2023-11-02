@@ -48,6 +48,15 @@ public class GQLInsertTest {
     }
 
     @Test
+    public void testInsertAndQuery_004() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_insert_and_graph_004.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testInsertAndQueryWithRequest_001() throws Exception {
         QueryTester
             .build()

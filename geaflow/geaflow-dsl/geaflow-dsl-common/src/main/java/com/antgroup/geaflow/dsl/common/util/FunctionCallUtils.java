@@ -46,7 +46,7 @@ public class FunctionCallUtils {
             new Class<?>[]{Integer.class, Long.class, Double.class, BigDecimal.class});
         TYPE_DEGREE_MAP.put(Short.class,
             new Class<?>[]{Integer.class, Long.class, Double.class, BigDecimal.class});
-        TYPE_DEGREE_MAP.put(Double.class, new Class<?>[]{BigDecimal.class});
+        TYPE_DEGREE_MAP.put(BigDecimal.class, new Class<?>[]{Double.class});
     }
 
     private static final Map<Class<?>, Class<?>> BOX_TYPE_MAPS = new HashMap<>();
