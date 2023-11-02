@@ -51,18 +51,7 @@ GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类
 * DSL应用开发：[DSL开发文档](docs/docs-cn/application-development/dsl/overview.md)
 * API应用开发：[API开发文档](docs/docs-cn/application-development/api/guid.md)
 
-## 系统能力
-
-GeaFlow执行引擎与传统流计算引擎Flink对比如下：
-
-| 特性   | GeaFlow       | Flink                  |
-|------|---------------|------------------------|
-| 数据模型 | 支持图表模型的混合处理   | 支持表模型处理                |
-| 状态管理 | 支持流状态管理和图数据状态管理 | 支持流状态管理                |
-| Exactly once | 支持            | 支持                     |
-| Join | 支持复杂多跳Join关联  | 不适合复杂Join计算            |
-| 图算法  | 原生支持图算法       | Flink Gelly模块支持(目前已移除) |
-| 分析语言 | SQL+GQL       | SQL                    |
+## 实时能力
 
 相比传统的流式计算引擎比如Flink、Storm这些以表为模型的实时处理系统而言，GeaFlow以图为数据模型，在处理Join关系运算，尤其是复杂多度的关系运算如3度以上的Join、复杂环路查找上具备极大的性能优势。
 

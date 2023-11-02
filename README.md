@@ -23,14 +23,14 @@ For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow Sy
 
 ## Features
 
-* Distributed real-time graph computation
+* Distributed streaming graph computation
 * Hybrid graph and table processing (SQL+GQL)
 * Unified stream/batch/graph computation
 * Trillion-level graph-native storage
 * Interactive graph analytics
-* High availability and Exactly Once semantics
+* High availability and exactly once semantics
 * High-level API operator development
-* UDF/Graph-Algorithms/Connector support
+* UDF/graph-algorithms/connector support
 * One-stop graph development platform
 * Cloud-native deployment
 
@@ -51,20 +51,9 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 * DSL application development: [DSL Application Development](docs/docs-en/application-development/dsl/overview.md)
 * API application development: [API Application Development](docs/docs-en/application-development/api/overview.md)
 
-## System Capabilities
+## Real-time Capabilities
 
-The similarities and differences between GeaFlow execution engine and traditional stream computing engine, such as Flink, are as follows:
-
-| Features         | GeaFlow                                   | Flink                         |
-|------------------|-------------------------------------------|-------------------------------|
-| Data Model       | Support hybrid graph and table processing | Support table processing      |
-| State Management | Supports both stream and graph state      | Supports stream state         |
-| Exactly once     | Supported                                 | Supported                     |
-| Join             | Supports complex multi-hop join           | Not suitable for complex join |
-| Graph Algorithm  | Support natively                          | Flink Gelly (removed)         |
-| Language         | SQL+GQL                                   | SQL                           |
-
-Compared with traditional stream computing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-degree relationship operations like those involving 3 or more degrees of join and complex loop searches.
+Compared with traditional stream processing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-degree relationship operations like those involving 3 or more degrees of join and complex loop searches.
 
 [![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
 
