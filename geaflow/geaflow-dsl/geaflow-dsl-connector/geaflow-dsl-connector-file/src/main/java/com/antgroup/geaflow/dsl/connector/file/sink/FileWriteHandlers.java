@@ -14,12 +14,12 @@
 
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
+import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_S3_RESOURCE;
+
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
-
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_S3_RESOURCE;
 
 public class FileWriteHandlers {
 

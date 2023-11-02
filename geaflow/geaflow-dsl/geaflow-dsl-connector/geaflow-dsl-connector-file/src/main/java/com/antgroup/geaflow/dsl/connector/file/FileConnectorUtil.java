@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.dsl.connector.file;
 
+import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_S3_RESOURCE;
+
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -79,20 +81,18 @@ public class FileConnectorUtil {
         return conf.getString(FileConstants.S3_SERVICE_ENDPOINT);
     }
 
-    public static String getFileUri(String path) {
-        //s3://
-        return path.substring(5);
+    public static String[] getFileUri(String path) {
+        String uri = path.substring(PREFIX_S3_RESOURCE.length());
+        return uri.split("/");
     }
 
     public static String getBucket(String path) {
-        String uri = path.substring(5);
-        String[] paths = uri.split("/");
+        String[] paths = getFileUri(path);
         return paths[0];
     }
 
     public static String getKey(String path) {
-        String uri = path.substring(5);
-        String[] paths = uri.split("/");
+        String[] paths = getFileUri(path);
         String[] keys = new String[paths.length - 1];
         System.arraycopy(paths, 1, keys, 0, keys.length);
         return String.join("/", keys);

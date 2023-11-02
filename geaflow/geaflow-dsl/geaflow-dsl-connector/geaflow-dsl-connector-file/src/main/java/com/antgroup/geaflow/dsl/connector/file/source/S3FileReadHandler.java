@@ -5,19 +5,21 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class S3FileReadHandler extends AbstractFileReadHandler {
 
@@ -81,14 +83,14 @@ public class S3FileReadHandler extends AbstractFileReadHandler {
 
         private String key;
 
-        void setS3(AmazonS3 s3) {
-            this.s3 = s3;
-        }
-
         public ResourceFileSplit(String baseDir, String relativePath) {
             super(baseDir, relativePath);
             this.object = baseDir;
             this.key = relativePath;
+        }
+
+        void setS3(AmazonS3 s3) {
+            this.s3 = s3;
         }
 
         @Override

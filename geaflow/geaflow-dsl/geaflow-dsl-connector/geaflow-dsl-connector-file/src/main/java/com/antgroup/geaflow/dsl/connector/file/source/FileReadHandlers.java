@@ -22,7 +22,8 @@ public class FileReadHandlers {
     public static FileReadHandler from(String path) {
         if (path.startsWith(PREFIX_JAVA_RESOURCE)) {
             return new JarFileReadHandler();
-        } if (path.startsWith(PREFIX_S3_RESOURCE)) {
+        }
+        if (path.startsWith(PREFIX_S3_RESOURCE)) {
             return new S3FileReadHandler();
         }
         return new DfsFileReadHandler();
