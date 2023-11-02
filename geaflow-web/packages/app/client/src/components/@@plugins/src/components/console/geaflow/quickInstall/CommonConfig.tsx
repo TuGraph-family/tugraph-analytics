@@ -61,7 +61,6 @@ export const CommonConfig: React.FC<IProps> = ({
     customItemName: "",
     currentCategoryType: values.type,
   });
-
   const { t } = useTranslation();
 
   const inputRef = useRef<InputRef>(null);
@@ -149,11 +148,6 @@ export const CommonConfig: React.FC<IProps> = ({
       }
       // 将默认值和 required 的值进行合并
 
-      // form.setFieldValue(prefixName, {
-      //   ...originFormValue[prefixName],
-      //   config: originDefaultConfig
-      // })
-
       if (originFormValue[prefixName]) {
         form.setFieldsValue({
           [prefixName]: {
@@ -189,8 +183,55 @@ export const CommonConfig: React.FC<IProps> = ({
     }
   }, [DEFAULT_CATEGORY[prefixName], values?.type]);
 
-  const handleChangeType = (value: string) => {
-    getPluginConfigList(DEFAULT_CATEGORY[prefixName], value);
+  const handleChangeType = async (value: string) => {
+    const result = await getPluginCategoriesConfig(
+      DEFAULT_CATEGORY[prefixName],
+      value
+    );
+    if (result.code === "SUCCESS") {
+      const currentConfigList = result.data.map((d) => {
+        return {
+          label: d.comment,
+          value: d.key,
+          required: d.required,
+          type: d.type,
+          defaultValue: d.defaultValue,
+          masked: d.masked,
+        };
+      });
+      const requiredList = currentConfigList.filter((d) => d.required);
+      const originFormValue = form.getFieldsValue();
+      let originDefaultConfig: {
+        key: string;
+        value: any;
+        required: boolean;
+        masked: boolean;
+        type: string;
+      }[] = [];
+      for (const rd of requiredList) {
+        const { value, required, masked, defaultValue, type } = rd;
+        originDefaultConfig.push({
+          key: value,
+          value: defaultValue,
+          required,
+          masked,
+          type,
+        });
+      }
+      if (originFormValue[prefixName]) {
+        form.setFieldsValue({
+          [prefixName]: {
+            ...originFormValue[prefixName],
+            config: originDefaultConfig,
+          },
+        });
+      }
+      setState((draft) => {
+        draft.originConfigList = currentConfigList;
+        draft.configList = currentConfigList;
+        draft.configSelectedList = originDefaultConfig;
+      });
+    }
   };
 
   const handleFocusConfig = () => {
@@ -334,7 +375,7 @@ export const CommonConfig: React.FC<IProps> = ({
           })}
         </Select>
       </Form.Item>
-      <Form.Item label={t("Configuration")}>
+      <Form.Item label={t("i18n.key.configurations")}>
         <Form.List name={[prefixName, "config"]}>
           {(fields, { add, remove }) => (
             <>

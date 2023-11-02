@@ -141,6 +141,7 @@ export const GraphDefintionTab: React.FC<Props> = ({
               }
               form={form}
               readonly={!editable && readonly}
+              currentItem={currentItem}
             />
           ) : (
             item.editTables?.map((i, paneIndex) => {

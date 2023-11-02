@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Input,
   Modal,
-  Tag,
+  Switch,
   Descriptions,
   Button,
   Space,
@@ -10,7 +10,11 @@ import {
   Popconfirm,
   Table,
 } from "antd";
-import { deleteVersion, getVersionList } from "../services/version";
+import {
+  deleteVersion,
+  getVersionList,
+  updateVersion,
+} from "../services/version";
 import CreateVersion from "./create";
 import styles from "./list.module.less";
 import $i18n from "../../../../../../i18n";
@@ -94,25 +98,31 @@ export const VersionManage: React.FC<{}> = ({}) => {
     {
       title: $i18n.get({
         id: "openpiece-geaflow.geaflow.version-manage.Status",
-        dm: "状态",
+        dm: "是否发布",
       }),
       dataIndex: "type",
       key: "type",
-      render: (text) => {
-        return text ? (
-          <Tag color="green">
-            {$i18n.get({
-              id: "openpiece-geaflow.geaflow.version-manage.Published",
-              dm: "已发布",
+      render: (text, record) => {
+        return (
+          <Switch
+            checked={record?.publish}
+            onClick={(checked: boolean) => {
+              updateVersion(record.name, checked).then((res) => {
+                if (!res.success) {
+                  message.error(`${res.message}`);
+                }
+                handelResources();
+              });
+            }}
+            checkedChildren={$i18n.get({
+              id: "openpiece-geaflow.geaflow.plugin-true.system",
+              dm: "是",
             })}
-          </Tag>
-        ) : (
-          <Tag color="red">
-            {$i18n.get({
-              id: "openpiece-geaflow.geaflow.version-manage.NotPublished",
-              dm: "未发布",
+            unCheckedChildren={$i18n.get({
+              id: "openpiece-geaflow.geaflow.plugin-false.system",
+              dm: "否",
             })}
-          </Tag>
+          />
         );
       },
     },

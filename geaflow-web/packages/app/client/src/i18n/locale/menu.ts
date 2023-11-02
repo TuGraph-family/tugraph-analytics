@@ -16,6 +16,7 @@ export const menuLocalConfig = {
   Clusters: "集群管理",
   Tenants: "租户管理",
   Versions: "版本管理",
+  Plugins: '插件管理'
 };
 
 const convertDict = (dictionary: any) => {
