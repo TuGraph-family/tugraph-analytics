@@ -28,12 +28,18 @@ RUN wget https://github.com/jvm-profiling-tools/async-profiler/releases/download
     && rm ${ASYNC_PROFILER_TAR_NAME}
 ENV ASYNC_PROFILER_SHELL_PATH=${GEAFLOW_INSTALL_PATH}/${ASYNC_PROFILER_DIR_NAME}/profiler.sh
 
+RUN mkdir -p /home/admin/logs
+
+ARG TMP_ENGINE_TAR_PATH=${GEAFLOW_INSTALL_PATH}/engine_tar
+RUN mkdir -p ${TMP_ENGINE_TAR_PATH}
 # geaflow-engine-tar is the *.tar.gz file built by maven
 ARG geaflow_engine_tar=NOT_SET
-# Copy engine jar if exist
-ADD $geaflow_engine_tar $GEAFLOW_INSTALL_PATH
-
-RUN mkdir -p /home/admin/logs
+# Copy engine tar to tmp dir
+ADD $geaflow_engine_tar $TMP_ENGINE_TAR_PATH
+# Copy the extracted engine dir into geaflow dir.
+RUN dirname=`ls ${TMP_ENGINE_TAR_PATH}` \
+    && mv -f ${TMP_ENGINE_TAR_PATH}/$dirname ${GEAFLOW_HOME} \
+    && rm -rf ${TMP_ENGINE_TAR_PATH}
 
 WORKDIR $GEAFLOW_HOME
 
