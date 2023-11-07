@@ -142,11 +142,26 @@ spec:
     # 作业存储相关配置
     stateConfig:
       geaflow.file.persistent.type: LOCAL
-      geaflow.ha.service.type: memory
+      geaflow.store.redis.host: host.minikube.internal
+      geaflow.store.redis.port: "6379"
     # 用户自定义参数配置
     additionalArgs:
       kubernetes.resource.storage.limit.size: 12Gi
       geaflow.system.state.backend.type: MEMORY
+```
+
+Geaflow 作业依赖于redis组件，可以通过docker快速启动一个redis容器并将端口映射到localhost。
+```shell
+docker pull redis:latest
+docker run -p 6379:6379 --name geaflow_redis redis:latest
+```
+若你已经部署了一个redis组件，则可以将example.yaml中的以下参数替换为已有的redis host和端口号。
+```yaml
+spec:
+  userSpec:
+    stateConfig:
+      geaflow.store.redis.host: ${your.redis.host}
+      geaflow.store.redis.port: ${your.redis.port}
 ```
 
 然后通过如下命令即可将作业提交到k8s集群。

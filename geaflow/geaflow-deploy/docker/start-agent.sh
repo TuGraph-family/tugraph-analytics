@@ -42,12 +42,14 @@ function checkEngineJarDownloaded() {
 }
 
 function startAgent() {
-    export GEAFLOW_CLASSPATH=`buildEngineClassPath`
+    GEAFLOW_CLASSPATH=`buildEngineClassPath`
     AGENT_START_COMMAND="${JAVA_HOME}/bin/java -cp ${GEAFLOW_CLASSPATH} \
     -DGEAFLOW_AGENT_SERVER_PORT=${GEAFLOW_AGENT_SERVER_PORT} \
     -DGEAFLOW_DEPLOY_LOG_PATH=${DEPLOY_LOG_PATH} -DGEAFLOW_LOG_DIR=${GEAFLOW_LOG_DIR} \
     -DFLAME_GRAPH_PROFILER_PATH=${ASYNC_PROFILER_SHELL_PATH} \
     -DAGENT_TMP_DIR=${AGENT_TMP_DIR} \
+    -Dlog4j.configuration=${GEAFLOW_CONFIG_FILE_LOG4J_NAME} \
+    -Dlog.file=${AGENT_LOG_PATH} \
     ${AGENT_MAIN_CLASS} >> ${AGENT_LOG_PATH} 2>&1"
 
     echo "Start agent with command: $AGENT_START_COMMAND"

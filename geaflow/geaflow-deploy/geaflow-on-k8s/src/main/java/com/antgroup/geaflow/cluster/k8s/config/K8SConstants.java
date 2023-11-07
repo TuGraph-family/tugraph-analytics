@@ -113,8 +113,6 @@ public final class K8SConstants {
     public static final String ENV_NAMESPACE = "NAMESPACE";
     public static final String NAMESPACE_FIELD_PATH = "metadata.namespace";
 
-    public static final String DIRECTORY_OR_CREATE = "DirectoryOrCreate";
-
     // ----------------------------- Environment Variables ----------------------------
 
     public static final String ENV_GEAFLOW_CLASSPATH = "GEAFLOW_CLASSPATH";
@@ -162,6 +160,8 @@ public final class K8SConstants {
 
     public static final String ENV_MASTER_ID = "GEAFLOW_MASTER_ID";
 
+    public static final String ENV_CONFIG_FILE_LOG4J_NAME = "GEAFLOW_CONFIG_FILE_LOG4J_NAME";
+
     public static final String ENV_CONFIG_FILE = "geaflow-conf.yml";
 
     public static final String CONFIG_FILE_LOG4J_NAME = "log4j.properties";
@@ -169,8 +169,6 @@ public final class K8SConstants {
     public static final String GEAFLOW_CONF_VOLUME = "geaflow-conf-volume";
 
     public static final String GEAFLOW_LOG_VOLUME = "geaflow-log-volume";
-
-    public static final String GEAFLOW_FILE_VOLUME = "geaflow-file-volume";
 
     public static final int EXIT_WAIT_TIME = 5;
 

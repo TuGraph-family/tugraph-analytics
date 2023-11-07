@@ -29,10 +29,16 @@ ENV ASYNC_PROFILER_SHELL_PATH=${GEAFLOW_INSTALL_PATH}/${ASYNC_PROFILER_DIR_NAME}
 
 RUN mkdir -p /home/admin/logs
 
+ARG TMP_ENGINE_TAR_PATH=${GEAFLOW_INSTALL_PATH}/engine_tar
+RUN mkdir -p ${TMP_ENGINE_TAR_PATH}
 # geaflow-engine-tar is the *.tar.gz file built by maven
 ARG geaflow_engine_tar=NOT_SET
-# Copy engine jar if exist
-ADD $geaflow_engine_tar $GEAFLOW_INSTALL_PATH
+# Copy engine tar to tmp dir
+ADD $geaflow_engine_tar $TMP_ENGINE_TAR_PATH
+# Copy the extracted engine dir into geaflow dir.
+RUN dirname=`ls ${TMP_ENGINE_TAR_PATH}` \
+    && mv -f ${TMP_ENGINE_TAR_PATH}/$dirname ${GEAFLOW_HOME} \
+    && rm -rf ${TMP_ENGINE_TAR_PATH}
 
 WORKDIR $GEAFLOW_HOME
 
