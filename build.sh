@@ -174,17 +174,11 @@ function buildGeaflowImage() {
 
   cp "${ARCHIVE}" "${TMPDIR}/"
   GEAFLOW_ENGINE_FILE=$(find ${TMPDIR} -name 'geaflow-*-bin.tar.gz')
-  tar -zxvf ${GEAFLOW_ENGINE_FILE} -C ${TMPDIR}
-  rm -rf ${GEAFLOW_ENGINE_FILE}
-  dirname=`ls ${TMPDIR}`
-  mv ${TMPDIR}/$dirname ${TMPDIR}/$PACKAGE_NAME
-
-  GEAFLOW_ENGINE_FILE=${TMPDIR}/geaflow.tar.gz
-  tar -zcvf ${GEAFLOW_ENGINE_FILE} -C ${TMPDIR} $PACKAGE_NAME
 
   GEAFLOW_ENGINE_TAR=_TMP_/geaflow.tar.gz
 
   cd $GEAFLOW_DOCKER_DIR
+  mv ${GEAFLOW_ENGINE_FILE} ${GEAFLOW_ENGINE_TAR}
   if [[ $MINIKUBE_INSTALLED = "0" ]]; then
     echo "build geaflow image in minikube env"
     eval $(minikube docker-env 2> /dev/null) &> /dev/null

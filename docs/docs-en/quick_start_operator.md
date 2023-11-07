@@ -108,10 +108,6 @@ spec:
   serviceAccount: geaflow
   # Java main class of the job
   entryClass: com.antgroup.geaflow.example.graph.statical.compute.sssp.SSSP
-  # User defined jars
-  udfJars:
-    - name: my_udf.jar
-      url: http://localhost:8080/download/my_udf.jar
   clientSpec:
     # Resource params of client pod
     resource:
@@ -150,10 +146,25 @@ spec:
     # State config of job
     stateConfig:
       geaflow.file.persistent.type: LOCAL
-      geaflow.ha.service.type: memory
+      geaflow.store.redis.host: host.minikube.internal
+      geaflow.store.redis.port: "6379"
     # Additional user defined params
     additionalArgs:
       geaflow.system.state.backend.type: MEMORY
+```
+
+The Geaflow job relies on the redis component. You can quickly start a redis container through docker and map the port to localhost.
+```shell
+docker pull redis:latest
+docker run -p 6379:6379 --name geaflow_redis redis:latest
+```
+If you have already deployed a redis component, you can replace the following parameters in example.yaml with the existing redis host and port number.
+```yaml
+spec:
+   userSpec:
+     stateConfig:
+       geaflow.store.redis.host: ${your.redis.host}
+       geaflow.store.redis.port: ${your.redis.port}
 ```
 
 Then run the following command to submit the job:

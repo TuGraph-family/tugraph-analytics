@@ -58,7 +58,7 @@ spec:
       geaflow.metric.stats.type: memory
     stateConfig:
       geaflow.file.persistent.type: LOCAL
-      geaflow.store.redis.host: 11.124.254.54
-      geaflow.store.redis.port: "8016"
+      geaflow.store.redis.host: host.minikube.internal
+      geaflow.store.redis.port: "6379"
     additionalArgs:
       geaflow.system.state.backend.type: MEMORY

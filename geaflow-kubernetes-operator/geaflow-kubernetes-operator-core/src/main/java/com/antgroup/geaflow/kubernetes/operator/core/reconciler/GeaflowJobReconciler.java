@@ -137,11 +137,10 @@ public class GeaflowJobReconciler implements Reconciler<GeaflowJob>, ErrorStatus
         Long userJobUid = Optional.ofNullable(resource.getSpec().getUserSpec())
             .map(UserSpec::getJobUid).orElse(null);
         Long currentJobUid = resource.getStatus().getJobUid();
-        String lastReconciledSpec = resource.getStatus().getLastReconciledSpec();
         if (userJobUid != null) {
             resource.getStatus().setJobUid(userJobUid);
-        } else if (currentJobUid == null && lastReconciledSpec == null) {
-            // Only generate uid when first reconciliation.
+        } else if (currentJobUid == null) {
+            // Only generate uid when current job uid is null.
             resource.getStatus().setJobUid(GeaflowJobUtil.generateJobUid());
         }
         LOGGER.info("Set jobUid {} to GeaFlow job {}. Previous jobUid: {}.",

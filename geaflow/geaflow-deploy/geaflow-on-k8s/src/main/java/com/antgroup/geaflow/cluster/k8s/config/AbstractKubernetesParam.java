@@ -189,6 +189,7 @@ public abstract class AbstractKubernetesParam implements KubernetesParam {
 
         StringBuilder logging = new StringBuilder();
         logging.append("-Dlog.file=\"").append(logFilename).append("\"");
+        logging.append(" -Dlog4j.configuration=" + K8SConstants.CONFIG_FILE_LOG4J_NAME);
 
         startCommandValues.put("logging", logging.toString());
         startCommandValues.put("redirects", ">> " + logFilename + " 2>&1");

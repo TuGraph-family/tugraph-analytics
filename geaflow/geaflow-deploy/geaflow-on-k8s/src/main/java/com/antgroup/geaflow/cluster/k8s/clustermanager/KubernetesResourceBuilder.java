@@ -34,8 +34,6 @@ import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedTy
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.file.FileConfigKeys;
-import com.antgroup.geaflow.file.PersistentType;
 import com.google.common.base.Preconditions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -131,6 +129,8 @@ public class KubernetesResourceBuilder {
             .addNewEnv()
                 .withName(K8SConstants.ENV_MASTER_ID).withValue(masterId).endEnv()
             .addNewEnv()
+                .withName(K8SConstants.ENV_CONFIG_FILE_LOG4J_NAME).withValue(K8SConstants.CONFIG_FILE_LOG4J_NAME).endEnv()
+            .addNewEnv()
                 .withName(K8SConstants.ENV_AUTO_RESTART).withValue(autoRestart).endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_CLUSTER_FAULT_INJECTION_ENABLE).withValue(String.valueOf(clusterFaultInjectionEnable)).endEnv()
@@ -169,19 +169,6 @@ public class KubernetesResourceBuilder {
                     .withName(K8SConstants.GEAFLOW_CONF_VOLUME)
                     .withMountPath(confDir)
                     .build());
-
-        PersistentType type = PersistentType.valueOf(
-            param.getConfig().getString(FileConfigKeys.PERSISTENT_TYPE).toUpperCase());
-        if (type == PersistentType.LOCAL) {
-            String persistentRoot = config.getString(FileConfigKeys.ROOT);
-            containerBuilder
-                .addNewEnv()
-                    .withName(K8SConstants.ENV_PERSISTENT_ROOT).withValue(persistentRoot).endEnv()
-                .addNewVolumeMount()
-                    .withName(K8SConstants.GEAFLOW_FILE_VOLUME)
-                    .withMountPath(param.getConfig().getString(FileConfigKeys.ROOT))
-                    .endVolumeMount();
-        }
 
         if (dockerNetworkType == DockerNetworkType.BRIDGE) {
             if (param.getRpcPort() > 0) {
@@ -331,20 +318,6 @@ public class KubernetesResourceBuilder {
                     .endVolume()
             .endSpec();
 
-        PersistentType type = PersistentType.valueOf(
-            param.getConfig().getString(FileConfigKeys.PERSISTENT_TYPE).toUpperCase());
-        if (type == PersistentType.LOCAL) {
-            podBuilder.editSpec()
-                .addNewVolume()
-                    .withName(K8SConstants.GEAFLOW_FILE_VOLUME)
-                    .withNewHostPath()
-                        .withPath(param.getConfig().getString(FileConfigKeys.ROOT))
-                        .withType(K8SConstants.DIRECTORY_OR_CREATE)
-                        .endHostPath()
-                    .endVolume()
-                .endSpec();
-        }
-
         List<NodeSelectorRequirement> matchExpressionsList =
             KubernetesUtils.getMatchExpressions(param.getConfig());
         if (matchExpressionsList.size() > 0) {
@@ -427,24 +400,6 @@ public class KubernetesResourceBuilder {
                     .endSpec()
                 .endTemplate()
             .endSpec();
-
-        PersistentType type = PersistentType.valueOf(
-            param.getConfig().getString(FileConfigKeys.PERSISTENT_TYPE).toUpperCase());
-        if (type == PersistentType.LOCAL) {
-            deploymentBuilder.editSpec()
-                .editTemplate()
-                    .editSpec()
-                        .addNewVolume()
-                            .withName(K8SConstants.GEAFLOW_FILE_VOLUME)
-                            .withNewHostPath()
-                                .withPath(param.getConfig().getString(FileConfigKeys.ROOT))
-                                .withType(K8SConstants.DIRECTORY_OR_CREATE)
-                                .endHostPath()
-                            .endVolume()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec();
-        }
 
         String dnsDomains = param.getConfig().getString(DNS_SEARCH_DOMAINS);
         if (!StringUtils.isEmpty(dnsDomains)) {

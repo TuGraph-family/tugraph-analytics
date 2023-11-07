@@ -64,6 +64,12 @@ if [[ -z "$SKIP_PACKAGE" ]]; then
 fi
 checkDocker || exit 1
 
+function buildGeaflowParent() {
+  echo -e "\033[32mbuilding geaflow parent...\033[0m"
+  mvn clean install -N -f=../pom.xml || return 1
+  echo -e "\033[32msuccess to build geaflow parent\033[0m"
+}
+
 function buildJarPackage() {
   echo -e "\033[32mrun maven build in $GEAFLOW_OPERATOR_DIR ...\033[0m"
 
@@ -103,6 +109,7 @@ function buildGeaflowOperatorImage() {
 }
 # build image
 if [[ -z "$SKIP_PACKAGE" ]]; then
+  buildGeaflowParent || exit $?
   buildJarPackage || exit $?
 fi
 buildGeaflowOperatorImage || exit $?

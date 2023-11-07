@@ -41,6 +41,7 @@
         <commons.collections.version>3.2.2</commons.collections.version>
         <slf4j.version>1.7.15</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
+        <log4j.slf4j.version>2.15.0</log4j.slf4j.version>
         <fastjson.version>1.2.71_noneautotype</fastjson.version>
         <hikaricp.version>4.0.3</hikaricp.version>
         <sqlite.version>3.40.0.0</sqlite.version>
@@ -72,6 +73,7 @@
         <jersey.version>2.40</jersey.version>
         <joda-time.version>2.12.1</joda-time.version>
         <jackson.version>2.11.2</jackson.version>
+        <jackson.core.version>2.13.4</jackson.core.version>
         <maven.version>3.6.3</maven.version>
         <curator.version>3.2.1</curator.version>
         <brpc.version>3.0.5</brpc.version>
@@ -231,6 +233,22 @@
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j.slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.slf4j.version}</version>
             </dependency>
 
             <dependency>
@@ -669,6 +687,13 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.core.version}</version>
+            </dependency>
+
+            <!-- brpc -->
+            <dependency>
                 <groupId>com.baidu</groupId>
                 <artifactId>brpc-java-communication</artifactId>
                 <version>${brpc.version}</version>
@@ -693,6 +718,19 @@
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
         </dependency>
 
         <dependency>
