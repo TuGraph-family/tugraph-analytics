@@ -14,6 +14,10 @@
 
 package com.antgroup.geaflow.dsl.connector.file;
 
+import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_S3_RESOURCE;
+
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.GsonUtil;
@@ -65,4 +69,33 @@ public class FileConnectorUtil {
         }
         return hadoopConf;
     }
+
+    public static AWSCredentials getS3Credentials(Configuration conf) {
+        String accessKey = conf.getString(FileConstants.S3_ACCESS_KEY);
+        String secretKey = conf.getString(FileConstants.S3_SECRET_KEY);
+        AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+        return credentials;
+    }
+
+    public static String getS3ServiceEndpoint(Configuration conf) {
+        return conf.getString(FileConstants.S3_SERVICE_ENDPOINT);
+    }
+
+    public static String[] getFileUri(String path) {
+        String uri = path.substring(PREFIX_S3_RESOURCE.length());
+        return uri.split("/");
+    }
+
+    public static String getBucket(String path) {
+        String[] paths = getFileUri(path);
+        return paths[0];
+    }
+
+    public static String getKey(String path) {
+        String[] paths = getFileUri(path);
+        String[] keys = new String[paths.length - 1];
+        System.arraycopy(paths, 1, keys, 0, keys.length);
+        return String.join("/", keys);
+    }
+    
 }
