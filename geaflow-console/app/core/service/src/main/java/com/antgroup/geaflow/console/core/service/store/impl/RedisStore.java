@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.service.store.impl;
 
+import com.antgroup.geaflow.console.common.util.ThreadUtil;
 import com.antgroup.geaflow.console.core.model.job.config.HaMetaArgsClass;
 import com.antgroup.geaflow.console.core.model.plugin.config.RedisPluginConfigClass;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
@@ -23,13 +24,15 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.ScanParams;
 import redis.clients.jedis.ScanResult;
 
@@ -37,45 +40,70 @@ import redis.clients.jedis.ScanResult;
 @Component
 public class RedisStore implements GeaflowHaMetaStore {
 
-    public static final char REDIS_NAMESPACE_SPLITTER = ':';
-
     private static final Integer MAX_SCAN_COUNT = Integer.MAX_VALUE;
 
-    private static final Cache<String, Jedis> JEDIS_CACHE = CacheBuilder.newBuilder().initialCapacity(10)
-        .maximumSize(100).expireAfterWrite(90, TimeUnit.SECONDS)
-        .removalListener((RemovalListener<String, Jedis>) removalNotification -> {
-            Jedis jedis = removalNotification.getValue();
-            // async clean the resources
-            CompletableFuture.runAsync(() -> {
-                log.info("redis close {}:{}", jedis.getClient().getHost(), jedis.getClient().getPort());
-                jedis.close();
-            });
-        }).build();
+    private static final int DEFAULT_RETRY_INTERVAL_MS = 500;
+
+    private static final int DEFAULT_RETRY_TIMES = 10;
+
+    private static final int DEFAULT_CONNECTION_TIMEOUT_MS = 5000;
+
+    private static final Cache<String, JedisPool> JEDIS_POOL_CACHE =
+        CacheBuilder.newBuilder().initialCapacity(10).maximumSize(100)
+            .removalListener(
+                (RemovalListener<String, JedisPool>) removalNotification -> {
+                    JedisPool jedisPool = removalNotification.getValue();
+                    // async clean the resources
+                    CompletableFuture.runAsync(() -> {
+                        Jedis jedis = jedisPool.getResource();
+                        log.info("Jedis pool closed: {}:{}", jedis.getClient().getHost(),
+                            jedis.getClient().getPort());
+                        jedisPool.close();
+                    });
+                })
+            .build();
 
     @Override
     public void cleanHaMeta(GeaflowTask task) {
         RedisPluginConfigClass redisConfig = (RedisPluginConfigClass) new HaMetaArgsClass(
             task.getHaMetaPluginConfig()).getPlugin();
 
-        String host = redisConfig.getHost();
-        int port = redisConfig.getPort();
         String keyPattern = String.format("*%s*", task.getId());
-
-        deleteByKeyPattern(host, port, keyPattern);
+        deleteByKeyPattern(redisConfig, keyPattern);
     }
 
-    protected void deleteByKey(String host, int port, String key) {
-        Jedis jedis = getJedis(host, port);
+    private void deleteByKey(RedisPluginConfigClass config, String key) {
+        Jedis jedis = getJedis(config);
         jedis.del(key);
     }
 
-    protected void deleteByKeyPattern(String host, int port, String keyPattern) {
-        Jedis jedis = getJedis(host, port);
-        Set<String> keySets = getScanKeySets(jedis, keyPattern, MAX_SCAN_COUNT);
-        keySets.forEach(jedis::del);
+    private void deleteByKeyPattern(RedisPluginConfigClass config, String keyPattern) {
+        int retryTimes = Optional.ofNullable(config.getRetryTimes()).orElse(DEFAULT_RETRY_TIMES);
+        int retryIntervalMs = Optional.ofNullable(config.getRetryIntervalMs()).orElse(DEFAULT_RETRY_INTERVAL_MS);
+        Set<String> keys = deleteByKeyPatternWithRetry(config, keyPattern, retryTimes,
+            retryIntervalMs);
+        log.info("Successfully deleted redis data with key pattern: {}. Redis host: {}:{}. "
+                + "Deleted keys: {}.",
+            keyPattern, config.getHost(), config.getHost(), keys);
     }
 
-    protected Set<String> getScanKeySets(Jedis jedis, String keyPattern, Integer count) {
+    private Set<String> deleteByKeyPatternWithRetry(RedisPluginConfigClass config,
+                                                    String keyPattern, int retry,
+                                                    int retryIntervalMs) {
+        try (Jedis jedis = getJedis(config)) {
+            Set<String> keySets = getScanKeySets(jedis, keyPattern, MAX_SCAN_COUNT);
+            keySets.forEach(jedis::del);
+            return keySets;
+        } catch (Exception e) {
+            if (retry <= 0) {
+                throw e;
+            }
+            ThreadUtil.sleepMilliSeconds(retryIntervalMs);
+            return deleteByKeyPatternWithRetry(config, keyPattern, retry - 1, retryIntervalMs);
+        }
+    }
+
+    private Set<String> getScanKeySets(Jedis jedis, String keyPattern, Integer count) {
         Set<String> keySets = new HashSet<>();
         ScanParams scanParams = new ScanParams();
         scanParams.match(keyPattern);
@@ -96,14 +124,19 @@ public class RedisStore implements GeaflowHaMetaStore {
         return keySets;
     }
 
-    protected Jedis getJedis(String host, int port) {
-        String cacheKey = host + REDIS_NAMESPACE_SPLITTER + port;
-        Jedis jedis = JEDIS_CACHE.getIfPresent(cacheKey);
-        if (jedis == null) {
-            log.info("redis connect {}:{}", host, port);
-            jedis = new Jedis(host, port);
-            JEDIS_CACHE.put(cacheKey, jedis);
+    private Jedis getJedis(RedisPluginConfigClass config) {
+        String cacheKey = config.toString();
+        JedisPool jedisPool = JEDIS_POOL_CACHE.getIfPresent(cacheKey);
+        if (jedisPool == null) {
+            String host = config.getHost();
+            int port = config.getPort();
+            int timeout = Optional.ofNullable(config.getConnectionTimeoutMs()).orElse(DEFAULT_CONNECTION_TIMEOUT_MS);
+            log.info("Jedis pool created: {}", config);
+            GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+            jedisPool = new JedisPool(poolConfig, host, port, timeout, config.getUser(),
+                config.getPassword());
+            JEDIS_POOL_CACHE.put(cacheKey, jedisPool);
         }
-        return jedis;
+        return jedisPool.getResource();
     }
 }
