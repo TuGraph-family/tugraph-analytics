@@ -72,7 +72,7 @@ COPY geaflow-console/target/config $GEAFLOW_HOME/config
 COPY geaflow-console/docker $GEAFLOW_HOME/
 
 # copy geaflow jar
-COPY geaflow/geaflow-deploy/geaflow-assembly/target/geaflow-assembly-*.jar \
+COPY geaflow/geaflow-deploy/geaflow-assembly/target/geaflow-assembly-*[!-sources].jar \
     $GEAFLOW_HOME/files/geaflow.jar
 
 EXPOSE 8080 8888 3306 6379 8086

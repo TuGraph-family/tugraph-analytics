@@ -53,7 +53,7 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 
 ## Real-time Capabilities
 
-Compared with traditional stream processing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-degree relationship operations like those involving 3 or more degrees of join and complex loop searches.
+Compared with traditional stream processing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-hops relationship operations like those involving 3 or more hops of join and complex loop searches.
 
 [![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
 
@@ -80,7 +80,7 @@ JOIN student s ON sc.srcId = s.id
 ```
 
 ## Contribution
-Thank you very much for contributing to GeaFlow, whether it's bug reporting, documentation improvement, or major feature development, we warmly welcome all contributions. 
+Thank you very much for contributing to GeaFlow, whether bug reporting, documentation improvement, or major feature development, we warmly welcome all contributions. 
 
 For more information: [Contribution](docs/docs-en/contribution.md).
 
