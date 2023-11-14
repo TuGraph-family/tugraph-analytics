@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.core.graph.builder;
 
+import static com.antgroup.geaflow.plan.PipelinePlanBuilder.ITERATION_AGG_VERTEX_ID;
+
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
@@ -225,8 +227,10 @@ public class ExecutionGraphBuilder implements Serializable {
             // Add output vertex to trigger next group.
             List<Integer> outputVertexIds = plan.getVertexOutputVertexIds(vertex.getVertexId());
             for (int id : outputVertexIds) {
-                PipelineVertex outputVertex = plan.getVertexMap().get(id);
-                triggerVertices.add(outputVertex);
+                if (isReadyToGroup(id, globalGroupedVertices, currentVertexGroupMap.keySet())) {
+                    PipelineVertex outputVertex = plan.getVertexMap().get(id);
+                    triggerVertices.add(outputVertex);
+                }
             }
         } else {
             // Current group is standalone pipeline which has no output vertices, can join into next group.
@@ -448,6 +452,27 @@ public class ExecutionGraphBuilder implements Serializable {
             default:
                 return true;
         }
+    }
+
+    /**
+     * Check whether current vertex can start to build a new group.
+     */
+    private boolean isReadyToGroup(int vertexId,
+                                   Set<Integer> globalGroupedVertices,
+                                   Set<Integer> currentGroupedVertices) {
+
+        List<Integer> inputs = plan.getVertexInputVertexIds(vertexId);
+        for (int inputVid : inputs) {
+            // A vertex that matches flowing cases will not allow to start a new group:
+            //   1. input has not grouped.
+            //   2. and input vertex is itself.
+            //   3. and input is agg vertex that will never allow to group standalone.
+            if (!globalGroupedVertices.contains(inputVid) && !currentGroupedVertices.contains(inputVid)
+                && inputVid != vertexId && inputVid != ITERATION_AGG_VERTEX_ID) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
