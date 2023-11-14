@@ -27,9 +27,7 @@ import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.model.traversal.TraversalType.ResponseType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<Object, Object> {
@@ -40,16 +38,16 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
 
     private final GraphSchema graphSchema;
     private final TraversalEdgeQuery<Object, Row> edgeQuery;
-
+    private final transient GeaFlowAlgorithmAggTraversalFunction traversalFunction;
     private Object vertexId;
 
     private long lastSendAggMsgIterationId = -1L;
 
-    private final Map<Object, Row> vertexId2NewValue = new HashMap<>();
-
     public GeaFlowAlgorithmRuntimeContext(
+        GeaFlowAlgorithmAggTraversalFunction traversalFunction,
         VertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> traversalContext,
         GraphSchema graphSchema) {
+        this.traversalFunction = traversalFunction;
         this.traversalContext = traversalContext;
         this.edgeQuery = traversalContext.edges();
         this.graphSchema = graphSchema;
@@ -91,7 +89,7 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
 
     @Override
     public void updateVertexValue(Row value) {
-        vertexId2NewValue.put(vertexId, value);
+        traversalFunction.updateVertexValue(vertexId, value);
     }
 
     @Override
@@ -99,8 +97,12 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
         traversalContext.takeResponse(new AlgorithmResponse(row));
     }
 
-    public Row getVertexNewValue() {
-        return vertexId2NewValue.get(vertexId);
+    public void finish() {
+
+    }
+
+    public void close() {
+
     }
 
     public long getCurrentIterationId() {

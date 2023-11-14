@@ -14,16 +14,29 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM_STATE_BACKEND_TYPE;
+
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggTraversalFunction;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
+import com.antgroup.geaflow.state.KeyValueState;
+import com.antgroup.geaflow.state.StateFactory;
+import com.antgroup.geaflow.state.descriptor.KeyValueStateDescriptor;
+import com.antgroup.geaflow.utils.keygroup.IKeyGroupAssigner;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
+import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignerFactory;
+import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 public class GeaFlowAlgorithmAggTraversalFunction implements
     VertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg, ITraversalAgg> {
@@ -38,6 +51,10 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
 
     private GeaFlowAlgorithmRuntimeContext algorithmCtx;
 
+    private transient Set<Object> invokeVIds;
+
+    private transient KeyValueState<Object, Row> vertexUpdateValues;
+
     public GeaFlowAlgorithmAggTraversalFunction(GraphSchema graphSchema,
                                                 AlgorithmUserFunction<Object, Object> userFunction,
                                                 Object[] params) {
@@ -50,8 +67,29 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
     public void open(
         VertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> vertexCentricFuncContext) {
         this.traversalContext = vertexCentricFuncContext;
-        this.algorithmCtx = new GeaFlowAlgorithmRuntimeContext(traversalContext, graphSchema);
+        this.algorithmCtx = new GeaFlowAlgorithmRuntimeContext(this, traversalContext, graphSchema);
         this.userFunction.init(algorithmCtx, params);
+        this.invokeVIds = new HashSet<>();
+        int taskIndex = traversalContext.getRuntimeContext().getTaskArgs().getTaskIndex();
+        String stateName =
+            traversalContext.getRuntimeContext().getConfiguration().getString(ExecutionConfigKeys.JOB_APP_NAME)
+                + "-GeaFlowAlgorithmDynamicRuntimeContext-" + taskIndex;
+        KeyValueStateDescriptor descriptor = KeyValueStateDescriptor.build(
+            stateName,
+            traversalContext.getRuntimeContext().getConfiguration().getString(SYSTEM_STATE_BACKEND_TYPE));
+        int parallelism = traversalContext.getRuntimeContext().getTaskArgs().getParallelism();
+        int maxParallelism = traversalContext.getRuntimeContext().getTaskArgs().getMaxParallelism();
+        KeyGroup keyGroup = KeyGroupAssignment.computeKeyGroupRangeForOperatorIndex(
+            maxParallelism, parallelism, taskIndex);
+        descriptor.withKeyGroup(keyGroup);
+        IKeyGroupAssigner keyGroupAssigner = KeyGroupAssignerFactory.createKeyGroupAssigner(
+            keyGroup, taskIndex, maxParallelism);
+        descriptor.withKeyGroupAssigner(keyGroupAssigner);
+        long recoverWindowId = traversalContext.getRuntimeContext().getWindowId();
+        this.vertexUpdateValues = StateFactory.buildKeyValueState(descriptor,
+            traversalContext.getRuntimeContext().getConfiguration());
+        this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId);
+        this.vertexUpdateValues.manage().operate().recover();
     }
 
     @Override
@@ -59,7 +97,9 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
         RowVertex vertex = (RowVertex) traversalContext.vertex().get();
         if (vertex != null) {
             algorithmCtx.setVertexId(vertex.getId());
-            userFunction.process(vertex, Collections.emptyIterator());
+            addInvokeVertex(vertex);
+            Row newValue = getVertexNewValue(vertex.getId());
+            userFunction.process(vertex, Optional.ofNullable(newValue), Collections.emptyIterator());
         }
     }
 
@@ -68,38 +108,56 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
         algorithmCtx.setVertexId(vertexId);
         RowVertex vertex = (RowVertex) traversalContext.vertex().get();
         if (vertex != null) {
-            Row newValue = algorithmCtx.getVertexNewValue();
-            if (newValue != null) {
-                vertex.setValue(newValue);
-            }
-            userFunction.process(vertex, messages);
+            Row newValue = getVertexNewValue(vertex.getId());
+            addInvokeVertex(vertex);
+            userFunction.process(vertex, Optional.ofNullable(newValue), messages);
         }
     }
 
     @Override
     public void finish() {
-        Iterator<Object> idIterator = traversalContext.vertex().loadIdIterator();
+        Iterator<Object> idIterator = getInvokeVIds();
         while (idIterator.hasNext()) {
             Object id = idIterator.next();
             algorithmCtx.setVertexId(id);
-            RowVertex rowVertex = (RowVertex) traversalContext.vertex().withId(id).get();
-            if (rowVertex != null) {
-                Row newValue = algorithmCtx.getVertexNewValue();
-                if (newValue != null) {
-                    rowVertex.setValue(newValue);
-                }
-                userFunction.finish(rowVertex);
+            RowVertex graphVertex = (RowVertex) traversalContext.vertex().withId(id).get();
+            if (graphVertex != null) {
+                Row newValue = getVertexNewValue(graphVertex.getId());
+                userFunction.finish(graphVertex, Optional.ofNullable(newValue));
             }
         }
+        algorithmCtx.finish();
+        long windowId = traversalContext.getRuntimeContext().getWindowId();
+        this.vertexUpdateValues.manage().operate().setCheckpointId(windowId);
+        this.vertexUpdateValues.manage().operate().finish();
+        this.vertexUpdateValues.manage().operate().archive();
+        invokeVIds.clear();
     }
 
     @Override
     public void close() {
-
+        algorithmCtx.close();
     }
 
     @Override
     public void initContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
         this.algorithmCtx.setAggContext(Objects.requireNonNull(aggContext));
     }
+
+    public void updateVertexValue(Object vertexId, Row value) {
+        vertexUpdateValues.put(vertexId, value);
+    }
+
+    public Row getVertexNewValue(Object vertexId) {
+        return vertexUpdateValues.get(vertexId);
+    }
+
+    public void addInvokeVertex(RowVertex v) {
+        invokeVIds.add(v.getId());
+    }
+
+    public Iterator<Object> getInvokeVIds() {
+        return invokeVIds.iterator();
+    }
+
 }

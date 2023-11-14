@@ -14,9 +14,17 @@
 
 package com.antgroup.geaflow.dsl.runtime.query;
 
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
+import com.antgroup.geaflow.file.FileConfigKeys;
+import java.io.File;
+import java.io.IOException;
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
 public class GQLAlgorithmTest {
+
+    private final String TEST_GRAPH_PATH = "/tmp/geaflow/dsl/algorithm/test/graph";
 
     @Test
     public void testAlgorithm_001() throws Exception {
@@ -81,5 +89,46 @@ public class GQLAlgorithmTest {
             .withQueryPath("/query/gql_algorithm_007.sql")
             .execute()
             .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_001() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_002() throws Exception {
+        clearGraph();
+        QueryTester
+            .build()
+            .withConfig(FileConfigKeys.ROOT.getKey(), TEST_GRAPH_PATH)
+            .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), 1)
+            .withQueryPath("/query/gql_using_001_ddl.sql")
+            .execute()
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), 1)
+            .withQueryPath("/query/gql_algorithm_inc_002.sql")
+            .execute()
+            .checkSinkResult();
+        clearGraph();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_003() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    private void clearGraph() throws IOException {
+        File file = new File(TEST_GRAPH_PATH);
+        if (file.exists()) {
+            FileUtils.deleteDirectory(file);
+        }
     }
 }
