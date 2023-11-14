@@ -38,6 +38,7 @@ import com.antgroup.geaflow.operator.impl.graph.traversal.statical.StaticGraphVe
 import com.antgroup.geaflow.operator.impl.graph.traversal.statical.StaticGraphVertexCentricTraversalStartByIdsOp;
 import com.antgroup.geaflow.operator.impl.graph.traversal.statical.StaticGraphVertexCentricTraversalStartByIdsWithAggOp;
 import com.antgroup.geaflow.operator.impl.graph.traversal.statical.StaticGraphVertexCentricTraversalStartByStreamOp;
+import com.antgroup.geaflow.operator.impl.graph.traversal.statical.StaticGraphVertexCentricTraversalStartByStreamWithAggOp;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.util.List;
 
@@ -65,7 +66,7 @@ public class GraphVertexCentricOpFactory {
     public static <K, VV, EV, M, R, I, PA, PR, GA, GR> IGraphVertexCentricOp<K, VV, EV, M> buildStaticGraphVertexCentricAggTraversalOp(
         GraphViewDesc graphViewDesc,
         VertexCentricAggTraversal<K, VV, EV, M, R, I, PA, PR, GA, GR> vertexCentricTraversal) {
-        return new StaticGraphVertexCentricTraversalStartByStreamOp<>(graphViewDesc,
+        return new StaticGraphVertexCentricTraversalStartByStreamWithAggOp<>(graphViewDesc,
             vertexCentricTraversal);
     }
 

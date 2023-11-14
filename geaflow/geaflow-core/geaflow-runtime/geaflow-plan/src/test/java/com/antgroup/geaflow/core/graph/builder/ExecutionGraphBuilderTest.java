@@ -815,6 +815,54 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(Long.MAX_VALUE, graph.getVertexGroupMap().get(1).getCycleGroupMeta().getIterationCount());
     }
 
+    @Test
+    public void testMultiGraphTraversal() {
+        AtomicInteger idGenerator = new AtomicInteger(0);
+        AbstractPipelineContext context = mock(AbstractPipelineContext.class);
+        when(context.generateId()).then(invocation -> idGenerator.incrementAndGet());
+        Configuration configuration = new Configuration();
+        when(context.getConfig()).thenReturn(configuration);
+
+        PWindowSource<IVertex<Integer, Integer>> vertices1 =
+            new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
+        PWindowSource<IVertex<Integer, Integer>> vertices2 =
+            new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
+
+        PWindowSource<IEdge<Integer, Integer>> edges =
+            new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
+
+        PStreamSource<ITraversalRequest<Integer>> triggerSource =
+            new WindowStreamSource<>(context,
+                new CollectionSource<>(Lists.newArrayList(new VertexBeginTraversalRequest(3))),
+                AllWindow.getInstance());
+
+
+        PGraphWindow graphWindow1 = new WindowStreamGraph(createGraphViewDesc(4), context,
+            vertices1, edges);
+        PWindowStream union = graphWindow1.traversal(new GraphTraversalAlgorithms(3))
+            .start(triggerSource).union(vertices2);
+
+        PGraphWindow graphWindow2 = new WindowStreamGraph(createGraphViewDesc(4), context,
+            union, edges);
+
+        PStreamSink sink = graphWindow2.traversal(new GraphTraversalAlgorithms(3)).start(triggerSource)
+            .sink(v -> {});
+
+
+        when(context.getActions()).thenReturn(ImmutableList.of(sink));
+
+        PipelinePlanBuilder planBuilder = new PipelinePlanBuilder();
+        PipelineGraph pipelineGraph = planBuilder.buildPlan(context);
+        PipelineGraphOptimizer optimizer = new PipelineGraphOptimizer();
+        optimizer.optimizePipelineGraph(pipelineGraph);
+
+        ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
+        ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
+        Assert.assertEquals(7, graph.getVertexGroupMap().size());
+        Assert.assertEquals(9, graph.getGroupEdgeMap().size());
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
+    }
+
     public static class IncGraphAlgorithms extends IncVertexCentricCompute<Integer, Integer, Integer, Integer> {
 
         public IncGraphAlgorithms(long iterations) {
