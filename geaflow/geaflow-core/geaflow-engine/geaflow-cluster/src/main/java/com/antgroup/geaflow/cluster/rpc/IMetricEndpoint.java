@@ -14,5 +14,14 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-public interface IMetricEndpoint extends RpcEndpoint {
+import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
+import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
+
+public interface IMetricEndpoint {
+
+    /**
+     * Query metrics.
+     */
+    MetricQueryResponse queryMetrics(MetricQueryRequest request);
+
 }

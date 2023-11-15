@@ -30,12 +30,16 @@ import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.RpcServiceImpl;
 import com.antgroup.geaflow.cluster.web.HttpServer;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
+import com.antgroup.geaflow.common.utils.PortUtil;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
+import com.baidu.brpc.server.RpcServerOptions;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractMaster extends AbstractComponent implements IMaster {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMaster.class);
 
     protected IResourceManager resourceManager;
@@ -73,6 +77,7 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
 
         // Register service info and initialize cluster.
         registerHAService();
+        // Start container.
         resourceManager.init(ResourceManagerContext.build(context, clusterContext));
 
         if (!configuration.getBoolean(ExecutionConfigKeys.RUN_LOCAL_MODE)) {
@@ -84,11 +89,13 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
 
     protected void startRpcService(IClusterManager clusterManager,
                                  IResourceManager resourceManager) {
-        this.rpcService = new RpcServiceImpl(rpcPort, configuration);
+        RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+        int port = PortUtil.getPort(rpcPort);
+        this.rpcService = new RpcServiceImpl(port, configuration, serverOptions);
         this.rpcService.addEndpoint(new MasterEndpoint(this, clusterManager));
         this.rpcService.addEndpoint(new ResourceManagerEndpoint(resourceManager));
         this.rpcPort = rpcService.startService();
-        this.masterAddress = new RpcAddress(ProcessUtil.getHostIp(), rpcPort);
+        this.masterAddress = new RpcAddress(ProcessUtil.getHostIp(), port);
     }
 
     public ClusterInfo startCluster() {

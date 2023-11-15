@@ -21,19 +21,18 @@ import com.antgroup.geaflow.cluster.resourcemanager.RequireResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.IAllocator;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.cluster.rpc.IResourceManagerEndpoint;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Resource;
-import com.antgroup.geaflow.rpc.proto.ResourceServiceGrpc;
-import io.grpc.stub.StreamObserver;
+import com.antgroup.geaflow.rpc.proto.Resource.ReleaseResourceResponse;
+import com.antgroup.geaflow.rpc.proto.Resource.RequireResourceResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ResourceManagerEndpoint extends ResourceServiceGrpc.ResourceServiceImplBase implements
-    RpcEndpoint {
+public class ResourceManagerEndpoint implements IResourceManagerEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceManagerEndpoint.class);
 
@@ -44,30 +43,27 @@ public class ResourceManagerEndpoint extends ResourceServiceGrpc.ResourceService
     }
 
     @Override
-    public void requireResource(Resource.RequireResourceRequest request,
-                                StreamObserver<Resource.RequireResourceResponse> responseObserver) {
+    public RequireResourceResponse requireResource(Resource.RequireResourceRequest request) {
         try {
-            RequireResponse requireResponse = this.resourceManager
-                .requireResource(convertRequireRequest(request));
-            responseObserver.onNext(convertRequireResponse(requireResponse));
-            responseObserver.onCompleted();
+            RequireResponse requireResponse = this.resourceManager.requireResource(convertRequireRequest(request));
+            return convertRequireResponse(requireResponse);
         } catch (Throwable t) {
             LOGGER.error("require resource failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("require resource failed: %s",
+                t.getMessage()), t);
         }
     }
 
     @Override
-    public void releaseResource(Resource.ReleaseResourceRequest request,
-                                StreamObserver<Resource.ReleaseResourceResponse> responseObserver) {
+    public ReleaseResourceResponse releaseResource(Resource.ReleaseResourceRequest request) {
         try {
             ReleaseResponse releaseResponse = this.resourceManager
                 .releaseResource(convertReleaseRequest(request));
-            responseObserver.onNext(convertReleaseResponse(releaseResponse));
-            responseObserver.onCompleted();
+            return convertReleaseResponse(releaseResponse);
         } catch (Throwable t) {
             LOGGER.error("release resource failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("release resource failed: %s",
+                t.getMessage()), t);
         }
     }
 

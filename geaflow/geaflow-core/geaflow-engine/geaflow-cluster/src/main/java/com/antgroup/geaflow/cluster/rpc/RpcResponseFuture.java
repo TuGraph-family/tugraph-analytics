@@ -17,7 +17,6 @@ package com.antgroup.geaflow.cluster.rpc;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.rpc.proto.Container;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -27,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class RpcResponseFuture implements Future<IEvent> {
 
-    private final ListenableFuture<Container.Response> delegate;
+    private final Future<IEvent> delegate;
 
-    public RpcResponseFuture(ListenableFuture<Container.Response> delegate) {
+    public RpcResponseFuture(Future<IEvent> delegate) {
         this.delegate = delegate;
     }
 
@@ -50,20 +49,18 @@ public class RpcResponseFuture implements Future<IEvent> {
 
     @Override
     public IEvent get() throws InterruptedException, ExecutionException {
-        Container.Response response = delegate.get();
-        return getEvent(response);
+        return delegate.get();
     }
 
     @Override
     public IEvent get(long timeout, @NotNull TimeUnit unit)
         throws InterruptedException, ExecutionException, TimeoutException {
-        Container.Response response = delegate.get(timeout, unit);
-        return getEvent(response);
+        return delegate.get(timeout, unit);
     }
 
     private IEvent getEvent(Container.Response response) {
         ByteString payload = response.getPayload();
-        if (payload == null || payload == ByteString.EMPTY) {
+        if (payload == ByteString.EMPTY) {
             return null;
         } else {
             return RpcMessageEncoder.decode(payload);

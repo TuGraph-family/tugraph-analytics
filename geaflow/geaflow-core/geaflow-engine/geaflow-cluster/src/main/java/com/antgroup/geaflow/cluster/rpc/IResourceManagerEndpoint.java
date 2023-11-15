@@ -14,17 +14,20 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import com.antgroup.geaflow.cluster.protocol.IEvent;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
-import com.antgroup.geaflow.rpc.proto.Container.Response;
-import java.io.Serializable;
-import java.util.concurrent.Future;
+import com.antgroup.geaflow.rpc.proto.Resource;
+import com.antgroup.geaflow.rpc.proto.Resource.ReleaseResourceResponse;
+import com.antgroup.geaflow.rpc.proto.Resource.RequireResourceResponse;
 
-public interface IContainerEndpointRef extends Serializable {
+public interface IResourceManagerEndpoint {
 
     /**
-     * Process event request.
+     * Require resource.
      */
-    Future<IEvent> process(IEvent request, RpcCallback<Response> callback);
+    RequireResourceResponse requireResource(Resource.RequireResourceRequest request);
+
+    /**
+     * Release resource.
+     */
+    ReleaseResourceResponse releaseResource(Resource.ReleaseResourceRequest request);
 
 }

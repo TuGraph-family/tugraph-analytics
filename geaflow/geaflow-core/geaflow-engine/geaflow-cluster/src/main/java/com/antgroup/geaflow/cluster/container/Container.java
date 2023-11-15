@@ -28,7 +28,10 @@ import com.antgroup.geaflow.cluster.task.service.TaskService;
 import com.antgroup.geaflow.cluster.worker.Dispatcher;
 import com.antgroup.geaflow.cluster.worker.DispatcherService;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
+import com.antgroup.geaflow.common.utils.PortUtil;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
+import com.baidu.brpc.server.RpcServerOptions;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +71,8 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
 
     @Override
     protected void startRpcService() {
-        this.rpcService = new RpcServiceImpl(rpcPort, configuration);
+        RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+        this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), configuration, serverOptions);
         this.rpcService.addEndpoint(new ContainerEndpoint(this));
         this.rpcPort = rpcService.startService();
     }
