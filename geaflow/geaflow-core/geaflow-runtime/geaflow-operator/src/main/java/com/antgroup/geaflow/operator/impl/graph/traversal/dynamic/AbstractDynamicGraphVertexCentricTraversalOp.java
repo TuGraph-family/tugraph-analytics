@@ -103,6 +103,7 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
             this.graphMsgBox.processInMessage(new MsgProcessFunc<K, M>() {
                 @Override
                 public void process(K vertexId, List<M> messages) {
+                    invokeVIds.add(vertexId);
                     graphVCTraversalCtx.init(iterations, vertexId);
                     incVcTraversalFunction.compute(vertexId, messages.iterator());
                 }
@@ -147,12 +148,12 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
         this.temporaryGraphCache.clear();
         this.invokeVIds.clear();
         this.traversalRequests.clear();
-        this.temporaryGraphCache.clear();
 
         for (ITraversalResponse<R> response : this.responses) {
             responseCollector.partition(response.getResponseId(), response);
         }
         responseCollector.finish();
+        incVcTraversalFunction.finish();
         responses.clear();
         checkpoint();
     }
@@ -160,6 +161,7 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
     @Override
     public void close() {
         super.close();
+        incVcTraversalFunction.close();
         this.responses.clear();
     }
 

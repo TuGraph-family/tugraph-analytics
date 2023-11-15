@@ -30,10 +30,8 @@ import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.model.traversal.TraversalType.ResponseType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeContext<Object, Object> {
@@ -48,15 +46,17 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
 
     protected TraversalEdgeQuery<Object, Row> edgeQuery;
 
+    private final transient GeaFlowAlgorithmDynamicAggTraversalFunction traversalFunction;
+
     private Object vertexId;
 
     private long iterationId = -1L;
 
-    private final Map<Object, Row> vertexId2NewValue = new HashMap<>();
-
     public GeaFlowAlgorithmDynamicRuntimeContext(
+        GeaFlowAlgorithmDynamicAggTraversalFunction traversalFunction,
         IncVertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> traversalContext,
         GraphSchema graphSchema) {
+        this.traversalFunction = traversalFunction;
         this.incVCTraversalCtx = traversalContext;
         this.graphSchema = graphSchema;
         TraversalGraphSnapShot<Object, Row, Row> graphSnapShot = incVCTraversalCtx.getHistoricalGraph()
@@ -106,22 +106,27 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
         }
     }
 
-    @Override
-    public void updateVertexValue(Row value) {
-        vertexId2NewValue.put(vertexId, value);
-    }
 
     @Override
     public void take(Row row) {
         incVCTraversalCtx.takeResponse(new AlgorithmResponse(row));
     }
 
-    public Row getVertexNewValue() {
-        return vertexId2NewValue.get(vertexId);
+    @Override
+    public void updateVertexValue(Row value) {
+        traversalFunction.updateVertexValue(vertexId, value);
     }
 
     public long getCurrentIterationId() {
         return incVCTraversalCtx.getIterationId();
+    }
+
+    public void finish() {
+
+    }
+
+    public void close() {
+
     }
 
     @Override

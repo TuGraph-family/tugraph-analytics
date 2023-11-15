@@ -15,10 +15,12 @@
 package com.antgroup.geaflow.dsl.common.algo;
 
 
+import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Optional;
 
 /**
  * Interface for the User Defined Graph Algorithm.
@@ -37,12 +39,12 @@ public interface AlgorithmUserFunction<K, M> extends Serializable {
     /**
      * Processing method for each vertex and the messages it received.
      */
-    void process(RowVertex vertex, Iterator<M> messages);
+    void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<M> messages);
 
     /**
      * Finish method called by each vertex upon algorithm convergence.
      */
-    void finish(RowVertex vertex);
+    void finish(RowVertex graphVertex, Optional<Row> updatedValues);
 
     /**
      * Returns the output type for the function.

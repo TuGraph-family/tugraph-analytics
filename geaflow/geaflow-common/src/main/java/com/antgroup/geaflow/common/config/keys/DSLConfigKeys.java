@@ -90,4 +90,5 @@ public class DSLConfigKeys implements Serializable {
         .key("geaflow.dsl.traversal.all.split.enable")
         .defaultValue(false)
         .description("Whether enable the split of the ids for traversal all. ");
+
 }

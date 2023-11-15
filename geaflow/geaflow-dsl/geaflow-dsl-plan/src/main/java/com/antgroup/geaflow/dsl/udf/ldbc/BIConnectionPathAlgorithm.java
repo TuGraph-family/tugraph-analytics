@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Description(name = "bi15_connection", description = "LDBC BI15 Connection Path Algorithm")
 public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, ObjectRow> {
@@ -77,7 +78,8 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<ObjectRow> messages) {
+        updatedValues.ifPresent(vertex::setValue);
         //Stage 1 propagation
         if (context.getCurrentIterationId() < propagationIterations) {
             //Send heartbeat messages to keep nodes alive
@@ -294,6 +296,6 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
     }
 
     @Override
-    public void finish(RowVertex vertex) {
+    public void finish(RowVertex vertex, Optional<Row> newValue) {
     }
 }

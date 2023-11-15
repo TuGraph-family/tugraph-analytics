@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Description(name = "bi19_interaction", description = "LDBC BI19 City Interaction Algorithm")
 public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object, ObjectRow> {
@@ -73,11 +74,12 @@ public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object,
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<ObjectRow> messages) {
         if (context.getCurrentIterationId() > maxIterations) {
             return;
         }
         Long vId = (Long)vertex.getId();
+        updatedValues.ifPresent(vertex::setValue);
         switch ((int)(context.getCurrentIterationId() % 3)) {
             case personIteration:
                 if (vertex.getLabel().equals(personType)) {
@@ -275,6 +277,6 @@ public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object,
     }
 
     @Override
-    public void finish(RowVertex vertex) {
+    public void finish(RowVertex vertex, Optional<Row> newValue) {
     }
 }

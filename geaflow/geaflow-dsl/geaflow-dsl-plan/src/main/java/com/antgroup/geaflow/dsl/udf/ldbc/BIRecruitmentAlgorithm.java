@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.udf.ldbc;
 import com.antgroup.geaflow.common.type.primitive.LongType;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
+import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 
 @Description(name = "bi20_recruitment", description = "LDBC BI20 Recruitment Algorithm")
 public class BIRecruitmentAlgorithm implements AlgorithmUserFunction<Object, ObjectRow> {
@@ -52,11 +54,12 @@ public class BIRecruitmentAlgorithm implements AlgorithmUserFunction<Object, Obj
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<ObjectRow> messages) {
         if (!vertex.getLabel().equals(personType)) {
             return;
         }
         Object vId = vertex.getId();
+        updatedValues.ifPresent(vertex::setValue);
         List<RowEdge> outEdges = context.loadEdges(EdgeDirection.BOTH);
         List<Object> sendMsgTargetIds = new ArrayList<>();
         Map<Object, Long> university2ClassYear = new HashMap<>();
@@ -126,6 +129,6 @@ public class BIRecruitmentAlgorithm implements AlgorithmUserFunction<Object, Obj
     }
 
     @Override
-    public void finish(RowVertex vertex) {
+    public void finish(RowVertex vertex, Optional<Row> newValue) {
     }
 }

@@ -42,6 +42,15 @@ public interface IncVertexCentricTraversalFunction<K, VV, EV, M, R> extends IncV
      */
     void init(ITraversalRequest<K> traversalRequest);
 
+    /**
+     * Finish iteration traversal.
+     */
+    void finish();
+
+    /**
+     * Close resources in iteration traversal.
+     */
+    void close();
 
     interface IncVertexCentricTraversalFuncContext<K, VV, EV, M, R> extends IncGraphContext<K, VV, EV,
             M> {

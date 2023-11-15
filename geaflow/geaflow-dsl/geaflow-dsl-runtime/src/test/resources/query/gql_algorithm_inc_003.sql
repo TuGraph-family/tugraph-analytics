@@ -32,7 +32,7 @@ CREATE TABLE modern_vertex (
 ) WITH (
   type='file',
   geaflow.dsl.file.path = 'resource:///data/modern_vertex.txt',
-  geaflow.dsl.window.size = -1
+  geaflow.dsl.window.size = 3
 );
 
 CREATE TABLE modern_edge (
@@ -42,8 +42,8 @@ CREATE TABLE modern_edge (
   weight double
 ) WITH (
   type='file',
-  geaflow.dsl.file.path = 'resource:///data/modern_edge.txt',
-  geaflow.dsl.window.size = 4
+  geaflow.dsl.file.path = 'resource:///data/modern_edge_sssp_inc.txt',
+  geaflow.dsl.window.size = 1
 );
 
 INSERT INTO modern.person

@@ -78,6 +78,16 @@ public class GeaFlowDynamicVCAggTraversalFunction implements
     }
 
     @Override
+    public void finish() {
+
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
     public void compute(Object vertexId, Iterator<MessageBox> messageIterator) {
         commonFunction.compute(vertexId, messageIterator);
     }
