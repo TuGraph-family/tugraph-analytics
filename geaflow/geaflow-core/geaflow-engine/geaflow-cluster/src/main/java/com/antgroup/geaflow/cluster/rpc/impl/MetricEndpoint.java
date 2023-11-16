@@ -17,16 +17,16 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.rpc.IMetricEndpoint;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
-import com.antgroup.geaflow.rpc.proto.MetricServiceGrpc.MetricServiceImplBase;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import com.antgroup.geaflow.stats.model.MetricCache;
-import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MetricEndpoint extends MetricServiceImplBase implements IMetricEndpoint {
+public class MetricEndpoint implements IMetricEndpoint {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricEndpoint.class);
     private final Configuration configuration;
 
@@ -35,18 +35,16 @@ public class MetricEndpoint extends MetricServiceImplBase implements IMetricEndp
     }
 
     @Override
-    public void queryMetrics(MetricQueryRequest request,
-                             StreamObserver<MetricQueryResponse> responseObserver) {
+    public MetricQueryResponse queryMetrics(MetricQueryRequest request) {
         try {
             MetricCache cache = StatsCollectorFactory.init(configuration).getMetricCache();
             MetricQueryResponse.Builder builder = MetricQueryResponse.newBuilder();
             builder.setPayload(RpcMessageEncoder.encode(cache));
-            responseObserver.onNext(builder.build());
-            responseObserver.onCompleted();
+            return builder.build();
         } catch (Throwable t) {
             LOGGER.error("process request failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("process request failed: %s", t.getMessage()),
+                t);
         }
     }
-
 }

@@ -23,6 +23,8 @@ public class QueryResults implements QueryStatusInfo, Serializable {
 
     private static final String DEFAULT_QUERY_ID = "0";
 
+    private static final String SEPARATOR = ":";
+
     private final String queryId;
     private final Object data;
     private final QueryError error;
@@ -66,6 +68,6 @@ public class QueryResults implements QueryStatusInfo, Serializable {
 
     @Override
     public String toString() {
-        return this.queryId + ":" + this.isQueryStatus() + ":" + this.data + ":" + this.error.toString();
+        return this.queryId + SEPARATOR + this.isQueryStatus() + SEPARATOR + (this.isQueryStatus() ? this.data : this.error.toString());
     }
 }

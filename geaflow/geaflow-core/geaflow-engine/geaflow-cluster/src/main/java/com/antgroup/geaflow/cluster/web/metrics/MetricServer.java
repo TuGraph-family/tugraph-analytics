@@ -20,6 +20,9 @@ import com.antgroup.geaflow.cluster.rpc.RpcService;
 import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.RpcServiceImpl;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
+import com.antgroup.geaflow.common.utils.PortUtil;
+import com.baidu.brpc.server.RpcServerOptions;
 import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +34,8 @@ public class MetricServer implements Serializable {
 
     public MetricServer(Configuration configuration) {
         int port = configuration.getInteger(METRIC_SERVICE_PORT);
-        RpcServiceImpl rpcService = new RpcServiceImpl(port, configuration);
+        RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+        RpcServiceImpl rpcService = new RpcServiceImpl(PortUtil.getPort(port), configuration, serverOptions);
         rpcService.addEndpoint(new MetricEndpoint(configuration));
         this.rpcService = rpcService;
     }

@@ -31,6 +31,7 @@ import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType;
 import com.antgroup.geaflow.cluster.rpc.impl.ContainerEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.impl.DefaultRpcCallbackImpl;
 import com.antgroup.geaflow.cluster.rpc.impl.DriverEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpointRef;
@@ -109,44 +110,44 @@ public class RpcClient implements Serializable {
     }
 
     // Master endpoint ref.
-    public <T> void registerContainer(String masterId, T info, RpcCallback<RegisterResponse> callback) {
+    public <T> void registerContainer(String masterId, T info,
+                                      RpcCallback<RegisterResponse> callback) {
         doRpcWithRetry(() -> {
-            ListenableFuture<RegisterResponse> future = connectMaster(masterId).registerContainer(info);
-            handleFutureCallback(future, callback, masterId);
+            connectMaster(masterId).registerContainer(info, new DefaultRpcCallbackImpl<>(callback, masterId, haService));
         }, masterId, MASTER);
     }
 
-    public void sendHeartBeat(String masterId, Heartbeat heartbeat, RpcCallback<HeartbeatResponse> callback) {
+    public void sendHeartBeat(String masterId, Heartbeat heartbeat,
+                              RpcCallback<HeartbeatResponse> callback) {
         doRpcWithRetry(() -> {
-            ListenableFuture<HeartbeatResponse> future = connectMaster(masterId).sendHeartBeat(heartbeat);
-            handleFutureCallback(future, callback, masterId);
+            connectMaster(masterId).sendHeartBeat(heartbeat,
+                new DefaultRpcCallbackImpl<>(callback, masterId, haService));
         }, masterId, MASTER);
     }
 
     public Empty sendException(String masterId, Integer containerId, String containerName,
                                Throwable throwable) {
-        return doRpcWithRetry(() -> connectMaster(masterId)
-            .sendException(containerId, containerName, throwable.getMessage()), masterId, MASTER);
+        return doRpcWithRetry(() -> connectMaster(masterId).sendException(containerId,
+            containerName, throwable.getMessage()), masterId, MASTER);
     }
 
     // Container endpoint ref.
     public Future processContainer(String containerId, IEvent event) {
-        return doRpcWithRetry(() -> {
-            ListenableFuture<Response> future = connectContainer(containerId).process(event);
-            return new RpcResponseFuture(future);
-        }, containerId, CONTAINER);
+        return doRpcWithRetry(() -> connectContainer(containerId).process(event,
+            new DefaultRpcCallbackImpl(null, containerId, haService)), containerId, CONTAINER);
     }
 
     public void processContainer(String containerId, IEvent event, RpcCallback<Response> callback) {
         doRpcWithRetry(() -> {
-            ListenableFuture<Response> future = connectContainer(containerId).process(event);
-            handleFutureCallback(future, callback, containerId);
+            connectContainer(containerId).process(event,
+                new DefaultRpcCallbackImpl<>(callback, containerId, haService));
         }, containerId, CONTAINER);
     }
 
     // Pipeline endpoint ref.
     public void processPipeline(String driverId, IEvent event) {
-        doRpcWithRetry(() -> connectPipelineManager(driverId).process(event), driverId,
+        doRpcWithRetry(() -> connectPipelineManager(driverId).process(event,
+                new DefaultRpcCallbackImpl<>()), driverId,
             PIPELINE_MANAGER);
     }
 
@@ -166,8 +167,11 @@ public class RpcClient implements Serializable {
             RESOURCE_MANAGER);
     }
 
-    public ListenableFuture<MetricQueryResponse> requestMetrics(String id, MetricQueryRequest request) {
-        return doRpcWithRetry(() -> connectMetricServer(id).queryMetrics(request), id, METRIC);
+    public Future<MetricQueryResponse> requestMetrics(String id, MetricQueryRequest request,
+                                                      RpcCallback<MetricQueryResponse> callback) {
+        return doRpcWithRetry(() -> connectMetricServer(id).queryMetrics(request,
+                new DefaultRpcCallbackImpl<>(callback, id, haService)), id,
+            METRIC);
     }
 
     // Close endpoint connection.
@@ -240,9 +244,8 @@ public class RpcClient implements Serializable {
         try {
             invalidateEndpointCache(resourceId, endpointType);
         } catch (Throwable e) {
-            String errorMsg = String.format(
-                "get resource data failed caused by %s while " + "invalidate endpoint cache: #%s",
-                t.getMessage(), resourceId);
+            String errorMsg = String.format("get resource data failed caused by %s while "
+                + "invalidate endpoint cache: #%s", t.getMessage(), resourceId);
             return new GeaflowRuntimeException(errorMsg, e);
         }
         invalidateResourceData(resourceId);
@@ -265,8 +268,8 @@ public class RpcClient implements Serializable {
     }
 
     public <T> void handleFutureCallback(ListenableFuture<T> future,
-                                          RpcCallback<T> callback,
-                                          String resourceId) {
+                                         RpcCallback<T> callback,
+                                         String resourceId) {
         Futures.addCallback(future, new FutureCallback<T>() {
             @Override
             public void onSuccess(@Nullable T result) {

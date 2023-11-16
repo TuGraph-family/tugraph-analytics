@@ -14,29 +14,29 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
-import com.antgroup.geaflow.common.heartbeat.Heartbeat;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
+import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
-import com.google.protobuf.Empty;
-import java.io.Serializable;
+import com.baidu.brpc.client.RpcCallback;
 import java.util.concurrent.Future;
 
-public interface IMasterEndpointRef extends Serializable {
+public interface IAsyncMasterEndpoint extends IMasterEndpoint {
 
     /**
-     * Register container into master.
+     * Async register container.
      */
-    <T> Future<RegisterResponse> registerContainer(T request, RpcCallback<RegisterResponse> callback);
+    Future<RegisterResponse> registerContainer(RegisterRequest request, RpcCallback<RegisterResponse> callback);
 
     /**
-     * Send heartbeat.
+     * Async register driver.
      */
-    Future<HeartbeatResponse> sendHeartBeat(Heartbeat heartbeat, RpcCallback<HeartbeatResponse> callback);
+    Future<RegisterResponse> registerDriver(RegisterRequest request, RpcCallback<RegisterResponse> callback);
 
     /**
-     * Send exception.
+     * Async receive heartbeat.
      */
-    Empty sendException(Integer containerId, String containerName, String message);
+    Future<HeartbeatResponse> receiveHeartbeat(HeartbeatRequest request, RpcCallback<HeartbeatResponse> callback);
 
 }
+

@@ -14,17 +14,19 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import com.antgroup.geaflow.cluster.protocol.IEvent;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
-import com.antgroup.geaflow.rpc.proto.Container.Response;
-import java.io.Serializable;
-import java.util.concurrent.Future;
+import com.antgroup.geaflow.rpc.proto.Driver.PipelineReq;
+import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
+import com.google.protobuf.Empty;
 
-public interface IContainerEndpointRef extends Serializable {
+public interface IDriverEndpoint {
 
     /**
-     * Process event request.
+     * Driver execute pipeline.
      */
-    Future<IEvent> process(IEvent request, RpcCallback<Response> callback);
+    PipelineRes executePipeline(PipelineReq request);
 
+    /**
+     * Driver close.
+     */
+    Empty close(Empty request);
 }

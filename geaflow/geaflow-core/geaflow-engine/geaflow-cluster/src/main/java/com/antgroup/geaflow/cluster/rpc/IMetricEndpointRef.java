@@ -16,10 +16,13 @@ package com.antgroup.geaflow.cluster.rpc;
 
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.Future;
 
 public interface IMetricEndpointRef extends RpcEndpointRef {
 
-    ListenableFuture<MetricQueryResponse> queryMetrics(MetricQueryRequest request);
+    /**
+     * Async query metrics.
+     */
+    Future<MetricQueryResponse> queryMetrics(MetricQueryRequest request, RpcCallback<MetricQueryResponse> callback);
 
 }

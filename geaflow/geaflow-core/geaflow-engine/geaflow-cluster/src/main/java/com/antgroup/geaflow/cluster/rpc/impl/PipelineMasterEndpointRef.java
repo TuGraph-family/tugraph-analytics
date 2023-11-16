@@ -16,12 +16,21 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.rpc.IPipelineManagerEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.IPipelineMasterEndpoint;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
+import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.antgroup.geaflow.rpc.proto.Container;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.antgroup.geaflow.rpc.proto.Container.Request;
+import com.antgroup.geaflow.rpc.proto.Container.Response;
+import com.baidu.brpc.client.BrpcProxy;
+import com.baidu.brpc.client.RpcClientOptions;
+import com.google.protobuf.ByteString;
+import java.util.concurrent.Future;
 
-public class PipelineMasterEndpointRef extends ContainerEndpointRef implements
-    IPipelineManagerEndpointRef {
+public class PipelineMasterEndpointRef extends AbstractRpcEndpointRef implements IPipelineManagerEndpointRef {
+
+    protected IPipelineMasterEndpoint pipelineMasterEndpoint;
 
     public PipelineMasterEndpointRef(String host, int port,
                                      Configuration configuration) {
@@ -29,10 +38,24 @@ public class PipelineMasterEndpointRef extends ContainerEndpointRef implements
     }
 
     @Override
-    public ListenableFuture<Container.Response> process(IEvent request) {
-        ensureChannelAlive();
+    protected void getRpcEndpoint() {
+        this.pipelineMasterEndpoint = BrpcProxy.getProxy(rpcClient, IPipelineMasterEndpoint.class);
+    }
+
+    @Override
+    protected RpcClientOptions getClientOptions() {
+        return DefaultClientOption.build();
+    }
+
+    @Override
+    public Future<IEvent> process(IEvent request, RpcCallback<Response> callback) {
         Container.Request taskEvent = buildRequest(request);
-        blockingStub.process(taskEvent);
+        this.pipelineMasterEndpoint.process(taskEvent);
         return null;
+    }
+
+    protected Request buildRequest(IEvent request) {
+        ByteString payload = RpcMessageEncoder.encode(request);
+        return Request.newBuilder().setPayload(payload).build();
     }
 }

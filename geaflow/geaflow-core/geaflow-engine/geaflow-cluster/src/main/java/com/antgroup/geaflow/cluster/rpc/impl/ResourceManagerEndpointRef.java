@@ -20,19 +20,20 @@ import com.antgroup.geaflow.cluster.resourcemanager.RequireResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.rpc.IResourceEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.IResourceManagerEndpoint;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.antgroup.geaflow.rpc.proto.Resource;
-import com.antgroup.geaflow.rpc.proto.ResourceServiceGrpc;
-import io.grpc.ManagedChannel;
+import com.baidu.brpc.client.BrpcProxy;
+import com.baidu.brpc.client.RpcClientOptions;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implements
-    IResourceEndpointRef {
+public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implements IResourceEndpointRef {
 
-    private ResourceServiceGrpc.ResourceServiceBlockingStub stub;
+    private IResourceManagerEndpoint resourceManagerEndpoint;
 
     public ResourceManagerEndpointRef(String host, int port,
                                       Configuration configuration) {
@@ -40,21 +41,24 @@ public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implement
     }
 
     @Override
-    protected void createStub(ManagedChannel channel) {
-        this.stub = ResourceServiceGrpc.newBlockingStub(channel);
+    protected void getRpcEndpoint() {
+        this.resourceManagerEndpoint = BrpcProxy.getProxy(rpcClient, IResourceManagerEndpoint.class);
+    }
+
+    @Override
+    protected RpcClientOptions getClientOptions() {
+        return DefaultClientOption.build();
     }
 
     @Override
     public RequireResponse requireResource(RequireResourceRequest request) {
-        ensureChannelAlive();
-        Resource.RequireResourceResponse response = this.stub.requireResource(convertRequireRequest(request));
+        Resource.RequireResourceResponse response = this.resourceManagerEndpoint.requireResource(convertRequireRequest(request));
         return convertRequireResponse(response);
     }
 
     @Override
     public ReleaseResponse releaseResource(ReleaseResourceRequest request) {
-        ensureChannelAlive();
-        Resource.ReleaseResourceResponse response = this.stub.releaseResource(convertReleaseRequest(request));
+        Resource.ReleaseResourceResponse response = this.resourceManagerEndpoint.releaseResource(convertReleaseRequest(request));
         return convertReleaseResponse(response);
     }
 
