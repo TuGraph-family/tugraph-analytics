@@ -1,0 +1,16 @@
+namespace graph_data;
+
+table SecondKey {
+    ts: uint;
+    graph_info: ulong;
+    sequence_id: ulong;
+    target_id: [ubyte];
+}
+
+table GraphDataIndex {
+    fid: uint;
+    offset: ulong;
+    second_key_vec: [SecondKey];
+}
+
+root_type GraphDataIndex;

@@ -18,6 +18,7 @@ import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.limit.IEdgeLimit;
 import com.antgroup.geaflow.state.pushdown.project.IProjector;
+import java.util.List;
 import java.util.Map;
 
 public interface IStatePushDown<K, T, R> {
@@ -28,9 +29,11 @@ public interface IStatePushDown<K, T, R> {
 
     IEdgeLimit getEdgeLimit();
 
-    EdgeAtom getOrderField();
+    List<EdgeAtom> getOrderFields();
 
     IProjector<T, R> getProjector();
 
     PushDownType getType();
+
+    boolean isEmpty();
 }

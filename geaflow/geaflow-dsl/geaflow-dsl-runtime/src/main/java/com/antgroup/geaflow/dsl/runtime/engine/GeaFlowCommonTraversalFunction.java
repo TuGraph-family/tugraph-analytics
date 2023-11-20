@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.dsl.runtime.traversal.ExecuteDagGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.BroadcastId;
@@ -67,26 +69,29 @@ public class GeaFlowCommonTraversalFunction {
 
     public void finish(long iterationId) {
         if (isTraversalAllWithRequest && initRequests.size() > 0) {
-            Iterator<Object> idIterator = context.loadAllVertex();
-            while (idIterator.hasNext()) {
-                Object vertexId = idIterator.next();
-                MessageBox messageBox = MessageType.PARAMETER_REQUEST.createMessageBox();
-                ParameterRequestMessage parameterMessage = new ParameterRequestMessage();
+            try (CloseableIterator<Object> idIterator = context.loadAllVertex()) {
+                while (idIterator.hasNext()) {
+                    Object vertexId = idIterator.next();
+                    MessageBox messageBox = MessageType.PARAMETER_REQUEST.createMessageBox();
+                    ParameterRequestMessage parameterMessage = new ParameterRequestMessage();
 
-                for (ITraversalRequest<Object> request : initRequests) {
-                    assert Objects.equals(request.getVId(), TraversalAll.INSTANCE);
-                    assert request instanceof InitParameterRequest;
-                    InitParameterRequest initRequest = (InitParameterRequest) request;
-                    // convert InitParameterRequest to ParameterRequest because ParameterRequest
-                    // can support multi-key request id, however ITraversalRequest can only support
-                    // Long type which is not enough for complex query, e.g. sub query request.
-                    ParameterRequest parameterRequest = new ParameterRequest(initRequest.getRequestId(),
-                        vertexId, initRequest.getParameters());
-                    parameterMessage.addRequest(parameterRequest);
+                    for (ITraversalRequest<Object> request : initRequests) {
+                        assert Objects.equals(request.getVId(), TraversalAll.INSTANCE);
+                        assert request instanceof InitParameterRequest;
+                        InitParameterRequest initRequest = (InitParameterRequest) request;
+                        // convert InitParameterRequest to ParameterRequest because ParameterRequest
+                        // can support multi-key request id, however ITraversalRequest can only support
+                        // Long type which is not enough for complex query, e.g. sub query request.
+                        ParameterRequest parameterRequest = new ParameterRequest(initRequest.getRequestId(),
+                                vertexId, initRequest.getParameters());
+                        parameterMessage.addRequest(parameterRequest);
+                    }
+                    messageBox.addMessage(executeDagGroup.getEntryOpId(), parameterMessage);
+                    context.setMessageBox(messageBox);
+                    executeDagGroup.execute(vertexId, executeDagGroup.getEntryOpId());
                 }
-                messageBox.addMessage(executeDagGroup.getEntryOpId(), parameterMessage);
-                context.setMessageBox(messageBox);
-                executeDagGroup.execute(vertexId, executeDagGroup.getEntryOpId());
+            } catch (Exception e) {
+                throw new GeaflowRuntimeException(e);
             }
         } else {
             for (ITraversalRequest<Object> request : initRequests) {

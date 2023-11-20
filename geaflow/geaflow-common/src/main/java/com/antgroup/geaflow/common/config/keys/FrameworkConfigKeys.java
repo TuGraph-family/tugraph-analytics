@@ -53,7 +53,7 @@ public class FrameworkConfigKeys implements Serializable {
     public static final ConfigKey SYSTEM_STATE_BACKEND_TYPE = ConfigKeys
         .key("geaflow.system.state.backend.type")
         .defaultValue("ROCKSDB")
-        .description("system state backend store type, e.g., [rocksdb, memory]");
+        .description("system state backend store type, e.g., [rocksdb, memory, cstore]");
 
     public static final ConfigKey SYSTEM_OFFSET_BACKEND_TYPE = ConfigKeys
         .key("geaflow.system.offset.backend.type")

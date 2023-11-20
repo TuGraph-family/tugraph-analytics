@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -21,20 +22,20 @@ import java.util.Iterator;
  * This class is an adaptation of Guava's Iterators.concat
  * by fixing the issue https://github.com/google/guava/issues/3178.
  */
-public class MultiIterator<T> implements Iterator<T> {
+public class MultiIterator<T> implements CloseableIterator<T> {
 
-    private final Iterator<? extends Iterator<? extends T>> iterators;
-    private Iterator<? extends T> currIterator;
+    private final Iterator<? extends CloseableIterator<? extends T>> iterators;
+    private CloseableIterator<? extends T> currIterator;
     private T nextValue;
 
-    public MultiIterator(Iterator<? extends Iterator<? extends T>> iterators) {
+    public MultiIterator(Iterator<? extends CloseableIterator<? extends T>> iterators) {
         this.iterators = iterators;
         if (iterators.hasNext()) {
             this.currIterator = iterators.next();
         }
     }
 
-    public MultiIterator(Iterator<? extends T>... iteratorCandidates) {
+    public MultiIterator(CloseableIterator<? extends T>... iteratorCandidates) {
         this.iterators = Arrays.asList(iteratorCandidates).iterator();
         if (iterators.hasNext()) {
             this.currIterator = iterators.next();
@@ -47,6 +48,7 @@ public class MultiIterator<T> implements Iterator<T> {
             return false;
         }
         if (!currIterator.hasNext()) {
+            currIterator.close();
             do {
                 if (!this.iterators.hasNext()) {
                     return false;
@@ -62,5 +64,16 @@ public class MultiIterator<T> implements Iterator<T> {
     @Override
     public T next() {
         return nextValue;
+    }
+
+    @Override
+    public void close() {
+        if (currIterator != null) {
+            currIterator.close();
+        }
+        while (this.iterators.hasNext()) {
+            currIterator = this.iterators.next();
+            currIterator.close();
+        }
     }
 }

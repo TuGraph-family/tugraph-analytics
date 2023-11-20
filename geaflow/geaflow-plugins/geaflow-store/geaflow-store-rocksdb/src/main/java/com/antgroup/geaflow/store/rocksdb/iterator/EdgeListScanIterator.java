@@ -14,18 +14,18 @@
 
 package com.antgroup.geaflow.store.rocksdb.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class EdgeListScanIterator<K, EV> implements Iterator<List<IEdge<K, EV>>> {
+public class EdgeListScanIterator<K, EV> implements CloseableIterator<List<IEdge<K, EV>>> {
 
-    private final Iterator<IEdge<K, EV>> edgeIterator;
+    private final CloseableIterator<IEdge<K, EV>> edgeIterator;
     private IEdge<K, EV> residualEdge;
     private List<IEdge<K, EV>> nextValue;
 
-    public EdgeListScanIterator(Iterator<IEdge<K, EV>> edgeIterator) {
+    public EdgeListScanIterator(CloseableIterator<IEdge<K, EV>> edgeIterator) {
         this.edgeIterator = edgeIterator;
     }
 
@@ -68,5 +68,10 @@ public class EdgeListScanIterator<K, EV> implements Iterator<List<IEdge<K, EV>>>
             residualEdge = null;
         }
         return list;
+    }
+
+    @Override
+    public void close() {
+        this.edgeIterator.close();
     }
 }

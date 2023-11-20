@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.api.graph.function.vc;
 
 import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.message.IGraphMessage;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
@@ -84,7 +85,7 @@ public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexC
         /**
          * Load vertex id iterator.
          */
-        Iterator<K> loadIdIterator();
+        CloseableIterator<K> loadIdIterator();
     }
 
     interface TraversalEdgeQuery<K, EV> extends EdgeQuery<K, EV> {

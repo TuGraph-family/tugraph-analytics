@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package meta;
+
+// Meta of table.
+message TableMeta
+{
+  // Size of block on the table.
+  uint32 data_block_size = 1;
+
+  // Compress type of block on the table.
+  uint32 compress_type = 3;
+
+  // Meta of offset for each block on the table.
+  repeated BlockMeta block_meta = 4;
+}
+
+// Meta of offset for each block on the table.
+message BlockMeta {
+  // Physical offset of the block on disk, which is also the uncompressed data offset.
+  uint64 table_offset = 1;
+
+  // Length of the uncompressed data.
+  uint32 uncompressed_length = 2;
+
+  // Length of the block on disk, which is also the length of the compressed data.
+  uint32 compressed_length = 3;
+}

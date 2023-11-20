@@ -14,9 +14,9 @@
 
 package com.antgroup.geaflow.state.query;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
 import com.antgroup.geaflow.state.pushdown.project.IProjector;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -53,12 +53,12 @@ public interface QueryableGraphState<K, VV, EV, R> {
     /**
      * Get id Iterator.
      */
-    Iterator<K> idIterator();
+    CloseableIterator<K> idIterator();
 
     /**
      * Query result is a iterator.
      */
-    Iterator<R> iterator();
+    CloseableIterator<R> iterator();
 
     /**
      * Get a simple result like a vertex.

@@ -17,12 +17,12 @@ package com.antgroup.geaflow.state.pushdown.limit;
 public enum LimitType {
 
     /**
-     * Composed limit type is used for or filter, which
-     * each inner filter is independence for the limit condition.
+     * Composed limit type is to take the whole filter into consideration.
      */
     COMPOSED,
     /**
-     * Single limit type is to take the whole filter into consideration.
+     * Single limit type is used for or filter, which
+     * each inner filter is independence for the limit condition.
      */
     SINGLE,
 }

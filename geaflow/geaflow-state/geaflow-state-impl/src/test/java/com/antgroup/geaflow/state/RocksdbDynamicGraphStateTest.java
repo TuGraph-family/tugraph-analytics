@@ -33,7 +33,6 @@ import com.antgroup.geaflow.state.pushdown.filter.IEdgeFilter;
 import com.antgroup.geaflow.state.pushdown.filter.IVertexFilter;
 import com.antgroup.geaflow.utils.keygroup.DefaultKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import java.io.File;

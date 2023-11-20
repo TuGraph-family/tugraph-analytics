@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.store.rocksdb.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
@@ -24,7 +25,7 @@ import java.util.Iterator;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-public class EdgeScanIterator<K, VV, EV> implements Iterator<IEdge<K, EV>> {
+public class EdgeScanIterator<K, VV, EV> implements CloseableIterator<IEdge<K, EV>> {
 
     private Supplier<IGraphFilter> filterFun;
     private final Iterator<Tuple<byte[], byte[]>> iterator;
@@ -66,5 +67,10 @@ public class EdgeScanIterator<K, VV, EV> implements Iterator<IEdge<K, EV>> {
     @Override
     public IEdge<K, EV> next() {
         return nextValue;
+    }
+
+    @Override
+    public void close() {
+
     }
 }

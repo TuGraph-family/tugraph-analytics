@@ -32,6 +32,7 @@
         <module>geaflow-store-rocksdb</module>
         <module>geaflow-store-redis</module>
         <module>geaflow-store-jdbc</module>
+        <module>geaflow-store-cstore</module>
     </modules>
 
     <dependencies>

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.store.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class KeysIterator<K, VV, EV, R> implements Iterator<R> {
+public class KeysIterator<K, VV, EV, R> implements CloseableIterator<R> {
 
     private final Iterator<K> iterator;
     private final BiFunction<K, IStatePushDown, R> fetchFun;
@@ -37,7 +38,7 @@ public class KeysIterator<K, VV, EV, R> implements Iterator<R> {
         if (pushdown.getFilters() != null) {
             StatePushDown simpleKeyPushDown = StatePushDown.of()
                 .withEdgeLimit(pushdown.getEdgeLimit())
-                .withOrderField(pushdown.getOrderField());
+                .withOrderFields(pushdown.getOrderFields());
             this.pushdownFun = k -> simpleKeyPushDown.withFilter(
                 (IFilter) pushdown.getFilters().get(k));
         } else {
@@ -62,5 +63,10 @@ public class KeysIterator<K, VV, EV, R> implements Iterator<R> {
     @Override
     public R next() {
         return nextValue;
+    }
+
+    @Override
+    public void close() {
+
     }
 }

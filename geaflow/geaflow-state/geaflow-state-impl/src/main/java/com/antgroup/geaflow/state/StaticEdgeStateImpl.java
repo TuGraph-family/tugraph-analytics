@@ -16,13 +16,13 @@ package com.antgroup.geaflow.state;
 
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.state.data.DataType;
 import com.antgroup.geaflow.state.query.QueryType;
 import com.antgroup.geaflow.state.strategy.manager.IGraphManager;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class StaticEdgeStateImpl<K, VV, EV> extends BaseQueryState<K, VV, EV, IEdge<K, EV>> implements
     StaticEdgeState<K, VV, EV> {
@@ -57,7 +57,7 @@ public class StaticEdgeStateImpl<K, VV, EV> extends BaseQueryState<K, VV, EV, IE
     }
 
     @Override
-    public Iterator<K> idIterator() {
+    public CloseableIterator<K> idIterator() {
         throw new GeaflowRuntimeException(RuntimeErrors.INST.unsupportedError());
     }
 }

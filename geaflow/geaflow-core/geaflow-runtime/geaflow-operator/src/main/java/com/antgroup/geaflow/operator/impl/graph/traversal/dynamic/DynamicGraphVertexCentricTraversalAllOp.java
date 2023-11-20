@@ -18,10 +18,10 @@ import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
 
 import com.antgroup.geaflow.api.graph.base.algo.AbstractIncVertexCentricTraversalAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.impl.VertexBeginTraversalRequest;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import java.util.Iterator;
 
 public class DynamicGraphVertexCentricTraversalAllOp<K, VV, EV, M, R,
     FUNC extends IncVertexCentricTraversalFunction<K, VV, EV, M, R>>
@@ -36,12 +36,14 @@ public class DynamicGraphVertexCentricTraversalAllOp<K, VV, EV, M, R,
     @Override
     protected void traversalByRequest() {
         if (!temporaryGraphCache.getAllEvolveVId().isEmpty()) {
-            Iterator<K> idIterator = graphState.dynamicGraph().V().query(GRAPH_VERSION, keyGroup).idIterator();
-            while (idIterator.hasNext()) {
-                K vertexId = idIterator.next();
-                ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest<>(vertexId);
-                this.graphVCTraversalCtx.init(iterations, vertexId);
-                this.incVcTraversalFunction.init(traversalRequest);
+            try (CloseableIterator<K> idIterator =
+                     graphState.dynamicGraph().V().query(GRAPH_VERSION, keyGroup).idIterator()) {
+                while (idIterator.hasNext()) {
+                    K vertexId = idIterator.next();
+                    ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest<>(vertexId);
+                    this.graphVCTraversalCtx.init(iterations, vertexId);
+                    this.incVcTraversalFunction.init(traversalRequest);
+                }
             }
         }
     }

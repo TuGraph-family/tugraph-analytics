@@ -14,11 +14,11 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import java.io.Serializable;
-import java.util.Iterator;
 
-public interface IOneDegreeGraphIterator<K, VV, EV> extends Iterator<OneDegreeGraph<K, VV, EV>>,
-    Serializable {
+public interface IOneDegreeGraphIterator<K, VV, EV> extends
+    CloseableIterator<OneDegreeGraph<K, VV, EV>>, Serializable {
 
 }

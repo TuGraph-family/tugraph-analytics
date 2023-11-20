@@ -15,9 +15,9 @@
 package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical;
 
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
-import java.util.Iterator;
 
 public class StaticTraversalVertexQueryImpl<K, VV, EV> extends StaticVertexQueryImpl<K, VV, EV>
     implements TraversalVertexQuery<K, VV> {
@@ -27,7 +27,7 @@ public class StaticTraversalVertexQueryImpl<K, VV, EV> extends StaticVertexQuery
     }
 
     @Override
-    public Iterator<K> loadIdIterator() {
+    public CloseableIterator<K> loadIdIterator() {
         if (keyGroup == null) {
             return graphState.staticGraph().V().idIterator();
         }

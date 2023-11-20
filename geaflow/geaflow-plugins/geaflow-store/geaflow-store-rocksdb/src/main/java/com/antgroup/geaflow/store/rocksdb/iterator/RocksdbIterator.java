@@ -14,13 +14,12 @@
 
 package com.antgroup.geaflow.store.rocksdb.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.utils.ByteUtils;
-import java.io.Closeable;
-import java.util.Iterator;
 import org.rocksdb.RocksIterator;
 
-public class RocksdbIterator implements Iterator<Tuple<byte[], byte[]>>, Closeable {
+public class RocksdbIterator implements CloseableIterator<Tuple<byte[], byte[]>> {
 
     private final RocksIterator rocksIt;
     private byte[] prefix;
