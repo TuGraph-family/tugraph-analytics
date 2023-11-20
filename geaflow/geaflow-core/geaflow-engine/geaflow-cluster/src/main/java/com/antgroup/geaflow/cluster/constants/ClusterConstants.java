@@ -19,11 +19,14 @@ public class ClusterConstants {
     private static final String MASTER_PREFIX = "master-";
     private static final String DRIVER_PREFIX = "driver-";
     private static final String CONTAINER_PREFIX = "container-";
+    public static final String MASTER_ADDRESS = "geaflow.master.address";
+
     public static final String PORT_SEPARATOR = ":";
     public static final String CLUSTER_TYPE = "clusterType";
     public static final String LOCAL_CLUSTER = "LOCAL";
     public static final int DEFAULT_MASTER_ID = 0;
     public static final int EXIT_CODE = -1;
+    public static final int EXIT_WAIT_SECONDS = 5;
 
     public static String getMasterName() {
         return String.format("%s%s", MASTER_PREFIX, DEFAULT_MASTER_ID);

@@ -33,12 +33,9 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class StreamWordPrintPipeline implements Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamWordPrintPipeline.class);
 
     public static final String RESULT_FILE_PATH = "./target/tmp/data/result/wordprint";
     public static final String REF_FILE_PATH = "data/reference/wordprint";

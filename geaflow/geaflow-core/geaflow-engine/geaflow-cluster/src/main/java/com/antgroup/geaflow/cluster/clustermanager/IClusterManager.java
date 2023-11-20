@@ -31,19 +31,14 @@ public interface IClusterManager extends Serializable {
     ClusterId startMaster();
 
     /**
-     * Start drivers and returns rpc address map.
+     * Start drivers drivers and returns rpc addresses.
      */
     Map<String, RpcAddress> startDrivers();
 
     /**
-     * Start workers.
+     * Start worker threads.
      */
     void allocateWorkers(int workerNum);
-
-    /**
-     * Restart container of container id.
-     */
-    void restartContainer(int containerId);
 
     /**
      * Trigger job failover.

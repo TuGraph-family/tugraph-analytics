@@ -93,7 +93,7 @@ public class KubernetesMasterRunner {
             LOGGER.info("Completed master init in {} ms", System.currentTimeMillis() - startTime);
             masterRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("init master failed: {}", e.getMessage(), e);
+            LOGGER.error("Master exits with error: {}", e.getMessage(), e);
             throw e;
         }
     }

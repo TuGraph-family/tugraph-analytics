@@ -170,6 +170,6 @@ public final class K8SConstants {
 
     public static final String GEAFLOW_LOG_VOLUME = "geaflow-log-volume";
 
-    public static final int EXIT_WAIT_TIME = 5;
+    public static final String CONTAINER_START_COMMAND = "CONTAINER_START_COMMAND";
 
 }

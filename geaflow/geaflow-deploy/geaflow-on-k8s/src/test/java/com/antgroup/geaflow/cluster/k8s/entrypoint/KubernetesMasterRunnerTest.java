@@ -22,7 +22,7 @@ public class KubernetesMasterRunnerTest extends KubernetesTestBase {
 
     @Test(expectedExceptions = TimeoutException.class)
     public void testMasterRunner() throws Throwable {
-        configuration.put(ExecutionConfigKeys.REGISTER_TIMEOUT, "1");
+        configuration.put(ExecutionConfigKeys.FO_TIMEOUT_MS, "1000");
         try {
             KubernetesMasterRunner masterRunner = new KubernetesMasterRunner(configuration);
             masterRunner.init();

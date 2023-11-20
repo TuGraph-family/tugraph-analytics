@@ -70,15 +70,7 @@ public class RayClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void restartContainer(int containerId) {
-        if (!actors.containsKey(containerId)) {
-            throw new GeaflowRuntimeException(String.format("invalid container id %s", containerId));
-        }
-        actors.get(containerId).kill();
-    }
-
-    @Override
-    public void doStartContainer(int containerId, boolean isRecover) {
+    public void createNewContainer(int containerId, boolean isRecover) {
         ContainerContext containerContext = new RayContainerContext(containerId,
             clusterConfig.getConfig());
         ActorHandle<RayContainerRunner> container = RayClient.createContainer(clusterConfig, containerContext);
@@ -86,12 +78,27 @@ public class RayClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void doStartDriver(int driverId, int driverIndex) {
-        DriverContext driverContext = new RayDriverContext(driverId, driverIndex,
-            clusterConfig.getConfig());
+    public void createNewDriver(int driverId, int driverIndex) {
+        DriverContext driverContext = new RayDriverContext(driverId, driverIndex, clusterConfig.getConfig());
         ActorHandle<RayDriverRunner> driver = RayClient.createDriver(clusterConfig, driverContext);
         actors.put(driverId, driver);
         LOGGER.info("call driver start id:{} index:{}", driverId, driverIndex);
+    }
+
+    @Override
+    public void recreateContainer(int containerId) {
+        if (!actors.containsKey(containerId)) {
+            throw new GeaflowRuntimeException(String.format("invalid container id %s", containerId));
+        }
+        actors.get(containerId).kill();
+    }
+
+    @Override
+    public void recreateDriver(int driverId) {
+        if (!actors.containsKey(driverId)) {
+            throw new GeaflowRuntimeException(String.format("invalid driver id %s", driverId));
+        }
+        actors.get(driverId).kill();
     }
 
     @Override

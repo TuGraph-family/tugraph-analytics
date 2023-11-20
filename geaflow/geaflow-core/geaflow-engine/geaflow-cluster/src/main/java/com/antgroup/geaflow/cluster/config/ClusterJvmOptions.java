@@ -28,7 +28,6 @@ public class ClusterJvmOptions {
     private static final String XMN_OPTION = "-Xmn";
     private static final String XSS_OPTION = "-Xss";
     private static final String MAX_DIRECT_MEM_SIZE = "MaxDirectMemorySize";
-
     private static final String CLUSTER_WORKER_JVM_ARG_PATTERN =
         "(-XX:\\+(HeapDumpOnOutOfMemoryError|CrashOnOutOfMemoryError|UseG1GC))"
             + "|(-XX:MaxDirectMemorySize=(\\d+)(m|g|M|G))"

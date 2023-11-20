@@ -77,8 +77,7 @@ public class MasterEndpoint implements IMasterEndpoint {
             heartbeat.setProcessMetrics(RpcMessageEncoder.decode(request.getPayload()));
             HeartbeatManager heartbeatManager =
                 ((AbstractClusterManager) clusterManager).getClusterContext().getHeartbeatManager();
-            HeartbeatResponse response = heartbeatManager.receivedHeartbeat(heartbeat);
-            return response;
+            return heartbeatManager.receivedHeartbeat(heartbeat);
         } catch (Throwable t) {
             LOGGER.error("process {} heartbeat failed: {}", request.getId(), t.getMessage(), t);
             throw new GeaflowRuntimeException(String.format("process %s heartbeat failed: %s",
