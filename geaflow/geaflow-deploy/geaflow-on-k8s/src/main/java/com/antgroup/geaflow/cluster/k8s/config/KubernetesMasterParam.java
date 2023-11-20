@@ -16,7 +16,6 @@ package com.antgroup.geaflow.cluster.k8s.config;
 
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_HTTP_PORT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_RPC_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
@@ -74,18 +73,13 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFilename = getLogDir() + File.separator + MASTER_LOG_SUFFIX;
-        return getContainerShellCommand(clusterConfig.getMasterJvmOptions(),
-            KubernetesMasterRunner.class, logFilename);
+        return KubernetesUtils.getContainerStartCommand(clusterConfig.getMasterJvmOptions(),
+            KubernetesMasterRunner.class, logFilename, config);
     }
 
     @Override
     public String getPodNamePrefix(String clusterId) {
         return clusterId + K8SConstants.MASTER_NAME_SUFFIX + K8SConstants.NAME_SEPARATOR;
-    }
-
-    @Override
-    public int getRpcPort() {
-        return config.getInteger(MASTER_RPC_PORT);
     }
 
     @Override

@@ -90,8 +90,8 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
     }
 
     @Override
-    public void close() {
+    public void closeEndpoint() {
         this.masterEndpoint.close(Empty.newBuilder().build());
-        super.close();
+        super.closeEndpoint();
     }
 }

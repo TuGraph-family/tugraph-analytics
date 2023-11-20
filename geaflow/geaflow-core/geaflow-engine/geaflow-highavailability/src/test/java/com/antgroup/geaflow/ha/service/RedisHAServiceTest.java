@@ -21,7 +21,6 @@ import static com.antgroup.geaflow.store.redis.RedisConfigKeys.REDIS_PORT;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.github.fppt.jedismock.RedisServer;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;

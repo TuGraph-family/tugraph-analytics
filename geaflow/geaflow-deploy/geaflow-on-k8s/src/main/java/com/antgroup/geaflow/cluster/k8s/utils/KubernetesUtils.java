@@ -14,14 +14,17 @@
 
 package com.antgroup.geaflow.cluster.k8s.utils;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ADDRESS_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_KV_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_LIST_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.DRIVER_SERVICE_NAME_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONF_DIR;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_START_COMMAND_TEMPLATE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USE_IP_IN_HOST_NETWORK;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_RPC_HOST;
 
+import com.antgroup.geaflow.cluster.config.ClusterJvmOptions;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
@@ -170,19 +173,20 @@ public class KubernetesUtils {
     public static Configuration loadConfiguration() throws Exception {
         Configuration config = loadConfigurationFromFile();
 
-        KubernetesConfig.DockerNetworkType dockerNetworkType = KubernetesConfig
-            .getDockerNetworkType(config);
+        KubernetesConfig.DockerNetworkType dockerNetworkType =
+            KubernetesConfig.getDockerNetworkType(
+            config);
 
         // Wait for service to be resolved.
         String serviceIp = waitForServiceNameResolved(config, false).getHostAddress();
-        config.put(MASTER_RPC_HOST, serviceIp);
+        config.put(MASTER_ADDRESS, serviceIp);
         if (dockerNetworkType == KubernetesConfig.DockerNetworkType.HOST) {
             try {
                 InetAddress addr = InetAddress.getLocalHost();
                 if (config.getBoolean(USE_IP_IN_HOST_NETWORK)) {
-                    config.put(MASTER_RPC_HOST, serviceIp);
+                    config.put(MASTER_ADDRESS, serviceIp);
                 } else {
-                    config.put(MASTER_RPC_HOST, addr.getHostName());
+                    config.put(MASTER_ADDRESS, addr.getHostName());
                 }
             } catch (UnknownHostException e) {
                 LOGGER.warn("Get hostname for master error {}.", e.getMessage());
@@ -201,8 +205,8 @@ public class KubernetesUtils {
         final File confDirFile = new File(configDir);
         if (!(confDirFile.exists())) {
             throw new RuntimeException(
-                "The given configuration directory name '" + configDir + "' (" + confDirFile
-                    .getAbsolutePath() + ") does not describe an existing directory.");
+                "The given configuration directory name '" + configDir + "' ("
+                    + confDirFile.getAbsolutePath() + ") does not describe an existing directory.");
         }
 
         // get yaml configuration file
@@ -218,7 +222,8 @@ public class KubernetesUtils {
     }
 
     /**
-     * This method is an adaptation of Flink's org.apache.flink.configuration.GlobalConfiguration#loadYAMLResource
+     * This method is an adaptation of Flink's
+     * org.apache.flink.configuration.GlobalConfiguration#loadYAMLResource
      */
     @VisibleForTesting
     public static Configuration loadYAMLResource(File file) {
@@ -242,8 +247,9 @@ public class KubernetesUtils {
 
                     String[] kv = conf.split(CONFIG_KV_SEPARATOR, 2);
                     if (kv.length < 1) {
-                        LOGGER.warn("Error while trying to split key and value in configuration file "
-                            + file + ":" + lineNo + ": \"" + line + "\"");
+                        LOGGER.warn(
+                            "Error while trying to split key and value in configuration file "
+                                + file + ":" + lineNo + ": \"" + line + "\"");
                         continue;
                     }
 
@@ -252,8 +258,9 @@ public class KubernetesUtils {
 
                     // sanity check
                     if (key.length() == 0) {
-                        LOGGER.warn("Error after splitting key in configuration file " + file
-                            + ":" + lineNo + ": \"" + line + "\"");
+                        LOGGER.warn(
+                            "Error after splitting key in configuration file " + file + ":" + lineNo
+                                + ": \"" + line + "\"");
                         continue;
                     }
 
@@ -365,7 +372,8 @@ public class KubernetesUtils {
     }
 
     public static String encodeRpcAddressMap(Map<String, ?> addressMap) {
-        return Joiner.on(CONFIG_LIST_SEPARATOR).withKeyValueSeparator(ADDRESS_SEPARATOR).join(addressMap);
+        return Joiner.on(CONFIG_LIST_SEPARATOR).withKeyValueSeparator(ADDRESS_SEPARATOR)
+            .join(addressMap);
     }
 
     public static Map<String, RpcAddress> decodeRpcAddressMap(String str) {
@@ -388,4 +396,42 @@ public class KubernetesUtils {
     public static String getDriverServiceName(String clusterId, int driverIndex) {
         return clusterId + DRIVER_SERVICE_NAME_SUFFIX + driverIndex;
     }
+
+    /**
+     * This method is an adaptation of Flink's.
+     * org.apache.flink.runtime.clusterframework.BootstrapTools#getTaskManagerShellCommand.
+     */
+    public static String getContainerStartCommand(ClusterJvmOptions jvmOpts, Class<?> mainClass,
+                                                  String logFilename, Configuration configuration) {
+        String confDir = configuration.getString(CONF_DIR);
+
+        final Map<String, String> startCommandValues = new HashMap<>();
+        startCommandValues.put("java", "$JAVA_HOME/bin/java");
+        startCommandValues.put("classpath", "-classpath " + confDir + File.pathSeparator + "$"
+            + K8SConstants.ENV_GEAFLOW_CLASSPATH);
+        startCommandValues.put("class", mainClass.getName());
+
+        ArrayList<String> params = new ArrayList<>();
+        params.add(String.format("-Xms%dm", jvmOpts.getXmsMB()));
+        params.add(String.format("-Xmx%dm", jvmOpts.getMaxHeapMB()));
+        if (jvmOpts.getXmnMB() > 0) {
+            params.add(String.format("-Xmn%dm", jvmOpts.getXmnMB()));
+        }
+        if (jvmOpts.getMaxDirectMB() > 0) {
+            params.add(String.format("-XX:MaxDirectMemorySize=%dm", jvmOpts.getMaxDirectMB()));
+        }
+        startCommandValues.put("jvmmem", StringUtils.join(params, ' '));
+        startCommandValues.put("jvmopts", StringUtils.join(jvmOpts.getExtraOptions(), ' '));
+
+        StringBuilder logging = new StringBuilder();
+        logging.append("-Dlog.file=\"").append(logFilename).append("\"");
+        logging.append(" -Dlog4j.configuration=" + K8SConstants.CONFIG_FILE_LOG4J_NAME);
+
+        startCommandValues.put("logging", logging.toString());
+        startCommandValues.put("redirects", ">> " + logFilename + " 2>&1");
+
+        String commandTemplate = configuration.getString(CONTAINER_START_COMMAND_TEMPLATE);
+        return getContainerStartCommand(commandTemplate, startCommandValues);
+    }
+
 }

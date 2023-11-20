@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.dashboard.agent.util;
+package com.antgroup.geaflow.common.utils;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import java.io.BufferedReader;
@@ -56,7 +56,7 @@ public class ShellUtil {
         }
     }
 
-    private static String getCommandErrorMessage(Process process) {
+    public static String getCommandErrorMessage(Process process) {
         String errorMessage;
         try (InputStream inputStream = process.getErrorStream()) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));

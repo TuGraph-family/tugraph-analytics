@@ -12,29 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.rpc;
+package com.antgroup.geaflow.utils;
 
-import java.io.Closeable;
-import java.io.Serializable;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
-public interface RpcEndpointRef extends Closeable, Serializable {
+public class NetworkUtil {
 
-    /**
-     * Close rpc endpoint.
-     */
-    void closeEndpoint();
-
-    interface RpcCallback<T> {
-
-        /**
-         * The callback for rpc process succeed.
-         */
-        void onSuccess(T value);
-
-        /**
-         * The callback for rpc process failed.
-         */
-        void onFailure(Throwable t);
+    public static void checkServiceAvailable(String hostName, int port, int connectTimeout)
+        throws IOException {
+        try (Socket socket = new Socket()) {
+            InetSocketAddress socketAddress = new InetSocketAddress(hostName, port);
+            socket.connect(socketAddress, connectTimeout);
+        }
     }
 
 }

@@ -14,8 +14,6 @@
 
 package com.antgroup.geaflow.cluster.master;
 
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
-
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
@@ -59,7 +57,7 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
 
     @Override
     public void init(MasterContext context) {
-        super.init(DEFAULT_MASTER_ID, context.getConfiguration().getMasterId(),
+        super.init(context.getId(), context.getConfiguration().getMasterId(),
             context.getConfiguration());
 
         this.clusterManager = context.getClusterManager();
@@ -91,7 +89,7 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
                                  IResourceManager resourceManager) {
         RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
         int port = PortUtil.getPort(rpcPort);
-        this.rpcService = new RpcServiceImpl(port, configuration, serverOptions);
+        this.rpcService = new RpcServiceImpl(port, serverOptions);
         this.rpcService.addEndpoint(new MasterEndpoint(this, clusterManager));
         this.rpcService.addEndpoint(new ResourceManagerEndpoint(resourceManager));
         this.rpcPort = rpcService.startService();

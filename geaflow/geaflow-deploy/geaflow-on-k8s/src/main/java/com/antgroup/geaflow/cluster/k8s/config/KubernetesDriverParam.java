@@ -63,8 +63,8 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFileName = getLogDir() + File.separator + DRIVER_LOG_SUFFIX;
-        return getContainerShellCommand(clusterConfig.getDriverJvmOptions(),
-            KubernetesDriverRunner.class, logFileName);
+        return KubernetesUtils.getContainerStartCommand(clusterConfig.getDriverJvmOptions(),
+            KubernetesDriverRunner.class, logFileName, config);
     }
 
     @Override

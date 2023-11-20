@@ -42,9 +42,9 @@ public class KubernetesComponentFailoverStrategy extends AbstractKubernetesFailo
             if (cause instanceof GeaflowHeartbeatException) {
                 long startTime = System.currentTimeMillis();
                 if (clusterContext.getDriverIds().containsKey(componentId)) {
-                    clusterManager.restartDriver(componentId);
+                    clusterManager.recreateDriver(componentId);
                 } else {
-                    clusterManager.restartContainer(componentId);
+                    clusterManager.recreateContainer(componentId);
                 }
                 LOGGER.info("Completed failover in {} ms", System.currentTimeMillis() - startTime);
             } else {

@@ -65,8 +65,8 @@ public class DriverEndpointRef extends AbstractRpcEndpointRef implements IDriver
     }
 
     @Override
-    public void close() {
+    public void closeEndpoint() {
         this.driverEndpoint.close(Empty.newBuilder().build());
-        super.close();
+        super.closeEndpoint();
     }
 }

@@ -619,10 +619,6 @@ public class DefaultResourceManagerTest {
         }
 
         @Override
-        public void restartContainer(int containerId) {
-        }
-
-        @Override
         public void doFailover(int componentId, Throwable cause) {
         }
 

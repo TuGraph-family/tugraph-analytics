@@ -37,6 +37,7 @@ public abstract class AbstractComponent {
     protected String name;
     protected String masterId;
     protected int rpcPort;
+    protected int supervisorPort;
 
     protected Configuration configuration;
     protected IHAService haService;
@@ -77,6 +78,7 @@ public abstract class AbstractComponent {
         resourceData.setProcessId(ProcessUtil.getProcessId());
         resourceData.setHost(ProcessUtil.getHostIp());
         resourceData.setRpcPort(rpcPort);
+        resourceData.setSupervisorPort(supervisorPort);
         ShuffleManager shuffleManager = ShuffleManager.getInstance();
         if (shuffleManager != null) {
             resourceData.setShufflePort(shuffleManager.getShufflePort());
