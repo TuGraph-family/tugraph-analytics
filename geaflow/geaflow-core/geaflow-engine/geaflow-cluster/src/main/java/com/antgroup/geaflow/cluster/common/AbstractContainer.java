@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.common;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_RPC_PORT;
+
 import com.antgroup.geaflow.cluster.exception.ExceptionClient;
 import com.antgroup.geaflow.cluster.exception.ExceptionCollectService;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatClient;
@@ -30,6 +32,7 @@ public abstract class AbstractContainer extends AbstractComponent {
     protected ExceptionCollectService exceptionCollectService;
     protected MetricServer metricServer;
     protected int metricPort;
+    protected int supervisorPort;
 
     public AbstractContainer(int rpcPort) {
         super(rpcPort);
@@ -46,6 +49,7 @@ public abstract class AbstractContainer extends AbstractComponent {
         this.exceptionCollectService = new ExceptionCollectService();
         this.metricServer = new MetricServer(configuration);
         this.metricPort = metricServer.start();
+        this.supervisorPort = configuration.getInteger(SUPERVISOR_RPC_PORT);
     }
 
     protected void registerToMaster() {

@@ -55,23 +55,25 @@ public class LocalClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void restartContainer(int containerId) {
-        // do nothing.
-    }
-
-    @Override
-    public void doStartContainer(int containerId, boolean isRecover) {
+    public void createNewContainer(int containerId, boolean isRecover) {
         ContainerContext containerContext = new LocalContainerContext(containerId,
             clusterConfig.getConfig());
         LocalClient.createContainer(clusterConfig, containerContext);
     }
 
     @Override
-    public void doStartDriver(int driverId, int driverIndex) {
-        DriverContext driverContext = new LocalDriverContext(driverId,
-            driverIndex, clusterConfig.getConfig());
+    public void createNewDriver(int driverId, int driverIndex) {
+        DriverContext driverContext = new LocalDriverContext(driverId, driverIndex, clusterConfig.getConfig());
         LocalClient.createDriver(clusterConfig, driverContext);
         LOGGER.info("call driver start id:{} index:{}", driverId, driverIndex);
+    }
+
+    @Override
+    public void recreateContainer(int containerId) {
+    }
+
+    @Override
+    public void recreateDriver(int id) {
     }
 
     @Override

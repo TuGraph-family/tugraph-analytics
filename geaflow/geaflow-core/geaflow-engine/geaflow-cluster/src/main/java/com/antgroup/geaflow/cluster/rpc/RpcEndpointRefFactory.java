@@ -20,6 +20,7 @@ import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.PipelineMasterEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.impl.SupervisorEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.Serializable;
 import java.util.Map;
@@ -27,7 +28,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RpcEndpointRefFactory implements Serializable {
-
     private final Map<EndpointRefID, RpcEndpointRef> endpointRefMap;
     private final Configuration configuration;
 
@@ -56,7 +56,7 @@ public class RpcEndpointRefFactory implements Serializable {
                 .computeIfAbsent(refID,
                     key -> new MasterEndpointRef(host, port, configuration));
         } catch (Throwable t) {
-            endpointRefMap.remove(refID);
+            invalidateRef(refID);
             throw new RuntimeException("connect master error, host " + host + " port " + port, t);
         }
     }
@@ -68,7 +68,7 @@ public class RpcEndpointRefFactory implements Serializable {
                 .computeIfAbsent(refID,
                     key -> new ResourceManagerEndpointRef(host, port, configuration));
         } catch (Throwable t) {
-            endpointRefMap.remove(refID);
+            invalidateRef(refID);
             throw new RuntimeException("connect rm error, host " + host + " port " + port, t);
         }
     }
@@ -80,7 +80,7 @@ public class RpcEndpointRefFactory implements Serializable {
                 .computeIfAbsent(refID,
                     key -> new DriverEndpointRef(host, port, configuration));
         } catch (Throwable t) {
-            endpointRefMap.remove(refID);
+            invalidateRef(refID);
             throw new RuntimeException("connect driver error, host " + host + " port " + port, t);
         }
     }
@@ -92,7 +92,7 @@ public class RpcEndpointRefFactory implements Serializable {
                 .computeIfAbsent(refID,
                     key -> new PipelineMasterEndpointRef(host, port, configuration));
         } catch (Throwable t) {
-            endpointRefMap.remove(refID);
+            invalidateRef(refID);
             throw new RuntimeException("connect pipeline master error, host " + host + " port " + port, t);
         }
     }
@@ -104,7 +104,18 @@ public class RpcEndpointRefFactory implements Serializable {
                 .computeIfAbsent(refID,
                     key -> new ContainerEndpointRef(host, port, configuration));
         } catch (Throwable t) {
-            endpointRefMap.remove(refID);
+            invalidateRef(refID);
+            throw new RuntimeException("connect container error, host " + host + " port " + port, t);
+        }
+    }
+
+    public SupervisorEndpointRef connectSupervisor(String host, int port) {
+        EndpointRefID refID = new EndpointRefID(host, port, EndpointType.SUPERVISOR);
+        try {
+            return (SupervisorEndpointRef) endpointRefMap
+                .computeIfAbsent(refID, key -> new SupervisorEndpointRef(host, port, configuration));
+        } catch (Throwable t) {
+            invalidateRef(refID);
             throw new RuntimeException("connect container error, host " + host + " port " + port, t);
         }
     }
@@ -115,17 +126,20 @@ public class RpcEndpointRefFactory implements Serializable {
             return (MetricEndpointRef) endpointRefMap
                 .computeIfAbsent(refID, key -> new MetricEndpointRef(host, port, configuration));
         } catch (Throwable t) {
-            endpointRefMap.remove(refID);
+            invalidateRef(refID);
             throw new RuntimeException("connect container error, host " + host + " port " + port, t);
         }
     }
 
     public void invalidateEndpointCache(String host, int port, EndpointType endpointType) {
-        EndpointRefID refID = new EndpointRefID(host, port, endpointType);
-        endpointRefMap.remove(refID);
+        invalidateRef(new EndpointRefID(host, port, endpointType));
     }
 
-    enum EndpointType {
+    public void invalidateRef(EndpointRefID refId) {
+        endpointRefMap.remove(refId);
+    }
+
+    public enum EndpointType {
         /** Master endpoint. */
         MASTER,
         /** ResourceManager endpoint. */
@@ -136,6 +150,8 @@ public class RpcEndpointRefFactory implements Serializable {
         PIPELINE_MANAGER,
         /** Container endpoint. */
         CONTAINER,
+        /** Worker endpoint. */
+        SUPERVISOR,
         /** Metric query endpoint. */
         METRIC
     }

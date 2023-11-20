@@ -14,8 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.client;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_WAIT_SECONDS;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.PORT_SEPARATOR;
-import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.EXIT_WAIT_TIME;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DRIVER_EXPOSED_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.MASTER_EXPOSED_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.ServiceExposedType.CLUSTER_IP;
@@ -92,7 +92,7 @@ public class KubernetesClusterClient extends AbstractClusterClient {
         } catch (Throwable e) {
             LOGGER.error("Deploy failed.", e);
             callback.onFailure(e);
-            SleepUtils.sleepSecond(EXIT_WAIT_TIME);
+            SleepUtils.sleepSecond(EXIT_WAIT_SECONDS);
             kubernetesClient.destroyCluster(clusterId);
             throw new GeaflowRuntimeException(e);
         }

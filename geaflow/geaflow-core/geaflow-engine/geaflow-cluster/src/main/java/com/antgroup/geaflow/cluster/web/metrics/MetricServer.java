@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.cluster.web.metrics;
 
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.METRIC_SERVICE_PORT;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RUN_LOCAL_MODE;
 
 import com.antgroup.geaflow.cluster.rpc.RpcService;
 import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpoint;
@@ -30,25 +31,34 @@ import org.slf4j.LoggerFactory;
 public class MetricServer implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricServer.class);
 
-    private final RpcService rpcService;
+    private final int port;
+    private RpcService rpcService;
 
     public MetricServer(Configuration configuration) {
-        int port = configuration.getInteger(METRIC_SERVICE_PORT);
-        RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
-        RpcServiceImpl rpcService = new RpcServiceImpl(PortUtil.getPort(port), configuration, serverOptions);
-        rpcService.addEndpoint(new MetricEndpoint(configuration));
-        this.rpcService = rpcService;
+        this.port = configuration.getInteger(METRIC_SERVICE_PORT);
+        if (!configuration.getBoolean(RUN_LOCAL_MODE)) {
+            RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+            RpcServiceImpl rpcService = new RpcServiceImpl(PortUtil.getPort(port), serverOptions);
+            rpcService.addEndpoint(new MetricEndpoint(configuration));
+            this.rpcService = rpcService;
+        }
     }
 
     public int start() {
-        int metricPort = rpcService.startService();
-        LOGGER.info("started metric service on port:{}", metricPort);
-        return metricPort;
+        if (rpcService != null) {
+            int metricPort = rpcService.startService();
+            LOGGER.info("started metric service on port:{}", metricPort);
+            return metricPort;
+        } else {
+            return port;
+        }
     }
 
     public void stop() {
-        LOGGER.info("stopping metric query service");
-        rpcService.stopService();
+        if (rpcService != null) {
+            LOGGER.info("stopping metric query service");
+            rpcService.stopService();
+        }
     }
 
 }

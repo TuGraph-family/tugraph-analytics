@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.heartbeat;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_INITIAL_DELAY_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_REPORT_EXPIRED_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_REPORT_INTERVAL_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_TIMEOUT_MS;
@@ -48,8 +49,7 @@ public class HeartbeatManager implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatManager.class);
 
-    private final long heartbeatCheckMs;
-    private final long heartbeatReportMs;
+    private final long heartbeatTimeoutMs;
     private final long heartbeatReportExpiredMs;
     private final Map<Integer, Heartbeat> senderMap;
     private final IClusterManager clusterManager;
@@ -58,47 +58,62 @@ public class HeartbeatManager implements Serializable {
     private final ScheduledFuture<?> reportFuture;
     private final ScheduledExecutorService checkTimeoutService;
     private final ScheduledExecutorService heartbeatReportService;
+    private final GeaflowHeartbeatException timeoutException;
 
     public HeartbeatManager(Configuration config, IClusterManager clusterManager) {
         this.senderMap = new ConcurrentHashMap<>();
-        this.heartbeatCheckMs = config.getInteger(HEARTBEAT_TIMEOUT_MS);
-        this.heartbeatReportMs = config.getInteger(HEARTBEAT_REPORT_INTERVAL_MS);
-        int defaultReportExpiredMs = (int) ((heartbeatCheckMs + heartbeatReportMs) * 1.2);
+        this.heartbeatTimeoutMs = config.getInteger(HEARTBEAT_TIMEOUT_MS);
+        int heartbeatReportMs = config.getInteger(HEARTBEAT_REPORT_INTERVAL_MS);
+        int defaultReportExpiredMs = (int) ((heartbeatTimeoutMs + heartbeatReportMs) * 1.2);
         this.heartbeatReportExpiredMs = config.getInteger(HEARTBEAT_REPORT_EXPIRED_MS, defaultReportExpiredMs);
+
         this.checkTimeoutService = new ScheduledThreadPoolExecutor(1,
-            ThreadUtil.namedThreadFactory(true, "heartbeat-timeout-manager"));
+            ThreadUtil.namedThreadFactory(true, "heartbeat-check"));
+        int initDelayMs = config.getInteger(HEARTBEAT_INITIAL_DELAY_MS);
         this.timeoutFuture = checkTimeoutService
-            .scheduleAtFixedRate(this::checkHeartBeat, heartbeatCheckMs, heartbeatCheckMs,
+            .scheduleAtFixedRate(this::checkHeartBeat, initDelayMs, heartbeatTimeoutMs,
                 TimeUnit.MILLISECONDS);
+
         this.heartbeatReportService = new ScheduledThreadPoolExecutor(1,
-            ThreadUtil.namedThreadFactory(true, "heartbeat-report-manager"));
+            ThreadUtil.namedThreadFactory(true, "heartbeat-report"));
         this.reportFuture = heartbeatReportService
             .scheduleAtFixedRate(this::reportHeartbeat, heartbeatReportMs, heartbeatReportMs,
                 TimeUnit.MILLISECONDS);
+
         this.clusterManager = clusterManager;
+        this.timeoutException = new GeaflowHeartbeatException();
     }
 
     public HeartbeatResponse receivedHeartbeat(Heartbeat heartbeat) {
         senderMap.put(heartbeat.getContainerId(), heartbeat);
-        boolean registered = isComponentRegistered(heartbeat.getContainerId());
+        boolean registered = isRegistered(heartbeat.getContainerId());
         return HeartbeatResponse.newBuilder().setSuccess(true).setRegistered(registered).build();
     }
 
     public void checkHeartBeat() {
-        long checkTime = System.currentTimeMillis();
-        AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
-        checkTimeout(cm.getContainerIds(), checkTime);
-        checkTimeout(cm.getDriverIds(), checkTime);
+        try {
+            long checkTime = System.currentTimeMillis();
+            AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
+            checkTimeout(cm.getContainerIds(), checkTime);
+            checkTimeout(cm.getDriverIds(), checkTime);
+        } catch (Throwable e) {
+            LOGGER.warn("Catch unexpect error", e);
+        }
     }
 
     private void checkTimeout(Map<Integer, String> map, long checkTime) {
-        GeaflowHeartbeatException exception = new GeaflowHeartbeatException();
         for (Map.Entry<Integer, String> entry : map.entrySet()) {
             int componentId = entry.getKey();
             Heartbeat heartbeat = senderMap.get(componentId);
-            if (heartbeat == null || checkTime > heartbeat.getTimestamp() + heartbeatCheckMs) {
-                LOGGER.error("{} heartbeat missing.", entry.getValue());
-                clusterManager.doFailover(componentId, exception);
+            if (heartbeat == null) {
+                if (isRegistered(componentId)) {
+                    LOGGER.warn("{} is registered but heartbeat not received", entry.getValue());
+                } else {
+                    LOGGER.warn("{} is not registered", entry.getValue());
+                }
+            } else if (checkTime > heartbeat.getTimestamp() + heartbeatTimeoutMs) {
+                LOGGER.error("{} heartbeat missing", entry.getValue());
+                clusterManager.doFailover(componentId, timeoutException);
             }
         }
     }
@@ -111,9 +126,10 @@ public class HeartbeatManager implements Serializable {
         }
     }
 
-    protected boolean isComponentRegistered(int componentId) {
+    protected boolean isRegistered(int componentId) {
         AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
-        return cm.getContainerInfos().containsKey(componentId) || cm.getDriverInfos().containsKey(componentId);
+        return cm.getContainerInfos().containsKey(componentId) || cm.getDriverInfos()
+            .containsKey(componentId);
     }
 
     protected HeartbeatInfo buildHeartbeatInfo() {
@@ -152,7 +168,8 @@ public class HeartbeatManager implements Serializable {
     }
 
     public Set<Integer> getActiveContainerIds() {
-        Map<Integer, String> containerIdMap = ((AbstractClusterManager) clusterManager).getContainerIds();
+        Map<Integer, String> containerIdMap =
+            ((AbstractClusterManager) clusterManager).getContainerIds();
         return getActiveComponentIds(containerIdMap);
     }
 
@@ -167,7 +184,7 @@ public class HeartbeatManager implements Serializable {
         for (Map.Entry<Integer, String> entry : map.entrySet()) {
             int componentId = entry.getKey();
             Heartbeat heartbeat = senderMap.get(componentId);
-            if (heartbeat != null && checkTime <= heartbeat.getTimestamp() + heartbeatCheckMs) {
+            if (heartbeat != null && checkTime <= heartbeat.getTimestamp() + heartbeatTimeoutMs) {
                 activeComponentIds.add(componentId);
             }
         }

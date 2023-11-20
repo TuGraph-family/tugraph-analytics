@@ -72,7 +72,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
     @Override
     protected void startRpcService() {
         RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
-        this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), configuration, serverOptions);
+        this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), serverOptions);
         this.rpcService.addEndpoint(new ContainerEndpoint(this));
         this.rpcPort = rpcService.startService();
     }

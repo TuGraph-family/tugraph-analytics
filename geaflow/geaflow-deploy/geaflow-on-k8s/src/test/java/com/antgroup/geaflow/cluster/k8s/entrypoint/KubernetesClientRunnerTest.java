@@ -17,14 +17,13 @@ package com.antgroup.geaflow.cluster.k8s.entrypoint;
 import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
-import java.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 public class KubernetesClientRunnerTest extends KubernetesTestBase {
 
     @Test
     public void testClientRunner() {
-        configuration.put(ExecutionConfigKeys.REGISTER_TIMEOUT, "2");
+        configuration.put(ExecutionConfigKeys.FO_TIMEOUT_MS, "2");
         configuration.put(KubernetesConfigKeys.USER_MAIN_CLASS,
             KubernetesMockRunner.class.getCanonicalName());
         String clusterArgs = JSON.toJSONString(configuration.getConfigMap());

@@ -92,7 +92,7 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
     @Override
     protected void startRpcService() {
         RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
-        this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), configuration, serverOptions);
+        this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), serverOptions);
         this.rpcService.addEndpoint(new DriverEndpoint(this));
         this.rpcService.addEndpoint(new PipelineMasterEndpoint(this));
         this.rpcPort = rpcService.startService();

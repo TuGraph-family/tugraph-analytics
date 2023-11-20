@@ -32,9 +32,12 @@ import com.antgroup.geaflow.common.utils.FutureUtil;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -76,6 +79,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
                 driverFutureMap.put(driverId, new CompletableFuture<>());
             }
         }
+        RpcClient.init(clusterContext.getConfig());
     }
 
     @Override
@@ -87,11 +91,11 @@ public abstract class AbstractClusterManager implements IClusterManager {
         doCheckpoint();
     }
 
-    private void startContainers(int containerNum) {
+    protected void startContainers(int containerNum) {
         Map<Integer, String> containerIds = new HashMap<>();
         for (int i = 0; i < containerNum; i++) {
             int containerId = generateNextComponentId();
-            doStartContainer(containerId, false);
+            createNewContainer(containerId, false);
             containerIds.put(containerId, ClusterConstants.getContainerName(containerId));
         }
         clusterContext.getContainerIds().putAll(containerIds);
@@ -105,7 +109,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
             for (int driverIndex = 0; driverIndex < driverNum; driverIndex++) {
                 int driverId = generateNextComponentId();
                 driverFutureMap.put(driverId, new CompletableFuture<>());
-                doStartDriver(driverId, driverIndex);
+                createNewDriver(driverId, driverIndex);
                 driverIds.put(driverId, ClusterConstants.getDriverName(driverId));
             }
             clusterContext.getDriverIds().putAll(driverIds);
@@ -119,6 +123,74 @@ public abstract class AbstractClusterManager implements IClusterManager {
                 driverInfo.getRpcPort())));
         return driverAddresses;
     }
+
+    /**
+     * Restart all driver processes and rebuild pod if needed.
+     */
+    public void restartAllDrivers() {
+        Map<Integer, String> driverIds = clusterContext.getDriverIds();
+        LOGGER.info("Restart all drivers: {}", driverIds);
+        restartSupervisorWorkerProcess(driverIds, true);
+    }
+
+    /**
+     * Restart all container processes and rebuild pod if needed.
+     */
+    public void restartAllContainers() {
+        Map<Integer, String> containerIds = clusterContext.getContainerIds();
+        LOGGER.info("Restart all containers: {}", containerIds);
+        restartSupervisorWorkerProcess(containerIds, false);
+    }
+
+    private void restartSupervisorWorkerProcess(Map<Integer, String> containerIds, boolean isDriver) {
+        List<Future> futures = new ArrayList<>();
+        for (Map.Entry<Integer, String> entry : containerIds.entrySet()) {
+            futures.add(RpcClient.getInstance().restartSupervisorWorkerProcess(entry.getValue()));
+        }
+        Iterator<Entry<Integer, String>> iterator = containerIds.entrySet().iterator();
+        List<Integer> lostWorkers = new ArrayList<>();
+        for (Future future : futures) {
+            Entry<Integer, String> entry = iterator.next();
+            try {
+                future.get();
+            } catch (Throwable e) {
+                LOGGER.warn("catch exception from {}: {} {}", entry.getValue(),
+                    e.getClass().getCanonicalName(), e.getMessage());
+                lostWorkers.add(entry.getKey());
+            }
+        }
+        if (isDriver) {
+            LOGGER.info("Restart lost drivers: {}", lostWorkers);
+            for (Integer id : lostWorkers) {
+                recreateDriver(id);
+            }
+        } else {
+            LOGGER.info("Restart lost containers: {}", lostWorkers);
+            for (Integer id : lostWorkers) {
+                recreateContainer(id);
+            }
+        }
+    }
+
+    /**
+     * Create a new driver component.
+     */
+    protected abstract void createNewDriver(int driverId, int index);
+
+    /**
+     * Create a new container component.
+     */
+    protected abstract void createNewContainer(int containerId, boolean isRecover);
+
+    /**
+     * Recreate a driver component.
+     */
+    public abstract void recreateDriver(int driverId);
+
+    /**
+     * Recreate a container component.
+     */
+    public abstract void recreateContainer(int containerId);
 
     @Override
     public void doFailover(int componentId, Throwable cause) {
@@ -207,10 +279,6 @@ public abstract class AbstractClusterManager implements IClusterManager {
     }
 
     protected abstract IFailoverStrategy buildFailoverStrategy();
-
-    protected abstract void doStartContainer(int containerId, boolean isRecover);
-
-    protected abstract void doStartDriver(int driverId, int driverIndex);
 
     public ClusterContext getClusterContext() {
         return clusterContext;

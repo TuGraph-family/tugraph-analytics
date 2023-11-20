@@ -14,27 +14,11 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
-import java.io.Closeable;
-import java.io.Serializable;
+import com.google.protobuf.Empty;
+import java.util.concurrent.Future;
 
-public interface RpcEndpointRef extends Closeable, Serializable {
+public interface ISupervisorEndpointRef extends RpcEndpointRef {
 
-    /**
-     * Close rpc endpoint.
-     */
-    void closeEndpoint();
-
-    interface RpcCallback<T> {
-
-        /**
-         * The callback for rpc process succeed.
-         */
-        void onSuccess(T value);
-
-        /**
-         * The callback for rpc process failed.
-         */
-        void onFailure(Throwable t);
-    }
+    Future<Empty> restart(int pid, RpcCallback<Empty> callback);
 
 }

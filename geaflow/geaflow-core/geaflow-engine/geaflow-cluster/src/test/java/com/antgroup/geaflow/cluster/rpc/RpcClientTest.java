@@ -42,7 +42,6 @@ public class RpcClientTest {
         Assert.assertNotNull(resourceData);
 
         rpcClient.invalidateEndpointCache("1", EndpointType.MASTER);
-        rpcClient.invalidateResourceData("1");
         resourceData = rpcClient.getResourceData("1");
         Assert.assertNull(resourceData);
     }
