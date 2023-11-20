@@ -355,6 +355,7 @@ public class KubernetesResourceBuilder {
 
     public static Deployment createDeployment(String clusterId,
                                               String rcName,
+                                              String id,
                                               Container container,
                                               ConfigMap configMap,
                                               KubernetesParam param,
@@ -363,7 +364,9 @@ public class KubernetesResourceBuilder {
         String serviceAccount = param.getServiceAccount();
 
         Map<String, String> labels = param.getPodLabels(clusterId);
+        labels.put(LABEL_COMPONENT_ID_KEY, id);
         Map<String, String> annotations = getAnnotations(param);
+
         List<KeyToPath> configMapItems = configMap.getData().keySet().stream()
             .map(e -> new KeyToPath(e, null, e)).collect(Collectors.toList());
 

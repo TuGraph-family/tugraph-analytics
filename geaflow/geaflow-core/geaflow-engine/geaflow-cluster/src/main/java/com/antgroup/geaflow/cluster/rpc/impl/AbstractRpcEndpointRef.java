@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.Endpoint;
@@ -38,7 +39,14 @@ public abstract class AbstractRpcEndpointRef implements RpcEndpointRef {
 
     protected abstract void getRpcEndpoint();
 
-    protected abstract RpcClientOptions getClientOptions();
+    protected RpcClientOptions getClientOptions() {
+        return DefaultClientOption.build();
+    }
+
+    @Override
+    public void closeEndpoint() {
+        close();
+    }
 
     @Override
     public void close() {

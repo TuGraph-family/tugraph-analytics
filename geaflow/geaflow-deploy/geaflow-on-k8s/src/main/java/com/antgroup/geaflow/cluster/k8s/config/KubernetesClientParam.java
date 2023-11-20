@@ -57,14 +57,14 @@ public class KubernetesClientParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFilename = getLogDir() + File.separator + CLIENT_LOG_SUFFIX;
-        return getContainerShellCommand(clusterConfig.getClientJvmOptions(),
-            KubernetesClientRunner.class, logFilename);
+        return KubernetesUtils.getContainerStartCommand(clusterConfig.getClientJvmOptions(),
+            KubernetesClientRunner.class, logFilename, config);
     }
 
     @Override
     public Map<String, String> getAdditionEnvs() {
-        return KubernetesUtils
-            .getVariablesWithPrefix(CONTAINERIZED_CLIENT_ENV_PREFIX, config.getConfigMap());
+        return KubernetesUtils.getVariablesWithPrefix(CONTAINERIZED_CLIENT_ENV_PREFIX,
+            config.getConfigMap());
     }
 
     @Override

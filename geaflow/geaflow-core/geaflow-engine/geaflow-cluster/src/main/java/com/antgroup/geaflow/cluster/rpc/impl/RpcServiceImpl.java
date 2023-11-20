@@ -14,9 +14,7 @@
 
 package com.antgroup.geaflow.cluster.rpc.impl;
 
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory;
 import com.antgroup.geaflow.cluster.rpc.RpcService;
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
@@ -33,10 +31,9 @@ public class RpcServiceImpl implements RpcService, Serializable {
 
     private final RpcServer server;
 
-    public RpcServiceImpl(int port, Configuration config, RpcServerOptions options) {
+    public RpcServiceImpl(int port, RpcServerOptions options) {
         this.port = port;
         this.server = new RpcServer(port, options);
-        RpcEndpointRefFactory.getInstance(config);
     }
 
     public void addEndpoint(Object rpcEndpoint) {
@@ -47,7 +44,7 @@ public class RpcServiceImpl implements RpcService, Serializable {
     public int startService() {
         try {
             this.server.start();
-            LOGGER.info("Brpc Server started, listening on: {}", port);
+            LOGGER.info("Brpc Server started: {}", port);
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {

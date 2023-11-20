@@ -165,7 +165,7 @@ public class AsyncRpcTest {
         protected RpcServiceImpl rpcService;
 
         public void startServer() {
-            this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), configuration,
+            this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort),
                 ConfigurableServerOption.build(configuration));
             this.rpcService.addEndpoint(new MockContainerEndpoint());
             this.rpcPort = rpcService.startService();

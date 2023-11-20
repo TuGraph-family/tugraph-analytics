@@ -60,14 +60,6 @@ public class ExecutionConfigKeys implements Serializable {
     // rpc
     // ------------------------------------------------------------------------
 
-    public static final ConfigKey MASTER_RPC_HOST = ConfigKeys.key("geaflow.master.rpc.host")
-        .noDefaultValue()
-        .description("master rpc host address");
-
-    public static final ConfigKey MASTER_RPC_PORT = ConfigKeys.key("geaflow.master.rpc.port")
-        .defaultValue(6123)
-        .description("master rpc port");
-
     public static final ConfigKey MASTER_HTTP_PORT = ConfigKeys.key("geaflow.master.http.port")
         .defaultValue(8090)
         .description("master http port");
@@ -79,6 +71,10 @@ public class ExecutionConfigKeys implements Serializable {
     public static final ConfigKey DRIVER_RPC_PORT = ConfigKeys.key("geaflow.driver.rpc.port")
         .defaultValue(6123)
         .description("driver rpc port");
+
+    public static final ConfigKey SUPERVISOR_RPC_PORT = ConfigKeys.key("geaflow.supervisor.rpc.port")
+        .defaultValue(6121)
+        .description("supervisor rpc port");
 
     public static final ConfigKey RPC_ASYNC_THREADS = ConfigKeys
         .key("geaflow.rpc.async.thread.num")
@@ -157,7 +153,7 @@ public class ExecutionConfigKeys implements Serializable {
         .description("client container disk");
 
     public static final ConfigKey CLIENT_JVM_OPTIONS = ConfigKeys.key("geaflow.client.jvm.options")
-        .defaultValue("-Xmx1024m,-Xms1024m,-Xmn256m,-Xss256k,-XX:MaxDirectMemorySize=512m")
+        .defaultValue("-Xmx640m,-Xms640m,-Xmn256m,-Xss256k")
         .description("client jvm options");
 
     public static final ConfigKey MASTER_MEMORY_MB = ConfigKeys.key("geaflow.master.memory.mb")
@@ -229,10 +225,9 @@ public class ExecutionConfigKeys implements Serializable {
         .noDefaultValue()
         .description("container max heap size in mb");
 
-    public static final ConfigKey REGISTER_TIMEOUT = ConfigKeys
-        .key("geaflow.register.timeout.seconds")
-        .defaultValue(120)
-        .description("driver/container register timeout");
+    public static final ConfigKey SUPERVISOR_JVM_OPTIONS = ConfigKeys.key("geaflow.supervisor.jvm.options")
+        .defaultValue("-Xmx128m,-Xms64m,-Xmn32m")
+        .description("supervisor jvm options");
 
     public static final ConfigKey FO_ENABLE = ConfigKeys
         .key("geaflow.fo.enable")
@@ -245,7 +240,7 @@ public class ExecutionConfigKeys implements Serializable {
         .description("whether to enable fo");
 
     public static final ConfigKey FO_TIMEOUT_MS = ConfigKeys.key("geaflow.fo.timeout.ms")
-        .defaultValue(600000)
+        .defaultValue(300000)
         .description("fo timeout in ms");
 
     public static final ConfigKey FO_MAX_RESTARTS = ConfigKeys

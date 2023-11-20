@@ -78,9 +78,9 @@ public class ContainerEndpointRef extends AbstractRpcEndpointRef implements ICon
     }
 
     @Override
-    public void close() {
+    public void closeEndpoint() {
         this.containerEndpoint.close(Empty.newBuilder().build());
-        super.close();
+        super.closeEndpoint();
     }
 
     protected Request buildRequest(IEvent request) {

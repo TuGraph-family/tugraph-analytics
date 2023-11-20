@@ -19,15 +19,15 @@ import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.store.api.key.IKVStore;
+import com.antgroup.geaflow.utils.NetworkUtil;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractHAService implements IHAService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractHAService.class);
     protected static final String TABLE_PREFIX = "WORKERS_";
 
@@ -53,12 +53,17 @@ public abstract class AbstractHAService implements IHAService {
 
     @Override
     public ResourceData resolveResource(String resourceId) {
-        return resourceDataCache.computeIfAbsent(resourceId, this::loadDataFromStore);
+        return resourceDataCache.computeIfAbsent(resourceId, key -> loadDataFromStore(key, true));
     }
 
     @Override
-    public void invalidateResource(String resourceId) {
-        resourceDataCache.remove(resourceId);
+    public ResourceData loadResource(String resourceId) {
+        return resourceDataCache.computeIfAbsent(resourceId, key -> loadDataFromStore(key, false));
+    }
+
+    @Override
+    public ResourceData invalidateResource(String resourceId) {
+        return resourceDataCache.remove(resourceId);
     }
 
     @Override
@@ -72,12 +77,12 @@ public abstract class AbstractHAService implements IHAService {
         return kvStore.get(resourceId);
     }
 
-    private ResourceData loadDataFromStore(String resourceId) {
+    private ResourceData loadDataFromStore(String resourceId, boolean resolve) {
         long currentTime = System.currentTimeMillis();
         long startTime = currentTime;
         long checkTime = currentTime;
         Throwable throwable = null;
-        ResourceData resourceData = null;
+        ResourceData resourceData;
         do {
             currentTime = System.currentTimeMillis();
             if (currentTime - checkTime > 2000) {
@@ -95,7 +100,10 @@ public abstract class AbstractHAService implements IHAService {
             resourceData = getResourceData(resourceId);
             if (resourceData != null) {
                 try {
-                    checkServiceAvailable(resourceData.getHost(), resourceData.getRpcPort());
+                    if (resolve) {
+                        NetworkUtil.checkServiceAvailable(resourceData.getHost(),
+                            resourceData.getRpcPort(), connectTimeout);
+                    }
                     break;
                 } catch (IOException ex) {
                     throwable = ex;
@@ -105,13 +113,5 @@ public abstract class AbstractHAService implements IHAService {
         return resourceData;
     }
 
-    private void checkServiceAvailable(String hostName, int port) throws IOException {
-        try (Socket socket = new Socket()) {
-            InetSocketAddress socketAddress = new InetSocketAddress(hostName, port);
-            socket.connect(socketAddress, connectTimeout);
-        } catch (IOException ex) {
-            throw ex;
-        }
-    }
 
 }

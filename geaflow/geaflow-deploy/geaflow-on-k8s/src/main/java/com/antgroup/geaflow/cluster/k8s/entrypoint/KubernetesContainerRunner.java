@@ -17,7 +17,7 @@ package com.antgroup.geaflow.cluster.k8s.entrypoint;
 import com.antgroup.geaflow.cluster.container.Container;
 import com.antgroup.geaflow.cluster.container.ContainerContext;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
-import com.antgroup.geaflow.cluster.k8s.config.KubernetesWorkerParam;
+import com.antgroup.geaflow.cluster.k8s.config.KubernetesContainerParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.util.Map;
@@ -43,7 +43,7 @@ public class KubernetesContainerRunner {
 
     public void run() {
         Configuration config = containerContext.getConfig();
-        KubernetesWorkerParam workerParam = new KubernetesWorkerParam(config);
+        KubernetesContainerParam workerParam = new KubernetesContainerParam(config);
         container = new Container(workerParam.getRpcPort());
         containerContext.load();
         container.init(containerContext);

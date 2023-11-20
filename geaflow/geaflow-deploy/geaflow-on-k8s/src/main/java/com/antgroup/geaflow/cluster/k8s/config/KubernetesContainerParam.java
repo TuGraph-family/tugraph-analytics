@@ -24,21 +24,21 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KubernetesWorkerParam extends AbstractKubernetesParam {
+public class KubernetesContainerParam extends AbstractKubernetesParam {
 
-    public static final String WORKER_USER_ANNOTATIONS = "kubernetes.worker.user.annotations";
+    public static final String CONTAINER_USER_ANNOTATIONS = "kubernetes.container.user.annotations";
 
-    public static final String WORKER_NODE_SELECTOR = "kubernetes.worker.node-selector";
+    public static final String CONTAINER_NODE_SELECTOR = "kubernetes.container.node-selector";
 
-    public static final String WORKER_ENV_PREFIX = "kubernetes.worker.env.";
+    public static final String CONTAINER_ENV_PREFIX = "kubernetes.container.env.";
 
-    public static final String WORKER_LOG_SUFFIX = "container.log";
+    public static final String CONTAINER_LOG_SUFFIX = "container.log";
 
-    public KubernetesWorkerParam(Configuration config) {
+    public KubernetesContainerParam(Configuration config) {
         super(config);
     }
 
-    public KubernetesWorkerParam(ClusterConfig config) {
+    public KubernetesContainerParam(ClusterConfig config) {
         super(config);
     }
 
@@ -59,15 +59,15 @@ public class KubernetesWorkerParam extends AbstractKubernetesParam {
 
     @Override
     public String getContainerShellCommand() {
-        String logFilename = getLogDir() + File.separator + WORKER_LOG_SUFFIX;
-        return getContainerShellCommand(clusterConfig.getContainerJvmOptions(),
-            KubernetesContainerRunner.class, logFilename);
+        String logFilename = getLogDir() + File.separator + CONTAINER_LOG_SUFFIX;
+        return KubernetesUtils.getContainerStartCommand(clusterConfig.getContainerJvmOptions(),
+            KubernetesContainerRunner.class, logFilename, config);
     }
 
     @Override
     public Map<String, String> getAdditionEnvs() {
         return KubernetesUtils
-            .getVariablesWithPrefix(WORKER_ENV_PREFIX, config.getConfigMap());
+            .getVariablesWithPrefix(CONTAINER_ENV_PREFIX, config.getConfigMap());
     }
 
     @Override
@@ -91,11 +91,11 @@ public class KubernetesWorkerParam extends AbstractKubernetesParam {
 
     @Override
     public Map<String, String> getAnnotations() {
-        return KubernetesUtils.getPairsConf(config, WORKER_USER_ANNOTATIONS);
+        return KubernetesUtils.getPairsConf(config, CONTAINER_USER_ANNOTATIONS);
     }
 
     @Override
     public Map<String, String> getNodeSelector() {
-        return KubernetesUtils.getPairsConf(config, WORKER_NODE_SELECTOR);
+        return KubernetesUtils.getPairsConf(config, CONTAINER_NODE_SELECTOR);
     }
 }
