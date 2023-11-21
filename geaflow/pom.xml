@@ -78,6 +78,7 @@
         <curator.version>3.2.1</curator.version>
         <brpc.version>3.0.5</brpc.version>
         <jctools.version>2.1.2</jctools.version>
+        <prometheus.version>0.16.0</prometheus.version>
     </properties>
 
     <modules>
@@ -299,6 +300,12 @@
                 <version>${metrics.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_pushgateway</artifactId>
+                <version>${prometheus.version}</version>
+            </dependency>
+
             <!-- redis -->
             <dependency>
                 <groupId>redis.clients</groupId>
@@ -473,6 +480,11 @@
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-metrics-influxdb</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-metrics-prometheus</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
