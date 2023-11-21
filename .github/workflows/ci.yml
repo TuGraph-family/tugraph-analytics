@@ -37,16 +37,22 @@ jobs:
 
       - name: Setup Rust
         run: |
-          rustup toolchain install nightly 
+          rustup toolchain install nightly
           rustup component add rustfmt --toolchain nightly
           rustup component add clippy --toolchain nightly
 
-      - name: build cstore
+      - name: Build CStore
         run: |
           cd geaflow-cstore
-          touch ~/.cstore_buildrc && make features mod=2 && source ~/.cstore_buildrc
-          cd java && sh build.sh
-          cd ../
+          touch ~/.cstore_buildrc && make features mod=0 && source ~/.cstore_buildrc
+          cd java && ./build.sh
+        env:
+          OSTYPE: Linux
+
+      - name: CStore Test
+        run: |
+          cd geaflow-cstore
+          make all
 
       - name: Build and Test
         run: mvn -B -e clean test -Duser.timezone=Asia/Shanghai

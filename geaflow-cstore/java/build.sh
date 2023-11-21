@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright 2023 AntGroup CO., Ltd.
 #
@@ -18,11 +19,17 @@ make build-release
 rm -f java/src/main/resources/libgeaflow_cstore.*
 mkdir -p java/src/main/resources
 ARCH=$(uname -m)
-if [[ "$OSTYPE" == "linux"* ]]; then
+echo "arch:" $ARCH
+echo "os:" $OSTYPE
+
+if [[ "$OSTYPE" == "linux"* || "$OSTYPE" == "Linux"*  ]]; then
   cp target/release/libgeaflow_cstore.so java/src/main/resources/libgeaflow_cstore-${ARCH}.so
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "Darwin"* ]]; then
   cp target/release/libgeaflow_cstore.dylib java/src/main/resources/libgeaflow_cstore-${ARCH}.dylib
+else
+  echo "WARN: unknown OSTYPE:" $OSTYPE
 fi
-# shellcheck disable=SC2164
+
+echo "mvn clean install"
 cd -
 mvn clean install
