@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.function.Function;
@@ -22,15 +23,20 @@ import java.util.function.Predicate;
 /**
  * This class accepts a iterator and makes its value filtered and transformed.
  */
-public class IteratorWithFilterThenFn<T, R> implements Iterator<R> {
+public class IteratorWithFilterThenFn<T, R> extends BaseCloseableIterator<T, R> {
 
-    private final Iterator<T> iterator;
     private final Predicate<T> predicate;
     private final Function<T, R> function;
     private T nextValue;
 
+    public IteratorWithFilterThenFn(CloseableIterator<T> iterator, Predicate<T> predicate, Function<T, R> function) {
+        super(iterator);
+        this.predicate = Preconditions.checkNotNull(predicate);
+        this.function = function;
+    }
+
     public IteratorWithFilterThenFn(Iterator<T> iterator, Predicate<T> predicate, Function<T, R> function) {
-        this.iterator = iterator;
+        super(iterator);
         this.predicate = Preconditions.checkNotNull(predicate);
         this.function = function;
     }

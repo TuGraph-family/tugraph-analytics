@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.state;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.query.QueryCondition;
 import com.antgroup.geaflow.state.query.QueryType;
 import com.antgroup.geaflow.state.query.QueryableAllGraphState;
@@ -26,7 +27,6 @@ import com.antgroup.geaflow.state.strategy.manager.IGraphManager;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class BaseDynamicQueryState<K, VV, EV, R> implements
@@ -86,7 +86,7 @@ public abstract class BaseDynamicQueryState<K, VV, EV, R> implements
     }
 
     @Override
-    public Iterator<K> idIterator() {
+    public CloseableIterator<K> idIterator() {
         return this.graphManager.getDynamicGraphTrait().vertexIDIterator();
     }
 }

@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.runtime.engine;
 import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContextFunction.VertexCentricAggContext;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
@@ -42,7 +43,6 @@ import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -209,7 +209,7 @@ public abstract class AbstractTraversalRuntimeContext implements TraversalRuntim
     }
 
     @Override
-    public Iterator<Object> loadAllVertex() {
+    public CloseableIterator<Object> loadAllVertex() {
         return vertexQuery.loadIdIterator();
     }
 

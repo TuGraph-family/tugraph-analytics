@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.state.strategy.accessor;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.DataModel;
@@ -27,7 +28,6 @@ import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.graph.IGraphMultiVersionedStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,12 +83,12 @@ public class RWDynamicGraphAccessor<K, VV, EV> extends BaseActionAccess implemen
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
+    public CloseableIterator<K> vertexIDIterator() {
         return getStore().vertexIDIterator();
     }
 
     @Override
-    public Iterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
         return getStore().vertexIDIterator(version, pushdown);
     }
 
@@ -103,35 +103,35 @@ public class RWDynamicGraphAccessor<K, VV, EV> extends BaseActionAccess implemen
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
         return getStore().getVertexIterator(version, pushdown);
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
                                                       IStatePushDown pushdown) {
         return getStore().getVertexIterator(version, keys, pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
         return getStore().getEdgeIterator(version, pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
                                                   IStatePushDown pushdown) {
         return getStore().getEdgeIterator(version, keys, pushdown);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
                                                                          IStatePushDown pushdown) {
         return getStore().getOneDegreeGraphIterator(version, pushdown);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
                                                                          IStatePushDown pushdown) {
         return getStore().getOneDegreeGraphIterator(version, keys, pushdown);
     }

@@ -19,12 +19,13 @@ import com.antgroup.geaflow.api.graph.function.vc.base.IncVertexCentricFunction.
 import com.antgroup.geaflow.api.graph.function.vc.base.IncVertexCentricFunction.IncGraphContext;
 import com.antgroup.geaflow.api.graph.function.vc.base.IncVertexCentricFunction.MutableGraph;
 import com.antgroup.geaflow.api.graph.function.vc.base.IncVertexCentricFunction.TemporaryGraph;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.operator.Operator.OpContext;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox;
 import com.antgroup.geaflow.operator.impl.graph.compute.dynamic.cache.TemporaryGraphCache;
 import com.antgroup.geaflow.state.GraphState;
-import java.util.Iterator;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,11 +116,14 @@ public class IncGraphContextImpl<K, VV, EV, M> implements IncGraphContext<K, VV,
         }
         List<Long> allVersions = graphState.dynamicGraph().V().getAllVersions(vertexId);
         for (long version: allVersions) {
-            Iterator<IEdge<K, EV>> edgeIterator =
-                graphState.dynamicGraph().E().query(version, vertexId).iterator();
-            while (edgeIterator.hasNext()) {
-                IEdge<K, EV> edge = edgeIterator.next();
-                graphMsgBox.addOutMessage(edge.getTargetId(), m);
+            try (CloseableIterator<IEdge<K, EV>> edgeIterator
+                    = graphState.dynamicGraph().E().query(version, vertexId).iterator()) {
+                while (edgeIterator.hasNext()) {
+                    IEdge<K, EV> edge = edgeIterator.next();
+                    graphMsgBox.addOutMessage(edge.getTargetId(), m);
+                }
+            } catch (Exception e) {
+                throw new GeaflowRuntimeException(e);
             }
         }
     }

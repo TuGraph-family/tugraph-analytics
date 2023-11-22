@@ -46,4 +46,9 @@ public class MemoryVertexScanIterator<K, VV, EV> implements IVertexIterator<K, V
     public IVertex<K, VV> next() {
         return nextValue;
     }
+
+    @Override
+    public void close() {
+
+    }
 }

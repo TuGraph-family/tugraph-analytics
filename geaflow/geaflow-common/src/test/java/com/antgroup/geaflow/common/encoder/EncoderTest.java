@@ -529,7 +529,11 @@ public class EncoderTest {
         int i = 0;
         while (bis.available() > 0) {
             String res = Encoders.STRING.decode(bis);
-            Assert.assertEquals(strings[i], res);
+            if (i == 10) {
+                Assert.assertEquals(strings[i], res, "" + strings[i].length() + " " + res.length());
+            } else {
+                Assert.assertEquals(strings[i], res);
+            }
             i++;
         }
     }
@@ -560,7 +564,7 @@ public class EncoderTest {
         Assert.assertNull(strings1);
         String[] strings2 = encoder.decode(bis);
         for (int i = 0; i < strings.length; i++) {
-            Assert.assertEquals(strings[i], strings2[i]);
+            Assert.assertEquals(strings[i], strings2[i], "not right " + i);
         }
     }
 

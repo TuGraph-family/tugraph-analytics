@@ -20,6 +20,8 @@ import com.antgroup.geaflow.api.graph.base.algo.AbstractVertexCentricComputeAlgo
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricComputeFunction;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricComputeFunction.VertexCentricComputeFuncContext;
 import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
@@ -113,11 +115,13 @@ public class StaticGraphVertexCentricComputeOp<K, VV, EV, M, FUNC extends Vertex
 
     @Override
     public void finish() {
-        Iterator<IVertex<K, VV>> vertexIterator = graphState.staticGraph().V().query().iterator();
-
-        while (vertexIterator.hasNext()) {
-            IVertex<K, VV> vertex = vertexIterator.next();
-            vertexCollector.partition(vertex.getId(), vertex);
+        try (CloseableIterator<IVertex<K, VV>> vertexIterator = graphState.staticGraph().V().query().iterator()) {
+            while (vertexIterator.hasNext()) {
+                IVertex<K, VV> vertex = vertexIterator.next();
+                vertexCollector.partition(vertex.getId(), vertex);
+            }
+        } catch (Exception e) {
+            throw new GeaflowRuntimeException(e);
         }
         this.vcComputeFunction.finish();
         vertexCollector.finish();

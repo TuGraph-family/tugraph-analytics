@@ -49,6 +49,11 @@
             <artifactId>geaflow-state-strategy</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-store-cstore</artifactId>
+        </dependency>
+
         <!-- test -->
         <dependency>
             <groupId>org.openjdk.jmh</groupId>

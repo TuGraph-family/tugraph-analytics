@@ -22,6 +22,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.StateConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
@@ -30,6 +31,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.graph.encoder.IEdgeKVEncoder;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
 import com.antgroup.geaflow.state.graph.encoder.IVertexKVEncoder;
+import com.antgroup.geaflow.state.iterator.IteratorWithClose;
 import com.antgroup.geaflow.state.iterator.IteratorWithFlatFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFnThenFilter;
@@ -47,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -127,7 +128,8 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     public OneDegreeGraph<K, VV, EV> getOneDegreeGraph(long version, K sid, IStatePushDown pushdown) {
         IVertex<K, VV> vertex = getVertex(version, sid, pushdown);
         List<IEdge<K, EV>> edgeList = getEdges(version, sid, pushdown);
-        OneDegreeGraph<K, VV, EV> oneDegreeGraph = new OneDegreeGraph<>(sid, vertex, edgeList.iterator());
+        OneDegreeGraph<K, VV, EV> oneDegreeGraph = new OneDegreeGraph<>(sid, vertex,
+            IteratorWithClose.wrap(edgeList.iterator()));
         if (((IGraphFilter)pushdown.getFilter()).filterOneDegreeGraph(oneDegreeGraph)) {
             return oneDegreeGraph;
         } else {
@@ -136,7 +138,7 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
+    public CloseableIterator<K> vertexIDIterator() {
         flush();
         RocksdbIterator it = new RocksdbIterator(this.rocksdbClient.getIterator(VERTEX_INDEX_CF));
 
@@ -146,7 +148,7 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     }
 
     @Override
-    public Iterator<K> vertexIDIterator(long version, IStatePushDown pushDown) {
+    public CloseableIterator<K> vertexIDIterator(long version, IStatePushDown pushDown) {
         if (pushDown.getFilter() == null) {
             flush();
             byte[] prefix = getVersionPrefix(version);
@@ -161,7 +163,7 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
         flush();
         byte[] prefix = getVersionPrefix(version);
         RocksdbIterator it = new RocksdbIterator(rocksdbClient.getIterator(VERTEX_CF), prefix);
@@ -170,13 +172,13 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
                                                       IStatePushDown pushdown) {
         return new KeysIterator<>(keys, (k, f) -> getVertex(version, k, f), pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
         flush();
         byte[] prefix = getVersionPrefix(version);
         RocksdbIterator it = new RocksdbIterator(rocksdbClient.getIterator(EDGE_CF), prefix);
@@ -185,13 +187,13 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
                                                   IStatePushDown pushdown) {
         return new IteratorWithFlatFn<>(new KeysIterator<>(keys, (k, f) -> getEdges(version, k, f), pushdown), List::iterator);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
                                                                          IStatePushDown pushdown) {
         flush();
         return new OneDegreeGraphScanIterator<>(
@@ -202,7 +204,7 @@ public class SyncGraphMultiVersionedProxy<K, VV, EV> implements IGraphMultiVersi
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
                                                                          IStatePushDown pushdown) {
         return new KeysIterator<>(keys, (k, f) -> getOneDegreeGraph(version, k, f), pushdown);
     }

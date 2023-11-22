@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package pushdown;
+
+message PushDown {
+    oneof filter {
+        FilterNode filter_node = 1;
+        FilterNodes filter_nodes = 2;
+    }
+    EdgeLimit edge_limit = 3;
+    repeated SortType sort_type = 4;
+}
+
+message EdgeLimit {
+    uint64 in = 1;
+    uint64 out = 2;
+    bool is_single = 3;
+}
+
+message FilterNodes {
+    repeated bytes keys = 1;
+    repeated FilterNode filter_nodes = 2;
+}
+
+message FilterNode {
+    FilterType filter_type = 1;
+    repeated FilterNode filters = 2;
+    oneof content {
+        IntList int_content = 3;
+        LongList long_content = 4;
+        StringList str_content = 5;
+        BytesList bytes_content = 6;
+    }
+}
+
+message IntList {
+    repeated int32 int = 1;
+}
+
+message LongList {
+    repeated int64 long = 1;
+}
+
+message StringList {
+    repeated string str = 1;
+}
+
+message BytesList {
+    repeated bytes bytes = 1;
+}
+
+enum FilterType {
+    EMPTY = 0;
+    ONLY_VERTEX = 1;
+    IN_EDGE = 2;
+    OUT_EDGE = 3;
+    VERTEX_TS = 4;
+    EDGE_TS = 5;
+    MULTI_EDGE_TS = 6;
+    VERTEX_LABEL = 7;
+    EDGE_LABEL = 8;
+    VERTEX_VALUE_DROP = 9;
+    EDGE_VALUE_DROP = 10;
+    TTL = 11;
+    AND = 12;
+    OR = 13;
+    VERTEX_MUST_CONTAIN = 14;
+    GENERATED = 15;
+    OTHER = 16;
+}
+
+enum SortType {
+    SRC_ID = 0;
+    DIRECTION = 1;
+    DESC_TIME = 2;
+    TIME = 3;
+    LABEL = 4;
+    DST_ID = 5;
+}

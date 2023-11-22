@@ -14,12 +14,12 @@
 
 package com.antgroup.geaflow.state;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.query.QueryableAllGraphState;
 import com.antgroup.geaflow.state.query.QueryableKeysGraphState;
 import com.antgroup.geaflow.state.query.QueryableVersionGraphState;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -70,5 +70,5 @@ public interface DynamicQueryableState<K, VV, EV, R> {
     /**
      * Returns the graph id iterator.
      */
-    Iterator<K> idIterator();
+    CloseableIterator<K> idIterator();
 }

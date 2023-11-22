@@ -16,6 +16,7 @@ package com.antgroup.geaflow.state.query;
 
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.state.data.DataType;
@@ -96,7 +97,7 @@ public class QueryableGraphStateImpl<K, VV, EV, R> implements QueryableGraphStat
     }
 
     @Override
-    public Iterator<K> idIterator() {
+    public CloseableIterator<K> idIterator() {
         return version < 0
                ? this.graphManager.getStaticGraphTrait().vertexIDIterator(getPushDown())
                : this.graphManager.getDynamicGraphTrait().vertexIDIterator(version, getPushDown());
@@ -126,25 +127,25 @@ public class QueryableGraphStateImpl<K, VV, EV, R> implements QueryableGraphStat
         return pushDown;
     }
 
-    private Iterator<R> staticIterator() {
+    private CloseableIterator<R> staticIterator() {
         StatePushDown condition = getPushDown();
-        Iterator<R> it;
+        CloseableIterator<R> it;
 
         switch (this.type.getType()) {
             case V:
                 it = queryCondition.isFullScan
-                     ? (Iterator<R>) this.graphManager.getStaticGraphTrait().getVertexIterator(condition)
-                     : (Iterator<R>) this.graphManager.getStaticGraphTrait().getVertexIterator(queryCondition.queryIds, condition);
+                     ? (CloseableIterator<R>) this.graphManager.getStaticGraphTrait().getVertexIterator(condition)
+                     : (CloseableIterator<R>) this.graphManager.getStaticGraphTrait().getVertexIterator(queryCondition.queryIds, condition);
                 break;
             case E:
                 it = queryCondition.isFullScan
-                     ? (Iterator<R>) this.graphManager.getStaticGraphTrait().getEdgeIterator(condition)
-                     : (Iterator<R>) this.graphManager.getStaticGraphTrait().getEdgeIterator(queryCondition.queryIds, condition);
+                     ? (CloseableIterator<R>) this.graphManager.getStaticGraphTrait().getEdgeIterator(condition)
+                     : (CloseableIterator<R>) this.graphManager.getStaticGraphTrait().getEdgeIterator(queryCondition.queryIds, condition);
                 break;
             case VE:
                 it = queryCondition.isFullScan
-                     ? (Iterator<R>) this.graphManager.getStaticGraphTrait().getOneDegreeGraphIterator(condition)
-                     : (Iterator<R>) this.graphManager.getStaticGraphTrait().getOneDegreeGraphIterator(queryCondition.queryIds, condition);
+                     ? (CloseableIterator<R>) this.graphManager.getStaticGraphTrait().getOneDegreeGraphIterator(condition)
+                     : (CloseableIterator<R>) this.graphManager.getStaticGraphTrait().getOneDegreeGraphIterator(queryCondition.queryIds, condition);
                 break;
             case PROJECT_FIELD:
                 IStatePushDown<K, IEdge<K, EV>, R> projectCondition = condition.withProjector(queryCondition.projector);
@@ -159,25 +160,25 @@ public class QueryableGraphStateImpl<K, VV, EV, R> implements QueryableGraphStat
         return it;
     }
 
-    private Iterator<R> dynamicIterator() {
+    private CloseableIterator<R> dynamicIterator() {
         StatePushDown condition = getPushDown();
-        Iterator<R> it;
+        CloseableIterator<R> it;
 
         switch (this.type.getType()) {
             case V:
                 it = queryCondition.isFullScan
-                     ? (Iterator<R>) this.graphManager.getDynamicGraphTrait().getVertexIterator(version, condition)
-                     : (Iterator<R>) this.graphManager.getDynamicGraphTrait().getVertexIterator(version, queryCondition.queryIds, condition);
+                     ? (CloseableIterator<R>) this.graphManager.getDynamicGraphTrait().getVertexIterator(version, condition)
+                     : (CloseableIterator<R>) this.graphManager.getDynamicGraphTrait().getVertexIterator(version, queryCondition.queryIds, condition);
                 break;
             case E:
                 it = queryCondition.isFullScan
-                     ? (Iterator<R>) this.graphManager.getDynamicGraphTrait().getEdgeIterator(version, condition)
-                     : (Iterator<R>) this.graphManager.getDynamicGraphTrait().getEdgeIterator(version, queryCondition.queryIds, condition);
+                     ? (CloseableIterator<R>) this.graphManager.getDynamicGraphTrait().getEdgeIterator(version, condition)
+                     : (CloseableIterator<R>) this.graphManager.getDynamicGraphTrait().getEdgeIterator(version, queryCondition.queryIds, condition);
                 break;
             case VE:
                 it = queryCondition.isFullScan
-                     ? (Iterator<R>) this.graphManager.getDynamicGraphTrait().getOneDegreeGraphIterator(version, condition)
-                     : (Iterator<R>) this.graphManager.getDynamicGraphTrait().getOneDegreeGraphIterator(version, queryCondition.queryIds, condition);
+                     ? (CloseableIterator<R>) this.graphManager.getDynamicGraphTrait().getOneDegreeGraphIterator(version, condition)
+                     : (CloseableIterator<R>) this.graphManager.getDynamicGraphTrait().getOneDegreeGraphIterator(version, queryCondition.queryIds, condition);
                 break;
             default:
                 throw new GeaflowRuntimeException(RuntimeErrors.INST.unsupportedError());
@@ -186,12 +187,12 @@ public class QueryableGraphStateImpl<K, VV, EV, R> implements QueryableGraphStat
     }
 
     @Override
-    public Iterator<R> iterator() {
+    public CloseableIterator<R> iterator() {
         if (queryCondition.isFullScan) {
             Preconditions.checkArgument(queryCondition.stateFilters.length <= 1,
                 "full scan only support single or none filter now.");
         }
-        Iterator<R> it = version < 0 ? staticIterator() : dynamicIterator();
+        CloseableIterator<R> it = version < 0 ? staticIterator() : dynamicIterator();
         return new StandardIterator<>(it);
     }
 

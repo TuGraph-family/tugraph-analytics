@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package memory_index_manifest;
+
+// Manifest of MemoryIndex
+message MemoryIndexManifest {
+    map<uint32, ParentNodeManifest> mem_index = 1;
+}
+
+message IndexMetaManifest {
+    uint32 fid = 1;
+    uint64 offset = 2;
+}
+
+message ParentNodeManifest {
+    repeated IndexMetaManifest index_meta_vec = 1;
+}

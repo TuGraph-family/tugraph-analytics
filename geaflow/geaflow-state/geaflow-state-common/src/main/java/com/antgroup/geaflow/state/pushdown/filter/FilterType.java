@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.state.pushdown.filter;
 
+import com.antgroup.geaflow.state.pushdown.inner.PushDownPb;
+
 public enum FilterType {
     /**
      * empty filter.
@@ -81,14 +83,19 @@ public enum FilterType {
      */
     OTHER(false);
 
+    private final PushDownPb.FilterType pbFilterType;
     private boolean isRootFilter;
 
     FilterType(boolean isRootFilter) {
         this.isRootFilter = isRootFilter;
+        this.pbFilterType = PushDownPb.FilterType.valueOf(this.name());
     }
 
     public boolean isRootFilter() {
         return isRootFilter;
     }
 
+    public PushDownPb.FilterType toPbFilterType() {
+        return pbFilterType;
+    }
 }

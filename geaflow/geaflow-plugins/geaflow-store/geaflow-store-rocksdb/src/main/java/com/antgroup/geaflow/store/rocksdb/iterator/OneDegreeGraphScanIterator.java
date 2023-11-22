@@ -14,23 +14,24 @@
 
 package com.antgroup.geaflow.store.rocksdb.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.iterator.IOneDegreeGraphIterator;
+import com.antgroup.geaflow.state.iterator.IteratorWithClose;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class OneDegreeGraphScanIterator<K, VV, EV> implements
     IOneDegreeGraphIterator<K, VV, EV> {
 
-    private final Iterator<IVertex<K, VV>> vertexIterator;
-    private final Iterator<List<IEdge<K, EV>>> edgeListIterator;
+    private final CloseableIterator<IVertex<K, VV>> vertexIterator;
+    private final CloseableIterator<List<IEdge<K, EV>>> edgeListIterator;
     private final IType<K> keyType;
     private IGraphFilter filter;
     private OneDegreeGraph<K, VV, EV> nextValue;
@@ -40,8 +41,8 @@ public class OneDegreeGraphScanIterator<K, VV, EV> implements
 
     public OneDegreeGraphScanIterator(
         IType<K> keyType,
-        Iterator<IVertex<K, VV>> vertexIterator,
-        Iterator<IEdge<K, EV>> edgeIterator,
+        CloseableIterator<IVertex<K, VV>> vertexIterator,
+        CloseableIterator<IEdge<K, EV>> edgeIterator,
         IStatePushDown pushdown) {
         this.keyType = keyType;
         this.vertexIterator = vertexIterator;
@@ -72,22 +73,26 @@ public class OneDegreeGraphScanIterator<K, VV, EV> implements
                 K vertexKey = candidateVertex.getId();
                 int res = keyType.compare(edgeKey, vertexKey);
                 if (res < 0) {
-                    nextValue = new OneDegreeGraph<>(edgeKey, null, candidateEdges.iterator());
+                    nextValue = new OneDegreeGraph<>(edgeKey, null,
+                        IteratorWithClose.wrap(candidateEdges.iterator()));
                     candidateEdges = null;
                 } else if (res == 0) {
-                    nextValue = new OneDegreeGraph<>(vertexKey, candidateVertex, candidateEdges.iterator());
+                    nextValue = new OneDegreeGraph<>(vertexKey, candidateVertex,
+                        IteratorWithClose.wrap(candidateEdges.iterator()));
                     candidateVertex = null;
                     candidateEdges = null;
                 } else {
-                    nextValue = new OneDegreeGraph<>(vertexKey, candidateVertex, Collections.emptyIterator());
+                    nextValue = new OneDegreeGraph<>(vertexKey, candidateVertex,
+                        IteratorWithClose.wrap(Collections.emptyIterator()));
                     candidateVertex = null;
                 }
             } else if (candidateEdges.size() > 0) {
                 nextValue = new OneDegreeGraph<>(candidateEdges.get(0).getSrcId(), null,
-                    candidateEdges.iterator());
+                    IteratorWithClose.wrap(candidateEdges.iterator()));
                 candidateEdges = null;
             } else if (candidateVertex != null) {
-                nextValue = new OneDegreeGraph<>(candidateVertex.getId(), candidateVertex, Collections.emptyIterator());
+                nextValue = new OneDegreeGraph<>(candidateVertex.getId(), candidateVertex,
+                    IteratorWithClose.wrap(Collections.emptyIterator()));
                 candidateVertex = null;
             } else {
                 return false;
@@ -103,5 +108,11 @@ public class OneDegreeGraphScanIterator<K, VV, EV> implements
     @Override
     public OneDegreeGraph<K, VV, EV> next() {
         return nextValue;
+    }
+
+    @Override
+    public void close() {
+        this.vertexIterator.close();
+        this.edgeListIterator.close();
     }
 }

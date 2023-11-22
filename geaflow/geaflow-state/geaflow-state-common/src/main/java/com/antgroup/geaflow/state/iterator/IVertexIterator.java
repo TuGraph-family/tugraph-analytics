@@ -14,10 +14,10 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import java.io.Serializable;
-import java.util.Iterator;
 
-public interface IVertexIterator<K, VV> extends Iterator<IVertex<K, VV>>, Serializable {
+public interface IVertexIterator<K, VV> extends CloseableIterator<IVertex<K, VV>>, Serializable {
 
 }

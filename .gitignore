@@ -124,3 +124,10 @@ venv
 *.log
 version.txt
 _TMP_
+
+geaflow-cstore/target/
+geaflow-cstore/.vscode/
+geaflow-cstore/log/
+geaflow-cstore/.idea/
+geaflow-cstore/*.log
+geaflow-cstore/java/src/main/resources/libgeaflow_cstore*

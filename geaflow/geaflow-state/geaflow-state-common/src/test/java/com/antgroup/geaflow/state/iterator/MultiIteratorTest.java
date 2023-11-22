@@ -14,10 +14,10 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -26,7 +26,7 @@ public class MultiIteratorTest {
 
     @Test
     public void test() {
-        List<Iterator<Integer>> list = new ArrayList<>();
+        List<CloseableIterator<Integer>> list = new ArrayList<>();
         list.add(new IteratorWithFilter<>(Arrays.asList(1, 2, 3, 4, 5).iterator(),
             o -> o > 3));
         list.add(new IteratorWithFilter<>(Arrays.asList(1, 2, 3, 4, 5).iterator(),

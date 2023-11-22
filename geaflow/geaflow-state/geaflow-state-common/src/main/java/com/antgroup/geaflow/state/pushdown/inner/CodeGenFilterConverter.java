@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 public class CodeGenFilterConverter implements IFilterConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CodeGenFilterConverter.class);
-    private static final FilterType[] FILTER_TYPES = FilterType.values();
     private static final String CODE_GEN_PACKAGE = "com.antgroup.geaflow.state.pushdown.filter.inner.";
     private static final String TEMPLATE_FILE_NAME = "Filter.template";
     private static final String FILTER_CLASS_HEADER = "GraphFilter_";
@@ -122,19 +121,19 @@ public class CodeGenFilterConverter implements IFilterConverter {
     private static void variableGen(FilterNode filterNode, VariableContext context) {
         if (filterNode.getFiltersCount() == 0) {
             switch (filterNode.getContentCase()) {
-                case INTCONTENT:
+                case INT_CONTENT:
                     context.variables.addAll(filterNode.getIntContent().getIntList());
                     break;
-                case BYTESCONTENT:
+                case BYTES_CONTENT:
                     context.variables.addAll(filterNode.getBytesContent().getBytesList());
                     break;
-                case LONGCONTENT:
+                case LONG_CONTENT:
                     context.variables.addAll(filterNode.getLongContent().getLongList());
                     break;
-                case STRCONTENT:
+                case STR_CONTENT:
                     ProtocolStringList list = filterNode.getStrContent().getStrList();
-                    int ordinal = filterNode.getFilterOrdinal();
-                    if (ordinal == FilterType.VERTEX_LABEL.ordinal() || ordinal == FilterType.EDGE_LABEL.ordinal()) {
+                    PushDownPb.FilterType type = filterNode.getFilterType();
+                    if (type == PushDownPb.FilterType.VERTEX_LABEL || type == PushDownPb.FilterType.EDGE_LABEL) {
                         context.variables.add(new HashSet<>(list));
                     } else {
                         context.variables.add(list);
@@ -151,7 +150,7 @@ public class CodeGenFilterConverter implements IFilterConverter {
     }
 
     private static void innerCodeGen(FilterNode filterNode, CodeGenContext context) {
-        FilterType type = FILTER_TYPES[filterNode.getFilterOrdinal()];
+        PushDownPb.FilterType type = filterNode.getFilterType();
         switch (type) {
             case AND:
                 CodeGenContext inContext = new CodeGenContext(context.varIdx);
@@ -213,8 +212,8 @@ public class CodeGenFilterConverter implements IFilterConverter {
 
     public static class CodeGenContext {
 
-        private Set<FilterType> edgePreFields = new HashSet<>();
-        private Set<FilterType> vertexPreFields = new HashSet<>();
+        private Set<PushDownPb.FilterType> edgePreFields = new HashSet<>();
+        private Set<PushDownPb.FilterType> vertexPreFields = new HashSet<>();
         private List<String> edgeFormulas = new ArrayList<>();
         private List<String> vertexFormulas = new ArrayList<>();
         private List<String> oneDegreeFormulas = new ArrayList<>();
@@ -224,7 +223,7 @@ public class CodeGenFilterConverter implements IFilterConverter {
             this.varIdx = varIdx;
         }
 
-        private String getPreComputeCode(FilterType type) {
+        private String getPreComputeCode(PushDownPb.FilterType type) {
             switch (type) {
                 case VERTEX_TS:
                     return "long ts = ((IGraphElementWithTimeField)vertex).getTime();";
@@ -251,11 +250,11 @@ public class CodeGenFilterConverter implements IFilterConverter {
             vertexFormulas.add(code);
         }
 
-        public void addEdgePreCompute(FilterType type) {
+        public void addEdgePreCompute(PushDownPb.FilterType type) {
             edgePreFields.add(type);
         }
 
-        public void addVertexPreCompute(FilterType type) {
+        public void addVertexPreCompute(PushDownPb.FilterType type) {
             vertexPreFields.add(type);
         }
 
@@ -291,7 +290,7 @@ public class CodeGenFilterConverter implements IFilterConverter {
             String vertexPreCompute = "";
             if (vertexFormulas.size() == 1) {
                 StringBuilder preCompute = new StringBuilder();
-                for (FilterType filterType : vertexPreFields) {
+                for (PushDownPb.FilterType filterType : vertexPreFields) {
                     preCompute.append(getPreComputeCode(filterType)).append("\n");
                 }
                 vertexPreCompute = preCompute.toString();
@@ -301,7 +300,7 @@ public class CodeGenFilterConverter implements IFilterConverter {
             String edgePreCompute = "";
             if (edgeFormulas.size() == 1) {
                 StringBuilder preCompute = new StringBuilder();
-                for (FilterType filterType : edgePreFields) {
+                for (PushDownPb.FilterType filterType : edgePreFields) {
                     preCompute.append(getPreComputeCode(filterType)).append("\n");
                 }
                 edgePreCompute = preCompute.toString();

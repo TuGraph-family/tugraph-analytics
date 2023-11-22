@@ -14,20 +14,19 @@
 
 package com.antgroup.geaflow.state.iterator;
 
-import java.util.Iterator;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 
 /**
  * This class is a wrapper iterator, allowing multiple hasNext call but one next call.
  */
-public class StandardIterator<T> implements Iterator<T> {
+public class StandardIterator<T> extends BaseCloseableIterator<T, T> {
 
-    private final Iterator<T> iterator;
     private boolean nextCalled;
     private boolean hasNextValue;
     private T nextValue;
 
-    public StandardIterator(Iterator<T> iterator) {
-        this.iterator = iterator;
+    public StandardIterator(CloseableIterator<T> iterator) {
+        super(iterator);
         innerNext();
     }
 

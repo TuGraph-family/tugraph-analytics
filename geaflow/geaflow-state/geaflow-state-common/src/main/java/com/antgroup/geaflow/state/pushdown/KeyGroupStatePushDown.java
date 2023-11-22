@@ -35,7 +35,7 @@ public class KeyGroupStatePushDown<K, T, R> extends StatePushDown<K, T, R> {
         pushDown.filter = statePushDown.filter;
         pushDown.edgeLimit = statePushDown.edgeLimit;
         pushDown.filters = statePushDown.filters;
-        pushDown.orderField = statePushDown.orderField;
+        pushDown.orderFields = statePushDown.orderFields;
         pushDown.projector = statePushDown.projector;
         pushDown.pushdownType = statePushDown.pushdownType;
         return pushDown;

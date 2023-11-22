@@ -19,13 +19,15 @@ import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.meta.GraphFiledName;
+import com.antgroup.geaflow.state.pushdown.inner.PushDownPb;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
-
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import org.apache.commons.collections.comparators.ComparatorChain;
 
 public enum EdgeAtom {
     /**
@@ -220,6 +222,12 @@ public enum EdgeAtom {
         }
     };
 
+    private PushDownPb.SortType sortType;
+
+    EdgeAtom() {
+        sortType = PushDownPb.SortType.valueOf(this.name());
+    }
+
     public abstract <K, EV> Object getValue(IEdge<K, EV> edge, GraphDataSchema graphDataSchema);
 
     public abstract <K, EV> byte[] getBinaryValue(IEdge<K, EV> edge, GraphDataSchema graphDataSchema);
@@ -229,6 +237,10 @@ public enum EdgeAtom {
     public abstract <K, EV> void setBinaryValue(IEdge<K, EV> edge, byte[] value, GraphDataSchema graphDataSchema);
 
     public abstract GraphFiledName getGraphFieldName();
+
+    public PushDownPb.SortType toPbSortType() {
+        return sortType;
+    }
 
     public static final Map<GraphFiledName, EdgeAtom> EDGE_ATOM_MAP = ImmutableMap.of(
         GraphFiledName.SRC_ID, SRC_ID,
@@ -265,5 +277,14 @@ public enum EdgeAtom {
             default:
                 throw new RuntimeException("no comparator");
         }
+    }
+
+    public static Comparator<IEdge> getComparator(List<EdgeAtom> fields) {
+        if (fields == null || fields.size() == 0) {
+            return null;
+        }
+        ComparatorChain chain = new ComparatorChain();
+        fields.forEach(f -> chain.addComparator(f.getComparator()));
+        return chain;
     }
 }

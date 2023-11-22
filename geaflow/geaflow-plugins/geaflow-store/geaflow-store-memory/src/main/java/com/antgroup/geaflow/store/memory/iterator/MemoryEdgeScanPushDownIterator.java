@@ -14,7 +14,9 @@
 
 package com.antgroup.geaflow.store.memory.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.inner.GraphFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
@@ -25,7 +27,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-public class MemoryEdgeScanPushDownIterator<K, VV, EV> implements Iterator<List<IEdge<K, EV>>> {
+public class MemoryEdgeScanPushDownIterator<K, VV, EV> implements CloseableIterator<List<IEdge<K, EV>>> {
 
     private final Iterator<List<IEdge<K, EV>>> iterator;
     private final Comparator<IEdge> edgeComparator;
@@ -38,7 +40,8 @@ public class MemoryEdgeScanPushDownIterator<K, VV, EV> implements Iterator<List<
         IStatePushDown pushdown) {
         this.filter = (IGraphFilter) pushdown.getFilter();
         this.edgeLimit = pushdown.getEdgeLimit();
-        this.edgeComparator = pushdown.getOrderField() == null ? null : pushdown.getOrderField().getComparator();
+        List<EdgeAtom> orderFields = pushdown.getOrderFields();
+        this.edgeComparator = EdgeAtom.getComparator(orderFields);
         this.iterator = iterator;
     }
 
@@ -68,5 +71,10 @@ public class MemoryEdgeScanPushDownIterator<K, VV, EV> implements Iterator<List<
     @Override
     public List<IEdge<K, EV>> next() {
         return nextValue;
+    }
+
+    @Override
+    public void close() {
+
     }
 }

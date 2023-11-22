@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.state.schema;
 
-import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.type.Types;
 import com.antgroup.geaflow.common.type.primitive.StringType;
 import com.antgroup.geaflow.model.graph.edge.IEdge;

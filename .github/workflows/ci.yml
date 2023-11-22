@@ -29,5 +29,30 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
           cache: maven
+
+      - name: Setup Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "21.7"
+
+      - name: Setup Rust
+        run: |
+          rustup toolchain install nightly
+          rustup component add rustfmt --toolchain nightly
+          rustup component add clippy --toolchain nightly
+
+      - name: Build CStore
+        run: |
+          cd geaflow-cstore
+          touch ~/.cstore_buildrc && make features mod=0 && source ~/.cstore_buildrc
+          cd java && ./build.sh
+        env:
+          OSTYPE: Linux
+
+      - name: CStore Test
+        run: |
+          cd geaflow-cstore
+          make all
+
       - name: Build and Test
         run: mvn -B -e clean test -Duser.timezone=Asia/Shanghai

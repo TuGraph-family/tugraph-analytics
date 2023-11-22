@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package manifest;
+
+// Manifest of cstore.
+message Manifest {
+    // Version number of the manifest, which is unique on each cstore shard.
+    uint64 version = 1;
+
+    // Max file id of index and date files
+    uint32 max_registered_fid = 2;
+
+    // File id of the snapshot for memory index.
+    uint32 memory_index_fid = 3;
+
+    // File path of the snapshot for id dict.
+    string id_dict_snapshot_path = 4;
+
+    // Serialized data of snapshot for label dict.
+    string label_dict_snapshot_str = 5;
+
+    // The time stamp the manifest was created.
+    uint64 create_ts = 6;
+
+    // The vector which records snapshots of all level handlers.
+    repeated LevelManifest level_manifest_vec = 7;
+
+    // Graph data unique sequence id.
+    uint64 seq_id = 8;
+}
+
+// Manifest of LevelHandler
+message LevelManifest {
+    // Map from file id of the index table to manifest of table info.
+    map<uint32, TableInfoManifest> table_info_manifest_map = 1;
+}
+
+message TableInfoManifest {
+    // Manifest of index table info.
+    IndexTableInfoManifest index_table_manifest = 1;
+
+    // Manifest of data table info.
+    DataTableInfoManifest data_table_manifest = 2;
+}
+
+message IndexTableInfoManifest {
+    // File id of the index table.
+    uint32 fid = 1;
+
+    // File size of the index table in disk(compressed data).
+    uint64 size = 2;
+
+    // File size  of the index table in memory(uncompressed data).
+    uint64 uncompressed_size = 3;
+
+    // The time stamp the index table was created.
+    uint64 create_ts = 4;
+
+    // The start(smallest) index of the index table.
+    uint32 start = 5;
+
+    // The end(largest) index of the index table.
+    uint32 end = 6;
+}
+
+message DataTableInfoManifest {
+    // File id of the data table.
+    uint32 fid = 1;
+
+    // File size of the data table in disk(compressed data).
+    uint64 size = 2;
+}
+

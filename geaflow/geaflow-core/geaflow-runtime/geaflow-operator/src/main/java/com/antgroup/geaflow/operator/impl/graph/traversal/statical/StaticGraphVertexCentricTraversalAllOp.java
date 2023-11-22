@@ -16,10 +16,11 @@ package com.antgroup.geaflow.operator.impl.graph.traversal.statical;
 
 import com.antgroup.geaflow.api.graph.base.algo.AbstractVertexCentricTraversalAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.impl.VertexBeginTraversalRequest;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,12 +38,15 @@ public class StaticGraphVertexCentricTraversalAllOp<K, VV, EV, M, R,
 
     @Override
     protected void traversalByRequest(long iterations) {
-        Iterator<K> idIterator = graphVCTraversalCtx.vertex().loadIdIterator();
-        while (idIterator.hasNext()) {
-            K vertexId = idIterator.next();
-            ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest(vertexId);
-            this.graphVCTraversalCtx.init(iterations, vertexId);
-            this.vcTraversalFunction.init(traversalRequest);
+        try (CloseableIterator<K> idIterator = graphVCTraversalCtx.vertex().loadIdIterator()) {
+            while (idIterator.hasNext()) {
+                K vertexId = idIterator.next();
+                ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest(vertexId);
+                this.graphVCTraversalCtx.init(iterations, vertexId);
+                this.vcTraversalFunction.init(traversalRequest);
+            }
+        } catch (Exception e) {
+            throw new GeaflowRuntimeException(e);
         }
     }
 

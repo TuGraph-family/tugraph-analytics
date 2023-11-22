@@ -14,23 +14,23 @@
 
 package com.antgroup.geaflow.store.rocksdb.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.iterator.IVertexIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
-import java.util.Iterator;
 import java.util.function.BiFunction;
 
 public class VertexScanIterator<K, VV, EV> implements IVertexIterator<K, VV> {
 
-    private final Iterator<Tuple<byte[], byte[]>> iterator;
+    private final CloseableIterator<Tuple<byte[], byte[]>> iterator;
     private final IGraphFilter filter;
     private final BiFunction<byte[], byte[], IVertex<K,VV>> vertexDecoder;
     private boolean isClosed = false;
     private IVertex<K, VV> nextValue;
 
-    public VertexScanIterator(Iterator<Tuple<byte[], byte[]>> iterator,
+    public VertexScanIterator(CloseableIterator<Tuple<byte[], byte[]>> iterator,
                               IStatePushDown pushdown,
                               BiFunction<byte[], byte[], IVertex<K, VV>> decoderFun) {
         this.vertexDecoder = decoderFun;
@@ -59,5 +59,10 @@ public class VertexScanIterator<K, VV, EV> implements IVertexIterator<K, VV> {
     @Override
     public IVertex<K, VV> next() {
         return nextValue;
+    }
+
+    @Override
+    public void close() {
+        this.iterator.close();
     }
 }

@@ -30,10 +30,13 @@ import com.antgroup.geaflow.model.graph.vertex.impl.ValueVertex;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.StateFactory;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
+import com.antgroup.geaflow.utils.keygroup.DefaultKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.io.FileUtils;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -49,8 +52,8 @@ import org.openjdk.jmh.annotations.Warmup;
 @Threads(1)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @BenchmarkMode(Mode.AverageTime)
-@Measurement(iterations = 5, time = 1)
-@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 1, time = 1)
+@Warmup(iterations = 1, time = 1)
 @State(Scope.Benchmark)
 public class StaticGraphStateWriteJMH10 extends JMHParameter {
 
@@ -63,6 +66,7 @@ public class StaticGraphStateWriteJMH10 extends JMHParameter {
         GraphMetaType tag = new GraphMetaType(Types.INTEGER, ValueVertex.class,
             Integer.class, ValueLabelTimeEdge.class, Integer.class);
         desc.withGraphMeta(new GraphMeta(tag)).withKeyGroup(new KeyGroup(0, 0));
+        desc.withKeyGroupAssigner(new DefaultKeyGroupAssigner(1));
         Map<String, String> config = new HashMap<>();
         config.put(JOB_MAX_PARALLEL.getKey(), "1");
         config.put(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateJMH");
@@ -85,6 +89,7 @@ public class StaticGraphStateWriteJMH10 extends JMHParameter {
         graphState.manage().operate().finish();
         graphState.manage().operate().close();
         graphState.manage().operate().drop();
+        FileUtils.deleteQuietly(new File("/tmp/geaflow_cstore_local"));
     }
 
 }

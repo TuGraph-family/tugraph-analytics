@@ -14,14 +14,15 @@
 
 package com.antgroup.geaflow.store.memory;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.antgroup.geaflow.state.iterator.IteratorWithClose;
 import com.antgroup.geaflow.state.iterator.IteratorWithFnThenFilter;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,18 +70,18 @@ public class GraphMemoryStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, EV>
     }
 
     @Override
-    protected Iterator<List<IEdge<K, EV>>> getEdgesIterator() {
-        return map.values().stream().map(c -> c.f1).iterator();
+    protected CloseableIterator<List<IEdge<K, EV>>> getEdgesIterator() {
+        return IteratorWithClose.wrap(map.values().stream().map(c -> c.f1).iterator());
     }
 
     @Override
-    protected Iterator<IVertex<K, VV>> getVertexIterator() {
+    protected CloseableIterator<IVertex<K, VV>> getVertexIterator() {
         return new IteratorWithFnThenFilter<>(map.values().iterator(), c -> c.f0, Objects::nonNull);
     }
 
     @Override
-    protected Iterator<K> getKeyIterator() {
-        return map.keySet().iterator();
+    protected CloseableIterator<K> getKeyIterator() {
+        return IteratorWithClose.wrap(map.keySet().iterator());
     }
 
     @Override
