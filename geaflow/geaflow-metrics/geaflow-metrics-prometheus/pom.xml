@@ -17,22 +17,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
+        <artifactId>geaflow-metrics</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <artifactId>geaflow</artifactId>
         <version>0.4.0-SNAPSHOT</version>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>geaflow-metrics</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>geaflow-metrics-prometheus</artifactId>
 
-    <modules>
-        <module>geaflow-metrics-common</module>
-        <module>geaflow-metrics-slf4j</module>
-        <module>geaflow-metrics-prometheus</module>
-        <module>geaflow-metrics-influxdb</module>
-        <module>geaflow-stats-metrics</module>
-        <module>geaflow-metrics-reporter</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-metrics-reporter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_pushgateway</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>
