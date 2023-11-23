@@ -20,7 +20,6 @@ import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.util.FunctionUtil;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -52,15 +51,16 @@ public class GeaFlowUserDefinedGraphAlgorithm extends SqlUserDefinedFunction {
     }
 
     private static SqlReturnTypeInference getReturnTypeInference(final Class<?> clazz) {
-        AlgorithmUserFunction algorithm;
-        try {
-            algorithm = (AlgorithmUserFunction)clazz.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new GeaFlowDSLException("Cannot new instance for class: " + clazz.getName(), e);
-        }
-        final StructType outputType = algorithm.getOutputType();
         return opBinding -> {
-            final JavaTypeFactoryImpl typeFactory = (JavaTypeFactoryImpl) opBinding.getTypeFactory();
+            final GQLJavaTypeFactory typeFactory = (GQLJavaTypeFactory) opBinding.getTypeFactory();
+            AlgorithmUserFunction algorithm;
+            try {
+                algorithm = (AlgorithmUserFunction)clazz.getConstructor().newInstance();
+            } catch (Exception e) {
+                throw new GeaFlowDSLException("Cannot new instance for class: " + clazz.getName(), e);
+            }
+            final StructType outputType =
+                algorithm.getOutputType(typeFactory.getCurrentGraph().getGraphSchema(typeFactory));
             return SqlTypeUtil.convertToRelType(outputType, true, typeFactory);
         };
     }

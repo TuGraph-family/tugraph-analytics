@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.udf.graph;
 
 import com.antgroup.geaflow.common.type.primitive.IntegerType;
-import com.antgroup.geaflow.common.type.primitive.StringType;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
@@ -23,11 +22,11 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -81,9 +80,9 @@ public class KHop implements AlgorithmUserFunction<Object, Integer> {
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
-            new TableField(OUTPUT_ID, StringType.INSTANCE, false),
+            new TableField(OUTPUT_ID, graphSchema.getIdType(), false),
             new TableField(OUTPUT_K, IntegerType.INSTANCE, false)
         );
     }
