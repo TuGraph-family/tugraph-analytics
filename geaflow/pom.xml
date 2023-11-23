@@ -574,11 +574,11 @@
                 <artifactId>geaflow-store-rocksdb</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.antgroup.tugraph</groupId>
-                <artifactId>geaflow-store-cstore</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>com.antgroup.tugraph</groupId>-->
+<!--                <artifactId>geaflow-store-cstore</artifactId>-->
+<!--                <version>${project.version}</version>-->
+<!--            </dependency>-->
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-store-redis</artifactId>

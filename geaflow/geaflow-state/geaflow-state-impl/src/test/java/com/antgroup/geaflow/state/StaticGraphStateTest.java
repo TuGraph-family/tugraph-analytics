@@ -80,7 +80,7 @@ public class StaticGraphStateTest {
                 new StaticGraphStateTest(StoreType.MEMORY, new HashMap<>()),
                 new StaticGraphStateTest(StoreType.MEMORY, ImmutableMap.of(MemoryConfigKeys.CSR_MEMORY_ENABLE.getKey(), "true")),
                 new StaticGraphStateTest(StoreType.ROCKSDB, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
-                new StaticGraphStateTest(StoreType.CSTORE, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
+                //new StaticGraphStateTest(StoreType.CSTORE, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
             };
         }
     }
