@@ -20,7 +20,7 @@ import static com.antgroup.geaflow.analytics.service.client.jdbc.AnalyticsResult
 import com.antgroup.geaflow.analytics.service.client.jdbc.HttpQueryChannel;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
 import com.antgroup.geaflow.analytics.service.query.QueryStatusInfo;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.pipeline.service.ServiceType;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;

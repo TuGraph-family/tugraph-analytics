@@ -14,9 +14,9 @@
 
 package com.antgroup.geaflow.metaserver.local;
 
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.metaserver.MetaServerContext;
 import com.antgroup.geaflow.metaserver.api.NamespaceServiceHandler;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
 import com.antgroup.geaflow.metaserver.model.protocal.MetaRequest;
 import com.antgroup.geaflow.metaserver.model.protocal.MetaResponse;
 import com.antgroup.geaflow.metaserver.model.protocal.request.RegisterServiceRequest;

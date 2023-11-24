@@ -18,7 +18,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.FileUtil;
 import com.antgroup.geaflow.metaserver.client.interal.MetaServerClient;
 import com.antgroup.geaflow.metaserver.client.MetaServerQueryClient;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.metaserver.service.NamespaceType;
 import java.io.File;
 import java.io.IOException;

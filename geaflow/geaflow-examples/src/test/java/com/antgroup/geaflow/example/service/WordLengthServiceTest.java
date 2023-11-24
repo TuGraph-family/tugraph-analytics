@@ -21,14 +21,13 @@ import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsServiceConfig
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
 import com.antgroup.geaflow.analytics.service.server.http.handler.HttpAnalyticsServiceHandler;
 import com.antgroup.geaflow.cluster.response.ResponseResult;
-import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.utils.SleepUtils;
-import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
+import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.rpc.proto.Analytics;
 import com.antgroup.geaflow.rpc.proto.AnalyticsServiceGrpc;
@@ -47,22 +46,16 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class WordLengthServiceTest {
+public class WordLengthServiceTest extends BaseTest {
 
     private static final String QUERY = "hello world";
-
-    @BeforeMethod
-    public void setUp() {
-        ClusterMetaStore.close();
-    }
 
     @Test
     public void testWordLengthWithHttpServer() throws Exception {
         int port = 8091;
-        Environment environment = EnvironmentFactory.onLocalEnvironment();
+        environment = EnvironmentFactory.onLocalEnvironment();
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_PORT, String.valueOf(port));
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, QUERY);
@@ -70,16 +63,13 @@ public class WordLengthServiceTest {
         configuration.put(FrameworkConfigKeys.SERVICE_SERVER_TYPE, "analytics_http");
         WordLengthService wordLengthService = new WordLengthService();
         wordLengthService.submit(environment);
-
         testHttpServiceServer(port);
-
-        environment.shutdown();
     }
 
     @Test
     public void testWordLengthSourceMultiParallelismWithHttpServer() throws Exception {
         int port = 8092;
-        Environment environment = EnvironmentFactory.onLocalEnvironment();
+        environment = EnvironmentFactory.onLocalEnvironment();
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_PORT, String.valueOf(port));
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, QUERY);
@@ -88,16 +78,13 @@ public class WordLengthServiceTest {
         configuration.put(ExampleConfigKeys.SOURCE_PARALLELISM.getKey(), "3");
         WordLengthService wordLengthService = new WordLengthService();
         wordLengthService.submit(environment);
-
         testHttpServiceServer(port);
-
-        environment.shutdown();
     }
 
     @Test
     public void testWordLengthWithRpcServer() {
         int port = 8093;
-        Environment environment = EnvironmentFactory.onLocalEnvironment();
+        environment = EnvironmentFactory.onLocalEnvironment();
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_PORT, String.valueOf(port));
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, QUERY);
@@ -105,16 +92,13 @@ public class WordLengthServiceTest {
         configuration.put(FrameworkConfigKeys.SERVICE_SERVER_TYPE, "analytics_rpc");
         WordLengthService wordLengthService = new WordLengthService();
         wordLengthService.submit(environment);
-
         testRpcServiceServer(port);
-
-        environment.shutdown();
     }
 
     @Test
     public void testWordLengthSourceMultiParallelismWithRpcServer() {
         int port = 8094;
-        Environment environment = EnvironmentFactory.onLocalEnvironment();
+        environment = EnvironmentFactory.onLocalEnvironment();
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_PORT, String.valueOf(port));
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, QUERY);
@@ -123,10 +107,7 @@ public class WordLengthServiceTest {
         configuration.put(ExampleConfigKeys.SOURCE_PARALLELISM.getKey(), "3");
         WordLengthService wordLengthService = new WordLengthService();
         wordLengthService.submit(environment);
-
         testRpcServiceServer(port);
-
-        environment.shutdown();
     }
 
     private static void testHttpServiceServer(int port) throws Exception {

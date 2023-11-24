@@ -17,7 +17,7 @@ package com.antgroup.geaflow.analytics.service.client;
 import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsClientConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.rpc.proto.AnalyticsServiceGrpc;
 import com.antgroup.geaflow.rpc.proto.AnalyticsServiceGrpc.AnalyticsServiceBlockingStub;
 import io.grpc.ManagedChannel;

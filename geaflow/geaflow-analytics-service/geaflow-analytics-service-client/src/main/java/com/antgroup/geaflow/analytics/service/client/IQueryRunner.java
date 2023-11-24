@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.analytics.service.client;
 
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.pipeline.service.ServiceType;
 import java.io.Closeable;
 

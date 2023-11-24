@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.common.rpc;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.utils.BrpcConstants;
@@ -23,43 +24,42 @@ import org.slf4j.LoggerFactory;
 
 public class ConfigurableServerOption {
 
-    public static final String BRPC_IO_THREAD_NUM = "brpc.io.thread.num";
-    public static final String BRPC_WORKER_THREAD_NUM = "brpc.worker.thread.num";
-    public static final String BRPC_ENABLE_THREADPOOL_SHARING = "brpc.enable.threadpool.sharing";
-    public static final String CONNECTION_KEEP_ALIVE_TIME_SEC =
-        "brpc.connection.keep.alive.time.sec";
-    public static final String RPC_BUFFER_SIZE_BYTES = "brpc.buffer.size.bytes";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurableServerOption.class);
 
     public static RpcServerOptions build(Configuration config) {
         RpcServerOptions serverOptions = new RpcServerOptions();
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
-        serverOptions.setMaxTryTimes(3);
+        int maxRetryTimes = config.getInteger(ExecutionConfigKeys.RPC_MAX_RETRY_TIMES);
+        serverOptions.setMaxTryTimes(maxRetryTimes);
 
-        // keepAliveTime should be at least 1 minute.
-        serverOptions.setKeepAliveTime(
-            Math.max(config.getInteger(CONNECTION_KEEP_ALIVE_TIME_SEC, 0), 60));
+        int keepAliveTime = config.getInteger(ExecutionConfigKeys.RPC_KEEP_ALIVE_TIME_SEC);
+        serverOptions.setKeepAliveTime(keepAliveTime);
 
-        boolean threadSharing = true;
-        if (config.contains(BRPC_ENABLE_THREADPOOL_SHARING)) {
-            threadSharing = Boolean.parseBoolean(config.getString(BRPC_ENABLE_THREADPOOL_SHARING));
-        }
+        boolean threadSharing = config.getBoolean(ExecutionConfigKeys.RPC_THREADPOOL_SHARING_ENABLE);
         serverOptions.setGlobalThreadPoolSharing(threadSharing);
-        int threadLowerBound = Math.max(8, Runtime.getRuntime().availableProcessors());
-        int brpcIoThreadNum = config.getInteger(BRPC_IO_THREAD_NUM,
-            Runtime.getRuntime().availableProcessors());
-        int brpcWorkerThreadNum = config.getInteger(BRPC_WORKER_THREAD_NUM,
-            Runtime.getRuntime().availableProcessors());
-        serverOptions.setIoThreadNum(Math.min(threadLowerBound, brpcIoThreadNum));
-        serverOptions.setWorkThreadNum(Math.min(threadLowerBound, brpcWorkerThreadNum));
+
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        int ioThreadNum = config.getInteger(ExecutionConfigKeys.RPC_IO_THREAD_NUM);
+        int workerThreadNum = config.getInteger(ExecutionConfigKeys.RPC_WORKER_THREAD_NUM);
+        if (ioThreadNum > availableProcessors) {
+            LOGGER.warn("rpc io thread num set {}, but available processors num {}",
+                ioThreadNum, availableProcessors);
+            ioThreadNum = availableProcessors;
+        }
+        if (workerThreadNum > availableProcessors) {
+            LOGGER.warn("rpc worker thread num set {}, but available processors num {}",
+                workerThreadNum, availableProcessors);
+            workerThreadNum = availableProcessors;
+        }
+        serverOptions.setIoThreadNum(ioThreadNum);
+        serverOptions.setWorkThreadNum(workerThreadNum);
         serverOptions.setIoEventType(BrpcConstants.IO_EVENT_NETTY_EPOLL);
-        int rpcBufferSize = config.getInteger(RPC_BUFFER_SIZE_BYTES, 256 * 1024);
+
+        int rpcBufferSize = config.getInteger(ExecutionConfigKeys.RPC_BUFFER_SIZE_BYTES);
         serverOptions.setSendBufferSize(rpcBufferSize);
         serverOptions.setReceiveBufferSize(rpcBufferSize);
 
-        LOGGER.info("Server Brpc io thread nums: {}, worker thread nums: {}, buffer size: {}",
-            serverOptions.getIoThreadNum(), serverOptions.getWorkThreadNum(), rpcBufferSize);
-
+        LOGGER.info("server options set: {}", serverOptions);
         return serverOptions;
     }
 }

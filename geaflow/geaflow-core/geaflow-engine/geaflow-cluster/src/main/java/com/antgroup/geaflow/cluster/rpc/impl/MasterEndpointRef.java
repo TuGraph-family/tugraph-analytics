@@ -22,13 +22,11 @@ import com.antgroup.geaflow.cluster.rpc.RpcUtil;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
-import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcClientOptions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.concurrent.CompletableFuture;
@@ -45,11 +43,6 @@ public class MasterEndpointRef extends AbstractRpcEndpointRef implements IMaster
     @Override
     protected void getRpcEndpoint() {
         this.masterEndpoint = BrpcProxy.getProxy(rpcClient, IAsyncMasterEndpoint.class);
-    }
-
-    @Override
-    protected RpcClientOptions getClientOptions() {
-        return DefaultClientOption.build();
     }
 
     public <T> Future<RegisterResponse> registerContainer(T info, RpcEndpointRef.RpcCallback<RegisterResponse> callback) {

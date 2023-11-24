@@ -19,12 +19,12 @@ import static com.antgroup.geaflow.metaserver.Constants.META_SERVER;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.utils.PortUtil;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.metaserver.api.NamespaceServiceHandler;
 import com.antgroup.geaflow.metaserver.api.ServiceHandlerFactory;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
 import com.antgroup.geaflow.metaserver.model.protocal.MetaRequest;
 import com.antgroup.geaflow.metaserver.model.protocal.MetaResponse;
 import com.antgroup.geaflow.metaserver.model.protocal.request.RequestPBConverter;

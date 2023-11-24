@@ -21,7 +21,7 @@ import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointRefID;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType;
 import com.antgroup.geaflow.cluster.rpc.RpcUtil;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
+import com.antgroup.geaflow.common.rpc.ConfigurableClientOption;
 import com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -47,7 +47,7 @@ public class SupervisorEndpointRef extends AbstractRpcEndpointRef implements ISu
 
     @Override
     protected RpcClientOptions getClientOptions() {
-        RpcClientOptions options = DefaultClientOption.build();
+        RpcClientOptions options = ConfigurableClientOption.build(configuration);
         options.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN);
         return options;
     }

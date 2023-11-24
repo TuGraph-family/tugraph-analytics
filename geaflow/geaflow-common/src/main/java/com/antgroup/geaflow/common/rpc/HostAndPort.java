@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.metaserver.model;
+package com.antgroup.geaflow.common.rpc;
 
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
