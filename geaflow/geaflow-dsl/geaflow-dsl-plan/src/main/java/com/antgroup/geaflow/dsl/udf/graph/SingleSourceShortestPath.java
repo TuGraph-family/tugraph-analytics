@@ -14,10 +14,8 @@
 
 package com.antgroup.geaflow.dsl.udf.graph;
 
-import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.common.type.primitive.BooleanType;
 import com.antgroup.geaflow.common.type.primitive.LongType;
-import com.antgroup.geaflow.common.type.primitive.StringType;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.algo.IncrementalAlgorithmUserFunction;
@@ -26,6 +24,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
@@ -112,8 +111,7 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
             if (distanceUpdated) {
                 long currentDistance = (long) newValue.get().getField(0, LongType.INSTANCE);
                 if (currentDistance < Long.MAX_VALUE) {
-                    context.take(ObjectRow.create(BinaryString.fromString(
-                        (String) TypeCastUtil.cast(vertex.getId(), StringType.INSTANCE)), currentDistance));
+                    context.take(ObjectRow.create(vertex.getId(), currentDistance));
                 }
                 context.updateVertexValue(ObjectRow.create(currentDistance, false));
             }
@@ -121,9 +119,9 @@ public class SingleSourceShortestPath implements AlgorithmUserFunction<Object, L
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
-            new TableField("id", StringType.INSTANCE, false),
+            new TableField("id", graphSchema.getIdType(), false),
             new TableField("distance", LongType.INSTANCE, false)
         );
     }

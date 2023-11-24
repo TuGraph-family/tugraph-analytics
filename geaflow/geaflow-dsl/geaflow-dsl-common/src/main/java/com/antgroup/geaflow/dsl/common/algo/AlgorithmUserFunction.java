@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.common.algo;
 
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import java.io.Serializable;
 import java.util.Iterator;
@@ -49,5 +50,5 @@ public interface AlgorithmUserFunction<K, M> extends Serializable {
     /**
      * Returns the output type for the function.
      */
-    StructType getOutputType();
+    StructType getOutputType(GraphSchema graphSchema);
 }

@@ -916,7 +916,7 @@ public class GQLToRelConverterTest {
             .checkRelNode(
                 "LogicalProject(vid=[$0], distance=[$1])\n"
                     + "  LogicalGraphAlgorithm(algo=[SingleSourceShortestPath], params=[[Integer]], "
-                    + "outputType=[RecordType:peek(VARCHAR id, BIGINT distance)])\n"
+                    + "outputType=[RecordType:peek(BIGINT id, BIGINT distance)])\n"
                     + "    LogicalGraphScan(table=[default.g0])\n"
             );
         PlanTester.build()
@@ -925,7 +925,7 @@ public class GQLToRelConverterTest {
             .checkRelNode(
                 "LogicalProject(vid=[$0], distance=[$1])\n"
                     + "  LogicalGraphAlgorithm(algo=[SingleSourceShortestPath], params=[[]], "
-                    + "outputType=[RecordType:peek(VARCHAR id, BIGINT distance)])\n"
+                    + "outputType=[RecordType:peek(BIGINT id, BIGINT distance)])\n"
                     + "    LogicalGraphScan(table=[default.g0])\n"
             );
     }

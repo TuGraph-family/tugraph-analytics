@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.udf.graph;
 
 import com.antgroup.geaflow.common.type.primitive.DoubleType;
-import com.antgroup.geaflow.common.type.primitive.LongType;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
@@ -23,6 +22,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
@@ -95,9 +95,9 @@ public class PageRank implements AlgorithmUserFunction<Object, Double> {
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
-            new TableField("id", LongType.INSTANCE, false),
+            new TableField("id", graphSchema.getIdType(), false),
             new TableField("pr", DoubleType.INSTANCE, false)
         );
     }

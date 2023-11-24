@@ -26,7 +26,7 @@ public class GQLValidateGraphAlgorithmTest {
             .gql(script1)
             .validate()
             .expectValidateType(
-                "RecordType(VARCHAR vid, BIGINT distance)");
+                "RecordType(BIGINT vid, BIGINT distance)");
 
         String script2 = "CALL SSSP() YIELD (vid, distance)\n" + "RETURN vid, distance";
 
@@ -34,6 +34,6 @@ public class GQLValidateGraphAlgorithmTest {
             .gql(script2)
             .validate()
             .expectValidateType(
-                "RecordType(VARCHAR vid, BIGINT distance)");
+                "RecordType(BIGINT vid, BIGINT distance)");
     }
 }

@@ -25,6 +25,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
@@ -246,7 +247,7 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
             new TableField("distance", DoubleType.INSTANCE, false)
         );

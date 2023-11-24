@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dsl.rel;
 
 import com.antgroup.geaflow.common.utils.ClassUtil;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
+import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import java.util.Arrays;
 import java.util.List;
@@ -68,7 +69,9 @@ public abstract class GraphAlgorithm extends SingleRel {
     public static RelDataType getFunctionOutputType(Class<? extends AlgorithmUserFunction> userFunctionClass,
                                                     RelDataTypeFactory typeFactory) {
         AlgorithmUserFunction<?, ?> userFunction = ClassUtil.newInstance(userFunctionClass);
-        return SqlTypeUtil.convertToRelType(userFunction.getOutputType(),
+        GQLJavaTypeFactory factory = (GQLJavaTypeFactory) typeFactory;
+        return SqlTypeUtil.convertToRelType(userFunction.getOutputType(
+                factory.getCurrentGraph().getGraphSchema(factory)),
             false, typeFactory);
     }
 
