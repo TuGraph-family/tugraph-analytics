@@ -145,7 +145,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
     private void restartSupervisorWorkerProcess(Map<Integer, String> containerIds, boolean isDriver) {
         List<Future> futures = new ArrayList<>();
         for (Map.Entry<Integer, String> entry : containerIds.entrySet()) {
-            futures.add(RpcClient.getInstance().restartSupervisorWorkerProcess(entry.getValue()));
+            futures.add(RpcClient.getInstance().restartSupervisorContainer(entry.getValue()));
         }
         Iterator<Entry<Integer, String>> iterator = containerIds.entrySet().iterator();
         List<Integer> lostWorkers = new ArrayList<>();

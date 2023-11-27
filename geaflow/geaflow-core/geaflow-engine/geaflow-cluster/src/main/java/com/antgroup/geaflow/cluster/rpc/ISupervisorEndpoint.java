@@ -15,10 +15,13 @@
 package com.antgroup.geaflow.cluster.rpc;
 
 import com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest;
+import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.google.protobuf.Empty;
 
 public interface ISupervisorEndpoint extends RpcEndpoint {
 
     Empty restart(RestartRequest request);
+
+    StatusResponse status(Empty empty);
 
 }

@@ -60,6 +60,7 @@ public abstract class AbstractContainer extends AbstractComponent {
     protected ResourceData buildResourceData() {
         ResourceData resourceData = super.buildResourceData();
         resourceData.setMetricPort(metricPort);
+        resourceData.setSupervisorPort(supervisorPort);
         return resourceData;
     }
 

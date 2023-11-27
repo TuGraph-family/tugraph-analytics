@@ -21,8 +21,8 @@ import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointRefID;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType;
 import com.antgroup.geaflow.cluster.rpc.RpcUtil;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.rpc.ConfigurableClientOption;
 import com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest;
+import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
@@ -34,10 +34,12 @@ public class SupervisorEndpointRef extends AbstractRpcEndpointRef implements ISu
 
     private IAsyncSupervisorEndpoint supervisorEndpoint;
     private final EndpointRefID refID;
+    private final Empty empty;
 
     public SupervisorEndpointRef(String host, int port, Configuration configuration) {
         super(host, port, configuration);
         this.refID = new EndpointRefID(host, port, EndpointType.SUPERVISOR);
+        this.empty = Empty.newBuilder().build();
     }
 
     @Override
@@ -47,7 +49,12 @@ public class SupervisorEndpointRef extends AbstractRpcEndpointRef implements ISu
 
     @Override
     protected RpcClientOptions getClientOptions() {
-        RpcClientOptions options = ConfigurableClientOption.build(configuration);
+        RpcClientOptions options = super.getClientOptions();
+        options.setGlobalThreadPoolSharing(false);
+        options.setMaxTotalConnections(2);
+        options.setMinIdleConnections(2);
+        options.setIoThreadNum(1);
+        options.setWorkThreadNum(2);
         options.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN);
         return options;
     }
@@ -65,6 +72,11 @@ public class SupervisorEndpointRef extends AbstractRpcEndpointRef implements ISu
             RpcEndpointRefFactory.getInstance().invalidateRef(refID);
         }
         return result;
+    }
+
+    @Override
+    public StatusResponse status() {
+        return supervisorEndpoint.status(empty);
     }
 
 }

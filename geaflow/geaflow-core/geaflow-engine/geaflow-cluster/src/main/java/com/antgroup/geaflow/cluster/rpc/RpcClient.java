@@ -54,6 +54,7 @@ import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryRequest;
 import com.antgroup.geaflow.rpc.proto.Metrics.MetricQueryResponse;
+import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.google.protobuf.Empty;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
@@ -172,9 +173,13 @@ public class RpcClient implements Serializable {
             METRIC);
     }
 
-    public Future restartSupervisorWorkerProcess(String id) {
+    public Future restartSupervisorContainer(String id) {
         ResourceData resourceData = haService.loadResource(id);
         return connectSupervisor(id).restart(resourceData.getProcessId(), new DefaultRpcCallbackImpl<>());
+    }
+
+    public StatusResponse querySupervisorStatus(String id) {
+        return connectSupervisor(id).status();
     }
 
     // Close endpoint connection.

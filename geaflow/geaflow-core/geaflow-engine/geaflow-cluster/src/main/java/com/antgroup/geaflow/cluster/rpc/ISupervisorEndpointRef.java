@@ -14,11 +14,14 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
+import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.google.protobuf.Empty;
 import java.util.concurrent.Future;
 
 public interface ISupervisorEndpointRef extends RpcEndpointRef {
 
     Future<Empty> restart(int pid, RpcCallback<Empty> callback);
+
+    StatusResponse status();
 
 }

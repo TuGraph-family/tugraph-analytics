@@ -14,20 +14,12 @@
 
 package com.antgroup.geaflow.rpc.proto;
 
-import static io.grpc.stub.ClientCalls.asyncUnaryCall;
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncClientStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncBidiStreamingCall;
-import static io.grpc.stub.ClientCalls.blockingUnaryCall;
-import static io.grpc.stub.ClientCalls.blockingServerStreamingCall;
-import static io.grpc.stub.ClientCalls.futureUnaryCall;
 import static io.grpc.MethodDescriptor.generateFullMethodName;
+import static io.grpc.stub.ClientCalls.asyncUnaryCall;
+import static io.grpc.stub.ClientCalls.blockingUnaryCall;
+import static io.grpc.stub.ClientCalls.futureUnaryCall;
 import static io.grpc.stub.ServerCalls.asyncUnaryCall;
-import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
-import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
 
 /**
  */
@@ -50,6 +42,15 @@ public class SupervisorServiceGrpc {
               "SupervisorService", "restart"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static final io.grpc.MethodDescriptor<com.google.protobuf.Empty,
+      com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse> METHOD_STATUS =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "SupervisorService", "status"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse.getDefaultInstance()));
 
   /**
    * Creates a new async stub that supports all call types for the service
@@ -85,6 +86,14 @@ public class SupervisorServiceGrpc {
      */
     public void restart(com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+
+    /**
+     * <pre>
+     * check status
+     * </pre>
+     */
+    public void status(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse> responseObserver);
   }
 
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1469")
@@ -94,6 +103,12 @@ public class SupervisorServiceGrpc {
     public void restart(com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_RESTART, responseObserver);
+    }
+
+    @java.lang.Override
+    public void status(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_STATUS, responseObserver);
     }
 
     @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
@@ -111,6 +126,13 @@ public class SupervisorServiceGrpc {
      * </pre>
      */
     public com.google.protobuf.Empty restart(com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest request);
+
+    /**
+     * <pre>
+     * check status
+     * </pre>
+     */
+    public com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse status(com.google.protobuf.Empty request);
   }
 
   /**
@@ -124,6 +146,14 @@ public class SupervisorServiceGrpc {
      */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> restart(
         com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest request);
+
+    /**
+     * <pre>
+     * check status
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse> status(
+        com.google.protobuf.Empty request);
   }
 
   public static class SupervisorServiceStub extends io.grpc.stub.AbstractStub<SupervisorServiceStub>
@@ -149,6 +179,13 @@ public class SupervisorServiceGrpc {
       asyncUnaryCall(
           getChannel().newCall(METHOD_RESTART, getCallOptions()), request, responseObserver);
     }
+
+    @java.lang.Override
+    public void status(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_STATUS, getCallOptions()), request, responseObserver);
+    }
   }
 
   public static class SupervisorServiceBlockingStub extends io.grpc.stub.AbstractStub<SupervisorServiceBlockingStub>
@@ -172,6 +209,12 @@ public class SupervisorServiceGrpc {
     public com.google.protobuf.Empty restart(com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_RESTART, getCallOptions(), request);
+    }
+
+    @java.lang.Override
+    public com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse status(com.google.protobuf.Empty request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_STATUS, getCallOptions(), request);
     }
   }
 
@@ -198,11 +241,19 @@ public class SupervisorServiceGrpc {
       return futureUnaryCall(
           getChannel().newCall(METHOD_RESTART, getCallOptions()), request);
     }
+
+    @java.lang.Override
+    public com.google.common.util.concurrent.ListenableFuture<com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse> status(
+        com.google.protobuf.Empty request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_STATUS, getCallOptions()), request);
+    }
   }
 
   @java.lang.Deprecated public static abstract class AbstractSupervisorService extends SupervisorServiceImplBase {}
 
   private static final int METHODID_RESTART = 0;
+  private static final int METHODID_STATUS = 1;
 
   private static class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -225,6 +276,10 @@ public class SupervisorServiceGrpc {
           serviceImpl.restart((com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest) request,
               (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
           break;
+        case METHODID_STATUS:
+          serviceImpl.status((com.google.protobuf.Empty) request,
+              (io.grpc.stub.StreamObserver<com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse>) responseObserver);
+          break;
         default:
           throw new AssertionError();
       }
@@ -243,7 +298,8 @@ public class SupervisorServiceGrpc {
 
   public static io.grpc.ServiceDescriptor getServiceDescriptor() {
     return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_RESTART);
+        METHOD_RESTART,
+        METHOD_STATUS);
   }
 
   @java.lang.Deprecated public static io.grpc.ServerServiceDefinition bindService(
@@ -256,6 +312,13 @@ public class SupervisorServiceGrpc {
               com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest,
               com.google.protobuf.Empty>(
                 serviceImpl, METHODID_RESTART)))
+        .addMethod(
+          METHOD_STATUS,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.protobuf.Empty,
+              com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse>(
+                serviceImpl, METHODID_STATUS)))
         .build();
   }
 }

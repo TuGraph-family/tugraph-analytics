@@ -76,6 +76,10 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(6121)
         .description("supervisor rpc port");
 
+    public static final ConfigKey SUPERVISOR_ENABLE = ConfigKeys.key("geaflow.supervisor.enable")
+        .defaultValue(false)
+        .description("enable supervisor or not");
+
     public static final ConfigKey RPC_ASYNC_THREADS = ConfigKeys
         .key("geaflow.rpc.async.thread.num")
         .defaultValue(2)
@@ -133,12 +137,12 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey RPC_MAX_TOTAL_CONNECTION_NUM = ConfigKeys
         .key("geaflow.rpc.max.total.connection.num")
-        .defaultValue(8)
+        .defaultValue(2)
         .description("rpc max total connection num");
 
     public static final ConfigKey RPC_MIN_IDLE_CONNECTION_NUM = ConfigKeys
         .key("geaflow.rpc.min.idle.connection.num")
-        .defaultValue(8)
+        .defaultValue(2)
         .description("rpc min idle connection num");
 
     public static final ConfigKey RPC_MAX_RETRY_TIMES = ConfigKeys

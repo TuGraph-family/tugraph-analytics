@@ -37,11 +37,19 @@ public class MetricServer implements Serializable {
     public MetricServer(Configuration configuration) {
         this.port = configuration.getInteger(METRIC_SERVICE_PORT);
         if (!configuration.getBoolean(RUN_LOCAL_MODE)) {
-            RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+            RpcServerOptions serverOptions = getServerOptions(configuration);
             RpcServiceImpl rpcService = new RpcServiceImpl(PortUtil.getPort(port), serverOptions);
             rpcService.addEndpoint(new MetricEndpoint(configuration));
             this.rpcService = rpcService;
         }
+    }
+
+    private RpcServerOptions getServerOptions(Configuration configuration) {
+        RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+        serverOptions.setGlobalThreadPoolSharing(false);
+        serverOptions.setIoThreadNum(1);
+        serverOptions.setWorkThreadNum(2);
+        return serverOptions;
     }
 
     public int start() {

@@ -11,8 +11,16 @@ service SupervisorService {
     rpc restart(RestartRequest) returns (google.protobuf.Empty) {
     }
 
+    // check status
+    rpc status(google.protobuf.Empty) returns (StatusResponse) {
+    }
+
 }
 
 message RestartRequest {
     int32 pid = 1;
+}
+
+message StatusResponse {
+    bool isAlive = 1;
 }
