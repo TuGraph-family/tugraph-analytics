@@ -15,13 +15,16 @@
 package com.antgroup.geaflow.cluster.heartbeat;
 
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_INITIAL_DELAY_MS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_INTERVAL_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_REPORT_EXPIRED_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_REPORT_INTERVAL_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_TIMEOUT_MS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_ENABLE;
 
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
+import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowHeartbeatException;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
@@ -30,6 +33,7 @@ import com.antgroup.geaflow.common.heartbeat.HeartbeatInfo.ContainerHeartbeatInf
 import com.antgroup.geaflow.common.utils.ExecutorUtil;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
+import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -52,13 +56,13 @@ public class HeartbeatManager implements Serializable {
     private final long heartbeatTimeoutMs;
     private final long heartbeatReportExpiredMs;
     private final Map<Integer, Heartbeat> senderMap;
-    private final IClusterManager clusterManager;
-
+    private final AbstractClusterManager clusterManager;
     private final ScheduledFuture<?> timeoutFuture;
     private final ScheduledFuture<?> reportFuture;
     private final ScheduledExecutorService checkTimeoutService;
     private final ScheduledExecutorService heartbeatReportService;
     private final GeaflowHeartbeatException timeoutException;
+    private ScheduledFuture<?> checkFuture;
 
     public HeartbeatManager(Configuration config, IClusterManager clusterManager) {
         this.senderMap = new ConcurrentHashMap<>();
@@ -73,14 +77,18 @@ public class HeartbeatManager implements Serializable {
         this.timeoutFuture = checkTimeoutService
             .scheduleAtFixedRate(this::checkHeartBeat, initDelayMs, heartbeatTimeoutMs,
                 TimeUnit.MILLISECONDS);
-
+        if (config.getBoolean(SUPERVISOR_ENABLE)) {
+            long heartbeatCheckMs = config.getInteger(HEARTBEAT_INTERVAL_MS);
+            this.checkFuture = checkTimeoutService.scheduleAtFixedRate(this::checkSupervisorHealth,
+                initDelayMs, heartbeatCheckMs, TimeUnit.MILLISECONDS);
+        }
         this.heartbeatReportService = new ScheduledThreadPoolExecutor(1,
             ThreadUtil.namedThreadFactory(true, "heartbeat-report"));
         this.reportFuture = heartbeatReportService
             .scheduleAtFixedRate(this::reportHeartbeat, heartbeatReportMs, heartbeatReportMs,
                 TimeUnit.MILLISECONDS);
 
-        this.clusterManager = clusterManager;
+        this.clusterManager = (AbstractClusterManager) clusterManager;
         this.timeoutException = new GeaflowHeartbeatException();
     }
 
@@ -90,12 +98,11 @@ public class HeartbeatManager implements Serializable {
         return HeartbeatResponse.newBuilder().setSuccess(true).setRegistered(registered).build();
     }
 
-    public void checkHeartBeat() {
+    private void checkHeartBeat() {
         try {
             long checkTime = System.currentTimeMillis();
-            AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
-            checkTimeout(cm.getContainerIds(), checkTime);
-            checkTimeout(cm.getDriverIds(), checkTime);
+            checkTimeout(clusterManager.getContainerIds(), checkTime);
+            checkTimeout(clusterManager.getDriverIds(), checkTime);
         } catch (Throwable e) {
             LOGGER.warn("Catch unexpect error", e);
         }
@@ -107,12 +114,12 @@ public class HeartbeatManager implements Serializable {
             Heartbeat heartbeat = senderMap.get(componentId);
             if (heartbeat == null) {
                 if (isRegistered(componentId)) {
-                    LOGGER.warn("{} is registered but heartbeat not received", entry.getValue());
+                    LOGGER.warn("{} heartbeat is not received", entry.getValue());
                 } else {
                     LOGGER.warn("{} is not registered", entry.getValue());
                 }
             } else if (checkTime > heartbeat.getTimestamp() + heartbeatTimeoutMs) {
-                LOGGER.error("{} heartbeat missing", entry.getValue());
+                LOGGER.error("{} heartbeat is missing", entry.getValue());
                 clusterManager.doFailover(componentId, timeoutException);
             }
         }
@@ -126,17 +133,41 @@ public class HeartbeatManager implements Serializable {
         }
     }
 
+    private void checkSupervisorHealth() {
+        try {
+            checkSupervisorHealth(clusterManager.getContainerIds());
+            checkSupervisorHealth(clusterManager.getDriverIds());
+        } catch (Throwable e) {
+            LOGGER.warn("Check container healthy error", e);
+        }
+    }
+
+    private void checkSupervisorHealth(Map<Integer, String> map) {
+        for (Map.Entry<Integer, String> entry : map.entrySet()) {
+            String name = entry.getValue();
+            try {
+                StatusResponse response = RpcClient.getInstance().querySupervisorStatus(name);
+                if (!response.getIsAlive()) {
+                    LOGGER.info("Found {} is not alive and do failover", name);
+                    clusterManager.doFailover(entry.getKey(), timeoutException);
+                }
+            } catch (Throwable e) {
+                LOGGER.error("Catch exception from {}: {}", name, e.getClass(), e);
+                clusterManager.doFailover(entry.getKey(), e);
+            }
+        }
+    }
+
     protected boolean isRegistered(int componentId) {
-        AbstractClusterManager cm = (AbstractClusterManager) clusterManager;
+        AbstractClusterManager cm = clusterManager;
         return cm.getContainerInfos().containsKey(componentId) || cm.getDriverInfos()
             .containsKey(componentId);
     }
 
     protected HeartbeatInfo buildHeartbeatInfo() {
         Map<Integer, Heartbeat> heartbeatMap = getHeartBeatMap();
-        Map<Integer, ContainerInfo> containerMap = ((AbstractClusterManager) clusterManager).getContainerInfos();
-        Map<Integer, String> containerIndex =
-            ((AbstractClusterManager) clusterManager).getContainerIds();
+        Map<Integer, ContainerInfo> containerMap = clusterManager.getContainerInfos();
+        Map<Integer, String> containerIndex = clusterManager.getContainerIds();
         int totalContainerNum = containerIndex.size();
         List<ContainerHeartbeatInfo> containerList = new ArrayList<>();
         int activeContainers = 0;
@@ -168,13 +199,12 @@ public class HeartbeatManager implements Serializable {
     }
 
     public Set<Integer> getActiveContainerIds() {
-        Map<Integer, String> containerIdMap =
-            ((AbstractClusterManager) clusterManager).getContainerIds();
+        Map<Integer, String> containerIdMap = clusterManager.getContainerIds();
         return getActiveComponentIds(containerIdMap);
     }
 
     public Set<Integer> getActiveDriverIds() {
-        Map<Integer, String> driverIdMap = ((AbstractClusterManager) clusterManager).getDriverIds();
+        Map<Integer, String> driverIdMap = clusterManager.getDriverIds();
         return getActiveComponentIds(driverIdMap);
     }
 
@@ -194,6 +224,9 @@ public class HeartbeatManager implements Serializable {
     public void close() {
         if (timeoutFuture != null) {
             timeoutFuture.cancel(true);
+        }
+        if (checkFuture != null) {
+            checkFuture.cancel(true);
         }
         if (checkTimeoutService != null) {
             ExecutorUtil.shutdown(checkTimeoutService);

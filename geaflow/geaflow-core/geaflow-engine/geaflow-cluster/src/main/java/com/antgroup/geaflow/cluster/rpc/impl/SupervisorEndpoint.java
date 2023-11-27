@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.clustermanager.Supervisor;
 import com.antgroup.geaflow.cluster.rpc.ISupervisorEndpoint;
 import com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest;
+import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.google.protobuf.Empty;
 
 public class SupervisorEndpoint implements ISupervisorEndpoint {
@@ -33,6 +34,12 @@ public class SupervisorEndpoint implements ISupervisorEndpoint {
     public Empty restart(RestartRequest request) {
         supervisor.restartWorkerProcess(request.getPid());
         return empty;
+    }
+
+    @Override
+    public StatusResponse status(Empty empty) {
+        boolean isAlive = supervisor.isWorkerProcessAlive();
+        return StatusResponse.newBuilder().setIsAlive(isAlive).build();
     }
 
 }

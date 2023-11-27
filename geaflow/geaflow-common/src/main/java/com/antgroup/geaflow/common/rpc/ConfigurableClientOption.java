@@ -50,21 +50,12 @@ public class ConfigurableClientOption {
         boolean threadSharing = config.getBoolean(ExecutionConfigKeys.RPC_THREADPOOL_SHARING_ENABLE);
         clientOption.setGlobalThreadPoolSharing(threadSharing);
 
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
         int ioThreadNum = config.getInteger(ExecutionConfigKeys.RPC_IO_THREAD_NUM);
         int workerThreadNum = config.getInteger(ExecutionConfigKeys.RPC_WORKER_THREAD_NUM);
-        if (ioThreadNum > availableProcessors) {
-            LOGGER.warn("rpc io thread num set {}, but available processors num {}",
-                ioThreadNum, availableProcessors);
-            ioThreadNum = availableProcessors;
-        }
-        if (workerThreadNum > availableProcessors) {
-            LOGGER.warn("rpc worker thread num set {}, but available processors num {}",
-                workerThreadNum, availableProcessors);
-            workerThreadNum = availableProcessors;
-        }
-        clientOption.setIoThreadNum(ioThreadNum);
-        clientOption.setWorkThreadNum(workerThreadNum);
+        int defaultThreads = Runtime.getRuntime().availableProcessors();
+
+        clientOption.setIoThreadNum(Math.max(ioThreadNum, defaultThreads));
+        clientOption.setWorkThreadNum(Math.max(workerThreadNum, defaultThreads));
 
         clientOption.setIoEventType(BrpcConstants.IO_EVENT_NETTY_EPOLL);
         int rpcBufferSize = config.getInteger(ExecutionConfigKeys.RPC_BUFFER_SIZE_BYTES);

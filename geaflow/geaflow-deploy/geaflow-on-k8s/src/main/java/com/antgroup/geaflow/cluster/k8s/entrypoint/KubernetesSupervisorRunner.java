@@ -22,7 +22,6 @@ import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
-import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,6 @@ public class KubernetesSupervisorRunner {
     public KubernetesSupervisorRunner(Configuration configuration, String startCommand,
                                       List<String> commands, boolean autoRestart) {
         this.supervisor = new Supervisor(startCommand, commands, configuration, autoRestart);
-        StatsCollectorFactory.init(configuration);
     }
 
     public void run() {

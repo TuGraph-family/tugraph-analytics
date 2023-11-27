@@ -27,6 +27,7 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesDriverParam.DRIV
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam.MASTER_LOG_SUFFIX;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.FO_STRATEGY;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_ENABLE;
 
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
@@ -111,6 +112,7 @@ public class KubernetesClusterManager extends AbstractClusterManager {
     public void init(ClusterContext context, GeaflowKubeClient kubernetesClient) {
         super.init(context);
         this.config = context.getConfig();
+        this.config.put(SUPERVISOR_ENABLE, Boolean.TRUE.toString());
         this.kubernetesClient = kubernetesClient;
         this.dockerNetworkType = KubernetesConfig.getDockerNetworkType(config);
         this.serviceExposedType = KubernetesConfig.getServiceExposedType(config);

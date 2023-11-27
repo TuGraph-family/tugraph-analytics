@@ -26,7 +26,6 @@ import com.antgroup.geaflow.stats.model.MetricCache;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -37,7 +36,6 @@ public class MetricFetcher implements Serializable {
     private static final int DEFAULT_TIMEOUT = 10000;
 
     private final Map<Integer, String> driverIds;
-    private final ExecutorService executorService;
     private final MetricCache metricCache;
     private final int updateIntervalMs;
     private long lastUpdateTime;
@@ -48,7 +46,6 @@ public class MetricFetcher implements Serializable {
         this.metricCache = metricCache;
         this.updateIntervalMs = DEFAULT_TIMEOUT;
         RpcClient.init(configuration);
-        executorService = RpcClient.getInstance().getExecutor();
     }
 
     public synchronized void update() {
