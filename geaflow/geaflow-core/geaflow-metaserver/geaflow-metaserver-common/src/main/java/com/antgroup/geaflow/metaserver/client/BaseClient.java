@@ -18,9 +18,10 @@ import static com.antgroup.geaflow.metaserver.Constants.META_SERVER;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.rpc.ConfigurableClientOption;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.utils.RetryCommand;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
 import com.antgroup.geaflow.metaserver.model.protocal.MetaRequest;
 import com.antgroup.geaflow.metaserver.model.protocal.request.RequestPBConverter;
 import com.antgroup.geaflow.metaserver.model.protocal.response.ResponsePBConverter;
@@ -45,11 +46,13 @@ public abstract class BaseClient implements ServiceListener {
     protected RpcClient rpcClient;
     protected MetaServerService metaServerService;
     private HostAndPort currentServiceInfo;
+    protected Configuration configuration;
 
     public BaseClient() {
     }
 
     public BaseClient(Configuration configuration) {
+        this.configuration = configuration;
         ServiceBuilder serviceBuilder = ServiceBuilderFactory.build(
             configuration.getString(ExecutionConfigKeys.SERVICE_DISCOVERY_TYPE));
         serviceConsumer = serviceBuilder.buildConsumer(configuration);
@@ -80,7 +83,7 @@ public abstract class BaseClient implements ServiceListener {
         LOGGER.info("connect to meta server {}", serviceInfo);
 
         rpcClient = new RpcClient(new Endpoint(serviceInfo.getHost(), serviceInfo.getPort()),
-            DefaultClientOption.build());
+            ConfigurableClientOption.build(configuration));
         metaServerService = BrpcProxy.getProxy(rpcClient, MetaServerService.class);
         currentServiceInfo = serviceInfo;
     }

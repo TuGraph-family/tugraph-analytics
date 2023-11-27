@@ -20,13 +20,11 @@ import com.antgroup.geaflow.cluster.rpc.IDriverEndpointRef;
 import com.antgroup.geaflow.cluster.rpc.RpcUtil;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
-import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineReq;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcClientOptions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.concurrent.CompletableFuture;
@@ -46,11 +44,6 @@ public class DriverEndpointRef extends AbstractRpcEndpointRef implements IDriver
     @Override
     protected void getRpcEndpoint() {
         this.driverEndpoint = BrpcProxy.getProxy(rpcClient, IAsyncDriverEndpoint.class);
-    }
-
-    @Override
-    protected RpcClientOptions getClientOptions() {
-        return DefaultClientOption.build();
     }
 
     @Override

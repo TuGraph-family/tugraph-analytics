@@ -16,8 +16,7 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
-import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
+import com.antgroup.geaflow.common.rpc.ConfigurableClientOption;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.Endpoint;
@@ -27,20 +26,20 @@ public abstract class AbstractRpcEndpointRef implements RpcEndpointRef {
     protected RpcClient rpcClient;
     protected final String host;
     protected final int port;
-    protected final int timeoutMs;
+    protected final Configuration configuration;
 
     public AbstractRpcEndpointRef(String host, int port, Configuration configuration) {
         this.host = host;
         this.port = port;
-        this.timeoutMs = configuration.getInteger(ExecutionConfigKeys.RPC_CONNECT_TIMEOUT_MS);
+        this.configuration = configuration;
         this.rpcClient = new RpcClient(new Endpoint(host, port), getClientOptions());
         getRpcEndpoint();
     }
 
     protected abstract void getRpcEndpoint();
 
-    protected RpcClientOptions getClientOptions() {
-        return DefaultClientOption.build();
+    protected synchronized RpcClientOptions getClientOptions() {
+        return ConfigurableClientOption.build(configuration);
     }
 
     @Override
@@ -50,7 +49,7 @@ public abstract class AbstractRpcEndpointRef implements RpcEndpointRef {
 
     @Override
     public void close() {
-        if (rpcClient.isShutdown()) {
+        if (!rpcClient.isShutdown()) {
             this.rpcClient.stop();
         }
     }

@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.metaserver.model.protocal;
 
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.metaserver.model.protocal.response.DefaultResponse;
 import com.antgroup.geaflow.metaserver.model.protocal.response.ResponsePBConverter;
 import com.antgroup.geaflow.metaserver.model.protocal.response.ServiceResponse;

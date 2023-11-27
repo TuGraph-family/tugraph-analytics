@@ -27,7 +27,7 @@ import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.metaserver.client.MetaServerQueryClient;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.metaserver.service.NamespaceType;
 import com.antgroup.geaflow.rpc.proto.Analytics.QueryRequest;
 import com.antgroup.geaflow.rpc.proto.Analytics.QueryResult;

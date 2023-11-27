@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.analytics.service.client;
 
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import java.util.List;
 
 public class AnalyticsServiceInfo {

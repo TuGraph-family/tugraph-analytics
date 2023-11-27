@@ -24,10 +24,8 @@ import com.antgroup.geaflow.cluster.rpc.IResourceManagerEndpoint;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.antgroup.geaflow.rpc.proto.Resource;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcClientOptions;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,11 +41,6 @@ public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implement
     @Override
     protected void getRpcEndpoint() {
         this.resourceManagerEndpoint = BrpcProxy.getProxy(rpcClient, IResourceManagerEndpoint.class);
-    }
-
-    @Override
-    protected RpcClientOptions getClientOptions() {
-        return DefaultClientOption.build();
     }
 
     @Override

@@ -19,12 +19,10 @@ import com.antgroup.geaflow.cluster.rpc.IAsyncContainerEndpoint;
 import com.antgroup.geaflow.cluster.rpc.IContainerEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
-import com.antgroup.geaflow.metaserver.client.DefaultClientOption;
 import com.antgroup.geaflow.rpc.proto.Container;
 import com.antgroup.geaflow.rpc.proto.Container.Request;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcClientOptions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.concurrent.CompletableFuture;
@@ -41,11 +39,6 @@ public class ContainerEndpointRef extends AbstractRpcEndpointRef implements ICon
     @Override
     protected void getRpcEndpoint() {
         this.containerEndpoint = BrpcProxy.getProxy(rpcClient, IAsyncContainerEndpoint.class);
-    }
-
-    @Override
-    protected RpcClientOptions getClientOptions() {
-        return DefaultClientOption.build();
     }
 
     @Override

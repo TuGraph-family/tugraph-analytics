@@ -16,7 +16,7 @@ package com.antgroup.geaflow.metaserver.client;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.metaserver.model.protocal.request.QueryAllServiceRequest;
 import com.antgroup.geaflow.metaserver.model.protocal.response.ServiceResponse;
 import com.antgroup.geaflow.metaserver.service.NamespaceType;

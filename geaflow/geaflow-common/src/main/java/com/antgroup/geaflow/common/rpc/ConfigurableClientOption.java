@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.common.rpc;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
@@ -25,72 +26,79 @@ import org.slf4j.LoggerFactory;
 
 public class ConfigurableClientOption {
 
-    public static final String BRPC_CONNECTION_NUMS = "brpc.connection.nums";
-    public static final String BRPC_CHANNEL_TYPE = "brpc.channel.type";
-    public static final String BRPC_CONNECTION_TIMEOUT_MS = "brpc.connect.timeout.ms";
-    public static final String BRPC_IO_THREAD_NUM = "brpc.io.thread.num";
-    public static final String BRPC_WORKER_THREAD_NUM = "brpc.worker.thread.num";
-    public static final String BRPC_ENABLE_THREADPOOL_SHARING = "brpc.enable.threadpool.sharing";
-    public static final String CONNECTION_KEEP_ALIVE_TIME_SEC = "brpc.connection.keep.alive.time"
-        + ".sec";
-    public static final String RPC_BUFFER_SIZE_BYTES = "brpc.buffer.size.bytes";
+    private static final String SHORT_CONNECTION = "short_connection";
+    private static final String SINGLE_CONNECTION = "single_connection";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurableClientOption.class);
 
     public static RpcClientOptions build(Configuration config) {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
-        clientOption.setMaxTryTimes(3);
+        int maxRetryTimes = config.getInteger(ExecutionConfigKeys.RPC_MAX_RETRY_TIMES);
+        clientOption.setMaxTryTimes(maxRetryTimes);
 
-        int brpcConnections = config.getInteger(BRPC_CONNECTION_NUMS, 2);
         // only works for pooled connection
-        clientOption.setMaxTotalConnections(brpcConnections);
+        int maxTotalConnectionNum = config.getInteger(ExecutionConfigKeys.RPC_MAX_TOTAL_CONNECTION_NUM);
+        clientOption.setMaxTotalConnections(maxTotalConnectionNum);
         // only works for pooled connection
-        clientOption.setMinIdleConnections(brpcConnections);
-        LOGGER.info("Brpc Connection nums: {}", brpcConnections);
+        int minIdleConnectionNum = config.getInteger(ExecutionConfigKeys.RPC_MIN_IDLE_CONNECTION_NUM);
+        clientOption.setMinIdleConnections(minIdleConnectionNum);
 
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
-        // keepAliveTime should be at least 1 minute.
-        clientOption.setKeepAliveTime(
-            Math.max(config.getInteger(CONNECTION_KEEP_ALIVE_TIME_SEC, 0), 60));
-
-        boolean threadSharing = true;
-        if (config.contains(BRPC_ENABLE_THREADPOOL_SHARING)) {
-            threadSharing = Boolean.parseBoolean(config.getString(BRPC_ENABLE_THREADPOOL_SHARING));
-        }
+        boolean threadSharing = config.getBoolean(ExecutionConfigKeys.RPC_THREADPOOL_SHARING_ENABLE);
         clientOption.setGlobalThreadPoolSharing(threadSharing);
-        int threadLowerBound = Math.max(8, Runtime.getRuntime().availableProcessors());
-        int brpcIoThreadNum = config.getInteger(BRPC_IO_THREAD_NUM,
-            Runtime.getRuntime().availableProcessors());
-        int brpcWorkerThreadNum = config.getInteger(BRPC_WORKER_THREAD_NUM,
-            Runtime.getRuntime().availableProcessors());
-        clientOption.setIoThreadNum(Math.max(threadLowerBound, brpcIoThreadNum));
-        clientOption.setWorkThreadNum(Math.max(threadLowerBound, brpcWorkerThreadNum));
+
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        int ioThreadNum = config.getInteger(ExecutionConfigKeys.RPC_IO_THREAD_NUM);
+        int workerThreadNum = config.getInteger(ExecutionConfigKeys.RPC_WORKER_THREAD_NUM);
+        if (ioThreadNum > availableProcessors) {
+            LOGGER.warn("rpc io thread num set {}, but available processors num {}",
+                ioThreadNum, availableProcessors);
+            ioThreadNum = availableProcessors;
+        }
+        if (workerThreadNum > availableProcessors) {
+            LOGGER.warn("rpc worker thread num set {}, but available processors num {}",
+                workerThreadNum, availableProcessors);
+            workerThreadNum = availableProcessors;
+        }
+        clientOption.setIoThreadNum(ioThreadNum);
+        clientOption.setWorkThreadNum(workerThreadNum);
+
         clientOption.setIoEventType(BrpcConstants.IO_EVENT_NETTY_EPOLL);
-        int rpcBufferSize = config.getInteger(RPC_BUFFER_SIZE_BYTES, 256 * 1024);
+        int rpcBufferSize = config.getInteger(ExecutionConfigKeys.RPC_BUFFER_SIZE_BYTES);
         clientOption.setSendBufferSize(rpcBufferSize);
         clientOption.setReceiveBufferSize(rpcBufferSize);
 
-        LOGGER.info("Brpc io thread nums: {}, worker thread nums: {}, buffer size: {}",
-            clientOption.getIoThreadNum(), clientOption.getWorkThreadNum(), rpcBufferSize);
-
-        // SINGLE_CONNECTION is default value if not config the channel type
-        int brpcChannelType = config.getInteger(BRPC_CHANNEL_TYPE, 1);
-        if (0 == brpcChannelType) {
-            clientOption.setChannelType(ChannelType.POOLED_CONNECTION);
-        } else if (2 == brpcChannelType) {
-            clientOption.setChannelType(ChannelType.SHORT_CONNECTION);
-        } else {
-            clientOption.setChannelType(ChannelType.SINGLE_CONNECTION);
+        ChannelType channelType = getChannelType(config);
+        if (ChannelType.SINGLE_CONNECTION.equals(channelType)) {
+            // Only SINGLE_CONNECTION type needs to be set keepAliveTime.
+            int keepAliveTime = config.getInteger(ExecutionConfigKeys.RPC_KEEP_ALIVE_TIME_SEC);
+            clientOption.setKeepAliveTime(keepAliveTime);
         }
+        clientOption.setChannelType(channelType);
 
-        int timeoutMillis = config.getInteger(BRPC_CONNECTION_TIMEOUT_MS, 20000);
-        clientOption.setWriteTimeoutMillis(timeoutMillis);
-        clientOption.setReadTimeoutMillis(timeoutMillis);
-        clientOption.setConnectTimeoutMillis(timeoutMillis * 2);
+        int writeTimeout = config.getInteger(ExecutionConfigKeys.RPC_WRITE_TIMEOUT_MS);
+        clientOption.setWriteTimeoutMillis(writeTimeout);
+        int readTimeout = config.getInteger(ExecutionConfigKeys.RPC_READ_TIMEOUT_MS);
+        clientOption.setReadTimeoutMillis(readTimeout);
+        int connectTimeout = config.getInteger(ExecutionConfigKeys.RPC_CONNECT_TIMEOUT_MS);
+        clientOption.setConnectTimeoutMillis(connectTimeout);
 
-        LOGGER.info("brpc time out {}ms", timeoutMillis);
+        LOGGER.info("rpc client options set: {}", clientOption);
         return clientOption;
     }
+
+    private static ChannelType getChannelType(Configuration config) {
+        String channelType = config.getString(ExecutionConfigKeys.RPC_CHANNEL_CONNECT_TYPE);
+        if (channelType.equalsIgnoreCase(SHORT_CONNECTION)) {
+            return ChannelType.SHORT_CONNECTION;
+        } else if (channelType.equalsIgnoreCase(SINGLE_CONNECTION)) {
+            return ChannelType.SINGLE_CONNECTION;
+        } else {
+            return ChannelType.POOLED_CONNECTION;
+        }
+    }
+
 }

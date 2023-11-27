@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.metaserver.model.protocal.response;
 
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import java.util.List;
 
 public class ServiceResponse extends DefaultResponse {

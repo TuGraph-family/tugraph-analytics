@@ -16,7 +16,7 @@ package com.antgroup.geaflow.analytics.service.client;
 
 import com.antgroup.geaflow.analytics.service.client.jdbc.HttpQueryChannel;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;

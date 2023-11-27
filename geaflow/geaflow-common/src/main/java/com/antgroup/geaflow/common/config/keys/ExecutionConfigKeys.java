@@ -121,6 +121,61 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(5000)
         .description("rpc connect timeout");
 
+    public static final ConfigKey RPC_READ_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.rpc.read.timeout.ms")
+        .defaultValue(Integer.MAX_VALUE)
+        .description("rpc read timeout");
+
+    public static final ConfigKey RPC_WRITE_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.rpc.write.timeout.ms")
+        .defaultValue(Integer.MAX_VALUE)
+        .description("rpc write timeout");
+
+    public static final ConfigKey RPC_MAX_TOTAL_CONNECTION_NUM = ConfigKeys
+        .key("geaflow.rpc.max.total.connection.num")
+        .defaultValue(8)
+        .description("rpc max total connection num");
+
+    public static final ConfigKey RPC_MIN_IDLE_CONNECTION_NUM = ConfigKeys
+        .key("geaflow.rpc.min.idle.connection.num")
+        .defaultValue(8)
+        .description("rpc min idle connection num");
+
+    public static final ConfigKey RPC_MAX_RETRY_TIMES = ConfigKeys
+        .key("geaflow.rpc.max.retry.times")
+        .defaultValue(3)
+        .description("rpc max retry times");
+
+    public static final ConfigKey RPC_KEEP_ALIVE_TIME_SEC = ConfigKeys
+        .key("geaflow.rpc.keep.alive.time.sec")
+        .defaultValue(0)
+        .description("rpc keep alive time sec");
+
+    public static final ConfigKey RPC_THREADPOOL_SHARING_ENABLE = ConfigKeys
+        .key("geaflow.rpc.threadpool.sharing.enable")
+        .defaultValue(true)
+        .description("rpc threadpool sharing enable");
+
+    public static final ConfigKey RPC_IO_THREAD_NUM = ConfigKeys
+        .key("geaflow.rpc.io.thread.num")
+        .defaultValue(8)
+        .description("rpc io thread num");
+
+    public static final ConfigKey RPC_WORKER_THREAD_NUM = ConfigKeys
+        .key("geaflow.rpc.worker.thread.num")
+        .defaultValue(8)
+        .description("rpc worker thread num");
+
+    public static final ConfigKey RPC_BUFFER_SIZE_BYTES = ConfigKeys
+        .key("geaflow.rpc.buffer.size.bytes")
+        .defaultValue(256 * 1024)
+        .description("rpc buffer size bytes");
+
+    public static final ConfigKey RPC_CHANNEL_CONNECT_TYPE = ConfigKeys
+        .key("geaflow.rpc.channel.connect.type")
+        .defaultValue("pooled_connection")
+        .description("rpc channel connect type, e.g. [pooled_connection, short_connection, single_connection]");
+
     // ------------------------------------------------------------------------
     // cluster
     // ------------------------------------------------------------------------

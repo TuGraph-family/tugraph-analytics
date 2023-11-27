@@ -16,7 +16,7 @@ package com.antgroup.geaflow.analytics.service.client;
 
 import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsClientConfigKeys;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.metaserver.model.HostAndPort;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import java.util.List;
 
 public abstract class AbstractQueryExecutor {
