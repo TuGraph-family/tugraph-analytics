@@ -55,10 +55,10 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-store-rocksdb</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.antgroup.tugraph</groupId>-->
-<!--            <artifactId>geaflow-store-cstore</artifactId>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-store-cstore</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-view-meta</artifactId>
