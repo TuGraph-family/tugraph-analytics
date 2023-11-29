@@ -58,7 +58,7 @@ public class RpcAnalyticsServiceServer extends AbstractAnalyticsServiceServer {
                 LOGGER.warn("*** Geaflow analytics server shutdown.");
             }));
         } catch (Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+            LOGGER.error("errorRpc: " + t.getMessage(), t);
             throw new GeaflowRuntimeException(t);
         }
         waitForExecuted();

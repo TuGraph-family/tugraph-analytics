@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.metaserver.api;
 
+import com.antgroup.geaflow.common.mode.JobMode;
 import com.antgroup.geaflow.metaserver.MetaServerContext;
 import com.antgroup.geaflow.metaserver.local.DefaultServiceHandler;
 import com.antgroup.geaflow.metaserver.service.NamespaceType;
@@ -29,14 +30,17 @@ public class ServiceHandlerFactory {
 
     public static synchronized Map<NamespaceType, NamespaceServiceHandler> load(
         MetaServerContext context) {
+        JobMode jobMode = JobMode.getJobMode(context.getConfiguration());
 
         Map<NamespaceType, NamespaceServiceHandler> map = Maps.newConcurrentMap();
         ServiceLoader<NamespaceServiceHandler> serviceLoader = ServiceLoader.load(
             NamespaceServiceHandler.class);
         for (NamespaceServiceHandler handler : serviceLoader) {
-            LOGGER.info("{} register service handler", handler.namespaceType());
-            handler.init(context);
-            map.put(handler.namespaceType(), handler);
+            if (jobMode.name().equals(handler.namespaceType().name())) {
+                LOGGER.info("{} register service handler", handler.namespaceType());
+                handler.init(context);
+                map.put(handler.namespaceType(), handler);
+            }
         }
         DefaultServiceHandler defaultServiceHandler = new DefaultServiceHandler();
         defaultServiceHandler.init(context);

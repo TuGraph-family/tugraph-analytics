@@ -17,11 +17,12 @@ package com.antgroup.geaflow.console.biz.shared;
 
 import com.antgroup.geaflow.console.biz.shared.view.JobView;
 import com.antgroup.geaflow.console.common.dal.model.JobSearch;
+import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface JobManager extends IdManager<JobView, JobSearch> {
 
-    String create(JobView jobView, MultipartFile functionFile, String fileId);
+    String create(JobView jobView, MultipartFile functionFile, String fileId, List<String> graphIds);
 
     boolean update(String jobId, JobView jobView, MultipartFile jarFile, String fileId);
 }

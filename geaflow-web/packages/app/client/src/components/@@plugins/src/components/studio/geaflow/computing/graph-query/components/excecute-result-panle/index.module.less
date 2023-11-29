@@ -1,0 +1,94 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-excecute-history {
+  position: relative;
+  background-color: #fff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  &__full {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000000;
+  }
+
+  &-actions {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    color: rgba(106, 107, 113, 1);
+    height: 36px;
+    padding: 0 24px;
+    background-image: linear-gradient(180deg, #fbfbff 0%, #f3f5ff 100%);
+    z-index: 10;
+
+    .@{perfix-cls}-time {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+
+      &::after {
+        content: "";
+        display: block;
+        height: 12px;
+        width: 1px;
+        background-color: #dddddf;
+        margin-left: 12px;
+        margin-right: 8px;
+      }
+    }
+
+    :global {
+      .anticon {
+        font-size: 24px;
+        color: rgba(106, 107, 113, 1);
+      }
+
+      .anticon + .anticon {
+        margin-left: 8px;
+      }
+    }
+  }
+
+  &-table,
+  &-plan {
+    padding: 24px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  &-content {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .@{perfix-cls}-result-tab {
+    display: flex;
+    align-items: center;
+  }
+
+  :global {
+    .@{perfix-cls}-text-tabs {
+      padding-right: 260px;
+
+      &-item {
+        min-width: 95px;
+        padding: 6px 20px;
+        height: 36px;
+        box-sizing: border-box;
+
+        &__active {
+          font-weight: normal;
+          color: rgba(54, 55, 64, 1);
+        }
+      }
+    }
+  }
+}

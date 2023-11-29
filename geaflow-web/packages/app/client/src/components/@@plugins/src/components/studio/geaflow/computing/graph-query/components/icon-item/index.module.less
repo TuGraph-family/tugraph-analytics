@@ -1,0 +1,34 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-icon-item,
+.@{perfix-cls}-icon-item-disabled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &-name {
+    font-size: 12px;
+    line-height: 20px;
+    white-space: nowrap;
+  }
+}
+
+.@{perfix-cls}-icon-item {
+  color: #6a6b71;
+
+  &__horizontal {
+    flex-direction: row;
+
+    :global {
+      .anticon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.@{perfix-cls}-icon-item-disabled {
+  color: rgba(0, 10, 26, 0.26);
+  cursor: not-allowed;
+}

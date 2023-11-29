@@ -24,6 +24,7 @@ import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.algo.IncrementalAlgorithmUserFunction;
@@ -117,8 +118,8 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
     }
 
     @Override
-    public List<Path> take() {
-        return ArrayUtil.castList(getPathTable().take());
+    public List<Path> take(IType<?> type) {
+        return ArrayUtil.castList(getPathTable().take(logicalPlanSet.getMainPlan().getOutputPathSchema()));
     }
 
     @Override

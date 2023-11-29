@@ -1,0 +1,27 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-graph-canvas-tools {
+  display: flex;
+  background-color: #fff;
+  padding: 5px 9px;
+  border-radius: 6px;
+  align-items: center;
+
+  .@{perfix-cls}-divider {
+    height: 16px;
+    width: 1px;
+    background-color: #dddddf;
+    margin-left: 9px;
+  }
+
+  &-item {
+    cursor: pointer;
+
+    &:not(:first-child) {
+      padding-left: 9px;
+    }
+
+    &:hover {
+      color: #1650ff;
+    }
+  }
+}

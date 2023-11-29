@@ -76,4 +76,13 @@ public class GeaflowGraph extends GeaflowData {
         super.validate();
         Preconditions.checkNotNull(pluginConfig, "pluginConfig is null");
     }
+
+    public int getShardCount() {
+        String shardCount = (String) pluginConfig.getConfig().get("geaflow.dsl.graph.store.shard.count");
+        if (shardCount != null) {
+            return Integer.parseInt(shardCount);
+        }
+
+        return Integer.parseInt((String) pluginConfig.getConfig().getOrDefault("shardCount", 2));
+    }
 }

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.common.config.ConfigHelper;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
@@ -26,6 +27,7 @@ import com.antgroup.geaflow.dsl.parser.GeaFlowDSLParser;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.runtime.command.IQueryCommand;
 import com.antgroup.geaflow.dsl.runtime.engine.GeaFlowQueryEngine;
+import com.antgroup.geaflow.dsl.runtime.util.AnalyticsResultFormatter;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateFunction;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateTable;
@@ -112,19 +114,36 @@ public class QueryClient implements QueryCompiler {
             .build();
         queryContext.putConfigParallelism(context.getParallelisms());
         executeQuery(script, queryContext);
-        queryContext.finish();
-        PipelinePlanBuilder pipelinePlanBuilder = new PipelinePlanBuilder();
-        PipelineGraph pipelineGraph = pipelinePlanBuilder.buildPlan(pipelineContext);
-        pipelinePlanBuilder.optimizePlan(pipelineContext.getConfig());
-        JsonPlanGraphVisualization visualization = new JsonPlanGraphVisualization(pipelineGraph);
 
         CompileResult compileResult = new CompileResult();
-        compileResult.setPhysicPlan(visualization.getJsonPlan());
+        // get current schema before finish.
+        compileResult.setCurrentResultType(queryContext.getCurrentResultType());
+
+        queryContext.finish();
+
         compileResult.setSourceTables(queryContext.getReferSourceTables());
         compileResult.setTargetTables(queryContext.getReferTargetTables());
         compileResult.setSourceGraphs(queryContext.getReferSourceGraphs());
         compileResult.setTargetGraphs(queryContext.getReferTargetGraphs());
+
+
+        boolean needPlan = ConfigHelper.getBooleanOrDefault(context.getConfig(), "needPhysicalPlan", true);
+        if (needPlan) {
+            PipelinePlanBuilder pipelinePlanBuilder = new PipelinePlanBuilder();
+            PipelineGraph pipelineGraph = pipelinePlanBuilder.buildPlan(pipelineContext);
+            pipelinePlanBuilder.optimizePlan(pipelineContext.getConfig());
+            JsonPlanGraphVisualization visualization = new JsonPlanGraphVisualization(pipelineGraph);
+            compileResult.setPhysicPlan(visualization.getJsonPlan());
+        }
         return compileResult;
+    }
+
+
+    @Override
+    public String formatOlapResult(String script, Object queryResult, CompileContext context) {
+        context.getConfig().put("needPhysicalPlan", "false");
+        CompileResult compileResult = compile(script, context);
+        return AnalyticsResultFormatter.formatResult(queryResult, compileResult.getCurrentResultType());
     }
 
     @Override

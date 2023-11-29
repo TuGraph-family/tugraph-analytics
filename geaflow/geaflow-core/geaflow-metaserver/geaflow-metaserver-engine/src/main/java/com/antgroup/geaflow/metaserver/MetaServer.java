@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.metaserver.Constants.META_SERVER;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
 import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.utils.PortUtil;
@@ -61,7 +62,7 @@ public class MetaServer implements MetaServerService {
 
     private void startServer(Configuration configuration) {
         int port = PortUtil.getPort(MIN_PORT, MAX_PORT);
-        rpcServer = new RpcServer(port);
+        rpcServer = new RpcServer(port, ConfigurableServerOption.build(configuration));
         rpcServer.registerService(new MetaServerServiceProxy(this));
         rpcServer.start();
 

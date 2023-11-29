@@ -21,10 +21,12 @@ import com.antgroup.geaflow.dsl.runtime.QueryContext;
 import com.antgroup.geaflow.dsl.runtime.QueryEngine;
 import com.antgroup.geaflow.dsl.runtime.engine.GeaFlowQueryEngine;
 import com.antgroup.geaflow.env.Environment;
+import com.antgroup.geaflow.example.util.EnvironmentUtil;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.pipeline.PipelineFactory;
 import com.antgroup.geaflow.pipeline.service.PipelineService;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,27 @@ public class QueryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryService.class);
 
-    public IPipelineResult submit(Environment environment) {
+    private static final String WARM_UP_PATTERN = "USE GRAPH %s ; MATCH (a) RETURN a limit 0";
+
+    public static void main(String[] args) {
+        Environment environment = EnvironmentUtil.loadEnvironment(args);
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+
+        String graphViewName = configuration.getConfigMap().get("geaflow.analytics.graph.view.name");
+        Preconditions.checkNotNull(graphViewName, "graph view name is null");
+        configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, String.format(WARM_UP_PATTERN, graphViewName));
+        submit(environment);
+        LOGGER.info("query service start finish");
+        synchronized (QueryService.class) {
+            try {
+                QueryService.class.wait();
+            } catch (Throwable e) {
+                LOGGER.error("wait server failed");
+            }
+        }
+    }
+
+    public static IPipelineResult submit(Environment environment) {
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
         pipeline.start((PipelineService) pipelineServiceContext -> {

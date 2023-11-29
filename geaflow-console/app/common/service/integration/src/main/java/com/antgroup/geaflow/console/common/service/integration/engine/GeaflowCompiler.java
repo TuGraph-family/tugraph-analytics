@@ -30,4 +30,6 @@ public interface GeaflowCompiler {
 
     Set<TableInfo> getUnResolvedTables(String script, CompileContext context);
 
+    String formatOlapResult(String script, Object resultData, CompileContext context);
+
 }

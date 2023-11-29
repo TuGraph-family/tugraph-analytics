@@ -29,6 +29,7 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowServeJob;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,12 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
                 customJob.setEntryClass(entity.getEntryClass());
                 customJob.setJarPackage(jarPackage);
                 job = customJob;
+                break;
+            case SERVE:
+                GeaflowServeJob serveJob = (GeaflowServeJob) super.entityToModel(entity, GeaflowServeJob.class);
+                serveJob.setEntryClass(entity.getEntryClass());
+                serveJob.setGraph(graphs);
+                job = serveJob;
                 break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", jobType);

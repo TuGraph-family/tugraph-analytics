@@ -14,15 +14,21 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
 import com.antgroup.geaflow.dsl.common.compile.FunctionInfo;
 import com.antgroup.geaflow.dsl.common.compile.QueryCompiler;
 import com.antgroup.geaflow.dsl.common.compile.TableInfo;
+import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
+import com.antgroup.geaflow.dsl.common.data.impl.types.IntEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.types.IntVertex;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -73,6 +79,27 @@ public class CompilerTest {
                 + "\"parents\":[{\"id\":\"6-7\"}]},\"6-6\":{\"id\":\"6-6\",\"parallelism\":2,"
                 + "\"operator\":\"FlatMapOperator\",\"operatorName\":\"TraversalResponseToRow-0\",\"parents\":[]}}}}}}"
         );
+    }
+
+    @Test
+    public void testFormatOlapResult() throws IOException {
+        QueryCompiler compiler = new QueryClient();
+        String script = IOUtils.resourceToString("/query/olap_result.sql", Charset.defaultCharset());
+        CompileContext context = new CompileContext();
+        context.setConfig(new HashMap<>());
+        context.setParallelisms(new HashMap<>());
+
+        List<List<ResponseResult>> data = new ArrayList<>();
+        List<ResponseResult> data1 = new ArrayList<>();
+        data.add(data1);
+        data1.add(new ResponseResult(0, null, Lists.newArrayList(
+            ObjectRow.create(new IntVertex(1), new IntEdge(1,3), new IntVertex(3), 1))));
+
+        String result = compiler.formatOlapResult(script, data, context);
+        Assert.assertEquals(result,"{\"viewResult\":{\"nodes\":[{\"id\":\"1\",\"properties\":{}},{\"id\":\"3\",\"properties\":{}}]," 
+            + "\"edges\":[{\"direction\":\"OUT\",\"properties\":{},\"source\":\"1\",\"target\":\"3\"}]}," 
+            + "\"jsonResult\":[{\"a\":{\"id\":\"1\",\"properties\":{}},\"b\":{\"direction\":\"OUT\",\"properties\":{},\"source\":\"1\"," 
+            + "\"target\":\"3\"},\"e\":{\"id\":\"3\",\"properties\":{}},\"id\":1}]}");
     }
 
     @Test
@@ -171,14 +198,14 @@ public class CompilerTest {
 
         Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
         Assert.assertEquals(tables.size(), 4);
-        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t3")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t4")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t2")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t3")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t4")));
     }
 
     @Test
-    public void testFindTables2(){
+    public void testFindTables2() {
         QueryCompiler compiler = new QueryClient();
         CompileContext context = new CompileContext();
 
@@ -245,14 +272,14 @@ public class CompilerTest {
 
         Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
         Assert.assertEquals(tables.size(), 2);
-        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
-        Assert.assertFalse(tables.contains(new TableInfo("default","tbl_result")));
-        Assert.assertFalse(tables.contains(new TableInfo("default","dy_modern")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t2")));
+        Assert.assertFalse(tables.contains(new TableInfo("default", "tbl_result")));
+        Assert.assertFalse(tables.contains(new TableInfo("default", "dy_modern")));
     }
 
     @Test
-    public void testFindTables3(){
+    public void testFindTables3() {
         QueryCompiler compiler = new QueryClient();
         CompileContext context = new CompileContext();
 
@@ -260,12 +287,12 @@ public class CompilerTest {
 
         Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
         Assert.assertEquals(tables.size(), 2);
-        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t2")));
     }
 
     @Test
-    public void testFindTables4(){
+    public void testFindTables4() {
         QueryCompiler compiler = new QueryClient();
         CompileContext context = new CompileContext();
 
@@ -273,17 +300,17 @@ public class CompilerTest {
 
         Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
         Assert.assertEquals(tables.size(), 3);
-        Assert.assertTrue(tables.contains(new TableInfo("default","t1")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t3")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t1")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t2")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t3")));
     }
 
     @Test
-    public void testFindTables5(){
+    public void testFindTables5() {
         QueryCompiler compiler = new QueryClient();
         CompileContext context = new CompileContext();
 
-        String script="CREATE TABLE tbl_result (\n"
+        String script = "CREATE TABLE tbl_result (\n"
             + "  a_id bigint,\n"
             + "  b_id bigint,\n"
             + "  weight double\n"
@@ -309,8 +336,8 @@ public class CompilerTest {
 
         Set<TableInfo> tables = compiler.getUnResolvedTables(script, context);
         Assert.assertEquals(tables.size(), 2);
-        Assert.assertTrue(tables.contains(new TableInfo("default","p")));
-        Assert.assertTrue(tables.contains(new TableInfo("default","t2")));
-        Assert.assertFalse(tables.contains(new TableInfo("default","tbl_result")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "p")));
+        Assert.assertTrue(tables.contains(new TableInfo("default", "t2")));
+        Assert.assertFalse(tables.contains(new TableInfo("default", "tbl_result")));
     }
 }

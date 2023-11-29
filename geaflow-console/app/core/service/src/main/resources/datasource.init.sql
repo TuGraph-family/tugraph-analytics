@@ -536,5 +536,22 @@ PRIMARY KEY (`id`),
 UNIQUE KEY `uk_guid` (`guid`),
 UNIQUE KEY `uk_src_target` (`edge_id`, `source_id`, `target_id`, `graph_id`),
 KEY `idx_edge_id` (`edge_id`)
-) DEFAULT CHARSET = utf8mb4 COMMENT = 'Endpoint'
+) DEFAULT CHARSET = utf8mb4 COMMENT = 'Endpoint Table'
 ;
+
+CREATE TABLE `geaflow_statement` (
+`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT comment '主键',
+`gmt_create` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间',
+`gmt_modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment '修改时间',
+`tenant_id` char(64) NOT NULL comment '租户ID',
+`guid` char(64) NOT NULL comment 'ID',
+`creator_id` char(64) NOT NULL comment '创建人ID',
+`modifier_id` char(64) NOT NULL comment '修改人ID',
+`job_id` char(64) NOT NULL comment '作业Id',
+`script` text NOT NULL comment '查询语句',
+`status` varchar(64) DEFAULT NULL comment '状态',
+`result` mediumtext DEFAULT NULL comment '查询结果',
+PRIMARY KEY(`id`),
+UNIQUE KEY `uk_guid`(`guid`),
+KEY `idx_job_id`(`job_id`)
+) DEFAULT CHARSET = utf8mb4 COMMENT = 'Statemnet Table';

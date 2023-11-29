@@ -16,6 +16,7 @@ import {
   Card,
 } from "antd";
 import { getJobsCreat, getJobsEdit } from "../services/computing";
+import { getGraphDefinitionList } from "../services/graphDefinition";
 import styles from "./index.module.less";
 import $i18n from "../../../../../../i18n";
 import { isEmpty } from "lodash";
@@ -26,16 +27,28 @@ import CodeMirror from "@uiw/react-codemirror";
 const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState<boolean>(false);
+  const [state, setState] = useState({
+    serveList: [],
+  });
   const isWay = Form.useWatch("type", form);
   const isRadio = Form.useWatch("radio", form);
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
     ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
     : {};
+  const instanceName = currentInstance.value;
   const handleOk = () => {
     form.validateFields().then((val) => {
       setLoading(true);
-      const { jarFile, comment, name, userCode, type, entryClass, fileId } =
-        val;
+      const {
+        jarFile,
+        comment,
+        name,
+        userCode,
+        type,
+        entryClass,
+        fileId,
+        graphIds,
+      } = val;
       const { id, instanceId } = instance.instanceList || {};
       const formData = new FormData();
       !isEmpty(jarFile) &&
@@ -49,6 +62,7 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
       type && formData.append("type", type);
       fileId && formData.append("fileId", fileId);
       comment && formData.append("comment", comment);
+      graphIds && formData.append("graphIds", [graphIds]);
       if (id) {
         getJobsEdit(formData, id).then((res) => {
           setLoading(false);
@@ -105,8 +119,24 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
   useEffect(() => {
     if (!isEmpty(instance?.instanceList)) {
       form.setFieldsValue(instance?.instanceList);
+      form.setFieldsValue({
+        graphIds: instance?.instanceList?.graphs[0]?.id,
+      });
     }
   }, [instance]);
+  const handelTemplata = async () => {
+    const serveList = await getGraphDefinitionList({
+      instanceName,
+    });
+    setState({ ...state, serveList });
+  };
+
+  useEffect(() => {
+    // 只有当实例存在时才查询
+    if (instanceName) {
+      handelTemplata();
+    }
+  }, [instanceName]);
 
   const normFile = (e: any) => {
     if (Array.isArray(e)) {
@@ -227,17 +257,30 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
               options={[
                 {
                   value: "PROCESS",
-                  label: "DSL",
+                  label: $i18n.get({
+                    id: "openpiece-geaflow.geaflow.computing.Process",
+                    dm: "加工",
+                  }),
                 },
                 {
                   value: "CUSTOM",
-                  label: "HLA",
+                  label: $i18n.get({
+                    id: "openpiece-geaflow.geaflow.computing.Custom",
+                    dm: "自定义",
+                  }),
+                },
+                {
+                  value: "SERVE",
+                  label: $i18n.get({
+                    id: "openpiece-geaflow.geaflow.computing.Serve",
+                    dm: "图查询",
+                  }),
                 },
               ]}
               disabled={instance.check || instance.edit}
             />
           </Form.Item>
-          {isWay === "PROCESS" ? (
+          {isWay === "PROCESS" && (
             <Form.Item
               label="DSL"
               name="userCode"
@@ -257,7 +300,8 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
                 readOnly={instance.check}
               />
             </Form.Item>
-          ) : (
+          )}
+          {isWay === "CUSTOM" && (
             <>
               <Form.Item
                 name="entryClass"
@@ -383,6 +427,32 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
                 </Form.Item>
               )}
             </>
+          )}
+          {isWay === "SERVE" && (
+            <Form.Item
+              name="graphIds"
+              label={$i18n.get({
+                id: "openpiece-geaflow.geaflow.function-manage.uploadModal.SelectQuery",
+                dm: "目标图",
+              })}
+              rules={[
+                {
+                  required: true,
+                  message: $i18n.get({
+                    id: "openpiece-geaflow.geaflow.function-manage.uploadModal.SelectQuery",
+                    dm: "请选择图",
+                  }),
+                },
+              ]}
+            >
+              <Select disabled={instance.check || instance.edit}>
+                {state.serveList?.map((item) => {
+                  return (
+                    <Select.Option value={item.id}>{item.name}</Select.Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
           )}
         </Form>
         <div className={styles["definition-bottom"]}>

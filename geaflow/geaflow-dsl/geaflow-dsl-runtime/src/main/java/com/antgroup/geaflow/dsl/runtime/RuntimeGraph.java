@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.rel.GraphAlgorithm;
 import com.antgroup.geaflow.dsl.rel.GraphMatch;
@@ -25,7 +26,7 @@ import java.util.List;
  */
 public interface RuntimeGraph extends RDataView {
 
-    List<Path> take();
+    List<Path> take(IType<?> type);
 
     RuntimeGraph traversal(GraphMatch graphMatch);
 
