@@ -140,6 +140,7 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
             case CUSTOM:
                 GeaflowCustomJob customJob = (GeaflowCustomJob) viewToModel(view, GeaflowCustomJob.class);
                 customJob.setEntryClass(view.getEntryClass());
+                customJob.setJarPackage(jarFile);
                 job = customJob;
                 break;
             case SERVE:

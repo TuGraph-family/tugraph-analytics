@@ -41,7 +41,7 @@ RUN yum install -y epel-release \
 RUN yum install -y ca-certificates
 RUN yum install -y nc
 RUN cd /usr/lib \
-    && wget https://dlcdn.apache.org/zookeeper/zookeeper-3.8.3/apache-zookeeper-3.8.3-bin.tar.gz \
+    && wget https://mirrors.aliyun.com/apache/zookeeper/zookeeper-3.8.3/apache-zookeeper-3.8.3-bin.tar.gz \
     && tar xf apache-zookeeper-3.8.3-bin.tar.gz \
     && mkdir /usr/lib/apache-zookeeper-3.8.3-bin/zkData \
     && cd /usr/lib/apache-zookeeper-3.8.3-bin/conf \
