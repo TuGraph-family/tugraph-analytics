@@ -76,7 +76,7 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
         this.vcTraversalFunction = this.function.getTraversalFunction();
         this.graphVCTraversalCtx = new GraphVCTraversalCtxImpl(
             opContext, this.runtimeContext, this.graphState,
-            this.graphMsgBox, this.maxIterations, this.messageCollector);
+            this.graphMsgBox, this.maxIterations, getIdentify(), this.messageCollector);
         this.vcTraversalFunction.open(this.graphVCTraversalCtx);
 
         this.responses = new ArrayList<>();
@@ -155,6 +155,7 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
     class GraphVCTraversalCtxImpl extends StaticGraphContextImpl<K, VV, EV, M>
         implements VertexCentricTraversalFuncContext<K, VV, EV, M, R> {
 
+        private final String opName;
         private final ICollector<IGraphMessage<K, M>> messageCollector;
 
         public GraphVCTraversalCtxImpl(OpContext opContext,
@@ -162,8 +163,10 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
                                        GraphState<K, VV, EV> graphState,
                                        IGraphMsgBox<K, M> graphMsgBox,
                                        long maxIteration,
+                                       String opName,
                                        ICollector<IGraphMessage<K, M>> messageCollector) {
             super(opContext, runtimeContext, graphState, graphMsgBox, maxIteration);
+            this.opName = opName;
             this.messageCollector = messageCollector;
         }
 
@@ -191,6 +194,11 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
         @Override
         public void broadcast(IGraphMessage<K, M> message) {
             messageCollector.broadcast(message);
+        }
+
+        @Override
+        public String getTraversalOpName() {
+            return opName;
         }
     }
 

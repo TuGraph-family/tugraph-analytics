@@ -73,7 +73,7 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
         super.open(opContext);
 
         this.incVcTraversalFunction = this.function.getIncTraversalFunction();
-        this.graphVCTraversalCtx = new IncGraphVCTraversalCtxImpl(messageCollector);
+        this.graphVCTraversalCtx = new IncGraphVCTraversalCtxImpl(getIdentify(), messageCollector);
         this.incVcTraversalFunction.open(this.graphVCTraversalCtx);
 
         this.invokeVIds = new HashSet<>();
@@ -169,11 +169,13 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
         implements IncVertexCentricTraversalFuncContext<K, VV, EV, M, R> {
 
         private final ICollector<IGraphMessage<K, M>> messageCollector;
-
+        private final String opName;
         private final TraversalHistoricalGraph<K, VV, EV> traversalHistoricalGraph;
 
-        protected IncGraphVCTraversalCtxImpl(ICollector<IGraphMessage<K, M>> messageCollector) {
+        protected IncGraphVCTraversalCtxImpl(String opName,
+                                             ICollector<IGraphMessage<K, M>> messageCollector) {
             super(opContext, runtimeContext, graphState, temporaryGraphCache, graphMsgBox, maxIterations);
+            this.opName = opName;
             this.messageCollector = messageCollector;
             this.traversalHistoricalGraph = new TraversalIncHistoricalGraph<>(
                 (IncHistoricalGraph<K, VV, EV>) super.getHistoricalGraph());
@@ -197,6 +199,11 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
         @Override
         public TraversalHistoricalGraph<K, VV, EV> getHistoricalGraph() {
             return traversalHistoricalGraph;
+        }
+
+        @Override
+        public String getTraversalOpName() {
+            return opName;
         }
     }
 

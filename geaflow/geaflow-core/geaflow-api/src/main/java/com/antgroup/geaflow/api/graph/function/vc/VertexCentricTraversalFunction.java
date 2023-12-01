@@ -78,6 +78,11 @@ public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexC
          * Broadcast message.
          */
         void broadcast(IGraphMessage<K, M> message);
+
+        /**
+         * Get the traversal operator name.
+         */
+        String getTraversalOpName();
     }
 
     interface TraversalVertexQuery<K, VV> extends VertexQuery<K, VV> {

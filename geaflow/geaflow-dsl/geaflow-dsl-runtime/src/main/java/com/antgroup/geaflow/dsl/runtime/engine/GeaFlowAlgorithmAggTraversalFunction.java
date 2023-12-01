@@ -17,7 +17,6 @@ package com.antgroup.geaflow.dsl.runtime.engine;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM_STATE_BACKEND_TYPE;
 
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggTraversalFunction;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
@@ -40,6 +39,8 @@ import java.util.Set;
 
 public class GeaFlowAlgorithmAggTraversalFunction implements
     VertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg, ITraversalAgg> {
+
+    private static final String STATE_SUFFIX = "UpdatedValueState";
 
     private final AlgorithmUserFunction<Object, Object> userFunction;
 
@@ -70,15 +71,13 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
         this.algorithmCtx = new GeaFlowAlgorithmRuntimeContext(this, traversalContext, graphSchema);
         this.userFunction.init(algorithmCtx, params);
         this.invokeVIds = new HashSet<>();
-        int taskIndex = traversalContext.getRuntimeContext().getTaskArgs().getTaskIndex();
-        String stateName =
-            traversalContext.getRuntimeContext().getConfiguration().getString(ExecutionConfigKeys.JOB_APP_NAME)
-                + "-GeaFlowAlgorithmDynamicRuntimeContext-" + taskIndex;
+        String stateName = traversalContext.getTraversalOpName() + "_" + STATE_SUFFIX;
         KeyValueStateDescriptor descriptor = KeyValueStateDescriptor.build(
             stateName,
             traversalContext.getRuntimeContext().getConfiguration().getString(SYSTEM_STATE_BACKEND_TYPE));
         int parallelism = traversalContext.getRuntimeContext().getTaskArgs().getParallelism();
         int maxParallelism = traversalContext.getRuntimeContext().getTaskArgs().getMaxParallelism();
+        int taskIndex = traversalContext.getRuntimeContext().getTaskArgs().getTaskIndex();
         KeyGroup keyGroup = KeyGroupAssignment.computeKeyGroupRangeForOperatorIndex(
             maxParallelism, parallelism, taskIndex);
         descriptor.withKeyGroup(keyGroup);
@@ -88,8 +87,10 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
         long recoverWindowId = traversalContext.getRuntimeContext().getWindowId();
         this.vertexUpdateValues = StateFactory.buildKeyValueState(descriptor,
             traversalContext.getRuntimeContext().getConfiguration());
-        this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId);
-        this.vertexUpdateValues.manage().operate().recover();
+        if (recoverWindowId > 1) {
+            this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId);
+            this.vertexUpdateValues.manage().operate().recover();
+        }
     }
 
     @Override

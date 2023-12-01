@@ -74,6 +74,11 @@ public interface IncVertexCentricTraversalFunction<K, VV, EV, M, R> extends IncV
          * Get the historical graph of graph state.
          */
         TraversalHistoricalGraph<K, VV, EV> getHistoricalGraph();
+
+        /**
+         * Get the traversal operator name.
+         */
+        String getTraversalOpName();
     }
 
 
