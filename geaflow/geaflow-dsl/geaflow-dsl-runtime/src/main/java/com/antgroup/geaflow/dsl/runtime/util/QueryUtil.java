@@ -40,8 +40,12 @@ import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSetOption;
 import org.apache.calcite.sql.parser.SqlParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QueryUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryUtil.class);
 
     public static PreCompileResult preCompile(String script, Configuration config) {
         GeaFlowDSLParser parser = new GeaFlowDSLParser();
@@ -67,6 +71,7 @@ public class QueryUtil {
                         GeaFlowGraph graph = gqlContext.convertToGraph(createGraph, createTablesInScript);
                         Configuration globalConfig = graph.getConfigWithGlobal(config);
                         if (!QueryUtil.isGraphExists(graph, globalConfig)) {
+                            LOGGER.info("insertGraphs: {}", graph.getUniqueName());
                             preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, globalConfig));
                         }
                     } else {
@@ -77,11 +82,13 @@ public class QueryUtil {
                     SqlIdentifier insertName = gqlContext.completeCatalogObjName(
                         (SqlIdentifier) insert.getTargetTable());
                     SqlIdentifier insertGraphName = GQLNodeUtil.getGraphTableName(insertName);
-                    String simpleGraphName = insertName.getComponent(insertName.names.size() - 1,
-                        insertName.names.size()).getSimple();
+                    String simpleGraphName = insertName.getComponent(1, 2).getSimple();
+                    LOGGER.info("insertGraphName: {}, insertName:{}, simpleGraphName: {}",
+                        insertGraphName, insertName, simpleGraphName);
                     if (createGraphs.containsKey(insertGraphName.toString())) {
                         SqlCreateGraph createGraph = createGraphs.get(insertGraphName.toString());
                         GeaFlowGraph graph = gqlContext.convertToGraph(createGraph);
+                        LOGGER.info("insertGraphs: {}", graph.getUniqueName());
                         preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(graph, config));
                     } else {
                         Table graph = gqlContext.getCatalog().getGraph(
@@ -89,6 +96,7 @@ public class QueryUtil {
                         if (graph != null) {
                             GeaFlowGraph geaFlowGraph = (GeaFlowGraph) graph;
                             geaFlowGraph.getConfig().putAll(gqlContext.keyMapping(geaFlowGraph.getConfig().getConfigMap()));
+                            LOGGER.info("insertGraphs: {}", geaFlowGraph.getUniqueName());
                             preCompileResult.addGraph(SchemaUtil.buildGraphViewDesc(geaFlowGraph, config));
                         }
                     }

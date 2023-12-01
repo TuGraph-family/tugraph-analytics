@@ -19,7 +19,6 @@ import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
 
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricAggTraversalFunction;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
@@ -46,6 +45,8 @@ import java.util.Set;
 public class GeaFlowAlgorithmDynamicAggTraversalFunction
     implements IncVertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg,
         ITraversalAgg>, RichIteratorFunction {
+
+    private static final String STATE_SUFFIX = "UpdatedValueState";
 
     private final AlgorithmUserFunction<Object, Object> userFunction;
 
@@ -83,9 +84,7 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
         this.mutableGraph = traversalContext.getMutableGraph();
 
         int taskIndex = traversalContext.getRuntimeContext().getTaskArgs().getTaskIndex();
-        String stateName =
-            traversalContext.getRuntimeContext().getConfiguration().getString(ExecutionConfigKeys.JOB_APP_NAME)
-                + "-GeaFlowAlgorithmDynamicRuntimeContext-" + taskIndex;
+        String stateName = traversalContext.getTraversalOpName() + "_" + STATE_SUFFIX;
         KeyValueStateDescriptor descriptor = KeyValueStateDescriptor.build(
             stateName,
             traversalContext.getRuntimeContext().getConfiguration().getString(SYSTEM_STATE_BACKEND_TYPE));
@@ -100,8 +99,10 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
         long recoverWindowId = traversalContext.getRuntimeContext().getWindowId();
         this.vertexUpdateValues = StateFactory.buildKeyValueState(descriptor,
             traversalContext.getRuntimeContext().getConfiguration());
-        this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId);
-        this.vertexUpdateValues.manage().operate().recover();
+        if (recoverWindowId > 1) {
+            this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId);
+            this.vertexUpdateValues.manage().operate().recover();
+        }
     }
 
     @Override
