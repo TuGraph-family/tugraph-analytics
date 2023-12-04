@@ -1,0 +1,250 @@
+{
+    "files": [
+        {
+            "columns": [
+                "birthYear",
+                "name",
+                "description"
+            ],
+            "format": "CSV",
+            "label": "角色",
+            "path": "wandering_earth/rawdata/角色.csv"
+        },
+        {
+            "columns": [
+                "name",
+                "description"
+            ],
+            "format": "CSV",
+            "label": "组织",
+            "path": "wandering_earth/rawdata/组织.csv"
+        },
+        {
+            "columns": [
+                "name",
+                "description"
+            ],
+            "format": "CSV",
+            "label": "天体与设施",
+            "path": "wandering_earth/rawdata/天体与设施.csv"
+        },
+        {
+            "DST_ID": "角色",
+            "SRC_ID": "角色",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "name"
+            ],
+            "format": "CSV",
+            "label": "关系",
+            "path": "wandering_earth/rawdata/关系_角色_角色.csv"
+        },
+        {
+            "DST_ID": "组织",
+            "SRC_ID": "角色",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "name"
+            ],
+            "format": "CSV",
+            "label": "关系",
+            "path": "wandering_earth/rawdata/关系_角色_组织.csv"
+        },
+        {
+            "DST_ID": "天体与设施",
+            "SRC_ID": "角色",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "name"
+            ],
+            "format": "CSV",
+            "label": "关系",
+            "path": "wandering_earth/rawdata/关系_角色_天体与设施.csv"
+        },
+        {
+            "DST_ID": "角色",
+            "SRC_ID": "角色",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "no",
+                "name",
+                "title",
+                "year"
+            ],
+            "format": "CSV",
+            "label": "事件关系",
+            "path": "wandering_earth/rawdata/事件_角色_角色.csv"
+        },
+        {
+            "DST_ID": "组织",
+            "SRC_ID": "角色",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "no",
+                "name",
+                "title",
+                "year"
+            ],
+            "format": "CSV",
+            "label": "事件关系",
+            "path": "wandering_earth/rawdata/事件_角色_组织.csv"
+        },
+        {
+            "DST_ID": "天体与设施",
+            "SRC_ID": "角色",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "no",
+                "name",
+                "title",
+                "year"
+            ],
+            "format": "CSV",
+            "label": "事件关系",
+            "path": "wandering_earth/rawdata/事件_角色_天体与设施.csv"
+        },
+        {
+            "DST_ID": "角色",
+            "SRC_ID": "组织",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "no",
+                "name",
+                "title",
+                "year"
+            ],
+            "format": "CSV",
+            "label": "事件关系",
+            "path": "wandering_earth/rawdata/事件_组织_角色.csv"
+        },
+        {
+            "DST_ID": "天体与设施",
+            "SRC_ID": "组织",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "no",
+                "name",
+                "title",
+                "year"
+            ],
+            "format": "CSV",
+            "label": "事件关系",
+            "path": "wandering_earth/rawdata/事件_组织_天体与设施.csv"
+        },
+        {
+            "DST_ID": "天体与设施",
+            "SRC_ID": "天体与设施",
+            "columns": [
+                "SRC_ID",
+                "DST_ID",
+                "no",
+                "name",
+                "title",
+                "year"
+            ],
+            "format": "CSV",
+            "label": "事件关系",
+            "path": "wandering_earth/rawdata/事件_天体与设施_天体与设施.csv"
+        }
+    ],
+    "schema": [
+        {
+            "label": "天体与设施",
+            "primary": "name",
+            "properties": [
+                {
+                    "name": "name",
+                    "type": "STRING"
+                },
+                {
+                    "name": "description",
+                    "type": "STRING",
+                    "optional": true
+                }
+            ],
+            "type": "VERTEX"
+        },
+        {
+            "label": "组织",
+            "primary": "name",
+            "properties": [
+                {
+                    "name": "name",
+                    "type": "STRING"
+                },
+                {
+                    "name": "description",
+                    "type": "STRING",
+                    "optional": true
+                }
+            ],
+            "type": "VERTEX"
+        },
+        {
+            "label": "角色",
+            "primary": "name",
+            "properties": [
+                {
+                    "name": "birthYear",
+                    "optional": true,
+                    "type": "INT32"
+                },
+                {
+                    "name": "name",
+                    "type": "STRING"
+                },
+                {
+                    "name": "description",
+                    "optional": true,
+                    "type": "STRING"
+                }
+            ],
+            "type": "VERTEX"
+        },
+        {
+            "label": "关系",
+            "properties": [
+                {
+                    "name": "name",
+                    "optional": true,
+                    "type": "STRING"
+                }
+            ],
+            "type": "EDGE"
+        },
+        {
+            "label": "事件关系",
+            "properties": [
+                {
+                    "name": "title",
+                    "optional": true,
+                    "type": "STRING"
+                },
+                {
+                    "name": "year",
+                    "optional": true,
+                    "type": "INT32"
+                },
+                {
+                    "name": "no",
+                    "optional": false,
+                    "type": "INT32" 
+                },
+                {
+                    "name": "name",
+                    "optional": true,
+                    "type": "STRING"
+                }
+            ],
+            "type": "EDGE"
+        }
+    ]
+}

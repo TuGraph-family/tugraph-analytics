@@ -18,7 +18,11 @@ import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
 
 public class GeaflowServeJob extends GeaflowAnalysisJob {
 
+    private static final String SERVE_JOB_ENTRY_CLASS = "com.antgroup.geaflow.example.service.QueryService";
+
     public GeaflowServeJob() {
         super(GeaflowJobType.SERVE);
+        setEntryClass(SERVE_JOB_ENTRY_CLASS);
     }
+
 }

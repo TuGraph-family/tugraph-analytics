@@ -16,11 +16,13 @@ package com.antgroup.geaflow.dsl.common.binary.decoder;
 
 import com.antgroup.geaflow.dsl.common.binary.DecoderFactory;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
-import com.antgroup.geaflow.dsl.common.data.impl.BinaryRow;
+import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.data.impl.VertexEdgeFactory;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.types.StructType;
+import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
+import java.util.List;
 
 public class DefaultEdgeDecoder implements EdgeDecoder {
 
@@ -43,7 +45,13 @@ public class DefaultEdgeDecoder implements EdgeDecoder {
         if (edgeType.getTimestamp().isPresent()) {
             ((IGraphElementWithTimeField) decodeEdge).setTime(((IGraphElementWithTimeField) rowEdge).getTime());
         }
-        decodeEdge.setValue(rowDecoder.decode((BinaryRow) rowEdge.getValue()));
+        Object[] values = new Object[edgeType.getValueSize()];
+        List<TableField> valueFields = edgeType.getValueFields();
+        for (int i = 0; i < valueFields.size(); i++) {
+            values[i] = rowEdge.getField(edgeType.getValueOffset() + i,
+                valueFields.get(i).getType());
+        }
+        decodeEdge.setValue(rowDecoder.decode(ObjectRow.create(values)));
         return decodeEdge;
     }
 }

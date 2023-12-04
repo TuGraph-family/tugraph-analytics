@@ -23,12 +23,14 @@ GEAFLOW_LOG_DIR=$BASE_LOG_DIR/geaflow
 GEAFLOW_TASK_LOG_DIR=$BASE_LOG_DIR/task
 GEAFLOW_WEB_LOG_DIR=$BASE_LOG_DIR/geaflow-web
 REDIS_LOG_DIR=$BASE_LOG_DIR/redis
+ZOOKEEPER_LOG_DIR=$BASE_LOG_DIR/zookeeper
 INFLUXDB_LOG_DIR=$BASE_LOG_DIR/influxdb
 mkdir -p $BASE_LOG_DIR
 mkdir -p $GEAFLOW_LOG_DIR
 mkdir -p $GEAFLOW_TASK_LOG_DIR
 mkdir -p $GEAFLOW_WEB_LOG_DIR
 mkdir -p $REDIS_LOG_DIR
+mkdir -p $ZOOKEEPER_LOG_DIR
 mkdir -p $INFLUXDB_LOG_DIR
 if [[ ! -L $GEAFLOW_HOME/logs ]]; then
   ln -s $BASE_LOG_DIR $GEAFLOW_HOME/logs
@@ -107,6 +109,20 @@ function startRedis() {
   }
 }
 
+function startZookeeper() {
+  cd /usr/lib/apache-zookeeper-3.8.3-bin/conf
+
+  # config zk data dir
+  sed -i 's/^dataDir=.*/dataDir=\/usr\/lib\/apache-zookeeper-3.8.3-bin\/zkData/' zoo.cfg
+  sed -i '1i admin.enableServer=false' zoo.cfg
+
+  echo srvr | nc 127.0.0.1 2181 &> /dev/null && echo "zookeeper has been started" || {
+    echo 'starting zookeeper...'
+    nohup /usr/lib/apache-zookeeper-3.8.3-bin/bin/zkServer.sh start >> $ZOOKEEPER_LOG_DIR/stdout.log \
+      2>> $ZOOKEEPER_LOG_DIR/stderr.log &
+  }
+}
+
 function startInfluxdb() {
   /usr/local/bin/influx ping &> /dev/null && echo "influxdb has been started" || {
     echo 'starting influxdb...'
@@ -147,10 +163,11 @@ function startGeaflowConsole() {
   }
 }
 
-# start mysql, redis, influxdb
+# start mysql, redis, zookeeper, influxdb
 if [ "$DEPLOY_MODE" == "local" ]; then
   startMysql || exit 1
   startRedis || exit 1
+  startZookeeper || exit 1
   startInfluxdb || exit 1
 fi
 

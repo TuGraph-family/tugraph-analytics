@@ -33,4 +33,7 @@ public interface QueryCompiler {
     Set<String> getEnginePlugins();
 
     Set<TableInfo> getUnResolvedTables(String script, CompileContext context);
+
+    String formatOlapResult(String script, Object queryResult, CompileContext context);
+
 }

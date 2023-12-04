@@ -18,7 +18,13 @@
     "umi": "^3.5.20",
     "umi-request": "^1.4.0",
     "use-immer": "^0.8.1",
-    "immer": "^9.0.19"
+    "immer": "^9.0.19",
+    "ace-gremlin-editor": "1.0.2",
+    "react-split-pane": "^0.1.92",
+    "json-bigint": "^1.0.0",
+    "react-json-view": "^1.21.3",
+    "@antv/graphin": "^2.7.13",
+    "@antv/g6": "^4.7.14"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

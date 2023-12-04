@@ -524,12 +524,6 @@ const BasicInfo: React.FC<BasicInfoProps> = ({
               {job?.graphs[0]?.name}
             </Col>
           )}
-          {job?.entryClass && (
-            <Col span={6}>
-              entryClass：
-              {job?.entryClass}
-            </Col>
-          )}
           <Col span={6}>
             {$i18n.get({
               id: "openpiece-geaflow.job-detail.components.basicInfo.JobName",
@@ -568,6 +562,15 @@ const BasicInfo: React.FC<BasicInfoProps> = ({
             </Select>
           </Col>
         </Row>
+        {job?.entryClass && (
+          <Row style={{ marginBottom: 24 }}>
+            <Col>
+              entryClass：
+              {job?.entryClass}
+            </Col>
+          </Row>
+        )}
+
         <Form form={form}>
           <BasicTabs
             stageType={currentStatus}

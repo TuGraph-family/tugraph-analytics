@@ -1,0 +1,37 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-graph-canvas-layout {
+  display: flex;
+  align-items: center;
+
+  :global {
+    .anticon {
+      font-size: 22px;
+    }
+  }
+
+  .@{perfix-cls}-types {
+    background-color: rgba(26, 27, 37, 0.04);
+    border-radius: 6px;
+    padding: 2px;
+    display: flex;
+    margin-left: 10px;
+
+    &-item {
+      width: 32px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      justify-content: center;
+      border-radius: 4px;
+
+      &-active {
+        background-color: #fff;
+      }
+
+      &:hover {
+        color: #1650ff;
+      }
+    }
+  }
+}

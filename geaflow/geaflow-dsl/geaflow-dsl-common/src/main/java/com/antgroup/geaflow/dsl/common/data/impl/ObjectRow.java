@@ -39,6 +39,10 @@ public class ObjectRow implements Row {
         return fields[i];
     }
 
+    public Object[] getFields() {
+        return fields;
+    }
+
     @Override
     public String toString() {
         return Arrays.toString(fields);

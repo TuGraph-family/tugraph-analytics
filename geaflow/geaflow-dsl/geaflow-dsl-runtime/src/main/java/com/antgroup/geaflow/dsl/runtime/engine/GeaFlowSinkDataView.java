@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.runtime.engine;
 
 import com.antgroup.geaflow.api.pdata.PStreamSink;
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.runtime.SinkDataView;
@@ -38,7 +39,7 @@ public class GeaFlowSinkDataView implements SinkDataView {
     }
 
     @Override
-    public List<? extends Row> take() {
+    public List<? extends Row> take(IType<?> type) {
         throw new GeaFlowDSLException("Should not call take() on SinkDataView");
     }
 }

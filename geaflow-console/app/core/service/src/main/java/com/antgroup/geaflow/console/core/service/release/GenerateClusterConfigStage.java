@@ -15,42 +15,22 @@
 package com.antgroup.geaflow.console.core.service.release;
 
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfig;
-import com.antgroup.geaflow.console.core.model.job.config.ClusterConfigClass;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.release.ReleaseUpdate;
 import org.apache.commons.collections.MapUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GenerateClusterConfigStage extends GeaflowBuildStage {
 
-    private GeaflowConfig getDefaultClusterConfig() {
-        ClusterConfigClass clusterConfig = new ClusterConfigClass();
-        clusterConfig.setContainers(1);
-        clusterConfig.setContainerWorkers(3);
-        clusterConfig.setContainerMemory(1024);
-        clusterConfig.setContainerCores(1.5);
-        clusterConfig.setContainerJvmOptions("-Xmx512m,-Xms512m,-Xmn256m");
-
-        clusterConfig.setClientMemory(1024);
-        clusterConfig.setMasterMemory(1024);
-        clusterConfig.setDriverMemory(1024);
-
-        clusterConfig.setClientCores(0.5);
-        clusterConfig.setMasterCores(1.0);
-        clusterConfig.setDriverCores(1.0);
-
-        clusterConfig.setClientJvmOptions("-Xmx512m,-Xms512m,-Xmn256m,-Xss512k,-XX:MaxDirectMemorySize=128m");
-        clusterConfig.setMasterJvmOptions("-Xmx512m,-Xms512m,-Xmn256m,-Xss512k,-XX:MaxDirectMemorySize=128m");
-        clusterConfig.setDriverJvmOptions("-Xmx512m,-Xms512m,-Xmn256m,-Xss512k,-XX:MaxDirectMemorySize=128m");
-
-        return clusterConfig.build();
-    }
+    @Autowired
+    private ClusterConfigBuilder clusterConfigBuilder;
 
     @Override
     public void init(GeaflowRelease release) {
         // generate default cluster config from job config
-        GeaflowConfig clusterConfig = getDefaultClusterConfig();
+        GeaflowConfig clusterConfig = clusterConfigBuilder.buildDefaultConfig(release);
 
         if (release.getClusterConfig() != null) {
             clusterConfig.putAll(release.getClusterConfig());

@@ -47,6 +47,7 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAnalyticsServiceServer.class);
 
     private static final String ANALYTICS_SERVICE_PREFIX = "analytics-service-";
+    protected static MetaServerClient metaServerClient;
 
     protected int port;
     protected int maxRequests;
@@ -57,7 +58,7 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
     protected BlockingQueue<QueryResults> responseBlockingQueue;
     protected BlockingQueue<Long> cancelRequestBlockingQueue;
     protected BlockingQueue<Object> cancelResponseBlockingQueue;
-    protected MetaServerClient metaServerClient;
+
     protected Semaphore semaphore;
 
     @Override
@@ -91,6 +92,7 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
                 String queryScript = queryInfo.getQueryScript();
                 String queryId = queryInfo.getQueryId();
                 try {
+                    LOGGER.info("olap server receive query script {}", queryScript);
                     IExecutionResult result = executeQuery(queryScript);
                     QueryResults queryResults;
                     if (result.isSuccess()) {
@@ -100,12 +102,12 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
                         queryResults = new QueryResults(queryId, new QueryError(errorMsg));
                     }
                     responseBlockingQueue.put(queryResults);
-                } catch (Throwable t) {
+                } catch (Exception t) {
                     LOGGER.error("execute query: {} failed", queryInfo, t);
                     QueryResults queryResults = new QueryResults(queryId, new QueryError(t.getMessage()));
                     responseBlockingQueue.put(queryResults);
                 }
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 if (this.running) {
                     LOGGER.error("analytics service abnormal {}", t.getMessage(), t);
                 }
@@ -123,7 +125,7 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
         }
         // Register analytics service info.
         if (serviceExecutorContext.getConfiguration().getBoolean(ANALYTICS_SERVICE_REGISTER_ENABLE)) {
-            metaServerClient = new MetaServerClient(serviceExecutorContext.getConfiguration());
+            metaServerClient = getMetaServerClient(serviceExecutorContext.getConfiguration());
             metaServerClient.registerService(NamespaceType.DEFAULT,
                 ANALYTICS_SERVICE_PREFIX + serviceExecutorContext.getDriverIndex(),
                 new HostAndPort(ProcessUtil.getHostIp(), port));
@@ -152,5 +154,12 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
         IExecutionResult result = this.serviceExecutorContext.getPipelineRunner()
             .runPipelineGraph(pipelineGraph, serviceExecutorContext);
         return result;
+    }
+
+    private static synchronized MetaServerClient getMetaServerClient(Configuration configuration) {
+        if (metaServerClient == null) {
+            metaServerClient = new MetaServerClient(configuration);
+        }
+        return metaServerClient;
     }
 }

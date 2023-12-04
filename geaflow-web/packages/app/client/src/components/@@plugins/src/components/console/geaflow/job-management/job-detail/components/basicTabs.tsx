@@ -14,7 +14,7 @@ interface BasicTabsProps {
   stageType: string;
   syncConfig: (params: any) => void;
   form: any;
-  redirectPath?: any[]
+  redirectPath?: any[];
 }
 
 const BasicTabs: React.FC<BasicTabsProps> = ({
@@ -23,34 +23,38 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
   stageType,
   syncConfig,
   form,
-  redirectPath
+  redirectPath,
 }) => {
   const { dsl = "" } = jobItem;
   const jobType = record?.release?.job?.type;
   const items = [
-    {
-      label:
-        jobType === "CUSTOM"
-          ? $i18n.get({
-              id: "openpiece-geaflow.job-detail.components.basicTabs.Udf",
-              dm: "UDF",
-            })
-          : $i18n.get({
-              id: "openpiece-geaflow.job-detail.components.basicTabs.UserCode",
-              dm: "用户代码",
-            }),
-      key: "1",
-      children:
-        jobType === "CUSTOM" ? (
-          <UDFList syncConfig={syncConfig} record={record} />
-        ) : (
-          <TaskParams
-            syncConfig={syncConfig}
-            record={record}
-            redirectPath={redirectPath}
-          />
-        ),
-    },
+    ...(jobType !== "SERVE"
+      ? [
+          {
+            label:
+              jobType === "CUSTOM"
+                ? $i18n.get({
+                    id: "openpiece-geaflow.job-detail.components.basicTabs.Udf",
+                    dm: "UDF",
+                  })
+                : $i18n.get({
+                    id: "openpiece-geaflow.job-detail.components.basicTabs.UserCode",
+                    dm: "用户代码",
+                  }),
+            key: "1",
+            children:
+              jobType === "CUSTOM" ? (
+                <UDFList syncConfig={syncConfig} record={record} />
+              ) : (
+                <TaskParams
+                  syncConfig={syncConfig}
+                  record={record}
+                  redirectPath={redirectPath}
+                />
+              ),
+          },
+        ]
+      : []),
     {
       label: $i18n.get({
         id: "openpiece-geaflow.job-detail.components.basicTabs.TaskParameters",

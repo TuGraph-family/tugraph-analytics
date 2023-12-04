@@ -31,6 +31,7 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowServeJob;
 import com.antgroup.geaflow.console.core.service.InstanceService;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
@@ -84,6 +85,8 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
             case CUSTOM:
                 Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
                 Optional.ofNullable(updateView.getJarPackage()).ifPresent(view::setJarPackage);
+                break;
+            case SERVE:
                 break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", view.getType());
@@ -139,6 +142,11 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
                 customJob.setEntryClass(view.getEntryClass());
                 customJob.setJarPackage(jarFile);
                 job = customJob;
+                break;
+            case SERVE:
+                GeaflowServeJob serveJob = (GeaflowServeJob) viewToModel(view, GeaflowServeJob.class);
+                serveJob.setGraph(graphs);
+                job = serveJob;
                 break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", jobType);

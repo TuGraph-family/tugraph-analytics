@@ -607,4 +607,9 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue("compute")
         .description("job mode, e.g.[compute, olap service, state service]");
 
+    public static final ConfigKey META_SERVER_RETRY_TIMES = ConfigKeys
+        .key("geaflow.meta.server.retry.times")
+        .defaultValue(3)
+        .description("meta server connect retry times");
+
 }

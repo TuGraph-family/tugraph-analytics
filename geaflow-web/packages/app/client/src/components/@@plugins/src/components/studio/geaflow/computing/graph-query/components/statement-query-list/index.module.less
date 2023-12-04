@@ -1,0 +1,120 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-statement {
+  flex: 0 0 350px;
+  position: relative;
+  width: 280px;
+  transition: all 0.3s ease 0s;
+  &-drawer {
+    height: 100%;
+    border-top: 1px solid #ececec;
+    box-shadow: 1px 0 0 0 #f6f6f6;
+    &-content {
+      padding: 0 20px;
+      &-title {
+        height: 48px;
+        line-height: 48px;
+        font-weight: 500;
+        color: rgba(54, 55, 64, 1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        :global {
+          .anticon-plus-square {
+            font-size: 16px;
+            color: rgba(152, 152, 157, 1);
+          }
+        }
+      }
+      &-search {
+        :global {
+          .ant-input-affix-wrapper {
+            border-radius: 4px;
+            background-color: rgba(26, 27, 37, 0.08);
+            border: none;
+          }
+          .ant-tugraph-statement-drawer-content-list-text___1kG2J {
+            width: 332px;
+          }
+        }
+      }
+
+      &-list {
+        padding-top: 20px;
+        &-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          line-height: 32px;
+          border-radius: 8px;
+          padding: 0 8px;
+          font-size: 12px;
+          color: rgba(54, 55, 64, 1);
+          cursor: pointer;
+          :global {
+            .anticon-edit,
+            .anticon-delete {
+              display: none;
+            }
+          }
+          &:hover {
+            background-color: #ededee;
+            :global {
+              .anticon-edit,
+              .anticon-delete {
+                display: inline;
+              }
+            }
+          }
+          :global {
+            .anticon-mac-command {
+              color: rgba(198, 198, 200, 1);
+              font-size: 14px;
+              margin-right: 10px;
+            }
+          }
+        }
+        &-active {
+          background-color: #ededee;
+          :global {
+            .anticon-edit,
+            .anticon-delete {
+              display: inline;
+            }
+          }
+        }
+        &-left {
+          display: flex;
+          align-items: center;
+          :global {
+            .ant-input {
+              height: 20px;
+              width: 160px;
+              border-radius: 6px;
+              font-size: 12px;
+            }
+          }
+        }
+        &-text {
+          width: 160px;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+        :global {
+          .anticon-edit {
+            margin-right: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+.@{perfix-cls}-statement-ani {
+  flex: 0 0 10px;
+  width: 10px;
+}
+:global {
+  .ant-popover-inner {
+    border-radius: 8px;
+  }
+}

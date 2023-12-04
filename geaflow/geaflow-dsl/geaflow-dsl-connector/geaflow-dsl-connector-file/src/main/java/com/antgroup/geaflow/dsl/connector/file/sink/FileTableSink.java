@@ -37,7 +37,7 @@ public class FileTableSink implements TableSink {
 
     private Configuration tableConf;
 
-    private transient FileWriteHandler writer;
+    protected transient FileWriteHandler writer;
 
     @Override
     public void init(Configuration tableConf, StructType schema) {

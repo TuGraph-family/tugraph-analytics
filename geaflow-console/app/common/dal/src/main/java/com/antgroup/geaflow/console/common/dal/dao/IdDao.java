@@ -212,6 +212,9 @@ public interface IdDao<E extends IdEntity, S extends IdSearch> extends IService<
         wrapper.le(endModifyTime != null, MODIFY_TIME_FIELD_NAME, endModifyTime);
         wrapper.eq(StringUtils.isNotBlank(creatorId), CREATOR_FIELD_NAME, creatorId);
         wrapper.eq(StringUtils.isNotBlank(modifierId), MODIFIER_FIELD_NAME, modifierId);
+        wrapper.orderBy(search.getOrder() != null && StringUtils.isNotBlank(search.getSort()),
+            search.getOrder() == SortOrder.ASC, search.getSort());
+
     }
 
     default void configSearch(LambdaQueryWrapper<E> wrapper, S search) {

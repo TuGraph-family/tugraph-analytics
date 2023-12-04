@@ -3,7 +3,7 @@ import {
   Input,
   Button,
   Table,
-  Modal,
+  Breadcrumb,
   Form,
   Space,
   message,
@@ -24,6 +24,8 @@ import { useHistory } from "umi";
 import styles from "./index.module.less";
 import $i18n from "../../../../../../i18n";
 import CreateCompute from "./create";
+import { GraphQuery } from "./graph-query";
+import { InstanceList } from "../../../console/geaflow";
 
 const { Search } = Input;
 
@@ -42,7 +44,7 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
   const history = useHistory();
   const { location } = history;
   const jobId = location.query?.jobId;
-  
+
   const { redirectLoginURL } = useOpenpieceUserAuth();
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
     ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
@@ -53,6 +55,7 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
     instanceList: {},
     check: false,
     edit: false,
+    serve: false,
   });
   const [files, setFiels] = useState([]);
 
@@ -78,25 +81,24 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
     handelTemplata();
   }, []);
 
-
   const getJobDetailInfoById = async (id: string) => {
-    const response = await getJobsEditList(id)
+    const response = await getJobsEditList(id);
     if (response.success) {
-      if (location.query.view === 'true') {
+      if (location.query.view === "true") {
         setInstance({ ...instance, instanceList: response.data, check: true });
       } else {
         setInstance({ ...instance, instanceList: response.data, edit: true });
       }
       setIsModalOpen(true);
     }
-  }
+  };
 
   useEffect(() => {
     if (jobId) {
       // 通过 jobID 查询详情
-      getJobDetailInfoById(jobId)
+      getJobDetailInfoById(jobId);
     }
-  }, [jobId])
+  }, [jobId]);
 
   const typeMean = {
     INTEGRATE: $i18n.get({
@@ -366,6 +368,19 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
               dm: "查看作业",
             })}
           </a>
+          {record.type === "SERVE" && (
+            <a
+              onClick={() => {
+                setInstance({ ...instance, instanceList: record, serve: true });
+                setIsModalOpen(true);
+              }}
+            >
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.computing.Inquire",
+                dm: "查询",
+              })}
+            </a>
+          )}
           <Popconfirm
             title={$i18n.get({
               id: "openpiece-geaflow.geaflow.computing.AreYouSureYouWant",
@@ -407,7 +422,13 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
 
   const handleCancel = () => {
     setIsModalOpen(false);
-    setInstance({ ...instance, instanceList: {}, edit: false, check: false });
+    setInstance({
+      ...instance,
+      instanceList: {},
+      edit: false,
+      check: false,
+      serve: false,
+    });
     form.resetFields();
   };
   const handleSuccess = () => {
@@ -418,12 +439,34 @@ export const GeaFlowComputing: React.FC<PluginPorps> = ({ redirectPath }) => {
   return (
     <div className={styles["definition"]}>
       {isModalOpen ? (
-        <CreateCompute
-          handleCancel={handleCancel}
-          instance={instance}
-          files={files}
-          handleSuccess={handleSuccess}
-        />
+        instance.serve ? (
+          <div>
+            <Breadcrumb style={{ marginBottom: 16 }}>
+              <Breadcrumb.Item>
+                <a onClick={handleCancel}>
+                  {$i18n.get({
+                    id: "openpiece-geaflow.geaflow.computing.GraphCalculationList",
+                    dm: "图任务",
+                  })}
+                </a>
+              </Breadcrumb.Item>
+              <Breadcrumb.Item>
+                {$i18n.get({
+                  id: "openpiece-geaflow.geaflow.computing.Serve",
+                  dm: "图查询",
+                })}
+              </Breadcrumb.Item>
+            </Breadcrumb>
+            <GraphQuery instance={instance.instanceList} />
+          </div>
+        ) : (
+          <CreateCompute
+            handleCancel={handleCancel}
+            instance={instance}
+            files={files}
+            handleSuccess={handleSuccess}
+          />
+        )
       ) : (
         <div>
           <p>

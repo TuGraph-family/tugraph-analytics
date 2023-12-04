@@ -36,4 +36,9 @@ public class PageSearch {
         DESC
     }
 
+    public void setOrder(SortOrder order, String key) {
+        this.order = order;
+        this.sort = key;
+
+    }
 }

@@ -54,6 +54,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSetOption;
@@ -107,6 +108,17 @@ public class QueryContext {
     private final Set<GraphInfo> referTargetGraphs = new HashSet<>();
 
     private final List<QueryCallback> queryCallbacks = new ArrayList<>();
+
+    private RelDataType currentResultType;
+
+    public RelDataType getCurrentResultType() {
+        return currentResultType;
+    }
+
+    public QueryContext setCurrentResultType(RelDataType currentResultType) {
+        this.currentResultType = currentResultType;
+        return this;
+    }
 
     private QueryContext(QueryEngine engineContext, boolean isCompile) {
         this.engineContext = engineContext;
@@ -364,6 +376,7 @@ public class QueryContext {
         for (QueryCallback callback : queryCallbacks) {
             callback.onQueryFinish(this);
         }
+        this.currentResultType = null;
     }
 
     public static class QueryContextBuilder {

@@ -68,6 +68,7 @@ public class QueryCommand implements IQueryCommand {
         LOGGER.info("After path analyzer:\n{}", RelOptUtil.toString(physicNode));
 
         RDataView dataView = physicNode.translate(context);
+        context.setCurrentResultType(physicNode.getRowType());
 
         if (context.isCompile()) {
             long compileSpend = System.currentTimeMillis() - startTs;
@@ -76,7 +77,7 @@ public class QueryCommand implements IQueryCommand {
         }
 
         if (query.getKind() != SqlKind.INSERT) {
-            List<Row> rows = (List<Row>) dataView.take();
+            List<Row> rows = (List<Row>) dataView.take(SqlTypeUtil.convertType(physicNode.getRowType()));
             RowDecoder rowDecoder =
                 new DefaultRowDecoder((StructType) SqlTypeUtil.convertType(physicNode.getRowType()));
             List<Row> decodeRows = new ArrayList<>(rows.size());

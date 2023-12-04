@@ -35,6 +35,7 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.config.CompileContextClass;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
+import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.config.DeployConfig;
 import com.antgroup.geaflow.console.core.service.converter.IdConverter;
@@ -110,13 +111,10 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
     }
 
     public Set<FunctionInfo> parseFunctions(GeaflowJob job, GeaflowVersion version) {
-        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
-        CompileContext context = classLoader.newInstance(CompileContext.class);
-        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
-        setContextConfig(context, job.getInstanceId(), CatalogType.MEMORY);
-
+        CompilerAndContext compilerAndContext = getCompilerAndContext(version, job.getInstanceId(), CatalogType.MEMORY);
         try {
-            return compiler.getUnResolvedFunctions(job.generateCode().getText(), context);
+            return compilerAndContext.getCompiler()
+                .getUnResolvedFunctions(job.generateCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Parse functions failed", e);
         }
@@ -147,29 +145,27 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
 
 
     private CompileResult compile(CompileClassLoader classLoader, GeaflowJob job, Map<String, Integer> parallelisms) {
-        CompileContext context = classLoader.newInstance(CompileContext.class);
-        setContextConfig(context, job.getInstanceId(), CatalogType.CONSOLE);
+        CompilerAndContext compilerAndContext = getCompilerAndContext(classLoader, job.getInstanceId(), CatalogType.CONSOLE);
         if (MapUtils.isNotEmpty(parallelisms)) {
-            context.setParallelisms(parallelisms);
+            compilerAndContext.getContext().setParallelisms(parallelisms);
         }
-        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
-
         try {
-            return compiler.compile(job.generateCode().getText(), context);
+            return compilerAndContext.getCompiler()
+                .compile(job.generateCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Compile job code failed", e);
         }
     }
 
-    private void setContextConfig(CompileContext context, String instanceId, CatalogType catalogType) {
-        GeaflowInstance instance = instanceService.get(instanceId);
-        CompileContextClass config = new CompileContextClass();
-        config.setTokenKey(ContextHolder.get().getSessionToken());
-        config.setInstanceName(instance.getName());
-        config.setCatalogType(catalogType.getValue());
-        config.setEndpoint(deployConfig.getGatewayUrl());
-        Map<String, String> map = config.build().toStringMap();
-        context.setConfig(map);
+    public String formatOlapResult(String queryScript, Object resultData, GeaflowTask task) {
+        CompilerAndContext compilerAndContext = getCompilerAndContext(task.getRelease().getVersion(),
+            task.getRelease().getJob().getInstanceId(), CatalogType.CONSOLE);
+        try {
+            return compilerAndContext.getCompiler()
+                .formatOlapResult(queryScript, resultData, compilerAndContext.getContext());
+        } catch (Exception e) {
+            throw new GeaflowCompileException("Format olap result failed", e);
+        }
     }
 
     public void dropByJobIds(List<String> ids) {
@@ -184,29 +180,66 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
     }
 
     public Set<String> parseDeclaredPlugins(GeaflowJob job, GeaflowVersion version) {
-        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
-        CompileContext context = classLoader.newInstance(CompileContext.class);
-        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
-        setContextConfig(context, job.getInstanceId(), CatalogType.MEMORY);
-
+        CompilerAndContext compilerAndContext = getCompilerAndContext(version, job.getInstanceId(), CatalogType.MEMORY);
         try {
-            return compiler.getDeclaredTablePlugins(job.generateCode().getText(), context);
+            return compilerAndContext.getCompiler()
+                .getDeclaredTablePlugins(job.generateCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Parse plugins failed", e);
         }
     }
 
     public Set<TableInfo> getUnResolvedTables(GeaflowJob job, GeaflowVersion version) {
-        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
-        CompileContext context = classLoader.newInstance(CompileContext.class);
-        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
-        setContextConfig(context, job.getInstanceId(), CatalogType.MEMORY);
-
+        CompilerAndContext compilerAndContext = getCompilerAndContext(version, job.getInstanceId(), CatalogType.MEMORY);
         try {
-            return compiler.getUnResolvedTables(job.generateCode().getText(), context);
+            return compilerAndContext.getCompiler()
+                .getUnResolvedTables(job.generateCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Parse plugins failed", e);
         }
     }
+
+    private CompilerAndContext getCompilerAndContext(GeaflowVersion version, String instanceId, CatalogType catalogType) {
+        VersionClassLoader classLoader = versionFactory.getClassLoader(version);
+        return getCompilerAndContext(classLoader, instanceId, catalogType);
+    }
+
+    private CompilerAndContext getCompilerAndContext(CompileClassLoader classLoader, String instanceId, CatalogType catalogType) {
+        CompileContext context = classLoader.newInstance(CompileContext.class);
+        GeaflowCompiler compiler = classLoader.newInstance(GeaflowCompiler.class);
+        setContextConfig(context, instanceId, catalogType);
+        return new CompilerAndContext(compiler, context);
+    }
+
+    private void setContextConfig(CompileContext context, String instanceId, CatalogType catalogType) {
+        GeaflowInstance instance = instanceService.get(instanceId);
+        CompileContextClass config = new CompileContextClass();
+        config.setTokenKey(ContextHolder.get().getSessionToken());
+        config.setInstanceName(instance.getName());
+        config.setCatalogType(catalogType.getValue());
+        config.setEndpoint(deployConfig.getGatewayUrl());
+        Map<String, String> map = config.build().toStringMap();
+        context.setConfig(map);
+    }
+
+    private static class CompilerAndContext {
+
+        private final GeaflowCompiler compiler;
+        private final CompileContext context;
+
+        public CompilerAndContext(GeaflowCompiler geaflowCompiler, CompileContext compileContext) {
+            this.compiler = geaflowCompiler;
+            this.context = compileContext;
+        }
+
+        public GeaflowCompiler getCompiler() {
+            return compiler;
+        }
+
+        public CompileContext getContext() {
+            return context;
+        }
+    }
+
 }
 

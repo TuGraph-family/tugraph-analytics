@@ -22,22 +22,16 @@ import static com.antgroup.geaflow.analytics.service.query.StandardError.ANALYTI
 import static com.antgroup.geaflow.metaserver.service.NamespaceType.DEFAULT;
 import static java.util.Objects.requireNonNull;
 
-import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsClientConfigKeys;
 import com.antgroup.geaflow.analytics.service.query.QueryError;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.common.config.ConfigKey;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.mode.JobMode;
 import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.metaserver.client.MetaServerQueryClient;
 import com.antgroup.geaflow.metaserver.service.NamespaceType;
 import com.antgroup.geaflow.pipeline.service.ServiceType;
-import com.antgroup.geaflow.service.discovery.zookeeper.ZooKeeperConfigKeys;
-import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -71,21 +65,21 @@ public class AnalyticsClient {
         return new AnalyticsClientBuilder();
     }
 
-    private AnalyticsClient(AnalyticsClientBuilder builder) {
-        this.host = builder.host;
-        this.port = builder.port;
-        this.initChannelPools = builder.initChannelPools;
-        this.config = builder.configuration;
-        this.queryRetryNum = builder.configuration.getInteger(ANALYTICS_CLIENT_CONNECT_RETRY_NUM);
-        this.zkBaseNode = builder.zkBaseNode;
-        this.zkQuorumServer = builder.zkQuorumServer;
+    public AnalyticsClient(AnalyticsClientBuilder builder) {
+        this.host = builder.getHost();
+        this.port = builder.getPort();
+        this.initChannelPools = builder.isInitChannelPools();
+        this.config = builder.getConfiguration();
+        this.queryRetryNum = builder.getConfiguration().getInteger(ANALYTICS_CLIENT_CONNECT_RETRY_NUM);
+        this.zkBaseNode = builder.getZkBaseNode();
+        this.zkQuorumServer = builder.getZkQuorumServer();
         this.serviceType = ServiceType.getEnum(config);
         init();
     }
 
     private void init() {
         if (this.host == null) {
-            checkAnalyticsClientConfig(config);
+            AnalyticsClientBuilder.checkAnalyticsClientConfig(config);
         }
         initServiceAddress();
         ClientHandlerContext clientHandlerContext =
@@ -203,108 +197,4 @@ public class AnalyticsClient {
         }
     }
 
-    private static void checkAnalyticsClientConfig(Configuration config) {
-        // Check job mode.
-        checkAnalyticsClientJobMode(config);
-        configIsExist(config, ZooKeeperConfigKeys.ZOOKEEPER_BASE_NODE);
-        configIsExist(config, ZooKeeperConfigKeys.ZOOKEEPER_QUORUM_SERVERS);
-    }
-
-    private static void checkAnalyticsClientJobMode(Configuration config) {
-        if (config.contains(ExecutionConfigKeys.JOB_MODE)) {
-            JobMode jobMode = JobMode.getJobMode(config);
-            Preconditions.checkArgument(JobMode.OLAP_SERVICE.equals(jobMode), "analytics job mode must set OLAP_SERVICE");
-            return;
-        }
-        throw new GeaflowRuntimeException("analytics client config miss: " + ExecutionConfigKeys.JOB_MODE.getKey());
-    }
-
-    private static void configIsExist(Configuration config, ConfigKey configKey) {
-        Preconditions.checkArgument(
-            config.contains(configKey) && !config.getConfigMap().get(configKey.getKey()).isEmpty(),
-            "client missing config: " + configKey.getKey() + ", description: "
-                + configKey.getDescription());
-    }
-
-    public static class AnalyticsClientBuilder {
-
-        private final Configuration configuration = new Configuration();
-
-        private String host;
-
-        private int port;
-
-        private String user;
-
-        private boolean needAuth;
-
-        private int queryRetryNum;
-
-        private String zkBaseNode;
-
-        private String zkQuorumServer;
-
-        private boolean initChannelPools;
-
-        public AnalyticsClientBuilder withHost(String host) {
-            this.host = host;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withPort(int port) {
-            this.port = port;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withInitChannelPools(boolean initChannelPools) {
-            this.initChannelPools = initChannelPools;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withNeedAuth(boolean needAuth) {
-            this.needAuth = needAuth;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withConfiguration(Configuration configuration) {
-            this.configuration.putAll(configuration.getConfigMap());
-            return this;
-        }
-
-        public AnalyticsClientBuilder withUser(String user) {
-            this.user = user;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withAnalyticsZkNode(String zkBaseNode) {
-            this.configuration.put(ZooKeeperConfigKeys.ZOOKEEPER_BASE_NODE.getKey(), zkBaseNode);
-            this.zkBaseNode = zkBaseNode;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withAnalyticsZkQuorumServers(String zkQuorumServer) {
-            this.configuration.put(ZooKeeperConfigKeys.ZOOKEEPER_QUORUM_SERVERS.getKey(), zkQuorumServer);
-            this.zkQuorumServer = zkQuorumServer;
-            return this;
-        }
-
-        public AnalyticsClientBuilder withTimeoutMs(int timeoutMs) {
-            this.configuration.put(AnalyticsClientConfigKeys.ANALYTICS_CLIENT_CONNECT_TIMEOUT_MS, String.valueOf(timeoutMs));
-            return this;
-        }
-
-        public AnalyticsClientBuilder withRetryNum(int retryNum) {
-            this.configuration.put(ANALYTICS_CLIENT_CONNECT_RETRY_NUM, String.valueOf(retryNum));
-            this.queryRetryNum = retryNum;
-            return this;
-        }
-
-        public AnalyticsClient build() {
-            if (host == null) {
-                checkAnalyticsClientConfig(configuration);
-            }
-            return new AnalyticsClient(this);
-        }
-
-    }
 }

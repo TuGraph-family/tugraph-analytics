@@ -21,6 +21,7 @@ import com.antgroup.geaflow.console.biz.shared.RemoteFileManager;
 import com.antgroup.geaflow.console.biz.shared.TaskManager;
 import com.antgroup.geaflow.console.biz.shared.convert.IdViewConverter;
 import com.antgroup.geaflow.console.biz.shared.convert.JobViewConverter;
+import com.antgroup.geaflow.console.biz.shared.view.GraphView;
 import com.antgroup.geaflow.console.biz.shared.view.IdView;
 import com.antgroup.geaflow.console.biz.shared.view.JobView;
 import com.antgroup.geaflow.console.biz.shared.view.RemoteFileView;
@@ -46,6 +47,7 @@ import com.antgroup.geaflow.console.core.service.IdService;
 import com.antgroup.geaflow.console.core.service.JobService;
 import com.antgroup.geaflow.console.core.service.ReleaseService;
 import com.antgroup.geaflow.console.core.service.RemoteFileService;
+import com.antgroup.geaflow.console.core.service.StatementService;
 import com.antgroup.geaflow.console.core.service.TaskService;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import com.google.common.base.Preconditions;
@@ -91,6 +93,9 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
     @Autowired
     private RemoteFileService remoteFileService;
 
+    @Autowired
+    private StatementService statementService;
+
     @Override
     public IdViewConverter<GeaflowJob, JobView> getConverter() {
         return jobViewConverter;
@@ -103,17 +108,11 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
 
     @Override
     public List<GeaflowJob> parse(List<JobView> views) {
-        return views.stream().map(v -> {
+        return ListUtil.convert(views, v -> {
             GeaflowJobType type = v.getType();
             Preconditions.checkNotNull(type, "job Type is null");
 
             switch (type) {
-                case INTEGRATE:
-                    // get graphs and tables
-                    List<GeaflowStruct> structs = getResource(v.getStructs());
-                    List<String> graphIds = ListUtil.convert(v.getGraphs(), IdView::getId);
-                    List<GeaflowGraph> graphs = jobService.getResourceService(GeaflowResourceType.GRAPH).get(graphIds);
-                    return jobViewConverter.convert(v, structs, graphs, null, null);
                 case PROCESS:
                     // get functions
                     List<String> functionIds = ListUtil.convert(v.getFunctions(), IdView::getId);
@@ -123,10 +122,30 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
                     GeaflowRemoteFile remoteFile = Optional.ofNullable(v.getJarPackage())
                         .map(e -> remoteFileService.get(e.getId())).orElse(null);
                     return jobViewConverter.convert(v, null, null, null, remoteFile);
+                case INTEGRATE:
+                case SERVE:
+                    List<GeaflowStruct> structs = null;
+                    if (type == GeaflowJobType.INTEGRATE) {
+                        // get graphs and tables
+                        structs = getResource(v.getStructs());
+                    }
+
+                    if (type == GeaflowJobType.SERVE) {
+                        Preconditions.checkArgument(v.getGraphs().size() == 1,
+                            "AnalysisJob job must have one graph");
+                    }
+                    List<String> graphIds = ListUtil.convert(v.getGraphs(), IdView::getId);
+                    List<GeaflowGraph> graphs = ListUtil.convert(graphIds, id -> {
+                        GeaflowGraph g = (GeaflowGraph) jobService.getResourceService(GeaflowResourceType.GRAPH).get(id);
+                        Preconditions.checkNotNull(g, "Graph id {} is null", id);
+                        return g;
+                    });
+                    return jobViewConverter.convert(v, structs, graphs, null, null);
+
                 default:
-                    throw new GeaflowException("Unsupported job Type: ", v.getType());
+                    throw new GeaflowException("Unsupported job Type: {}", v.getType());
             }
-        }).collect(Collectors.toList());
+        });
     }
 
     private List<GeaflowStruct> getResource(List<StructView> views) {
@@ -134,8 +153,7 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
             return new ArrayList<>();
         }
         // group by the structType
-        Map<GeaflowStructType, List<StructView>> group = views.stream()
-            .collect(Collectors.groupingBy(StructView::getType));
+        Map<GeaflowStructType, List<StructView>> group = views.stream().collect(Collectors.groupingBy(StructView::getType));
         List<GeaflowStruct> res = new ArrayList<>();
         // use services according to the group
         for (Entry<GeaflowStructType, List<StructView>> entry : group.entrySet()) {
@@ -155,7 +173,7 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
         releaseService.dropByJobIds(jobIds);
         jobService.dropResources(jobIds);
         authorizationService.dropByResources(jobIds, GeaflowResourceType.JOB);
-
+        statementService.dropByJobIds(jobIds);
         try {
             Map<String, String> jarIds = jobService.getJarIds(jobIds);
             for (String jobId : jobIds) {
@@ -179,7 +197,10 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
             throw new GeaflowIllegalException("Job name {} exists", jobName);
         }
 
-        Preconditions.checkNotNull(jobView.getEntryClass(), "Hla job needs entryClass");
+        if (jobView.getType() == GeaflowJobType.CUSTOM) {
+            Preconditions.checkNotNull(jobView.getEntryClass(), "Custom job needs entryClass");
+        }
+
         if (jarFile != null) {
             jobView.setJarPackage(createRemoteFile(jarFile));
         } else if (fileId != null) {
@@ -198,7 +219,10 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
 
 
     private boolean updateApiJob(String jobId, JobView updateView, MultipartFile jarFile, String fileId) {
-        Preconditions.checkNotNull(updateView.getEntryClass(), "Hla job needs entryClass");
+        if (updateView.getType() == GeaflowJobType.CUSTOM) {
+            Preconditions.checkNotNull(updateView.getEntryClass(), "Hla job needs entryClass");
+        }
+
         if (jarFile != null) {
             updateView.setJarPackage(createRemoteFile(jarFile));
 
@@ -246,8 +270,16 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
 
     @Override
     @Transactional
-    public String create(JobView jobView, MultipartFile jarFile, String fileId) {
+    public String create(JobView jobView, MultipartFile jarFile, String fileId, List<String> graphIds) {
         Preconditions.checkNotNull(jobView.getType(), "Job type is null");
+        if (CollectionUtils.isNotEmpty(graphIds)) {
+            List<GraphView> graphViews = ListUtil.convert(graphIds, id -> {
+                GraphView graphView = new GraphView();
+                graphView.setId(id);
+                return graphView;
+            });
+            jobView.setGraphs(graphViews);
+        }
         return jobView.getType().getTaskType() == GeaflowTaskType.API ? createApiJob(jobView, jarFile, fileId) :
                super.create(jobView);
     }

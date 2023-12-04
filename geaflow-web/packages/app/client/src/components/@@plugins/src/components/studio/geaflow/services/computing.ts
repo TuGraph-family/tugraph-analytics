@@ -130,10 +130,99 @@ export const getJobsTasks = async (jobId: string) => {
   }
   return response?.data?.list;
 };
+
 export const getRemoteFiles = async () => {
   const response = await request(`${HTTP_SERVICE_URL}/api/remote-files`, {
     method: "get",
     requestType: "form",
   });
   return response?.data?.list;
+};
+
+export const getOlaps = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/statements`, {
+    method: "get",
+    params: params,
+  });
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return [];
+  }
+  return response?.data;
+};
+
+export const getOlapsResult = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/statements`, {
+    method: "post",
+    params: params,
+  });
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return "";
+  }
+  return response?.data;
+};
+
+export const getOlapQueryId = async (olapQueryId: string) => {
+  const response = await request(
+    `${HTTP_SERVICE_URL}/api/statements/${olapQueryId}`,
+    {
+      method: "get",
+    }
+  );
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return [];
+  }
+  return response?.data;
+};
+
+export const deleteOlapQueryId = async (olapQueryId: string) => {
+  const response = await request(
+    `${HTTP_SERVICE_URL}/api/statements/${olapQueryId}`,
+    {
+      method: "delete",
+    }
+  );
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return "";
+  }
+  return response;
 };

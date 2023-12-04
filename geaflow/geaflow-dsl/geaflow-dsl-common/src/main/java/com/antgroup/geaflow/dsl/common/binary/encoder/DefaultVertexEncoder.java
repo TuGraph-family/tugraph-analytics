@@ -16,10 +16,13 @@ package com.antgroup.geaflow.dsl.common.binary.encoder;
 
 import com.antgroup.geaflow.dsl.common.binary.EncoderFactory;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.data.impl.VertexEdgeFactory;
 import com.antgroup.geaflow.dsl.common.types.StructType;
+import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.types.VertexType;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
+import java.util.List;
 
 public class DefaultVertexEncoder implements VertexEncoder {
 
@@ -37,7 +40,13 @@ public class DefaultVertexEncoder implements VertexEncoder {
         RowVertex binaryVertex = VertexEdgeFactory.createVertex(vertexType);
         binaryVertex.setId(BinaryUtil.toBinaryForString(rowVertex.getId()));
         binaryVertex.setBinaryLabel(rowVertex.getBinaryLabel());
-        binaryVertex.setValue(rowEncoder.encode(rowVertex.getValue()));
+        Object[] values = new Object[vertexType.getValueSize()];
+        List<TableField> valueFields = vertexType.getValueFields();
+        for (int i = 0; i < valueFields.size(); i++) {
+            values[i] = rowVertex.getField(vertexType.getValueOffset() + i,
+                valueFields.get(i).getType());
+        }
+        binaryVertex.setValue(rowEncoder.encode(ObjectRow.create(values)));
         return binaryVertex;
     }
 }

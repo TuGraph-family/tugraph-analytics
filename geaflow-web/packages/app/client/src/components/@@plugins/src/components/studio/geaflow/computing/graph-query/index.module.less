@@ -1,0 +1,256 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-container {
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 1);
+  position: relative;
+  .@{perfix-cls}-header {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    background-color: #fafafa;
+    padding: 0 20px;
+    .@{perfix-cls}-headerLeft {
+      width: 185px;
+      :global {
+        .ant-select {
+          width: 152px;
+          .ant-select-selector {
+            border: none;
+            box-shadow: none !important;
+            background-color: #fafafa;
+          }
+        }
+      }
+    }
+    .@{perfix-cls}-headerRight {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    :global {
+      .ant-tabs-nav {
+        margin: 0;
+        &:before {
+          display: none;
+        }
+      }
+      .ant-tabs-tab {
+        color: rgba(106, 107, 113, 1);
+        font-size: 16px;
+
+        &:hover {
+          color: rgba(106, 107, 113, 1);
+        }
+      }
+      .ant-tabs-tab-btn {
+        color: rgba(106, 107, 113, 1);
+      }
+      .ant-tabs-tab-active {
+        .ant-tabs-tab-btn {
+          color: rgba(54, 55, 64, 1);
+        }
+      }
+      .ant-tabs-ink-bar-animated {
+        background-color: #1750fe;
+      }
+    }
+  }
+  .@{perfix-cls}-content {
+    height: 100%;
+    display: flex;
+    &-right {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      &-top {
+        height: calc(100% - 48px);
+        position: relative;
+      }
+      &-bottom {
+        height: 100%;
+        .@{perfix-cls}-bottom-spin {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+        }
+      }
+      .@{perfix-cls}-right-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 48px;
+        padding: 0 24px;
+        box-shadow: 0 1px 0 0 #f2f2f2;
+        :global {
+          .ant-space {
+            gap: 0 !important;
+            .ant-space-item-split {
+              margin-left: 16px;
+              .ant-divider-vertical {
+                margin: 0 0 0 8px;
+              }
+            }
+            .ant-btn-text {
+              padding: 0 0 0 16px;
+            }
+          }
+        }
+        .@{perfix-cls}-left-btn {
+          :global {
+            .ant-select-selector {
+              background-color: #f6f6f6;
+              border-radius: 6px;
+              border: none;
+            }
+            .ant-btn {
+              border-radius: 4px;
+            }
+          }
+          .@{perfix-cls}-btn-implement {
+            &-text {
+              margin-left: 16px;
+            }
+            &-zhixing {
+              font-size: 27px;
+              position: absolute;
+              top: 1px;
+              left: 2px;
+            }
+          }
+        }
+        .@{perfix-cls}-right-btn {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+    }
+  }
+  .@{perfix-cls}-path-container {
+    height: calc(100% - 52px);
+    .@{perfix-cls}-path-result {
+      height: 100%;
+      .@{perfix-cls}-path-spin {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+  }
+  .@{perfix-cls}-node-content {
+    height: calc(100% - 52px);
+    display: flex;
+    .@{perfix-cls}-node-result {
+      flex: 1 1 auto;
+      overflow: hidden;
+      .@{perfix-cls}-node-spin {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+  }
+}
+.@{perfix-cls}-right-center {
+  border-bottom: 1px solid #f2f2f2;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+.@{perfix-cls}-split-pane {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+
+  :global {
+    .SplitPane {
+      overflow: hidden;
+    }
+    .Resizer {
+      z-index: 2;
+      box-sizing: border-box;
+      background-clip: padding-box;
+    }
+
+    .Resizer:hover {
+      transition: all 1s ease;
+      opacity: 0.1;
+      background: #000;
+    }
+
+    .Resizer.horizontal {
+      width: 100%;
+      height: 3px;
+      z-index: 9999;
+      margin: -4px 0;
+      border-top: 5px solid rgb(255 255 255 / 0%);
+      border-bottom: 5px solid rgb(255 255 255 / 0%);
+      cursor: row-resize;
+    }
+
+    .Resizer.horizontal:hover {
+      border-top: 5px solid rgb(0 0 0 / 50%);
+      border-bottom: 5px solid rgb(0 0 0 / 50%);
+    }
+
+    .Resizer.vertical {
+      width: 4px;
+      margin: 0 -5px;
+      border-right: 5px solid rgb(255 255 255 / 0%);
+      border-left: 5px solid rgb(255 255 255 / 0%);
+      cursor: col-resize;
+    }
+
+    .Resizer.vertical:hover {
+      border-right: 5px solid rgb(0 0 0 / 50%);
+      border-left: 5px solid rgb(0 0 0 / 50%);
+    }
+
+    .Resizer.disabled {
+      cursor: not-allowed;
+    }
+
+    .Resizer.disabled:hover {
+      border-color: transparent;
+    }
+
+    .Pane.horizontal {
+      overflow: hidden;
+    }
+  }
+}
+:global {
+  .ant-popover-title {
+    border: none;
+  }
+}
+.@{perfix-cls}-rule {
+  background-color: #fbfbfb;
+  padding: 8px 0 8px 8px;
+  div {
+    color: rgba(106, 107, 113, 1);
+    line-height: 20px;
+    font-size: 10px;
+  }
+}
+.@{perfix-cls}-popover-table {
+  overflow: hidden;
+  :global {
+    .ant-table {
+      width: calc(100% + 2px);
+      left: -1px;
+      .ant-table-container {
+        background-color: #fbfbfb;
+      }
+      table {
+        border-top: none !important;
+      }
+    }
+  }
+}

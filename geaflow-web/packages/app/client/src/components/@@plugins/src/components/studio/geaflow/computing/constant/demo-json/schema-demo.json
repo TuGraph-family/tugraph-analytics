@@ -1,0 +1,40 @@
+[
+  {
+    "label": "person",
+    "type": "VERTEX",
+    "properties": [
+      {
+        "name": "name",
+        "type": "STRING",
+        "optional": false,
+        "unique": true,
+        "index": true
+      },
+      { "name": "age", "type": "INT8", "optional": false },
+      { "name": "birthday", "type": "STRING", "optional": false },
+      { "name": "gender", "type": "STRING", "optional": true },
+      { "name": "dsd", "type": "STRING", "optional": false }
+    ],
+    "primary": "name"
+  },
+  {
+    "label": "company",
+    "type": "VERTEX",
+    "properties": [
+      {
+        "name": "name",
+        "type": "STRING",
+        "optional": false,
+        "unique": true,
+        "index": true
+      }
+    ],
+    "primary": "name"
+  },
+  {
+    "label": "employment",
+    "type": "EDGE",
+    "properties": [],
+    "constraints": [["person", "company"]]
+  }
+]
