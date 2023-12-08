@@ -58,6 +58,11 @@
 
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dsl-connector-pulsar</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-dsl-connector-hive</artifactId>
         </dependency>
 
