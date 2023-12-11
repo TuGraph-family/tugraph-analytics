@@ -88,7 +88,7 @@ public class GeaFlowAlgorithmAggTraversalFunction implements
         this.vertexUpdateValues = StateFactory.buildKeyValueState(descriptor,
             traversalContext.getRuntimeContext().getConfiguration());
         if (recoverWindowId > 1) {
-            this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId);
+            this.vertexUpdateValues.manage().operate().setCheckpointId(recoverWindowId - 1);
             this.vertexUpdateValues.manage().operate().recover();
         }
     }
