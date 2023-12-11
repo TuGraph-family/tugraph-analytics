@@ -34,6 +34,7 @@ import com.antgroup.geaflow.pipeline.callback.ICallbackFunction;
 import com.antgroup.geaflow.pipeline.callback.TaskCallBack;
 import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
 import com.antgroup.geaflow.pipeline.task.PipelineTask;
+import com.antgroup.geaflow.view.IViewDesc.BackendType;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
 import java.io.IOException;
@@ -135,6 +136,9 @@ public class GQLPipeLine {
         public void window(long windowId) {
             if (CheckpointUtil.needDoCheckpoint(windowId, checkpointDuration)) {
                 for (GraphViewDesc graphViewDesc : insertGraphs) {
+                    if (graphViewDesc.getBackend().equals(BackendType.Memory)) {
+                        continue;
+                    }
                     long checkpointId = graphViewDesc.getCheckpoint(windowId);
                     try {
                         ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graphViewDesc.getName(), conf);
