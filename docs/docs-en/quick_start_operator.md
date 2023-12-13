@@ -185,7 +185,7 @@ spec:
   # Optional
   udfJars:
     - name: myUdf.jar
-      url: http://localhost:8080/download/myUdf.jar
+      url: http://localhost:8888/download/myUdf.jar
 ```
 
 ### Submit DSL job
@@ -202,11 +202,11 @@ spec:
   gqlFile:
     # Name must be correct
     name: myGql.gql
-    url: http://localhost:8080/download/myGql.gql
+    url: http://localhost:8888/download/myGql.gql
   # Optional
   udfJars:
     - name: myUdf.jar
-      url: http://localhost:8080/download/myUdf.jar
+      url: http://localhost:8888/download/myUdf.jar
 ```
 Regarding more parameters of DSL jobs and HLA jobs, we have prepared two demo jobs in the 
 project directory **geaflow-kubernetes-operator/example** directory for your reference. Please 

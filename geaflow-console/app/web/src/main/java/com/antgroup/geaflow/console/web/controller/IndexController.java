@@ -14,18 +14,16 @@
 
 package com.antgroup.geaflow.console.web.controller;
 
-import com.antgroup.geaflow.console.web.api.GeaflowApiResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class IndexController {
 
     @GetMapping("/")
-    @ResponseBody
-    public GeaflowApiResponse<String> index() {
-        return GeaflowApiResponse.success("GeaFlow Console");
+    public String index() {
+        return "index.html";
     }
 
 }
+  

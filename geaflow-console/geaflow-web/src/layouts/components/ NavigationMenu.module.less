@@ -1,0 +1,30 @@
+  .layout-menu {
+    width: 180px;
+    height: calc(100% - 24px);
+    margin-top: 24px;
+    background: #e9eeff;
+    border-right:1px solid #ccc;
+    box-shadow: 1px 0 0 0 #e5e6e8, 2px 0 0 0 #f7f8fa;
+    transition: width 0.3s;
+
+    :global {
+      .ant-menu-sub.ant-menu-inline{
+        background: #e9eeff !important;
+      }
+
+      .ant-menu-item-selected {
+        font-weight: 600;
+        background-color: rgba(0, 10, 26, 0.04) !important;
+
+        .anticon {
+          color: inherit;
+        }
+        
+      }
+      .ant-menu-item-selected::after{
+        opacity: 0 !important;
+      }
+    }
+
+  
+  }

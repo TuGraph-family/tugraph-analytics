@@ -46,18 +46,18 @@ docker images
 
 **x86架构**
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console:0.1
 ```
 
 **arm架构**
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console-arm:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console-arm:0.1
 ```
 通过**uname -a**命令可以查看机器架构类型.
 
 * 本地镜像启动方式如下：
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1
 ```
 **注意**: 远程拉取镜像和本地镜像tag名称不同，启动命令有所区别。
 

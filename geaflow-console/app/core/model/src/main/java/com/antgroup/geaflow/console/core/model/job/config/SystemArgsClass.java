@@ -37,7 +37,7 @@ public class SystemArgsClass extends GeaflowConfigClass {
     private String runtimeTaskName;
 
     @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "i18n.key.k8s.server.url")
-    @GeaflowConfigValue(required = true, defaultValue = "http://0.0.0.0:8080")
+    @GeaflowConfigValue(required = true, defaultValue = "http://0.0.0.0:8888")
     private String gateway;
 
     @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "i18n.key.api.token")

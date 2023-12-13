@@ -72,12 +72,12 @@ docker images
 本地启动GeaFlow Console平台服务，适用于minikube环境。（需要将${your.host.name}替换为本机对外IP地址）
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
 ```
 
 启动对外GeaFlow Console平台服务，适用于K8S真实集群环境。（需要将${your.host.name}替换为本机内网IP地址，例如172.xx.xxx.xx；${your.public.ip} 替换为外部公网IP地址，才能从外部访问GeaFlow Console）
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} -e geaflow.web.gateway.url=http://${your.public.ip}:8080 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
 ```
 
 容器默认以本地模式（local）启动，默认拉起本地的MySQL、Redis、InfluxDB。
@@ -85,10 +85,7 @@ docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6
 # /opt/geaflow/config/application.properties
 geaflow.deploy.mode=local
 geaflow.host=127.0.0.1
-geaflow.web.port=8888
-geaflow.gateway.port=8080
-geaflow.web.url=http://${geaflow.host}:${geaflow.web.port}
-geaflow.web.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
+geaflow.gateway.port=8888
 geaflow.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
 
 # Datasource
@@ -109,13 +106,10 @@ GeaflowApplication:61   - Started GeaflowApplication in 11.437 seconds (JVM runn
 
 若希望以集群模式（cluster）启动容器，需要调整datasource配置指向外部数据源，并设置对外的统一服务url地址。容器支持环境变量注入数据源配置和服务url，例如：
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
+docker run -d --name geaflow-console -p 8888:8888 \
 -e geaflow.deploy.mode="cluster" \
 -e geaflow.host=${your.host.name} \
--e geaflow.web.port=8888 \
--e geaflow.gateway.port=8080 \
--e geaflow.web.url=${your.geaflow.web.url} \
--e geaflow.web.gateway.url=${your.geaflow.web.gateway.url} \
+-e geaflow.gateway.port=8888 \
 -e geaflow.gateway.url=${your.geaflow.gateway.url} \
 -e spring.datasource.url=${your.datasource.url} \
 -e spring.datasource.username=${your.datasource.username} \
@@ -123,11 +117,10 @@ docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
 geaflow-console:1.0
 ```
 
-如果希望修改前端Node进程/Java进程端口号，只需设置geaflow.web.port/geaflow.gateway.port环境变量，并重新映射端口号即可，如：
+如果希望Java进程端口号，只需设置geaflow.gateway.port环境变量，并重新映射端口号即可，如：
 ```shell
-docker run -d --name geaflow-console -p 9090:9090 -p 9999:9999 \
--e geaflow.web.port=9999 \
--e geaflow.gateway.port=9090 \
+docker run -d --name geaflow-console -p 9999:9999 \
+-e geaflow.gateway.port=9999 \
 geaflow-console:1.0
 ```
 

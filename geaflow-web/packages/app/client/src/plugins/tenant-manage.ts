@@ -1,1 +1,0 @@
-export { default } from '@tugraph/plugin-tenant-manage/client';
