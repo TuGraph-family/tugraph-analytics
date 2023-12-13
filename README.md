@@ -1,5 +1,7 @@
 # TuGraph Analytics
 
+----
+
 [![Star](https://shields.io/github/stars/tugraph-family/tugraph-analytics?logo=startrek&label=Star&color=yellow)](https://github.com/TuGraph-family/tugraph-analytics/stargazers)
 [![Fork](https://shields.io/github/forks/tugraph-family/tugraph-analytics?logo=forgejo&label=Fork&color=orange)](https://github.com/TuGraph-family/tugraph-analytics/forks)
 [![Contributor](https://shields.io/github/contributors/tugraph-family/tugraph-analytics?logo=actigraph&label=Contributor&color=abcdef)](https://github.com/TuGraph-family/tugraph-analytics/contributors)
@@ -13,9 +15,11 @@
 
 🌐️ English | [中文](README_cn.md)
 
+----
+
 <!--intro-start-->
 ## Introduction
-**TuGraph Analytics**(alias GeaFlow) is an open-source OLAP graph database developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
+**TuGraph Analytics** (alias: GeaFlow) is the [**fastest**](https://ldbcouncil.org/benchmarks/snb-bi/) open-source OLAP graph database developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
 
 For more information about GeaFlow: [GeaFlow Introduction](docs/docs-en/introduction.md)
 
@@ -41,7 +45,7 @@ For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow Sy
 3. Build Project：`mvn clean install -DskipTests`
 4. Test Job：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql`
 3. Build Image：`./build.sh --all`
-4. Start Container：`docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 geaflow-console:0.1`
+4. Start Container：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
 For more details：[Quick Start](docs/docs-cn/quick_start.md)。
 
