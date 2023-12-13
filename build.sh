@@ -51,7 +51,6 @@ GEAFLOW_PACKAGE_DIR=$GEAFLOW_DIR/geaflow-deploy/geaflow-assembly/target
 GEAFLOW_CONSOLE_DIR=$BASE_DIR/geaflow-console
 GEAFLOW_CONSOLE_DOCKER_DIR=$GEAFLOW_CONSOLE_DIR
 GEAFLOW_CONSOLE_PACKAGE_DIR=$GEAFLOW_CONSOLE_DIR/target
-GEAFLOW_WEB_DIR=$BASE_DIR/geaflow-web
 
 # parse args
 for arg in $*
@@ -77,7 +76,7 @@ if [[ $# -eq 0 || -n "$HELP" || -n "$ERROR" ]]; then
   echo -n 'Usage: build.sh [-options]
 Options:
     --all                       Build package and image of all modules.
-    --module=<name>             Build given module name, default all. values: geaflow|geaflow-console|geaflow-web
+    --module=<name>             Build given module name, default all. values: geaflow|geaflow-console
     --output=<type>             Build given output type, default all. values: package|image
     --help                      Show this help message.
 '
@@ -96,7 +95,7 @@ if [[ -z "$MODULE" ]]; then
   BUILD_GEAFLOW="true"
   BUILD_GEAFLOW_CONSOLE="true"
   BUILD_GEAFLOW_WEB="true"
-  MODULES="geaflow,geaflow-console,geaflow-web"
+  MODULES="geaflow,geaflow-console"
   MVN_BUILD_DIR=$BASE_DIR
 elif [[ "$MODULE" = "geaflow" ]]; then
   BUILD_GEAFLOW="true"
@@ -104,10 +103,6 @@ elif [[ "$MODULE" = "geaflow" ]]; then
   MVN_BUILD_DIR=$GEAFLOW_DIR
 elif [[ "$MODULE" = "geaflow-console" ]]; then
   BUILD_GEAFLOW_CONSOLE="true"
-  MODULES=$MODULE
-  MVN_BUILD_DIR=$GEAFLOW_CONSOLE_DIR
-elif [[ "$MODULE" = "geaflow-web" ]]; then
-  BUILD_GEAFLOW_WEB="true"
   MODULES=$MODULE
   MVN_BUILD_DIR=$GEAFLOW_CONSOLE_DIR
 else
@@ -140,14 +135,6 @@ function buildJarPackage() {
   mvn clean install -DskipTests -Dcheckstyle.skip -T4 || return 1
 }
 
-function buildGeaflowWebPackage() {
-  echo -e "\033[32mpackage geaflow-web to $BASE_DIR/target ...\033[0m"
-
-  mkdir -p $BASE_DIR/target
-  cd $GEAFLOW_WEB_DIR
-  tar czvf $BASE_DIR/target/geaflow-web.tar.gz \
-    --exclude=.git --exclude=node_modules * .[!.]* &>/dev/null || return 1
-}
 
 function buildGeaflowImage() {
   echo -e "\033[32mbuild geaflow image ...\033[0m"
@@ -221,10 +208,6 @@ if [[ -n $BUILD_PACKAGE ]]; then
   if [[ -n "$BUILD_GEAFLOW" || -n "$BUILD_GEAFLOW_CONSOLE" ]]; then
     buildJarPackage || exit $?
   fi
-
-  if [[ -n "$BUILD_GEAFLOW_WEB" ]]; then
-    buildGeaflowWebPackage || exit $?
-  fi
 fi
 
 # build image
@@ -235,10 +218,6 @@ if [[ -n "$BUILD_IMAGE" ]]; then
 
   if [[ -n "$BUILD_GEAFLOW_CONSOLE" ]]; then
     buildGeaflowConsoleImage || exit $?
-  fi
-
-  if [[ -n "$BUILD_GEAFLOW_WEB" ]]; then
-    echo "build geaflow-web image is skipped"
   fi
 fi
 

@@ -79,13 +79,13 @@ The default GeaFlow platform image name is "geaflow-console:0.1", and the engine
 Start the GeaFlow Console platform service locally, suitable for Minikube environment. (Replace ${your.host.name} with the public IP address of your machine.)
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
 ```
 
 Start the external GeaFlow Console platform service, suitable for a real K8S cluster environment. (Replace ${your.host.name} with the internal IP address of your machine, for example 172.xx.xxx.xx; replace ${your.public.ip} with the external public IP address, so that GEAFlow Console can be accessed from the outside.)
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} -e geaflow.web.gateway.url=http://${your.public.ip}:8080 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
 ```
 
 The container starts in "local" mode by default, and local MySQL, Redis, and InfluxDB are launched by default.
@@ -94,10 +94,7 @@ The container starts in "local" mode by default, and local MySQL, Redis, and Inf
 # /opt/geaflow/config/application.properties
 geaflow.deploy.mode=local
 geaflow.host=127.0.0.1
-geaflow.web.port=8888
-geaflow.gateway.port=8080
-geaflow.web.url=http://${geaflow.host}:${geaflow.web.port}
-geaflow.web.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
+geaflow.gateway.port=8888
 geaflow.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
 
 # Datasource
@@ -119,13 +116,10 @@ GeaflowApplication:61   - Started GeaflowApplication in 11.437 seconds (JVM runn
 If you want to start the container in "cluster" mode, you need to adjust the datasource configuration to point to an external data source and set a unified service URL for external access. The container supports environment variable injection of datasource configuration and service URL. For example:
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
+docker run -d --name geaflow-console -p 8888:8888 \
 -e geaflow.deploy.mode="cluster" \
 -e geaflow.host=${your.host.name} \
--e geaflow.web.port=8888 \
--e geaflow.gateway.port=8080 \
--e geaflow.web.url=${your.geaflow.web.url} \
--e geaflow.web.gateway.url=${your.geaflow.web.gateway.url} \
+-e geaflow.gateway.port=8888 \
 -e geaflow.gateway.url=${your.geaflow.gateway.url} \
 -e spring.datasource.url=${your.datasource.url} \
 -e spring.datasource.username=${your.datasource.username} \
@@ -133,11 +127,10 @@ docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
 geaflow-console:1.0
 ```
 
-If you want to modify the port number of the front-end Node process or Java process, you only need to set the environment variables "geaflow.web.port" or "geaflow.gateway.port" and remap the port number. for example:
+If you want to modify the port number of the front-end Node process or Java process, you only need to set the environment variables "geaflow.gateway.port" and remap the port number. for example:
 ```shell
-docker run -d --name geaflow-console -p 9090:9090 -p 9999:9999 \
--e geaflow.web.port=9999 \
--e geaflow.gateway.port=9090 \
+docker run -d --name geaflow-console -p 9999:9999 \
+-e geaflow.gateway.port=9999 \
 geaflow-console:1.0
 ```
 

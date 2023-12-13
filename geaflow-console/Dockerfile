@@ -5,7 +5,6 @@ VOLUME /tmp
 
 ENV GEAFLOW_INSTALL_PATH=/opt
 ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
-ENV GEAFLOW_WEB_HOME=$GEAFLOW_INSTALL_PATH/geaflow-web
 
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -13,10 +12,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # base packages
 RUN yum -y install wget ps vim curl
 RUN wget --no-check-certificate http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo
-RUN curl -sL https://rpm.nodesource.com/setup_14.x | bash -
-
-RUN yum -y install apache-maven nodejs python3 git npm
-
 
 # jdk
 RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
@@ -36,7 +31,6 @@ RUN rpm -Uvh https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rp
 # redis
 RUN yum install -y epel-release \
     && yum install -y redis
-
 
 # zookeeper
 RUN yum install -y ca-certificates
@@ -64,18 +58,6 @@ RUN echo '[influxdata]' >> /etc/yum.repos.d/influxdata.repo \
     && cp influx /usr/local/bin/ \
     && rm -rf /usr/lib/influxdb2-client-2.7.3-linux-amd64
 
-# install web
-COPY target/geaflow-web.tar.gz $GEAFLOW_WEB_HOME/
-WORKDIR $GEAFLOW_WEB_HOME/
-RUN tar -vxzf geaflow-web.tar.gz \
-    && rm geaflow-web.tar.gz \
-    && npm config set registry http://registry.npmmirror.com \
-    && npm install -g yarn \
-    && yarn config set registry http://registry.npmmirror.com
-
-RUN yarn install
-RUN yarn build
-
 # copy console jar
 WORKDIR $GEAFLOW_HOME/
 COPY geaflow-console/target/boot/geaflow-console-bootstrap-*-executable.jar \
@@ -87,6 +69,6 @@ COPY geaflow-console/docker $GEAFLOW_HOME/
 COPY geaflow/geaflow-deploy/geaflow-assembly/target/geaflow-assembly-*[!-sources].jar \
     $GEAFLOW_HOME/files/geaflow.jar
 
-EXPOSE 8080 8888 3306 6379 8086 2181
+EXPOSE 8888 3306 6379 8086 2181
 
 ENTRYPOINT ["bash", "/opt/geaflow/bin/start-process.sh"]

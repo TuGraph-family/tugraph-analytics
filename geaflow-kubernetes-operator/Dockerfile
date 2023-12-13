@@ -26,7 +26,7 @@ RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV JAVA_8_HOME=/usr/lib/jvm/java-1.8.0-openjdk
 ENV USE_LOCAL_K8S=false
-ENV K8S_MASTER_URL=http://30.230.20.225:8000/
+ENV K8S_MASTER_URL=http://127.0.0.1:8000/
 ENV HTTP_SERVER_PORT=8080
 
 
@@ -36,6 +36,6 @@ COPY target/boot/geaflow-kubernetes-operator-bootstrap-*-executable.jar \
     $GEAFLOW_HOME/boot/geaflow-kubernetes-operator-bootstrap.jar
 COPY docker $GEAFLOW_HOME/
 
-EXPOSE 8080 8888 $HTTP_SERVER_PORT
+EXPOSE $HTTP_SERVER_PORT
 
 ENTRYPOINT ["bash", "/opt/geaflow/bin/start-process.sh"]

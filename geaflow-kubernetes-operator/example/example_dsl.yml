@@ -24,14 +24,14 @@ spec:
 
   # udfJars:
   #   - name: my_udf.jar
-  #     url: http://localhost:8080/download/my_udf.jar
+  #     url: http://localhost:8888/download/my_udf.jar
   #     md5: 123
 
   # Required. Replace the gql file to your own. Only effects when entryClass is blank.
   gqlFile:
     # Required. The file name.
     name: user.gql
-    url: http://localhost:8080/download/user.gql
+    url: http://localhost:8888/download/user.gql
     # md5: 123
 
   masterSpec:

@@ -27,15 +27,9 @@ public class DeployConfig implements InitializingBean {
 
     @Value("${geaflow.host}")
     protected String host;
-
-    @Value("${geaflow.web.port}")
-    protected Integer webPort;
-
+    
     @Value("${geaflow.gateway.port}")
     protected Integer gatewayPort;
-
-    @Value("${geaflow.web.url}")
-    protected String webUrl;
 
     @Value("${geaflow.gateway.url}")
     protected String gatewayUrl;
@@ -49,7 +43,6 @@ public class DeployConfig implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.webUrl = StringUtils.removeEnd(webUrl, "/");
         this.gatewayUrl = StringUtils.removeEnd(gatewayUrl, "/");
     }
 }

@@ -83,6 +83,6 @@ public class GeaflowGraph extends GeaflowData {
             return Integer.parseInt(shardCount);
         }
 
-        return Integer.parseInt((String) pluginConfig.getConfig().getOrDefault("shardCount", 2));
+        return Integer.parseInt((String) pluginConfig.getConfig().getOrDefault("shardCount", "2"));
     }
 }

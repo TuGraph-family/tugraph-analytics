@@ -92,8 +92,9 @@ public class GeaflowTaskOperator {
     public boolean start(GeaflowTask task) {
         GeaflowRuntime runtime = runtimeFactory.getRuntime(task);
 
-        // generate task token
+        // generate task token and save before start
         task.setToken(tokenGenerator.nextTaskToken());
+        taskService.update(task);
 
         // submit job to the engine
         try {

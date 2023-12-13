@@ -11,11 +11,11 @@
 [![EN](https://shields.io/badge/Docs-English-blue?logo=readme)](https://tugraph-analytics.readthedocs.io/en/latest/docs-en/introduction/)
 [![Blog](https://badgen.net/static/Blog/github.io/orange?icon=rss)](https://tugraph-analytics.github.io/)
 
-🌐️ 中文 | [English](README.md)
+> 🌐️ 中文 | [English](README.md)
 
 <!--intro-start-->
 ## 介绍
-**TuGraph Analytics**(又名GeaFlow)是蚂蚁集团开源的OLAP图数据库，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
+**TuGraph Analytics** (别名：GeaFlow) 是蚂蚁集团开源的[**世界最快**](https://ldbcouncil.org/benchmarks/snb-bi/)的OLAP图数据库，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
 
 关于GeaFlow更多介绍请参考：[GeaFlow介绍文档](docs/docs-cn/introduction.md)
 
@@ -41,7 +41,7 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 3. 项目构建：`mvn clean install -DskipTests`
 4. 测试任务：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql`
 3. 构建镜像：`./build.sh --all`
-4. 启动容器：`docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 geaflow-console:0.1`
+4. 启动容器：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
 更多详细内容请参考：[快速上手文档](docs/docs-cn/quick_start.md)。
 

@@ -49,17 +49,17 @@ Below is an introduction on running the flow graph job mentioned in Local Mode E
 
 **x86 architecture**
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console:0.1
 ```
 
 **arm Architecture**
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console-arm:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console-arm:0.1
 ```
 
 * For the Local Image
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1
 ```
 
 **Note**: The tag name of the remote image is different from that of the local build image, and the startup 

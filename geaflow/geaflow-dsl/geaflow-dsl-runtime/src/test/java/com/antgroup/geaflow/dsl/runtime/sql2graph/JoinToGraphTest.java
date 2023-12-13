@@ -38,7 +38,7 @@ public class JoinToGraphTest {
             // put(DSLConfigKeys.GEAFLOW_DSL_CATALOG_TYPE.getKey(), "console");
             // put(DSLConfigKeys.GEAFLOW_DSL_CATALOG_TOKEN_KEY.getKey(), "");
             // put(DSLConfigKeys.GEAFLOW_DSL_CATALOG_INSTANCE_NAME.getKey(), "test1");
-            // put(ExecutionConfigKeys.GEAFLOW_GW_ENDPOINT.getKey(), "http://127.0.0.1:8080");
+            // put(ExecutionConfigKeys.GEAFLOW_GW_ENDPOINT.getKey(), "http://127.0.0.1:8888");
         }
     };
 

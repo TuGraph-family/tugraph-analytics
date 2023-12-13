@@ -26,7 +26,7 @@ spec:
   # Optional. Replace the udf jars to your own jars.
   udfJars:
     - name: my_udf.jar
-      url: http://localhost:8080/download/my_udf.jar
+      url: http://localhost:8888/download/my_udf.jar
       # md5: 123
   masterSpec:
     resource:
