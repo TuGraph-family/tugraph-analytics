@@ -29,7 +29,6 @@ public class DefaultRuntimeContext extends AbstractRuntimeContext {
     private long pipelineId;
     private String pipelineName;
     private TaskArgs taskArgs;
-    private long windowId;
     protected IoDescriptor ioDescriptor;
 
     public DefaultRuntimeContext(Configuration jobConfig) {
@@ -94,13 +93,8 @@ public class DefaultRuntimeContext extends AbstractRuntimeContext {
     }
 
     public DefaultRuntimeContext setWindowId(long windowId) {
-        this.windowId = windowId;
+        updateWindowId(windowId);
         return this;
-    }
-
-    @Override
-    public long getWindowId() {
-        return windowId;
     }
 
     @Override
