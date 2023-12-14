@@ -25,10 +25,9 @@ ARG ASYNC_PROFILER_DIR_NAME=async-profiler-2.8.1-linux-x64
 ARG ASYNC_PROFILER_TAR_NAME=${ASYNC_PROFILER_DIR_NAME}.tar.gz
 RUN wget https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.8.1/${ASYNC_PROFILER_TAR_NAME} \
     && tar zxvf ${ASYNC_PROFILER_TAR_NAME} -C ${GEAFLOW_INSTALL_PATH} \
-    && rm ${ASYNC_PROFILER_TAR_NAME}
-ENV ASYNC_PROFILER_SHELL_PATH=${GEAFLOW_INSTALL_PATH}/${ASYNC_PROFILER_DIR_NAME}/profiler.sh
-
-RUN mkdir -p /home/admin/logs
+    && rm ${ASYNC_PROFILER_TAR_NAME} \
+    && mv ${GEAFLOW_INSTALL_PATH}/${ASYNC_PROFILER_DIR_NAME} ${GEAFLOW_INSTALL_PATH}/async-profiler
+ENV ASYNC_PROFILER_SHELL_PATH=${GEAFLOW_INSTALL_PATH}/async-profiler/profiler.sh
 
 ARG TMP_ENGINE_TAR_PATH=${GEAFLOW_INSTALL_PATH}/engine_tar
 RUN mkdir -p ${TMP_ENGINE_TAR_PATH}
@@ -41,16 +40,17 @@ RUN dirname=`ls ${TMP_ENGINE_TAR_PATH}` \
     && mv -f ${TMP_ENGINE_TAR_PATH}/$dirname ${GEAFLOW_HOME} \
     && rm -rf ${TMP_ENGINE_TAR_PATH}
 
-WORKDIR $GEAFLOW_HOME
+ARG GEAFLOW_DEPLOY_LOG_DIR=/home/admin/logs/geaflow
+RUN mkdir -p ${GEAFLOW_DEPLOY_LOG_DIR}
+
+WORKDIR ${GEAFLOW_DEPLOY_LOG_DIR}
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY config.sh $GEAFLOW_HOME/bin/
 COPY start-process.sh $GEAFLOW_HOME/bin/
-COPY start-agent.sh $GEAFLOW_HOME/bin/
 COPY udf-downloader.py $GEAFLOW_HOME/bin/
 COPY init-docker.sh /tmp/
 ADD geaflow-service.conf /etc/supervisor/conf.d/geaflow.conf
-ADD geaflow-agent.conf /etc/supervisor/conf.d/geaflow-agent.conf
 
 RUN /bin/sh /tmp/init-docker.sh
 

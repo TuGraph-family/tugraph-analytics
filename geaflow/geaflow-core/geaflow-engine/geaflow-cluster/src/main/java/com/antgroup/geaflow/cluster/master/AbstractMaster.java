@@ -78,7 +78,7 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
         // Start container.
         resourceManager.init(ResourceManagerContext.build(context, clusterContext));
 
-        if (!configuration.getBoolean(ExecutionConfigKeys.RUN_LOCAL_MODE)) {
+        if (configuration.getBoolean(ExecutionConfigKeys.HTTP_REST_SERVICE_ENABLE)) {
             httpServer = new HttpServer(configuration, clusterManager, heartbeatManager,
                 resourceManager);
             httpServer.start();

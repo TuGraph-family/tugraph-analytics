@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.AGENT_START_COMMAND;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONTAINER_START_COMMAND;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ENV_AUTO_RESTART;
 
@@ -58,6 +59,8 @@ public class KubernetesSupervisorRunner {
             Configuration config = KubernetesUtils.loadConfiguration();
             String startCommand = KubernetesUtils.getEnvValue(ENV, CONTAINER_START_COMMAND);
             List<String> serviceCommands = new ArrayList<>();
+            String agentStartCommand = KubernetesUtils.getEnvValue(ENV, AGENT_START_COMMAND);
+            serviceCommands.add(agentStartCommand);
             boolean autoRestart = !autoRestartEnv.equalsIgnoreCase(Boolean.FALSE.toString());
             KubernetesSupervisorRunner workerRunner = new KubernetesSupervisorRunner(config,
                 startCommand, serviceCommands, autoRestart);

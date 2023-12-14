@@ -1,11 +1,10 @@
 import React from 'react';
-import {Controlled as CodeMirror} from 'react-codemirror2';
 import {useIntl} from "@@/exports";
-import 'codemirror/lib/codemirror.js'
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/theme/idea.css';
-import 'codemirror/addon/display/autorefresh'
-import 'codemirror/mode/jsx/jsx';
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-jsx";
+import "ace-builds/src-noconflict/theme-xcode";
+import "ace-builds/src-noconflict/ext-language_tools";
+import "ace-builds/src-noconflict/ext-searchbox";
 
 import {ProCard} from "@ant-design/pro-components";
 import {Pagination} from "antd";
@@ -27,27 +26,21 @@ const FileContentCard: React.FC<{
     subTitle={subtitle}
     extra={extra}
   >
-    <CodeMirror
+    <AceEditor
       value={data}
-      options={{
-        mode: 'jsx',
-        theme: 'idea',
-        lineNumbers: true,
-        readOnly: true,
-        lineWiseCopyCut: true,
-        autofocus: false,
-        lineWrapping: true,
-        smartIndent: true,
-        lint: true,
-        autoRefresh: true,
-        gutters: ['CodeMirror-lint-markers'],
-      }}
-      editorDidMount={(editor) => {
-        editor.setSize('auto', '600px');
-      }}
-      onChange={(editor: any, data: any, value: string) => {
-      }}
-      onBeforeChange={(editor: any, data: any, value: string) => {
+      mode="jsx"
+      theme="xcode"
+      name="log_view"
+      readOnly={true}
+      showPrintMargin={false}
+      showGutter={true}
+      highlightActiveLine={true}
+      style={{width: 'auto', height: '600px'}}
+      setOptions={{
+        enableBasicAutocompletion: false,
+        enableLiveAutocompletion: false,
+        enableSnippets: true,
+        showLineNumbers: true,
       }}
     />
     <Pagination current={paginationRequestRef.current.pageNo}

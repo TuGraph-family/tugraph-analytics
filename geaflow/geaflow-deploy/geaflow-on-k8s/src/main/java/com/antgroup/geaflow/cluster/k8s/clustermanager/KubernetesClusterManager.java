@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.cluster.k8s.clustermanager;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.AGENT_START_COMMAND;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONTAINER_START_COMMAND;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ENV_IS_RECOVER;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.LOG_DIR;
@@ -223,13 +224,14 @@ public class KubernetesClusterManager extends AbstractClusterManager {
 
     @VisibleForTesting
     public Container createMasterContainer(String clusterId, DockerNetworkType networkType) {
-        String containerName = masterParam.getContainerName();
-        String containerId = clusterId + K8SConstants.MASTER_NAME_SUFFIX;
         String command = masterParam.getContainerShellCommand();
         LOGGER.info("master start command: {}", command);
         Map<String, String> additionalEnvs = masterParam.getAdditionEnvs();
         additionalEnvs.put(CONTAINER_START_COMMAND, command);
+        additionalEnvs.put(AGENT_START_COMMAND, KubernetesUtils.getAgentShellCommand(config));
 
+        String containerName = masterParam.getContainerName();
+        String containerId = clusterId + K8SConstants.MASTER_NAME_SUFFIX;
         String startCommand = buildSupervisorStartCommand(MASTER_LOG_SUFFIX);
         return KubernetesResourceBuilder
             .createContainer(containerName, containerId, masterId, masterParam, startCommand,
@@ -273,6 +275,7 @@ public class KubernetesClusterManager extends AbstractClusterManager {
             Map<String, String> additionalEnvs = containerParam.getAdditionEnvs();
             additionalEnvs.put(ENV_IS_RECOVER, String.valueOf(isRecover));
             additionalEnvs.put(CONTAINER_START_COMMAND, containerStartCommand);
+            additionalEnvs.put(AGENT_START_COMMAND, KubernetesUtils.getAgentShellCommand(config));
 
             String startCommand = buildSupervisorStartCommand(CONTAINER_LOG_SUFFIX);
             Container container = KubernetesResourceBuilder
@@ -304,6 +307,7 @@ public class KubernetesClusterManager extends AbstractClusterManager {
         Map<String, String> additionalEnvs = driverParam.getAdditionEnvs();
         additionalEnvs.put(K8SConstants.ENV_CONTAINER_INDEX, String.valueOf(driverIndex));
         additionalEnvs.put(CONTAINER_START_COMMAND, driverStartCommand);
+        additionalEnvs.put(AGENT_START_COMMAND, KubernetesUtils.getAgentShellCommand(config));
 
         String startCommand = buildSupervisorStartCommand(DRIVER_LOG_SUFFIX);
         Container container = KubernetesResourceBuilder

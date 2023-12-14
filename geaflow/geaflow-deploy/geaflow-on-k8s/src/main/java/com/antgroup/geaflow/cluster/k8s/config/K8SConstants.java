@@ -121,10 +121,6 @@ public final class K8SConstants {
 
     public static final String ENV_LOG_DIR = "GEAFLOW_LOG_DIR";
 
-    public static final String ENV_DEPLOY_LOG_PATH = "GEAFLOW_DEPLOY_LOG_PATH";
-
-    public static final String ENV_AGENT_SERVER_PORT = "GEAFLOW_AGENT_SERVER_PORT";
-
     public static final String ENV_JOB_WORK_PATH = "GEAFLOW_JOB_WORK_PATH";
 
     public static final String ENV_JAR_DOWNLOAD_PATH = "GEAFLOW_JAR_DOWNLOAD_PATH";
@@ -160,8 +156,6 @@ public final class K8SConstants {
 
     public static final String ENV_MASTER_ID = "GEAFLOW_MASTER_ID";
 
-    public static final String ENV_CONFIG_FILE_LOG4J_NAME = "GEAFLOW_CONFIG_FILE_LOG4J_NAME";
-
     public static final String ENV_CONFIG_FILE = "geaflow-conf.yml";
 
     public static final String CONFIG_FILE_LOG4J_NAME = "log4j.properties";
@@ -171,5 +165,7 @@ public final class K8SConstants {
     public static final String GEAFLOW_LOG_VOLUME = "geaflow-log-volume";
 
     public static final String CONTAINER_START_COMMAND = "CONTAINER_START_COMMAND";
+
+    public static final String AGENT_START_COMMAND = "AGENT_START_COMMAND";
 
 }

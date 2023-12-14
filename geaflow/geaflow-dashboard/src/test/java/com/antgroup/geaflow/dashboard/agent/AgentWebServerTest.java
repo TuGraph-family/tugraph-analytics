@@ -36,8 +36,6 @@ public class AgentWebServerTest {
 
     private static final String LOG_DIR = "/tmp/geaflow/test/logs/geaflow";
 
-    private static final String DEPLOY_LOG_PATH = "/tmp/geaflow/test/logs/geaflow.log";
-
     private static final String CLIENT_LOG_PATH = LOG_DIR + File.separator + "client.log";
 
     private static final String FLAME_GRAPH_PROFILER_PATH = "/tmp/async-profiler/profiler.sh";
@@ -48,7 +46,7 @@ public class AgentWebServerTest {
 
     @Test
     public void testServer() throws Exception {
-        AgentWebServer httpServer = new AgentWebServer(AGENT_PORT, DEPLOY_LOG_PATH, LOG_DIR,
+        AgentWebServer httpServer = new AgentWebServer(AGENT_PORT, LOG_DIR,
             FLAME_GRAPH_PROFILER_PATH, AGENT_DIR);
         CountDownLatch latch = new CountDownLatch(1);
         new Thread(new Runnable() {
@@ -61,8 +59,6 @@ public class AgentWebServerTest {
 
         latch.await();
         doGet("http://localhost:8088/", "rest/logs");
-        doGet("http://localhost:8088/",
-            "rest/logs/content?path=/tmp/geaflow/test/logs/geaflow.log&pageNo=1&pageSize=1024");
         doGet("http://localhost:8088/",
             "rest/logs/content?path=/tmp/geaflow/test/logs/geaflow/client.log&pageNo=1&pageSize=1024");
         doGet("http://localhost:8088/",
@@ -81,7 +77,6 @@ public class AgentWebServerTest {
     }
 
     private static void initLogFiles() {
-        initLogFile(DEPLOY_LOG_PATH);
         initLogFile(CLIENT_LOG_PATH);
         initLogFile(THREAD_DUMP_LOG_FILE_PATH);
     }
@@ -107,7 +102,6 @@ public class AgentWebServerTest {
     }
 
     private static void cleanup() {
-        cleanLogFile(DEPLOY_LOG_PATH);
         cleanLogFile(CLIENT_LOG_PATH);
         cleanLogFile(THREAD_DUMP_LOG_FILE_PATH);
     }

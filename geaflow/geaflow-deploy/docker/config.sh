@@ -17,7 +17,7 @@
 export GEAFLOW_HOME=${GEAFLOW_HOME:-"/opt/geaflow/"}
 export GEAFLOW_LOG_DIR=${GEAFLOW_LOG_DIR:-"/home/admin/logs/geaflow"}
 export ENGINE_JAR_READY_FILE="/home/admin/logs/engine_jar_ready_flag"
-export DEPLOY_LOG_PATH="/home/admin/logs/geaflow.log"
+export DEPLOY_LOG_PATH="/home/admin/logs/geaflow/deploy.log"
 
 function createDirIfNeed() {
   if [ ! -d $1 ]; then

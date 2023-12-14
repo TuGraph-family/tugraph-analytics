@@ -14,8 +14,8 @@
 
 package com.antgroup.geaflow.dashboard.agent.runner;
 
-import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
-import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.cluster.constants.AgentConstants;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.dashboard.agent.AgentWebServer;
 import com.antgroup.geaflow.dashboard.agent.handler.LogRestHandler;
 import org.eclipse.jetty.util.StringUtil;
@@ -26,19 +26,15 @@ public class AgentWebRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LogRestHandler.class);
 
-    private static final String FLAME_GRAPH_PROFILER_PATH = "FLAME_GRAPH_PROFILER_PATH";
-
-    private static final String AGENT_TMP_DIR = "AGENT_TMP_DIR";
-
     public static void main(String[] args) {
         try {
-            String httpPort = getProperty(K8SConstants.ENV_AGENT_SERVER_PORT);
-            String deployLogPath = getProperty(K8SConstants.ENV_DEPLOY_LOG_PATH);
-            String runtimeLogDirPath = getProperty(K8SConstants.ENV_LOG_DIR);
-            String flameGraphProfilerPath = getProperty(FLAME_GRAPH_PROFILER_PATH);
-            String agentDir = getProperty(AGENT_TMP_DIR);
-            AgentWebServer server = new AgentWebServer(Integer.parseInt(httpPort), deployLogPath,
-                runtimeLogDirPath, flameGraphProfilerPath, agentDir);
+            String httpPort = getPropertyOrDefault(AgentConstants.AGENT_SERVER_PORT_KEY,
+                String.valueOf(ExecutionConfigKeys.AGENT_HTTP_PORT.getDefaultValue()));
+            String agentDir = getPropertyOrDefault(AgentConstants.AGENT_TMP_DIR_KEY,
+                String.valueOf(ExecutionConfigKeys.JOB_WORK_PATH.getDefaultValue()));
+            String runtimeLogDirPath = getPropertyOrDefault(AgentConstants.LOG_DIR_KEY, null);
+            String flameGraphProfilerPath = getPropertyOrDefault(AgentConstants.FLAME_GRAPH_PROFILER_PATH_KEY, null);
+            AgentWebServer server = new AgentWebServer(Integer.parseInt(httpPort), runtimeLogDirPath, flameGraphProfilerPath, agentDir);
             server.start();
             server.await();
         } catch (Throwable t) {
@@ -47,10 +43,11 @@ public class AgentWebRunner {
         }
     }
 
-    private static String getProperty(String key) {
+    private static String getPropertyOrDefault(String key, String defaultValue) {
         String value = System.getProperty(key);
         if (StringUtil.isEmpty(value)) {
-            throw new GeaflowRuntimeException(String.format("Jvm property %s not found.", key));
+            LOGGER.info("Jvm property {} not found, using default value {}", key, defaultValue);
+            return defaultValue;
         }
         return value;
     }

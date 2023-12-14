@@ -26,4 +26,11 @@
 
     <artifactId>geaflow-on-local</artifactId>
     <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dashboard</artifactId>
+        </dependency>
+    </dependencies>
 </project>

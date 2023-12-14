@@ -3,11 +3,6 @@ import {executeThreadDump, getThreadDumpContent} from "@/services/jobs/api";
 import RuntimeLayout from "@/pages/Component/Runtime/Runtime";
 import {history, useIntl, useParams} from "@@/exports";
 import {fetchComponentInfo, getByteNum, parseAgentUrl} from "@/util/CommonUtil";
-import 'codemirror/lib/codemirror.js'
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/theme/idea.css';
-import 'codemirror/addon/display/autorefresh'
-import 'codemirror/mode/jsx/jsx';
 import {Button, message, PaginationProps} from "antd";
 import FileContentCard from "@/pages/Component/Runtime/FileContentCard";
 import moment from "moment";

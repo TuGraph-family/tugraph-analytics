@@ -116,7 +116,8 @@ public class KubernetesConfigKeys {
 
     public static final ConfigKey CONTAINER_START_COMMAND_TEMPLATE = ConfigKeys
         .key("kubernetes.container-start-command-template")
-        .defaultValue("%java% %classpath% %jvmmem% %jvmopts% %logging% %class% %redirects%")
+        .defaultValue("%java% %classpath% %jvmmem% %jvmopts% %logging% %class% "
+            + "%redirects%")
         .description("container start command template");
 
     public static final ConfigKey CONTAINER_CONF_FILES = ConfigKeys

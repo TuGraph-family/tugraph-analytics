@@ -25,6 +25,13 @@ After compiling the GeaFlow code, execute the following command in the project d
 bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql
 ```
 
+If you want to use flame graph in the process for process analysis, you need to download and decompress async-profiler yourself.
+And add the path to profiler.sh in the decompressed folder to the parameters. For example:
+
+```shell
+bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql --profiler /tmp/async-profiler/profiler.sh
+```
+
 "loop_detection.sql" is a DSL calculation job for real-time querying all four-degree loops in a graph. Its contents are as follows:
 
 ```sql
@@ -149,6 +156,16 @@ You can also continue to enter new point edge data to view the latest calculatio
 We can see that the new loop 3-4-5-6-3 is checked out:
 
 ![ide_socket_server_more](../static/img/ide_socket_server_more.png)
+
+4. Access the dashboard page
+
+The local mode will use the local 8090 and 8088 ports and comes with a dashboard page.
+
+Visit *http://localhost:8090* in the browser to access the front-end page.
+![dashboard_overview](../static/img/dashboard_overview.png)
+
+For more dashboard related content, please refer to the documentation:
+[Dashboard](dashboard.md)
 
 ## Running in GeaFlow Console
 GeaFlow Console is a graph computing research and development platform provided by GeaFlow. In this document, we will introduce how to launch the GeaFlow Console platform in a Docker container and submit graph computing jobs. 
