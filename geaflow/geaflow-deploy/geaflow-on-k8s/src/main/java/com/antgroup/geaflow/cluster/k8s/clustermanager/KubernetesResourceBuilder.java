@@ -72,7 +72,7 @@ public class KubernetesResourceBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesResourceBuilder.class);
 
-    public static Container createContainer(String containerName, String containerId,
+    public static Container createContainer(String containerName, String componentType, String containerId,
                                             String masterId, KubernetesParam param, String command,
                                             Map<String, String> additionalEnvs,
                                             DockerNetworkType dockerNetworkType) {
@@ -365,13 +365,15 @@ public class KubernetesResourceBuilder {
         List<KeyToPath> configMapItems = configMap.getData().keySet().stream()
             .map(e -> new KeyToPath(e, null, e)).collect(Collectors.toList());
 
+        int replicas = param.enableLeaderElection() ? 2 : 1;
+
         DeploymentBuilder deploymentBuilder = new DeploymentBuilder()
             .editOrNewMetadata()
                 .withName(rcName)
                 .withLabels(labels)
                 .endMetadata()
             .editOrNewSpec()
-                .withReplicas(1)
+                .withReplicas(replicas)
                 .withNewSelector()
                     .addToMatchLabels(labels)
                     .endSelector()

@@ -27,10 +27,14 @@ import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.RpcServiceImpl;
 import com.antgroup.geaflow.cluster.web.HttpServer;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
 import com.antgroup.geaflow.common.utils.PortUtil;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
+import com.antgroup.geaflow.ha.leaderelection.ILeaderContender;
+import com.antgroup.geaflow.ha.leaderelection.ILeaderElectionService;
+import com.antgroup.geaflow.ha.leaderelection.LeaderElectionServiceFactory;
 import com.baidu.brpc.server.RpcServerOptions;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -46,6 +50,7 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
     protected RpcAddress masterAddress;
     protected HttpServer httpServer;
     protected ClusterContext clusterContext;
+    protected ILeaderElectionService leaderElectionService;
 
     public AbstractMaster() {
         this(0);
@@ -82,6 +87,28 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
             httpServer = new HttpServer(configuration, clusterManager, heartbeatManager,
                 resourceManager);
             httpServer.start();
+        }
+    }
+
+    public void initLeaderElectionService(ILeaderContender contender,
+                                          Configuration configuration,
+                                          int componentId) {
+        leaderElectionService = LeaderElectionServiceFactory.loadElectionService(configuration);
+        leaderElectionService.init(configuration, String.valueOf(componentId));
+        leaderElectionService.open(contender);
+        LOGGER.info("Leader election service enabled for master.");
+    }
+
+    public void waitForLeaderElection() throws InterruptedException {
+        LOGGER.info("Wait for becoming a leader...");
+        synchronized (leaderElectionService) {
+            leaderElectionService.wait();
+        }
+    }
+
+    public void notifyLeaderElection() {
+        synchronized (leaderElectionService) {
+            leaderElectionService.notify();
         }
     }
 

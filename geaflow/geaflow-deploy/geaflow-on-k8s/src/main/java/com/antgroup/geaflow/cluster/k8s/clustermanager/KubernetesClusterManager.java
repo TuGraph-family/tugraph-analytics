@@ -194,7 +194,7 @@ public class KubernetesClusterManager extends AbstractClusterManager {
         ConfigMap configMap = createMasterConfigMap(clusterId, dockerNetworkType);
 
         // 2. create the master container
-        Container container = createMasterContainer(clusterId, dockerNetworkType);
+        Container container = createMasterContainer(dockerNetworkType);
 
         // 3. create replication controller.
         String masterDeployName = clusterId + K8SConstants.MASTER_RS_NAME_SUFFIX;
@@ -223,7 +223,7 @@ public class KubernetesClusterManager extends AbstractClusterManager {
     }
 
     @VisibleForTesting
-    public Container createMasterContainer(String clusterId, DockerNetworkType networkType) {
+    public Container createMasterContainer(DockerNetworkType networkType) {
         String command = masterParam.getContainerShellCommand();
         LOGGER.info("master start command: {}", command);
         Map<String, String> additionalEnvs = masterParam.getAdditionEnvs();
@@ -231,11 +231,10 @@ public class KubernetesClusterManager extends AbstractClusterManager {
         additionalEnvs.put(AGENT_START_COMMAND, KubernetesUtils.getAgentShellCommand(config));
 
         String containerName = masterParam.getContainerName();
-        String containerId = clusterId + K8SConstants.MASTER_NAME_SUFFIX;
         String startCommand = buildSupervisorStartCommand(MASTER_LOG_SUFFIX);
         return KubernetesResourceBuilder
-            .createContainer(containerName, containerId, masterId, masterParam, startCommand,
-                additionalEnvs, networkType);
+            .createContainer(containerName, K8SConstants.LABEL_COMPONENT_MASTER, String.valueOf(DEFAULT_MASTER_ID),
+                masterId, masterParam, startCommand, additionalEnvs, networkType);
     }
 
     /**
@@ -279,8 +278,8 @@ public class KubernetesClusterManager extends AbstractClusterManager {
 
             String startCommand = buildSupervisorStartCommand(CONTAINER_LOG_SUFFIX);
             Container container = KubernetesResourceBuilder
-                .createContainer(podName, String.valueOf(containerId), masterId, containerParam,
-                    startCommand, additionalEnvs, dockerNetworkType);
+                .createContainer(podName, K8SConstants.LABEL_COMPONENT_WORKER, String.valueOf(containerId),
+                    masterId, containerParam, startCommand, additionalEnvs, dockerNetworkType);
 
             // Create pod.
             Pod containerPod = KubernetesResourceBuilder
@@ -311,8 +310,8 @@ public class KubernetesClusterManager extends AbstractClusterManager {
 
         String startCommand = buildSupervisorStartCommand(DRIVER_LOG_SUFFIX);
         Container container = KubernetesResourceBuilder
-            .createContainer(podName, String.valueOf(driverId), masterId, driverParam,
-                startCommand, additionalEnvs, dockerNetworkType);
+            .createContainer(podName, K8SConstants.LABEL_COMPONENT_DRIVER, String.valueOf(driverId), masterId,
+                driverParam, startCommand, additionalEnvs, dockerNetworkType);
 
         // 2. Create deployment.
         String rcName = clusterId + K8SConstants.DRIVER_RS_NAME_SUFFIX + driverIndex;

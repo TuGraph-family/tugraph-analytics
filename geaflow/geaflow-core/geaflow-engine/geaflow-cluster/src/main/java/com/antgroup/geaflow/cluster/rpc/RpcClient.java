@@ -262,7 +262,7 @@ public class RpcClient implements Serializable {
         return new GeaflowRuntimeException(String.format("do rpc failed. %s", t.getMessage()), t);
     }
 
-    protected void invalidateEndpointCache(String resourceId, EndpointType endpointType) {
+    public void invalidateEndpointCache(String resourceId, EndpointType endpointType) {
         ResourceData resourceData = haService.invalidateResource(resourceId);
         if (resourceData != null) {
             refFactory.invalidateEndpointCache(resourceData.getHost(), resourceData.getRpcPort(),
