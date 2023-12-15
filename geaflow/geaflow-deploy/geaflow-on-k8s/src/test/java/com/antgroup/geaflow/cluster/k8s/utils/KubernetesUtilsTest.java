@@ -22,6 +22,7 @@ import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.utils.FileUtil;
 import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
 import io.fabric8.kubernetes.api.model.Toleration;
 import java.io.File;
@@ -58,7 +59,7 @@ public class KubernetesUtilsTest {
     public void testGetContentFromFile() {
         String path =
             this.getClass().getClassLoader().getResource("geaflow-conf-test.yml").getPath();
-        String content = KubernetesUtils.getContentFromFile(path);
+        String content = FileUtil.getContentFromFile(path);
         Assert.assertNotNull(content);
     }
 

@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dashboard.agent.handler;
 
 import static com.antgroup.geaflow.dashboard.agent.util.FileUtil.checkPaginationRequest;
 
+import com.antgroup.geaflow.cluster.constants.AgentConstants;
 import com.antgroup.geaflow.cluster.web.api.ApiResponse;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.dashboard.agent.model.FileInfo;
@@ -31,6 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,14 +41,11 @@ public class LogRestHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LogRestHandler.class);
 
-    private final String deployLogPath;
-
     private final String runtimeLogDirPath;
 
     private final Pattern logPattern;
 
-    public LogRestHandler(String deployLogPath, String runtimeLogDirPath) {
-        this.deployLogPath = deployLogPath;
+    public LogRestHandler(String runtimeLogDirPath) {
         this.runtimeLogDirPath = runtimeLogDirPath;
         this.logPattern = Pattern.compile(String.format("%s.*\\.log(\\.\\d*)?", this.runtimeLogDirPath));
     }
@@ -56,6 +55,7 @@ public class LogRestHandler {
     @Produces(MediaType.APPLICATION_JSON)
     public ApiResponse<List<FileInfo>> getLogList() {
         try {
+            checkRuntimeLogDirPath();
             List<FileInfo> logs = new ArrayList<>();
             File file = new File(runtimeLogDirPath);
             String[] fileList = file.list();
@@ -66,13 +66,6 @@ public class LogRestHandler {
                     FileInfo fileInfo = FileUtil.buildFileInfo(logFile, logPath);
                     logs.add(fileInfo);
                 }
-            }
-            file = new File(deployLogPath);
-            if (file.exists() && file.isFile()) {
-                FileInfo fileInfo = new FileInfo();
-                fileInfo.setPath(deployLogPath);
-                fileInfo.setSize(file.length());
-                logs.add(fileInfo);
             }
             return ApiResponse.success(logs);
         } catch (Throwable t) {
@@ -103,8 +96,15 @@ public class LogRestHandler {
         }
     }
 
+    private void checkRuntimeLogDirPath() {
+        if (StringUtils.isEmpty(runtimeLogDirPath)) {
+            throw new GeaflowRuntimeException(String.format("Log dir path is not set. Please set the log "
+                + "dir path through JVM argument: %s", AgentConstants.LOG_DIR_KEY));
+        }
+    }
+
     private void checkLogPath(String logPath) {
-        if (logPath == null || (!logPath.equals(deployLogPath) && !logPattern.matcher(logPath).matches())) {
+        if (logPath == null || !logPattern.matcher(logPath).matches()) {
             throw new GeaflowRuntimeException(String.format("Log path %s is invalid.", logPath));
         }
     }

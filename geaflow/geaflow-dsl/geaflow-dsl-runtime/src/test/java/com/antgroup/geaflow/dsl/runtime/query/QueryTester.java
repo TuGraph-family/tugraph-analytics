@@ -103,7 +103,7 @@ public class QueryTester implements Serializable {
         config.putAll(this.config);
         initResultDirectory();
 
-        Environment environment = EnvironmentFactory.onLocalEnvironment(new String[]{});
+        Environment environment = EnvironmentFactory.onLocalEnvironment();
         environment.getEnvironmentContext().withConfig(config);
 
         GQLPipeLine gqlPipeLine = new GQLPipeLine(environment, testTimeWaitSeconds);

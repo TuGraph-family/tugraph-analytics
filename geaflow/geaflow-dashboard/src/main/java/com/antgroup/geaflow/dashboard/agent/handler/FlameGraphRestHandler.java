@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.dashboard.agent.handler;
 
-import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.constants.AgentConstants;
 import com.antgroup.geaflow.cluster.web.api.ApiResponse;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ShellUtil;
@@ -41,6 +41,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +101,7 @@ public class FlameGraphRestHandler {
     public ApiResponse<String> getFlameGraphFileContent(@QueryParam("path") String filePath) {
         try {
             checkFlameGraphFilePath(filePath);
-            String content = KubernetesUtils.getContentFromFile(filePath);
+            String content = com.antgroup.geaflow.common.utils.FileUtil.getContentFromFile(filePath);
             if (content == null) {
                 throw new GeaflowRuntimeException(
                     String.format("Flame-graph file %s not exists.", filePath));
@@ -118,6 +119,7 @@ public class FlameGraphRestHandler {
     @Consumes(MediaType.APPLICATION_JSON)
     public ApiResponse<Void> executeFlameGraphProfiler(FlameGraphRequest request) {
         try {
+            checkProfilerPath();
             checkFlameGraphRequest(request);
             checkFlameGraphFileCount();
             ProcessBuilder command = getCommand(request);
@@ -165,6 +167,14 @@ public class FlameGraphRestHandler {
             throw new GeaflowRuntimeException(String.format(
                 "The count of flame-graph files is " + "limited to " + "%s. "
                     + "Please delete some of them first.", FLAME_GRAPH_FILE_MAX_CNT));
+        }
+    }
+
+    private void checkProfilerPath() {
+        if (StringUtils.isEmpty(flameGraphProfilerPath)) {
+            throw new GeaflowRuntimeException(String.format("Async-profiler shell script path is "
+                    + "not set. Please set the file path of async-profiler shell script through JVM "
+                    + "argument: %s", AgentConstants.FLAME_GRAPH_PROFILER_PATH_KEY));
         }
     }
 

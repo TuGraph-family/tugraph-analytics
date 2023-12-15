@@ -18,6 +18,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RUN_LO
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM_OFFSET_BACKEND_TYPE;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM_STATE_BACKEND_TYPE;
 
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
@@ -36,12 +37,18 @@ public class EnvironmentFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnvironmentFactory.class);
 
     public static Environment onLocalEnvironment() {
-        return onLocalEnvironment(new String[]{});
+        Map<String, String> config = new HashMap<>();
+        config.put(ExecutionConfigKeys.HTTP_REST_SERVICE_ENABLE.getKey(), Boolean.FALSE.toString());
+        return onLocalEnvironment(config);
     }
 
     public static Environment onLocalEnvironment(String[] args) {
         IEnvironmentArgsParser argsParser = loadEnvironmentArgsParser();
         Map<String, String> config = new HashMap<>(argsParser.parse(args));
+        return onLocalEnvironment(config);
+    }
+
+    private static Environment onLocalEnvironment(Map<String, String> config) {
         config.put(RUN_LOCAL_MODE.getKey(), Boolean.TRUE.toString());
         // Set default state backend type to memory on local env.
         config.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());

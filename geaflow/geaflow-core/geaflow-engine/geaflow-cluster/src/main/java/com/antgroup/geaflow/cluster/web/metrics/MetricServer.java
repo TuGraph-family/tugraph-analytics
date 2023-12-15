@@ -14,8 +14,8 @@
 
 package com.antgroup.geaflow.cluster.web.metrics;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HTTP_REST_SERVICE_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.METRIC_SERVICE_PORT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RUN_LOCAL_MODE;
 
 import com.antgroup.geaflow.cluster.rpc.RpcService;
 import com.antgroup.geaflow.cluster.rpc.impl.MetricEndpoint;
@@ -36,7 +36,7 @@ public class MetricServer implements Serializable {
 
     public MetricServer(Configuration configuration) {
         this.port = configuration.getInteger(METRIC_SERVICE_PORT);
-        if (!configuration.getBoolean(RUN_LOCAL_MODE)) {
+        if (configuration.getBoolean(HTTP_REST_SERVICE_ENABLE)) {
             RpcServerOptions serverOptions = getServerOptions(configuration);
             RpcServiceImpl rpcService = new RpcServiceImpl(PortUtil.getPort(port), serverOptions);
             rpcService.addEndpoint(new MetricEndpoint(configuration));

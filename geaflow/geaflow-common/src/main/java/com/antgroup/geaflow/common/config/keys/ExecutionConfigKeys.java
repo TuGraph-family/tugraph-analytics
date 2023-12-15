@@ -288,6 +288,10 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue("-Xmx128m,-Xms64m,-Xmn32m")
         .description("supervisor jvm options");
 
+    public static final ConfigKey AGENT_JVM_OPTIONS = ConfigKeys.key("geaflow.agent.jvm.options")
+        .defaultValue("-Xmx128m,-Xms64m,-Xmn32m")
+        .description("agent jvm options");
+
     public static final ConfigKey FO_ENABLE = ConfigKeys
         .key("geaflow.fo.enable")
         .defaultValue(true)
@@ -311,6 +315,11 @@ public class ExecutionConfigKeys implements Serializable {
         .key("geaflow.ha.service.type")
         .defaultValue("")
         .description("ha service type, e.g., [redis, hbase, memory]");
+
+    public static final ConfigKey HTTP_REST_SERVICE_ENABLE = ConfigKeys
+        .key("geaflow.http.rest.service.enable")
+        .defaultValue(true)
+        .description("whether to enable http rest service");
 
     // ------------------------------------------------------------------------
     // shuffle

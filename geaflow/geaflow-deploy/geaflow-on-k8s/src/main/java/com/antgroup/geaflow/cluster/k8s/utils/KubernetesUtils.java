@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.utils;
 
+import static com.antgroup.geaflow.cluster.constants.AgentConstants.AGENT_LOG_SUFFIX;
+import static com.antgroup.geaflow.cluster.constants.AgentConstants.ASYNC_PROFILER_SHELL_PATH;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ADDRESS_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_KV_SEPARATOR;
@@ -21,17 +23,22 @@ import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_LIST_S
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.DRIVER_SERVICE_NAME_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONF_DIR;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_START_COMMAND_TEMPLATE;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.LOG_DIR;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USE_IP_IN_HOST_NETWORK;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
 
 import com.antgroup.geaflow.cluster.config.ClusterJvmOptions;
+import com.antgroup.geaflow.cluster.constants.AgentConstants;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.ConfigKey;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.utils.SleepUtils;
+import com.antgroup.geaflow.dashboard.agent.runner.AgentWebRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -63,24 +70,6 @@ import org.slf4j.LoggerFactory;
 public class KubernetesUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesUtils.class);
-
-    public static String getContentFromFile(String filePath) {
-        File file = new File(filePath);
-        if (file.exists()) {
-            StringBuilder content = new StringBuilder();
-            String line;
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(new FileInputStream(file)))) {
-                while ((line = reader.readLine()) != null) {
-                    content.append(line).append(System.lineSeparator());
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Error read file content.", e);
-            }
-            return content.toString();
-        }
-        return null;
-    }
 
     private static InetAddress resolveServiceAddress(String serviceName) {
         try {
@@ -432,6 +421,23 @@ public class KubernetesUtils {
 
         String commandTemplate = configuration.getString(CONTAINER_START_COMMAND_TEMPLATE);
         return getContainerStartCommand(commandTemplate, startCommandValues);
+    }
+
+    public static String getAgentShellCommand(Configuration config) {
+        String agentPort = config.getString(ExecutionConfigKeys.AGENT_HTTP_PORT);
+        String workDir = config.getString(WORK_DIR);
+        String logDir = config.getString(LOG_DIR);
+        Map<String, String> extraOptions = new HashMap<>();
+        extraOptions.put(AgentConstants.AGENT_SERVER_PORT_KEY, agentPort);
+        extraOptions.put(AgentConstants.AGENT_TMP_DIR_KEY, workDir);
+        extraOptions.put(AgentConstants.LOG_DIR_KEY, logDir);
+        extraOptions.put(AgentConstants.FLAME_GRAPH_PROFILER_PATH_KEY, ASYNC_PROFILER_SHELL_PATH);
+        String jvmArgs = config.getString(ExecutionConfigKeys.AGENT_JVM_OPTIONS);
+        ClusterJvmOptions jvmOpts = ClusterJvmOptions.build(jvmArgs);
+        extraOptions.forEach((key, value) -> jvmOpts.getExtraOptions().add(String.format("-D%s=%s", key, value)));
+        String logFileName = logDir + File.separator + AGENT_LOG_SUFFIX;
+        return KubernetesUtils.getContainerStartCommand(jvmOpts,
+            AgentWebRunner.class, logFileName, config);
     }
 
 }

@@ -51,7 +51,7 @@ public class AgentWebServer {
 
     private final Object lock = new Object();
 
-    public AgentWebServer(int httpPort, String deployLogPath, String runtimeLogDirPath,
+    public AgentWebServer(int httpPort, String runtimeLogDirPath,
                           String flameGraphProfilerPath, String agentDir) {
         this.httpPort = httpPort;
         threadPool = new QueuedThreadPool();
@@ -65,7 +65,7 @@ public class AgentWebServer {
         server.addBean(errorHandler);
 
         ResourceConfig resourceConfig = new ResourceConfig();
-        resourceConfig.register(new LogRestHandler(deployLogPath, runtimeLogDirPath));
+        resourceConfig.register(new LogRestHandler(runtimeLogDirPath));
         resourceConfig.register(new FlameGraphRestHandler(flameGraphProfilerPath, agentDir));
         resourceConfig.register(new ThreadDumpRestHandler(agentDir));
 

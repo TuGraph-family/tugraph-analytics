@@ -30,6 +30,13 @@ mvn clean package -DskipTests
 bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql
 ```
 
+如果你想要在进程中使用火焰图进行进程分析，则需要自行下载解压async-profiler，
+并将解压后的文件夹中的profiler.sh的路径加入到参数中。例如：
+
+```shell
+bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql --profiler /tmp/async-profiler/profiler.sh
+```
+
 其中 loop_detection.sql 是一段实时查询图中所有四度环路的 DSL 计算作业，其内容如下：
 
 ```sql
@@ -159,6 +166,17 @@ socket 服务启动后，控制台显示如下信息：
 可以看到新的环路 3-4-5-6-3 被检查出来：
 
 ![ide_socket_server_more](../static/img/ide_socket_server_more.png)
+
+4. 访问可视化dashboard页面
+
+本地模式的进程会占用本地的8090和8088端口，附带一个可视化页面。
+
+在浏览器中输入*http://localhost:8090*即可访问前端页面。
+
+![dashboard_overview](../static/img/dashboard_overview.png)
+
+关于更多dashboard相关的内容，请参考文档：
+[文档](dashboard.md)
 
 ## GeaFlow Console 快速上手
 
