@@ -103,7 +103,7 @@ spec:
   # 作业使用的k8s service account
   serviceAccount: geaflow
   # 作业java进程的主类
-  entryClass: com.antgroup.geaflow.example.graph.dynamic.IncrGraphCompute
+  entryClass: com.antgroup.geaflow.example.graph.statical.compute.khop.KHop
   clientSpec:
     # client pod相关的资源设置
     resource:

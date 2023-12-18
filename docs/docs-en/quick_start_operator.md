@@ -107,7 +107,7 @@ spec:
   # Kubernetes service account of the job
   serviceAccount: geaflow
   # Java main class of the job
-  entryClass: com.antgroup.geaflow.example.graph.statical.compute.sssp.SSSP
+  entryClass: com.antgroup.geaflow.example.graph.statical.compute.khop.KHop
   clientSpec:
     # Resource params of client pod
     resource:
