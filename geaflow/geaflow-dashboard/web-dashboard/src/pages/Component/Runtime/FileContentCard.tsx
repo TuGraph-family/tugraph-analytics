@@ -8,6 +8,7 @@ import "ace-builds/src-noconflict/ext-searchbox";
 
 import {ProCard} from "@ant-design/pro-components";
 import {Pagination} from "antd";
+import {Ace} from "ace-builds";
 
 const FileContentCard: React.FC<{
   title: string,
@@ -27,11 +28,16 @@ const FileContentCard: React.FC<{
     extra={extra}
   >
     <AceEditor
+      key={paginationRequestRef?.current?.pageNo}
       value={data}
       mode="jsx"
       theme="xcode"
       name="log_view"
       readOnly={true}
+      onLoad={(editor: Ace.Editor) => {
+        editor.moveCursorTo(0, 0);
+      }}
+      wrapEnabled={true}
       showPrintMargin={false}
       showGutter={true}
       highlightActiveLine={true}

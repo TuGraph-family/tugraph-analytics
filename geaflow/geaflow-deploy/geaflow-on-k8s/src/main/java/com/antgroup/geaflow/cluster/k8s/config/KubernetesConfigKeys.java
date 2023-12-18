@@ -241,4 +241,9 @@ public class KubernetesConfigKeys {
         .defaultValue(5)
         .description("The interval seconds of each contenders to try to contend for a new leader,"
             + " also is the interval seconds of current leader to renew for its leadership lease");
+
+    public static final ConfigKey ALWAYS_PULL_ENGINE_JAR = ConfigKeys
+        .key("kubernetes.engine.jar.pull.always")
+        .defaultValue(false)
+        .description("whether to always pull the remote engine jar to replace local ones");
 }

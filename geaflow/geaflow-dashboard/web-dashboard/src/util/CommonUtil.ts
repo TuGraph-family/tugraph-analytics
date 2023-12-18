@@ -51,10 +51,10 @@ export const parseAgentUrl = (component: API.ComponentInfo | undefined): string 
 }
 
 export const formatFileSize = (size: number | undefined) => {
-  if(null == size){
-    return "0 Bytes";
+  if(null == size || 0 == size){
+    return "0 Byte";
   }
-  const UNITS = ["Bytes","KB","MB","GB"];
+  const UNITS = ["Byte","KB","MB","GB"];
   let index = Math.floor(Math.log(size) / Math.log(1024));
   let fmtSize = size / Math.pow(1024, index);
   let fmtSizeStr;

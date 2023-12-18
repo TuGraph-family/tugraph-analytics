@@ -135,6 +135,8 @@ public final class K8SConstants {
 
     public static final String ENV_AUTO_RESTART = "GEAFLOW_AUTO_RESTART";
 
+    public static final String ENV_ALWAYS_DOWNLOAD_ENGINE = "GEAFLOW_ALWAYS_DOWNLOAD_ENGINE_JAR";
+
     public static final String ENV_CLUSTER_ID = "GEAFLOW_CLUSTER_ID";
 
     public static final String ENV_CLUSTER_FAULT_INJECTION_ENABLE =

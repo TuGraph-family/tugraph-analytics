@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.k8s.clustermanager;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_KV_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_LIST_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.LABEL_COMPONENT_ID_KEY;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.ALWAYS_PULL_ENGINE_JAR;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLUSTER_NAME;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_CONF_FILES;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DNS_SEARCH_DOMAINS;
@@ -96,6 +97,7 @@ public class KubernetesResourceBuilder {
         String gatewayEndpoint = config.getString(GEAFLOW_GW_ENDPOINT, "");
         String geaflowToken = config.getString(GEAFLOW_DSL_CATALOG_TOKEN_KEY, "");
         Boolean clusterFaultInjectionEnable = param.getClusterFaultInjectionEnable();
+        boolean alwaysDownloadEngineJar = config.getBoolean(ALWAYS_PULL_ENGINE_JAR);
 
         ContainerBuilder containerBuilder = new ContainerBuilder()
             .withName(containerName)
@@ -130,6 +132,8 @@ public class KubernetesResourceBuilder {
                 .withName(K8SConstants.ENV_CATALOG_TOKEN).withValue(geaflowToken).endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_GW_ENDPOINT).withValue(gatewayEndpoint).endEnv()
+            .addNewEnv()
+                .withName(K8SConstants.ENV_ALWAYS_DOWNLOAD_ENGINE).withValue(String.valueOf(alwaysDownloadEngineJar)).endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_NODE_NAME).withValueFrom(new EnvVarSourceBuilder()
                 .withFieldRef(

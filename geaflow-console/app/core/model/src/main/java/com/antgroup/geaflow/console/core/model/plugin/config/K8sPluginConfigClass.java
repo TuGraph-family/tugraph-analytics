@@ -84,6 +84,10 @@ public class K8sPluginConfigClass extends PluginConfigClass {
     @GeaflowConfigKey(value = "kubernetes.certs.client.key.algo", comment = "i18n.key.client.cert.key.algo")
     private String certKeyAlgo;
 
+    @GeaflowConfigKey(value = "kubernetes.engine.jar.pull.always", comment = "i18n.key.engine.jar.pull.always")
+    @GeaflowConfigValue(defaultValue = "true")
+    private String alwaysPullEngineJar;
+
     public K8sPluginConfigClass() {
         super(GeaflowPluginType.K8S);
     }
