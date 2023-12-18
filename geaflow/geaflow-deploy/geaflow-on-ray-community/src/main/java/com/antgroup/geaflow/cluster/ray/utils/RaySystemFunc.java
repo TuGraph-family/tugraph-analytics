@@ -18,6 +18,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WO
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RUN_LOCAL_MODE;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
+import com.antgroup.geaflow.cluster.ray.config.RayConfig;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.utils.math.MathUtil;
 import io.ray.api.Ray;

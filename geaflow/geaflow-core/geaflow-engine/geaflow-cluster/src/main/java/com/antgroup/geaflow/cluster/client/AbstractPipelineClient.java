@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.config.Configuration;
 
@@ -23,10 +23,10 @@ import java.util.Map;
 public abstract class AbstractPipelineClient implements IPipelineClient {
 
     protected RpcClient rpcClient;
-    protected Map<String, RpcAddress> driverAddresses;
+    protected Map<String, ConnectAddress> driverAddresses;
 
     @Override
-    public void init(Map<String, RpcAddress> driverAddresses, Configuration config) {
+    public void init(Map<String, ConnectAddress> driverAddresses, Configuration config) {
         this.rpcClient = RpcClient.init(config);
         this.driverAddresses = driverAddresses;
     }

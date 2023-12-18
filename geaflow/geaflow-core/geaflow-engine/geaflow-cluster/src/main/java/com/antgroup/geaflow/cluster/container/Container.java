@@ -145,7 +145,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
     @Override
     protected ContainerInfo buildComponentInfo() {
         ContainerInfo containerInfo = new ContainerInfo();
-        buildComponentInfo(containerInfo);
+        fillComponentInfo(containerInfo);
         containerInfo.setShufflePort(ShuffleManager.getInstance().getShufflePort());
         return containerInfo;
     }

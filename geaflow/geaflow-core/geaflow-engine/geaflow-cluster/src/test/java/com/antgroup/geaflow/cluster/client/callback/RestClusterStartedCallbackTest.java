@@ -16,7 +16,7 @@ package com.antgroup.geaflow.cluster.client.callback;
 
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
 import com.antgroup.geaflow.cluster.client.callback.RestClusterStartedCallback.HttpRequest;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -61,8 +61,8 @@ public class RestClusterStartedCallbackTest {
         Configuration configuration = new Configuration();
         String url = URI.create(baseUrl).resolve("/v1/cluster").toString();
         RestClusterStartedCallback callback = new RestClusterStartedCallback(configuration, url);
-        Map<String, RpcAddress> addressList = new HashMap<>();
-        addressList.put("1", new RpcAddress());
+        Map<String, ConnectAddress> addressList = new HashMap<>();
+        addressList.put("1", new ConnectAddress());
         ClusterMeta clusterMeta = new ClusterMeta(addressList, "master1");
         callback.onSuccess(clusterMeta);
 

@@ -23,10 +23,8 @@ import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.local.clustermanager.LocalClient;
 import com.antgroup.geaflow.cluster.local.clustermanager.LocalClusterId;
 import com.antgroup.geaflow.cluster.local.clustermanager.LocalClusterManager;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
-import com.antgroup.geaflow.dashboard.agent.runner.AgentWebRunner;
 import com.antgroup.geaflow.env.ctx.IEnvironmentContext;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,7 +50,6 @@ public class LocalClusterClient extends AbstractClusterClient {
     @Override
     public IPipelineClient startCluster() {
         try {
-            this.startLocalAgent();
             LocalClusterId clusterId = localClusterManager.startMaster();
             ClusterInfo clusterInfo = LocalClient.initMaster(clusterId.getMaster());
             ClusterMeta clusterMeta = new ClusterMeta(clusterInfo);
@@ -64,12 +61,6 @@ public class LocalClusterClient extends AbstractClusterClient {
             LOGGER.error("deploy cluster failed", e);
             callback.onFailure(e);
             throw new GeaflowRuntimeException(e);
-        }
-    }
-
-    private void startLocalAgent() {
-        if (config.getBoolean(ExecutionConfigKeys.HTTP_REST_SERVICE_ENABLE)) {
-            agentService.execute(() -> AgentWebRunner.main(new String[]{}));
         }
     }
 

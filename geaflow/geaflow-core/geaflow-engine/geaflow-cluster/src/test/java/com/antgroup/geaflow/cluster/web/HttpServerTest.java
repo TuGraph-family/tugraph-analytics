@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.web;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HA_SERVICE_TYPE;
 
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
+import com.antgroup.geaflow.cluster.common.ComponentInfo;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
 import com.antgroup.geaflow.cluster.resourcemanager.DefaultResourceManager;
 import com.antgroup.geaflow.cluster.resourcemanager.IResourceManager;
@@ -43,7 +44,7 @@ public class HttpServerTest {
         HeartbeatManager heartbeatManager = new HeartbeatManager(configuration, clusterManager);
         IResourceManager resourceManager = new DefaultResourceManager(clusterManager);
         HttpServer httpServer = new HttpServer(configuration, clusterManager, heartbeatManager,
-            resourceManager);
+            resourceManager, new ComponentInfo());
         CountDownLatch latch = new CountDownLatch(1);
 
         new Thread(new Runnable() {

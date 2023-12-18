@@ -44,7 +44,8 @@ public class LocalClusterManager extends AbstractClusterManager {
 
     @Override
     protected IFailoverStrategy buildFailoverStrategy() {
-        return FailoverStrategyFactory.loadFailoverStrategy(IEnvironment.EnvType.LOCAL, FailoverStrategyType.disable_fo.name());
+        return FailoverStrategyFactory.loadFailoverStrategy(IEnvironment.EnvType.LOCAL,
+            FailoverStrategyType.disable_fo.name());
     }
 
     @Override
@@ -63,17 +64,19 @@ public class LocalClusterManager extends AbstractClusterManager {
 
     @Override
     public void createNewDriver(int driverId, int driverIndex) {
-        DriverContext driverContext = new LocalDriverContext(driverId, driverIndex, clusterConfig.getConfig());
+        DriverContext driverContext = new LocalDriverContext(driverId, driverIndex,
+            clusterConfig.getConfig());
         LocalClient.createDriver(clusterConfig, driverContext);
         LOGGER.info("call driver start id:{} index:{}", driverId, driverIndex);
     }
 
+
     @Override
-    public void recreateContainer(int containerId) {
+    public void restartDriver(int driverId) {
     }
 
     @Override
-    public void recreateDriver(int id) {
+    public void restartContainer(int containerId) {
     }
 
     @Override

@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ExecutorUtil;
@@ -50,7 +50,7 @@ public class AsyncPipelineClient extends AbstractPipelineClient {
             ThreadUtil.namedThreadFactory(true, PREFIX_DRIVER_EXECUTE_PIPELINE));
         List<Future<IPipelineResult>> list = new ArrayList<>(driverNum);
         int pipelineIndex = 0;
-        for (Map.Entry<String, RpcAddress> entry : driverAddresses.entrySet()) {
+        for (Map.Entry<String, ConnectAddress> entry : driverAddresses.entrySet()) {
             list.add(executorService.submit(new ExecutePipelineTask(driverNum, pipelineIndex,
                 pipeline, entry.getKey())));
             pipelineIndex++;

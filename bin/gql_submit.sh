@@ -39,6 +39,8 @@ GEAFLOW_LOG_DIR=${TMP_DIR}/logs
 GEAFLOW_LOG_PATH=$GEAFLOW_LOG_DIR/local.log
 mkdir -p $GEAFLOW_LOG_DIR
 
+LOG4j_PROPERTIES_FILE_NAME=log4j.properties
+
 while [ "$1" ]; do
   case "$1" in
   --gql)
@@ -49,9 +51,17 @@ while [ "$1" ]; do
     ASYNC_PROFILER_SHELL_PATH="$2"
     shift
     ;;
+  --args)
+    JOB_ARGS="$2"
+    shift
+    ;;
   esac
   shift
   done
+
+DEFAULT_JOB_ARGS='{"job": {"geaflow.log.dir": "/tmp/geaflow/logs", "geaflow.agent.http.port": "8088", "AGENT_PROFILER_PATH": "'${ASYNC_PROFILER_SHELL_PATH}'"}}'
+JOB_ARGS=${JOB_ARGS:-${DEFAULT_JOB_ARGS}}
+echo "JOB_ARGS:  ${JOB_ARGS}"
 
 echo "GQL_FILE: $GQL_FILE"
 mkdir -p /tmp/geaflow/gql
@@ -63,8 +73,7 @@ echo "CLASSPATH:$CLASSPATH"
 echo -e "\033[32mView dashboard via http://localhost:8090.
 See logs via url http://localhost:8090/#/components/master/logs or at local path ${GEAFLOW_LOG_PATH}\033[32m"
 $JAVACMD -cp "$CLASSPATH" \
-    -DclusterType=LOCAL \
-    -DLOG_DIR=${GEAFLOW_LOG_DIR} \
-    -DFLAME_GRAPH_PROFILER_PATH=${ASYNC_PROFILER_SHELL_PATH} \
-    -DAGENT_TMP_DIR=${TMP_DIR} \
-    com.antgroup.geaflow.dsl.runtime.engine.GeaFlowGqlClient "$@" > ${GEAFLOW_LOG_PATH} 2>&1
+  -DclusterType=LOCAL \
+  -Dlog.file=${GEAFLOW_LOG_PATH} \
+  -Dlog4j.configuration=${LOG4j_PROPERTIES_FILE_NAME} \
+  com.antgroup.geaflow.dsl.runtime.engine.GeaFlowGqlClient "${JOB_ARGS}" > ${GEAFLOW_LOG_PATH} 2>&1

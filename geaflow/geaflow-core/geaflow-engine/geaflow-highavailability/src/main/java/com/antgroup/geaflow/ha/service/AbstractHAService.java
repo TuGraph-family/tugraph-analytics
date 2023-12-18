@@ -23,6 +23,7 @@ import com.antgroup.geaflow.utils.NetworkUtil;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ public abstract class AbstractHAService implements IHAService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractHAService.class);
     protected static final String TABLE_PREFIX = "WORKERS_";
+    protected static final int LOAD_INTERVAL_MS = 200;
 
     protected int connectTimeout;
     protected int recoverTimeout;
@@ -48,7 +50,9 @@ public abstract class AbstractHAService implements IHAService {
 
     @Override
     public void register(String resourceId, ResourceData resourceData) {
-        kvStore.put(resourceId, resourceData);
+        if (kvStore != null) {
+            kvStore.put(resourceId, resourceData);
+        }
     }
 
     @Override
@@ -74,10 +78,23 @@ public abstract class AbstractHAService implements IHAService {
     }
 
     protected ResourceData getResourceData(String resourceId) {
-        return kvStore.get(resourceId);
+        if (kvStore != null) {
+            return kvStore.get(resourceId);
+        }
+        return null;
     }
 
     private ResourceData loadDataFromStore(String resourceId, boolean resolve) {
+        return loadDataFromStore(resourceId, resolve, recoverTimeout, ResourceData::getRpcPort);
+    }
+
+    public ResourceData loadDataFromStore(String resourceId, boolean resolve,
+                                      Function<ResourceData, Integer> portFunc) {
+        return loadDataFromStore(resourceId, resolve, recoverTimeout, portFunc);
+    }
+
+    private ResourceData loadDataFromStore(String resourceId, boolean resolve, int timeoutMs,
+                                       Function<ResourceData, Integer> portFunc) {
         long currentTime = System.currentTimeMillis();
         long startTime = currentTime;
         long checkTime = currentTime;
@@ -88,21 +105,22 @@ public abstract class AbstractHAService implements IHAService {
             if (currentTime - checkTime > 2000) {
                 long elapsedTime = currentTime - startTime;
                 checkTime = currentTime;
-                if (elapsedTime > recoverTimeout) {
+                if (elapsedTime > timeoutMs) {
                     String reason = throwable != null ? throwable.getMessage() : null;
                     String msg = String.format("load resource %s timeout after %sms, reason:%s",
                         resourceId, elapsedTime, reason);
                     LOGGER.error(msg);
                     throw new GeaflowRuntimeException(msg);
                 }
-                SleepUtils.sleepMilliSecond(200);
+                SleepUtils.sleepMilliSecond(LOAD_INTERVAL_MS);
             }
             resourceData = getResourceData(resourceId);
             if (resourceData != null) {
                 try {
                     if (resolve) {
-                        NetworkUtil.checkServiceAvailable(resourceData.getHost(),
-                            resourceData.getRpcPort(), connectTimeout);
+                        int port = portFunc.apply(resourceData);
+                        NetworkUtil.checkServiceAvailable(resourceData.getHost(), port,
+                            connectTimeout);
                     }
                     break;
                 } catch (IOException ex) {
@@ -112,6 +130,5 @@ public abstract class AbstractHAService implements IHAService {
         } while (true);
         return resourceData;
     }
-
 
 }

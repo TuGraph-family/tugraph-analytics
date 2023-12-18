@@ -113,7 +113,7 @@ public class ProcessUtil {
     }
 
     public static synchronized void killProcess(int pid) {
-        LOGGER.info("Run kill -9 {}", pid);
+        LOGGER.info("Kill -9 {}", pid);
         try {
             Runtime.getRuntime().exec("kill -9 " + pid);
         } catch (IOException e) {

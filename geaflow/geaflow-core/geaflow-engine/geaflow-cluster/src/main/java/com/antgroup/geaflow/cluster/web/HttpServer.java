@@ -17,6 +17,7 @@ package com.antgroup.geaflow.cluster.web;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_HTTP_PORT;
 
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
+import com.antgroup.geaflow.cluster.common.ComponentInfo;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
 import com.antgroup.geaflow.cluster.resourcemanager.IResourceManager;
 import com.antgroup.geaflow.cluster.web.handler.ClusterRestHandler;
@@ -59,7 +60,8 @@ public class HttpServer {
     private final ScheduledExecutorScheduler serverExecutor;
 
     public HttpServer(Configuration configuration, IClusterManager clusterManager,
-                      HeartbeatManager heartbeatManager, IResourceManager resourceManager) {
+                      HeartbeatManager heartbeatManager, IResourceManager resourceManager,
+                      ComponentInfo masterInfo) {
         httpPort = configuration.getInteger(MASTER_HTTP_PORT);
         threadPool = new QueuedThreadPool();
         threadPool.setDaemon(true);
@@ -76,7 +78,7 @@ public class HttpServer {
             metricCache);
 
         ResourceConfig resourceConfig = new ResourceConfig();
-        resourceConfig.register(new MasterRestHandler(configuration));
+        resourceConfig.register(new MasterRestHandler(masterInfo, configuration));
         resourceConfig.register(new ClusterRestHandler(clusterManager, heartbeatManager,
             resourceManager, metricFetcher));
         resourceConfig.register(new PipelineRestHandler(metricCache, metricFetcher));
