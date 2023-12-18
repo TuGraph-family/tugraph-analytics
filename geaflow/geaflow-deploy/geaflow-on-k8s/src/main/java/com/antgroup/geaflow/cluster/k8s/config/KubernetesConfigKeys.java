@@ -232,4 +232,19 @@ public class KubernetesConfigKeys {
         .defaultValue("")
         .description("client key algo");
 
+    public static final ConfigKey LEADER_ELECTION_LEASE_DURATION = ConfigKeys.key("kubernetes.leader-election.lease-duration")
+        .defaultValue(15)
+        .description("The duration seconds of once leader-election in kubernetes. Contenders can "
+            + "try to contend for a new leader after the previous leader invalid");
+
+    public static final ConfigKey LEADER_ELECTION_RENEW_DEADLINE = ConfigKeys.key("kubernetes.leader-election.renew-deadline")
+        .defaultValue(15)
+        .description("The deadline seconds of once leader-election in kubernetes. The current "
+            + "leader must renew the leadership within the deadline, or the leadership will be "
+            + "invalid after lease duration");
+
+    public static final ConfigKey LEADER_ELECTION_RETRY_PERIOD = ConfigKeys.key("kubernetes.leader-election.retry-period")
+        .defaultValue(5)
+        .description("The interval seconds of each contenders to try to contend for a new leader,"
+            + " also is the interval seconds of current leader to renew for its leadership lease");
 }

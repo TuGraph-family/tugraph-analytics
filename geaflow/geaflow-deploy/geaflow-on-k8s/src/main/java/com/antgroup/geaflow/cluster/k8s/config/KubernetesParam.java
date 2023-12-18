@@ -141,4 +141,9 @@ public interface KubernetesParam {
      */
     Map<String, String> getAdditionEnvs();
 
+    /**
+     * Get whether leader-election is enabled.
+     */
+    boolean enableLeaderElection();
+
 }

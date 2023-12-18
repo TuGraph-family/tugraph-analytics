@@ -59,6 +59,8 @@ public final class K8SConstants {
 
     public static final String LABEL_APP_KEY = "app";
 
+    public static final String LABEL_CONFIG_MAP_LOCK = "config-map-lock";
+
     public static final String LABEL_COMPONENT_KEY = "component";
 
     public static final String LABEL_COMPONENT_MASTER = "master";
@@ -142,6 +144,8 @@ public final class K8SConstants {
     public static final String ENV_CONTAINER_INDEX = "GEAFLOW_CONTAINER_INDEX";
 
     public static final String ENV_CONTAINER_TYPE = "CONTAINER_TYPE";
+
+    public static final String ENV_COMPONENT_TYPE = "COMPONENT_TYPE";
 
     public static final String ENV_CONTAINER_TYPE_K8S = "K8S";
 

@@ -23,6 +23,7 @@ import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.AutoRestartPolic
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesMasterRunner;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -115,5 +116,10 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
     @Override
     public Map<String, String> getNodeSelector() {
         return KubernetesUtils.getPairsConf(config, MASTER_NODE_SELECTOR);
+    }
+
+    @Override
+    public boolean enableLeaderElection() {
+        return config.getBoolean(ExecutionConfigKeys.ENABLE_MASTER_LEADER_ELECTION);
     }
 }

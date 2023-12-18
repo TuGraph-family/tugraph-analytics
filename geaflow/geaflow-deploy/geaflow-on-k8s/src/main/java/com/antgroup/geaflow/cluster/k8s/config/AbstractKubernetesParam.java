@@ -152,4 +152,8 @@ public abstract class AbstractKubernetesParam implements KubernetesParam {
         return config;
     }
 
+    @Override
+    public boolean enableLeaderElection() {
+        return false;
+    }
 }

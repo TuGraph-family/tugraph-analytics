@@ -110,9 +110,8 @@ public class KubernetesClusterManagerTest {
         String envValue = "value-a";
         jobConf.put(MASTER_ENV_PREFIX + envName, envValue);
 
-        String clusterId = "cluster";
         Container container = kubernetesClusterManager
-            .createMasterContainer(clusterId, DockerNetworkType.BRIDGE);
+            .createMasterContainer(DockerNetworkType.BRIDGE);
 
         assertTrue(container.getCommand().isEmpty());
         Optional<EnvVar> commandEnv = container.getEnv().stream()

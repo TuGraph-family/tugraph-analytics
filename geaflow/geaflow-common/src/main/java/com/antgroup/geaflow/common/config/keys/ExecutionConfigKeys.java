@@ -316,6 +316,16 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue("")
         .description("ha service type, e.g., [redis, hbase, memory]");
 
+    public static final ConfigKey ENABLE_MASTER_LEADER_ELECTION = ConfigKeys
+        .key("geaflow.master.leader-election.enable")
+        .defaultValue(false)
+        .description("whether to enable leader-election of master, currently only supports in k8s env");
+
+    public static final ConfigKey LEADER_ELECTION_TYPE = ConfigKeys
+        .key("geaflow.leader-election.type")
+        .defaultValue("kubernetes")
+        .description("leader-election type, e.g., [kubernetes]");
+
     public static final ConfigKey HTTP_REST_SERVICE_ENABLE = ConfigKeys
         .key("geaflow.http.rest.service.enable")
         .defaultValue(true)

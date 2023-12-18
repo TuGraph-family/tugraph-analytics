@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
@@ -23,14 +25,16 @@ import com.antgroup.geaflow.cluster.k8s.clustermanager.KubernetesResourceBuilder
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
+import com.antgroup.geaflow.cluster.k8s.config.KubernetesParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.cluster.master.AbstractMaster;
 import com.antgroup.geaflow.cluster.master.MasterContext;
 import com.antgroup.geaflow.cluster.master.MasterFactory;
 import com.antgroup.geaflow.cluster.rpc.RpcAddress;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.ha.leaderelection.ILeaderContender;
+import com.antgroup.geaflow.ha.leaderelection.LeaderContenderType;
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -50,8 +54,37 @@ public class KubernetesMasterRunner {
         this.config = config;
     }
 
-    public void init() {
+    public void init() throws InterruptedException {
         master = MasterFactory.create(config);
+        KubernetesParam masterParams = new KubernetesMasterParam(config);
+        if (masterParams.enableLeaderElection()) {
+            master.initLeaderElectionService(new KubernetesMasterLeaderContender(), config, DEFAULT_MASTER_ID);
+            master.waitForLeaderElection();
+        }
+        initMaster();
+    }
+
+    private class KubernetesMasterLeaderContender implements ILeaderContender {
+
+        @Override
+        public void handleLeadershipGranted() {
+            LOGGER.info("Leadership granted, init master now.");
+            master.notifyLeaderElection();
+        }
+
+        @Override
+        public void handleLeadershipLost() {
+            LOGGER.info("Leadership lost, exit the process now.");
+            System.exit(EXIT_CODE);
+        }
+
+        @Override
+        public LeaderContenderType getType() {
+            return LeaderContenderType.master;
+        }
+    }
+
+    private void initMaster() {
         MasterContext context = new MasterContext(config);
         context.setClusterManager(new KubernetesClusterManager());
         context.load();
@@ -82,7 +115,7 @@ public class KubernetesMasterRunner {
         master.waitTermination();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         try {
             final long startTime = System.currentTimeMillis();
             Configuration config = KubernetesUtils.loadConfigurationFromFile();
