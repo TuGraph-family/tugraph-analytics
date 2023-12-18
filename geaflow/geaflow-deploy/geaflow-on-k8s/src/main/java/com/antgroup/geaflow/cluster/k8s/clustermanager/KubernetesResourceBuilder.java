@@ -72,7 +72,7 @@ public class KubernetesResourceBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesResourceBuilder.class);
 
-    public static Container createContainer(String containerName, String componentType, String containerId,
+    public static Container createContainer(String containerName, String containerId,
                                             String masterId, KubernetesParam param, String command,
                                             Map<String, String> additionalEnvs,
                                             DockerNetworkType dockerNetworkType) {
@@ -117,9 +117,6 @@ public class KubernetesResourceBuilder {
                 .withName(K8SConstants.ENV_START_COMMAND).withValue(command).endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_CONTAINER_ID).withValue(containerId).endEnv()
-            .addNewEnv()
-                .withName(K8SConstants.ENV_CONTAINER_TYPE).withValue(K8SConstants.ENV_CONTAINER_TYPE_K8S)
-                .endEnv()
             .addNewEnv()
                 .withName(K8SConstants.ENV_CLUSTER_ID).withValue(clusterName)
                 .endEnv()

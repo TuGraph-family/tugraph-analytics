@@ -21,12 +21,14 @@ import com.antgroup.geaflow.cluster.driver.DriverContext;
 import com.antgroup.geaflow.cluster.ray.entrypoint.RayContainerRunner;
 import com.antgroup.geaflow.cluster.ray.entrypoint.RayDriverRunner;
 import com.antgroup.geaflow.cluster.ray.entrypoint.RayMasterRunner;
+import com.antgroup.geaflow.cluster.ray.entrypoint.RaySupervisorRunner;
 import io.ray.api.ActorHandle;
 import io.ray.api.ObjectRef;
 import io.ray.api.Ray;
 import io.ray.api.options.ActorLifetime;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,8 +81,22 @@ public class RayClient implements Serializable {
             .actor(RayContainerRunner::new, containerContext)
             .setMaxRestarts(clusterConfig.getMaxRestarts())
             .setLifetime(ActorLifetime.DETACHED)
+            .setJvmOptions(clusterConfig.getContainerJvmOptions().getJvmOptions())
             .remote();
         LOGGER.info("worker actor {} maxRestarts {}", rayContainer.getId().toString(),
+            clusterConfig.getMaxRestarts());
+        return rayContainer;
+    }
+
+    public static ActorHandle<RaySupervisorRunner> createSupervisor(ClusterConfig clusterConfig,
+                                        Map<String, String> envs) {
+        ActorHandle<RaySupervisorRunner> rayContainer = Ray
+            .actor(RaySupervisorRunner::new, clusterConfig.getConfig(), envs)
+            .setMaxRestarts(clusterConfig.getMaxRestarts())
+            .setLifetime(ActorLifetime.DETACHED)
+            .setJvmOptions(clusterConfig.getSupervisorJvmOptions().getJvmOptions())
+            .remote();
+        LOGGER.info("supervisor actor {} maxRestarts {}", rayContainer.getId().toString(),
             clusterConfig.getMaxRestarts());
         return rayContainer;
     }

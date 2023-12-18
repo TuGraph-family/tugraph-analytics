@@ -19,6 +19,7 @@ import com.antgroup.geaflow.cluster.driver.DriverContext;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesDriverParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -61,9 +62,9 @@ public class KubernetesDriverRunner {
     public static void main(String[] args) throws Exception {
         try {
             final long startTime = System.currentTimeMillis();
-            String id = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
-            String index = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_INDEX);
-            String masterId = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
+            String id = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
+            String index = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_INDEX);
+            String masterId = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
             LOGGER.info("ResourceID assigned for this driver id:{} index:{} masterId:{}", id,
                 index, masterId);
 

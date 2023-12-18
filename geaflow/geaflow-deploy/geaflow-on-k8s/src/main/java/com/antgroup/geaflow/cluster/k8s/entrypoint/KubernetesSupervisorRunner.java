@@ -14,17 +14,14 @@
 
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
-import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.AGENT_START_COMMAND;
-import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONTAINER_START_COMMAND;
-import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ENV_AUTO_RESTART;
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CONTAINER_START_COMMAND;
 
-import com.antgroup.geaflow.cluster.clustermanager.Supervisor;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.Supervisor;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +33,8 @@ public class KubernetesSupervisorRunner {
     private final Supervisor supervisor;
 
     public KubernetesSupervisorRunner(Configuration configuration, String startCommand,
-                                      List<String> commands, boolean autoRestart) {
-        this.supervisor = new Supervisor(startCommand, commands, configuration, autoRestart);
+                                      boolean autoRestart) {
+        this.supervisor = new Supervisor(startCommand, configuration, autoRestart);
     }
 
     public void run() {
@@ -51,19 +48,16 @@ public class KubernetesSupervisorRunner {
 
     public static void main(String[] args) throws Exception {
         try {
-            String id = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
-            String autoRestartEnv = KubernetesUtils.getEnvValue(ENV, ENV_AUTO_RESTART);
+            String id = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
+            String autoRestartEnv = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_AUTO_RESTART);
             LOGGER.info("Start supervisor with ID: {} pid: {} autoStart:{}", id,
                 ProcessUtil.getProcessId(), autoRestartEnv);
 
             Configuration config = KubernetesUtils.loadConfiguration();
-            String startCommand = KubernetesUtils.getEnvValue(ENV, CONTAINER_START_COMMAND);
-            List<String> serviceCommands = new ArrayList<>();
-            String agentStartCommand = KubernetesUtils.getEnvValue(ENV, AGENT_START_COMMAND);
-            serviceCommands.add(agentStartCommand);
+            String startCommand = ClusterUtils.getEnvValue(ENV, CONTAINER_START_COMMAND);
             boolean autoRestart = !autoRestartEnv.equalsIgnoreCase(Boolean.FALSE.toString());
             KubernetesSupervisorRunner workerRunner = new KubernetesSupervisorRunner(config,
-                startCommand, serviceCommands, autoRestart);
+                startCommand, autoRestart);
             workerRunner.run();
             workerRunner.waitForTermination();
             LOGGER.info("Exit worker process");

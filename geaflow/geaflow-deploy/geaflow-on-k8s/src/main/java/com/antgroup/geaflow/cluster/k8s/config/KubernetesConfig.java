@@ -30,7 +30,6 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTE
 
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
-import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -105,27 +104,6 @@ public class KubernetesConfig {
         }
     }
 
-    public enum AutoRestartPolicy {
-        /** the process will not be autorestarted. */
-        FALSE("false"),
-
-        /** the process will always be autorestarted. */
-        TRUE("true"),
-
-        /** the process will be autorestarted when exits with unexpected codes. */
-        UNEXPECTED("unexpected");
-
-        private final String value;
-
-        AutoRestartPolicy(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
     public static String getClientMasterUrl(Configuration config) {
         String url = config.getString(CLIENT_MASTER_URL);
         if (StringUtils.isNotBlank(url)) {
@@ -179,11 +157,6 @@ public class KubernetesConfig {
 
     public static String getResourceEphemeralStorageSize(Configuration config) {
         return config.getString(DEFAULT_RESOURCE_EPHEMERAL_STORAGE_SIZE);
-    }
-
-    public static String getJobWorkDir(Configuration config, String clusterId) {
-        String workDir = config.getString(WORK_DIR);
-        return Paths.get(workDir, "/", clusterId).toString();
     }
 
     public static String getJarDownloadPath(Configuration config) {

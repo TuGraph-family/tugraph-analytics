@@ -68,7 +68,7 @@ public abstract class AbstractContainer extends AbstractComponent {
 
     protected abstract ComponentInfo buildComponentInfo();
 
-    protected void buildComponentInfo(ComponentInfo componentInfo) {
+    protected void fillComponentInfo(ComponentInfo componentInfo) {
         componentInfo.setId(id);
         componentInfo.setName(name);
         componentInfo.setHost(ProcessUtil.getHostIp());

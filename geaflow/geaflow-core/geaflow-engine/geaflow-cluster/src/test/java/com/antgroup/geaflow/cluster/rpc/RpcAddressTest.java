@@ -21,8 +21,8 @@ public class RpcAddressTest {
 
     @Test
     public void testAddress() {
-        RpcAddress address = new RpcAddress("localhost", 0);
-        RpcAddress newAddr = RpcAddress.build(address.toString());
+        ConnectAddress address = new ConnectAddress("localhost", 0);
+        ConnectAddress newAddr = ConnectAddress.build(address.toString());
         Assert.assertEquals(address, newAddr);
     }
 

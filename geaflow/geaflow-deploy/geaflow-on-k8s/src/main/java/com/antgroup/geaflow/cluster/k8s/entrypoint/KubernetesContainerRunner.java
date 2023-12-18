@@ -19,6 +19,7 @@ import com.antgroup.geaflow.cluster.container.ContainerContext;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesContainerParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -57,9 +58,10 @@ public class KubernetesContainerRunner {
     public static void main(String[] args) throws Exception {
         try {
             final long startTime = System.currentTimeMillis();
-            String id = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
-            String masterId = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
-            boolean isRecover = Boolean.parseBoolean(KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_IS_RECOVER));
+            String id = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_CONTAINER_ID);
+            String masterId = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
+            boolean isRecover = Boolean.parseBoolean(ClusterUtils.getEnvValue(ENV,
+                K8SConstants.ENV_IS_RECOVER));
             LOGGER.info("ResourceID assigned for this container:{} masterId:{}, isRecover:{}", id,
                 masterId, isRecover);
 

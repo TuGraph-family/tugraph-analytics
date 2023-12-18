@@ -44,8 +44,11 @@ public class RayClusterClient extends AbstractClusterClient {
         clusterContext = new ClusterContext(config);
         rayClusterManager = new RayClusterManager();
         rayClusterManager.init(clusterContext);
+
         RaySystemFunc.initRayEnv(clusterContext.getClusterConfig());
-        config.put(JOB_WORK_PATH, RaySystemFunc.getWorkPath());
+        if (!config.contains(JOB_WORK_PATH)) {
+            config.put(JOB_WORK_PATH, RaySystemFunc.getWorkPath());
+        }
     }
 
     @Override

@@ -280,7 +280,7 @@ public class KubernetesClusterManagerTest {
         // check pod label
         verifyWorkerPodSize(1);
         // restart pod
-        kubernetesClusterManager2.recreateContainer(containerId);
+        kubernetesClusterManager2.restartContainer(containerId);
         verifyWorkerPodSize(1);
     }
 
@@ -319,7 +319,7 @@ public class KubernetesClusterManagerTest {
         verifyWorkerPodSize(2);
 
         // restart all pod
-        kubernetesClusterManager2.recreateContainer(containerId_1);
+        kubernetesClusterManager2.restartContainer(containerId_1);
         verifyWorkerPodSize(2);
 
         // restart driver & containers

@@ -17,7 +17,6 @@ package com.antgroup.geaflow.ha.service;
 import java.io.Serializable;
 
 public class ResourceData implements Serializable {
-
     private String host;
     private int processId;
     /** rpc service port.*/
@@ -84,5 +83,4 @@ public class ResourceData implements Serializable {
             + rpcPort + ", shufflePort=" + shufflePort + ", metricPort=" + metricPort
             + ", supervisorPort=" + supervisorPort + '}';
     }
-
 }

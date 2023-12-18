@@ -114,12 +114,6 @@ public class KubernetesConfigKeys {
         .defaultValue("IfNotPresent")
         .description("container image pull policy");
 
-    public static final ConfigKey CONTAINER_START_COMMAND_TEMPLATE = ConfigKeys
-        .key("kubernetes.container-start-command-template")
-        .defaultValue("%java% %classpath% %jvmmem% %jvmopts% %logging% %class% "
-            + "%redirects%")
-        .description("container start command template");
-
     public static final ConfigKey CONTAINER_CONF_FILES = ConfigKeys
         .key("kubernetes.container.conf.files")
         .defaultValue("/opt/geaflow/conf/log4j.properties")

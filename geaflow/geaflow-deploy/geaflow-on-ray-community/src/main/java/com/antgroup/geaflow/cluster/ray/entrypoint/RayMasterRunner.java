@@ -14,27 +14,14 @@
 
 package com.antgroup.geaflow.cluster.ray.entrypoint;
 
-import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
-import com.antgroup.geaflow.cluster.master.AbstractMaster;
-import com.antgroup.geaflow.cluster.master.MasterContext;
-import com.antgroup.geaflow.cluster.master.MasterFactory;
 import com.antgroup.geaflow.cluster.ray.clustermanager.RayClusterManager;
+import com.antgroup.geaflow.cluster.runner.entrypoint.MasterRunner;
 import com.antgroup.geaflow.common.config.Configuration;
 
-public class RayMasterRunner {
-
-    private final AbstractMaster master;
+public class RayMasterRunner extends MasterRunner {
 
     public RayMasterRunner(Configuration configuration) {
-        master = MasterFactory.create(configuration);
-        MasterContext context = new MasterContext(configuration);
-        context.setClusterManager(new RayClusterManager());
-        context.load();
-        master.init(context);
-    }
-
-    public ClusterInfo init() {
-        return master.startCluster();
+        super(configuration, new RayClusterManager());
     }
 
 }

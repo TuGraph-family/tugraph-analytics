@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
@@ -27,7 +27,7 @@ public interface IPipelineClient {
      * Init pipeline client.
      * @param driverAddresses Driver Address map.
      */
-    void init(Map<String, RpcAddress> driverAddresses, Configuration config);
+    void init(Map<String, ConnectAddress> driverAddresses, Configuration config);
 
     /**
      * Submit pipeline to execute.

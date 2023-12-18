@@ -20,6 +20,7 @@ import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointTyp
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.METRIC;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.PIPELINE_MANAGER;
 import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.RESOURCE_MANAGER;
+import static com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType.SUPERVISOR;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RPC_ASYNC_THREADS;
 
@@ -44,6 +45,7 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.common.utils.RetryCommand;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
+import com.antgroup.geaflow.ha.service.AbstractHAService;
 import com.antgroup.geaflow.ha.service.HAServiceFactory;
 import com.antgroup.geaflow.ha.service.IHAService;
 import com.antgroup.geaflow.ha.service.ResourceData;
@@ -58,6 +60,7 @@ import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.google.protobuf.Empty;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -81,8 +84,8 @@ public class RpcClient implements Serializable {
         // Ensure total retry time be longer than (heartbeat timeout + 30s).
         retryIntervalMs = configuration.getInteger(ExecutionConfigKeys.RPC_RETRY_INTERVAL_MS);
         int heartbeatTimeoutMs = configuration.getInteger(HEARTBEAT_TIMEOUT_MS);
-        int minTimes = (int) Math
-            .ceil((double) (heartbeatTimeoutMs + RPC_RETRY_EXTRA_MS) / retryIntervalMs);
+        int minTimes = (int) Math.ceil(
+            (double) (heartbeatTimeoutMs + RPC_RETRY_EXTRA_MS) / retryIntervalMs);
         int rpcRetryTimes = configuration.getInteger(ExecutionConfigKeys.RPC_RETRY_TIMES);
         retryTimes = Math.max(minTimes, rpcRetryTimes);
         refFactory = RpcEndpointRefFactory.getInstance(configuration);
@@ -112,7 +115,8 @@ public class RpcClient implements Serializable {
     public <T> void registerContainer(String masterId, T info,
                                       RpcCallback<RegisterResponse> callback) {
         doRpcWithRetry(() -> {
-            connectMaster(masterId).registerContainer(info, new DefaultRpcCallbackImpl<>(callback, masterId, haService));
+            connectMaster(masterId).registerContainer(info,
+                new DefaultRpcCallbackImpl<>(callback, masterId, haService));
         }, masterId, MASTER);
     }
 
@@ -126,8 +130,9 @@ public class RpcClient implements Serializable {
 
     public Empty sendException(String masterId, Integer containerId, String containerName,
                                Throwable throwable) {
-        return doRpcWithRetry(() -> connectMaster(masterId).sendException(containerId,
-            containerName, throwable.getMessage()), masterId, MASTER);
+        return doRpcWithRetry(
+            () -> connectMaster(masterId).sendException(containerId, containerName,
+                throwable.getMessage()), masterId, MASTER);
     }
 
     // Container endpoint ref.
@@ -145,9 +150,9 @@ public class RpcClient implements Serializable {
 
     // Pipeline endpoint ref.
     public void processPipeline(String driverId, IEvent event) {
-        doRpcWithRetry(() -> connectPipelineManager(driverId).process(event,
-                new DefaultRpcCallbackImpl<>()), driverId,
-            PIPELINE_MANAGER);
+        doRpcWithRetry(
+            () -> connectPipelineManager(driverId).process(event, new DefaultRpcCallbackImpl<>()),
+            driverId, PIPELINE_MANAGER);
     }
 
     public IPipelineResult executePipeline(String driverId, Pipeline pipeline) {
@@ -169,13 +174,22 @@ public class RpcClient implements Serializable {
     public Future<MetricQueryResponse> requestMetrics(String id, MetricQueryRequest request,
                                                       RpcCallback<MetricQueryResponse> callback) {
         return doRpcWithRetry(() -> connectMetricServer(id).queryMetrics(request,
-                new DefaultRpcCallbackImpl<>(callback, id, haService)), id,
-            METRIC);
+            new DefaultRpcCallbackImpl<>(callback, id, haService)), id, METRIC);
     }
 
-    public Future restartSupervisorContainer(String id) {
-        ResourceData resourceData = haService.loadResource(id);
-        return connectSupervisor(id).restart(resourceData.getProcessId(), new DefaultRpcCallbackImpl<>());
+    public Future restartSupervisorContainer(String id, boolean fastFailure) {
+        int retries = fastFailure ? 1 : retryTimes;
+        try {
+            return doRpcWithRetry(() -> {
+                ResourceData resourceData = loadSupervisorData(id, fastFailure);
+                return connectSupervisor(resourceData).restart(resourceData.getProcessId(),
+                    new DefaultRpcCallbackImpl<>());
+            }, id, SUPERVISOR, retries);
+        } catch (Throwable e) {
+            CompletableFuture<Empty> result = new CompletableFuture<>();
+            result.completeExceptionally(e);
+            return result;
+        }
     }
 
     public StatusResponse querySupervisorStatus(String id) {
@@ -226,12 +240,33 @@ public class RpcClient implements Serializable {
     }
 
     private SupervisorEndpointRef connectSupervisor(String id) {
-        ResourceData resourceData = haService.loadResource(id);
-        return refFactory.connectSupervisor(resourceData.getHost(), resourceData.getSupervisorPort());
+        ResourceData resourceData = loadSupervisorData(id, true);
+        return connectSupervisor(resourceData);
+    }
+
+    private SupervisorEndpointRef connectSupervisor(ResourceData resourceData) {
+        return refFactory.connectSupervisor(resourceData.getHost(),
+            resourceData.getSupervisorPort());
+    }
+
+    private ResourceData loadSupervisorData(String id, boolean fastFailure) {
+        ResourceData resourceData;
+        if (fastFailure) {
+            resourceData = haService.loadResource(id);
+        } else {
+            resourceData = ((AbstractHAService) haService).loadDataFromStore(id,
+                true, ResourceData::getSupervisorPort);
+        }
+        return resourceData;
     }
 
     private <T> T doRpcWithRetry(Callable<T> function, String resourceId,
                                  EndpointType endpointType) {
+        return doRpcWithRetry(function, resourceId, endpointType, retryTimes);
+    }
+
+    private <T> T doRpcWithRetry(Callable<T> function, String resourceId, EndpointType endpointType,
+                                 int retryTimes) {
         return RetryCommand.run(() -> {
             try {
                 return function.call();
@@ -262,7 +297,7 @@ public class RpcClient implements Serializable {
         return new GeaflowRuntimeException(String.format("do rpc failed. %s", t.getMessage()), t);
     }
 
-    public void invalidateEndpointCache(String resourceId, EndpointType endpointType) {
+    protected void invalidateEndpointCache(String resourceId, EndpointType endpointType) {
         ResourceData resourceData = haService.invalidateResource(resourceId);
         if (resourceData != null) {
             refFactory.invalidateEndpointCache(resourceData.getHost(), resourceData.getRpcPort(),

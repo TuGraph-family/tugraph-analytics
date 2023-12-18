@@ -14,21 +14,16 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
-
 import com.antgroup.geaflow.cluster.client.callback.ClusterCallbackFactory;
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.env.ctx.IEnvironmentContext;
-import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
 
 public abstract class AbstractClusterClient implements IClusterClient {
 
     private static final String MASTER_ID = "_MASTER";
 
-    protected String clusterId;
     protected String masterId;
     protected Configuration config;
     protected ClusterStartedCallback callback;
@@ -36,12 +31,6 @@ public abstract class AbstractClusterClient implements IClusterClient {
     public void init(IEnvironmentContext environmentContext) {
         EnvironmentContext context = (EnvironmentContext) environmentContext;
         this.config = context.getConfig();
-
-        this.clusterId = config.getString(CLUSTER_ID);
-        if (StringUtils.isEmpty(clusterId)) {
-            clusterId = UUID.randomUUID().toString();
-            config.put(CLUSTER_ID, clusterId);
-        }
         this.masterId = MASTER_ID;
         this.config.setMasterId(masterId);
         this.callback = ClusterCallbackFactory.createClusterStartCallback(config);

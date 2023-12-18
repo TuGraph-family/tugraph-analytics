@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 
@@ -31,7 +31,7 @@ public class SyncPipelineClient extends AbstractPipelineClient {
     @Override
     public IPipelineResult submit(Pipeline pipeline) {
         List<IPipelineResult> results = new ArrayList<>();
-        for (Map.Entry<String, RpcAddress> entry : driverAddresses.entrySet()) {
+        for (Map.Entry<String, ConnectAddress> entry : driverAddresses.entrySet()) {
             LOGGER.info("submit pipeline to driver {}: {}", entry.getKey(), entry.getValue());
             results.add(rpcClient.executePipeline(entry.getKey(), pipeline));
         }
