@@ -14,10 +14,19 @@
 
 package com.antgroup.geaflow.cluster.ray.client;
 
+import static com.antgroup.geaflow.cluster.ray.config.RayConfig.RAY_LOG_DIR;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.LOG_DIR;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_ENABLE;
+
 import com.antgroup.geaflow.cluster.client.AbstractEnvironment;
 import com.antgroup.geaflow.cluster.client.IClusterClient;
 
 public class RayEnvironment extends AbstractEnvironment {
+
+    public RayEnvironment() {
+        context.getConfig().put(LOG_DIR, RAY_LOG_DIR);
+        context.getConfig().put(SUPERVISOR_ENABLE, Boolean.TRUE.toString());
+    }
 
     @Override
     protected IClusterClient getClusterClient() {

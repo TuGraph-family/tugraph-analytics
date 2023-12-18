@@ -15,22 +15,20 @@
 package com.antgroup.geaflow.cluster.ray.failover;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
-import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
-import com.antgroup.geaflow.cluster.ray.utils.RayConfig;
+import com.antgroup.geaflow.cluster.ray.config.RayConfig;
+import com.antgroup.geaflow.cluster.runner.failover.ClusterFailoverStrategy;
+import com.antgroup.geaflow.env.IEnvironment.EnvType;
 
-public class RayClusterFailoverStrategy extends AbstractRayFailoverStrategy {
+public class RayClusterFailoverStrategy extends ClusterFailoverStrategy {
+
+    public RayClusterFailoverStrategy() {
+        super(EnvType.RAY_COMMUNITY);
+    }
 
     @Override
     public void init(ClusterContext context) {
+        super.init(context);
         System.setProperty(RayConfig.RAY_TASK_RETURN_TASK_EXCEPTION, Boolean.FALSE.toString());
     }
 
-    @Override
-    public void doFailover(int componentId, Throwable cause) {
-    }
-
-    @Override
-    public FailoverStrategyType getType() {
-        return FailoverStrategyType.cluster_fo;
-    }
 }

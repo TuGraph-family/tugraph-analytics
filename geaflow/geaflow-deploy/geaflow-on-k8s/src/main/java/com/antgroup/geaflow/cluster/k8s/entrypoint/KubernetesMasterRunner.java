@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.AGENT_PROFILER_PATH;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
@@ -25,13 +26,12 @@ import com.antgroup.geaflow.cluster.k8s.clustermanager.KubernetesResourceBuilder
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
-import com.antgroup.geaflow.cluster.k8s.config.KubernetesParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.master.AbstractMaster;
-import com.antgroup.geaflow.cluster.master.MasterContext;
-import com.antgroup.geaflow.cluster.master.MasterFactory;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
+import com.antgroup.geaflow.cluster.runner.entrypoint.MasterRunner;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.ha.leaderelection.ILeaderContender;
 import com.antgroup.geaflow.ha.leaderelection.LeaderContenderType;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -41,27 +41,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is an adaptation of Flink's org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner.
+ * This class is an adaptation of Flink's
+ * org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner.
  */
-public class KubernetesMasterRunner {
+public class KubernetesMasterRunner extends MasterRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesMasterRunner.class);
     private static final Map<String, String> ENV = System.getenv();
-    private final Configuration config;
-    private AbstractMaster master;
 
     public KubernetesMasterRunner(Configuration config) {
-        this.config = config;
+        super(config, new KubernetesClusterManager());
     }
 
-    public void init() throws InterruptedException {
-        master = MasterFactory.create(config);
-        KubernetesParam masterParams = new KubernetesMasterParam(config);
-        if (masterParams.enableLeaderElection()) {
-            master.initLeaderElectionService(new KubernetesMasterLeaderContender(), config, DEFAULT_MASTER_ID);
+    @Override
+    public ClusterInfo init() {
+        ClusterInfo clusterInfo = super.init();
+
+        updateConfigMap(clusterInfo);
+        return clusterInfo;
+    }
+
+    @Override
+    protected void initLeaderElectionService() {
+        master.initLeaderElectionService(new KubernetesMasterLeaderContender(), config,
+            DEFAULT_MASTER_ID);
+        try {
             master.waitForLeaderElection();
+        } catch (InterruptedException e) {
+            throw new GeaflowRuntimeException(e);
         }
-        initMaster();
     }
 
     private class KubernetesMasterLeaderContender implements ILeaderContender {
@@ -84,18 +92,12 @@ public class KubernetesMasterRunner {
         }
     }
 
-    private void initMaster() {
-        MasterContext context = new MasterContext(config);
-        context.setClusterManager(new KubernetesClusterManager());
-        context.load();
-        master.init(context);
-        ClusterInfo clusterInfo = master.startCluster();
-
+    private void updateConfigMap(ClusterInfo clusterInfo) {
         Map<String, String> updatedConfig = new HashMap<>();
-        RpcAddress masterAddress = clusterInfo.getMasterAddress();
+        ConnectAddress masterAddress = clusterInfo.getMasterAddress();
         updatedConfig.put(KubernetesConfig.MASTER_EXPOSED_ADDRESS, masterAddress.toString());
 
-        Map<String, RpcAddress> driverAddresses = clusterInfo.getDriverAddresses();
+        Map<String, ConnectAddress> driverAddresses = clusterInfo.getDriverAddresses();
         updatedConfig.put(KubernetesConfig.DRIVER_EXPOSED_ADDRESS,
             KubernetesUtils.encodeRpcAddressMap(driverAddresses));
 
@@ -110,23 +112,21 @@ public class KubernetesMasterRunner {
         LOGGER.info("updated master configmap: {}", config);
     }
 
-    private void waitForTermination() {
-        LOGGER.info("waiting for finishing...");
-        master.waitTermination();
-    }
-
     public static void main(String[] args) throws Exception {
         try {
             final long startTime = System.currentTimeMillis();
-            Configuration config = KubernetesUtils.loadConfigurationFromFile();
-            String masterId = KubernetesUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
+            Configuration config = KubernetesUtils.loadConfiguration();
+            String masterId = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_MASTER_ID);
             config.setMasterId(masterId);
+            String profilerPath = ClusterUtils.getEnvValue(ENV, K8SConstants.ENV_PROFILER_PATH);
+            config.put(AGENT_PROFILER_PATH, profilerPath);
+
             KubernetesMasterRunner masterRunner = new KubernetesMasterRunner(config);
             masterRunner.init();
             LOGGER.info("Completed master init in {} ms", System.currentTimeMillis() - startTime);
             masterRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("Master exits with error: {}", e.getMessage(), e);
+            LOGGER.error("FETAL: process exits", e);
             throw e;
         }
     }

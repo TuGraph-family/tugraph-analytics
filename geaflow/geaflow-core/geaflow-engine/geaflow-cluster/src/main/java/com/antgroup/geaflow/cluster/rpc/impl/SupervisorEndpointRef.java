@@ -16,9 +16,6 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.rpc.IAsyncSupervisorEndpoint;
 import com.antgroup.geaflow.cluster.rpc.ISupervisorEndpointRef;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointRefID;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory.EndpointType;
 import com.antgroup.geaflow.cluster.rpc.RpcUtil;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.rpc.proto.Supervisor.RestartRequest;
@@ -33,12 +30,10 @@ import java.util.concurrent.Future;
 public class SupervisorEndpointRef extends AbstractRpcEndpointRef implements ISupervisorEndpointRef {
 
     private IAsyncSupervisorEndpoint supervisorEndpoint;
-    private final EndpointRefID refID;
     private final Empty empty;
 
     public SupervisorEndpointRef(String host, int port, Configuration configuration) {
         super(host, port, configuration);
-        this.refID = new EndpointRefID(host, port, EndpointType.SUPERVISOR);
         this.empty = Empty.newBuilder().build();
     }
 
@@ -65,12 +60,7 @@ public class SupervisorEndpointRef extends AbstractRpcEndpointRef implements ISu
         com.baidu.brpc.client.RpcCallback<Empty> rpcCallback =
             RpcUtil.buildRpcCallback(callback, result);
         RestartRequest request = RestartRequest.newBuilder().setPid(pid).build();
-        try {
-            supervisorEndpoint.restart(request, rpcCallback);
-        } catch (Exception e) {
-            rpcCallback.fail(e);
-            RpcEndpointRefFactory.getInstance().invalidateRef(refID);
-        }
+        supervisorEndpoint.restart(request, rpcCallback);
         return result;
     }
 

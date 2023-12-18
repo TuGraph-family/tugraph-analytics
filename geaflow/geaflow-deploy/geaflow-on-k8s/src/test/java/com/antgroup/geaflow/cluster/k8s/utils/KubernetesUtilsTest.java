@@ -20,7 +20,8 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.REPORT
 
 import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.FileUtil;
 import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
@@ -38,7 +39,7 @@ public class KubernetesUtilsTest {
     public void testGetEnvTest() {
         Map<String, String> env = System.getenv();
         try {
-            KubernetesUtils.getEnvValue(env, "envTestKey");
+            ClusterUtils.getEnvValue(env, "envTestKey");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(e.getMessage().contains("envTestKey is not set"));
         }
@@ -95,12 +96,12 @@ public class KubernetesUtilsTest {
 
     @Test
     public void testAddressEncoding() {
-        Map<String, RpcAddress> map = new HashMap<>();
+        Map<String, ConnectAddress> map = new HashMap<>();
         for (int i = 0; i < 3; i++) {
-            map.put(ClusterConstants.getDriverName(i), new RpcAddress("127.0.0.1", 80));
+            map.put(ClusterConstants.getDriverName(i), new ConnectAddress("127.0.0.1", 80));
         }
         String encodedStr = KubernetesUtils.encodeRpcAddressMap(map);
-        Map<String, RpcAddress> map2 = KubernetesUtils.decodeRpcAddressMap(encodedStr);
+        Map<String, ConnectAddress> map2 = KubernetesUtils.decodeRpcAddressMap(encodedStr);
         Assert.assertEquals(map, map2);
     }
 }

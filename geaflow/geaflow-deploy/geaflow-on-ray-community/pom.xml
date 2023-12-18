@@ -45,6 +45,11 @@
             <artifactId>ray-runtime</artifactId>
             <version>${ray.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-cluster-runner</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

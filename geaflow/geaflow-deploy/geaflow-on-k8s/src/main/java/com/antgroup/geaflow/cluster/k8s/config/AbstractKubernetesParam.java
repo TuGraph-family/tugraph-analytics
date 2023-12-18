@@ -19,10 +19,10 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONF_
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_IMAGE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_IMAGE_PULL_POLICY;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.LOG_DIR;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.PROCESS_AUTO_RESTART;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_ACCOUNT;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_USER_ANNOTATIONS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_USER_LABELS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCESS_AUTO_RESTART;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;

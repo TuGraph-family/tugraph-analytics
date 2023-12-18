@@ -14,14 +14,17 @@
 
 package com.antgroup.geaflow.cluster.k8s.config;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DRIVER_LOG_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DRIVER_NODE_PORT;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_RPC_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
-import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesDriverRunner;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.entrypoint.DriverRunner;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
 import java.util.HashMap;
@@ -34,8 +37,6 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     public static final String DRIVER_USER_ANNOTATIONS = "kubernetes.driver.user.annotations";
 
     public static final String DRIVER_NODE_SELECTOR = "kubernetes.driver.node-selector";
-
-    public static final String DRIVER_LOG_SUFFIX = "driver.log";
 
     public KubernetesDriverParam(Configuration config) {
         super(config);
@@ -63,8 +64,8 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFileName = getLogDir() + File.separator + DRIVER_LOG_SUFFIX;
-        return KubernetesUtils.getContainerStartCommand(clusterConfig.getDriverJvmOptions(),
-            KubernetesDriverRunner.class, logFileName, config);
+        return ClusterUtils.getStartCommand(clusterConfig.getDriverJvmOptions(),
+            DriverRunner.class, logFileName, config, JOB_CLASSPATH);
     }
 
     @Override

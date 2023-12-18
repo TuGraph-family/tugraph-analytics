@@ -168,7 +168,7 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
     @Override
     protected DriverInfo buildComponentInfo() {
         DriverInfo driverInfo = new DriverInfo();
-        buildComponentInfo(driverInfo);
+        fillComponentInfo(driverInfo);
         return driverInfo;
     }
 }

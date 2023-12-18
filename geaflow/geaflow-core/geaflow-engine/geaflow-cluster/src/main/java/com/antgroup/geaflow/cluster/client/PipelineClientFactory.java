@@ -15,7 +15,7 @@
 package com.antgroup.geaflow.cluster.client;
 
 import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
@@ -29,7 +29,7 @@ public class PipelineClientFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineClientFactory.class);
 
-    public static IPipelineClient createPipelineClient(Map<String, RpcAddress> driverAddresses, Configuration config) {
+    public static IPipelineClient createPipelineClient(Map<String, ConnectAddress> driverAddresses, Configuration config) {
         ServiceLoader<IPipelineClient> clientLoader = ServiceLoader.load(IPipelineClient.class);
         Iterator<IPipelineClient> clientIterable = clientLoader.iterator();
         boolean isSync = !PipelineUtil.isAsync(config);

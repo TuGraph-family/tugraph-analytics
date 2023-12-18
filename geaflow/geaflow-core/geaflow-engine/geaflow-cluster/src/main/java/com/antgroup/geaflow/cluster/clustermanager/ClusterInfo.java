@@ -14,32 +14,32 @@
 
 package com.antgroup.geaflow.cluster.clustermanager;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
 public class ClusterInfo implements Serializable {
 
-    private RpcAddress masterAddress;
-    private Map<String, RpcAddress> driverAddresses;
+    private ConnectAddress masterAddress;
+    private Map<String, ConnectAddress> driverAddresses;
 
     public ClusterInfo() {
     }
 
-    public RpcAddress getMasterAddress() {
+    public ConnectAddress getMasterAddress() {
         return masterAddress;
     }
 
-    public void setMasterAddress(RpcAddress masterAddress) {
+    public void setMasterAddress(ConnectAddress masterAddress) {
         this.masterAddress = masterAddress;
     }
 
-    public Map<String, RpcAddress> getDriverAddresses() {
+    public Map<String, ConnectAddress> getDriverAddresses() {
         return driverAddresses;
     }
 
-    public void setDriverAddresses(Map<String, RpcAddress> driverAddresses) {
+    public void setDriverAddresses(Map<String, ConnectAddress> driverAddresses) {
         this.driverAddresses = driverAddresses;
     }
 

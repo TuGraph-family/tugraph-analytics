@@ -14,11 +14,14 @@
 
 package com.antgroup.geaflow.cluster.k8s.config;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CONTAINER_LOG_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
-import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesContainerRunner;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.entrypoint.ContainerRunner;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
 import java.util.HashMap;
@@ -31,8 +34,6 @@ public class KubernetesContainerParam extends AbstractKubernetesParam {
     public static final String CONTAINER_NODE_SELECTOR = "kubernetes.container.node-selector";
 
     public static final String CONTAINER_ENV_PREFIX = "kubernetes.container.env.";
-
-    public static final String CONTAINER_LOG_SUFFIX = "container.log";
 
     public KubernetesContainerParam(Configuration config) {
         super(config);
@@ -60,8 +61,8 @@ public class KubernetesContainerParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFilename = getLogDir() + File.separator + CONTAINER_LOG_SUFFIX;
-        return KubernetesUtils.getContainerStartCommand(clusterConfig.getContainerJvmOptions(),
-            KubernetesContainerRunner.class, logFilename, config);
+        return ClusterUtils.getStartCommand(clusterConfig.getContainerJvmOptions(),
+            ContainerRunner.class, logFilename, config, JOB_CLASSPATH);
     }
 
     @Override

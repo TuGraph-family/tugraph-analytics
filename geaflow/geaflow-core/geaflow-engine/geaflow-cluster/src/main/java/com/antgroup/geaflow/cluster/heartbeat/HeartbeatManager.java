@@ -23,6 +23,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERV
 
 import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
+import com.antgroup.geaflow.cluster.common.ComponentInfo;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -35,6 +36,7 @@ import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import com.antgroup.geaflow.stats.sink.IStatsWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -63,6 +65,7 @@ public class HeartbeatManager implements Serializable {
     private final ScheduledExecutorService heartbeatReportService;
     private final GeaflowHeartbeatException timeoutException;
     private ScheduledFuture<?> checkFuture;
+    private IStatsWriter statsWriter;
 
     public HeartbeatManager(Configuration config, IClusterManager clusterManager) {
         this.senderMap = new ConcurrentHashMap<>();
@@ -71,16 +74,17 @@ public class HeartbeatManager implements Serializable {
         int defaultReportExpiredMs = (int) ((heartbeatTimeoutMs + heartbeatReportMs) * 1.2);
         this.heartbeatReportExpiredMs = config.getInteger(HEARTBEAT_REPORT_EXPIRED_MS, defaultReportExpiredMs);
 
-        this.checkTimeoutService = new ScheduledThreadPoolExecutor(1,
-            ThreadUtil.namedThreadFactory(true, "heartbeat-check"));
+        boolean supervisorEnable = config.getBoolean(SUPERVISOR_ENABLE);
+        int corePoolSize = supervisorEnable ? 2 : 1;
+        this.checkTimeoutService = new ScheduledThreadPoolExecutor(corePoolSize,
+            ThreadUtil.namedThreadFactory(true, "heartbeat-manager"));
         int initDelayMs = config.getInteger(HEARTBEAT_INITIAL_DELAY_MS);
-        this.timeoutFuture = checkTimeoutService
-            .scheduleAtFixedRate(this::checkHeartBeat, initDelayMs, heartbeatTimeoutMs,
-                TimeUnit.MILLISECONDS);
-        if (config.getBoolean(SUPERVISOR_ENABLE)) {
+        this.timeoutFuture = checkTimeoutService.scheduleAtFixedRate(this::checkHeartBeat,
+            initDelayMs, heartbeatTimeoutMs, TimeUnit.MILLISECONDS);
+        if (supervisorEnable) {
             long heartbeatCheckMs = config.getInteger(HEARTBEAT_INTERVAL_MS);
             this.checkFuture = checkTimeoutService.scheduleAtFixedRate(this::checkSupervisorHealth,
-                initDelayMs, heartbeatCheckMs, TimeUnit.MILLISECONDS);
+                heartbeatCheckMs, heartbeatCheckMs, TimeUnit.MILLISECONDS);
         }
         this.heartbeatReportService = new ScheduledThreadPoolExecutor(1,
             ThreadUtil.namedThreadFactory(true, "heartbeat-report"));
@@ -90,12 +94,17 @@ public class HeartbeatManager implements Serializable {
 
         this.clusterManager = (AbstractClusterManager) clusterManager;
         this.timeoutException = new GeaflowHeartbeatException();
+        this.statsWriter = StatsCollectorFactory.init(config).getStatsWriter();
     }
 
     public HeartbeatResponse receivedHeartbeat(Heartbeat heartbeat) {
         senderMap.put(heartbeat.getContainerId(), heartbeat);
         boolean registered = isRegistered(heartbeat.getContainerId());
         return HeartbeatResponse.newBuilder().setSuccess(true).setRegistered(registered).build();
+    }
+
+    public void registerMasterHeartbeat(ComponentInfo masterInfo) {
+        this.statsWriter.addMetric(masterInfo.getName(), masterInfo);
     }
 
     private void checkHeartBeat() {
@@ -152,7 +161,8 @@ public class HeartbeatManager implements Serializable {
                     clusterManager.doFailover(entry.getKey(), timeoutException);
                 }
             } catch (Throwable e) {
-                LOGGER.error("Catch exception from {}: {}", name, e.getClass(), e);
+                LOGGER.error("Try to do failover due to exception from {}: {}", name,
+                    e.getMessage());
                 clusterManager.doFailover(entry.getKey(), e);
             }
         }

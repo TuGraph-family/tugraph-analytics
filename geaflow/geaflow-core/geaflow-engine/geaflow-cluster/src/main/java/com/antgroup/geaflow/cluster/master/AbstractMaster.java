@@ -14,19 +14,24 @@
 
 package com.antgroup.geaflow.cluster.master;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.AGENT_HTTP_PORT;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_HTTP_PORT;
+
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.common.AbstractComponent;
+import com.antgroup.geaflow.cluster.common.ComponentInfo;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
 import com.antgroup.geaflow.cluster.resourcemanager.DefaultResourceManager;
 import com.antgroup.geaflow.cluster.resourcemanager.IResourceManager;
 import com.antgroup.geaflow.cluster.resourcemanager.ResourceManagerContext;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.cluster.rpc.impl.MasterEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.ResourceManagerEndpoint;
 import com.antgroup.geaflow.cluster.rpc.impl.RpcServiceImpl;
 import com.antgroup.geaflow.cluster.web.HttpServer;
+import com.antgroup.geaflow.cluster.web.agent.AgentWebServer;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
@@ -47,7 +52,9 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
     protected IResourceManager resourceManager;
     protected IClusterManager clusterManager;
     protected HeartbeatManager heartbeatManager;
-    protected RpcAddress masterAddress;
+    protected ConnectAddress masterAddress;
+    protected int agentPort;
+    protected int httpPort;
     protected HttpServer httpServer;
     protected ClusterContext clusterContext;
     protected ILeaderElectionService leaderElectionService;
@@ -70,6 +77,7 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
         this.heartbeatManager = new HeartbeatManager(configuration, clusterManager);
         this.resourceManager = new DefaultResourceManager(clusterManager);
         this.clusterContext.setHeartbeatManager(heartbeatManager);
+        this.httpPort = configuration.getInteger(MASTER_HTTP_PORT);
 
         initEnv(context);
     }
@@ -84,10 +92,12 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
         resourceManager.init(ResourceManagerContext.build(context, clusterContext));
 
         if (configuration.getBoolean(ExecutionConfigKeys.HTTP_REST_SERVICE_ENABLE)) {
+            this.agentPort = startAgent();
             httpServer = new HttpServer(configuration, clusterManager, heartbeatManager,
-                resourceManager);
+                resourceManager, buildMasterInfo());
             httpServer.start();
         }
+        registerHeartbeat();
     }
 
     public void initLeaderElectionService(ILeaderContender contender,
@@ -120,16 +130,40 @@ public abstract class AbstractMaster extends AbstractComponent implements IMaste
         this.rpcService.addEndpoint(new MasterEndpoint(this, clusterManager));
         this.rpcService.addEndpoint(new ResourceManagerEndpoint(resourceManager));
         this.rpcPort = rpcService.startService();
-        this.masterAddress = new RpcAddress(ProcessUtil.getHostIp(), port);
+        this.masterAddress = new ConnectAddress(ProcessUtil.getHostIp(), httpPort);
     }
 
     public ClusterInfo startCluster() {
         ClusterInfo clusterInfo = new ClusterInfo();
         clusterInfo.setMasterAddress(masterAddress);
-        Map<String, RpcAddress> driverAddresses = clusterManager.startDrivers();
+        Map<String, ConnectAddress> driverAddresses = clusterManager.startDrivers();
         clusterInfo.setDriverAddresses(driverAddresses);
         LOGGER.info("init cluster with info: {}", clusterInfo);
         return clusterInfo;
+    }
+
+    private int startAgent() {
+        int port = PortUtil.getPort(configuration.getInteger(AGENT_HTTP_PORT));
+        AgentWebServer agentServer = new AgentWebServer(port, configuration);
+        agentServer.start();
+        return port;
+    }
+
+    protected MasterInfo buildMasterInfo() {
+        MasterInfo componentInfo = new MasterInfo();
+        componentInfo.setId(id);
+        componentInfo.setName(name);
+        componentInfo.setHost(ProcessUtil.getHostIp());
+        componentInfo.setPid(ProcessUtil.getProcessId());
+        componentInfo.setRpcPort(rpcPort);
+        componentInfo.setAgentPort(agentPort);
+        componentInfo.setHttpPort(httpPort);
+        return componentInfo;
+    }
+
+    protected void registerHeartbeat() {
+        ComponentInfo componentInfo = buildMasterInfo();
+        heartbeatManager.registerMasterHeartbeat(componentInfo);
     }
 
     @Override

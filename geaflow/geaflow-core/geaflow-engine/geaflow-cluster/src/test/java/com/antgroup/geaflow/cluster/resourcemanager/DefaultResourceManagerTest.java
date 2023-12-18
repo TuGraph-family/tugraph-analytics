@@ -27,7 +27,7 @@ import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.master.MasterContext;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
@@ -601,7 +601,7 @@ public class DefaultResourceManagerTest {
         }
 
         @Override
-        public Map<String, RpcAddress> startDrivers() {
+        public Map<String, ConnectAddress> startDrivers() {
             return null;
         }
 

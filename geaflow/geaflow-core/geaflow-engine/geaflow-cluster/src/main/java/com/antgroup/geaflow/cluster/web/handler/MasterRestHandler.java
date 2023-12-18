@@ -15,12 +15,9 @@
 package com.antgroup.geaflow.cluster.web.handler;
 
 import com.antgroup.geaflow.cluster.common.ComponentInfo;
-import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.web.api.ApiResponse;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.metric.ProcessMetrics;
-import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.io.Serializable;
 import java.util.Map;
@@ -36,12 +33,12 @@ public class MasterRestHandler implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MasterRestHandler.class);
 
-    private static final String MASTER_NAME = "master";
-
     private final Configuration configuration;
+    private final ComponentInfo componentInfo;
 
-    public MasterRestHandler(Configuration configuration) {
+    public MasterRestHandler(ComponentInfo componentInfo, Configuration configuration) {
         this.configuration = configuration;
+        this.componentInfo = componentInfo;
     }
 
     @GET
@@ -73,12 +70,6 @@ public class MasterRestHandler implements Serializable {
     @Produces(MediaType.APPLICATION_JSON)
     public ApiResponse<ComponentInfo> queryMasterInfo() {
         try {
-            ComponentInfo componentInfo = new ComponentInfo();
-            componentInfo.setId(ClusterConstants.DEFAULT_MASTER_ID);
-            componentInfo.setName(MASTER_NAME);
-            componentInfo.setHost(ProcessUtil.getHostIp());
-            componentInfo.setPid(ProcessUtil.getProcessId());
-            componentInfo.setAgentPort(configuration.getInteger(ExecutionConfigKeys.AGENT_HTTP_PORT));
             return ApiResponse.success(componentInfo);
         } catch (Throwable t) {
             LOGGER.error("Query master process metrics failed. {}", t.getMessage(), t);

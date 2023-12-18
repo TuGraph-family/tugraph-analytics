@@ -14,14 +14,17 @@
 
 package com.antgroup.geaflow.cluster.k8s.config;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_LOG_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_HTTP_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
-import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.AutoRestartPolicy;
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesMasterRunner;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.failover.AutoRestartPolicy;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import java.io.File;
@@ -38,7 +41,6 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
 
     public static final String MASTER_ENV_PREFIX = "kubernetes.master.env.";
 
-    public static final String MASTER_LOG_SUFFIX = "master.log";
 
     public KubernetesMasterParam(Configuration config) {
         super(config);
@@ -74,8 +76,8 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFilename = getLogDir() + File.separator + MASTER_LOG_SUFFIX;
-        return KubernetesUtils.getContainerStartCommand(clusterConfig.getMasterJvmOptions(),
-            KubernetesMasterRunner.class, logFilename, config);
+        return ClusterUtils.getStartCommand(clusterConfig.getMasterJvmOptions(),
+            KubernetesMasterRunner.class, logFilename, config, JOB_CLASSPATH);
     }
 
     @Override

@@ -14,34 +14,23 @@
 
 package com.antgroup.geaflow.cluster.k8s.utils;
 
-import static com.antgroup.geaflow.cluster.constants.AgentConstants.AGENT_LOG_SUFFIX;
-import static com.antgroup.geaflow.cluster.constants.AgentConstants.ASYNC_PROFILER_SHELL_PATH;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ADDRESS_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_KV_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.CONFIG_LIST_SEPARATOR;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.DRIVER_SERVICE_NAME_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONF_DIR;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONTAINER_START_COMMAND_TEMPLATE;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.LOG_DIR;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.MASTER_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USE_IP_IN_HOST_NETWORK;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
 
-import com.antgroup.geaflow.cluster.config.ClusterJvmOptions;
-import com.antgroup.geaflow.cluster.constants.AgentConstants;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.ConfigKey;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.utils.SleepUtils;
-import com.antgroup.geaflow.dashboard.agent.runner.AgentWebRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.HostAlias;
 import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
@@ -77,18 +66,6 @@ public class KubernetesUtils {
         } catch (UnknownHostException e) {
             return null;
         }
-    }
-
-    /**
-     * This method is an adaptation of Flink's.
-     * org.apache.flink.runtime.clusterframework.BootstrapTools#getStartCommand.
-     */
-    public static String getContainerStartCommand(String template,
-                                                  Map<String, String> startCommandValues) {
-        for (Map.Entry<String, String> variable : startCommandValues.entrySet()) {
-            template = template.replace("%" + variable.getKey() + "%", variable.getValue());
-        }
-        return template;
     }
 
     public static Map<String, String> getPairsConf(Configuration config, ConfigKey configKey) {
@@ -288,12 +265,6 @@ public class KubernetesUtils {
         return serviceAddress;
     }
 
-    public static String getEnvValue(Map<String, String> env, String envKey) {
-        // Infer the resource identifier from the environment variable
-        String value = env.get(envKey);
-        Preconditions.checkArgument(value != null, "%s is not set", envKey);
-        return value;
-    }
 
     public static List<Toleration> getTolerations(Configuration config) {
         List<Toleration> tolerationList = new ArrayList<>();
@@ -365,11 +336,11 @@ public class KubernetesUtils {
             .join(addressMap);
     }
 
-    public static Map<String, RpcAddress> decodeRpcAddressMap(String str) {
-        Map<String, RpcAddress> map = new HashMap<>();
+    public static Map<String, ConnectAddress> decodeRpcAddressMap(String str) {
+        Map<String, ConnectAddress> map = new HashMap<>();
         for (String entry : str.trim().split(CONFIG_LIST_SEPARATOR)) {
             String[] pair = entry.split(ADDRESS_SEPARATOR);
-            map.put(pair[0], RpcAddress.build(pair[1]));
+            map.put(pair[0], ConnectAddress.build(pair[1]));
         }
         return map;
     }
@@ -384,60 +355,6 @@ public class KubernetesUtils {
 
     public static String getDriverServiceName(String clusterId, int driverIndex) {
         return clusterId + DRIVER_SERVICE_NAME_SUFFIX + driverIndex;
-    }
-
-    /**
-     * This method is an adaptation of Flink's.
-     * org.apache.flink.runtime.clusterframework.BootstrapTools#getTaskManagerShellCommand.
-     */
-    public static String getContainerStartCommand(ClusterJvmOptions jvmOpts, Class<?> mainClass,
-                                                  String logFilename, Configuration configuration) {
-        String confDir = configuration.getString(CONF_DIR);
-
-        final Map<String, String> startCommandValues = new HashMap<>();
-        startCommandValues.put("java", "$JAVA_HOME/bin/java");
-        startCommandValues.put("classpath", "-classpath " + confDir + File.pathSeparator + "$"
-            + K8SConstants.ENV_GEAFLOW_CLASSPATH);
-        startCommandValues.put("class", mainClass.getName());
-
-        ArrayList<String> params = new ArrayList<>();
-        params.add(String.format("-Xms%dm", jvmOpts.getXmsMB()));
-        params.add(String.format("-Xmx%dm", jvmOpts.getMaxHeapMB()));
-        if (jvmOpts.getXmnMB() > 0) {
-            params.add(String.format("-Xmn%dm", jvmOpts.getXmnMB()));
-        }
-        if (jvmOpts.getMaxDirectMB() > 0) {
-            params.add(String.format("-XX:MaxDirectMemorySize=%dm", jvmOpts.getMaxDirectMB()));
-        }
-        startCommandValues.put("jvmmem", StringUtils.join(params, ' '));
-        startCommandValues.put("jvmopts", StringUtils.join(jvmOpts.getExtraOptions(), ' '));
-
-        StringBuilder logging = new StringBuilder();
-        logging.append("-Dlog.file=\"").append(logFilename).append("\"");
-        logging.append(" -Dlog4j.configuration=" + K8SConstants.CONFIG_FILE_LOG4J_NAME);
-
-        startCommandValues.put("logging", logging.toString());
-        startCommandValues.put("redirects", ">> " + logFilename + " 2>&1");
-
-        String commandTemplate = configuration.getString(CONTAINER_START_COMMAND_TEMPLATE);
-        return getContainerStartCommand(commandTemplate, startCommandValues);
-    }
-
-    public static String getAgentShellCommand(Configuration config) {
-        String agentPort = config.getString(ExecutionConfigKeys.AGENT_HTTP_PORT);
-        String workDir = config.getString(WORK_DIR);
-        String logDir = config.getString(LOG_DIR);
-        Map<String, String> extraOptions = new HashMap<>();
-        extraOptions.put(AgentConstants.AGENT_SERVER_PORT_KEY, agentPort);
-        extraOptions.put(AgentConstants.AGENT_TMP_DIR_KEY, workDir);
-        extraOptions.put(AgentConstants.LOG_DIR_KEY, logDir);
-        extraOptions.put(AgentConstants.FLAME_GRAPH_PROFILER_PATH_KEY, ASYNC_PROFILER_SHELL_PATH);
-        String jvmArgs = config.getString(ExecutionConfigKeys.AGENT_JVM_OPTIONS);
-        ClusterJvmOptions jvmOpts = ClusterJvmOptions.build(jvmArgs);
-        extraOptions.forEach((key, value) -> jvmOpts.getExtraOptions().add(String.format("-D%s=%s", key, value)));
-        String logFileName = logDir + File.separator + AGENT_LOG_SUFFIX;
-        return KubernetesUtils.getContainerStartCommand(jvmOpts,
-            AgentWebRunner.class, logFileName, config);
     }
 
 }
