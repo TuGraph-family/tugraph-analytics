@@ -66,6 +66,8 @@ public class ComputeWorker<T, R> extends AbstractAlignedWorker<T, R> implements 
             context.getTaskId(), windowId, context.getCurrentWindowId());
         context.getProcessor().finish(windowId);
         finishWindow(context.getCurrentWindowId());
+        LOGGER.info("taskId {} has finished windowId {}, currentBatchId {}",
+            context.getTaskId(), windowId, context.getCurrentWindowId());
     }
 
     @Override

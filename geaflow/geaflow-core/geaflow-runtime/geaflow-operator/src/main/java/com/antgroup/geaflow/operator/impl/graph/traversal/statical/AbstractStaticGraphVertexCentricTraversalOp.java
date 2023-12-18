@@ -136,13 +136,16 @@ public abstract class AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, 
 
     @Override
     public void finish() {
+        LOGGER.info("vcTraversalFunction finish windowId:{}", this.windowId);
         vcTraversalFunction.finish();
+        LOGGER.info("vcTraversalFunction has finish windowId:{}", this.windowId);
         for (ITraversalResponse<R> response : this.responses) {
             responseCollector.partition(response.getResponseId(), response);
         }
         responseCollector.finish();
         traversalRequests.clear();
         responses.clear();
+        LOGGER.info("TraversalOp has finish windowId:{}", this.windowId);
     }
 
     @Override
