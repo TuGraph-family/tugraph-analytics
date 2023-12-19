@@ -153,9 +153,12 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
             responseCollector.partition(response.getResponseId(), response);
         }
         responseCollector.finish();
+        LOGGER.info("incVcTraversalFunction finish, windowId:{}, invokeIds size:{}", this.windowId, this.invokeVIds.size());
         incVcTraversalFunction.finish();
+        LOGGER.info("incVcTraversalFunction has finish windowId:{}", this.windowId);
         responses.clear();
         checkpoint();
+        LOGGER.info("TraversalOp has finish windowId:{}", this.windowId);
     }
 
     @Override

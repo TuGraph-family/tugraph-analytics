@@ -186,10 +186,10 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public void finish(long windowId) {
+        checkpoint(windowId);
         if (callbackFunction != null) {
             callbackFunction.window(windowId);
         }
-        checkpoint(windowId);
     }
     
     @Override
