@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.store.rocksdb;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.StateConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.thread.Executors;
@@ -76,6 +77,7 @@ public class RocksdbPersistClient {
     private static final String FILE_SEPARATOR = ",";
     private static final String SST_SUFFIX = "sst";
 
+    private final Long persistTimeout;
     private final IPersistentIO persistIO;
     private final NavigableMap<Long, CheckPointFileInfo> checkPointFileInfo;
     private final ExecutorService copyFileService;
@@ -89,7 +91,8 @@ public class RocksdbPersistClient {
         this.checkPointFileInfo = new ConcurrentSkipListMap<>();
         int persistThreadNum = configuration.getInteger(FileConfigKeys.PERSISTENT_THREAD_SIZE);
         int persistCleanThreadNum = configuration.getInteger(RocksdbConfigKeys.ROCKSDB_PERSISTENT_CLEAN_THREAD_SIZE);
-
+        this.persistTimeout = (long) configuration.getInteger(
+            StateConfigKeys.STATE_ROCKSDB_PERSIST_TIMEOUT_SECONDS);
         copyFileService = Executors.getExecutorService(1, persistThreadNum, "persist-%d");
         deleteFileService = Executors.getService(persistCleanThreadNum, DELETE_CAPACITY, 300L, TimeUnit.SECONDS);
         ((ThreadPoolExecutor) deleteFileService).setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
@@ -408,9 +411,10 @@ public class RocksdbPersistClient {
         for (final Callable<T> entry : callers) {
             futures.add(executorService.submit(entry));
         }
+
         try {
             for (Future<T> future : futures) {
-                results.add(future.get());
+                results.add(future.get(persistTimeout, TimeUnit.SECONDS));
             }
         } catch (Exception e) {
             throw new GeaflowRuntimeException(

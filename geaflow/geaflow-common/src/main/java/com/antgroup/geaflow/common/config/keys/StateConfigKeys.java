@@ -77,4 +77,9 @@ public class StateConfigKeys implements Serializable {
         .key("geaflow.state.sync.gap.ms")
         .defaultValue(600000)
         .description("state background sync ms, default 600000ms");
+
+    public static final ConfigKey STATE_ROCKSDB_PERSIST_TIMEOUT_SECONDS = ConfigKeys
+        .key("geaflow.state.rocksdb.persist.timeout.second")
+        .defaultValue(Integer.MAX_VALUE)
+        .description("rocksdb persist timeout second, default Integer.MAX_VALUE");
 }
