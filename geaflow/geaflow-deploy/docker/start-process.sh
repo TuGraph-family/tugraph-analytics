@@ -25,10 +25,12 @@ CLUSTER_FAULT_INJECTION_ENABLE=${GEAFLOW_CLUSTER_FAULT_INJECTION_ENABLE:-"false"
 
 GEAFLOW_UDF_LIST=${GEAFLOW_UDF_LIST:-""}
 GEAFLOW_ENGINE_JAR=${GEAFLOW_ENGINE_JAR:-""}
+GEAFLOW_ALWAYS_DOWNLOAD_ENGINE_JAR=${GEAFLOW_ALWAYS_DOWNLOAD_ENGINE_JAR:-"false"}
 
-echo "engine jar files: $GEAFLOW_ENGINE_JAR"
-echo "udf jar list: $GEAFLOW_UDF_LIST"
-echo "udf jar path: $GEAFLOW_JAR_DOWNLOAD_PATH"
+echo "Remote engine jar files: $GEAFLOW_ENGINE_JAR"
+echo "Always using remote engine jar files: $GEAFLOW_ALWAYS_DOWNLOAD_ENGINE_JAR"
+echo "Udf jar list: $GEAFLOW_UDF_LIST"
+echo "Udf jar path: $GEAFLOW_JAR_DOWNLOAD_PATH"
 
 USE_DNS_FILTER=${USE_DNS_FILTER:-"true"}
 
@@ -49,9 +51,12 @@ function enableDnsFilter() {
 # 1. Download the engine jar package
 function downloadEngineJars() {
   JARS=$(find ${GEAFLOW_LIB_DIR} -type f -name "[!.]*.jar" 2>/dev/null)
-  if [[ -n ${JARS} ]]; then
+  if [ "$GEAFLOW_ALWAYS_DOWNLOAD_ENGINE_JAR" == "false" -a -n "${JARS}" ]; then
     echo "Default engine jar ${JARS} already exists, skip downloading engine jar."
   else
+    if [ ! -f "$INIT_FILE" -a -n "${JARS}" ]; then
+      cleanupLibDir
+    fi
     createDirIfNeed $GEAFLOW_LIB_DIR
     su root -c "eval python $GEAFLOW_HOME/bin/udf-downloader.py $DEPLOY_LOG_PATH $GEAFLOW_LIB_DIR 'GEAFLOW_ENGINE_JAR' >> $DEPLOY_LOG_PATH 2>&1"
   fi
@@ -64,10 +69,20 @@ function downloadUdfJars() {
   su root -c "eval python $GEAFLOW_HOME/bin/udf-downloader.py $DEPLOY_LOG_PATH $GEAFLOW_JAR_DOWNLOAD_PATH 'GEAFLOW_UDF_LIST' >> $DEPLOY_LOG_PATH 2>&1"
 }
 
+# Cleanup exist engine jars
+function cleanupLibDir() {
+  createDirIfNeed $GEAFLOW_LIB_DIR
+  rm -rf $GEAFLOW_LIB_DIR
+}
+
 function buildCompleteClassPath() {
 
     local GEAFLOW_CLASSPATH
     GEAFLOW_CLASSPATH=`buildEngineClassPath`
+    if [[ -z ${GEAFLOW_CLASSPATH} ]]; then
+      echo ""
+      exit 1
+    fi
 
     # add UDF jars to classpath
     while read -d '' -r jarfile ; do
@@ -82,6 +97,10 @@ function buildCompleteClassPath() {
 
 function startProcess() {
     export GEAFLOW_CLASSPATH=`buildCompleteClassPath`
+    if [[ -z ${GEAFLOW_CLASSPATH} ]]; then
+      echo ""
+      exit 1
+    fi
     echo "CLASSPATH:"$GEAFLOW_CLASSPATH
 
     echo "Start with command: $GEAFLOW_START_COMMAND"

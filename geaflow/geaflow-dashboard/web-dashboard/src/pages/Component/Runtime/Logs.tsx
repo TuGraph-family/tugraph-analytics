@@ -5,12 +5,17 @@ import {FormattedMessage} from "@umijs/max";
 import {logList} from "@/services/jobs/api";
 import RuntimeLayout from "@/pages/Component/Runtime/Runtime";
 import {history, useIntl, useParams} from "@@/exports";
-import {fetchComponentInfo, formatFileSize, parseAgentUrl} from "@/util/CommonUtil";
+import {fetchComponentInfo, formatFileSize, parseAgentUrl, sortTable} from "@/util/CommonUtil";
+import {getColumnSearchProps} from "@/util/TableUtil";
+import {InputRef} from "antd";
 
 const LogTable: React.FC<{ componentName: string, agentUrl: string | undefined }> = ({
                                                                                        componentName,
                                                                                        agentUrl
                                                                                      }) => {
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
   const actionRef = useRef<ActionType>();
   const intl = useIntl();
 
@@ -35,6 +40,8 @@ const LogTable: React.FC<{ componentName: string, agentUrl: string | undefined }
           {
             title: <FormattedMessage id="pages.components.logs.table.path" defaultMessage="Path"/>,
             dataIndex: 'path',
+            sorter: (a, b) => sortTable(a.path, b.path),
+            ...getColumnSearchProps<API.FileInfo>('path', searchText, searchedColumn, searchInput, setSearchText, setSearchedColumn),
             render: (dom, entity) => {
               return (
                 <a
@@ -50,6 +57,7 @@ const LogTable: React.FC<{ componentName: string, agentUrl: string | undefined }
           {
             title: <FormattedMessage id="pages.components.logs.table.size" defaultMessage="Size"/>,
             dataIndex: 'size',
+            sorter: (a, b) => sortTable(a.size, b.size),
             render: (dom, entity) => {
               return (formatFileSize(entity.size));
             },
