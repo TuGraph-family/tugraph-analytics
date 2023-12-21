@@ -73,6 +73,12 @@ public class GraphController {
         return GeaflowApiResponse.success(graphManager.dropByName(instanceName, graphName));
     }
 
+    @PostMapping("/instances/{instanceName}/graphs/{graphName}/clean")
+    public GeaflowApiResponse<Boolean> clean(@PathVariable("instanceName") String instanceName,
+                                            @PathVariable("graphName") String graphName) {
+        return GeaflowApiResponse.success(graphManager.clean(instanceName, graphName));
+    }
+
     @PostMapping("/instances/{instanceName}/graphs/{graphName}/endpoints")
     public GeaflowApiResponse<Boolean> createEndpoints(@PathVariable("instanceName") String instanceName,
                                                        @PathVariable("graphName") String graphName,

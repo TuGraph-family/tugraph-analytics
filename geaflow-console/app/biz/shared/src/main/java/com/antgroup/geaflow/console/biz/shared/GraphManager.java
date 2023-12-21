@@ -25,4 +25,6 @@ public interface GraphManager extends DataManager<GraphView, GraphSearch> {
     boolean createEndpoints(String instanceName, String graphName, List<EndpointView> endpoints);
 
     boolean deleteEndpoints(String instanceName, String graphName, List<EndpointView> endpoints);
+
+    boolean clean(String instanceName, String graphName);
 }

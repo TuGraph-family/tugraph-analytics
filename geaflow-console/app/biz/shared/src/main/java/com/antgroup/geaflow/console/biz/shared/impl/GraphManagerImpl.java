@@ -43,6 +43,7 @@ import com.antgroup.geaflow.console.core.service.PluginConfigService;
 import com.antgroup.geaflow.console.core.service.VertexService;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -192,6 +193,13 @@ public class GraphManagerImpl extends DataManagerImpl<GeaflowGraph, GraphView, G
         Preconditions.checkNotNull(graph, "Graph %s not exist", edgeName);
         List<GeaflowEndpoint> endpoints = buildEndpoints(instanceId, views);
         return graphService.deleteEndpoints(graph, endpoints);
+    }
+
+    @Override
+    public boolean clean(String instanceName, String graphName) {
+        String instanceId = getInstanceIdByName(instanceName);
+        GeaflowGraph graph = graphService.getByName(instanceId, graphName);
+        return graphService.clean(Collections.singletonList(graph));
     }
 
     private List<GeaflowEndpoint> buildEndpoints(String instanceId, List<EndpointView> endpointViews) {

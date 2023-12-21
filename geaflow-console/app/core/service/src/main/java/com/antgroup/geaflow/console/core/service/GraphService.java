@@ -25,6 +25,7 @@ import com.antgroup.geaflow.console.common.dal.entity.IdEntity;
 import com.antgroup.geaflow.console.common.dal.model.GraphSearch;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.data.GeaflowEdge;
@@ -34,6 +35,8 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowVertex;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.service.converter.DataConverter;
 import com.antgroup.geaflow.console.core.service.converter.GraphConverter;
+import com.antgroup.geaflow.console.core.service.store.GeaflowDataStore;
+import com.antgroup.geaflow.console.core.service.store.factory.DataStoreFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -66,6 +69,12 @@ public class GraphService extends DataService<GeaflowGraph, GraphEntity, GraphSe
 
     @Autowired
     private EndpointDao endpointDao;
+
+    @Autowired
+    private DataStoreFactory dataStoreFactory;
+
+    @Autowired
+    private PluginService pluginService;
 
     @Override
     protected DataDao<GraphEntity, GraphSearch> getDao() {
@@ -133,12 +142,28 @@ public class GraphService extends DataService<GeaflowGraph, GraphEntity, GraphSe
     @Override
     public boolean drop(List<String> ids) {
         List<GraphEntity> entities = graphDao.get(ids);
-        // do not delete edges and vertices
 
+        List<GeaflowGraph> graphs = ListUtil.convert(entities, this::parse);
+        clean(graphs);
+
+        // do not delete edges and vertices
         graphStructMappingDao.removeByGraphIds(ids);
         endpointDao.dropByGraphIds(ids);
         pluginConfigService.drop(ListUtil.convert(entities, GraphEntity::getPluginConfigId));
         return super.drop(ids);
+    }
+
+    public boolean clean(List<GeaflowGraph> graphs) {
+        // clean graph data, do not delete graph
+        GeaflowPluginCategory category = GeaflowPluginCategory.DATA;
+        String dataType = pluginService.getDefaultPlugin(category).getType();
+        GeaflowDataStore dataStore = dataStoreFactory.getDataStore(dataType);
+
+        for (GeaflowGraph graph : graphs) {
+            dataStore.cleanGraphData(graph);
+        }
+
+        return true;
     }
 
     private void saveGraphStructs(GeaflowGraph g, List<String> vertexIds, List<String> edgeIds) {
@@ -213,4 +238,5 @@ public class GraphService extends DataService<GeaflowGraph, GraphEntity, GraphSe
                 this.getNameById(entities.get(0).getGraphId()));
         }
     }
+
 }

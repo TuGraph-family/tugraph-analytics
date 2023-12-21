@@ -60,6 +60,35 @@ export const deleteGraphDefinition = async (
 };
 
 /**
+ * 清空图数据
+ */
+export const cleanGraphData = async (
+    instanceName: string,
+    graphName: string
+) => {
+  const response = await request(
+      `${HTTP_SERVICE_URL}/api/instances/${instanceName}/graphs/${graphName}/clean`,
+      {
+        method: "POST",
+      }
+  );
+
+  if (!response?.success) {
+    message.error(
+        $i18n.get(
+            {
+              id: "openpiece-geaflow.geaflow.services.function-manage.FailedToDeleteResponsemessage",
+              dm: "清空失败：{responseMessage}",
+            },
+            { responseMessage: response?.message }
+        )
+    );
+    return [];
+  }
+  return response;
+};
+
+/**
  * 获取插件类型
  * @param type 类型名称
  * @returns

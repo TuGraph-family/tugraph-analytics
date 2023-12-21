@@ -161,8 +161,8 @@ public class GeaflowTaskOperator {
 
     public boolean cleanData(GeaflowTask task) {
         GeaflowPluginConfig dataConfig = task.getDataPluginConfig();
-        GeaflowDataStore dataStore = dataStoreFactory.getDataStore(dataConfig);
-        dataStore.cleanData(task);
+        GeaflowDataStore dataStore = dataStoreFactory.getDataStore(dataConfig.getType());
+        dataStore.cleanTaskData(task);
         return true;
     }
 

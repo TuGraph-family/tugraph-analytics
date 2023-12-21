@@ -11,6 +11,7 @@ import {
 import {
   getGraphDefinitionList,
   deleteGraphDefinition,
+  cleanGraphData,
 } from "../services/graphDefinition";
 import CreateGraphDefinition from "./create";
 import styles from "./list.module.less";
@@ -169,6 +170,40 @@ export const GraphDefinition: React.FC<{}> = ({}) => {
               dm: "编辑",
             })}
           </a>
+          <Popconfirm
+              title={$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.AreYouSureYouWantClean",
+                dm: "确认清空？",
+              })}
+              onConfirm={() => {
+                cleanGraphData(instanceName, record?.name).then((res) => {
+                  if (res?.success) {
+                    message.success(
+                        $i18n.get({
+                          id: "openpiece-geaflow.geaflow.graph-definition.DeletedSuccessfully",
+                          dm: "清空数据成功",
+                        })
+                    );
+                  }
+                });
+              }}
+              okText={$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.Ok",
+                dm: "确定",
+              })}
+              cancelText={$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.Cancel",
+                dm: "取消",
+              })}
+          >
+            <a>
+              {$i18n.get({
+                id: "openpiece-geaflow.geaflow.graph-definition.CleanGraph",
+                dm: "清空图数据",
+              })}
+            </a>
+          </Popconfirm>
+
           <Popconfirm
             title={$i18n.get({
               id: "openpiece-geaflow.geaflow.graph-definition.AreYouSureYouWant",
