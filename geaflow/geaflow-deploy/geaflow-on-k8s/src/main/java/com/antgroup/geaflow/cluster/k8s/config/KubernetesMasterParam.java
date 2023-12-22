@@ -18,7 +18,6 @@ import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_LOG
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_HTTP_PORT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesMasterRunner;
@@ -60,7 +59,7 @@ public class KubernetesMasterParam extends AbstractKubernetesParam {
     }
 
     public Double getContainerCpu() {
-        return config.getDouble(MASTER_VCORES);
+        return clusterConfig.getMasterVcores();
     }
 
     @Override
