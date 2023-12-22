@@ -48,6 +48,8 @@ public class ContainerRuntime implements GeaflowRuntime {
 
     private static final String GEAFLOW_ENGINE_FINISH_FILE = "/tmp/logs/task/%s.finish";
 
+    private static final String GEAFLOW_LOG4J_PROPERTIES = "log4j.properties";
+
     @Autowired
     private ContainerTaskParams taskParams;
 
@@ -137,12 +139,15 @@ public class ContainerRuntime implements GeaflowRuntime {
             String classPathString = StringUtils.join(classPaths, ":");
             String mainClass = task.getMainClass();
             String args = StringEscapeUtils.escapeJava(JSON.toJSONString(geaflowArgs.build()));
+            String logFilePath = getLogFilePath(task.getId());
             CommandLine cmd = new CommandLine(java);
             cmd.addArgument("-cp");
             cmd.addArgument(classPathString);
+            cmd.addArgument("-Dlog.file=" + logFilePath);
+            cmd.addArgument("-Dlog4j.configuration=" + GEAFLOW_LOG4J_PROPERTIES);
             cmd.addArgument(mainClass);
             cmd.addArgument(args, false);
-            int pid = ProcessUtil.execAsyncCommand(cmd, 1000, getLogFilePath(task.getId()), finishFile);
+            int pid = ProcessUtil.execAsyncCommand(cmd, 1000, logFilePath, finishFile);
 
             // save handle
             ContainerTaskHandle taskHandle = new ContainerTaskHandle();
