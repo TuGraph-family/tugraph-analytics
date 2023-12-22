@@ -153,7 +153,7 @@ public abstract class GeaFlowClusterManager extends AbstractClusterManager {
         extraOptions.put(IS_RECOVER, String.valueOf(isRecover));
 
         String logFilename = logDir + File.separator + logFile;
-        return ClusterUtils.getStartCommand(clusterConfig.getDriverJvmOptions(),
+        return ClusterUtils.getStartCommand(clusterConfig.getContainerJvmOptions(),
             ContainerRunner.class, logFilename, clusterConfig.getConfig(), extraOptions, classpath);
     }
 

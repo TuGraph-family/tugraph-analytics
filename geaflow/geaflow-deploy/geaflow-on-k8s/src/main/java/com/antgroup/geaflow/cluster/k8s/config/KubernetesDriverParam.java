@@ -19,7 +19,6 @@ import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DRIVER_NODE_PORT;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_RPC_PORT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
@@ -48,7 +47,7 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
 
     @Override
     public Double getContainerCpu() {
-        return config.getDouble(DRIVER_VCORES);
+        return clusterConfig.getDriverVcores();
     }
 
     @Override
