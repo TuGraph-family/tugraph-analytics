@@ -54,6 +54,6 @@ SELECT
 FROM e_source;
 
 INSERT INTO tbl_result(v_id, k_value)
-CALL khop("1",2) YIELD (vid, kValue)
+CALL kcore(1) YIELD (vid, kValue)
 RETURN vid, kValue
 ;

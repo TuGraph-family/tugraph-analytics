@@ -124,7 +124,7 @@ public class GQLPipeLine {
 
         private final Configuration conf;
         private final List<GraphViewDesc> insertGraphs;
-        private final long checkpointDuration;
+        private long checkpointDuration;
 
         public SaveGraphWriteVersionCallbackFunction(Configuration conf, PreCompileResult compileResult) {
             this.conf = conf;
@@ -133,7 +133,12 @@ public class GQLPipeLine {
         }
 
         @Override
-        public void window(long windowId) {
+        public void window(long windowId, long checkpointDuration) {
+            if (checkpointDuration != this.checkpointDuration) {
+                LOGGER.info("Checkpoint duration changed. old: {}, new: {}",
+                    this.checkpointDuration, checkpointDuration);
+                this.checkpointDuration = checkpointDuration;
+            }
             if (CheckpointUtil.needDoCheckpoint(windowId, checkpointDuration)) {
                 for (GraphViewDesc graphViewDesc : insertGraphs) {
                     if (graphViewDesc.getBackend().equals(BackendType.Memory)) {
