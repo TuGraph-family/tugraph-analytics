@@ -38,6 +38,8 @@ import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContex
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionCycleType;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
+import com.antgroup.geaflow.runtime.core.scheduler.response.EventListenerKey;
+import com.antgroup.geaflow.runtime.core.scheduler.response.SourceFinishResponseEventListener;
 import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
@@ -99,6 +101,7 @@ public class PipelineCycleScheduler<E>
         this.cycleId = nodeCycle.getCycleId();
         this.resultManager = context.getResultManager();
         this.cycleLogTag = LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId);
+        this.dispatcher = new SchedulerEventDispatcher(cycleLogTag);
         this.initMetrics();
 
         inputExchangeMode = DataExchangeMode.BATCH;
@@ -117,6 +120,8 @@ public class PipelineCycleScheduler<E>
             this.aggregator = new SchedulerGraphAggregateProcessor(nodeCycle,
                 (AbstractCycleSchedulerContext) context, resultManager);
         }
+
+        registerEventListener();
     }
 
     private void initMetrics() {
@@ -145,44 +150,6 @@ public class PipelineCycleScheduler<E>
         LOGGER.info("{} closed", cycleLogTag);
     }
 
-    @Override
-    public void handleEvent(IEvent event) {
-        LOGGER.info("{} handle event {}", cycleLogTag, event);
-        switch (event.getEventType()) {
-            case DONE:
-                DoneEvent doneEvent = (DoneEvent) event;
-                if (doneEvent.getSourceEvent() == EventType.LAUNCH_SOURCE) {
-                    if (!taskIdToFinishedSourceIds.containsKey(doneEvent.getTaskId())) {
-                        taskIdToFinishedSourceIds.put(doneEvent.getTaskId(), doneEvent.getWindowId());
-                        if (taskIdToFinishedSourceIds.size() == nodeCycle.getCycleHeads().size()) {
-                            long allSourceFinishIterationId =
-                                taskIdToFinishedSourceIds.values().stream().max(Long::compareTo).get();
-                            ((AbstractCycleSchedulerContext) context)
-                                .setTerminateIterationId(allSourceFinishIterationId);
-                            LOGGER.info("{} all source is finished at {}", cycleLogTag, allSourceFinishIterationId);
-
-                            ICycleSchedulerContext parentContext = ((AbstractCycleSchedulerContext) context).getParentContext();
-                            if (parentContext != null) {
-                                DoneEvent<?> cycleDoneEvent = new DoneEvent<>(parentContext.getCycle().getCycleId(),
-                                    doneEvent.getWindowId(), doneEvent.getTaskId(),
-                                    EventType.LAUNCH_SOURCE, doneEvent.getCycleId());
-                                RpcClient.getInstance().processPipeline(cycle.getDriverId(), cycleDoneEvent);
-                            }
-                        }
-                    }
-                } else {
-                    responseEventPool.notifyEvent(event);
-                }
-                break;
-            case COMPOSE:
-                for (IEvent e : ((ComposeEvent) event).getEventList()) {
-                    handleEvent(e);
-                }
-                break;
-            default:
-                throw new RuntimeException(String.format("not supported event %s", event));
-        }
-    }
 
     protected void execute(long iterationId) {
         String iterationLogTag = getCycleIterationTag(iterationId);
@@ -317,6 +284,18 @@ public class PipelineCycleScheduler<E>
         return context.getResultManager().getDataResponse();
     }
 
+    @Override
+    public void handleEvent(IEvent event) {
+        LOGGER.info("{} handle event {}", cycleLogTag, event);
+        if (event.getEventType() == EventType.COMPOSE) {
+            for (IEvent e : ((ComposeEvent) event).getEventList()) {
+                handleEvent(e);
+            }
+        } else {
+            dispatcher.dispatch(event);
+        }
+    }
+
     private void registerResults(DoneEvent<Map<Integer, IResult>> event) {
 
         if (event.getResult() != null) {
@@ -437,5 +416,50 @@ public class PipelineCycleScheduler<E>
         return this.isIteration
             ? LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId, iterationId)
             : LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId);
+    }
+
+    @Override
+    protected void registerEventListener() {
+        registerSourceFinishEventListener();
+        registerResponseEventListener();
+    }
+
+    private void registerSourceFinishEventListener() {
+        EventListenerKey listenerKey = EventListenerKey.of(cycle.getCycleId(), EventType.LAUNCH_SOURCE);
+        IEventListener listener =
+            new SourceFinishResponseEventListener(nodeCycle.getCycleHeads().size(),
+                events -> {
+                    long sourceFinishWindowId =
+                        events.stream().map(e -> ((DoneEvent) e).getWindowId()).max(Long::compareTo).get();
+                    ((AbstractCycleSchedulerContext) context)
+                        .setTerminateIterationId(sourceFinishWindowId);
+                    LOGGER.info("{} all source finished at {}", cycleLogTag, sourceFinishWindowId);
+
+
+                    ICycleSchedulerContext parentContext = ((AbstractCycleSchedulerContext) context).getParentContext();
+                    if (parentContext != null) {
+                        DoneEvent sourceFinishEvent = new DoneEvent(parentContext.getCycle().getCycleId(),
+                            sourceFinishWindowId, cycle.getCycleId(),
+                            EventType.LAUNCH_SOURCE, cycle.getCycleId());
+                        RpcClient.getInstance().processPipeline(cycle.getDriverId(), sourceFinishEvent);
+                    }
+                });
+
+        // Register listener for end of source event.
+        this.dispatcher.registerListener(listenerKey, listener);
+    }
+
+    private void registerResponseEventListener() {
+        EventListenerKey listenerKey = EventListenerKey.of(cycle.getCycleId());
+        IEventListener listener = new ResponseEventListener();
+        this.dispatcher.registerListener(listenerKey, listener);
+    }
+
+    public class ResponseEventListener implements IEventListener {
+
+        @Override
+        public void handleEvent(IEvent event) {
+            responseEventPool.notifyEvent(event);
+        }
     }
 }
