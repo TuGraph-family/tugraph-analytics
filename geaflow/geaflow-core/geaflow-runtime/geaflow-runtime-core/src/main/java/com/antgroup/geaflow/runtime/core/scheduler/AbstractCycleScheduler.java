@@ -28,6 +28,7 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
 
     protected IExecutionCycle cycle;
     protected ICycleSchedulerContext context;
+    protected SchedulerEventDispatcher dispatcher;
 
     @Override
     public void init(ICycleSchedulerContext context) {
@@ -74,4 +75,6 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
     protected abstract void finish(long iterationId);
 
     protected abstract R finish();
+
+    protected abstract void registerEventListener();
 }

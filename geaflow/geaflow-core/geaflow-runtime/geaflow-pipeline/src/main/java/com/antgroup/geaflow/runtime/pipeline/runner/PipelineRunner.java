@@ -77,6 +77,9 @@ public class PipelineRunner {
         IExecutionResult result = scheduler.execute();
         LOGGER.info("final result of pipeline is {}", result.getResult());
         scheduler.close();
+        if (scheduler instanceof IEventListener) {
+            eventDispatcher.removeListener((IEventListener) scheduler);
+        }
         return result;
     }
 
