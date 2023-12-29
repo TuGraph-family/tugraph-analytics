@@ -15,7 +15,7 @@
 
 <!--intro-start-->
 ## 介绍
-**TuGraph Analytics** (别名：GeaFlow) 是蚂蚁集团开源的[**世界最快**](https://ldbcouncil.org/benchmarks/snb-bi/)的OLAP图数据库，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
+**TuGraph Analytics** (别名：GeaFlow) 是蚂蚁集团开源的[**性能世界一流**](https://ldbcouncil.org/benchmarks/snb-bi/)的OLAP图数据库，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
 
 关于GeaFlow更多介绍请参考：[GeaFlow介绍文档](docs/docs-cn/introduction.md)
 
