@@ -19,7 +19,7 @@ public interface ICallbackFunction {
     /**
      * Pass window id by callback.
      */
-    void window(long windowId);
+    void window(long windowId, long checkpointDuration);
 
     /**
      * Logical definition of all Windows finished.

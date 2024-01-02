@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS e_source (
 
 CREATE TABLE IF NOT EXISTS tbl_result (
   v_id varchar,
-  k_value int
+  k_value double
 ) WITH (
   type='file',
    geaflow.dsl.file.path = '${target}'
@@ -54,6 +54,6 @@ SELECT
 FROM e_source;
 
 INSERT INTO tbl_result(v_id, k_value)
-CALL khop("1",2) YIELD (vid, kValue)
+CALL closeness_centrality("1") YIELD (vid, kValue)
 RETURN vid, kValue
 ;

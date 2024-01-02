@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.context;
 
+import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT;
+
 import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -186,8 +188,9 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public void finish(long windowId) {
+        long checkpointDuration = getConfig().getLong(BATCH_NUMBER_PER_CHECKPOINT);
         if (callbackFunction != null) {
-            callbackFunction.window(windowId);
+            callbackFunction.window(windowId, checkpointDuration);
         }
         checkpoint(windowId);
     }
