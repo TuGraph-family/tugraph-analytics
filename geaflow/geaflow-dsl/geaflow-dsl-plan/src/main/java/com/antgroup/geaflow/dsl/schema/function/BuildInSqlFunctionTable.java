@@ -18,8 +18,12 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.function.UDAF;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
+import com.antgroup.geaflow.dsl.udf.graph.ClosenessCentrality;
+import com.antgroup.geaflow.dsl.udf.graph.KCore;
+import com.antgroup.geaflow.dsl.udf.graph.KHop;
 import com.antgroup.geaflow.dsl.udf.graph.PageRank;
 import com.antgroup.geaflow.dsl.udf.graph.SingleSourceShortestPath;
+import com.antgroup.geaflow.dsl.udf.graph.WeakConnectedComponents;
 import com.antgroup.geaflow.dsl.udf.table.date.AddMonths;
 import com.antgroup.geaflow.dsl.udf.table.date.DateAdd;
 import com.antgroup.geaflow.dsl.udf.table.date.DateDiff;
@@ -169,6 +173,10 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             // UDGA
             .add(GeaFlowFunction.of(SingleSourceShortestPath.class))
             .add(GeaFlowFunction.of(PageRank.class))
+            .add(GeaFlowFunction.of(KHop.class))
+            .add(GeaFlowFunction.of(KCore.class))
+            .add(GeaFlowFunction.of(ClosenessCentrality.class))
+            .add(GeaFlowFunction.of(WeakConnectedComponents.class))
             .build();
 
     public BuildInSqlFunctionTable(GQLJavaTypeFactory typeFactory) {

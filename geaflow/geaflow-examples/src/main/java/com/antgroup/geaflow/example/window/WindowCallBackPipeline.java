@@ -80,7 +80,7 @@ public class WindowCallBackPipeline implements Serializable {
         });
         taskCallBack.addCallBack(new ICallbackFunction() {
             @Override
-            public void window(long windowId) {
+            public void window(long windowId, long checkpointDuration) {
                 LOGGER.info("finish windowId:{}", windowId);
             }
 

@@ -82,11 +82,39 @@ public class GQLAlgorithmTest {
             .execute()
             .checkSinkResult();
     }
+
     @Test
-    public void testAlgorithm_007() throws Exception {
+    public void testAlgorithmKHop() throws Exception {
         QueryTester
             .build()
             .withQueryPath("/query/gql_algorithm_007.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmKCore() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_kcore.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmClosenessCentrality() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_closeness_centrality.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmWeakConnectedComponents() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_wcc.sql")
             .execute()
             .checkSinkResult();
     }
