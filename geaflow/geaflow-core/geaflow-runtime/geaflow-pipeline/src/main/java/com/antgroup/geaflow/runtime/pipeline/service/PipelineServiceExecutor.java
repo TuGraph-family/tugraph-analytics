@@ -14,10 +14,9 @@
 
 package com.antgroup.geaflow.runtime.pipeline.service;
 
-import com.antgroup.geaflow.pipeline.service.PipelineService;
-import com.antgroup.geaflow.plan.PipelinePlanBuilder;
-import com.antgroup.geaflow.plan.graph.PipelineGraph;
+import com.antgroup.geaflow.pipeline.service.IServiceServer;
 import com.antgroup.geaflow.runtime.pipeline.executor.PipelineExecutor;
+import com.antgroup.geaflow.runtime.pipeline.service.util.ServerFactory;
 import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,25 +26,19 @@ public class PipelineServiceExecutor implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineExecutor.class);
 
     private PipelineServiceExecutorContext serviceExecutorContext;
+    private IServiceServer serviceServer;
 
     public PipelineServiceExecutor(PipelineServiceExecutorContext serviceExecutorContext) {
         this.serviceExecutorContext = serviceExecutorContext;
     }
 
-    public void start(PipelineService pipelineService) {
-        // User pipeline Task.
-        PipelineServiceContext serviceContext =
-            new PipelineServiceContext(System.currentTimeMillis(),
-                serviceExecutorContext.getPipelineContext());
-        pipelineService.execute(serviceContext);
+    public void start() {
+        LOGGER.info("start pipeline service {}", serviceExecutorContext.getPipelineService());
+        this.serviceServer = ServerFactory.loadServer(this.serviceExecutorContext);
+        this.serviceServer.startServer();
+    }
 
-        PipelinePlanBuilder pipelinePlanBuilder = new PipelinePlanBuilder();
-        // 1. Build pipeline graph plan.
-        PipelineGraph pipelineGraph = pipelinePlanBuilder.buildPlan(serviceExecutorContext.getPipelineContext());
-
-        // 2. Optimize pipeline graph plan.
-        pipelinePlanBuilder.optimizePlan(serviceExecutorContext.getPipelineContext().getConfig());
-
-        this.serviceExecutorContext.getPipelineRunner().runPipelineGraph(pipelineGraph, serviceExecutorContext);
+    public void stop() {
+        this.serviceServer.stopServer();
     }
 }

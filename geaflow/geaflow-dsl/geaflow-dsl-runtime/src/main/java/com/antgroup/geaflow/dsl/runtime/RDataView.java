@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public interface RDataView {
 
     ViewType getType();
 
-    List<? extends Row> take();
+    List<? extends Row> take(IType<?> type);
 
     enum ViewType {
         TABLE,

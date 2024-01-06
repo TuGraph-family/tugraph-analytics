@@ -14,10 +14,7 @@
 
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_LOCAL_FILE;
-
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.utils.FileUtil;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
@@ -25,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,35 +30,34 @@ public class LocalFileWriteHandler implements FileWriteHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalFileWriteHandler.class);
 
-    private BufferedWriter writer;
-
     private final String baseDir;
 
+    protected String targetFile;
+
+    private Writer writer;
+
     public LocalFileWriteHandler(String baseDir) {
-        if (baseDir.startsWith(PREFIX_LOCAL_FILE)) {
-            this.baseDir = baseDir.substring(PREFIX_LOCAL_FILE.length());
-        } else {
-            this.baseDir = baseDir;
-        }
+        this.baseDir = baseDir;
     }
 
     @Override
-    public void init(Configuration conf, StructType schema, int taskIndex) {
-        File dir = new File(baseDir);
-        String filePath = FileUtil.concatPath(baseDir, FileConnectorUtil.getPartitionFileName(taskIndex));
+    public void init(Configuration tableConf, StructType schema, int taskIndex) {
+        File dirPath = new File(baseDir);
+        File filePath = new File(dirPath, FileConnectorUtil.getPartitionFileName(taskIndex));
         try {
-            if (!dir.exists()) {
-                dir.mkdirs();
+            if (!dirPath.exists()) {
+                dirPath.mkdirs();
             }
-            File file = new File(filePath);
-            if (file.exists()) {
+            if (filePath.exists()) {
                 String newPath = filePath + "_" + System.currentTimeMillis();
-                file = new File(newPath);
+                targetFile = newPath;
+                this.writer = new BufferedWriter(new FileWriter(newPath));
                 LOGGER.info("path {} exists, create new file path {}", filePath, newPath);
+            } else {
+                targetFile = filePath.getAbsolutePath();
+                this.writer = new BufferedWriter(new FileWriter(filePath));
+                LOGGER.info("create file path {}", filePath);
             }
-            file.createNewFile();
-            this.writer = new BufferedWriter(new FileWriter(file));
-            LOGGER.info("succeed to create file: {}", filePath);
         } catch (IOException e) {
             throw new GeaFlowDSLException("Error in create file: " + filePath, e);
         }

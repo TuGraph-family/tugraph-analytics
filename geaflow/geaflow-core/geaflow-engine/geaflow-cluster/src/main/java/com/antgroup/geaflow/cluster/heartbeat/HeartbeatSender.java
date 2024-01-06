@@ -18,10 +18,12 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTB
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.HEARTBEAT_INTERVAL_MS;
 
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
+import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef.RpcCallback;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.common.utils.ExecutorUtil;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import java.io.Serializable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -36,15 +38,17 @@ public class HeartbeatSender implements Serializable {
     private final String masterId;
     private final ScheduledExecutorService scheduledService;
     private final Supplier<Heartbeat> heartbeatTrigger;
+    private final HeartbeatClient heartbeatClient;
     private final long initialDelayMs;
     private final long intervalMs;
 
     public HeartbeatSender(String masterId, Supplier<Heartbeat> heartbeatTrigger,
-                           Configuration config) {
+                           Configuration config, HeartbeatClient heartbeatClient) {
         this.masterId = masterId;
         this.heartbeatTrigger = heartbeatTrigger;
         this.scheduledService = new ScheduledThreadPoolExecutor(1,
             ThreadUtil.namedThreadFactory(true, "heartbeat-sender"));
+        this.heartbeatClient = heartbeatClient;
         this.initialDelayMs = config.getInteger(HEARTBEAT_INITIAL_DELAY_MS);
         this.intervalMs = config.getInteger(HEARTBEAT_INTERVAL_MS);
     }
@@ -55,7 +59,21 @@ public class HeartbeatSender implements Serializable {
             try {
                 message = heartbeatTrigger.get();
                 if (message != null) {
-                    RpcClient.getInstance().sendHeartBeat(masterId, message);
+                    RpcClient.getInstance().sendHeartBeat(masterId, message, new RpcCallback<HeartbeatResponse>() {
+
+                        @Override
+                        public void onSuccess(HeartbeatResponse event) {
+                            if (!event.getRegistered()) {
+                                LOGGER.warn("Heartbeat is not registered.");
+                                heartbeatClient.registerToMaster();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            LOGGER.error("Send heartbeat failed.", t);
+                        }
+                    });
                 }
             } catch (Throwable e) {
                 LOGGER.error("send heartbeat {} failed", message, e);

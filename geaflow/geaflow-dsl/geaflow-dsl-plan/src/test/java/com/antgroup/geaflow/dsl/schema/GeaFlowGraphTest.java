@@ -33,13 +33,15 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.testng.annotations.Test;
 
 public class GeaFlowGraphTest {
+
     @Test
     public void testGeaFlowGraph() {
         GQLJavaTypeFactory typeFactory = GQLJavaTypeFactory.create();
-        TableField field1 = new TableField("name", Types.STRING,true);
-        TableField field2 = new TableField("id", Types.LONG,false);
-        TableField field3 = new TableField("age", Types.DOUBLE,true);
+        TableField field1 = new TableField("name", Types.STRING, true);
+        TableField field2 = new TableField("id", Types.LONG, false);
+        TableField field3 = new TableField("age", Types.DOUBLE, true);
         VertexTable vertexTable = new VertexTable(
+            "default",
             "person",
             Lists.newArrayList(field1, field2, field3),
             "id"
@@ -48,10 +50,11 @@ public class GeaFlowGraphTest {
         assertEquals(vertexTable.getFields().size(), 3);
         assertNotNull(vertexTable.getIdField());
 
-        TableField field4 = new TableField("src", Types.LONG,false);
-        TableField field5 = new TableField("dst", Types.LONG,false);
-        TableField field6 = new TableField("weight", Types.DOUBLE,true);
+        TableField field4 = new TableField("src", Types.LONG, false);
+        TableField field5 = new TableField("dst", Types.LONG, false);
+        TableField field6 = new TableField("weight", Types.DOUBLE, true);
         EdgeTable edgeTable = new EdgeTable(
+            "default",
             "follow",
             Lists.newArrayList(field4, field5, field6),
             "src", "dst", null
@@ -70,8 +73,7 @@ public class GeaFlowGraphTest {
             Lists.newArrayList(vertexTable),
             Lists.newArrayList(edgeTable),
             config, new HashMap<>(),
-            false, false, false
-        );
+            false, false);
 
         RelDataType relDataType = graph.getRowType(typeFactory);
         assertEquals(relDataType.toString(), "Graph:RecordType:peek("

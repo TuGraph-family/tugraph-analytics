@@ -18,28 +18,22 @@ import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_JAVA_
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
-import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JarFileReadHandler extends AbstractFileReadHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JarFileReadHandler.class);
-
     private String path;
 
-    private BufferedReader reader;
-
     @Override
-    public void init(Configuration conf, String path) {
+    public void init(Configuration tableConf, TableSchema tableSchema, String path) throws IOException {
+        super.init(tableConf, tableSchema, path);
         this.path = path.substring(PREFIX_JAVA_RESOURCE.length());
     }
 
@@ -48,32 +42,22 @@ public class JarFileReadHandler extends AbstractFileReadHandler {
         int index = path.lastIndexOf('/');
         String baseDir = path.substring(0, index);
         String fileName = path.substring(index + 1);
-        return Collections.singletonList(new FileSplit(baseDir, fileName));
+        return Collections.singletonList(new ResourceFileSplit(baseDir, fileName));
     }
 
-    @Override
-    public void close() {
-        if (reader != null) {
-            try {
-                reader.close();
-            } catch (IOException e) {
-                LOGGER.warn("Error in close reader", e);
-            }
+    public static class ResourceFileSplit extends FileSplit {
+
+        public ResourceFileSplit(String baseDir, String relativePath) {
+            super(baseDir, relativePath);
         }
-    }
 
-    @Override
-    protected BufferedReader getPartitionReader(FileSplit split, FileOffset offset) {
-        try {
-            if (reader == null) {
-                URL url = getClass().getResource(path);
-                assert url != null;
-                reader = new BufferedReader(new InputStreamReader(url.openStream()));
-                reader.skip(offset.getOffset());
+        @Override
+        public InputStream openStream(Configuration conf) throws IOException {
+            URL url = getClass().getResource(getPath());
+            if (url == null) {
+                throw new GeaFlowDSLException("Resource: {} not found", getPath());
             }
-            return reader;
-        } catch (IOException e) {
-            throw new GeaFlowDSLException(e);
+            return url.openStream();
         }
     }
 }

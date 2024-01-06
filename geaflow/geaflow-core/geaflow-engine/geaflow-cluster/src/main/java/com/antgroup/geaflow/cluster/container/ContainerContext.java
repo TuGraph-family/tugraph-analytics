@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.container;
 
 import com.antgroup.geaflow.cluster.common.IReliableContext;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IComposeEvent;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
@@ -36,7 +37,7 @@ public class ContainerContext extends ReliableContainerContext {
     private transient List<IEvent> waitingCheckpointEvents;
 
     public ContainerContext(int id, Configuration config) {
-        super(id, config);
+        super(id, ClusterConstants.getContainerName(id), config);
         this.reliableEvents = new ArrayList<>();
         this.waitingCheckpointEvents = new ArrayList<>();
     }
@@ -53,32 +54,16 @@ public class ContainerContext extends ReliableContainerContext {
 
     @Override
     public void load() {
-        if (isRecover()) {
-            List<IEvent> events = ClusterMetaStore.getInstance(id, config)
-                .getEvents();
-            if (events == null) {
-                LOGGER.info("container {} not found any events to recover", id);
-            } else {
-                LOGGER.info("container {} recover events {}", id, events);
-                reliableEvents = events;
-            }
+        List<IEvent> events = ClusterMetaStore.getInstance(id, name, config).getEvents();
+        if (events != null) {
+            LOGGER.info("container {} recover events {}", id, events);
+            reliableEvents = events;
         }
         if (waitingCheckpointEvents == null) {
             waitingCheckpointEvents = new ArrayList<>();
         } else {
             waitingCheckpointEvents.clear();
         }
-    }
-
-    public static ContainerContext build(int id, Configuration config, boolean isRecover) {
-        List<IEvent> events = ClusterMetaStore.getInstance(id, config).getEvents();
-        if (events == null) {
-            LOGGER.info("container {} not found any events to recover", id);
-            return new ContainerContext(id, config, isRecover);
-        }
-        LOGGER.info("container {} recover events {}", id, events);
-        ContainerContext context = new ContainerContext(id, config, true, events);
-        return context;
     }
 
     public List<IEvent> getReliableEvents() {

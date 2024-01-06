@@ -16,12 +16,8 @@ package com.antgroup.geaflow.runtime.core.worker.context;
 
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.collector.ICollector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class WorkerContext extends AbstractWorkerContext {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(WorkerContext.class);
 
     public WorkerContext(ITaskContext taskContext) {
         super(taskContext);
@@ -32,7 +28,7 @@ public class WorkerContext extends AbstractWorkerContext {
      */
     @Override
     public void close() {
-        for (ICollector collector : collectors) {
+        for (ICollector<?> collector : collectors) {
             collector.close();
         }
         processor.close();

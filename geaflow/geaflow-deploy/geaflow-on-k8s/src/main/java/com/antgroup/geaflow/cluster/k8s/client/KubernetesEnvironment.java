@@ -14,10 +14,18 @@
 
 package com.antgroup.geaflow.cluster.k8s.client;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.LOG_DIR;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_ENABLE;
+
 import com.antgroup.geaflow.cluster.client.AbstractEnvironment;
 import com.antgroup.geaflow.cluster.client.IClusterClient;
 
 public class KubernetesEnvironment extends AbstractEnvironment {
+
+    public KubernetesEnvironment() {
+        this.context.getConfig().put(LOG_DIR, "/home/admin/logs/geaflow");
+        this.context.getConfig().put(SUPERVISOR_ENABLE, Boolean.TRUE.toString());
+    }
 
     @Override
     protected IClusterClient getClusterClient() {

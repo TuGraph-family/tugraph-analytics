@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
@@ -30,8 +31,9 @@ public class Executors {
     private static final int DEFAULT_QUEUE_CAPACITY = 1024;
     private static final int DEFAULT_MAGNIFICATION = 2;
 
-    private static Map<String, ExecutorService> boundedExecutors = new HashMap<>();
-    private static int CORE_NUM = Runtime.getRuntime().availableProcessors();
+    private static final Map<String, ExecutorService> BOUNDED_EXECUTORS = new HashMap<>();
+    private static final Map<String, ExecutorService> UNBOUNDED_EXECUTORS = new HashMap<>();
+    private static final int CORE_NUM = Runtime.getRuntime().availableProcessors();
 
     private static String getKey(String type, int bound, int capacity, long keepAliveTime,
                                  TimeUnit unit) {
@@ -42,12 +44,12 @@ public class Executors {
                                                                  long keepAliveTime,
                                                                  TimeUnit unit) {
         String key = getKey("bound", bound, capacity, keepAliveTime, unit);
-        if (boundedExecutors.get(key) == null) {
+        if (BOUNDED_EXECUTORS.get(key) == null) {
             BoundedExecutor boundedExecutor = new BoundedExecutor(bound, capacity, keepAliveTime,
                 unit);
-            boundedExecutors.put(key, boundedExecutor);
+            BOUNDED_EXECUTORS.put(key, boundedExecutor);
         }
-        return boundedExecutors.get(key);
+        return BOUNDED_EXECUTORS.get(key);
     }
 
     public static synchronized ExecutorService getMaxCoreBoundedService() {
@@ -63,12 +65,12 @@ public class Executors {
     public static synchronized ExecutorService getService(int bound, int capacity,
                                                           long keepAliveTime, TimeUnit unit) {
         String key = getKey("normal", bound, capacity, keepAliveTime, unit);
-        if (boundedExecutors.get(key) == null) {
+        if (BOUNDED_EXECUTORS.get(key) == null) {
             ExecutorService boundedExecutor = new ThreadPoolExecutor(bound, bound, keepAliveTime,
                 unit, new LinkedBlockingQueue<>(capacity));
-            boundedExecutors.put(key, boundedExecutor);
+            BOUNDED_EXECUTORS.put(key, boundedExecutor);
         }
-        return boundedExecutors.get(key);
+        return BOUNDED_EXECUTORS.get(key);
     }
 
     public static synchronized ExecutorService getMultiCoreExecutorService(int maxMultiple,
@@ -122,7 +124,7 @@ public class Executors {
                                                                 String threadFormat,
                                                                 Thread.UncaughtExceptionHandler handler) {
         String key = getKey(threadFormat, bound, capacity, keepAliveTime, unit);
-        if (boundedExecutors.get(key) == null || boundedExecutors.get(key).isShutdown()) {
+        if (BOUNDED_EXECUTORS.get(key) == null || BOUNDED_EXECUTORS.get(key).isShutdown()) {
             ThreadFactoryBuilder builder  = new ThreadFactoryBuilder()
                 .setNameFormat(threadFormat)
                 .setDaemon(true);
@@ -131,9 +133,35 @@ public class Executors {
             }
             ExecutorService boundedExecutor = new ThreadPoolExecutor(bound, bound, keepAliveTime,
                 unit, new LinkedBlockingQueue<>(capacity), builder.build());
-            boundedExecutors.put(key, boundedExecutor);
+            BOUNDED_EXECUTORS.put(key, boundedExecutor);
         }
-        return boundedExecutors.get(key);
+        return BOUNDED_EXECUTORS.get(key);
+    }
+
+    public static synchronized ExecutorService getUnboundedExecutorService(String name,
+                                                                           long keepAliveTime,
+                                                                           TimeUnit unit,
+                                                                           String threadFormat,
+                                                                           Thread.UncaughtExceptionHandler handler) {
+        ExecutorService cached = UNBOUNDED_EXECUTORS.get(name);
+        if (cached != null && !cached.isShutdown()) {
+            return cached;
+        }
+
+        ThreadFactoryBuilder builder  = new ThreadFactoryBuilder()
+            .setDaemon(true);
+        if (threadFormat != null) {
+            builder.setNameFormat(threadFormat);
+        }
+        if (handler != null) {
+            builder.setUncaughtExceptionHandler(handler);
+        }
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+            0, Integer.MAX_VALUE, keepAliveTime, unit,
+            new SynchronousQueue<>(), builder.build());
+        UNBOUNDED_EXECUTORS.put(name, pool);
+        return pool;
+
     }
 
 }

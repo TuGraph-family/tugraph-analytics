@@ -6,9 +6,10 @@ import logging
 import urllib2
 import json
 import hashlib
+import time
 
 def main(logFilePath, jarPath, jarUrlEnvName):
-    logging.basicConfig(filename=logFilePath, filemode="a", format="%(asctime)s %(name)s:%(levelname)s:%(message)s", datefmt="%d-%M-%Y %H:%M:%S", level=logging.DEBUG)
+    logging.basicConfig(filename=logFilePath, filemode="a", format="%(asctime)s %(name)s:%(levelname)s:%(message)s", datefmt="%Y-%M-%d %H:%M:%S", level=logging.DEBUG)
     jarUrls = os.getenv(jarUrlEnvName)
     if not jarUrls or not jarUrls.strip():
         return
@@ -19,7 +20,7 @@ def main(logFilePath, jarPath, jarUrlEnvName):
     for jarUrl in urlList:
         try:
             url = jarUrl["url"]
-            md5 = jarUrl["md5"]
+            md5 = jarUrl["md5"] if jarUrl.has_key('md5') else ""
             jarName = getNameFromUrl(url)
             destination = os.path.join(jarPath, jarName)
             downloaded = downloadJarFile(url, destination, md5)
@@ -27,14 +28,15 @@ def main(logFilePath, jarPath, jarUrlEnvName):
                 unzipFile(destination, jarPath)
 
         except Exception as e:
-            logging.error("download " + url + " failed", exc_info=True)
+            logging.error("Download file {} failed.".format(url), exc_info=True)
             raise e
 
 def downloadJarFile(url, destination, md5):
-    logging.info("downloading " + url + " to local " + destination)
+    start = time.time()
+    logging.info("Downloading {} to local {}.".format(url, destination))
     if os.path.isfile(destination):
         checkFileMd5(md5, destination, url)
-        logging.info("file " + url + " is already downloaded")
+        logging.info("File {} is already downloaded.".format(url))
         return False
     consoleToken = ""
     consoleUrl = os.getenv("GEAFLOW_GW_ENDPOINT")
@@ -43,40 +45,58 @@ def downloadJarFile(url, destination, md5):
     tokenHeaders = {"geaflow-token": consoleToken}
     request = urllib2.Request(url, headers=tokenHeaders)
     logging.info(request.headers)
-    f = urllib2.urlopen(request)
-    data = f.read()
+
+    response = urllib2.urlopen(request)
+    chunkSize = 1024 * 8
     with open(destination, "wb") as file:
-        file.write(data)
-        logging.info("file " + url + " download down")
+      while True:
+          tmp = response.read(chunkSize)
+          if not tmp:
+            break
+          file.write(tmp)
+      response.close()
+    costSeconds = time.time() - start
+    logging.info("File {} successfully downloaded. Cost: {:.5f} seconds.".format(url, costSeconds))
     checkFileMd5(md5, destination, url)
     return True
 
 def checkFileMd5(expectedMd5, filePath, url):
+    start = time.time()
     if not expectedMd5 or not expectedMd5.strip():
         return
     with open(filePath, 'rb') as file:
-        actualMd5 = hashlib.md5(file.read()).hexdigest()
+        tmpMd5 = hashlib.md5()
+        chunkSize = 1024 * 8
+        while True:
+            data = file.read(chunkSize)
+            if not data:
+                break
+            tmpMd5.update(data)
+        actualMd5 = tmpMd5.hexdigest()
         if actualMd5 != expectedMd5:
-            raise Exception("file md5 not match: " + url + ". Expected: " + expectedMd5
-            + ". Actual: " + actualMd5)
-
+            raise Exception("Md5 of file {} not match. Expected: {}. Actual: {}.".format(url, expectedMd5, actualMd5))
+    costMills = 1000 * (time.time() -start)
+    logging.info("Check md5 of file {} cost {:.2f} mill-seconds.".format(filePath, costMills))
 def getNameFromUrl(jarUrl):
     try:
         index = jarUrl.rindex("/")
     except Exception as e:
-        logging.error("illegal url: " + jarUrl, exc_info=True)
+        logging.error("Illegal url: {}".format(jarUrl), exc_info=True)
         raise e
     return jarUrl[index + 1: len(jarUrl)]
 
 def unzipFile(filePath, outputDir):
     try:
+        start = time.time()
         file = zipfile.ZipFile(filePath)
-        logging.info("start unzip file: " + filePath)
+        logging.info("Start to unzip file: {}".format(filePath))
         file.extractall(outputDir)
-        logging.info("unzip file success")
+
+        costMills = 1000 * (time.time() - start)
+        logging.info("Unzip file {} success. Cost: {:.2f} mill-seconds.".format(filePath, costMills))
         file.close()
     except Exception as e:
-        logging.error("unzip " + filePath + " failed", exc_info=True)
+        logging.error("Unzip file {} failed.".format(filePath), exc_info=True)
         raise e
 
 if __name__ == '__main__':

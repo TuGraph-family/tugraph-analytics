@@ -1,28 +1,36 @@
-// protoc --java_out=./ --proto_path=`pwd` manifest.proto
+// protoc --java_out=./ --proto_path=`pwd` pushdown.proto
 syntax = "proto3";
 
 option java_outer_classname = "PushDownPb";
 
 message PushDown {
-    FilterNode filterNode = 1;
-    EdgeLimit edgeLimit = 2;
-    uint32 sortType = 3;
+    oneof filter {
+        FilterNode filter_node = 1;
+        FilterNodes filter_nodes = 2;
+    }
+    EdgeLimit edge_limit = 3;
+    repeated SortType sort_type = 4;
 }
 
 message EdgeLimit {
     uint64 in = 1;
     uint64 out = 2;
-    uint32 limitType = 3;
+    bool is_single = 3;
+}
+
+message FilterNodes {
+    repeated bytes keys = 1;
+    repeated FilterNode filter_nodes = 2;
 }
 
 message FilterNode {
-    uint32 filterOrdinal = 1;
+    FilterType filter_type = 1;
     repeated FilterNode filters = 2;
     oneof content {
-        IntList intContent = 3;
-        LongList longContent = 4;
-        StringList strContent = 5;
-        BytesList bytesContent = 6;
+        IntList int_content = 3;
+        LongList long_content = 4;
+        StringList str_content = 5;
+        BytesList bytes_content = 6;
     }
 }
 
@@ -40,4 +48,33 @@ message StringList {
 
 message BytesList {
     repeated bytes bytes = 1;
+}
+
+enum FilterType {
+    EMPTY = 0;
+    ONLY_VERTEX = 1;
+    IN_EDGE = 2;
+    OUT_EDGE = 3;
+    VERTEX_TS = 4;
+    EDGE_TS = 5;
+    MULTI_EDGE_TS = 6;
+    VERTEX_LABEL = 7;
+    EDGE_LABEL = 8;
+    VERTEX_VALUE_DROP = 9;
+    EDGE_VALUE_DROP = 10;
+    TTL = 11;
+    AND = 12;
+    OR = 13;
+    VERTEX_MUST_CONTAIN = 14;
+    GENERATED = 15;
+    OTHER = 16;
+}
+
+enum SortType {
+    SRC_ID = 0;
+    DIRECTION = 1;
+    DESC_TIME = 2;
+    TIME = 3;
+    LABEL = 4;
+    DST_ID = 5;
 }

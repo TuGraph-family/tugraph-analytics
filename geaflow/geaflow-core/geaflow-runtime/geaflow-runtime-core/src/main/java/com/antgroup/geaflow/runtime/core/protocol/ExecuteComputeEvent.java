@@ -31,7 +31,7 @@ public class ExecuteComputeEvent extends AbstractIterationComputeCommand {
     public ExecuteComputeEvent(int workerId, int cycleId, long windowId,
                                long fetchWindowId, long fetchCount,
                                boolean recoverable) {
-        super(workerId, cycleId, windowId, fetchWindowId, fetchCount);
+        this(workerId, cycleId, windowId, fetchWindowId, fetchCount);
         this.recoverable = recoverable;
     }
 

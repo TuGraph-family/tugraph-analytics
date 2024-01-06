@@ -14,51 +14,8 @@
 
 package com.antgroup.geaflow.pipeline.task;
 
-import com.antgroup.geaflow.api.function.io.SourceFunction;
-import com.antgroup.geaflow.api.graph.PGraphWindow;
-import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
-import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
-import com.antgroup.geaflow.api.window.IWindow;
-import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.model.graph.edge.IEdge;
-import com.antgroup.geaflow.model.graph.vertex.IVertex;
-import com.antgroup.geaflow.view.IViewDesc;
-import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import com.antgroup.geaflow.view.graph.PGraphView;
-import java.io.Serializable;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 
-public interface IPipelineTaskContext extends Serializable {
-
-    /**
-     * Returns pipeline task id.
-     */
-    long getPipelineTaskId();
-
-    /**
-     * Returns pipeline config.
-     */
-    Configuration getConfig();
-
-    /**
-     * Build window source with source function and window.
-     */
-    <T> PWindowSource<T> buildSource(SourceFunction<T> sourceFunction, IWindow<T> window);
-
-    /**
-     * Returns graph view with view name.
-     */
-    <K, VV, EV> PGraphView<K, VV, EV> getGraphView(String viewName);
-
-    /**
-     * Create graph view with view desc.
-     */
-    <K, VV, EV> PGraphView<K, VV, EV> createGraphView(IViewDesc viewDesc);
-
-    /**
-     * Build window stream graph.
-     */
-    <K, VV, EV> PGraphWindow<K, VV, EV> buildWindowStreamGraph(PWindowStream<IVertex<K, VV>> vertexWindowSteam,
-                                                               PWindowStream<IEdge<K, EV>> edgeWindowStream,
-                                                               GraphViewDesc graphViewDesc);
+public interface IPipelineTaskContext extends IPipelineJobContext {
 
 }

@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM
 
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
@@ -34,6 +35,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
@@ -49,6 +51,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
@@ -73,15 +76,16 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         // do checkpoint
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
 
         // clean checkpoint cycle.
-        ClusterMetaStore.getInstance(0, new Configuration()).clean();
+        ClusterMetaStore.getInstance(0, "driver-0", new Configuration()).clean();
         CheckpointSchedulerContext newContext =
-            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> new CheckpointSchedulerContext(cycle, null));
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> CycleSchedulerContextFactory.create(cycle, null));
 
         long currentIterationId = checkpointId + 1;
         context.init(currentIterationId);
@@ -100,6 +104,7 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
 
         ExecutionNodeCycle cycle = buildMockCycle(false);
         CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        context.init();
 
         // not do checkpoint at 17
         long checkpointId = 17L;
@@ -126,17 +131,21 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         Configuration configuration = new Configuration();
         configuration.put(JOB_UNIQUE_ID, "test-scheduler-context");
         configuration.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         long finishIterationId = 100;
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(isIterative);
+        if (isIterative) {
+            vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.incremental);
+        } else {
+            vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
+        }
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(2);
         vertexGroup.getVertexMap().put(0, vertex);
 
-        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
     }
 }

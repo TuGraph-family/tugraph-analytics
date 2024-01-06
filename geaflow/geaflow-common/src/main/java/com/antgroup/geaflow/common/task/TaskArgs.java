@@ -18,7 +18,7 @@ import java.io.Serializable;
 
 /**
  * TaskArgs that denotes relevant information of task, including: taskId, taskIndex, taskParallelism and
- * maxParallelism.
+ * maxParallelism, processIndex.
  */
 public class TaskArgs implements Serializable {
 
@@ -27,14 +27,16 @@ public class TaskArgs implements Serializable {
     private String taskName;
     private int parallelism;
     private int maxParallelism;
+    private int processIndex;
 
     public TaskArgs(int taskId, int taskIndex, String taskName, int parallelism,
-                    int maxParallelism) {
+                    int maxParallelism, int processIndex) {
         this.taskId = taskId;
         this.taskIndex = taskIndex;
         this.taskName = taskName;
         this.parallelism = parallelism;
         this.maxParallelism = maxParallelism;
+        this.processIndex = processIndex;
     }
 
     public int getTaskId() {
@@ -55,6 +57,10 @@ public class TaskArgs implements Serializable {
 
     public String getTaskName() {
         return taskName;
+    }
+
+    public int getProcessIndex() {
+        return processIndex;
     }
 
 }

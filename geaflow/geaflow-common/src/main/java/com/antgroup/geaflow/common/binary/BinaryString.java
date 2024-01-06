@@ -27,6 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * This class is an adaptation of Spark's org.apache.spark.unsafe.types.UTF8String.
@@ -63,6 +64,8 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         4, 4, 4, 4, 4, // 0xF0..0xF4
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 0xF5..0xFF - disallowed in UTF-8
     };
+
+    public static final BinaryString EMPTY_STRING = BinaryString.fromString("");
 
     public BinaryString() {
 
@@ -182,7 +185,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return numBytes - other.numBytes;
     }
 
-    private byte getByte(int i) {
+    public byte getByte(int i) {
         return BinaryOperations.getByte(binaryObject, offset + i);
     }
 
@@ -226,6 +229,66 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return false;
     }
 
+    public static BinaryString concat(BinaryString... inputs) {
+        long totalLength = 0;
+        for (BinaryString input : inputs) {
+            if (Objects.isNull(input)) {
+                continue;
+            }
+            totalLength += input.numBytes;
+        }
+
+        byte[] result = new byte[Math.toIntExact(totalLength)];
+        int offset = 0;
+        for (BinaryString input : inputs) {
+            if (Objects.isNull(input)) {
+                continue;
+            }
+            int len = input.numBytes;
+            copyMemory(input.binaryObject, input.offset, result, offset, len);
+            offset += len;
+        }
+        return fromBytes(result);
+    }
+
+    public static BinaryString concatWs(BinaryString separator, BinaryString... inputs) {
+        if (Objects.isNull(separator)) {
+            separator = EMPTY_STRING;
+        }
+
+        // total number of bytes from inputs
+        long numInputBytes = 0L;
+        int numInputs = inputs.length;
+        for (BinaryString input : inputs) {
+            if (Objects.nonNull(input)) {
+                numInputBytes += input.numBytes;
+            }
+        }
+
+        int resultSize =
+            Math.toIntExact(numInputBytes + (numInputs - 1) * (long) separator.numBytes);
+        byte[] result = new byte[resultSize];
+        int offset = 0;
+
+        for (int i = 0, j = 0; i < inputs.length; i++) {
+            if (Objects.nonNull(inputs[i])) {
+                int len = inputs[i].numBytes;
+                copyMemory(inputs[i].binaryObject, inputs[i].offset, result,
+                    offset, len);
+                offset += len;
+            }
+
+            j++;
+            // Add separator if this is not the last input.
+            if (j < numInputs) {
+                copyMemory(separator.binaryObject, separator.offset, result,
+                    offset, separator.numBytes);
+                offset += separator.numBytes;
+            }
+        }
+        return fromBytes(result);
+    }
+
     public int indexOf(BinaryString s, int start) {
         if (s.numBytes == 0) {
             return 0;
@@ -265,10 +328,48 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         return matchAt(prefix, 0);
     }
 
+    public boolean endsWith(final BinaryString suffix) {
+        return matchAt(suffix, numBytes - suffix.numBytes);
+    }
+
     private static int numBytesForFirstByte(final byte b) {
         final int offset = b & 0xFF;
         byte numBytes = bytesOfCodePointInUTF8[offset];
         return (numBytes == 0) ? 1 : numBytes; // Skip the first byte disallowed in UTF-8
+    }
+
+    public BinaryString substring(final int start) {
+        return substring(start, getLength());
+    }
+
+    /**
+     * This method is an adaptation of Spark's BinaryString#substring.
+     */
+    public BinaryString substring(final int start, final int end) {
+        if (end <= start || start >= numBytes) {
+            return EMPTY_STRING;
+        }
+
+        int i = 0;
+        int c = 0;
+        while (i < numBytes && c < start) {
+            i += numBytesForFirstByte(getByte(i));
+            c += 1;
+        }
+
+        int j = i;
+        while (i < numBytes && c < end) {
+            i += numBytesForFirstByte(getByte(i));
+            c += 1;
+        }
+
+        if (i > j) {
+            byte[] bytes = new byte[i - j];
+            copyMemory(binaryObject, offset + j, bytes, 0, i - j);
+            return fromBytes(bytes);
+        } else {
+            return EMPTY_STRING;
+        }
     }
 
     @Override
@@ -288,7 +389,7 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
     }
 
     /**
-     *  * This method is an adaptation of Spark's org.apache.spark.unsafe.hash.Murmur3_x86_32.
+     * * This method is an adaptation of Spark's org.apache.spark.unsafe.hash.Murmur3_x86_32.
      */
     private static int hashUnsafeBytes(IBinaryObject base, long offset, int lengthInBytes, int seed) {
         int lengthAligned = lengthInBytes - lengthInBytes % 4;

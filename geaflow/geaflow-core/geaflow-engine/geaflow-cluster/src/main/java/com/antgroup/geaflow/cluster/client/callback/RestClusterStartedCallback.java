@@ -26,18 +26,14 @@ public class RestClusterStartedCallback implements ClusterStartedCallback {
 
     private static final String GEAFLOW_TOKEN_KEY = "geaflow-token";
 
-    private final Configuration config;
-
     private final String callbackUrl;
 
     private final Map<String, String> headers;
 
     public RestClusterStartedCallback(Configuration config, String url) {
-        this.config = config;
         this.callbackUrl = url;
         this.headers = new HashMap<>();
         this.headers.put(GEAFLOW_TOKEN_KEY, config.getString(DSLConfigKeys.GEAFLOW_DSL_CATALOG_TOKEN_KEY, ""));
-
     }
 
     @Override

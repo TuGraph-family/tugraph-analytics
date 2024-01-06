@@ -16,7 +16,7 @@ package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
-import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
+import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +33,17 @@ public class LaunchSourceEvent extends AbstractExecutableCommand {
 
     @Override
     public void execute(ITaskContext taskContext) {
+        final long start = System.currentTimeMillis();
         super.execute(taskContext);
         worker.init(windowId);
         boolean hasData = (boolean) worker.process(null);
+        WorkerContext workerContext = (WorkerContext) this.context;
         if (!hasData) {
             LOGGER.info("source is finished");
-            sendDoneEvent(cycleId, windowId, EventType.LAUNCH_SOURCE, false);
+            this.sendDoneEvent(workerContext.getDriverId(), EventType.LAUNCH_SOURCE, false, false);
         }
         worker.finish(windowId);
+        workerContext.getEventMetrics().addProcessCostMs(System.currentTimeMillis() - start);
     }
 
     @Override
@@ -59,15 +62,6 @@ public class LaunchSourceEvent extends AbstractExecutableCommand {
     @Override
     public EventType getEventType() {
         return EventType.LAUNCH_SOURCE;
-    }
-
-    /**
-     * Finish compute and tell scheduler finish.
-     */
-    protected <T> void sendDoneEvent(int cycleId, long batchId, EventType eventType, T result) {
-        AbstractWorkerContext workerContext = (AbstractWorkerContext) context;
-        DoneEvent doneEvent = new DoneEvent(cycleId, batchId, workerContext.getTaskId(), eventType, result);
-        workerContext.getPipelineMaster().send(doneEvent);
     }
 
     @Override

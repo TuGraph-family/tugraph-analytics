@@ -14,12 +14,40 @@
 
 package com.antgroup.geaflow.cluster.rpc;
 
+import com.baidu.brpc.client.RpcCallback;
 import io.grpc.Context;
 import java.io.Serializable;
+import java.util.concurrent.CompletableFuture;
 
 public class RpcUtil implements Serializable {
 
     public static void asyncExecute(Runnable runnable) {
         Context.current().fork().run(runnable);
     }
+
+    /**
+     * Build brpc callback.
+     */
+    public static <T> RpcCallback<T> buildRpcCallback(RpcEndpointRef.RpcCallback<T> listener,
+                                                      CompletableFuture<T> result) {
+        return new RpcCallback<T>() {
+                @Override
+                public void success(T response) {
+                    if (listener != null) {
+                        listener.onSuccess(response);
+                    }
+                    result.complete(response);
+                }
+
+                @Override
+                public void fail(Throwable t) {
+                    if (listener != null) {
+                        listener.onFailure(t);
+                    }
+                    result.completeExceptionally(t);
+                }
+            };
+    }
+
+
 }

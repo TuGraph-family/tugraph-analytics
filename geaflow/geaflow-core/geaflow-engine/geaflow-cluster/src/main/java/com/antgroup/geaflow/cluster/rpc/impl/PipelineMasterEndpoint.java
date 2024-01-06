@@ -16,16 +16,15 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.driver.Driver;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.cluster.rpc.IPipelineMasterEndpoint;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Container.Request;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
-import com.antgroup.geaflow.rpc.proto.ContainerServiceGrpc;
-import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PipelineMasterEndpoint extends ContainerServiceGrpc.ContainerServiceImplBase implements
-    RpcEndpoint {
+public class PipelineMasterEndpoint implements IPipelineMasterEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineMasterEndpoint.class);
 
@@ -36,15 +35,14 @@ public class PipelineMasterEndpoint extends ContainerServiceGrpc.ContainerServic
     }
 
     @Override
-    public void process(Request request, StreamObserver<Response> responseObserver) {
+    public Response process(Request request) {
         try {
             IEvent event = RpcMessageEncoder.decode(request.getPayload());
             driver.process(event);
-            responseObserver.onNext(Response.newBuilder().build());
-            responseObserver.onCompleted();
+            return Response.newBuilder().build();
         } catch (Throwable t) {
             LOGGER.error("process event failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("process event failed: %s", t.getMessage()), t);
         }
     }
 

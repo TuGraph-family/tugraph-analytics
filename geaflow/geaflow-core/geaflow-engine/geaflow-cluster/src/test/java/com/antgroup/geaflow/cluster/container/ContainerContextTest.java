@@ -58,7 +58,7 @@ public class ContainerContextTest {
     public void testContainer() {
 
         int containerId = 1;
-        ClusterMetaStore.init(containerId, configuration);
+        ClusterMetaStore.init(containerId, "container-0", configuration);
         ContainerContext containerContext = new ContainerContext(containerId, configuration);
 
         TestHAEvent event = new TestHAEvent();
@@ -75,7 +75,7 @@ public class ContainerContextTest {
         // cluster id is changed, re-init cluster metastore.
         ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
-        ClusterMetaStore.init(containerId, configuration);
+        ClusterMetaStore.init(containerId, "container-0", configuration);
         // rebuild, context reliable event list is empty, and metastore is cleaned.
         ContainerContext restartContext = new ContainerContext(containerId, configuration);
         restartContext.load();
@@ -87,7 +87,7 @@ public class ContainerContextTest {
     @Test
     public void testCheckpoint() {
         int containerId = 1;
-        ClusterMetaStore.init(containerId, configuration);
+        ClusterMetaStore.init(containerId, "container-0", configuration);
         ContainerContext containerContext = new ContainerContext(containerId, configuration);
 
         TestHAEvent event = new TestHAEvent("test1", 1);

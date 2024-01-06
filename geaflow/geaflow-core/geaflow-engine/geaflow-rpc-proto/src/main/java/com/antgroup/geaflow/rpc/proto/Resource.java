@@ -37,6 +37,10 @@ public final class Resource {
      * <code>ROUND_ROBIN = 0;</code>
      */
     ROUND_ROBIN(0),
+    /**
+     * <code>PROCESS_FAIR = 1;</code>
+     */
+    PROCESS_FAIR(1),
     UNRECOGNIZED(-1),
     ;
 
@@ -44,6 +48,10 @@ public final class Resource {
      * <code>ROUND_ROBIN = 0;</code>
      */
     public static final int ROUND_ROBIN_VALUE = 0;
+    /**
+     * <code>PROCESS_FAIR = 1;</code>
+     */
+    public static final int PROCESS_FAIR_VALUE = 1;
 
 
     public final int getNumber() {
@@ -71,6 +79,7 @@ public final class Resource {
     public static AllocateStrategy forNumber(int value) {
       switch (value) {
         case 0: return ROUND_ROBIN;
+        case 1: return PROCESS_FAIR;
         default: return null;
       }
     }
@@ -3819,6 +3828,12 @@ public final class Resource {
      */
     com.google.protobuf.ByteString
         getContainerIdBytes();
+
+    /**
+     * <code>int32 processIndex = 7;</code>
+     * @return The processIndex.
+     */
+    int getProcessIndex();
   }
   /**
    * Protobuf type {@code Worker}
@@ -3897,6 +3912,11 @@ public final class Resource {
               java.lang.String s = input.readStringRequireUtf8();
 
               containerId_ = s;
+              break;
+            }
+            case 56: {
+
+              processIndex_ = input.readInt32();
               break;
             }
             default: {
@@ -4051,6 +4071,17 @@ public final class Resource {
       }
     }
 
+    public static final int PROCESSINDEX_FIELD_NUMBER = 7;
+    private int processIndex_;
+    /**
+     * <code>int32 processIndex = 7;</code>
+     * @return The processIndex.
+     */
+    @java.lang.Override
+    public int getProcessIndex() {
+      return processIndex_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4083,6 +4114,9 @@ public final class Resource {
       if (!getContainerIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 6, containerId_);
       }
+      if (processIndex_ != 0) {
+        output.writeInt32(7, processIndex_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -4114,6 +4148,10 @@ public final class Resource {
       if (!getContainerIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, containerId_);
       }
+      if (processIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(7, processIndex_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -4141,6 +4179,8 @@ public final class Resource {
           != other.getWorkerId()) return false;
       if (!getContainerId()
           .equals(other.getContainerId())) return false;
+      if (getProcessIndex()
+          != other.getProcessIndex()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -4164,6 +4204,8 @@ public final class Resource {
       hash = (53 * hash) + getWorkerId();
       hash = (37 * hash) + CONTAINERID_FIELD_NUMBER;
       hash = (53 * hash) + getContainerId().hashCode();
+      hash = (37 * hash) + PROCESSINDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getProcessIndex();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -4309,6 +4351,8 @@ public final class Resource {
 
         containerId_ = "";
 
+        processIndex_ = 0;
+
         return this;
       }
 
@@ -4341,6 +4385,7 @@ public final class Resource {
         result.shufflePort_ = shufflePort_;
         result.workerId_ = workerId_;
         result.containerId_ = containerId_;
+        result.processIndex_ = processIndex_;
         onBuilt();
         return result;
       }
@@ -4408,6 +4453,9 @@ public final class Resource {
         if (!other.getContainerId().isEmpty()) {
           containerId_ = other.containerId_;
           onChanged();
+        }
+        if (other.getProcessIndex() != 0) {
+          setProcessIndex(other.getProcessIndex());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -4713,6 +4761,37 @@ public final class Resource {
         onChanged();
         return this;
       }
+
+      private int processIndex_ ;
+      /**
+       * <code>int32 processIndex = 7;</code>
+       * @return The processIndex.
+       */
+      @java.lang.Override
+      public int getProcessIndex() {
+        return processIndex_;
+      }
+      /**
+       * <code>int32 processIndex = 7;</code>
+       * @param value The processIndex to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessIndex(int value) {
+        
+        processIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 processIndex = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProcessIndex() {
+        
+        processIndex_ = 0;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -4809,16 +4888,17 @@ public final class Resource {
       "rceRequest\022\021\n\treleaseId\030\001 \001(\t\022\027\n\006worker\030" +
       "\002 \003(\0132\007.Worker\"J\n\027ReleaseResourceRespons" +
       "e\022\021\n\treleaseId\030\001 \001(\t\022\017\n\007success\030\002 \001(\010\022\013\n" +
-      "\003msg\030\003 \001(\t\"v\n\006Worker\022\014\n\004host\030\001 \001(\t\022\021\n\tpr" +
-      "ocessId\030\002 \001(\005\022\017\n\007rpcPort\030\003 \001(\005\022\023\n\013shuffl" +
-      "ePort\030\004 \001(\005\022\020\n\010workerId\030\005 \001(\005\022\023\n\013contain" +
-      "erId\030\006 \001(\t*#\n\020AllocateStrategy\022\017\n\013ROUND_" +
-      "ROBIN\020\0002\241\001\n\017ResourceService\022F\n\017requireRe" +
-      "source\022\027.RequireResourceRequest\032\030.Requir" +
-      "eResourceResponse\"\000\022F\n\017releaseResource\022\027" +
-      ".ReleaseResourceRequest\032\030.ReleaseResourc" +
-      "eResponse\"\000B\"\n\036com.antgroup.geaflow.rpc." +
-      "protoP\000b\006proto3"
+      "\003msg\030\003 \001(\t\"\214\001\n\006Worker\022\014\n\004host\030\001 \001(\t\022\021\n\tp" +
+      "rocessId\030\002 \001(\005\022\017\n\007rpcPort\030\003 \001(\005\022\023\n\013shuff" +
+      "lePort\030\004 \001(\005\022\020\n\010workerId\030\005 \001(\005\022\023\n\013contai" +
+      "nerId\030\006 \001(\t\022\024\n\014processIndex\030\007 \001(\005*5\n\020All" +
+      "ocateStrategy\022\017\n\013ROUND_ROBIN\020\000\022\020\n\014PROCES" +
+      "S_FAIR\020\0012\241\001\n\017ResourceService\022F\n\017requireR" +
+      "esource\022\027.RequireResourceRequest\032\030.Requi" +
+      "reResourceResponse\"\000\022F\n\017releaseResource\022" +
+      "\027.ReleaseResourceRequest\032\030.ReleaseResour" +
+      "ceResponse\"\000B\"\n\036com.antgroup.geaflow.rpc" +
+      ".protoP\000b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4853,7 +4933,7 @@ public final class Resource {
     internal_static_Worker_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Worker_descriptor,
-        new java.lang.String[] { "Host", "ProcessId", "RpcPort", "ShufflePort", "WorkerId", "ContainerId", });
+        new java.lang.String[] { "Host", "ProcessId", "RpcPort", "ShufflePort", "WorkerId", "ContainerId", "ProcessIndex", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

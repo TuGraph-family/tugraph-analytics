@@ -36,16 +36,29 @@ public class MatchVertexFunctionImpl implements MatchVertexFunction {
 
     private IFilter vertexFilter;
 
-    public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, String label,
-                                   IFilter<?> vertexFilter) {
+    private final boolean isOptionalMatchVertex;
+
+    public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, String label, IFilter<?> vertexFilter) {
+        this(vertexTypes, false, label, vertexFilter);
+    }
+
+    public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, boolean isOptionalMatchVertex,
+                                   String label, IFilter<?> vertexFilter) {
         this.vertexTypes = vertexTypes;
         this.label = label;
         this.vertexFilter = vertexFilter;
+        this.isOptionalMatchVertex = isOptionalMatchVertex;
     }
 
     public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, String label,
                                    IFilter ... pushDownFilters) {
+        this(vertexTypes, false, label, pushDownFilters);
+    }
+
+    public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, boolean isOptionalMatchVertex,
+                                   String label, IFilter ... pushDownFilters) {
         this.vertexTypes = Objects.requireNonNull(vertexTypes);
+        this.isOptionalMatchVertex = isOptionalMatchVertex;
         this.label = label;
         if (!vertexTypes.isEmpty()) {
             this.vertexFilter = new VertexLabelFilter(
@@ -77,6 +90,10 @@ public class MatchVertexFunctionImpl implements MatchVertexFunction {
     @Override
     public void finish(StepCollector<StepRecord> collector) {
 
+    }
+
+    public boolean isOptionalMatchVertex() {
+        return isOptionalMatchVertex;
     }
 
     @Override

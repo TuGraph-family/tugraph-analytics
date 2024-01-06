@@ -14,27 +14,31 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.io;
 
+import com.antgroup.geaflow.cluster.response.IResult;
+import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.cluster.shuffle.LogicalPipelineSliceMeta;
-import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.encoder.IEncoder;
-import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
-import com.antgroup.geaflow.core.graph.util.ExecutionTaskUtils;
-import com.antgroup.geaflow.model.record.RecordArgs;
-import com.antgroup.geaflow.partitioner.impl.KeyPartitioner;
+import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.io.ResponseOutputDesc;
+import com.antgroup.geaflow.operator.base.AbstractOperator;
+import com.antgroup.geaflow.processor.impl.AbstractProcessor;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.CollectExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
+import com.antgroup.geaflow.runtime.io.IInputDesc;
+import com.antgroup.geaflow.runtime.io.RawDataInputDesc;
 import com.antgroup.geaflow.runtime.shuffle.InputDescriptor;
 import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
+import com.antgroup.geaflow.runtime.shuffle.ShardInputDesc;
+import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
+import com.antgroup.geaflow.shuffle.IOutputDesc;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
-import com.antgroup.geaflow.shuffle.OutputInfo;
 import com.antgroup.geaflow.shuffle.message.Shard;
-import com.antgroup.geaflow.shuffle.message.SliceId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,334 +46,242 @@ import java.util.stream.Collectors;
 
 public class IoDescriptorBuilder {
 
-    private static final int SELF_IO_EDGE_ID = 0;
+    public static int COLLECT_DATA_EDGE_ID = 0;
 
+    /**
+     * Build pipeline io descriptor for input task.
+     */
     public static IoDescriptor buildPipelineIoDescriptor(ExecutionTask task,
                                                          ExecutionNodeCycle cycle,
-                                                         DataExchangeMode dataOutputExchangeMode,
-                                                         Configuration config,
                                                          CycleResultManager resultManager) {
-
-        // Init input descriptor.
-        InputDescriptor inputDescriptor;
-        // Cycle head will get input data from upstream.
-        if (isIteration(cycle.getVertexGroup())) {
-            inputDescriptor =
-                IoDescriptorBuilder.buildPipelineInputDescriptorFromSelfLoop(task, cycle, cycle.getIterationCount());
-        } else {
-            if (ExecutionTaskUtils.isCycleHead(task)) {
-                inputDescriptor = IoDescriptorBuilder.buildBatchInputDescriptorFromUpstream(task, cycle, resultManager);
-            } else {
-                inputDescriptor = IoDescriptorBuilder.buildPipelineInputDescriptorFromUpstream(task, cycle);
-            }
-        }
-
-        // Init output descriptor.
-        OutputDescriptor outputDescriptor;
-        if (ExecutionTaskUtils.isCycleTail(task)) {
-            if (dataOutputExchangeMode == DataExchangeMode.PIPELINE) {
-                // Initialize iteration tail output to itself.
-                outputDescriptor = IoDescriptorBuilder.buildPipelineOutputDescriptorToSelfLoop(task, cycle);
-            } else {
-                outputDescriptor = IoDescriptorBuilder.buildBatchOutputDescriptorToDownstream(task, cycle);
-            }
-        } else {
-            outputDescriptor = IoDescriptorBuilder.buildPipelineOutputDescriptorToDownstream(task, cycle);
-        }
-
+        InputDescriptor inputDescriptor = buildPipelineInputDescriptor(task, cycle, resultManager);
+        OutputDescriptor outputDescriptor = buildPipelineOutputDescriptor(task, cycle);
         IoDescriptor ioDescriptor = new IoDescriptor(inputDescriptor, outputDescriptor);
         return ioDescriptor;
     }
 
-    public static OutputDescriptor buildIterationOutputDescriptor(ExecutionTask task,
-                                                                  ExecutionNodeCycle cycle) {
-        List<OutputInfo> outputInfoList = new ArrayList<>();
-
-        int vertexId = task.getVertexId();
+    /**
+     * Build pipeline input descriptor.
+     */
+    private static InputDescriptor buildPipelineInputDescriptor(ExecutionTask task,
+                                                                ExecutionNodeCycle cycle,
+                                                                CycleResultManager resultManager) {
         ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-        List<Integer> outEdgeIds = vertexGroup.getVertexId2OutEdgeIds().get(vertexId);
-
-        // 1. Build to downstream.
-        for (Integer edgeId : outEdgeIds) {
-            ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(edge.getTargetId());
-            List<Integer> taskIds = tasks.stream().map(e -> e.getTaskId()).collect(Collectors.toList());
-            OutputInfo outputInfo = new OutputInfo(edgeId, edge.getEdgeName(), vertexId, ShuffleDescriptor.BATCH);
-            // TODO Forward partitioner not write to all output tasks.
-            outputInfo.setTargetTaskIndices(taskIds);
-            outputInfo.setPartitioner(edge.getPartitioner());
-            outputInfo.setEncoder(edge.getEncoder());
-            outputInfo.setNumPartitions(tasks.get(0).getNumPartitions());
-            outputInfoList.add(outputInfo);
-        }
-
-        // 2. Build self loop.
-        if (outEdgeIds.size() != 0) {
-            ExecutionEdge iterationEdge = vertexGroup.getIterationEdgeMap().get(vertexId);
-            List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(vertexId);
-            List<Integer> taskIds = tasks.stream().map(ExecutionTask::getTaskId).collect(Collectors.toList());
-            OutputInfo outputInfo = new OutputInfo(SELF_IO_EDGE_ID,
-                getSelfIoEdgeTag(), task.getVertexId(), ShuffleDescriptor.PIPELINE);
-            outputInfo.setTargetTaskIndices(taskIds);
-            outputInfo.setPartitioner(new KeyPartitioner<>(iterationEdge.getPartitioner().getOpId()));
-            outputInfo.setEncoder(iterationEdge.getEncoder());
-            outputInfo.setNumPartitions(task.getMaxParallelism());
-            outputInfoList.add(outputInfo);
-        }
-        OutputDescriptor outputDescriptor = new OutputDescriptor();
-        outputDescriptor.setOutputInfoList(outputInfoList);
-        return outputDescriptor;
-    }
-
-    public static InputDescriptor buildPipelineInputDescriptorFromUpstream(ExecutionTask task,
-                                                                           ExecutionNodeCycle cycle) {
-        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-
-        // 1. Build input descriptor.
-        InputDescriptor inputDescriptor = new InputDescriptor();
-        Map<Integer, List<Shard>> inputShardResultMap = new HashMap<>();
-        Map<Integer, String> streamId2NameMap = new HashMap<>();
-        Map<Integer, IEncoder<?>> edgeId2EncoderMap = new HashMap<>();
-
         List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(task.getVertexId());
+
+        Map<Integer, IInputDesc> inputInfos = new HashMap<>();
         for (Integer edgeId : inputEdgeIds) {
             ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            List<ExecutionTask> inputTasks = cycle.getVertexIdToTasks().get(edge.getSrcId());
-
-            List<Shard> inputShard = new ArrayList<>(inputTasks.size());
-            for (ExecutionTask inputTask : inputTasks) {
-                Shard shard = new Shard(edgeId,
-                    Arrays.asList(new LogicalPipelineSliceMeta(inputTask.getIndex(), task.getIndex(),
-                        cycle.getPipelineId(), edgeId, inputTask.getWorkerInfo().getContainerName())));
-                inputShard.add(shard);
+            // Only build forward for pipeline.
+            if (edge.getType() != CollectType.FORWARD) {
+                continue;
             }
-            inputShardResultMap.put(edgeId, inputShard);
-            streamId2NameMap.put(edgeId, edge.getEdgeName());
-            if (edge.getEncoder() != null) {
-                edgeId2EncoderMap.put(edgeId, edge.getEncoder());
+            if (edge.getSrcId() == edge.getTargetId()) {
+                continue;
+            }
+            IInputDesc inputInfo = buildInputInfo(task, edge, cycle, resultManager);
+            if (inputInfo != null) {
+                inputInfos.put(edgeId, inputInfo);
             }
         }
-        inputDescriptor.setInputShardMap(inputShardResultMap);
-        inputDescriptor.setStreamId2NameMap(streamId2NameMap);
-        inputDescriptor.setEdgeId2EncoderMap(edgeId2EncoderMap);
-        inputDescriptor.setShuffleDescriptor(ShuffleDescriptor.PIPELINE);
-
-        return inputDescriptor;
+        return new InputDescriptor(inputInfos);
     }
 
     /**
-     * Input from current vertex itself.
+     * Build pipeline output descriptor.
      */
-    public static InputDescriptor buildPipelineInputDescriptorFromSelfLoop(ExecutionTask executionTask,
-                                                                           ExecutionNodeCycle cycle,
-                                                                           long iterationId) {
-        int vertexId = executionTask.getVertexId();
-
-        Map<Integer, List<Shard>> inputPartitionResultMap = new HashMap<>();
-        Map<Integer, String> id2TagMap = new HashMap<>();
-
-        List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(vertexId);
-        List<Shard> inputShard = new ArrayList<>(tasks.size());
-        for (ExecutionTask task : tasks) {
-            Shard shard = new Shard(SELF_IO_EDGE_ID,
-                Arrays.asList(new LogicalPipelineSliceMeta(
-                    new SliceId(cycle.getPipelineId(), SELF_IO_EDGE_ID, task.getIndex(), executionTask.getIndex()),
-                    iterationId, task.getWorkerInfo().getContainerName())));
-            inputShard.add(shard);
+    private static OutputDescriptor buildPipelineOutputDescriptor(ExecutionTask task,
+                                                                  ExecutionNodeCycle cycle) {
+        int vertexId = task.getVertexId();
+        if (cycle instanceof CollectExecutionNodeCycle) {
+            return new OutputDescriptor(Arrays.asList(buildCollectOutputDesc(task)));
         }
-        inputPartitionResultMap.put(SELF_IO_EDGE_ID, inputShard);
-        id2TagMap.put(SELF_IO_EDGE_ID, getSelfIoEdgeTag());
-
-        IEncoder<?> msgEncoder = cycle.getVertexGroup().getIterationEdgeMap().get(vertexId).getEncoder();
-        Map<Integer, IEncoder<?>> encoders = Collections.singletonMap(SELF_IO_EDGE_ID, msgEncoder);
-
-        InputDescriptor inputDescriptor = new InputDescriptor();
-        inputDescriptor.setInputShardMap(inputPartitionResultMap);
-        inputDescriptor.setStreamId2NameMap(id2TagMap);
-        inputDescriptor.setEdgeId2EncoderMap(encoders);
-        inputDescriptor.setShuffleDescriptor(ShuffleDescriptor.PIPELINE);
-
-        return inputDescriptor;
-    }
-
-    public static OutputDescriptor buildPipelineOutputDescriptorToDownstream(ExecutionTask task,
-                                                                             ExecutionNodeCycle cycle) {
         ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-        OutputDescriptor outputDescriptor = new OutputDescriptor();
-        List<OutputInfo> outputInfoList = new ArrayList<>();
-
-        List<Integer> outEdgeIds = vertexGroup.getVertexId2OutEdgeIds().get(task.getVertexId());
-        for (Integer edgeId : outEdgeIds) {
-            ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(edge.getTargetId());
-            List<Integer> taskIds = tasks.stream().map(e -> e.getTaskId()).collect(Collectors.toList());
-            OutputInfo outputInfo = new OutputInfo(edgeId, edge.getEdgeName(), task.getVertexId(), ShuffleDescriptor.PIPELINE);
-            outputInfo.setTargetTaskIndices(taskIds);
-            outputInfo.setPartitioner(edge.getPartitioner());
-            outputInfo.setEncoder(edge.getEncoder());
-            outputInfo.setNumPartitions(task.getNumPartitions());
-            outputInfoList.add(outputInfo);
-        }
-        outputDescriptor.setOutputInfoList(outputInfoList);
-        return outputDescriptor;
-    }
-
-    /**
-     * Input from upstream vertices.
-     */
-    public static InputDescriptor buildBatchInputDescriptorFromUpstream(ExecutionTask executionTask,
-                                                                        ExecutionNodeCycle cycle,
-                                                                        CycleResultManager resultManager) {
-
-        int vertexId = executionTask.getVertexId();
-        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-
-        InputDescriptor inputDescriptor = new InputDescriptor();
-        Map<Integer, List<Shard>> inputPartitionResultMap = new HashMap<>();
-        Map<Integer, String> id2TagMap = new HashMap<>();
-        Map<Integer, IEncoder<?>> edgeId2EncoderMap = new HashMap<>();
-
-        List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(vertexId);
-
-        if (inputEdgeIds != null && !inputEdgeIds.isEmpty()) {
-            // TODO Forward partitioner not read all input tasks.
-            Map<Integer, List<Shard>> inputs =
-                DataExchanger.buildInput(vertexGroup.getVertexMap().get(vertexId), resultManager);
-
-            List<Shard> partitions = inputs.get(executionTask.getIndex());
-            // Convert to edgeId to list map.
-            for (Shard partition : partitions) {
-                int edgeId = partition.getEdgeId();
-                if (!inputPartitionResultMap.containsKey(edgeId)) {
-                    inputPartitionResultMap.put(edgeId, new ArrayList<>());
-                }
-                inputPartitionResultMap.get(edgeId).add(partition);
-            }
-
-            for (Integer edgeId : inputEdgeIds) {
-                ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-                id2TagMap.put(edgeId, edge.getEdgeName());
-                if (edge.getEncoder() != null) {
-                    edgeId2EncoderMap.put(edgeId, edge.getEncoder());
-                }
-            }
-        }
-        inputDescriptor.setInputShardMap(inputPartitionResultMap);
-        inputDescriptor.setStreamId2NameMap(id2TagMap);
-        inputDescriptor.setEdgeId2EncoderMap(edgeId2EncoderMap);
-        inputDescriptor.setShuffleDescriptor(ShuffleDescriptor.BATCH);
-
-        return inputDescriptor;
-    }
-
-    /**
-     * Input from upstream vertices.
-     */
-    public static InputDescriptor buildBatchInputDescriptorFromSelfLoop(ExecutionTask executionTask,
-                                                                        ExecutionNodeCycle cycle,
-                                                                        CycleResultManager resultManager) {
-
-        int vertexId = executionTask.getVertexId();
-        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-
-        InputDescriptor inputDescriptor = new InputDescriptor();
-        Map<Integer, List<Shard>> inputPartitionResultMap = new HashMap<>();
-        Map<Integer, String> id2TagMap = new HashMap<>();
-        Map<Integer, IEncoder<?>> edgeId2EncoderMap = new HashMap<>();
-
-        List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(vertexId);
-
-        if (inputEdgeIds != null && !inputEdgeIds.isEmpty()) {
-            // TODO Forward partitioner not read all input tasks.
-            Map<Integer, List<Shard>> inputs =
-                DataExchanger.buildInput(vertexGroup.getVertexMap().get(vertexId), resultManager);
-
-            List<Shard> partitions = inputs.get(executionTask.getIndex());
-            // Convert to edgeId to list map.
-            for (Shard partition : partitions) {
-                int edgeId = partition.getEdgeId();
-                if (!inputPartitionResultMap.containsKey(edgeId)) {
-                    inputPartitionResultMap.put(edgeId, new ArrayList<>());
-                }
-                inputPartitionResultMap.get(edgeId).add(partition);
-            }
-
-            for (Integer edgeId : inputEdgeIds) {
-                ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-                id2TagMap.put(edgeId, edge.getEdgeName());
-                if (edge.getEncoder() != null) {
-                    edgeId2EncoderMap.put(edgeId, edge.getEncoder());
-                }
-            }
-        }
-        inputDescriptor.setInputShardMap(inputPartitionResultMap);
-        inputDescriptor.setStreamId2NameMap(id2TagMap);
-        inputDescriptor.setEdgeId2EncoderMap(edgeId2EncoderMap);
-        inputDescriptor.setShuffleDescriptor(ShuffleDescriptor.BATCH);
-
-        return inputDescriptor;
-    }
-
-
-    public static OutputDescriptor buildBatchOutputDescriptorToDownstream(ExecutionTask executionTask,
-                                                                          ExecutionNodeCycle cycle) {
-
-        int vertexId = executionTask.getVertexId();
-        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-
-        // 1. Build output descriptor.
-        OutputDescriptor outputDescriptor = new OutputDescriptor();
-        List<OutputInfo> outputInfoList = new ArrayList<>();
-
         List<Integer> outEdgeIds = vertexGroup.getVertexId2OutEdgeIds().get(vertexId);
+        List<IOutputDesc> outputDescs = new ArrayList<>();
         for (Integer edgeId : outEdgeIds) {
             ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(edge.getTargetId());
-            List<Integer> taskIds = tasks.stream().map(e -> e.getTaskId()).collect(Collectors.toList());
-            OutputInfo outputInfo = new OutputInfo(edgeId, edge.getEdgeName(), vertexId, ShuffleDescriptor.BATCH);
-            // TODO Forward partitioner not write to all output tasks.
-            outputInfo.setTargetTaskIndices(taskIds);
-            outputInfo.setPartitioner(edge.getPartitioner());
-            outputInfo.setEncoder(edge.getEncoder());
-            outputInfo.setNumPartitions(executionTask.getNumPartitions());
-            outputInfoList.add(outputInfo);
+            IOutputDesc outputDesc = buildOutputDesc(task, edge, cycle);
+            outputDescs.add(outputDesc);
         }
-        outputDescriptor.setOutputInfoList(outputInfoList);
+        OutputDescriptor outputDescriptor = new OutputDescriptor(outputDescs);
         return outputDescriptor;
     }
 
-    public static OutputDescriptor buildPipelineOutputDescriptorToSelfLoop(ExecutionTask executionTask,
-                                                                           ExecutionNodeCycle cycle) {
+    /**
+     * Build input descriptor for iteration when do init will build iteration loop input descriptor.
+     */
+    public static InputDescriptor buildIterationInitInputDescriptor(ExecutionTask task,
+                                                                    ExecutionNodeCycle cycle,
+                                                                    CycleResultManager resultManager) {
         ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-        List<Integer> outEdgeIds = vertexGroup.getVertexId2OutEdgeIds().get(executionTask.getVertexId());
-        OutputDescriptor outputDescriptor = new OutputDescriptor();
-        if (outEdgeIds.size() != 0) {
-            // Only support one output edge.
-            ExecutionEdge edge = vertexGroup.getEdgeMap().get(outEdgeIds.get(0));
+        List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(task.getVertexId());
 
-            List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(executionTask.getVertexId());
-            List<Integer> taskIds = tasks.stream().map(e -> e.getTaskId()).collect(Collectors.toList());
-            OutputInfo outputInfo = new OutputInfo(SELF_IO_EDGE_ID, getSelfIoEdgeTag(), executionTask.getVertexId(),
-                ShuffleDescriptor.PIPELINE);
-            outputInfo.setTargetTaskIndices(taskIds);
-            outputInfo.setPartitioner(new KeyPartitioner(edge.getPartitioner().getOpId()));
-            outputInfo.setEncoder(edge.getEncoder());
-            outputInfo.setNumPartitions(executionTask.getMaxParallelism());
-            outputDescriptor.setOutputInfoList(Collections.singletonList(outputInfo));
-        } else {
-            outputDescriptor.setOutputInfoList(null);
+        Map<Integer, IInputDesc> inputInfos = new HashMap<>();
+        for (Integer edgeId : inputEdgeIds) {
+            ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
+            // Only build self loop.
+            if (edge.getType() == CollectType.LOOP) {
+                IInputDesc inputInfo = buildInputInfo(task, edge, cycle, resultManager);
+                if (inputInfo != null) {
+                    inputInfos.put(edgeId, inputInfo);
+                }
+            }
         }
-        return outputDescriptor;
+        return new InputDescriptor(inputInfos);
     }
 
-    private static String getSelfIoEdgeTag() {
-        return RecordArgs.GraphRecordNames.Message.name();
+    /**
+     * Build iteration input descriptor when execute with RAW_FORWARD input edge.
+     */
+    public static InputDescriptor buildIterationExecuteInputDescriptor(ExecutionTask task,
+                                                                       ExecutionNodeCycle cycle,
+                                                                       CycleResultManager resultManager) {
+        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
+        List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(task.getVertexId());
+        Map<Integer, IInputDesc> inputInfos = new HashMap<>();
+        for (Integer edgeId : inputEdgeIds) {
+            ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
+            if (edge.getType() == CollectType.RESPONSE) {
+                IInputDesc inputInfo = buildInputInfo(task, edge, cycle, resultManager);
+                if (inputInfo != null) {
+                    inputInfos.put(edgeId, inputInfo);
+                }
+            }
+        }
+        return new InputDescriptor(inputInfos);
     }
 
-    private static boolean isIteration(ExecutionVertexGroup group) {
-        if (group.getCycleGroupMeta().isIterative()) {
+    /**
+     * Build input info for input task and edge.
+     */
+    protected static IInputDesc buildInputInfo(ExecutionTask task,
+                                             ExecutionEdge inputEdge,
+                                             ExecutionNodeCycle cycle,
+                                             CycleResultManager resultManager) {
+        List<ExecutionTask> inputTasks = cycle.getVertexIdToTasks().get(inputEdge.getSrcId());
+        int edgeId = inputEdge.getEdgeId();
+
+        switch (inputEdge.getType()) {
+            case LOOP:
+            case FORWARD:
+                int vertexId = task.getVertexId();
+                ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
+                ShuffleDescriptor shuffleDescriptor;
+                List<Shard> inputs = new ArrayList<>(inputTasks.size());
+                if (isBatchDataExchange(vertexGroup, inputEdge.getSrcId())) {
+                    shuffleDescriptor = ShuffleDescriptor.BATCH;
+                    Map<Integer, List<Shard>> taskInputs =
+                        DataExchanger.buildInput(vertexGroup.getVertexMap().get(vertexId),inputEdge, resultManager);
+                    inputs = taskInputs.get(task.getIndex());
+                } else {
+                    shuffleDescriptor = ShuffleDescriptor.PIPELINE;
+                    // TODO forward partitioner not read all input tasks.
+                    for (ExecutionTask inputTask : inputTasks) {
+                        Shard shard = new Shard(edgeId,
+                            Arrays.asList(new LogicalPipelineSliceMeta(inputTask.getIndex(), task.getIndex(),
+                                cycle.getPipelineId(), edgeId, inputTask.getWorkerInfo().getContainerName())));
+                        inputs.add(shard);
+                    }
+                }
+                return new ShardInputDesc(edgeId, inputEdge.getEdgeName(), inputs,
+                    inputEdge.getEncoder(), shuffleDescriptor);
+            case RESPONSE:
+                List<IResult> results = resultManager.get(inputEdge.getEdgeId());
+                if (results == null) {
+                    return null;
+                }
+                List<Object> dataInput = new ArrayList<>();
+                for (IResult result : results) {
+                    if (result.getType() != CollectType.RESPONSE) {
+                        throw new GeaflowRuntimeException(String.format("edge %s type %s not support handle result %s",
+                            inputEdge.getEdgeId(), inputEdge.getType(), result.getType()));
+                    }
+                    dataInput.addAll(((ResponseResult) result).getResponse());
+                }
+                return new RawDataInputDesc(edgeId, inputEdge.getEdgeName(), dataInput);
+            default:
+                throw new GeaflowRuntimeException(String.format("not support build input for edge %s type %s",
+                    inputEdge.getEdgeId(), inputEdge.getType()));
+        }
+    }
+
+    private static IOutputDesc buildCollectOutputDesc(ExecutionTask task) {
+        int opId = getCollectOpId((AbstractOperator) ((AbstractProcessor) task.getProcessor()).getOperator());
+        ResponseOutputDesc outputDesc = new ResponseOutputDesc(opId,
+            COLLECT_DATA_EDGE_ID, CollectType.RESPONSE.name(), CollectType.RESPONSE);
+        return outputDesc;
+
+    }
+
+    private static Integer getCollectOpId(AbstractOperator operator) {
+        if (operator.getNextOperators().isEmpty()) {
+            return operator.getOpArgs().getOpId();
+        } else if (operator.getNextOperators().size() == 1) {
+            return getCollectOpId((AbstractOperator) operator.getNextOperators().get(0));
+        } else {
+            throw new GeaflowRuntimeException("not support collect multi-output");
+        }
+    }
+
+    protected static IOutputDesc buildOutputDesc(ExecutionTask task,
+                                                 ExecutionEdge outEdge,
+                                                 ExecutionNodeCycle cycle) {
+
+        int vertexId = task.getVertexId();
+        switch (outEdge.getType()) {
+            case LOOP:
+            case FORWARD:
+                List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(outEdge.getTargetId());
+                List<Integer> taskIds = tasks.stream().map(e -> e.getTaskId()).collect(Collectors.toList());
+                ShuffleDescriptor shuffleDescriptor;
+                if (isBatchDataExchange(cycle.getVertexGroup(), outEdge.getTargetId())) {
+                    shuffleDescriptor = ShuffleDescriptor.BATCH;
+                } else {
+                    shuffleDescriptor = ShuffleDescriptor.PIPELINE;
+                }
+                ForwardOutputDesc shuffleOutputDesc = new ForwardOutputDesc(outEdge.getEdgeId(),
+                    outEdge.getEdgeName(), vertexId,
+                    shuffleDescriptor);
+                // TODO forward partitioner not write to all output tasks.
+                shuffleOutputDesc.setTargetTaskIndices(taskIds);
+                shuffleOutputDesc.setPartitioner(outEdge.getPartitioner());
+                shuffleOutputDesc.setEncoder(outEdge.getEncoder());
+                if (isIteration(outEdge)) {
+                    shuffleOutputDesc.setNumPartitions(task.getMaxParallelism());
+                } else {
+                    shuffleOutputDesc.setNumPartitions(task.getNumPartitions());
+                }
+                return shuffleOutputDesc;
+            case RESPONSE:
+                ResponseOutputDesc outputDesc = new ResponseOutputDesc(outEdge.getPartitioner().getOpId(),
+                    outEdge.getEdgeId(), outEdge.getEdgeName(),
+                    outEdge.getType());
+                return outputDesc;
+            default:
+                throw new GeaflowRuntimeException(String.format("not support build output for edge %s type %s",
+                    outEdge.getEdgeId(), outEdge.getType()));
+
+        }
+    }
+
+    private static boolean isIteration(ExecutionEdge edge) {
+        if (edge.getSrcId() == edge.getTargetId()) {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Check whether the input edge is batch exchange mode.
+     * If the vertex not in current vertex group, then set the current edge exchange mode to batch.
+     */
+    private static boolean isBatchDataExchange(ExecutionVertexGroup vertexGroup,
+                                               int vertexId) {
+        if (!vertexGroup.getVertexMap().containsKey(vertexId)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

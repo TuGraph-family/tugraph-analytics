@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.operator.impl.graph.materialize;
 
+import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
+
 import com.antgroup.geaflow.api.graph.materialize.GraphMaterializeFunction;
 import com.antgroup.geaflow.api.trait.CheckpointTrait;
 import com.antgroup.geaflow.api.trait.TransactionTrait;
@@ -58,7 +60,7 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
         String storeType = graphViewDesc.getBackend().name();
         GraphStateDescriptor<K, VV, EV> descriptor = GraphStateDescriptor.build(
             graphViewDesc.getName(), storeType);
-        descriptor.withDataModel(graphViewDesc.isStatic() ? DataModel.STATIC_GRAPH : DataModel.DYNAMIC_GRAPH);
+        descriptor.withDataModel(DataModel.DYNAMIC_GRAPH);
         descriptor.withGraphMeta(new GraphMeta(graphViewDesc.getGraphMetaType()));
         descriptor.withMetricGroup(runtimeContext.getMetric());
 
@@ -80,11 +82,7 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
             taskIndex, keyGroup);
         this.graphState = StateFactory.buildGraphState(descriptor, runtimeContext.getConfiguration());
         recover();
-        if (graphViewDesc.isStatic()) {
-            this.function =  new StaticGraphMaterializeFunction<>(graphState);
-        } else {
-            this.function = new DynamicGraphMaterializeFunction<>(graphState);
-        }
+        this.function = new DynamicGraphMaterializeFunction<>(graphState);
     }
 
     @Override
@@ -156,28 +154,7 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
         }
     }
 
-    private static class StaticGraphMaterializeFunction<K, VV, EV> implements GraphMaterializeFunction<K, VV, EV> {
-
-        private final GraphState<K, VV, EV> graphState;
-
-        public StaticGraphMaterializeFunction(GraphState<K, VV, EV> graphState) {
-            this.graphState = graphState;
-        }
-
-        @Override
-        public void materializeVertex(IVertex<K, VV> vertex) {
-            graphState.staticGraph().V().add(vertex);
-        }
-
-        @Override
-        public void materializeEdge(IEdge<K, EV> edge) {
-            graphState.staticGraph().E().add(edge);
-        }
-    }
-
-    private static class DynamicGraphMaterializeFunction<K, VV, EV> implements GraphMaterializeFunction<K, VV, EV> {
-
-        public static final long VERSION = 0L;
+    public static class DynamicGraphMaterializeFunction<K, VV, EV> implements GraphMaterializeFunction<K, VV, EV> {
 
         private final GraphState<K, VV, EV> graphState;
 
@@ -187,12 +164,12 @@ public class GraphViewMaterializeOp<K, VV, EV> extends AbstractOneInputOperator<
 
         @Override
         public void materializeVertex(IVertex<K, VV> vertex) {
-            graphState.dynamicGraph().V().add(VERSION, vertex);
+            graphState.dynamicGraph().V().add(GRAPH_VERSION, vertex);
         }
 
         @Override
         public void materializeEdge(IEdge<K, EV> edge) {
-            graphState.dynamicGraph().E().add(VERSION, edge);
+            graphState.dynamicGraph().E().add(GRAPH_VERSION, edge);
         }
 
     }

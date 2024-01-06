@@ -36,10 +36,18 @@ public class StepJoinFunctionImpl implements StepJoinFunction {
 
     private final IType<?>[] rightTypes;
 
+    private final Expression condition;
+
     public StepJoinFunctionImpl(JoinRelType joinType, IType<?>[] leftTypes, IType<?>[] rightTypes) {
+        this(joinType, leftTypes, rightTypes, null);
+    }
+
+    public StepJoinFunctionImpl(JoinRelType joinType, IType<?>[] leftTypes,
+                                IType<?>[] rightTypes, Expression condition) {
         this.joinType = joinType;
         this.leftTypes = Objects.requireNonNull(leftTypes);
         this.rightTypes = Objects.requireNonNull(rightTypes);
+        this.condition = condition;
     }
 
     @Override
@@ -49,7 +57,12 @@ public class StepJoinFunctionImpl implements StepJoinFunction {
                 if (left == null || right == null) {
                     return null;
                 }
-                return joinPath(left, right);
+                Path innerJoinPath = joinPath(left, right);
+                if (condition == null || Boolean.valueOf(true).equals(condition.evaluate(innerJoinPath))) {
+                    return innerJoinPath;
+                } else {
+                    return null;
+                }
             case LEFT:
                 if (left == null) {
                     return null;
@@ -57,7 +70,12 @@ public class StepJoinFunctionImpl implements StepJoinFunction {
                 if (right == null) {
                     right = new DefaultPath(new Row[rightTypes.length]);
                 }
-                return joinPath(left, right);
+                Path leftJoinPath = joinPath(left, right);
+                if (condition == null || Boolean.valueOf(true).equals(condition.evaluate(leftJoinPath))) {
+                    return leftJoinPath;
+                } else {
+                    return null;
+                }
             case RIGHT:
                 if (right == null) {
                     return null;
@@ -65,7 +83,12 @@ public class StepJoinFunctionImpl implements StepJoinFunction {
                 if (left == null) {
                     left = new DefaultPath(new Row[leftTypes.length]);
                 }
-                return joinPath(left, right);
+                Path rightJoinPath = joinPath(left, right);
+                if (condition == null || Boolean.valueOf(true).equals(condition.evaluate(rightJoinPath))) {
+                    return rightJoinPath;
+                } else {
+                    return null;
+                }
             default:
                 throw new GeaFlowDSLException("JoinType: " + joinType + " is not support");
         }
@@ -107,6 +130,6 @@ public class StepJoinFunctionImpl implements StepJoinFunction {
     @Override
     public StepFunction copy(List<Expression> expressions) {
         assert expressions.isEmpty();
-        return new StepJoinFunctionImpl(joinType, leftTypes, rightTypes);
+        return new StepJoinFunctionImpl(joinType, leftTypes, rightTypes, condition);
     }
 }

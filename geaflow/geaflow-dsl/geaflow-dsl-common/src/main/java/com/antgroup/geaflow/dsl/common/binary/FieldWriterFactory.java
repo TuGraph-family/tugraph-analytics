@@ -22,7 +22,6 @@ import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.ArrayType;
-import java.sql.Timestamp;
 import java.util.Locale;
 
 public class FieldWriterFactory {
@@ -81,7 +80,8 @@ public class FieldWriterFactory {
                     }
                 };
             case Types.TYPE_NAME_TIMESTAMP:
-                return (PropertyFieldWriter<Timestamp>) (writerBuffer, nullBitsOffset, index, value) -> {
+            case Types.TYPE_NAME_DATE:
+                return (PropertyFieldWriter<java.util.Date>) (writerBuffer, nullBitsOffset, index, value) -> {
                     if (value == null) {
                         writerBuffer.setNullAt(nullBitsOffset, index);
                     } else {

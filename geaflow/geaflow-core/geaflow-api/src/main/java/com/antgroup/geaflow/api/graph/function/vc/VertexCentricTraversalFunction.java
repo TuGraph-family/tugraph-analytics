@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.api.graph.function.vc;
 
 import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.message.IGraphMessage;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
@@ -28,8 +29,7 @@ import java.util.Iterator;
  * @param <M> The message type during iterations.
  * @param <R> The request type for traversal.
  */
-public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexCentricFunction<K, VV
-    , EV, M> {
+public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexCentricFunction<K, VV, EV, M> {
 
     /**
      * Open traversal function based on context.
@@ -78,6 +78,11 @@ public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexC
          * Broadcast message.
          */
         void broadcast(IGraphMessage<K, M> message);
+
+        /**
+         * Get the traversal operator name.
+         */
+        String getTraversalOpName();
     }
 
     interface TraversalVertexQuery<K, VV> extends VertexQuery<K, VV> {
@@ -85,7 +90,7 @@ public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexC
         /**
          * Load vertex id iterator.
          */
-        Iterator<K> loadIdIterator();
+        CloseableIterator<K> loadIdIterator();
     }
 
     interface TraversalEdgeQuery<K, EV> extends EdgeQuery<K, EV> {

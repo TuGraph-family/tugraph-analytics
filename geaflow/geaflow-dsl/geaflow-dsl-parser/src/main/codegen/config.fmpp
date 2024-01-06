@@ -48,6 +48,7 @@ data: {
         "com.antgroup.geaflow.dsl.sqlnode.SqlMatchEdge.EdgeDirection"
         "com.antgroup.geaflow.dsl.sqlnode.*"
         "com.antgroup.geaflow.dsl.util.GQLReturnKeyword"
+        "com.antgroup.geaflow.dsl.util.GQLEdgeConstraint"
     ]
 
     # List of new keywords. Example: "DATABASES", "TABLES". If the keyword is not a reserved

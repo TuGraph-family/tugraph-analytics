@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.api.reader;
 
+import com.antgroup.geaflow.common.metric.ShuffleReadMetrics;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.shuffle.message.FetchRequest;
 import com.antgroup.geaflow.shuffle.message.PipelineEvent;
@@ -54,6 +55,13 @@ public interface IShuffleReader extends Serializable {
      * @return exchange mode.
      */
     DataExchangeMode getExchangeMode();
+
+    /**
+     * Get read metrics.
+     *
+     * @return read metrics.
+     */
+    ShuffleReadMetrics getShuffleReadMetrics();
 
     /**
      * Close.

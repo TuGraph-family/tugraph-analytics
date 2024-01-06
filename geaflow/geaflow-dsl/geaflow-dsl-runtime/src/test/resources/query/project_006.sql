@@ -9,9 +9,10 @@ CREATE TABLE users (
 );
 
 CREATE TABLE output_console(
-	console_f1 bigint,
+	id bigint,
 	console_f2 double,
-	console_f3 varchar
+	console_f3 varchar,
+	PRIMARY KEY(id)
 ) WITH (
 	type='file',
 	geaflow.dsl.file.path='${target}'

@@ -85,6 +85,11 @@ public class MetricNameFormatter {
         return MetricRegistry.name(MetricConstants.METRIC_ITERATION_MSG_TPS, metricName);
     }
 
+    public static String iterationAggMetricName(Class<?> opClass, int opId) {
+        String metricName = String.format("%s[%d]%s", opClass.getSimpleName(), opId, MetricConstants.UNIT_N);
+        return MetricRegistry.name(MetricConstants.METRIC_ITERATION_AGG_TPS, metricName);
+    }
+
     //////////////////////////////
     // Dsl
     //////////////////////////////

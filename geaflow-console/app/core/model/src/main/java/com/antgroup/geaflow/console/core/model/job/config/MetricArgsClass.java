@@ -32,16 +32,16 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MetricArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.metric.reporters", comment = "指标存储类型")
+    @GeaflowConfigKey(value = "geaflow.metric.reporters", comment = "i18n.key.metric.storage.type")
     @GeaflowConfigValue(required = true, defaultValue = "INFLUXDB")
     private GeaflowPluginType type;
 
-    @GeaflowConfigKey(value = "plugin", comment = "插件配置")
+    @GeaflowConfigKey(value = "plugin", comment = "i18n.key.plugin.config")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private PluginConfigClass plugin;
 
     public MetricArgsClass(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
 
         Class<? extends PluginConfigClass> configClass;
         switch (type) {
@@ -49,7 +49,7 @@ public class MetricArgsClass extends GeaflowConfigClass {
                 configClass = InfluxdbPluginConfigClass.class;
                 break;
             default:
-                throw new GeaflowIllegalException("Metric meta config type {} not supported", type);
+                throw new GeaflowIllegalException("Metric meta config type {} not supported", pluginConfig.getType());
         }
 
         this.plugin = pluginConfig.getConfig().parse(configClass);

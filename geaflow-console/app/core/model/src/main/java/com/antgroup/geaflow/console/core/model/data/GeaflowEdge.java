@@ -14,18 +14,18 @@
 
 package com.antgroup.geaflow.console.core.model.data;
 
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_SOURCE_ID;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_TARGET_ID;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory.EDGE_TIMESTAMP;
+
+import com.antgroup.geaflow.console.common.util.type.GeaflowFieldCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class GeaflowEdge extends GeaflowStruct {
-
-    private List<Endpoint> endpoints = new ArrayList<>();
 
     public GeaflowEdge() {
         super(GeaflowStructType.EDGE);
@@ -37,17 +37,31 @@ public class GeaflowEdge extends GeaflowStruct {
         super.comment = comment;
     }
 
-    public void addEndpoints(List<Endpoint> endpoints) {
-        this.endpoints.addAll(endpoints);
+    @Override
+    public void validate() {
+        super.validate();
+
+        int sourceIdCount = 0;
+        int targetIdCount = 0;
+        int tsCount = 0;
+        for (GeaflowField value : fields.values()) {
+            GeaflowFieldCategory category = value.getCategory();
+            if (category == EDGE_SOURCE_ID) {
+                sourceIdCount++;
+            }
+
+            if (category == EDGE_TARGET_ID) {
+                targetIdCount++;
+            }
+
+            if (category == EDGE_TIMESTAMP) {
+                tsCount++;
+            }
+        }
+
+        EDGE_SOURCE_ID.validate(sourceIdCount);
+        EDGE_TARGET_ID.validate(targetIdCount);
+        EDGE_TIMESTAMP.validate(tsCount);
     }
 
-    @Getter
-    @AllArgsConstructor
-    public static class Endpoint {
-
-        private GeaflowVertex source;
-
-        private GeaflowVertex target;
-
-    }
 }

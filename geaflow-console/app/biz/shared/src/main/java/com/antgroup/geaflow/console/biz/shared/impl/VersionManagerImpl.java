@@ -27,9 +27,11 @@ import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.dal.model.VersionSearch;
 import com.antgroup.geaflow.console.common.util.FileUtil;
 import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
+import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.NameService;
@@ -129,7 +131,7 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
 
         VersionView versionView = new VersionView();
         versionView.setName("0.1");
-        versionView.setComment("默认版本");
+        versionView.setComment(I18nUtil.getMessage("i18n.key.default.version"));
         versionView.setPublish(true);
 
         return createVersion(versionView, new LocalMultipartFile(new File(path)), null);
@@ -187,12 +189,12 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
 
         GeaflowRemoteFile engineJarPackage = version.getEngineJarPackage();
         if (engineJarPackage != null) {
-            remoteFileManager.deleteVersionJar(engineJarPackage.getId());
+            remoteFileManager.deleteRefJar(engineJarPackage.getId(),null, GeaflowResourceType.ENGINE_VERSION);
         }
 
         GeaflowRemoteFile langJarPackage = version.getLangJarPackage();
         if (langJarPackage != null) {
-            remoteFileManager.deleteVersionJar(langJarPackage.getId());
+            remoteFileManager.deleteRefJar(langJarPackage.getId(),null, GeaflowResourceType.ENGINE_VERSION);
         }
 
         return drop(version.getId());

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime.query;
 
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import org.testng.annotations.Test;
 
 public class GQLInsertTest {
@@ -37,10 +38,28 @@ public class GQLInsertTest {
     }
 
     @Test
+    public void testInsertAndQuery_003() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), "2")
+            .withQueryPath("/query/gql_insert_and_graph_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testInsertAndQuery_004() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_insert_and_graph_004.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testInsertAndQueryWithRequest_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_request_001.sql")
             .execute()
             .checkSinkResult();
@@ -50,7 +69,6 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithRequest_002() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_request_002.sql")
             .execute()
             .checkSinkResult();
@@ -60,7 +78,6 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithRequest_003() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_request_003.sql")
             .execute()
             .checkSinkResult();
@@ -70,7 +87,6 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithSubQuery_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_subquery_001.sql")
             .execute()
             .checkSinkResult();
@@ -80,7 +96,6 @@ public class GQLInsertTest {
     public void testInsertAndQueryWithSubQuery_002() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_insert_and_query_with_subquery_002.sql")
             .execute()
             .checkSinkResult();

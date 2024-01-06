@@ -19,7 +19,7 @@
     <parent>
         <groupId>com.antgroup.tugraph</groupId>
         <artifactId>geaflow</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -29,6 +29,7 @@
     <modules>
         <module>geaflow-metrics-common</module>
         <module>geaflow-metrics-slf4j</module>
+        <module>geaflow-metrics-prometheus</module>
         <module>geaflow-metrics-influxdb</module>
         <module>geaflow-stats-metrics</module>
         <module>geaflow-metrics-reporter</module>

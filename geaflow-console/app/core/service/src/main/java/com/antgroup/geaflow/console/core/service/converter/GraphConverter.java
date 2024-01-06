@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.service.converter;
 
 import com.antgroup.geaflow.console.common.dal.entity.GraphEntity;
 import com.antgroup.geaflow.console.core.model.data.GeaflowEdge;
+import com.antgroup.geaflow.console.core.model.data.GeaflowEndpoint;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowVertex;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
@@ -34,11 +35,11 @@ public class GraphConverter extends DataConverter<GeaflowGraph, GraphEntity> {
     }
 
     public GeaflowGraph convert(GraphEntity entity, List<GeaflowVertex> vertices, List<GeaflowEdge> edges,
-                                GeaflowPluginConfig pluginConfig) {
+                                List<GeaflowEndpoint> endpoints, GeaflowPluginConfig pluginConfig) {
         GeaflowGraph graph = entityToModel(entity);
-
         graph.addVertices(vertices);
         graph.addEdges(edges);
+        graph.setEndpoints(endpoints);
         graph.setPluginConfig(pluginConfig);
         return graph;
     }

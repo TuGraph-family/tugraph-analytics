@@ -17,10 +17,9 @@ package com.antgroup.geaflow.console.biz.shared;
 import com.antgroup.geaflow.console.biz.shared.view.PluginConfigView;
 import com.antgroup.geaflow.console.common.dal.model.PluginConfigSearch;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import java.util.List;
 
 public interface PluginConfigManager extends NameManager<PluginConfigView, PluginConfigSearch> {
 
-    List<PluginConfigView> getPluginConfigs(GeaflowPluginCategory category, GeaflowPluginType type);
+    List<PluginConfigView> getPluginConfigs(GeaflowPluginCategory category, String type);
 }

@@ -23,17 +23,12 @@ import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DefaultRuntimeContext extends AbstractRuntimeContext {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRuntimeContext.class);
 
     private long pipelineId;
     private String pipelineName;
     private TaskArgs taskArgs;
-    private long windowId;
     protected IoDescriptor ioDescriptor;
 
     public DefaultRuntimeContext(Configuration jobConfig) {
@@ -66,9 +61,7 @@ public class DefaultRuntimeContext extends AbstractRuntimeContext {
     }
 
     public DefaultRuntimeContext setTaskArgs(TaskArgs taskArgs) {
-        this.taskArgs = new TaskArgs(taskArgs.getTaskId(),
-            taskArgs.getTaskIndex(), taskArgs.getTaskName(),
-            taskArgs.getParallelism(), taskArgs.getMaxParallelism());
+        this.taskArgs = taskArgs;
         return this;
     }
 
@@ -80,7 +73,7 @@ public class DefaultRuntimeContext extends AbstractRuntimeContext {
     public DefaultRuntimeContext setExecutionTask(ExecutionTask task) {
         this.taskArgs = new TaskArgs(task.getTaskId(), task.getIndex(),
             task.getTaskName(), task.getParallelism(),
-            task.getMaxParallelism());
+            task.getMaxParallelism(), task.getWorkerInfo().getProcessIndex());
         return this;
     }
 
@@ -100,13 +93,8 @@ public class DefaultRuntimeContext extends AbstractRuntimeContext {
     }
 
     public DefaultRuntimeContext setWindowId(long windowId) {
-        this.windowId = windowId;
+        updateWindowId(windowId);
         return this;
-    }
-
-    @Override
-    public long getWindowId() {
-        return windowId;
     }
 
     @Override

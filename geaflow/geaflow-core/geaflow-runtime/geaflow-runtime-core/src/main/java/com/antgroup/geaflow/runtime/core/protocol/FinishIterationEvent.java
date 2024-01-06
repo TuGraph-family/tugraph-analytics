@@ -16,6 +16,7 @@ package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
+import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public class FinishIterationEvent extends AbstractExecutableCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FinishIterationEvent.class);
 
-    private static final long END_OF_ITERATION_ID = 0;
+    public static final long END_OF_ITERATION_ID = 0;
 
     private int taskId;
 
@@ -34,9 +35,11 @@ public class FinishIterationEvent extends AbstractExecutableCommand {
 
     @Override
     public void execute(ITaskContext taskContext) {
+        final long start = System.currentTimeMillis();
         super.execute(taskContext);
         worker.init(windowId);
         worker.finish(END_OF_ITERATION_ID);
+        ((AbstractWorkerContext) this.context).getEventMetrics().addProcessCostMs(System.currentTimeMillis() - start);
     }
 
     @Override

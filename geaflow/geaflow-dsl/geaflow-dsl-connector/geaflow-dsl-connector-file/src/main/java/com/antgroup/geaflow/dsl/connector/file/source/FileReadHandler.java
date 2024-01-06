@@ -15,8 +15,10 @@
 package com.antgroup.geaflow.dsl.connector.file.source;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
 import java.io.IOException;
@@ -25,11 +27,13 @@ import java.util.List;
 
 public interface FileReadHandler extends Serializable {
 
-    void init(Configuration conf, String path);
+    void init(Configuration tableConf, TableSchema tableSchema, String path) throws IOException;
 
     List<Partition> listPartitions();
 
-    FetchData<String> readPartition(FileSplit split, FileOffset offset, long size) throws IOException;
+    <T> FetchData<T> readPartition(FileSplit split, FileOffset offset, int windowSize) throws IOException;
 
-    void close();
+    void close() throws IOException;
+
+    <T> TableDeserializer<T> getDeserializer();
 }

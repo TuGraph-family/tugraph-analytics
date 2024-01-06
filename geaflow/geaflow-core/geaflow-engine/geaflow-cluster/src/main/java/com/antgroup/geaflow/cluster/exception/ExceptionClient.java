@@ -24,17 +24,19 @@ public class ExceptionClient {
 
     private static ExceptionClient INSTANCE;
 
-    private final int containerId;
     private final String masterId;
+    private final int containerId;
+    private final String containerName;
 
-    public ExceptionClient(int containerId, String masterId) {
+    public ExceptionClient(int containerId, String containerName, String masterId) {
         this.containerId = containerId;
+        this.containerName = containerName;
         this.masterId = masterId;
     }
 
-    public static synchronized ExceptionClient init(int containerId, String masterId) {
+    public static synchronized ExceptionClient init(int containerId, String name, String masterId) {
         if (INSTANCE == null) {
-            INSTANCE = new ExceptionClient(containerId, masterId);
+            INSTANCE = new ExceptionClient(containerId, name, masterId);
         }
         return INSTANCE;
     }
@@ -46,7 +48,7 @@ public class ExceptionClient {
     public void sendException(Throwable throwable) {
         try {
             LOGGER.info("Send exception {} to master.", throwable.getMessage());
-            RpcClient.getInstance().sendException(masterId, containerId, throwable);
+            RpcClient.getInstance().sendException(masterId, containerId, containerName, throwable);
         } catch (Throwable e) {
             LOGGER.error("Send exception {} to master failed.", throwable.getMessage(), e);
         }

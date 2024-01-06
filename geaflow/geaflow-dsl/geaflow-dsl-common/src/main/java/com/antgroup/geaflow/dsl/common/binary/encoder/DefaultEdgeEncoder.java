@@ -16,11 +16,14 @@ package com.antgroup.geaflow.dsl.common.binary.encoder;
 
 import com.antgroup.geaflow.dsl.common.binary.EncoderFactory;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
+import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.data.impl.VertexEdgeFactory;
 import com.antgroup.geaflow.dsl.common.types.EdgeType;
 import com.antgroup.geaflow.dsl.common.types.StructType;
+import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.BinaryUtil;
 import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
+import java.util.List;
 
 public class DefaultEdgeEncoder implements EdgeEncoder {
 
@@ -43,7 +46,13 @@ public class DefaultEdgeEncoder implements EdgeEncoder {
         }
         binaryEdge.setDirect(rowEdge.getDirect());
         binaryEdge.setBinaryLabel(rowEdge.getBinaryLabel());
-        binaryEdge.setValue(rowEncoder.encode(rowEdge.getValue()));
+        Object[] values = new Object[edgeType.getValueSize()];
+        List<TableField> valueFields = edgeType.getValueFields();
+        for (int i = 0; i < valueFields.size(); i++) {
+            values[i] = rowEdge.getField(edgeType.getValueOffset() + i,
+                valueFields.get(i).getType());
+        }
+        binaryEdge.setValue(rowEncoder.encode(ObjectRow.create(values)));
         return binaryEdge;
     }
 }

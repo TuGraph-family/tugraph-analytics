@@ -104,14 +104,14 @@ public abstract class AbstractOperator<FUNC extends Function> implements Operato
         for (Operator subOperator : subOperatorList) {
             OpContext subOpContext = new DefaultOpContext(opContext.getCollectors(), opContext.getRuntimeContext());
             subOperator.open(subOpContext);
-            IChainCollector chainCollector = new OpChainCollector(opArgs.getOpId(), subOperator);
+            IChainCollector<?> chainCollector = new OpChainCollector<>(opArgs.getOpId(), subOperator);
             this.collectors.add(chainCollector);
         }
 
         this.collectors.addAll(opContext.getCollectors().stream().filter(collector -> collector.getId() == opArgs.getOpId())
             .collect(Collectors.toList()));
         for (int i = 0, size = this.collectors.size(); i < size; i++) {
-            ICollector collector = this.collectors.get(i);
+            ICollector<?> collector = this.collectors.get(i);
             collector.setUp(this.runtimeContext);
             if (collector instanceof AbstractCollector) {
                 ((AbstractCollector) collector).setOutputMetric(this.opOutputMeter);

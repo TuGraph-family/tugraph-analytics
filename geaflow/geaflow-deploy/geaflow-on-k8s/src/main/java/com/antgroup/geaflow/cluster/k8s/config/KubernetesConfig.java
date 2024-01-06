@@ -27,11 +27,9 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WORK_PATH;
 
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
-import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -138,7 +136,7 @@ public class KubernetesConfig {
     }
 
     public static String getServiceName(Configuration config) {
-        return config.getString(CLUSTER_ID) + K8SConstants.SERVICE_NAME_SUFFIX;
+        return KubernetesUtils.getMasterServiceName(config.getString(CLUSTER_ID));
     }
 
     public static String getServiceNameWithNamespace(Configuration config) {
@@ -161,13 +159,8 @@ public class KubernetesConfig {
         return config.getString(DEFAULT_RESOURCE_EPHEMERAL_STORAGE_SIZE);
     }
 
-    public static String getJobWorkDir(Configuration config, String clusterId) {
-        String workDir = config.getString(WORK_DIR);
-        return Paths.get(workDir, "/", clusterId).toString();
-    }
-
     public static String getJarDownloadPath(Configuration config) {
-        return FileUtils.getFile(config.getString(JOB_WORK_PATH), "jar").toString();
+        return FileUtils.getFile(config.getString(WORK_DIR), "jar").toString();
     }
 
 }

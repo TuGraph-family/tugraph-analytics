@@ -15,22 +15,22 @@
 package com.antgroup.geaflow.runtime.core.worker;
 
 import com.antgroup.geaflow.api.trait.CancellableTrait;
-import com.antgroup.geaflow.cluster.collector.PipelineOutputCollector;
+import com.antgroup.geaflow.cluster.collector.AbstractPipelineOutputCollector;
 import com.antgroup.geaflow.cluster.protocol.EventType;
-import com.antgroup.geaflow.cluster.protocol.Message;
+import com.antgroup.geaflow.cluster.protocol.InputMessage;
 import com.antgroup.geaflow.cluster.response.IResult;
-import com.antgroup.geaflow.cluster.response.ShardResult;
+import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.worker.IWorker;
 import com.antgroup.geaflow.cluster.worker.IWorkerContext;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.collector.IResultCollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.utils.GcUtil;
+import com.antgroup.geaflow.common.metric.EventMetrics;
 import com.antgroup.geaflow.core.graph.util.ExecutionTaskUtils;
 import com.antgroup.geaflow.model.record.BatchRecord;
+import com.antgroup.geaflow.model.record.RecordArgs;
 import com.antgroup.geaflow.runtime.core.protocol.DoneEvent;
 import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
-import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 import java.util.ArrayList;
@@ -41,22 +41,22 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O> {
+public abstract class AbstractAlignedWorker<T, O> implements IWorker<BatchRecord<T>, O> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAlignedWorker.class);
 
+    private static final int DEFAULT_TIMEOUT_MS = 100;
+
     protected AbstractWorkerContext context;
-    protected InputReader inputReader;
-    protected OutputWriter outputWriter;
+    protected InputReader<T> inputReader;
     protected Map<Long, Long> windowCount;
-    protected Map<Long, List<PipelineMessage>> windowMessageCache;
+    protected Map<Long, List<PipelineMessage<T>>> windowMessageCache;
     protected volatile boolean running;
 
     public AbstractAlignedWorker() {
-        this.inputReader = new InputReader();
-        this.outputWriter = new OutputWriter();
+        this.inputReader = new InputReader<>();
         this.windowCount = new HashMap<>();
-        this.windowMessageCache = new HashMap();
+        this.windowMessageCache = new HashMap<>();
         this.running = false;
     }
 
@@ -71,12 +71,8 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
         return context;
     }
 
-    public InputReader getInputReader() {
+    public InputReader<T> getInputReader() {
         return inputReader;
-    }
-
-    public OutputWriter getOutputWriter() {
-        return outputWriter;
     }
 
     /**
@@ -85,15 +81,20 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
      */
     public void alignedProcess(long totalWindowCount) {
         long processedWindowCount = 0;
+        long fetchCost = 0;
         while (processedWindowCount < totalWindowCount && running) {
             try {
-                Message input = inputReader.poll(100, TimeUnit.MILLISECONDS);
+                long fetchStart = System.currentTimeMillis();
+                InputMessage<T> input = this.inputReader.poll(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                fetchCost += System.currentTimeMillis() - fetchStart;
                 if (input != null) {
                     long windowId = input.getWindowId();
                     if (input.getMessage() != null) {
-                        PipelineMessage message = input.getMessage();
+                        PipelineMessage<T> message = input.getMessage();
                         processMessage(windowId, message);
                     } else {
+                        this.context.getEventMetrics().addShuffleReadCostMs(fetchCost);
+                        fetchCost = 0;
                         long totalCount = input.getWindowCount();
                         processBarrier(windowId, totalCount);
                         processedWindowCount++;
@@ -113,50 +114,31 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
      * Tell scheduler finish and send back response to scheduler.
      */
     protected void finishWindow(long windowId) {
-        Map<Integer, IResult> results = new HashMap<>();
-        List<ICollector> collectors = outputWriter.getCollectors();
+        Map<Integer, IResult<?>> results = new HashMap<>();
+        List<ICollector<?>> collectors = this.context.getCollectors();
         if (ExecutionTaskUtils.isCycleTail(context.getExecutionTask())) {
-            long outputRecordNum = 0;
-            long outputBytes = 0;
             for (int i = 0; i < collectors.size(); i++) {
-                IResultCollector responseCollector = (IResultCollector) collectors.get(i);
-                IResult result = (IResult) responseCollector.collectResult();
+                IResultCollector<?> responseCollector = (IResultCollector<?>) collectors.get(i);
+                IResult<?> result = (IResult<?>) responseCollector.collectResult();
                 if (result != null) {
-                    if (result.getType() == IResult.ResponseType.COLLECTION) {
-                        if (results.containsKey(result.getId())) {
-                            results.get(result.getId()).getResponse().addAll(result.getResponse());
-                        } else {
-                            results.put(result.getId(), result);
-                        }
-                        outputRecordNum += result.getResponse().size();
-                    } else {
-                        results.put(result.getId(), result);
-                        ShardResult shard = (ShardResult) result;
-                        for (ISliceMeta sliceMeta : shard.getResponse()) {
-                            outputRecordNum += sliceMeta.getRecordNum();
-                            outputBytes += sliceMeta.getEncodedSize();
-                        }
-                    }
+                    results.put(result.getId(), result);
                 }
             }
-            context.getEventMetrics().setOutputRecords(outputRecordNum);
-            context.getEventMetrics().setOutputBytes(outputBytes);
 
             // Tell scheduler finish or response.
-            DoneEvent done = new DoneEvent(context.getCycleId(), windowId, context.getTaskId(),
-                EventType.EXECUTE_COMPUTE, results, context.getEventMetrics());
-            context.getPipelineMaster().send(done);
+            EventMetrics eventMetrics = this.context.isIterativeTask() ? this.context.getEventMetrics() : null;
+            DoneEvent<?> done = new DoneEvent<>(context.getCycleId(), windowId, context.getTaskId(),
+                EventType.EXECUTE_COMPUTE, results, eventMetrics);
+            RpcClient.getInstance().processPipeline(context.getDriverId(), done);
         }
     }
 
 
     protected void updateWindowId(long windowId) {
-        context.getEventMetrics().setStartTs(System.currentTimeMillis());
-        context.getEventMetrics().setStartGcTs(GcUtil.computeCurrentTotalGcTime());
         context.setCurrentWindowId(windowId);
-        for (ICollector collector : outputWriter.getCollectors()) {
-            if (collector instanceof PipelineOutputCollector) {
-                ((PipelineOutputCollector) collector).setWindowId(windowId);
+        for (ICollector<?> collector : this.context.getCollectors()) {
+            if (collector instanceof AbstractPipelineOutputCollector) {
+                ((AbstractPipelineOutputCollector<?>) collector).setWindowId(windowId);
             }
         }
     }
@@ -164,12 +146,12 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
     /**
      * Trigger worker to process message.
      */
-    private void processMessage(long windowId, PipelineMessage message) {
+    private void processMessage(long windowId, PipelineMessage<T> message) {
         if (windowId > context.getCurrentWindowId()) {
             if (windowMessageCache.containsKey(windowId)) {
                 windowMessageCache.get(windowId).add(message);
             } else {
-                List cache = new ArrayList();
+                List<PipelineMessage<T>> cache = new ArrayList<>();
                 cache.add(message);
                 windowMessageCache.put(windowId, cache);
             }
@@ -181,7 +163,7 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
     /**
      * Trigger worker to process buffered message.
      */
-    private void processBarrier( long windowId, long totalCount) {
+    private void processBarrier(long windowId, long totalCount) {
         processBufferedMessages(windowId);
 
         long processCount = 0;
@@ -192,9 +174,10 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
         if (totalCount != processCount) {
             LOGGER.error("taskId {} {} mismatch, TotalCount:{} != ProcessCount:{}",
                 context.getTaskId(), totalCount, totalCount, processCount);
-            throw new GeaflowRuntimeException("TotalCount Not Equal, ProcessCount " + totalCount + ", " + processCount);
+            throw new GeaflowRuntimeException(String.format("taskId %s mismatch, TotalCount:%s != ProcessCount:%s",
+                context.getTaskId(), totalCount, processCount));
         }
-        context.getEventMetrics().setInputRecords(totalCount);
+        context.getEventMetrics().addShuffleReadRecords(totalCount);
 
         long currentWindowId = context.getCurrentWindowId();
         finish(currentWindowId);
@@ -204,18 +187,21 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
     /**
      * Process message event and trigger worker to process.
      */
-    private void processMessageEvent(long windowId, PipelineMessage message) {
-        IMessageIterator messageIterator = message.getMessageIterator();
+    private void processMessageEvent(long windowId, PipelineMessage<T> message) {
+        IMessageIterator<T> messageIterator = message.getMessageIterator();
         process(new BatchRecord<>(message.getRecordArgs(), messageIterator));
 
         long count = messageIterator.getSize();
         messageIterator.close();
 
-        if (!windowCount.containsKey(windowId)) {
-            windowCount.put(windowId, count);
-        } else {
-            long oldCounter = windowCount.get(windowId);
-            windowCount.put(windowId, oldCounter + count);
+        // Aggregate message not take into account when check message count.
+        if (!message.getRecordArgs().getName().equals(RecordArgs.GraphRecordNames.Aggregate.name())) {
+            if (!windowCount.containsKey(windowId)) {
+                windowCount.put(windowId, count);
+            } else {
+                long oldCounter = windowCount.get(windowId);
+                windowCount.put(windowId, oldCounter + count);
+            }
         }
     }
 
@@ -224,8 +210,8 @@ public abstract class AbstractAlignedWorker<O> implements IWorker<BatchRecord, O
      */
     private void processBufferedMessages(long windowId) {
         if (windowMessageCache.containsKey(windowId)) {
-            List<PipelineMessage> cacheMessages = windowMessageCache.get(windowId);
-            for (PipelineMessage message : cacheMessages) {
+            List<PipelineMessage<T>> cacheMessages = windowMessageCache.get(windowId);
+            for (PipelineMessage<T> message : cacheMessages) {
                 processMessageEvent(windowId, message);
             }
             windowMessageCache.remove(windowId);

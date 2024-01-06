@@ -24,15 +24,15 @@ import lombok.Setter;
 @Setter
 public class GeaflowArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "system", comment = "系统参数")
+    @GeaflowConfigKey(value = "system", comment = "i18n.key.system.params")
     @GeaflowConfigValue(required = true)
     private SystemArgsClass systemArgs;
 
-    @GeaflowConfigKey(value = "cluster", comment = "集群参数")
+    @GeaflowConfigKey(value = "cluster", comment = "i18n.key.cluster.args")
     @GeaflowConfigValue(required = true)
     private ClusterArgsClass clusterArgs;
 
-    @GeaflowConfigKey(value = "job", comment = "任务参数")
+    @GeaflowConfigKey(value = "job", comment = "i18n.key.task.params")
     @GeaflowConfigValue(required = true)
     private JobArgsClass jobArgs;
 

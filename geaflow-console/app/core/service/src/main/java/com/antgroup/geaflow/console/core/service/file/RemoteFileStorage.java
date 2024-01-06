@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.service.file;
 
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.service.PluginConfigService;
@@ -113,7 +114,7 @@ public class RemoteFileStorage {
                 GeaflowPluginConfig config = pluginConfigService.getDefaultPluginConfig(category, plugin.getType());
 
                 RemoteFileClient client;
-                switch (config.getType()) {
+                switch (GeaflowPluginType.of(config.getType())) {
                     case LOCAL:
                         client = new LocalFileClient(deployConfig.getGatewayUrl());
                         break;

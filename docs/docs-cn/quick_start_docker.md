@@ -46,18 +46,18 @@ docker images
 
 **x86架构**
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console:0.1
 ```
 
 **arm架构**
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console-arm:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console-arm:0.1
 ```
 通过**uname -a**命令可以查看机器架构类型.
 
 * 本地镜像启动方式如下：
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1
 ```
 **注意**: 远程拉取镜像和本地镜像tag名称不同，启动命令有所区别。
 
@@ -106,9 +106,9 @@ GeaFlow首次运行需要配置运行时环境相关的配置，包括集群配�
 ![install_jar_config](../static/img/install_jar_config.png)
 配置完成后点击一键安装按钮，安装成功后，管理员会自动切换到个人租户下的默认实例，并可以直接创建发布图计算任务。
 
-4. 创建图计算作业
+4. 创建图计算任务
 
-进入图研发页面，选择左侧图计算Tab栏，点击右上角新增按钮，新建一个DSL作业。
+进入图研发页面，选择左侧图任务Tab栏，点击右上角新增按钮，新建一个DSL作业。
 
 ![create_job](../static/img/create_job.png)
 分别填写任务名称、任务描述和DSL内容。其中DSL内容和前面本地运行作业介绍的一样，只需修改DSL,**将tbl_source和tbl_result表的${your.host.ip}替换成本机ip**即可。
@@ -178,7 +178,7 @@ FROM (
 );
 
 INSERT INTO tbl_result
-SELECT
+SELECT DISTINCT
   a_id,
   b_id,
   c_id,

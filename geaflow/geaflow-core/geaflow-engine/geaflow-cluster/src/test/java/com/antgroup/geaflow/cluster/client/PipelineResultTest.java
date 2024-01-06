@@ -14,11 +14,11 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.impl.RpcMessageEncoder;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Driver;
-import java.util.ArrayList;
-import java.util.List;
+import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 
@@ -26,27 +26,19 @@ public class PipelineResultTest {
 
     @Test
     public void testResult() {
-        List<Driver.PipelineRes> res = new ArrayList();
-        res.add(Driver.PipelineRes.newBuilder().setPayload(RpcMessageEncoder.encode("test")).build());
-        PipelineResult result = new PipelineResult(res.iterator());
+        CompletableFuture<PipelineRes> res = new CompletableFuture<>();
+        res.complete(Driver.PipelineRes.newBuilder().setPayload(RpcMessageEncoder.encode("test")).build());
+        PipelineResult result = new PipelineResult(res);
         Assert.assertEquals("test", result.get());
     }
 
     @Test(expectedExceptions = GeaflowRuntimeException.class,
-        expectedExceptionsMessageRegExp = ".*not found pipeline result.*")
+        expectedExceptionsMessageRegExp = ".*get pipeline result error.*")
     public void testNotHasResult() {
-        List<Driver.PipelineRes> res = new ArrayList();
-        PipelineResult result = new PipelineResult(res.iterator());
+        CompletableFuture<PipelineRes> res = new CompletableFuture<>();
+        res.completeExceptionally(new Throwable());
+        PipelineResult result = new PipelineResult(res);
         Assert.assertTrue(result.isSuccess());
     }
 
-    @Test(expectedExceptions = GeaflowRuntimeException.class,
-        expectedExceptionsMessageRegExp = ".*not support more than one result yet.*")
-    public void testTooMuchResult() {
-        List<Driver.PipelineRes> res = new ArrayList();
-        res.add(Driver.PipelineRes.newBuilder().setPayload(RpcMessageEncoder.encode("test")).build());
-        res.add(Driver.PipelineRes.newBuilder().build());
-        PipelineResult result = new PipelineResult(res.iterator());
-        Assert.assertTrue(result.isSuccess());
-    }
 }

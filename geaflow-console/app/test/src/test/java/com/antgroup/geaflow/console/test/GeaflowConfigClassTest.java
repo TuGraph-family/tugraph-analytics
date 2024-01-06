@@ -77,9 +77,9 @@ public class GeaflowConfigClassTest {
         config.setTaskId("123455");
         config.setRuntimeTaskId("geaflow123456-123456");
         config.setRuntimeTaskName("geaflow123456");
-        config.setGateway("http://127.0.0.1:8080");
+        config.setGateway("http://127.0.0.1:8888");
         config.setTaskToken("qwertyuiopasdfghjklzxcvbnm");
-        config.setStartupNotifyUrl("http://127.0.0.1:8080/api/tasks/123455/operations");
+        config.setStartupNotifyUrl("http://127.0.0.1:8888/api/tasks/123455/operations");
         config.setInstanceName("test-instance");
         config.setCatalogType("console");
         config.setStateArgs(buildStateArgs());

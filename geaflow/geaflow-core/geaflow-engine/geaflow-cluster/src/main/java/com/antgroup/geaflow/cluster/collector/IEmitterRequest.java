@@ -19,7 +19,23 @@ import java.io.Serializable;
 public interface IEmitterRequest extends Serializable {
 
     /**
-     * Returns the request type.
+     *  Return the task id of the emitter request.
+     *
+     * @return task id.
+     */
+    int getTaskId();
+
+    /**
+     * Return the window id of the emitter request.
+     *
+     * @return window id.
+     */
+    long getWindowId();
+
+    /**
+     * Return the request type of the emitter request.
+     *
+     * @return request type.
      */
     RequestType getRequestType();
 }

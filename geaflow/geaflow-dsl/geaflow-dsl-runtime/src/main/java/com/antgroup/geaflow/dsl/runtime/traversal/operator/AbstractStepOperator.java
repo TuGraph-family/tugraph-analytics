@@ -199,6 +199,7 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
 
         PathType concatInputType = concatInputPathType();
         if (concatInputType != null) {
+            List<String> appendFields = new ArrayList<>();
             int[] outputPathFieldIndices = ArrayUtil.toIntArray(
                 outputPathSchema.getFieldNames().stream().map(name -> {
                     int index = concatInputType.indexOf(name);
@@ -206,13 +207,11 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
                         return index;
                     }
                     // If the last output field is not exist in the input, then it is a new
-                    // append field by MatchVertex Or MatchEdge operator, return the input size as
-                    // the field index.
-                    if (outputPathSchema.indexOf(name) == outputPathSchema.size() - 1) {
-                        return concatInputType.size();
-                    } else {
-                        throw new IllegalArgumentException("Illegal output field: '" + name + "'");
-                    }
+                    // append field by MatchVertex Or MatchEdge Or MatchExtend operator, return the
+                    // field index of outputPathSchema.
+                    index = concatInputType.size() + appendFields.size();
+                    appendFields.add(name);
+                    return index;
                 }).collect(Collectors.toList()));
             // If any of the input field is not exist in the output, then we should prune the output path.
             boolean needPathPrune = concatInputType.getFieldNames().stream()
@@ -288,9 +287,7 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
         long startTs = System.nanoTime();
 
         // set current operator id.
-        long inputId = context.getCurrentOpId();
         context.setCurrentOpId(id);
-        context.setInputOperatorId(inputId);
         if (record.getType() == StepRecordType.EOD) {
             inputEodCounter.inc();
             EndOfData eod = (EndOfData) record;
@@ -410,6 +407,7 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     }
 
     protected void collect(OUT record) {
+        context.setInputOperatorId(id);
         collector.collect(record);
         outputCounter.inc();
         outputTps.mark();
@@ -429,11 +427,17 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     public void close() {
     }
 
+    @Override
     public void addNextOperator(StepOperator nextOperator) {
         if (nextOperators.contains(nextOperator)) {
             return;
         }
         this.nextOperators.add(nextOperator);
+    }
+
+    @Override
+    public List<StepOperator<OUT, ?>> getNextOperators() {
+        return this.nextOperators;
     }
 
     @Override
@@ -533,12 +537,17 @@ public abstract class AbstractStepOperator<FUNC extends StepFunction, IN extends
     }
 
     @Override
+    public List<String> getSubQueryNames() {
+        return function.getCallQueryProxies().stream()
+            .flatMap(proxy -> proxy.getSubQueryNames().stream())
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
         str.append(getName());
-        List<String> subQueryNames = function.getCallQueryProxies().stream()
-            .flatMap(proxy -> proxy.getSubQueryNames().stream())
-            .collect(Collectors.toList());
+        List<String> subQueryNames = getSubQueryNames();
         if (subQueryNames.size() > 0) {
             str.append("[").append(StringUtils.join(subQueryNames, ",")).append("]");
         }

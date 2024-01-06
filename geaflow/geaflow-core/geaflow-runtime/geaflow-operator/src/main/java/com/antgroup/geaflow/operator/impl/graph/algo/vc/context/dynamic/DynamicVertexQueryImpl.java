@@ -19,17 +19,27 @@ import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction.Ver
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 
 public class DynamicVertexQueryImpl<K, VV, EV> implements VertexQuery<K,VV> {
 
     private K vertexId;
-    private long versionId;
+    protected long versionId;
     protected GraphState<K, VV, EV> graphState;
+    protected KeyGroup keyGroup;
 
     public DynamicVertexQueryImpl(K vertexId, long versionId, GraphState<K, VV, EV> graphState) {
         this.vertexId = vertexId;
         this.versionId = versionId;
         this.graphState = graphState;
+    }
+
+    public DynamicVertexQueryImpl(K vertexId, long versionId, GraphState<K, VV, EV> graphState,
+                                  KeyGroup keyGroup) {
+        this.vertexId = vertexId;
+        this.versionId = versionId;
+        this.graphState = graphState;
+        this.keyGroup = keyGroup;
     }
 
     @Override
@@ -47,4 +57,6 @@ public class DynamicVertexQueryImpl<K, VV, EV> implements VertexQuery<K,VV> {
     public IVertex<K, VV> get(IFilter vertexFilter) {
         return graphState.dynamicGraph().V().query(versionId, vertexId).by(vertexFilter).get();
     }
+
+
 }

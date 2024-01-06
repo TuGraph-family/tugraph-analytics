@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.antgroup.tugraph</groupId>
         <artifactId>geaflow</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,7 +28,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>geaflow-on-ray</module>
+        <module>geaflow-cluster-runner</module>
+        <module>geaflow-on-ray-community</module>
         <module>geaflow-on-k8s</module>
         <module>geaflow-on-local</module>
         <module>geaflow-assembly</module>

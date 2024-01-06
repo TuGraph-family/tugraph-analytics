@@ -15,7 +15,11 @@
 package com.antgroup.geaflow.state;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.thread.Executors;
 import com.antgroup.geaflow.common.type.Types;
+import com.antgroup.geaflow.common.utils.GsonUtil;
+import com.antgroup.geaflow.file.FileConfigKeys;
 import com.antgroup.geaflow.model.graph.edge.impl.ValueEdge;
 import com.antgroup.geaflow.model.graph.meta.GraphMeta;
 import com.antgroup.geaflow.model.graph.meta.GraphMetaType;
@@ -25,15 +29,22 @@ import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.state.descriptor.KeyListStateDescriptor;
 import com.antgroup.geaflow.state.descriptor.KeyMapStateDescriptor;
 import com.antgroup.geaflow.state.descriptor.KeyValueStateDescriptor;
+import com.antgroup.geaflow.state.manage.LoadOption;
 import com.antgroup.geaflow.utils.keygroup.DefaultKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.google.common.collect.Iterators;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -54,6 +65,63 @@ public class StateFactoryTest {
     @AfterMethod
     public void tearDown() throws IOException {
         FileUtils.deleteQuietly(new File("/tmp/" + testName));
+    }
+
+    @Test
+    public void testSingleton() throws ExecutionException, InterruptedException {
+        Map<String, String> config = new HashMap<>();
+        Map<String, String> persistConfig = new HashMap<>();
+        config.put(ExecutionConfigKeys.JOB_APP_NAME.getKey(), testName);
+        config.put(FileConfigKeys.PERSISTENT_TYPE.getKey(), "LOCAL");
+        config.put(FileConfigKeys.ROOT.getKey(), "/tmp/geaflow/chk/");
+        config.put(FileConfigKeys.JSON_CONFIG.getKey(), GsonUtil.toJson(persistConfig));
+
+        GraphMetaType tag = new GraphMetaType(Types.STRING, ValueVertex.class,
+            String.class, ValueEdge.class, String.class);
+        GraphStateDescriptor desc = GraphStateDescriptor.build(testName, StoreType.ROCKSDB.name());
+        desc.withGraphMeta(new GraphMeta(tag)).withKeyGroup(new KeyGroup(0, 1))
+            .withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
+        desc.withSingleton();
+        ExecutorService executors = Executors.getExecutorService( 8, "testSingleton");
+        List<Future<GraphState>> list = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            Future<GraphState> future = executors.submit(
+                () -> StateFactory.buildGraphState(desc, new Configuration(config)));
+            list.add(future);
+        }
+        GraphState graphState = list.get(0).get();
+        for (int i = 1; i < 8; i++) {
+            Assert.assertTrue(graphState == list.get(i).get());
+        }
+
+        graphState.manage().operate().setCheckpointId(1);
+        for (int i = 0; i < 10000; i++) {
+            graphState.staticGraph().V().add(new ValueVertex<>("hello" + i, "hello"));
+            graphState.staticGraph().E().add(new ValueEdge<>("hello" + i, "world" + i, "hello" + i));
+        }
+        graphState.manage().operate().finish();
+        graphState.manage().operate().archive();
+        graphState.manage().operate().drop();
+
+        final GraphState graphState2 = StateFactory.buildGraphState(desc, new Configuration(config));
+        List<Future> list2 = new ArrayList<>();
+        AtomicInteger count = new AtomicInteger(0);
+        for (int i = 0; i < 8; i++) {
+            final int keyGroupId = i % 2;
+            list2.add(executors.submit(() -> {
+                graphState2.manage().operate().load(LoadOption.of().withKeyGroup(new KeyGroup(keyGroupId, keyGroupId)).withCheckpointId(1L));
+                int size = Iterators.size(graphState2.staticGraph().V().query(new KeyGroup(keyGroupId, keyGroupId)).idIterator());
+                count.addAndGet(size);
+            }));
+        }
+        for (Future f : list2) {
+            f.get();
+        }
+        Assert.assertEquals(count.get(), 40000);
+        graphState2.manage().operate().drop();
+        executors.shutdown();
+
+        FileUtils.deleteQuietly(new File("/tmp/geaflow/chk"));
     }
 
     @Test

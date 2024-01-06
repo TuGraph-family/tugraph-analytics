@@ -14,17 +14,25 @@
 
 package com.antgroup.geaflow.example.graph.statical;
 
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CLUSTER_TYPE;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.LOCAL_CLUSTER;
-
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.env.EnvironmentFactory;
+import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.statical.compute.personalrank.PersonalRank;
+import com.antgroup.geaflow.pipeline.IPipelineResult;
 import org.testng.annotations.Test;
 
-public class PersonalRankRankTest {
+public class PersonalRankRankTest extends BaseTest {
 
     @Test
-    public void testMainInvoke() {
-        System.setProperty(CLUSTER_TYPE, LOCAL_CLUSTER);
-        PersonalRank.main(null);
+    public void test() throws Exception {
+        environment = EnvironmentFactory.onLocalEnvironment();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.putAll(config);
+
+        IPipelineResult result = PersonalRank.submit(environment);
+        if (!result.isSuccess()) {
+            throw new Exception("execute failed");
+        }
+        PersonalRank.validateResult();
     }
 }

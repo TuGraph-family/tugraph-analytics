@@ -33,7 +33,7 @@ public class CatalogTest {
         Catalog catalog = CatalogFactory.getCatalog(new Configuration());
         String instance = "default";
         GeaFlowGraph graph = new GeaFlowGraph(instance, "g1", new ArrayList<>(),
-            new ArrayList<>(), new HashMap<>(), new HashMap<>(), true, false, false);
+            new ArrayList<>(), new HashMap<>(), new HashMap<>(), true, false);
         GeaFlowTable table = new GeaFlowTable(instance, "t1", new ArrayList<>(),
             new ArrayList<>(), new ArrayList<>(), new HashMap<>(), true, false);
         GeaFlowView view = new GeaFlowView(instance, "v1", new ArrayList<>(),
@@ -68,7 +68,7 @@ public class CatalogTest {
         }
         try {
             GeaFlowGraph graph2 = new GeaFlowGraph(instance, "g2", new ArrayList<>(),
-                new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false, false);
+                new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false);
             catalog.createGraph(instance, graph2);
             catalog.createGraph(instance, graph2);
         } catch (Exception e) {

@@ -46,6 +46,7 @@ public class MetricConstants {
     public static final String METRIC_PROCESS_RT = "processRt";
     public static final String METRIC_ITERATION = "iteration";
     public static final String METRIC_ITERATION_MSG_TPS = "iterationMsgTps";
+    public static final String METRIC_ITERATION_AGG_TPS = "iterationAggTps";
 
     /**
      * Dsl metric name.

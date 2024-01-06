@@ -20,7 +20,7 @@
     <parent>
         <artifactId>geaflow-deploy</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,11 +28,17 @@
     <packaging>jar</packaging>
 
     <properties>
-        <kubernetes.client.version>5.4.0</kubernetes.client.version>
+        <kubernetes.client.version>6.2.0</kubernetes.client.version>
+        <bouncycastle.version>1.50</bouncycastle.version>
     </properties>
 
     <dependencies>
         <!-- kubernetes dependencies -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-client</artifactId>
@@ -70,15 +76,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-utils</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-examples</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
@@ -86,6 +83,32 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-cluster-runner</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-ext-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+
     </dependencies>
 
 

@@ -14,13 +14,13 @@
 
 package com.antgroup.geaflow.state.graph;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.DataType;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -57,37 +57,42 @@ public interface DynamicGraphTrait<K, VV, EV> {
     /**
      * Fetch the iterator of the ids of all graph vertices.
      */
-    Iterator<K> vertexIDIterator();
+    CloseableIterator<K> vertexIDIterator();
+
+    /**
+     * Fetch the iterator of the ids of all graph vertices by pushdown condition.
+     */
+    CloseableIterator<K> vertexIDIterator(long version, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of the graph vertices according to the version and pushdown condition.
      */
-    Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown);
+    CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of some vertices according to the version, ids and pushdown condition.
      */
-    Iterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of graph edges according to the version and pushdown condition.
      */
-    Iterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown);
+    CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of some edges according to the version, ids and pushdown condition.
      */
-    Iterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of one degree graph according to the version and pushdown condition.
      */
-    Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, IStatePushDown pushdown);
+    CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of one degree graph according to the version, ids and pushdown condition.
      */
-    Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys, IStatePushDown pushdown);
 
     /**
      * Fetch the versions of some id.

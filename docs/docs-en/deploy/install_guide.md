@@ -79,13 +79,13 @@ The default GeaFlow platform image name is "geaflow-console:0.1", and the engine
 Start the GeaFlow Console platform service locally, suitable for Minikube environment. (Replace ${your.host.name} with the public IP address of your machine.)
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
 ```
 
 Start the external GeaFlow Console platform service, suitable for a real K8S cluster environment. (Replace ${your.host.name} with the internal IP address of your machine, for example 172.xx.xxx.xx; replace ${your.public.ip} with the external public IP address, so that GEAFlow Console can be accessed from the outside.)
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} -e geaflow.web.gateway.url=http://${your.public.ip}:8080 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 -p 3306:3306 -p 6379:6379 -p 8086:8086 -e geaflow.host=${your.host.name} geaflow-console:0.1
 ```
 
 The container starts in "local" mode by default, and local MySQL, Redis, and InfluxDB are launched by default.
@@ -94,10 +94,7 @@ The container starts in "local" mode by default, and local MySQL, Redis, and Inf
 # /opt/geaflow/config/application.properties
 geaflow.deploy.mode=local
 geaflow.host=127.0.0.1
-geaflow.web.port=8888
-geaflow.gateway.port=8080
-geaflow.web.url=http://${geaflow.host}:${geaflow.web.port}
-geaflow.web.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
+geaflow.gateway.port=8888
 geaflow.gateway.url=http://${geaflow.host}:${geaflow.gateway.port}
 
 # Datasource
@@ -119,13 +116,10 @@ GeaflowApplication:61   - Started GeaflowApplication in 11.437 seconds (JVM runn
 If you want to start the container in "cluster" mode, you need to adjust the datasource configuration to point to an external data source and set a unified service URL for external access. The container supports environment variable injection of datasource configuration and service URL. For example:
 
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
+docker run -d --name geaflow-console -p 8888:8888 \
 -e geaflow.deploy.mode="cluster" \
 -e geaflow.host=${your.host.name} \
--e geaflow.web.port=8888 \
--e geaflow.gateway.port=8080 \
--e geaflow.web.url=${your.geaflow.web.url} \
--e geaflow.web.gateway.url=${your.geaflow.web.gateway.url} \
+-e geaflow.gateway.port=8888 \
 -e geaflow.gateway.url=${your.geaflow.gateway.url} \
 -e spring.datasource.url=${your.datasource.url} \
 -e spring.datasource.username=${your.datasource.username} \
@@ -133,18 +127,17 @@ docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 \
 geaflow-console:1.0
 ```
 
-If you want to modify the port number of the front-end Node process or Java process, you only need to set the environment variables "geaflow.web.port" or "geaflow.gateway.port" and remap the port number. for example:
+If you want to modify the port number of the front-end Node process or Java process, you only need to set the environment variables "geaflow.gateway.port" and remap the port number. for example:
 ```shell
-docker run -d --name geaflow-console -p 9090:9090 -p 9999:9999 \
--e geaflow.web.port=9999 \
--e geaflow.gateway.port=9090 \
+docker run -d --name geaflow-console -p 9999:9999 \
+-e geaflow.gateway.port=9999 \
 geaflow-console:1.0
 ```
 
 ## Register and Login
 The first registered user will be set as the administrator by default. Log in as an administrator and use the "One-click Installation" function to start system initialization.
 
-![install_welcome](../../static/img/install_welcome.png)
+![install_welcome](../../static/img/install_welcome_en.png)
 
 ## System Initialization
 When the administrator logs into the GeaFlow system for the first time, the one-click installation process will be triggered to prepare the system for initialization.
@@ -152,7 +145,7 @@ When the administrator logs into the GeaFlow system for the first time, the one-
 ### Cluster Configuration
 Configure the runtime cluster for GeaFlow jobs, and it is recommended to use Kubernetes. In local mode, the default proxy address is ${your.host.name}:8000. Please make sure that minikube has been started locally and the proxy address has been set. If you set the address of the K8S cluster, please ensure that the connectivity of the address is normal.
 
-![install_cluster_config](../../static/img/install_cluster_config.png)
+![install_cluster_config](../../static/img/install_cluster_config_en.png)
 
 Add the following configuration for K8S cluster:
 ```
@@ -173,7 +166,7 @@ Configure the storage of HA metadata for GeaFlow job runtime. HA metadata includ
 
 Configure the storage of metric data for GeaFlow job runtime, which is used for job metric monitoring. It is recommended to use InfluxDB.
 
-![undefined](../../static/img/install_meta_config.png)
+![undefined](../../static/img/install_meta_config_en.png)
 
 In local mode, when the docker container starts, MySQL, Redis, and InfluxDB services will be automatically pulled up by default.
 
@@ -186,12 +179,12 @@ Add the following configuration for K8S cluster:
 ### Data Storage Configuration
 Configure the persistent storage of GeaFlow job, graph, and table data, and it is recommended to use HDFS. In local mode, the default is the disk inside the container.
 
-![install_storage_config](../../static/img/install_storage_config.png)
+![install_storage_config](../../static/img/install_storage_config_en.png)
 
 ### File Storage Configuration
 Configure the persistent storage of GeaFlow engine JAR and user JAR files, and it is recommended to use HDFS. In local mode, the default is the disk inside the container.
 
-![install_jar_config](../../static/img/install_jar_config.png)
+![install_jar_config](../../static/img/install_jar_config_en.png)
 
 After the installation is successful, **the administrator will automatically switch to the default instance under the default tenant**, and you can directly create and publish graph computation tasks at this time.
 
@@ -204,28 +197,28 @@ The user icon menu in the upper right corner of the page provides a quick mode s
 ### System Mode
 When the user logs in as an administrator, they will enter the system mode. At this time, you can perform system operations such as one-click installation and system management.
 
-![install_system_mode](../../static/img/install_system_mode.png)
+![install_system_mode](../../static/img/install_system_mode_en.jpg)
 
 In system mode, the administrator can manage information such as clusters, GeaFlow engine versions, files, users, tenants, etc.
 
 ### Tenant Mode
 After normal user login, they will enter tenant mode. At this time, they can perform graph computing development and maintenance operations.
 
-![install_tenant_mode](../../static/img/install_tenant_mode.png)
+![install_tenant_mode](../../static/img/install_tenant_mode_en.jpg)
 
 In tenant mode, users can create development resources such as instances, graphs, tables, and graph computing tasks. They can also publish graph computing tasks, submit graph computing jobs, and perform other related operations.
 
 ## Task Management
 Add a graph computing task and describe the business logic of graph computing using SQL+GQL.
 
-![install_task_manager](../../static/img/install_task_manager.png)
+![install_task_manager](../../static/img/install_task_manager_en.png)
 
 After creating a task, click on "publish" to enter the job operation and maintenance interface.
 
 ## Task Maintenance
 Before submitting a job, you can also adjust the default task parameters and cluster parameters to facilitate adjustments to job behavior.
 
-![install_job_op](../../static/img/install_job_op.png)
+![install_job_op](../../static/img/install_job_op_en.png)
 
 Access other tabs on the job details page to view information about job runtime, metrics, containers, exceptions, logs, and more.
 

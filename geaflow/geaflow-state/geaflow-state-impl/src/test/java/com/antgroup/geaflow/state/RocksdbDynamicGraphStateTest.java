@@ -67,8 +67,8 @@ public class RocksdbDynamicGraphStateTest {
             type.getTypeClass(), ValueEdge.class, type.getTypeClass());
 
         GraphStateDescriptor desc = GraphStateDescriptor.build(name, StoreType.ROCKSDB.name());
-        desc.withKeyGroup(new KeyGroup(0, 0)).withDataModel(DataModel.DYNAMIC_GRAPH)
-            .withKeyGroupAssigner(new DefaultKeyGroupAssigner(1));
+        desc.withKeyGroup(new KeyGroup(0, 1)).withDataModel(DataModel.DYNAMIC_GRAPH)
+            .withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
         desc.withGraphMeta(new GraphMeta(tag));
         GraphState<T, T, T> graphState = StateFactory.buildGraphState(desc, new Configuration(conf));
         return graphState;
@@ -164,6 +164,39 @@ public class RocksdbDynamicGraphStateTest {
 
         graphState.manage().operate().close();
         graphState.manage().operate().drop();
+    }
+
+    @Test
+    public void testKeyGroup() {
+        Map<String, String> conf = config;
+        GraphState<String, String, String> graphState = getGraphState(StringType.INSTANCE, "testKeyGroup", conf);
+
+        graphState.manage().operate().setCheckpointId(1);
+
+        for (int i = 0; i < 10; i++) {
+            graphState.dynamicGraph().E().add(i, new ValueEdge<>("1", "2", "hello" + i));
+            graphState.dynamicGraph().E().add(i, new ValueEdge<>("1", "3", "hello" + i));
+            graphState.dynamicGraph().E().add(i, new ValueEdge<>("2", "2", "world" + i));
+            graphState.dynamicGraph().E().add(i, new ValueEdge<>("2", "3", "world" + i));
+            graphState.dynamicGraph().V().add(i, new ValueVertex<>("1", "3" + i));
+            graphState.dynamicGraph().V().add(i, new ValueVertex<>("2", "4" + i));
+            graphState.dynamicGraph().V().add(i, new ValueVertex<>("1", "5" + i));
+            graphState.dynamicGraph().V().add(i, new ValueVertex<>("1", "6" + i));
+        }
+
+        graphState.manage().operate().finish();
+
+        Iterator<String> idIterator = graphState.dynamicGraph().V().idIterator();
+        Assert.assertEquals(Iterators.size(idIterator), 2);
+
+        idIterator = graphState.dynamicGraph().V().query(1L, new KeyGroup(0, 0)).idIterator();
+        Assert.assertEquals(Iterators.size(idIterator), 1);
+
+        List<IEdge<String, String>> list = graphState.dynamicGraph().E().query(1L,
+            new KeyGroup(0, 0)).by((IEdgeFilter<String, String>) value -> !value.getTargetId().equals("2")).asList();
+        Assert.assertEquals(list.size(), 1);
+        Assert.assertEquals(list.get(0).getTargetId(), "3");
+
     }
 
 }

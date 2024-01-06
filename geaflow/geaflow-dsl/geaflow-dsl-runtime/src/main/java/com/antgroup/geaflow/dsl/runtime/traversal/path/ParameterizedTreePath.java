@@ -20,6 +20,10 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.IMessage;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageType;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -205,4 +209,28 @@ public class ParameterizedTreePath extends AbstractTreePath {
     public Row getParameter() {
         return parameter;
     }
+
+    public static class ParameterizedTreePathSerializer extends Serializer<ParameterizedTreePath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, ParameterizedTreePath object) {
+            kryo.writeClassAndObject(output, object.baseTreePath);
+            kryo.writeClassAndObject(output, object.getRequestId());
+            kryo.writeClassAndObject(output, object.getParameter());
+        }
+
+        @Override
+        public ParameterizedTreePath read(Kryo kryo, Input input, Class<ParameterizedTreePath> type) {
+            ITreePath baseTreePath = (ITreePath) kryo.readClassAndObject(input);
+            Object requestId = kryo.readClassAndObject(input);
+            Row parameter = (Row) kryo.readClassAndObject(input);
+            return new ParameterizedTreePath(baseTreePath, requestId, parameter);
+        }
+
+        @Override
+        public ParameterizedTreePath copy(Kryo kryo, ParameterizedTreePath original) {
+            return (ParameterizedTreePath) original.copy();
+        }
+    }
+
 }

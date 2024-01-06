@@ -26,9 +26,13 @@ import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.binary.FieldReaderFactory;
 import com.antgroup.geaflow.dsl.common.binary.FieldReaderFactory.PropertyFieldReader;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.Objects;
 
-public class BinaryRow implements Row {
+public class BinaryRow implements Row, KryoSerializable {
 
     private IBinaryObject binaryObject;
 
@@ -80,4 +84,19 @@ public class BinaryRow implements Row {
     private boolean isNullValue(int index) {
         return isSet(binaryObject, NULL_BIT_OFFSET, index);
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        byte[] bytes = this.binaryObject.toBytes();
+        output.writeInt(bytes.length);
+        output.writeBytes(bytes);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        int length = input.readInt();
+        byte[] bytes = input.readBytes(length);
+        this.binaryObject = HeapBinaryObject.of(bytes);
+    }
+
 }

@@ -48,6 +48,8 @@ public class EdgeType extends StructType {
 
     public static final String DEFAULT_LABEL_NAME = "~label";
 
+    public static final String DEFAULT_TS_NAME = "~ts";
+
     public EdgeType(List<TableField> fields, boolean hasTimestamp) {
         super(fields);
         this.hasTimestamp = hasTimestamp;
@@ -96,6 +98,15 @@ public class EdgeType extends StructType {
 
     public List<TableField> getValueFields() {
         return getFields().subList(getValueOffset(), size());
+    }
+
+    public IType<?>[] getValueTypes() {
+        IType<?>[] valueTypes = new IType[size() - getValueOffset()];
+        List<TableField> valueFields = getValueFields();
+        for (int i = 0; i < valueFields.size(); i++) {
+            valueTypes[i ] = valueFields.get(i).getType();
+        }
+        return valueTypes;
     }
 
     public static EdgeType emptyEdge(IType<?> idType) {

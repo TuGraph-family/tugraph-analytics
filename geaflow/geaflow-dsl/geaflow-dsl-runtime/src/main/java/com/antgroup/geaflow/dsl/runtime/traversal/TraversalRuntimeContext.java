@@ -15,7 +15,9 @@
 package com.antgroup.geaflow.dsl.runtime.traversal;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContextFunction.VertexCentricAggContext;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
@@ -25,12 +27,12 @@ import com.antgroup.geaflow.dsl.runtime.traversal.data.CallRequestId;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.ParameterRequest;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.IMessage;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageBox;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageType;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
-import java.util.Iterator;
 
 public interface TraversalRuntimeContext {
 
@@ -71,7 +73,7 @@ public interface TraversalRuntimeContext {
 
     RowVertex loadVertex(Object vertexId, IFilter loadVertexFilter, GraphSchema graphSchema, IType<?>[] addingVertexFieldTypes);
 
-    Iterator<Object> loadAllVertex();
+    CloseableIterator<Object> loadAllVertex();
 
     void sendMessage(Object vertexId, IMessage message, long receiverId, long... otherReceiveIds);
 
@@ -80,6 +82,10 @@ public interface TraversalRuntimeContext {
     void takePath(ITreePath treePath);
 
     void sendCoordinator(String name, Object value);
+
+    VertexCentricAggContext<ITraversalAgg, ITraversalAgg> getAggContext();
+
+    void setAggContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext);
 
     RuntimeContext getRuntimeContext();
 

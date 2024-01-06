@@ -24,43 +24,43 @@ import lombok.Setter;
 @Setter
 public class SystemArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.job.unique.id", comment = "作业ID")
+    @GeaflowConfigKey(value = "geaflow.job.unique.id", comment = "i18n.key.job.id")
     @GeaflowConfigValue(required = true)
     private String taskId;
 
-    @GeaflowConfigKey(value = "geaflow.job.cluster.id", comment = "运行时作业ID")
+    @GeaflowConfigKey(value = "geaflow.job.cluster.id", comment = "i18n.key.running.job.id")
     @GeaflowConfigValue(required = true)
     private String runtimeTaskId;
 
-    @GeaflowConfigKey(value = "geaflow.job.runtime.name", comment = "运行时作业名")
+    @GeaflowConfigKey(value = "geaflow.job.runtime.name", comment = "i18n.key.running.job.name")
     @GeaflowConfigValue(required = true)
     private String runtimeTaskName;
 
-    @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "API服务地址")
-    @GeaflowConfigValue(required = true, defaultValue = "http://0.0.0.0:8080")
+    @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "i18n.key.k8s.server.url")
+    @GeaflowConfigValue(required = true, defaultValue = "http://0.0.0.0:8888")
     private String gateway;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "API服务Token")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "i18n.key.api.token")
     @GeaflowConfigValue(required = true, masked = true)
     private String taskToken;
 
-    @GeaflowConfigKey(value = "geaflow.cluster.started.callback.url", comment = "启动通知服务URL")
+    @GeaflowConfigKey(value = "geaflow.cluster.started.callback.url", comment = "i18n.key.startup.notify.url")
     @GeaflowConfigValue(required = true)
     private String startupNotifyUrl;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.instance.name", comment = "默认实例名")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.instance.name", comment = "i18n.key.default.instance.name")
     @GeaflowConfigValue(required = true)
     private String instanceName;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.type", comment = "作业Catalog存储类型")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.type", comment = "i18n.key.job.catalog.type")
     @GeaflowConfigValue(required = true, defaultValue = "console")
     private String catalogType;
 
-    @GeaflowConfigKey(value = "stateConfig", comment = "State参数")
+    @GeaflowConfigKey(value = "stateConfig", comment = "i18n.key.state.params")
     @GeaflowConfigValue(required = true)
     private StateArgsClass stateArgs;
 
-    @GeaflowConfigKey(value = "metricConfig", comment = "Metric参数")
+    @GeaflowConfigKey(value = "metricConfig", comment = "i18n.key.metric.params")
     @GeaflowConfigValue(required = true)
     private MetricArgsClass metricArgs;
 

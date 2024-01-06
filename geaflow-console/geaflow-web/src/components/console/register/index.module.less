@@ -1,0 +1,94 @@
+@perfix-cls: ant-geaflow;
+.@{perfix-cls}-login-container {
+  width: 100%;
+  height: 100vh;
+  background-color: #e3e9ff;
+  position: relative;
+  .@{perfix-cls}-logo-img {
+    position: absolute;
+    width: 122px;
+    top: 54px;
+    left: 54px;
+  }
+  .@{perfix-cls}-particles-container {
+    width: calc(100% - 580px);
+    height: 426px;
+    font-size: 20px;
+    color: #ffffff;
+    top: 17.7%;
+    position: relative;
+    .@{perfix-cls}-text {
+      position: absolute;
+      width: 100%;
+      transform: translate(-50%, -50%);
+      left: 50%;
+      top: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 48px;
+      color: #1890ff;
+      font-weight: bold;
+      .@{perfix-cls}-title {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        font-weight: bold;
+      }
+    }
+  }
+  .@{perfix-cls}-login-form {
+    width: 580px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    background-color: #ffffff;
+    .@{perfix-cls}-logo {
+      width: 300px;
+      position: absolute;
+      top: 168px;
+      right: 140px;
+
+      .@{perfix-cls}-account-login {
+        font-weight: 500;
+        font-size: 28px;
+        color: rgba(26, 27, 37, 0.88);
+        line-height: 36px;
+        margin-bottom: 4px;
+        padding: 16px 0;
+      }
+      .@{perfix-cls}-login-desc {
+        height: 22px;
+        width: 126px;
+        font-weight: 400;
+        font-size: 14px;
+        color: rgba(26, 27, 37, 0.45);
+        line-height: 22px;
+        margin-bottom: 32px;
+      }
+    }
+    .@{perfix-cls}-form-style {
+      :global {
+        .ant-input-affix-wrapper {
+          padding: 0 11px;
+        }
+        .ant-input {
+          height: 40px;
+        }
+        .ant-btn {
+          width: 100%;
+          background-color: rgba(22, 80, 255, 1);
+          height: 40px;
+          font-size: 16px;
+          font-weight: 400;
+          margin-top: 16px;
+        }
+        .ant-input-password-icon {
+          font-size: 17px;
+        }
+      }
+    }
+  }
+}

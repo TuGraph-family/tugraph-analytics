@@ -14,38 +14,26 @@
 
 package com.antgroup.geaflow.runtime.core.worker;
 
-import com.antgroup.geaflow.cluster.protocol.Message;
-import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.cluster.fetcher.IInputMessageBuffer;
+import com.antgroup.geaflow.cluster.protocol.InputMessage;
+import com.antgroup.geaflow.io.AbstractMessageBuffer;
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
+import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 
-import java.io.Serializable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-public class InputReader implements Serializable {
-
-    private LinkedBlockingQueue<Message> inputQueue;
+public class InputReader<T> extends AbstractMessageBuffer<InputMessage<T>> implements IInputMessageBuffer<T> {
 
     public InputReader() {
-        this.inputQueue = new LinkedBlockingQueue<>();
+        super(ShuffleConfig.getInstance().getFetchQueueSize());
     }
 
-    /**
-     * Add message into input queue.
-     */
-    public void add(Message message) {
-        inputQueue.add(message);
+    @Override
+    public void onMessage(PipelineMessage<T> message) {
+        this.offer(new InputMessage<>(message));
     }
 
-    /**
-     * Returns message from input queue.
-     */
-    public Message poll(long timeout, TimeUnit unit) {
-        Message message;
-        try {
-            message = inputQueue.poll(timeout, unit);
-        } catch (Throwable t) {
-            throw new GeaflowRuntimeException(t);
-        }
-        return message;
+    @Override
+    public void onBarrier(long windowId, long windowCount) {
+        this.offer(new InputMessage<>(windowId, windowCount));
     }
+
 }

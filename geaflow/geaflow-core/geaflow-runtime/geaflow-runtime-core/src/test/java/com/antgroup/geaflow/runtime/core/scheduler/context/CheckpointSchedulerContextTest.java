@@ -16,6 +16,7 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
@@ -45,7 +46,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         // mock restart job
         ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         CheckpointSchedulerContext loaded2 = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> context);
         Assert.assertEquals(checkpointId + 1, loaded2.getCurrentIterationId());
@@ -55,18 +56,22 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
 
 
     private ExecutionNodeCycle buildMockCycle(boolean isIterative) {
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
 
         long finishIterationId = 100;
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(isIterative);
+        if (isIterative) {
+            vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.incremental);
+        } else {
+            vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
+        }
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(2);
         vertexGroup.getVertexMap().put(0, vertex);
 
-        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
     }
 
 }

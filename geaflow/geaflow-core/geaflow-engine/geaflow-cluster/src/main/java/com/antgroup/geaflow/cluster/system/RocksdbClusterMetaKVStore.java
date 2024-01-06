@@ -31,10 +31,12 @@ public class RocksdbClusterMetaKVStore<K, V> implements IClusterMetaKVStore<K, V
 
     private IKVStore<K, Object> kvStore;
     private transient long version;
+    private String name;
 
     @Override
     public void init(StoreContext storeContext) {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.ROCKSDB.name());
+        this.name = storeContext.getName();
         kvStore = (IKVStore<K, Object>) builder.getStore(DataModel.KV, storeContext.getConfig());
         kvStore.init(storeContext);
 
@@ -51,6 +53,7 @@ public class RocksdbClusterMetaKVStore<K, V> implements IClusterMetaKVStore<K, V
 
     @Override
     public void flush() {
+        LOGGER.info("cluster meta {} do flush", name);
         kvStore.archive(version);
         version++;
     }

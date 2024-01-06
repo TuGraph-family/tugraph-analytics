@@ -32,16 +32,16 @@ import lombok.Setter;
 @NoArgsConstructor
 public class HaMetaArgsClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.ha.service.type", comment = "类型")
+    @GeaflowConfigKey(value = "geaflow.ha.service.type", comment = "i18n.key.type")
     @GeaflowConfigValue(required = true, defaultValue = "REDIS")
     private GeaflowPluginType type;
 
-    @GeaflowConfigKey(value = "plugin", comment = "插件配置")
+    @GeaflowConfigKey(value = "plugin", comment = "i18n.key.plugin.config")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private PluginConfigClass plugin;
 
     public HaMetaArgsClass(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
 
         Class<? extends PluginConfigClass> configClass;
         switch (type) {
@@ -49,7 +49,7 @@ public class HaMetaArgsClass extends GeaflowConfigClass {
                 configClass = RedisPluginConfigClass.class;
                 break;
             default:
-                throw new GeaflowIllegalException("Ha meta config type {} not supported", type);
+                throw new GeaflowIllegalException("Ha meta config type {} not supported", pluginConfig.getType());
         }
 
         this.plugin = pluginConfig.getConfig().parse(configClass);

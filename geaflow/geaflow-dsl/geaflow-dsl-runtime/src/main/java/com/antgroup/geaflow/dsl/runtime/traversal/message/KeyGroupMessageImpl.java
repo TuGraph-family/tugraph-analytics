@@ -15,6 +15,10 @@
 package com.antgroup.geaflow.dsl.runtime.traversal.message;
 
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,4 +53,24 @@ public class KeyGroupMessageImpl implements KeyGroupMessage {
     public List<Row> getGroupRows() {
         return groupRows;
     }
+
+    public static class KeyGroupMessageImplSerializer extends Serializer<KeyGroupMessageImpl> {
+
+        @Override
+        public void write(Kryo kryo, Output output, KeyGroupMessageImpl object) {
+            kryo.writeObject(output, object.groupRows);
+        }
+
+        @Override
+        public KeyGroupMessageImpl read(Kryo kryo, Input input, Class<KeyGroupMessageImpl> type) {
+            List<Row> groupRows = kryo.readObject(input, ArrayList.class);
+            return new KeyGroupMessageImpl(groupRows);
+        }
+
+        @Override
+        public KeyGroupMessageImpl copy(Kryo kryo, KeyGroupMessageImpl original) {
+            return new KeyGroupMessageImpl(new ArrayList<>(original.getGroupRows()));
+        }
+    }
+
 }

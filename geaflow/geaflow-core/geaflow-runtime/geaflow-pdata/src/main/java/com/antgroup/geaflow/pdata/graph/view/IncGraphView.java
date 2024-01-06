@@ -14,21 +14,20 @@
 
 package com.antgroup.geaflow.pdata.graph.view;
 
-import com.antgroup.geaflow.api.function.internal.CollectionSource;
 import com.antgroup.geaflow.api.graph.PGraphWindow;
+import com.antgroup.geaflow.api.graph.compute.IncVertexCentricAggCompute;
 import com.antgroup.geaflow.api.graph.compute.IncVertexCentricCompute;
 import com.antgroup.geaflow.api.graph.compute.PGraphCompute;
+import com.antgroup.geaflow.api.graph.traversal.IncVertexCentricAggTraversal;
 import com.antgroup.geaflow.api.graph.traversal.IncVertexCentricTraversal;
 import com.antgroup.geaflow.api.graph.traversal.PGraphTraversal;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
-import com.antgroup.geaflow.api.window.impl.AllWindow;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.pdata.graph.view.compute.ComputeIncGraph;
 import com.antgroup.geaflow.pdata.graph.view.materialize.MaterializedIncGraph;
 import com.antgroup.geaflow.pdata.graph.view.traversal.TraversalIncGraph;
 import com.antgroup.geaflow.pdata.graph.window.WindowStreamGraph;
-import com.antgroup.geaflow.pdata.stream.window.WindowStreamSource;
 import com.antgroup.geaflow.pipeline.context.IPipelineContext;
 import com.antgroup.geaflow.view.IViewDesc;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
@@ -64,12 +63,7 @@ public class IncGraphView<K, VV, EV> implements PIncGraphView<K, VV, EV> {
     @SuppressWarnings("unchecked")
     @Override
     public PGraphWindow<K, VV, EV> snapshot(long version) {
-        PWindowStream vertexSource = new WindowStreamSource(pipelineContext, new CollectionSource(),
-            AllWindow.getInstance());
-        PWindowStream edgeSource = new WindowStreamSource(pipelineContext, new CollectionSource(),
-            AllWindow.getInstance());
-        return new WindowStreamGraph<>(((GraphViewDesc) graphViewDesc).snapshot(version), pipelineContext,
-            vertexSource, edgeSource);
+        return new WindowStreamGraph<>(((GraphViewDesc) graphViewDesc).snapshot(version), pipelineContext);
     }
 
     @Override
@@ -93,11 +87,23 @@ public class IncGraphView<K, VV, EV> implements PIncGraphView<K, VV, EV> {
     }
 
     @Override
-    public <M> PGraphCompute<K, VV, EV> incrementalCompute(IncVertexCentricCompute<K, VV, EV, M> incVertexCentricCompute) {
+    public <M> PGraphCompute<K, VV, EV> incrementalCompute(
+        IncVertexCentricCompute<K, VV, EV, M> incVertexCentricCompute) {
         ComputeIncGraph<K, VV, EV, M> computeIncGraph = new ComputeIncGraph<>(pipelineContext,
             graphViewDesc, vertexWindowSteam, edgeWindowStream);
         computeIncGraph.computeOnIncVertexCentric(incVertexCentricCompute);
         return computeIncGraph;
+    }
+
+    @Override
+    public <M, I, PA, PR, GA, GR> PGraphCompute<K, VV, EV> incrementalCompute(
+        IncVertexCentricAggCompute<K, VV, EV, M, I, PA, PR, GA, GR> incVertexCentricCompute) {
+        ComputeIncGraph<K, VV, EV, M> computeIncGraph =
+            new ComputeIncGraph<>(pipelineContext, graphViewDesc,
+                vertexWindowSteam,
+                edgeWindowStream);
+        computeIncGraph.computeOnIncVertexCentric(incVertexCentricCompute);
+        return null;
     }
 
     @Override
@@ -108,6 +114,17 @@ public class IncGraphView<K, VV, EV> implements PIncGraphView<K, VV, EV> {
             new TraversalIncGraph<>(pipelineContext, graphViewDesc,
             this.vertexWindowSteam,
             this.edgeWindowStream);
+        traversalIncGraph.traversalOnVertexCentric(incVertexCentricTraversal);
+        return traversalIncGraph;
+    }
+
+    @Override
+    public <M, R, I, PA, PR, GA, GR> PGraphTraversal<K, R> incrementalTraversal(
+        IncVertexCentricAggTraversal<K, VV, EV, M, R, I, PA, PR, GA, GR> incVertexCentricTraversal) {
+        TraversalIncGraph<K, VV, EV, M, R> traversalIncGraph =
+            new TraversalIncGraph<>(pipelineContext, graphViewDesc,
+                this.vertexWindowSteam,
+                this.edgeWindowStream);
         traversalIncGraph.traversalOnVertexCentric(incVertexCentricTraversal);
         return traversalIncGraph;
     }

@@ -29,26 +29,21 @@ public class PluginConverter extends NameConverter<GeaflowPlugin, PluginEntity> 
         PluginEntity entity = super.modelToEntity(model);
         entity.setPluginType(model.getType());
         entity.setPluginCategory(model.getCategory());
-        entity.setVersion(model.getVersion());
-        entity.setEntryClass(model.getEntryClass());
         entity.setJarPackageId(Optional.ofNullable(model.getJarPackage()).map(GeaflowId::getId).orElse(null));
-        entity.setDataPluginId(Optional.ofNullable(model.getDataPlugin()).map(GeaflowId::getId).orElse(null));
         return entity;
     }
 
     @Override
     protected GeaflowPlugin entityToModel(PluginEntity entity) {
         GeaflowPlugin model = super.entityToModel(entity);
-        model.setVersion(entity.getVersion());
         model.setType(entity.getPluginType());
         model.setCategory(entity.getPluginCategory());
-        model.setEntryClass(entity.getEntryClass());
+        model.setSystem(entity.isSystem());
         return model;
     }
 
-    public GeaflowPlugin convert(PluginEntity entity, GeaflowPlugin dataPlugin, GeaflowRemoteFile jarPackage) {
+    public GeaflowPlugin convert(PluginEntity entity, GeaflowRemoteFile jarPackage) {
         GeaflowPlugin model = entityToModel(entity);
-        model.setDataPlugin(dataPlugin);
         model.setJarPackage(jarPackage);
         return model;
     }

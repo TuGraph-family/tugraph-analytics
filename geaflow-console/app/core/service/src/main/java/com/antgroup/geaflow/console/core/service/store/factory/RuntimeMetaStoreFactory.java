@@ -30,12 +30,12 @@ public class RuntimeMetaStoreFactory {
     ApplicationContext context;
 
     public GeaflowRuntimeMetaStore getRuntimeMetaStore(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
+        GeaflowPluginType type = GeaflowPluginType.of(pluginConfig.getType());
         switch (type) {
             case JDBC:
                 return context.getBean(JdbcStore.class);
             default:
-                throw new GeaflowIllegalException("Not supported runtime meta store type {}", type);
+                throw new GeaflowIllegalException("Not supported runtime meta store type {}", pluginConfig.getType());
         }
     }
 

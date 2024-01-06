@@ -20,10 +20,21 @@
     <parent>
         <artifactId>geaflow-deploy</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>geaflow-on-local</artifactId>
     <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dashboard</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-cluster-runner</artifactId>
+        </dependency>
+    </dependencies>
 </project>

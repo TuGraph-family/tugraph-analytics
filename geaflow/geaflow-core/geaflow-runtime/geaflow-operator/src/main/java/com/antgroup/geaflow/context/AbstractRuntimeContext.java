@@ -51,5 +51,11 @@ public abstract class AbstractRuntimeContext implements RuntimeContext {
 
     public void updateWindowId(long windowId) {
         this.windowId = windowId;
+
+    }
+
+    @Override
+    public long getWindowId() {
+        return windowId;
     }
 }

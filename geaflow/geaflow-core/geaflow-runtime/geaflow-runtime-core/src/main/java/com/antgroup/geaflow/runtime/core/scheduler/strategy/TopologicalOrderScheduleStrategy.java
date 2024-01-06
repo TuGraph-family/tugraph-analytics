@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.runtime.core.scheduler.strategy;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import java.util.ArrayList;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,18 +69,14 @@ public class TopologicalOrderScheduleStrategy implements IScheduleStrategy<Execu
 
     @Override
     public IExecutionCycle next() {
-        IExecutionCycle cycle = waiting.peekFirst();
-        if (cycle == null) {
-            return null;
-        } else if (!running.isEmpty()) {
-            // If the next one is a stateful stage,
-            // should wait until no other stage is running.
-            return null;
-        } else {
-            waiting.pollFirst();
-            running.addLast(cycle);
-            return cycle;
+        IExecutionCycle cycle = null;
+        try {
+            cycle = waiting.takeFirst();
+        } catch (InterruptedException e) {
+            throw new GeaflowRuntimeException("interrupted when waiting the cycle ready to schedule", e);
         }
+        running.addLast(cycle);
+        return cycle;
     }
 
     @Override

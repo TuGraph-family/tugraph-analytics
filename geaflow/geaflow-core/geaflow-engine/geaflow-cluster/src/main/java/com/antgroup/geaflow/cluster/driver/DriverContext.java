@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.driver;
 
 import com.antgroup.geaflow.cluster.common.IReliableContext;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.Pipeline;
@@ -30,21 +31,22 @@ public class DriverContext extends ReliableContainerContext {
 
     private Pipeline pipeline;
     private List<Integer> finishedPipelineTasks;
+    private int index;
 
-    public DriverContext(int index, Configuration config) {
-        super(index, config);
+    public DriverContext(int id, int index, Configuration config) {
+        super(id, ClusterConstants.getDriverName(id), config);
+        this.index = index;
         this.finishedPipelineTasks = new ArrayList<>();
     }
 
-    public DriverContext(int index, Configuration config, boolean isRecover) {
-        super(index, config);
+    public DriverContext(int id, int index, Configuration config, boolean isRecover) {
+        this(id, index, config);
         this.isRecover = isRecover;
-        this.finishedPipelineTasks = new ArrayList<>();
     }
 
     @Override
     public void load() {
-        Pipeline pipeline = ClusterMetaStore.getInstance(id, config).getPipeline();
+        Pipeline pipeline = ClusterMetaStore.getInstance(id, name, config).getPipeline();
         if (pipeline != null) {
             List<Integer> finishedPipelineTasks = ClusterMetaStore.getInstance().getPipelineTasks();
             if (finishedPipelineTasks == null) {
@@ -64,6 +66,10 @@ public class DriverContext extends ReliableContainerContext {
         if (!pipeline.equals(this.pipeline)) {
             this.pipeline = pipeline;
         }
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     public List<Integer> getFinishedPipelineTasks() {

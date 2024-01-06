@@ -15,19 +15,19 @@
 package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.client.PipelineResult;
+import com.antgroup.geaflow.cluster.rpc.IAsyncDriverEndpoint;
 import com.antgroup.geaflow.cluster.rpc.IDriverEndpointRef;
-import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.cluster.rpc.RpcUtil;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineReq;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
-import com.antgroup.geaflow.rpc.proto.DriverServiceGrpc;
-import com.antgroup.geaflow.rpc.proto.DriverServiceGrpc.DriverServiceFutureStub;
+import com.baidu.brpc.client.BrpcProxy;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import io.grpc.ManagedChannel;
-import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,41 +35,31 @@ public class DriverEndpointRef extends AbstractRpcEndpointRef implements IDriver
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DriverEndpointRef.class);
 
-    private DriverServiceFutureStub stub;
-    private DriverServiceGrpc.DriverServiceBlockingStub blockingStub;
+    private IAsyncDriverEndpoint driverEndpoint;
 
-    public DriverEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public DriverEndpointRef(String host, int port, Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
-    protected void createStub(ManagedChannel channel) {
-        this.stub = DriverServiceGrpc.newFutureStub(channel);
-        this.blockingStub = DriverServiceGrpc.newBlockingStub(channel);
+    protected void getRpcEndpoint() {
+        this.driverEndpoint = BrpcProxy.getProxy(rpcClient, IAsyncDriverEndpoint.class);
     }
 
     @Override
     public IPipelineResult executePipeline(Pipeline pipeline) {
-        ensureChannelAlive();
-        LOGGER.info("send pipeline to driver, driver host:{}, port:{}. {}", super.host, super.port,
-            pipeline);
+        LOGGER.info("send pipeline to driver, driver host:{}, port:{}. {}", super.host, super.port, pipeline);
         ByteString payload = RpcMessageEncoder.encode(pipeline);
-        Iterator<PipelineRes> iterator =
-            blockingStub.executePipeline(PipelineReq.newBuilder().setPayload(payload).build());
-
-        // Make sure that ack response is received.
-        if (iterator.hasNext()) {
-            iterator.next();
-        } else {
-            throw new GeaflowRuntimeException("not found ack response");
-        }
-        return new PipelineResult(iterator);
+        PipelineReq req = PipelineReq.newBuilder().setPayload(payload).build();
+        CompletableFuture<PipelineRes> result = new CompletableFuture<>();
+        com.baidu.brpc.client.RpcCallback<PipelineRes> rpcCallback = RpcUtil.buildRpcCallback(null, result);
+        this.driverEndpoint.executePipeline(req, rpcCallback);
+        return new PipelineResult(result);
     }
 
     @Override
-    public void close() {
-        ensureChannelAlive();
-        blockingStub.close(Empty.newBuilder().build());
-        super.close();
+    public void closeEndpoint() {
+        this.driverEndpoint.close(Empty.newBuilder().build());
+        super.closeEndpoint();
     }
 }

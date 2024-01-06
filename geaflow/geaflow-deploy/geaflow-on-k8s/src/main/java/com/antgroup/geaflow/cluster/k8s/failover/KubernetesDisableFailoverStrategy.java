@@ -14,23 +14,13 @@
 
 package com.antgroup.geaflow.cluster.k8s.failover;
 
-import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
-import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
+import com.antgroup.geaflow.cluster.runner.failover.DisableFailoverStrategy;
+import com.antgroup.geaflow.env.IEnvironment.EnvType;
 
-public class KubernetesDisableFailoverStrategy extends AbstractKubernetesFailoverStrategy {
+public class KubernetesDisableFailoverStrategy extends DisableFailoverStrategy {
 
-    @Override
-    public void init(ClusterContext context) {
-
+    public KubernetesDisableFailoverStrategy() {
+        super(EnvType.K8S);
     }
 
-    @Override
-    public void doFailover(int componentId) {
-
-    }
-
-    @Override
-    public FailoverStrategyType getType() {
-        return FailoverStrategyType.disable_fo;
-    }
 }

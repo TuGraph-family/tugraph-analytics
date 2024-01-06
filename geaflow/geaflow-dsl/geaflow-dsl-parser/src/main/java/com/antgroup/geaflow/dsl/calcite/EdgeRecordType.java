@@ -51,6 +51,31 @@ public class EdgeRecordType extends RelRecordType {
     public static EdgeRecordType createEdgeType(List<RelDataTypeField> fields, String srcIdField,
                                                 String targetIdField, String timestampField,
                                                 RelDataTypeFactory typeFactory) {
+
+        boolean hasMultiSrcIdFields = fields.stream()
+            .filter(f -> f.getType() instanceof MetaFieldType
+                && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_SRC_ID))
+            .count() > 1;
+        if (hasMultiSrcIdFields) {
+            srcIdField = EdgeType.DEFAULT_SRC_ID_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.EDGE_SRC_ID, srcIdField);
+        }
+        boolean hasMultiTargetIdFields = fields.stream()
+            .filter(f -> f.getType() instanceof MetaFieldType
+                && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_TARGET_ID))
+            .count() > 1;
+        if (hasMultiTargetIdFields) {
+            targetIdField = EdgeType.DEFAULT_TARGET_ID_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.EDGE_TARGET_ID, targetIdField);
+        }
+        boolean hasMultiTsFields = fields.stream()
+            .filter(f -> f.getType() instanceof MetaFieldType
+                && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.EDGE_TS))
+            .count() > 1;
+        if (hasMultiTsFields) {
+            timestampField = EdgeType.DEFAULT_TS_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.EDGE_TS, timestampField);
+        }
         List<RelDataTypeField> reorderFields = reorderFields(fields, srcIdField, targetIdField, timestampField,
             typeFactory);
         return new EdgeRecordType(reorderFields, timestampField != null);
@@ -119,7 +144,7 @@ public class EdgeRecordType extends RelRecordType {
 
     public EdgeRecordType add(String fieldName, RelDataType type, boolean caseSensitive) {
         if (type instanceof MetaFieldType) {
-            throw new IllegalArgumentException("Cannot add MetaFieldType");
+            type = ((MetaFieldType) type).getType();
         }
         List<RelDataTypeField> fields = new ArrayList<>(getFieldList());
 
@@ -149,19 +174,19 @@ public class EdgeRecordType extends RelRecordType {
         RelDataTypeField targetIdTypeField = fields.get(targetIdIndex);
         // put srcId field.
         reorderFields.add(new RelDataTypeFieldImpl(srcIdTypeField.getName(), EdgeType.SRC_ID_FIELD_POSITION,
-            edgeSrcId(srcIdTypeField.getType())));
+            edgeSrcId(srcIdTypeField.getType(), typeFactory)));
         // put targetId field.
         reorderFields.add(new RelDataTypeFieldImpl(targetIdTypeField.getName(), EdgeType.TARGET_ID_FIELD_POSITION,
-            edgeTargetId(targetIdTypeField.getType())));
+            edgeTargetId(targetIdTypeField.getType(), typeFactory)));
         // put label field.
         reorderFields.add(new RelDataTypeFieldImpl(GraphSchema.LABEL_FIELD_NAME, EdgeType.LABEL_FIELD_POSITION,
-            edgeType(typeFactory.createSqlType(SqlTypeName.VARCHAR))));
+            edgeType(typeFactory.createSqlType(SqlTypeName.VARCHAR), typeFactory)));
         // put ts field if it has defined.
         int tsIndex = indexOf(fields, timestampField);
         if (tsIndex != -1) {
             RelDataTypeField tsTypeField = fields.get(tsIndex);
             reorderFields.add(new RelDataTypeFieldImpl(tsTypeField.getName(), EdgeType.TIME_FIELD_POSITION,
-                edgeTs(tsTypeField.getType())));
+                edgeTs(tsTypeField.getType(), typeFactory)));
         }
         int labelIndex = indexOf(fields, GraphSchema.LABEL_FIELD_NAME);
         // put other fields by order exclude ~label.
@@ -188,9 +213,10 @@ public class EdgeRecordType extends RelRecordType {
 
     public static EdgeRecordType emptyEdgeType(RelDataType idType, RelDataTypeFactory typeFactory) {
         List<RelDataTypeField> fields = new ArrayList<>();
-        fields.add(new RelDataTypeFieldImpl(EdgeType.DEFAULT_SRC_ID_NAME, EdgeType.SRC_ID_FIELD_POSITION, idType));
-        fields.add(
-            new RelDataTypeFieldImpl(EdgeType.DEFAULT_TARGET_ID_NAME, EdgeType.TARGET_ID_FIELD_POSITION, idType));
+        fields.add(new RelDataTypeFieldImpl(EdgeType.DEFAULT_SRC_ID_NAME,
+            EdgeType.SRC_ID_FIELD_POSITION, MetaFieldType.edgeSrcId(idType, typeFactory)));
+        fields.add(new RelDataTypeFieldImpl(EdgeType.DEFAULT_TARGET_ID_NAME,
+            EdgeType.TARGET_ID_FIELD_POSITION, MetaFieldType.edgeTargetId(idType, typeFactory)));
         fields.add(new RelDataTypeFieldImpl(GraphSchema.LABEL_FIELD_NAME, EdgeType.LABEL_FIELD_POSITION,
             typeFactory.createSqlType(SqlTypeName.VARCHAR)));
         return EdgeRecordType.createEdgeType(fields, EdgeType.DEFAULT_SRC_ID_NAME,

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = false;
+option java_package = "com.antgroup.geaflow.rpc.proto";
+
+service SupervisorService {
+
+    // 启动container
+    rpc restart(RestartRequest) returns (google.protobuf.Empty) {
+    }
+
+    // check status
+    rpc status(google.protobuf.Empty) returns (StatusResponse) {
+    }
+
+}
+
+message RestartRequest {
+    int32 pid = 1;
+}
+
+message StatusResponse {
+    bool isAlive = 1;
+}

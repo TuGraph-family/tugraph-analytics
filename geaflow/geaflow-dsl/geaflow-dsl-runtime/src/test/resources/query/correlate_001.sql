@@ -11,7 +11,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_correlate.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	f1 bigint,
 	f2 bigint,
 	f3 bigint,
@@ -22,11 +22,12 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT
 	createTime,
 	productId,
 	orderId,
 	units,
 	t.name
-FROM users, LATERAL table(UDTF_SPLIT(user_name, '|')) as t(name);
+FROM users, LATERAL table(UDTF_SPLIT(user_name, '|')) as t(name)
+where productId = 1 OR name = '中国';

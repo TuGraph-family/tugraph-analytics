@@ -14,29 +14,32 @@
 
 package com.antgroup.geaflow.cluster.k8s.clustermanager;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.LABEL_COMPONENT_ID_KEY;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.MASTER_RS_NAME_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.SERVICE_NAME_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.CLUSTER_START_TIME;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DOCKER_NETWORK_TYPE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.MATCH_EXPRESSION_LIST;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam.CONTAINERIZED_MASTER_ENV_PREFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam.MASTER_ENV_PREFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam.MASTER_NODE_SELECTOR;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.MASTER_RS_NAME_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.utils.K8SConstants.SERVICE_NAME_SUFFIX;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.MASTER_MEMORY_MB;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
+import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig.DockerNetworkType;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.exception.GeaflowHeartbeatException;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -49,11 +52,9 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import junit.framework.TestCase;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -80,6 +81,7 @@ public class KubernetesClusterManagerTest {
     @BeforeMethod
     public void setUp() {
         jobConf = new Configuration();
+        jobConf.put(ExecutionConfigKeys.RUN_LOCAL_MODE, Boolean.TRUE.toString());
         jobConf.put(KubernetesConfigKeys.CONF_DIR.getKey(), CONF_DIR_IN_IMAGE);
         jobConf.put(ExecutionConfigKeys.CLUSTER_ID.getKey(), CLUSTER_ID);
         jobConf.put(KubernetesMasterParam.MASTER_CONTAINER_NAME, MASTER_CONTAINER_NAME);
@@ -106,11 +108,10 @@ public class KubernetesClusterManagerTest {
         // Set environment for master
         String envName = "env-a";
         String envValue = "value-a";
-        jobConf.put(CONTAINERIZED_MASTER_ENV_PREFIX + envName, envValue);
+        jobConf.put(MASTER_ENV_PREFIX + envName, envValue);
 
-        String clusterId = "cluster";
         Container container = kubernetesClusterManager
-            .createMasterContainer(clusterId, DockerNetworkType.BRIDGE);
+            .createMasterContainer(DockerNetworkType.BRIDGE);
 
         assertTrue(container.getCommand().isEmpty());
         Optional<EnvVar> commandEnv = container.getEnv().stream()
@@ -148,7 +149,7 @@ public class KubernetesClusterManagerTest {
         Deployment deployment = geaflowKubeClient.getDeployment(CLUSTER_ID + MASTER_RS_NAME_SUFFIX);
         assertNotNull(deployment);
         assertEquals(1, deployment.getSpec().getReplicas().intValue());
-        assertEquals(2, deployment.getSpec().getSelector().getMatchLabels().size());
+        assertEquals(3, deployment.getSpec().getSelector().getMatchLabels().size());
         assertEquals(MASTER_CONTAINER_NAME,
             deployment.getSpec().getTemplate().getSpec().getContainers().get(0).getName());
         TestCase.assertEquals(K8SConstants.GEAFLOW_CONF_VOLUME,
@@ -160,7 +161,7 @@ public class KubernetesClusterManagerTest {
         Service service = geaflowKubeClient.getService(CLUSTER_ID + SERVICE_NAME_SUFFIX);
         assertNotNull(service);
         assertEquals(labels, service.getSpec().getSelector());
-        assertEquals(2, service.getSpec().getPorts().size());
+        assertEquals(1, service.getSpec().getPorts().size());
 
         // check owner reference
         String serviceName = service.getMetadata().getName();
@@ -188,11 +189,6 @@ public class KubernetesClusterManagerTest {
         assertNotNull(rc);
 
         kubernetesClusterManager.close();
-
-        // Service should be deleted
-        while (service != null) {
-            service = kubernetesClient.services().withName(CLUSTER_ID + SERVICE_NAME_SUFFIX).get();
-        }
     }
 
     @Test(timeOut = 30000)
@@ -201,8 +197,9 @@ public class KubernetesClusterManagerTest {
         Map<String, String> labels = new HashMap<>();
         labels.put("app", CLUSTER_ID);
         labels.put("component", MASTER_COMPONENT);
-        labels.putAll(KubernetesUtils.getPairsConf(jobConf, POD_USER_LABELS.getKey()));
-        assertEquals(4, labels.size());
+        labels.put(LABEL_COMPONENT_ID_KEY, String.valueOf(DEFAULT_MASTER_ID));
+        labels.putAll(KubernetesUtils.getPairsConf(jobConf, POD_USER_LABELS));
+        assertEquals(5, labels.size());
         assertEquals("test", labels.get("l1"));
         assertEquals("hello", labels.get("l2"));
         kubernetesClusterManager.createMaster(CLUSTER_ID, labels);
@@ -231,12 +228,12 @@ public class KubernetesClusterManagerTest {
         // check service
         Service service = geaflowKubeClient.getService(CLUSTER_ID + SERVICE_NAME_SUFFIX);
         assertNotNull(service);
-        assertEquals(2, service.getSpec().getPorts().size());
+        assertEquals(1, service.getSpec().getPorts().size());
         // Check client service
         Service clientService = geaflowKubeClient
-            .getService(CLUSTER_ID + K8SConstants.CLIENT_SERVICE_NAME_SUFFIX);
+            .getService(KubernetesUtils.getMasterClientServiceName(CLUSTER_ID));
         assertNotNull(service);
-        assertEquals(2, clientService.getSpec().getPorts().size());
+        assertEquals(1, clientService.getSpec().getPorts().size());
     }
 
     @Test(timeOut = 30000)
@@ -279,7 +276,7 @@ public class KubernetesClusterManagerTest {
         jobConf.put(CLUSTER_START_TIME, String.valueOf(System.currentTimeMillis()));
         ClusterContext context = new ClusterContext(jobConf);
         kubernetesClusterManager2.init(context, geaflowKubeClient);
-        kubernetesClusterManager2.doStartContainer(containerId, false);
+        kubernetesClusterManager2.createNewContainer(containerId, false);
         // check pod label
         verifyWorkerPodSize(1);
         // restart pod
@@ -294,9 +291,12 @@ public class KubernetesClusterManagerTest {
         int containerId_1 = 1;
         int containerId_2 = 2;
         int driverId = 3;
-        Set<Integer> containerIds = new HashSet<Integer>(){{
-            add(containerId_1);
-            add(containerId_2);
+        Map<Integer, String> containerIds = new HashMap<Integer, String>(){{
+            put(containerId_1, "container1");
+            put(containerId_2, "container2");
+        }};
+        Map<Integer, String> driverIds = new HashMap<Integer, String>() {{
+            put(0, "driver1");
         }};
 
         // driver/container FO
@@ -308,54 +308,35 @@ public class KubernetesClusterManagerTest {
         KubernetesClusterManager kubernetesClusterManager2 = new KubernetesClusterManager();
         jobConf.put(CLUSTER_START_TIME, String.valueOf(System.currentTimeMillis()));
         ClusterContext context = new ClusterContext(jobConf);
+        context.setContainerIds(containerIds);
+        context.setDriverIds(driverIds);
         kubernetesClusterManager2.init(context, geaflowKubeClient);
-        kubernetesClusterManager2.setContainerIds(containerIds);
-        kubernetesClusterManager2.doStartDriver(driverId);
-        kubernetesClusterManager2.doStartContainer(containerId_1, false);
-        kubernetesClusterManager2.doStartContainer(containerId_2, false);
+        kubernetesClusterManager2.createNewDriver(driverId, 0);
+        kubernetesClusterManager2.createNewContainer(containerId_1, false);
+        kubernetesClusterManager2.createNewContainer(containerId_2, false);
 
         // check pod label
         verifyWorkerPodSize(2);
+
         // restart all pod
-        kubernetesClusterManager2.killAllContainers();
-        verifyWorkerPodSize(0);
-        kubernetesClusterManager2.startAllContainersByFailover();
+        kubernetesClusterManager2.restartContainer(containerId_1);
         verifyWorkerPodSize(2);
-
-        kubernetesClusterManager2.killMaster();
-        kubernetesClusterManager2.killDriver();
-
-
 
         // restart driver & containers
         KubernetesClusterManager mock = mockClusterManager();
-        mock.clusterFailover(masterId);
-        Mockito.verify(mock, Mockito.times(1)).killDriver();
-        Mockito.verify(mock, Mockito.times(1)).killAllContainers();
-        Mockito.verify(mock, Mockito.times(1)).startAllContainersByFailover();
-        Mockito.verify(mock, Mockito.times(0)).killMaster();
-
-        // restart master
-        KubernetesClusterManager mock2 = mockClusterManager();
-        mock2.clusterFailover(containerId_1);
-        mock2.clusterFailover(driverId);
-        Mockito.verify(mock2, Mockito.times(2)).killMaster();
-        Mockito.verify(mock2, Mockito.times(0)).killDriver();
-        Mockito.verify(mock2, Mockito.times(0)).killAllContainers();
-        Mockito.verify(mock2, Mockito.times(0)).startAllContainersByFailover();
+        mock.doFailover(masterId, new GeaflowHeartbeatException());
+        Mockito.verify(mock, Mockito.times(1)).restartAllDrivers();
+        Mockito.verify(mock, Mockito.times(1)).restartAllContainers();
     }
 
     private KubernetesClusterManager mockClusterManager() {
         KubernetesClusterManager clusterManager = new KubernetesClusterManager();
         KubernetesClusterManager mockClusterManager = Mockito.spy(clusterManager);
-        Mockito.doNothing().when(mockClusterManager).killDriver();
-        Mockito.doNothing().when(mockClusterManager).killMaster();
-        Mockito.doNothing().when(mockClusterManager).killAllContainers();
-        Mockito.doNothing().when(mockClusterManager).startAllContainersByFailover();
+        Mockito.doNothing().when(mockClusterManager).restartAllDrivers();
+        Mockito.doNothing().when(mockClusterManager).restartAllContainers();
 
         ClusterContext context = new ClusterContext(jobConf);
         mockClusterManager.init(context, geaflowKubeClient);
-        mockClusterManager.setContainerIds(new HashSet<Integer>(){{add(1);}});
         return mockClusterManager;
     }
 

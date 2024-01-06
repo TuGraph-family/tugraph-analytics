@@ -23,7 +23,6 @@ import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowOperationType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
@@ -117,7 +116,7 @@ public class TaskService extends IdService<GeaflowTask, TaskEntity, TaskSearch> 
             task.setRelease(release);
             setPluginConfigs(task);
             create(task);
-            auditService.create(new GeaflowAudit(task, GeaflowOperationType.CREATE));
+            auditService.create(new GeaflowAudit(task.getId(), GeaflowOperationType.CREATE));
             return Arrays.asList(task);
         } catch (Exception e) {
             throw new GeaflowException("Build task fail ", e);
@@ -130,10 +129,10 @@ public class TaskService extends IdService<GeaflowTask, TaskEntity, TaskSearch> 
         GeaflowPluginCategory runtime = GeaflowPluginCategory.RUNTIME_META;
         GeaflowPluginCategory data = GeaflowPluginCategory.DATA;
 
-        GeaflowPluginType haType = pluginService.getDefaultPlugin(ha).getType();
-        GeaflowPluginType metricType = pluginService.getDefaultPlugin(metric).getType();
-        GeaflowPluginType runtimeType = pluginService.getDefaultPlugin(runtime).getType();
-        GeaflowPluginType dataType = pluginService.getDefaultPlugin(data).getType();
+        String haType = pluginService.getDefaultPlugin(ha).getType();
+        String metricType = pluginService.getDefaultPlugin(metric).getType();
+        String runtimeType = pluginService.getDefaultPlugin(runtime).getType();
+        String dataType = pluginService.getDefaultPlugin(data).getType();
 
         GeaflowPluginConfig haConfig = pluginConfigService.getDefaultPluginConfig(ha, haType);
         GeaflowPluginConfig metricConfig = pluginConfigService.getDefaultPluginConfig(metric, metricType);
@@ -146,11 +145,11 @@ public class TaskService extends IdService<GeaflowTask, TaskEntity, TaskSearch> 
         task.setDataPluginConfig(dataConfig);
     }
 
-    public void bindRelease(GeaflowRelease release) {
+    public String bindRelease(GeaflowRelease release) {
         TaskEntity task = taskDao.getByJobId(release.getJob().getId()).get(0);
         if (task.getStatus() == GeaflowTaskStatus.CREATED && release.getReleaseVersion() == 1) {
             // don't need to bind at the first time
-            return;
+            return null;
         }
         task.setReleaseId(release.getId());
         boolean updateStatus = updateStatus(task.getId(), task.getStatus(), GeaflowTaskStatus.CREATED);
@@ -159,6 +158,7 @@ public class TaskService extends IdService<GeaflowTask, TaskEntity, TaskSearch> 
         }
         taskDao.update(task);
 
+        return task.getId();
     }
 
     public Map<String, GeaflowTaskHandle> getTaskHandles(GeaflowTaskStatus status) {

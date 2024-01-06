@@ -15,22 +15,27 @@
 package com.antgroup.geaflow.dsl.runtime.expression.cast;
 
 import com.antgroup.geaflow.common.type.IType;
-import com.antgroup.geaflow.dsl.common.types.ClassType;
-import com.antgroup.geaflow.dsl.runtime.expression.AbstractReflectCallExpression;
+import com.antgroup.geaflow.dsl.common.data.Row;
+import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
+import com.antgroup.geaflow.dsl.common.util.TypeCastUtil.ITypeCast;
+import com.antgroup.geaflow.dsl.runtime.expression.AbstractNonLeafExpression;
 import com.antgroup.geaflow.dsl.runtime.expression.Expression;
-import com.antgroup.geaflow.dsl.runtime.expression.literal.LiteralExpression;
-import com.antgroup.geaflow.dsl.schema.function.GeaFlowBuiltinFunctions;
-import com.google.common.collect.Lists;
+import java.util.Collections;
 import java.util.List;
 
-public class CastExpression extends AbstractReflectCallExpression {
+public class CastExpression extends AbstractNonLeafExpression {
 
-    public static final String METHOD_NAME = "cast";
+    private final ITypeCast typeCast;
 
     public CastExpression(Expression input, IType<?> outputType) {
-        super(Lists.newArrayList(input,
-                new LiteralExpression(outputType.getTypeClass(), ClassType.INSTANCE)),
-            outputType, GeaFlowBuiltinFunctions.class, METHOD_NAME);
+        super(Collections.singletonList(input), outputType);
+        this.typeCast = TypeCastUtil.getTypeCast(input.getOutputType(), outputType);
+    }
+
+    @Override
+    public Object evaluate(Row row) {
+        Object inputValue = inputs.get(0).evaluate(row);
+        return typeCast.castTo(inputValue);
     }
 
     @Override
@@ -40,10 +45,6 @@ public class CastExpression extends AbstractReflectCallExpression {
 
     @Override
     public Expression copy(List<Expression> inputs) {
-        assert inputs.size() == 2;
-        assert inputs.get(1) instanceof LiteralExpression;
-        LiteralExpression castTypeLiteral = (LiteralExpression) inputs.get(1);
-        assert castTypeLiteral.getValue() == outputType.getTypeClass();
         return new CastExpression(inputs.get(0), outputType);
     }
 }

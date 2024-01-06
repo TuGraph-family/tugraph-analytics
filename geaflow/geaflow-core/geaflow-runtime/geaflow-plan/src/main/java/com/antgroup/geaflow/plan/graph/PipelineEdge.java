@@ -16,9 +16,9 @@ package com.antgroup.geaflow.plan.graph;
 
 import com.antgroup.geaflow.api.partition.kv.RandomPartition;
 import com.antgroup.geaflow.common.encoder.IEncoder;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.partitioner.IPartitioner;
 import com.antgroup.geaflow.partitioner.IPartitioner.PartitionType;
-
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -31,10 +31,17 @@ public class PipelineEdge implements Serializable {
     private IPartitioner partition;
     private PartitionType partitionType;
     private String edgeName;
+    private CollectType type;
     private IEncoder<?> encoder;
 
     public PipelineEdge(int edgeId, int srcId, int targetId, IPartitioner partition, IEncoder<?> encoder) {
         this(edgeId, srcId, targetId, partition, 0, encoder);
+    }
+
+    public PipelineEdge(int edgeId, int srcId, int targetId, IPartitioner partition,
+                        IEncoder<?> encoder, CollectType type) {
+        this(edgeId, srcId, targetId, partition, 0, encoder);
+        this.type = type;
     }
 
     public PipelineEdge(int edgeId, int srcId, int targetId, IPartitioner partition,
@@ -121,6 +128,10 @@ public class PipelineEdge implements Serializable {
         } else {
             return this.edgeId + "-stream-from" + srcId + "-IteratorStream";
         }
+    }
+
+    public CollectType getType() {
+        return type;
     }
 
     public void setEdgeName(String edgeName) {

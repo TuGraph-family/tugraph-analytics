@@ -34,25 +34,25 @@ public class RuntimeMetaArgsClass extends GeaflowConfigClass {
 
     private static final String RUNTIME_META_TABLE_NAME = "backend_meta";
 
-    @GeaflowConfigKey(value = "geaflow.metric.stats.type", comment = "类型")
+    @GeaflowConfigKey(value = "geaflow.metric.stats.type", comment = "i18n.key.type")
     @GeaflowConfigValue(required = true, defaultValue = "JDBC")
     private GeaflowPluginType type;
 
-    @GeaflowConfigKey(value = "geaflow.system.offset.backend.type", comment = "Offset存储类型")
+    @GeaflowConfigKey(value = "geaflow.system.offset.backend.type", comment = "i18n.key.offset.storage.type")
     @GeaflowConfigValue(required = true, defaultValue = "JDBC")
     private GeaflowPluginType offsetMetaType;
 
-    @GeaflowConfigKey(value = "geaflow.system.meta.table", comment = "表名")
+    @GeaflowConfigKey(value = "geaflow.system.meta.table", comment = "i18n.key.table.name")
     @GeaflowConfigValue(required = true, defaultValue = RUNTIME_META_TABLE_NAME)
     private String table;
 
-    @GeaflowConfigKey(value = "plugin", comment = "插件配置")
+    @GeaflowConfigKey(value = "plugin", comment = "i18n.key.plugin.config")
     @GeaflowConfigValue(required = true, behavior = ConfigValueBehavior.FLATTED)
     private PluginConfigClass plugin;
 
     public RuntimeMetaArgsClass(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
-        this.offsetMetaType = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
+        this.offsetMetaType = GeaflowPluginType.of(pluginConfig.getType());
         this.table = RUNTIME_META_TABLE_NAME;
 
         Class<? extends PluginConfigClass> configClass;
@@ -61,7 +61,7 @@ public class RuntimeMetaArgsClass extends GeaflowConfigClass {
                 configClass = JdbcPluginConfigClass.class;
                 break;
             default:
-                throw new GeaflowIllegalException("Runtime meta config type {} not supported", type);
+                throw new GeaflowIllegalException("Runtime meta config type {} not supported", pluginConfig.getType());
         }
 
         this.plugin = pluginConfig.getConfig().parse(configClass);

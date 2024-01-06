@@ -16,17 +16,25 @@ package com.antgroup.geaflow.dsl.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
+import org.apache.calcite.sql.SqlWith;
+import org.apache.calcite.sql.SqlWithItem;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.util.SqlVisitor;
 
@@ -98,6 +106,113 @@ public class SqlNodeUtil {
             @Override
             public List<SqlUnresolvedFunction> visit(SqlIntervalQualifier intervalQualifier) {
                 return Collections.emptyList();
+            }
+        });
+    }
+
+    public static Set<String> findUsedTables(SqlNode sqlNode) {
+        return sqlNode.accept(new SqlVisitor<Set<String>>() {
+            @Override
+            public Set<String> visit(SqlLiteral literal) {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public Set<String> visit(SqlCall call) {
+                Set<String> allTables = new HashSet<>();
+                if (call instanceof SqlInsert) {
+                    SqlInsert sqlInsert = (SqlInsert) call;
+                    SqlNode source = sqlInsert.getSource();
+                    Set<String> sourceTables = source.accept(this);
+                    SqlNode target = sqlInsert.getTargetTable();
+                    Set<String> targetTables = target.accept(this);
+                    allTables.addAll(sourceTables);
+                    allTables.addAll(targetTables);
+                } else if (call instanceof SqlSelect) {
+                    SqlSelect sqlSelect = (SqlSelect) call;
+                    SqlNode from = sqlSelect.getFrom();
+                    if (from != null) {
+                        Set<String> tables = from.accept(this);
+                        allTables.addAll(tables);
+                    }
+                } else if (call instanceof SqlJoin) {
+                    SqlJoin sqlJoin = (SqlJoin) call;
+                    String left = sqlJoin.getLeft().toString();
+                    String right = sqlJoin.getRight().toString();
+                    allTables.add(left);
+                    allTables.add(right);
+                } else if (call instanceof SqlWith) {
+                    SqlWith sqlWith = (SqlWith) call;
+                    SqlNodeList withList = sqlWith.withList;
+                    if (withList != null) {
+                        Set<String> tables = withList.accept(this);
+                        allTables.addAll(tables);
+                    }
+
+                } else if (call instanceof SqlWithItem) {
+                    SqlWithItem withItem = (SqlWithItem) call;
+                    allTables.add(withItem.name.names.get(0));
+                    SqlNode query = withItem.query;
+                    if (query != null) {
+                        Set<String> tables = query.accept(this);
+                        allTables.addAll(tables);
+                    }
+
+                } else if (call instanceof SqlBasicCall) {
+                    SqlBasicCall basicCall = (SqlBasicCall) call;
+                    SqlNode[] operands = basicCall.getOperands();
+                    if (operands.length > 0) {
+                        Set<String> tables = operands[0].accept(this);
+                        allTables.addAll(tables);
+                    }
+                }
+                return allTables;
+            }
+
+            @Override
+            public Set<String> visit(SqlNodeList nodeList) {
+                return visitNodes(nodeList.getList());
+            }
+
+            private Set<String> visitNodes(List<SqlNode> nodes) {
+                if (nodes == null) {
+                    return Collections.emptySet();
+                }
+                return nodes.stream()
+                    .flatMap(node -> {
+                        if (node != null) {
+                            return node.accept(this).stream();
+                        } else {
+                            return Collections.<String>emptySet().stream();
+                        }
+                    })
+                    .collect(Collectors.toSet());
+            }
+
+            @Override
+            public Set<String> visit(SqlIdentifier id) {
+                if (!id.names.isEmpty()) {
+                    String name = id.names.get(0);
+                    return Collections.singleton(name);
+                } else {
+                    return Collections.emptySet();
+                }
+
+            }
+
+            @Override
+            public Set<String> visit(SqlDataTypeSpec type) {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public Set<String> visit(SqlDynamicParam param) {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public Set<String> visit(SqlIntervalQualifier intervalQualifier) {
+                return Collections.emptySet();
             }
         });
     }

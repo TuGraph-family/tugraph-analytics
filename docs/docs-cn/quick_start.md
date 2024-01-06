@@ -30,6 +30,13 @@ mvn clean package -DskipTests
 bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql
 ```
 
+如果你想要在进程中使用火焰图进行进程分析，则需要自行下载解压async-profiler，
+并将解压后的文件夹中的profiler.sh的路径加入到参数中。例如：
+
+```shell
+bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql --profiler /tmp/async-profiler/profiler.sh
+```
+
 其中 loop_detection.sql 是一段实时查询图中所有四度环路的 DSL 计算作业，其内容如下：
 
 ```sql
@@ -97,7 +104,7 @@ FROM (
 );
 
 INSERT INTO tbl_result
-SELECT
+SELECT DISTINCT
   a_id,
   b_id,
   c_id,
@@ -160,10 +167,27 @@ socket 服务启动后，控制台显示如下信息：
 
 ![ide_socket_server_more](../static/img/ide_socket_server_more.png)
 
+4. 访问可视化dashboard页面
+
+本地模式的进程会占用本地的8090和8088端口，附带一个可视化页面。
+
+在浏览器中输入*http://localhost:8090*即可访问前端页面。
+
+![dashboard_overview](../static/img/dashboard_overview.png)
+
+关于更多dashboard相关的内容，请参考文档：
+[文档](dashboard.md)
+
 ## GeaFlow Console 快速上手
 
 GeaFlow Console 是 GeaFlow 提供的图计算研发平台，我们将介绍如何在 Docker 容器里面启动 GeaFlow Console 平台，提交流图计算作业。文档地址：
 [文档](quick_start_docker.md)
+
+## GeaFlow Kubernetes Operator快速上手
+Geaflow Kubernetes Operator是一个可以快速将Geaflow应用部署到kubernetes集群中的部署工具。
+我们将介绍如何通过Helm安装geaflow-kubernetes-operator，通过yaml文件快速提交geaflow作业，
+并访问operator的dashboard页面查看集群下的作业状态。文档地址：
+[文档](quick_start_operator.md)
 
 ## 使用 G6VP 进行流图计算作业可视化
 

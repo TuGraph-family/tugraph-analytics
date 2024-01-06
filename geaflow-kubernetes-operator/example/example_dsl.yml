@@ -1,0 +1,64 @@
+################################################################################
+#  Copyright 2023 AntGroup CO., Ltd.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+################################################################################
+
+apiVersion: geaflow.antgroup.com/v1
+kind: GeaflowJob
+metadata:
+  name: geaflow-example
+spec:
+  image: geaflow:0.1
+  imagePullPolicy: IfNotPresent
+  serviceAccount: geaflow
+  # When you submit a DSL job, you should not fill in the entryClass, but the gqlFile is required.
+
+  # udfJars:
+  #   - name: my_udf.jar
+  #     url: http://localhost:8888/download/my_udf.jar
+  #     md5: 123
+
+  # Required. Replace the gql file to your own. Only effects when entryClass is blank.
+  gqlFile:
+    # Required. The file name.
+    name: user.gql
+    url: http://localhost:8888/download/user.gql
+    # md5: 123
+
+  masterSpec:
+    resource:
+      cpuCores: 1
+      memoryMb: 1024
+      jvmOptions: -Xmx800m,-Xms800m,-Xmn300m
+  driverSpec:
+    resource:
+      cpuCores: 1
+      memoryMb: 1024
+      jvmOptions: -Xmx800m,-Xms800m,-Xmn300m
+    driverNum: 1
+  containerSpec:
+    resource:
+      cpuCores: 1
+      memoryMb: 1024
+      jvmOptions: -Xmx800m,-Xms800m,-Xmn300m
+    containerNum: 1
+    workerNumPerContainer: 4
+  userSpec:
+    metricConfig:
+      geaflow.metric.reporters: slf4j
+      geaflow.metric.stats.type: memory
+    stateConfig:
+      geaflow.file.persistent.type: LOCAL
+      geaflow.store.redis.host: host.minikube.internal
+      geaflow.store.redis.port: "6379"
+    additionalArgs:
+      geaflow.system.state.backend.type: MEMORY

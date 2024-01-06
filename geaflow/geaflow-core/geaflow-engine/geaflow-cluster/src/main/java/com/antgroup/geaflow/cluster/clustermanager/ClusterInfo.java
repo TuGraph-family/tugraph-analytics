@@ -14,38 +14,33 @@
 
 package com.antgroup.geaflow.cluster.clustermanager;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
 
 public class ClusterInfo implements Serializable {
 
-    private RpcAddress masterAddress;
-
-    private RpcAddress driverAddress;
+    private ConnectAddress masterAddress;
+    private Map<String, ConnectAddress> driverAddresses;
 
     public ClusterInfo() {
     }
 
-    public ClusterInfo(RpcAddress masterAddress, RpcAddress driverAddress) {
-        this.masterAddress = masterAddress;
-        this.driverAddress = driverAddress;
-    }
-
-    public RpcAddress getMasterAddress() {
+    public ConnectAddress getMasterAddress() {
         return masterAddress;
     }
 
-    public void setMasterAddress(RpcAddress masterAddress) {
+    public void setMasterAddress(ConnectAddress masterAddress) {
         this.masterAddress = masterAddress;
     }
 
-    public RpcAddress getDriverAddress() {
-        return driverAddress;
+    public Map<String, ConnectAddress> getDriverAddresses() {
+        return driverAddresses;
     }
 
-    public void setDriverAddress(RpcAddress driverAddress) {
-        this.driverAddress = driverAddress;
+    public void setDriverAddresses(Map<String, ConnectAddress> driverAddresses) {
+        this.driverAddresses = driverAddresses;
     }
 
     @Override
@@ -58,18 +53,18 @@ public class ClusterInfo implements Serializable {
         }
         ClusterInfo that = (ClusterInfo) o;
         return Objects.equals(masterAddress, that.masterAddress) && Objects
-            .equals(driverAddress, that.driverAddress);
+            .equals(driverAddresses, that.driverAddresses);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(masterAddress, driverAddress);
+        return Objects.hash(masterAddress, driverAddresses);
     }
 
     @Override
     public String toString() {
-        return "ClusterInfo{" + "masterAddress=" + masterAddress.getAddress() + ", driverAddress="
-            + driverAddress.getAddress() + '}';
+        return "ClusterInfo{" + "masterAddress=" + masterAddress + ", driverAddresses="
+            + driverAddresses + '}';
     }
 
 }

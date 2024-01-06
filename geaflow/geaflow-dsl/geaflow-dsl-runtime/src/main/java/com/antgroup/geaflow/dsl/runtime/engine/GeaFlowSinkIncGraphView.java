@@ -14,17 +14,18 @@
 
 package com.antgroup.geaflow.dsl.runtime.engine;
 
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.runtime.SinkDataView;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import java.util.List;
 
 public class GeaFlowSinkIncGraphView implements SinkDataView {
 
-    private final IPipelineTaskContext context;
+    private final IPipelineJobContext context;
 
-    public GeaFlowSinkIncGraphView(IPipelineTaskContext context) {
+    public GeaFlowSinkIncGraphView(IPipelineJobContext context) {
         this.context = context;
     }
 
@@ -34,7 +35,7 @@ public class GeaFlowSinkIncGraphView implements SinkDataView {
     }
 
     @Override
-    public List<? extends Row> take() {
+    public List<? extends Row> take(IType<?> type) {
         throw new GeaFlowDSLException("Should not call take() on GeaFlowIncGraphView");
     }
 }

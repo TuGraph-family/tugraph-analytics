@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.service.store;
 
+import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import java.util.Date;
 
@@ -25,7 +26,8 @@ public interface GeaflowDataStore {
 
     Date queryModifyTime(GeaflowTask task);
 
-    void cleanData(GeaflowTask task);
+    void cleanTaskData(GeaflowTask task);
 
+    void cleanGraphData(GeaflowGraph graph);
 
 }

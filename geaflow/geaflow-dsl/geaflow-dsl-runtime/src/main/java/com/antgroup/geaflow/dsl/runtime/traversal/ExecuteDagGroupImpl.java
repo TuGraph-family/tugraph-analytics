@@ -127,4 +127,9 @@ public class ExecuteDagGroupImpl implements ExecuteDagGroup {
     public DagTopology getMainDag() {
         return dagGroup.getMainDag();
     }
+
+    @Override
+    public int getMaxIterationCount() {
+        return dagGroup.getIterationCount(1, dagGroup.getMainDag().getEntryOperator());
+    }
 }

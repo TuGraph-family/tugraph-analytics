@@ -14,9 +14,6 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_TIMEOUT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_WRITE_BUFFER_SIZE;
-
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineShard;
@@ -46,11 +43,10 @@ public class PipelineShardBuffer<T, R> extends ShardBuffer<T, R> {
     public void init(IWriterContext writerContext) {
         super.init(writerContext);
 
-        this.maxBufferSize = config.getInteger(SHUFFLE_WRITE_BUFFER_SIZE);
         initResultSlices(targetChannels);
 
         String threadName = "OutputFlusher-" + Thread.currentThread().getName();
-        int flushTimeout = config.getInteger(SHUFFLE_FLUSH_BUFFER_TIMEOUT);
+        int flushTimeout = this.shuffleConfig.getFlushBufferTimeoutMs();
         this.outputFlusher = new OutputFlusher(threadName, flushTimeout);
         this.outputFlusher.start();
     }

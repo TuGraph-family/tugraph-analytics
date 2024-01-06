@@ -1,1 +1,0 @@
-export { default } from '@tugraph/plugin-geaflow-header/client';

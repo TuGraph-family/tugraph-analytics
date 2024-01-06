@@ -83,4 +83,9 @@ public final class ReflectionUtil {
         throw new NoSuchFieldException(fieldName);
     }
 
+    public static void setField(Object instance, String fieldName, Object value) throws Exception {
+        Field field = getField(instance.getClass(), fieldName);
+        field.setAccessible(true);
+        field.set(instance, value);
+    }
 }

@@ -42,6 +42,7 @@ import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.common.type.primitive.IntegerType;
 import com.antgroup.geaflow.context.AbstractPipelineContext;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionGraph;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
@@ -74,7 +75,6 @@ import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -188,6 +188,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getIterationCount());
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertFalse(vertexGroup.getCycleGroupMeta().isIterative());
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.windowed);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.windowed);
     }
 
     @Test
@@ -226,6 +228,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getIterationCount());
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertFalse(vertexGroup.getCycleGroupMeta().isIterative());
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.windowed);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.windowed);
     }
 
     @Test
@@ -260,6 +264,7 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(Long.MAX_VALUE, vertexGroup.getCycleGroupMeta().getIterationCount());
         Assert.assertEquals(5, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertFalse(vertexGroup.getCycleGroupMeta().isIterative());
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.pipelined);
     }
 
     @Test
@@ -307,6 +312,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertTrue(vertexGroup.getVertexMap().get(1).getNumPartitions() == 4);
         Assert.assertTrue(vertexGroup.getVertexMap().get(5).getNumPartitions() == 2);
         Assert.assertTrue(vertexGroup.getVertexMap().get(7).getNumPartitions() == 2);
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.pipelined);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.pipelined);
     }
 
     @Test
@@ -361,6 +368,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().isIterative());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().getAffinityLevel() == AffinityLevel.worker);
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.incremental);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.incremental);
     }
 
     @Test
@@ -377,7 +386,8 @@ public class ExecutionGraphBuilderTest {
             new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
 
 
-        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(), context, vertices, edges);
+        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(4), context,
+            vertices, edges);
         PStreamSink sink = graphWindow.compute(new PRAlgorithms(3))
             .compute(3)
             .getVertices()
@@ -395,7 +405,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
 
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -404,6 +414,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().isIterative());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().getAffinityLevel() == AffinityLevel.worker);
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
     }
 
     @Test
@@ -419,7 +431,8 @@ public class ExecutionGraphBuilderTest {
         PWindowSource<IEdge<Integer, Integer>> edges =
             new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), AllWindow.getInstance());
 
-        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(), context, vertices, edges);
+        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(4), context,
+            vertices, edges);
         PStreamSink sink = graphWindow.compute(new PRAlgorithms(3))
             .compute(3)
             .getVertices()
@@ -437,7 +450,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
 
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getIterationCount());
 
@@ -446,6 +459,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().isIterative());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().getAffinityLevel() == AffinityLevel.worker);
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
     }
 
     @Test
@@ -468,7 +483,7 @@ public class ExecutionGraphBuilderTest {
         PWindowStream<ITraversalRequest<Integer>> windowTrigger =
             triggerSource.window(WindowFactory.createSizeTumblingWindow(3));
 
-        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(), context, vertices, edges);
+        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(4), context, vertices, edges);
         PStreamSink sink = graphWindow.traversal(new GraphTraversalAlgorithms(3)).start(windowTrigger).sink(v -> {});
         when(context.getActions()).thenReturn(ImmutableList.of(sink));
 
@@ -480,7 +495,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(5, graph.getVertexGroupMap().size());
-        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(5, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -489,6 +504,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().isIterative());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().getAffinityLevel() == AffinityLevel.worker);
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
     }
 
     @Test
@@ -513,7 +530,7 @@ public class ExecutionGraphBuilderTest {
                 new CollectionSource<>(Lists.newArrayList(new VertexBeginTraversalRequest(3))),
                 AllWindow.getInstance());
 
-        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(), context,
+        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(4), context,
             vertices1.union(vertices2), edges);
         PStreamSink sink = graphWindow.traversal(new GraphTraversalAlgorithms(3)).start(triggerSource).sink(v -> {});
         when(context.getActions()).thenReturn(ImmutableList.of(sink));
@@ -526,7 +543,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -534,6 +551,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(3, vertexGroup.getCycleGroupMeta().getIterationCount());
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().isIterative());
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
     }
 
     @Test
@@ -554,7 +573,7 @@ public class ExecutionGraphBuilderTest {
                 new CollectionSource<>(Lists.newArrayList(new VertexBeginTraversalRequest(3))),
                 AllWindow.getInstance());
 
-        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(), context, vertices, edges);
+        PGraphWindow graphWindow = new WindowStreamGraph(createGraphViewDesc(4), context, vertices, edges);
         PStreamSink sink = graphWindow.traversal(new GraphTraversalAlgorithms(3)).start(triggerSource).sink(v -> {});
         when(context.getActions()).thenReturn(ImmutableList.of(sink));
 
@@ -566,7 +585,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(4, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getIterationCount());
 
@@ -575,6 +594,8 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(1, vertexGroup.getCycleGroupMeta().getFlyingCount());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().isIterative());
         Assert.assertTrue(vertexGroup.getCycleGroupMeta().getAffinityLevel() == AffinityLevel.worker);
+        Assert.assertTrue(vertexGroup.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
     }
 
     @Test
@@ -599,8 +620,7 @@ public class ExecutionGraphBuilderTest {
         PWindowStream<IVertex<Integer, Double>> v = v1.union(v2);
         PWindowStream<IEdge<Integer, Integer>> e = e1.union(e2);
 
-        PGraphWindow<Integer, Double, Integer> graphWindow = new WindowStreamGraph(createGraphViewDesc(),
-            context, v, e);
+        PGraphWindow<Integer, Double, Integer> graphWindow = new WindowStreamGraph(createGraphViewDesc(1), context, v, e);
         PStreamSink sink = graphWindow.compute(new PRAlgorithms(3))
             .getVertices()
             .sink(r -> {});
@@ -614,7 +634,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(3, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -652,7 +672,7 @@ public class ExecutionGraphBuilderTest {
         PWindowStream<IVertex<Integer, Double>> v = v1.union(v2).union(v3);
         PWindowStream<IEdge<Integer, Integer>> e = e1.union(e2).union(e3);
 
-        PGraphWindow<Integer, Double, Integer> graphWindow = new WindowStreamGraph(createGraphViewDesc(),
+        PGraphWindow<Integer, Double, Integer> graphWindow = new WindowStreamGraph(createGraphViewDesc(1),
             context, v, e);
         PStreamSink sink = graphWindow.compute(new PRAlgorithms(3))
             .getVertices()
@@ -667,7 +687,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(3, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -737,7 +757,7 @@ public class ExecutionGraphBuilderTest {
         PWindowStream<IEdge<Integer, Integer>> e =
             e1.union(e2).union(e3).union(e4).union(e5).union(e6).union(e7).union(e8).union(e9);
 
-        PGraphWindow<Integer, Double, Integer> graphWindow = new WindowStreamGraph(createGraphViewDesc(),
+        PGraphWindow<Integer, Double, Integer> graphWindow = new WindowStreamGraph(createGraphViewDesc(1),
             context, v, e);
         PStreamSink sink = graphWindow.compute(new PRAlgorithms(3))
                 .getVertices()
@@ -752,7 +772,7 @@ public class ExecutionGraphBuilderTest {
         ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
         ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
         Assert.assertEquals(3, graph.getVertexGroupMap().size());
-        Assert.assertEquals(3, graph.getGroupEdgeMap().size());
+        Assert.assertEquals(4, graph.getGroupEdgeMap().size());
         Assert.assertEquals(1, graph.getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getCycleGroupMeta().getIterationCount());
 
@@ -793,6 +813,54 @@ public class ExecutionGraphBuilderTest {
         Assert.assertEquals(0, graph.getGroupEdgeMap().size());
         Assert.assertEquals(5, graph.getVertexGroupMap().get(1).getCycleGroupMeta().getFlyingCount());
         Assert.assertEquals(Long.MAX_VALUE, graph.getVertexGroupMap().get(1).getCycleGroupMeta().getIterationCount());
+    }
+
+    @Test
+    public void testMultiGraphTraversal() {
+        AtomicInteger idGenerator = new AtomicInteger(0);
+        AbstractPipelineContext context = mock(AbstractPipelineContext.class);
+        when(context.generateId()).then(invocation -> idGenerator.incrementAndGet());
+        Configuration configuration = new Configuration();
+        when(context.getConfig()).thenReturn(configuration);
+
+        PWindowSource<IVertex<Integer, Integer>> vertices1 =
+            new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
+        PWindowSource<IVertex<Integer, Integer>> vertices2 =
+            new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
+
+        PWindowSource<IEdge<Integer, Integer>> edges =
+            new WindowStreamSource<>(context, new CollectionSource<>(new ArrayList<>()), SizeTumblingWindow.of(2));
+
+        PStreamSource<ITraversalRequest<Integer>> triggerSource =
+            new WindowStreamSource<>(context,
+                new CollectionSource<>(Lists.newArrayList(new VertexBeginTraversalRequest(3))),
+                AllWindow.getInstance());
+
+
+        PGraphWindow graphWindow1 = new WindowStreamGraph(createGraphViewDesc(4), context,
+            vertices1, edges);
+        PWindowStream union = graphWindow1.traversal(new GraphTraversalAlgorithms(3))
+            .start(triggerSource).union(vertices2);
+
+        PGraphWindow graphWindow2 = new WindowStreamGraph(createGraphViewDesc(4), context,
+            union, edges);
+
+        PStreamSink sink = graphWindow2.traversal(new GraphTraversalAlgorithms(3)).start(triggerSource)
+            .sink(v -> {});
+
+
+        when(context.getActions()).thenReturn(ImmutableList.of(sink));
+
+        PipelinePlanBuilder planBuilder = new PipelinePlanBuilder();
+        PipelineGraph pipelineGraph = planBuilder.buildPlan(context);
+        PipelineGraphOptimizer optimizer = new PipelineGraphOptimizer();
+        optimizer.optimizePipelineGraph(pipelineGraph);
+
+        ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
+        ExecutionGraph graph = builder.buildExecutionGraph(new Configuration());
+        Assert.assertEquals(7, graph.getVertexGroupMap().size());
+        Assert.assertEquals(9, graph.getGroupEdgeMap().size());
+        Assert.assertTrue(graph.getCycleGroupMeta().getGroupType() == CycleGroupType.statical);
     }
 
     public static class IncGraphAlgorithms extends IncVertexCentricCompute<Integer, Integer, Integer, Integer> {
@@ -922,12 +990,11 @@ public class ExecutionGraphBuilderTest {
         }
     }
 
-    private GraphViewDesc createGraphViewDesc() {
+    private GraphViewDesc createGraphViewDesc(int shardNum) {
         return GraphViewBuilder
             .createGraphView(GraphViewBuilder.DEFAULT_GRAPH)
-            .withShardNum(1)
+            .withShardNum(shardNum)
             .withBackend(BackendType.Memory)
-            .build()
-            ;
+            .build();
     }
 }

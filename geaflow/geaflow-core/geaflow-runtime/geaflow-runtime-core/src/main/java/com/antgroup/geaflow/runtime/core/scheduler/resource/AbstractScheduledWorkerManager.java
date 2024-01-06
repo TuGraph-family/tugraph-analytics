@@ -14,10 +14,12 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.resource;
 
+import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
 import com.antgroup.geaflow.cluster.resourcemanager.ReleaseResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
+import com.antgroup.geaflow.cluster.resourcemanager.allocator.IAllocator;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -46,22 +48,29 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractScheduledWorkerManager implements IScheduledWorkerManager<IExecutionCycle, ExecutionNodeCycle> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractScheduledWorkerManager.class);
-    protected static final String DEFAULT_RESOURCE_ID = "default";
+    protected static final String DEFAULT_RESOURCE_ID = "default_";
 
     protected static final int RETRY_REQUEST_RESOURCE_INTERVAL = 5;
     protected static final int REPORT_RETRY_TIMES = 50;
     protected String masterId;
     protected List<WorkerInfo> workers;
+    protected String resourceId;
+    protected boolean isAsync;
     protected transient List<WorkerInfo> available;
     protected transient Set<WorkerInfo> assigned;
     protected transient boolean isAssigned = false;
 
     public AbstractScheduledWorkerManager(Configuration config) {
         this.masterId = config.getMasterId();
+        this.isAsync = PipelineUtil.isAsync(config);
     }
 
     @Override
     public void init(IExecutionCycle graph) {
+        resourceId = DEFAULT_RESOURCE_ID + graph.getDriverIndex();
+        LOGGER.info("resource id {}, driver id {}, available {}, isAsync {}",
+            resourceId, graph.getDriverId(), available, isAsync);
+        
         if (available == null) {
             workers = requestWorker(graph);
             available = new ArrayList<>(workers);
@@ -80,7 +89,7 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
 
     @Override
     public void close() {
-        RpcClient.getInstance().releaseResource(masterId, ReleaseResourceRequest.build(DEFAULT_RESOURCE_ID, workers));
+        RpcClient.getInstance().releaseResource(masterId, ReleaseResourceRequest.build(resourceId, workers));
     }
 
     protected int getExecutionGroupParallelism(ExecutionVertexGroup vertexGroup) {
@@ -98,16 +107,18 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
             ExecutionNodeCycle group = (ExecutionNodeCycle) graph;
             requestResourceNum = getExecutionGroupParallelism(group.getVertexGroup());
         }
+        IAllocator.AllocateStrategy allocateStrategy = isAsync
+            ? IAllocator.AllocateStrategy.PROCESS_FAIR : IAllocator.AllocateStrategy.ROUND_ROBIN;
         RequireResponse response = RpcClient.getInstance().requireResource(masterId,
-            RequireResourceRequest.build(DEFAULT_RESOURCE_ID, requestResourceNum));
+            RequireResourceRequest.build(resourceId, requestResourceNum, allocateStrategy));
         int retryTimes = 1;
         while (!response.isSuccess() || response.getWorkers().isEmpty()) {
             try {
                 response = RpcClient.getInstance().requireResource(masterId,
-                    RequireResourceRequest.build(DEFAULT_RESOURCE_ID, requestResourceNum));
+                    RequireResourceRequest.build(resourceId, requestResourceNum, allocateStrategy));
                 if (retryTimes % REPORT_RETRY_TIMES == 0) {
-                    String msg = String.format("request %s worker failed after %s times: %s",
-                        requestResourceNum, retryTimes, response.getMsg());
+                    String msg = String.format("request %s worker with allocateStrategy %s failed after %s times: %s",
+                        requestResourceNum, allocateStrategy, retryTimes, response.getMsg());
                     LOGGER.warn(msg);
                 }
                 Thread.sleep(RETRY_REQUEST_RESOURCE_INTERVAL * retryTimes);

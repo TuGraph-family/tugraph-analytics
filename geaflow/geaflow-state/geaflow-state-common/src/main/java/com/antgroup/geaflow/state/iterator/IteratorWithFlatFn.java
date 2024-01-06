@@ -14,20 +14,25 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import java.util.Iterator;
 import java.util.function.Function;
 
 /**
  * This class accepts a iterator and makes its value fanned out.
  */
-public class IteratorWithFlatFn<T, R> implements Iterator<R> {
+public class IteratorWithFlatFn<T, R> extends BaseCloseableIterator<T, R> {
 
-    private final Iterator<T> iterator;
     private final Function<T, Iterator<R>> fn;
     private Iterator<R> inIt;
 
+    public IteratorWithFlatFn(CloseableIterator<T> iterator, Function<T, Iterator<R>> function) {
+        super(iterator);
+        this.fn = function;
+    }
+
     public IteratorWithFlatFn(Iterator<T> iterator, Function<T, Iterator<R>> function) {
-        this.iterator = iterator;
+        super(iterator);
         this.fn = function;
     }
 

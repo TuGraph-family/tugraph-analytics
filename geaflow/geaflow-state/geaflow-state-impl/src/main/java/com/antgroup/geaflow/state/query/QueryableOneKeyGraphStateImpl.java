@@ -16,13 +16,14 @@ package com.antgroup.geaflow.state.query;
 
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.data.DataType;
+import com.antgroup.geaflow.state.iterator.IteratorWithClose;
 import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.project.IProjector;
 import com.antgroup.geaflow.state.strategy.manager.IGraphManager;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class QueryableOneKeyGraphStateImpl<K, VV, EV, R>
@@ -50,8 +51,8 @@ public class QueryableOneKeyGraphStateImpl<K, VV, EV, R>
     }
 
     @Override
-    public Iterator<R> iterator() {
-        return asList().iterator();
+    public CloseableIterator<R> iterator() {
+        return IteratorWithClose.wrap(asList().iterator());
     }
 
     protected StatePushDown getPushDown() {

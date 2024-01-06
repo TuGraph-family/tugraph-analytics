@@ -17,6 +17,8 @@ package com.antgroup.geaflow.store.rocksdb;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.EDGE_CF;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.VERTEX_CF;
 
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
@@ -29,14 +31,11 @@ import com.antgroup.geaflow.store.api.graph.IGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.rocksdb.proxy.IGraphRocksdbProxy;
 import com.antgroup.geaflow.store.rocksdb.proxy.ProxyBuilder;
-import com.google.common.base.Preconditions;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore
-    implements IGraphStore<K, VV, EV> {
+public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore implements IGraphStore<K, VV, EV> {
 
     private IGraphRocksdbProxy<K, VV, EV> proxy;
     private EdgeAtom sortAtom;
@@ -72,64 +71,69 @@ public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore
 
     @Override
     public List<IEdge<K, EV>> getEdges(K sid, IStatePushDown pushdown) {
-        checkOrderField(pushdown.getOrderField());
+        checkOrderField(pushdown.getOrderFields());
         return proxy.getEdges(sid, pushdown);
     }
 
     @Override
     public OneDegreeGraph<K, VV, EV> getOneDegreeGraph(K sid, IStatePushDown pushdown) {
-        checkOrderField(pushdown.getOrderField());
+        checkOrderField(pushdown.getOrderFields());
         return proxy.getOneDegreeGraph(sid, pushdown);
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
+    public CloseableIterator<K> vertexIDIterator() {
         return this.proxy.vertexIDIterator();
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
+    public CloseableIterator<K> vertexIDIterator(IStatePushDown pushDown) {
+        return proxy.vertexIDIterator(pushDown);
+    }
+
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         return proxy.getVertexIterator(pushdown);
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
         return proxy.getVertexIterator(keys, pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
-        checkOrderField(pushdown.getOrderField());
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
+        checkOrderField(pushdown.getOrderFields());
         return proxy.getEdgeIterator(pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
-        checkOrderField(pushdown.getOrderField());
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
+        checkOrderField(pushdown.getOrderFields());
         return proxy.getEdgeIterator(keys, pushdown);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
         IStatePushDown pushdown) {
-        checkOrderField(pushdown.getOrderField());
+        checkOrderField(pushdown.getOrderFields());
         return proxy.getOneDegreeGraphIterator(pushdown);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
-        checkOrderField(pushdown.getOrderField());
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
+        checkOrderField(pushdown.getOrderFields());
         return proxy.getOneDegreeGraphIterator(keys, pushdown);
     }
 
     @Override
-    public <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
         IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return proxy.getEdgeProjectIterator(pushdown);
     }
 
     @Override
-    public <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys, IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys, IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return proxy.getEdgeProjectIterator(keys, pushdown);
     }
 
@@ -143,9 +147,12 @@ public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore
         return proxy.getAggResult(keys, pushdown);
     }
 
-    private void checkOrderField(EdgeAtom orderField) {
-        Preconditions.checkArgument(orderField == null || sortAtom == orderField,
-            "store is sort by %s but need %s", sortAtom, orderField);
+    private void checkOrderField(List<EdgeAtom> orderFields) {
+        boolean emptyFields = orderFields == null || orderFields.isEmpty();
+        boolean checkOk = emptyFields || sortAtom == orderFields.get(0);
+        if (!checkOk) {
+            throw new GeaflowRuntimeException(String.format("store is sort by %s but need %s", sortAtom, orderFields.get(0)));
+        }
     }
 
     @Override

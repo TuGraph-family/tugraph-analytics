@@ -49,10 +49,9 @@ public class EdgeMatch extends AbstractRelNode implements SingleMatchNode, IMatc
 
     private final RelDataType nodeType;
 
-    private EdgeMatch(RelOptCluster cluster, RelTraitSet traitSet,
-                      RelNode input, String label,
-                      Collection<String> edgeTypes, EdgeDirection direction,
-                      RelDataType nodeType, PathRecordType pathType) {
+    protected EdgeMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input, String label,
+              Collection<String> edgeTypes, EdgeDirection direction, RelDataType nodeType,
+              PathRecordType pathType) {
         super(cluster, traitSet);
         this.input = input;
         this.label = label;

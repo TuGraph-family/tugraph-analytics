@@ -5,12 +5,13 @@ VOLUME /tmp
 
 ENV GEAFLOW_INSTALL_PATH=/opt
 ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
-ENV GEAFLOW_WEB_HOME=$GEAFLOW_INSTALL_PATH/geaflow-web
+
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # base packages
 RUN yum -y install wget ps vim curl
 RUN wget --no-check-certificate http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo
-RUN yum -y install apache-maven python2 git npm
 
 # jdk
 RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
@@ -35,6 +36,17 @@ RUN rpm -ivh https://dev.mysql.com/get/mysql-community-icu-data-files-8.0.30-1.e
 RUN yum install -y epel-release \
     && yum install -y redis
 
+# zookeeper
+RUN yum install -y ca-certificates
+RUN yum install -y nc
+RUN cd /usr/lib \
+    && wget https://mirrors.aliyun.com/apache/zookeeper/zookeeper-3.8.3/apache-zookeeper-3.8.3-bin.tar.gz \
+    && tar xf apache-zookeeper-3.8.3-bin.tar.gz \
+    && mkdir /usr/lib/apache-zookeeper-3.8.3-bin/zkData \
+    && cd /usr/lib/apache-zookeeper-3.8.3-bin/conf \
+    && mv zoo_sample.cfg zoo.cfg \
+    && rm -rf /usr/lib/apache-zookeeper-3.8.3-bin.tar.gz
+
 # influxdb
 RUN echo '[influxdata]' >> /etc/yum.repos.d/influxdata.repo \
     && echo 'name = InfluxData Repository - Stable' >> /etc/yum.repos.d/influxdata.repo \
@@ -50,29 +62,6 @@ RUN echo '[influxdata]' >> /etc/yum.repos.d/influxdata.repo \
     && cp influx /usr/local/bin/ \
     && rm -rf /usr/lib/influxdb2-client-2.7.3-linux-amd64
 
-# install web
-RUN mkdir /usr/local/nodejs \
-    && cd  /usr/local/nodejs \
-    && wget https://nodejs.org/dist/v14.21.3/node-v14.21.3-linux-arm64.tar.xz \
-    && tar xvf node-v14.21.3-linux-arm64.tar.xz \
-    && rm -rf node-v14.21.3-linux-arm64.tar.xz \
-    && mv node-v14.21.3-linux-arm64/* /usr/local/nodejs \
-    && ln -s /usr/local/nodejs/bin/node /usr/local/bin \
-    && ln -s /usr/local/nodejs/bin/npm /usr/local/bin
-
-RUN yum -y install gcc gcc-c++ automake autoconf libtool make
-
-COPY target/geaflow-web.tar.gz $GEAFLOW_WEB_HOME/
-WORKDIR $GEAFLOW_WEB_HOME/
-RUN tar -vxzf geaflow-web.tar.gz \
-    && rm geaflow-web.tar.gz
-
-RUN npm install -g yarn --registry=https://registry.npm.taobao.org \
-    && ln -s /usr/local/nodejs/bin/yarn /usr/local/bin \
-    && yarn config set registry https://registry.npm.taobao.org \
-    && yarn install \
-    && yarn build
-
 # copy console jar
 WORKDIR $GEAFLOW_HOME/
 COPY geaflow-console/target/boot/geaflow-console-bootstrap-*-executable.jar \
@@ -84,6 +73,6 @@ COPY geaflow-console/docker $GEAFLOW_HOME/
 COPY geaflow/geaflow-deploy/geaflow-assembly/target/geaflow-assembly-*.jar \
     $GEAFLOW_HOME/files/geaflow.jar
 
-EXPOSE 8080 8888 3306 6379 8086
+EXPOSE 8888 3306 6379 8086 2181
 
 ENTRYPOINT ["bash", "/opt/geaflow/bin/start-process.sh"]

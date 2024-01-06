@@ -14,11 +14,12 @@
 
 package com.antgroup.geaflow.cluster.k8s.config;
 
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesClientRunner;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
 import java.util.HashMap;
@@ -58,14 +59,14 @@ public class KubernetesClientParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFilename = getLogDir() + File.separator + CLIENT_LOG_SUFFIX;
-        return getContainerShellCommand(clusterConfig.getClientJvmOptions(),
-            KubernetesClientRunner.class, logFilename);
+        return ClusterUtils.getStartCommand(clusterConfig.getClientJvmOptions(),
+            KubernetesClientRunner.class, logFilename, config, JOB_CLASSPATH);
     }
 
     @Override
     public Map<String, String> getAdditionEnvs() {
-        return KubernetesUtils
-            .getVariablesWithPrefix(CONTAINERIZED_CLIENT_ENV_PREFIX, config.getConfigMap());
+        return KubernetesUtils.getVariablesWithPrefix(CONTAINERIZED_CLIENT_ENV_PREFIX,
+            config.getConfigMap());
     }
 
     @Override
@@ -83,7 +84,7 @@ public class KubernetesClientParam extends AbstractKubernetesParam {
         Map<String, String> workerPodLabels = new HashMap<>();
         workerPodLabels.put(K8SConstants.LABEL_APP_KEY, clusterId);
         workerPodLabels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_CLIENT);
-        workerPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS.getKey()));
+        workerPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS));
         return workerPodLabels;
     }
 

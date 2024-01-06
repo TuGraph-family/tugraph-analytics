@@ -35,7 +35,7 @@ public class CleanStashEnvEvent extends AbstractCleanCommand {
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
         ShuffleDataManager.getInstance().release(pipelineId);
-        sendDoneEvent(cycleId, windowId, EventType.CLEAN_ENV);
+        this.sendDoneEvent(this.driverId, EventType.CLEAN_ENV, null, false);
     }
 
     @Override
@@ -57,8 +57,8 @@ public class CleanStashEnvEvent extends AbstractCleanCommand {
     }
 
     @Override
-    protected void sendDoneEvent(int cycleId, long windowId, EventType eventType) {
-        DoneEvent doneEvent = new DoneEvent(cycleId, windowId, 0, eventType);
+    protected <T> void sendDoneEvent(String driverId, EventType sourceEventType, T result, boolean sendMetrics) {
+        DoneEvent<T> doneEvent = new DoneEvent<>(this.cycleId, this.windowId, 0, sourceEventType, result);
         RpcClient.getInstance().processPipeline(driverId, doneEvent);
     }
 

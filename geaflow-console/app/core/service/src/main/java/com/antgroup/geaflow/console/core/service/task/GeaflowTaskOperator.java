@@ -92,8 +92,9 @@ public class GeaflowTaskOperator {
     public boolean start(GeaflowTask task) {
         GeaflowRuntime runtime = runtimeFactory.getRuntime(task);
 
-        // generate task token
+        // generate task token and save before start
         task.setToken(tokenGenerator.nextTaskToken());
+        taskService.update(task);
 
         // submit job to the engine
         try {
@@ -135,7 +136,7 @@ public class GeaflowTaskOperator {
                     // waiting startup timeout
                     String detail = Fmt.as("Waiting task startup timeout after {}s", TASK_STARTUP_TIMEOUT);
                     log.info(detail);
-                    auditService.create(new GeaflowAudit(task, GeaflowOperationType.STOP, detail));
+                    auditService.create(new GeaflowAudit(task.getId(), GeaflowOperationType.STOP, detail));
 
                 } else {
                     // waiting startup, keep status not changed
@@ -160,8 +161,8 @@ public class GeaflowTaskOperator {
 
     public boolean cleanData(GeaflowTask task) {
         GeaflowPluginConfig dataConfig = task.getDataPluginConfig();
-        GeaflowDataStore dataStore = dataStoreFactory.getDataStore(dataConfig);
-        dataStore.cleanData(task);
+        GeaflowDataStore dataStore = dataStoreFactory.getDataStore(dataConfig.getType());
+        dataStore.cleanTaskData(task);
         return true;
     }
 

@@ -148,7 +148,8 @@ public class StepPlanTest {
         ;
         StepKeyFunction keyFunction = new StepKeyFunctionImpl(new int[]{}, new IType[]{});
         StepLogicalPlan joinPlan = leftPlan.join(rightPlan, keyFunction, keyFunction,
-            new StepJoinFunctionImpl(JoinRelType.INNER, new IType[]{}, new IType[]{}), PathType.EMPTY)
+            new StepJoinFunctionImpl(JoinRelType.INNER, new IType[]{}, new IType[]{}),
+                PathType.EMPTY, false)
             .withOutputPathSchema(new PathType());
 
         StepLogicalPlanSet logicalPlanSet = new StepLogicalPlanSet(joinPlan);
@@ -174,9 +175,9 @@ public class StepPlanTest {
 
     private GraphSchema createGraph() {
         TableField idField = new TableField("id", Types.of("Long"), false);
-        VertexTable vTable = new VertexTable("testV", Collections.singletonList(idField),"id");
+        VertexTable vTable = new VertexTable("default", "testV", Collections.singletonList(idField),"id");
         GeaFlowGraph graph = new GeaFlowGraph("default", "test", Lists.newArrayList(vTable),
-            new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false, false);
+            new ArrayList<>(), new HashMap<>(), new HashMap<>(), false, false);
         GraphRecordType graphRecordType = (GraphRecordType) graph.getRowType(GQLJavaTypeFactory.create());
         return (GraphSchema) SqlTypeUtil.convertType(graphRecordType);
     }

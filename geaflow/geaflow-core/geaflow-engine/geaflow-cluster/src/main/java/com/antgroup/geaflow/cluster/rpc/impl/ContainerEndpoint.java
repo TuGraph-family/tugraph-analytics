@@ -17,18 +17,17 @@ package com.antgroup.geaflow.cluster.rpc.impl;
 import com.antgroup.geaflow.cluster.container.Container;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.protocol.OpenContainerEvent;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.cluster.rpc.IContainerEndpoint;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Container.Request;
 import com.antgroup.geaflow.rpc.proto.Container.Response;
-import com.antgroup.geaflow.rpc.proto.ContainerServiceGrpc;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ContainerEndpoint extends ContainerServiceGrpc.ContainerServiceImplBase implements
-    RpcEndpoint {
+public class ContainerEndpoint implements IContainerEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerEndpoint.class);
 
@@ -38,7 +37,9 @@ public class ContainerEndpoint extends ContainerServiceGrpc.ContainerServiceImpl
         this.container = workerContainer;
     }
 
-    public void process(Request request, StreamObserver<Response> responseObserver) {
+    @Override
+    public Response process(Request request) {
+        Response.Builder builder = Response.newBuilder();
         try {
             IEvent res;
             IEvent event = RpcMessageEncoder.decode(request.getPayload());
@@ -47,28 +48,25 @@ public class ContainerEndpoint extends ContainerServiceGrpc.ContainerServiceImpl
             } else {
                 res = container.process(event);
             }
-            Response.Builder builder = Response.newBuilder();
             if (res != null) {
                 ByteString payload = RpcMessageEncoder.encode(res);
                 builder.setPayload(payload);
             }
-            responseObserver.onNext(builder.build());
-            responseObserver.onCompleted();
+            return builder.build();
         } catch (Throwable t) {
             LOGGER.error("process request failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException("process request failed", t);
         }
     }
 
-    public void close(Empty request,
-                      StreamObserver<Empty> responseObserver) {
+    @Override
+    public Empty close(Empty request) {
         try {
             container.close();
-            responseObserver.onNext(Empty.newBuilder().build());
-            responseObserver.onCompleted();
+            return Empty.newBuilder().build();
         } catch (Throwable t) {
             LOGGER.error("close failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("close failed: %s", t.getMessage()), t);
         }
     }
 }

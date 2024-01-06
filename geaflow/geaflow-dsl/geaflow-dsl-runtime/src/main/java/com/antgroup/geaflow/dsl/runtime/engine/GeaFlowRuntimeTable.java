@@ -27,9 +27,13 @@ import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.mode.JobMode;
 import com.antgroup.geaflow.common.type.IType;
+import com.antgroup.geaflow.common.utils.ArrayUtil;
 import com.antgroup.geaflow.common.utils.ClassUtil;
 import com.antgroup.geaflow.dsl.common.binary.EncoderFactory;
+import com.antgroup.geaflow.dsl.common.binary.decoder.DefaultRowDecoder;
+import com.antgroup.geaflow.dsl.common.binary.decoder.RowDecoder;
 import com.antgroup.geaflow.dsl.common.binary.encoder.EdgeEncoder;
 import com.antgroup.geaflow.dsl.common.binary.encoder.IBinaryEncoder;
 import com.antgroup.geaflow.dsl.common.binary.encoder.VertexEncoder;
@@ -58,6 +62,7 @@ import com.antgroup.geaflow.dsl.runtime.SinkDataView;
 import com.antgroup.geaflow.dsl.runtime.function.table.AggFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.GroupByFunction;
+import com.antgroup.geaflow.dsl.runtime.function.table.GroupByFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.table.JoinTableFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.OrderByFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.ProjectFunction;
@@ -66,24 +71,26 @@ import com.antgroup.geaflow.dsl.runtime.plan.PhysicRelNode.PhysicRelNodeName;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.google.common.collect.Lists;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GeaFlowRuntimeTable implements RuntimeTable {
 
     private final QueryContext queryContext;
 
-    private final IPipelineTaskContext context;
+    private final IPipelineJobContext context;
 
     private final PWindowStream<Row> pStream;
 
-    public GeaFlowRuntimeTable(QueryContext queryContext, IPipelineTaskContext context,
+    public GeaFlowRuntimeTable(QueryContext queryContext, IPipelineJobContext context,
                                PWindowStream<Row> pStream) {
         this.queryContext = Objects.requireNonNull(queryContext);
         this.context = Objects.requireNonNull(context);
@@ -101,8 +108,13 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     @Override
-    public List<Row> take() {
-        throw new GeaFlowDSLException("take() has not support currently.");
+    public List<Row> take(IType<?> type) {
+        if (JobMode.getJobMode(context.getConfig()).equals(JobMode.OLAP_SERVICE)) {
+            pStream.map(new BinaryRowToObjectMapFunction(type)).collect();
+        } else {
+            pStream.collect();
+        }
+        return new ArrayList<>();
     }
 
     @Override
@@ -133,15 +145,18 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     public RuntimeTable aggregate(GroupByFunction groupByFunction, AggFunction aggFunction) {
         String opName = PhysicRelNodeName.AGGREGATE.getName(queryContext.getOpNameCount());
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
+        boolean isGlobalDistinct = aggFunction.getValueTypes().length == 0;
         PWindowStream<Row> aggregate =
-            pStream.flatMap(new TableLocalAggregateFunction(groupByFunction, aggFunction))
+            pStream.flatMap(isGlobalDistinct ? new TableLocalDistinctFunction(groupByFunction)
+                                             : new TableLocalAggregateFunction(groupByFunction, aggFunction))
                 .withName(opName + "-local")
                 .withParallelism(pStream.getParallelism())
                 .keyBy(new GroupKeySelectorFunction(groupByFunction))
                 .withName(opName + "-KeyBy")
                 .withParallelism(pStream.getParallelism())
                 .materialize()
-                .aggregate(new TableGlobalAggregateFunction(groupByFunction, aggFunction))
+                .aggregate(isGlobalDistinct ? new TableGlobalDistinctFunction(groupByFunction)
+                                            : new TableGlobalAggregateFunction(groupByFunction, aggFunction))
                 .withName(opName + "-global")
                 .withParallelism(parallelism);
         return copyWithSetOptions(aggregate);
@@ -204,7 +219,19 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         } else {
             sinkFunction = new GeaFlowTableSinkFunction(table, tableSink);
         }
-        PStreamSink<Row> sink = pStream.sink(sinkFunction)
+        PWindowStream<Row> inputStream = pStream;
+        if (table.getPrimaryFields().size() > 0) {
+            int[] primaryKeyIndices = ArrayUtil.toIntArray(table.getPrimaryFields()
+                .stream().map(name -> table.getTableSchema().indexOf(name))
+                .collect(Collectors.toList()));
+            IType<?>[] primaryKeyTypes = table.getPrimaryFields()
+                .stream().map(name -> table.getTableSchema().getField(name).getType())
+                .collect(Collectors.toList()).toArray(new IType[]{});
+
+            inputStream = pStream.keyBy(new GroupKeySelectorFunction(
+                new GroupByFunctionImpl(primaryKeyIndices, primaryKeyTypes)));
+        }
+        PStreamSink<Row> sink = inputStream.sink(sinkFunction)
             .withConfig(queryContext.getSetOptions())
             .withName(opName)
             .withParallelism(parallelism);
@@ -228,9 +255,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         return new GeaFlowSinkIncGraphView(context);
     }
 
-    private static class TableProjectFunction extends RichFunction implements MapFunction<Row, Row>, Serializable {
-
-        private boolean skipException;
+    private static class TableProjectFunction implements MapFunction<Row, Row>, Serializable {
 
         private final ProjectFunction projectFunction;
 
@@ -239,32 +264,26 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         }
 
         @Override
-        public void open(RuntimeContext runtimeContext) {
-            this.skipException = runtimeContext.getConfiguration()
-                .getBoolean(DSLConfigKeys.GEAFLOW_DSL_SKIP_EXCEPTION);
-        }
-
-        @Override
         public Row map(Row value) {
-            try {
-                return projectFunction.project(value);
-            } catch (Exception e) {
-                if (!skipException) {
-                    throw new GeaFlowDSLException(e);
-                }
-                return null;
-            }
-        }
-
-        @Override
-        public void close() {
-
+            return projectFunction.project(value);
         }
     }
 
-    private static class TableFilterFunction extends RichFunction implements FilterFunction<Row> {
+    private static class BinaryRowToObjectMapFunction implements MapFunction<Row, Row>, Serializable {
 
-        private boolean skipException;
+        private final RowDecoder rowDecoder;
+
+        public BinaryRowToObjectMapFunction(IType<?> schema) {
+            this.rowDecoder = new DefaultRowDecoder((StructType) schema);
+        }
+
+        @Override
+        public Row map(Row row) {
+            return rowDecoder.decode(row);
+        }
+    }
+
+    private static class TableFilterFunction implements FilterFunction<Row> {
 
         private final WhereFunction whereFunction;
 
@@ -273,29 +292,59 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         }
 
         @Override
-        public void open(RuntimeContext runtimeContext) {
-            this.skipException = runtimeContext.getConfiguration()
-                .getBoolean(DSLConfigKeys.GEAFLOW_DSL_SKIP_EXCEPTION);
+        public boolean filter(Row record) {
+            return whereFunction.filter(record);
+        }
+    }
+
+    private static class TableLocalDistinctFunction extends RichWindowFunction implements
+        FlatMapFunction<Row, Row> {
+
+        private final GroupByFunction groupByFunction;
+        private final Map<RowKey, Row> aggregatingState;
+        private final IBinaryEncoder encoder;
+
+        public TableLocalDistinctFunction(GroupByFunction groupByFunction) {
+            this.groupByFunction = groupByFunction;
+            this.aggregatingState = new HashMap<>();
+            IType<?>[] fieldTypes = groupByFunction.getFieldTypes();
+            TableField[] tableFields = new TableField[fieldTypes.length];
+            for (int i = 0; i < fieldTypes.length; i++) {
+                tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
+            }
+            this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
         }
 
         @Override
-        public boolean filter(Row record) {
-            try {
-                return whereFunction.filter(record);
-            } catch (Exception e) {
-                if (!skipException) {
-                    throw new GeaFlowDSLException(e);
-                }
-                return false;
-            }
+        public void open(RuntimeContext runtimeContext) {
         }
 
         @Override
         public void close() {
+        }
 
+        @Override
+        public void flatMap(Row value, Collector<Row> collector) {
+            //local distinct
+            RowKey groupKey = groupByFunction.getRowKey(value);
+            Row acc = aggregatingState.get(groupKey);
+            if (acc == null) {
+                assert collector != null : "collector is null";
+                IType<?>[] keyTypes = groupByFunction.getFieldTypes();
+                Object[] fields = new Object[keyTypes.length];
+                for (int i = 0; i < keyTypes.length; i++) {
+                    fields[i] = groupKey.getField(i, keyTypes[i]);
+                }
+                collector.partition(encoder.encode(ObjectRow.create(fields)));
+            }
+            aggregatingState.put(groupKey, value);
+        }
+
+        @Override
+        public void finish() {
+            aggregatingState.clear();
         }
     }
-
 
     private static class TableLocalAggregateFunction extends RichWindowFunction implements
         FlatMapFunction<Row, Row> {
@@ -304,7 +353,6 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         private final GroupByFunction groupByFunction;
         private Collector<Row> collector;
         private final Map<RowKey, Object> aggregatingState;
-        private final boolean hasAccumulator;
         private final IBinaryEncoder encoder;
 
         public TableLocalAggregateFunction(GroupByFunction groupByFunction, AggFunction localAggFunction) {
@@ -312,22 +360,13 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             this.groupByFunction = groupByFunction;
             this.aggregatingState = new HashMap<>();
             IType<?>[] fieldTypes = groupByFunction.getFieldTypes();
-            this.hasAccumulator = localAggFunction.getValueTypes().length > 0;
-            if (hasAccumulator) {
-                TableField[] tableFields = new TableField[fieldTypes.length + 1];
-                for (int i = 0; i < fieldTypes.length; i++) {
-                    tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
-                }
-                tableFields[fieldTypes.length] = new TableField(String.valueOf(fieldTypes.length)
-                    , ObjectType.INSTANCE, false);
-                this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
-            } else {
-                TableField[] tableFields = new TableField[fieldTypes.length];
-                for (int i = 0; i < fieldTypes.length; i++) {
-                    tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
-                }
-                this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
+            TableField[] tableFields = new TableField[fieldTypes.length + 1];
+            for (int i = 0; i < fieldTypes.length; i++) {
+                tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
             }
+            tableFields[fieldTypes.length] = new TableField(String.valueOf(fieldTypes.length)
+                , ObjectType.INSTANCE, false);
+            this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
         }
 
         @Override
@@ -360,17 +399,100 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
                 assert collector != null : "collector is null";
                 IType<?>[] keyTypes = groupByFunction.getFieldTypes();
                 //The last offset of ObjectRow is accumulator
-                Object[] fields =
-                    hasAccumulator ? new Object[keyTypes.length + 1] : new Object[keyTypes.length];
+                Object[] fields = new Object[keyTypes.length + 1];
                 for (int i = 0; i < keyTypes.length; i++) {
                     fields[i] = rowKeyObjectEntry.getKey().getField(i, keyTypes[i]);
                 }
-                if (hasAccumulator) {
-                    fields[keyTypes.length] = rowKeyObjectEntry.getValue();
-                }
+                fields[keyTypes.length] = rowKeyObjectEntry.getValue();
                 collector.partition(encoder.encode(ObjectRow.create(fields)));
             }
             aggregatingState.clear();
+        }
+    }
+
+    private static class TableGlobalDistinctFunction extends RichFunction implements
+        AggregateFunction<Row, Object, Row> {
+
+        private final GroupByFunction groupByFunction;
+
+        public TableGlobalDistinctFunction(GroupByFunction groupByFunction) {
+            this.groupByFunction = groupByFunction;
+        }
+
+        @Override
+        public void open(RuntimeContext runtimeContext) {
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public Object createAccumulator() {
+            return new DistinctAccumulator(null);
+        }
+
+        @Override
+        public void add(Row value, Object keyAccumulator) {
+            IType<?>[] keyTypes = groupByFunction.getFieldTypes();
+            Object[] fields = new Object[keyTypes.length];
+            for (int i = 0; i < keyTypes.length; i++) {
+                fields[i] = value.getField(i, keyTypes[i]);
+            }
+            RowKey key = ObjectRowKey.of(fields);
+            DistinctAccumulator keyAcc = (DistinctAccumulator) keyAccumulator;
+            if (keyAcc.getKey() == null) {
+                keyAcc.setKey(key);
+            }
+        }
+
+        @Override
+        public Row getResult(Object keyAccumulator) {
+            RowKey key = ((DistinctAccumulator) keyAccumulator).getResult();
+            if (key == null) {
+                return null;
+            }
+            IType<?>[] keyTypes = groupByFunction.getFieldTypes();
+            Object[] fields = new Object[keyTypes.length];
+            for (int i = 0; i < keyTypes.length; i++) {
+                fields[i] = key.getField(i, keyTypes[i]);
+            }
+            return ObjectRow.create(fields);
+        }
+
+        @Override
+        public Object merge(Object a, Object b) {
+            assert Objects.equals(((DistinctAccumulator) a).getKey(),
+                ((DistinctAccumulator) b).getKey());
+            return a;
+        }
+
+        private static class DistinctAccumulator implements Serializable {
+
+            private RowKey key;
+
+            private boolean hasBeenRead = false;
+
+            public DistinctAccumulator(RowKey key) {
+                this.key = key;
+            }
+
+            public RowKey getKey() {
+                return key;
+            }
+
+            public void setKey(RowKey key) {
+                this.key = key;
+            }
+
+            public RowKey getResult() {
+                if (hasBeenRead) {
+                    return null;
+                } else {
+                    hasBeenRead = true;
+                    return key;
+                }
+            }
         }
     }
 

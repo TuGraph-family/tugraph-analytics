@@ -17,7 +17,9 @@ package com.antgroup.geaflow.dsl.rel;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
+import com.antgroup.geaflow.dsl.rel.match.MatchAggregate;
 import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
+import com.antgroup.geaflow.dsl.rel.match.MatchExtend;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathModify;
@@ -83,8 +85,18 @@ public class MatchRelShuffle extends AbstractMatchNodeVisitor<IMatchNode> {
     }
 
     @Override
+    public IMatchNode visitExtend(MatchExtend matchExtend) {
+        return visitChildren(matchExtend);
+    }
+
+    @Override
     public IMatchNode visitSort(MatchPathSort pathSort) {
         return visitChildren(pathSort);
+    }
+
+    @Override
+    public IMatchNode visitAggregate(MatchAggregate matchAggregate) {
+        return visitChildren(matchAggregate);
     }
 
     protected IMatchNode visitChildren(IMatchNode parent) {

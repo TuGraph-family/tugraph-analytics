@@ -14,11 +14,13 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.api.function.io.SourceFunction;
+import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.runtime.expression.Expression;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
-import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
+import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import java.util.Collection;
 import java.util.Map;
 
@@ -29,11 +31,13 @@ public interface QueryEngine {
 
     Map<String, String> getConfig();
 
-    IPipelineTaskContext getContext();
+    IPipelineJobContext getContext();
 
     RuntimeTable createRuntimeTable(QueryContext context, GeaFlowTable table, Expression pushFilter);
 
     RuntimeTable createRuntimeTable(QueryContext context, Collection<Row> rows);
+
+    <T> PWindowSource<T> createRuntimeTable(QueryContext context, SourceFunction<T> sourceFunction);
 
     RuntimeGraph createRuntimeGraph(QueryContext context, GeaFlowGraph graph);
 }

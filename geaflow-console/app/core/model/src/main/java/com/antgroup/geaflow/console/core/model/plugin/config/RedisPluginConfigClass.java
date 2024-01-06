@@ -20,23 +20,39 @@ import com.antgroup.geaflow.console.core.model.config.GeaflowConfigKey;
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfigValue;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import redis.clients.jedis.Jedis;
 
 @Getter
 @Setter
+@ToString
 public class RedisPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.store.redis.host", comment = "Redis主机")
+    @GeaflowConfigKey(value = "geaflow.store.redis.host", comment = "i18n.key.host")
     @GeaflowConfigValue(required = true, defaultValue = "0.0.0.0")
     private String host;
 
-    @GeaflowConfigKey(value = "geaflow.store.redis.port", comment = "Redis端口")
+    @GeaflowConfigKey(value = "geaflow.store.redis.port", comment = "i18n.key.port")
     @GeaflowConfigValue(required = true, defaultValue = "6379")
     private Integer port;
 
-    @GeaflowConfigKey(value = "geaflow.store.redis.retry.times", comment = "重试次数")
+    @GeaflowConfigKey(value = "geaflow.store.redis.user", comment = "i18n.key.user")
+    private String user;
+
+    @GeaflowConfigKey(value = "geaflow.store.redis.password", comment = "i18n.key.password")
+    private String password;
+
+    @GeaflowConfigKey(value = "geaflow.store.redis.connection.timeout", comment = "i18n.key.connection.timeout")
+    @GeaflowConfigValue(defaultValue = "5000")
+    private Integer connectionTimeoutMs;
+
+    @GeaflowConfigKey(value = "geaflow.store.redis.retry.times", comment = "i18n.key.retry.times")
     @GeaflowConfigValue(defaultValue = "10")
     private Integer retryTimes;
+
+    @GeaflowConfigKey(value = "geaflow.store.redis.retry.interval.ms", comment = "i18n.key.retry.interval.ms")
+    @GeaflowConfigValue(defaultValue = "500")
+    private Integer retryIntervalMs;
 
     public RedisPluginConfigClass() {
         super(GeaflowPluginType.REDIS);

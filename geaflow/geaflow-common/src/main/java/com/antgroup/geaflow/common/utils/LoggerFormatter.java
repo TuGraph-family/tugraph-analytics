@@ -21,28 +21,40 @@ public class LoggerFormatter {
     public LoggerFormatter() {
     }
 
-    public static String getTaskLog(String pipelineName, int cycleId, long batchId, int taskId) {
-        return String.format("%s task#%s", getCycleTag(pipelineName, cycleId, batchId), taskId);
+    public static String getCycleName(int cycleId) {
+        return String.format("cycle#%s", cycleId);
     }
 
-    public static String getTaskLog(String pipelineName, int cycleId, int taskId) {
-        return String.format("%s task#%s", getCycleTag(pipelineName, cycleId), taskId);
+    public static String getCycleName(int cycleId, long windowId) {
+        return String.format("cycle#%s-%s", cycleId, windowId);
     }
 
     public static String getCycleTag(String pipelineName, int cycleId) {
         return String.format("%s %s", pipelineName, getCycleName(cycleId));
     }
 
-    public static String getCycleTag(String pipelineName, int cycleId, Object label) {
-        return String.format("%s %s", pipelineName, getCycleName(cycleId, label));
+    public static String getCycleTag(String pipelineName, int cycleId, long windowId) {
+        return String.format("%s %s", pipelineName, getCycleName(cycleId, windowId));
     }
 
-    public static String getCycleName(int cycleId) {
-        return String.format("cycle#%s", cycleId);
+    public static String getCycleMetricName(int cycleId, int vertexId) {
+        return String.format("%s[%d]", getCycleName(cycleId), vertexId);
     }
 
-    public static String getCycleName(int cycleId, Object label) {
-        return String.format("cycle#%s-%s", cycleId, label);
+    public static String getCycleMetricName(int cycleId, long windowId, int vertexId) {
+        return String.format("%s[%d]", getCycleName(cycleId, windowId), vertexId);
+    }
+
+    public static String getTaskTag(String pipelineName, int cycleId,
+                                    int taskId, int vertexId, int index, int parallelism) {
+        return String.format("%s task#%d [%d-%d/%d]", getCycleTag(pipelineName, cycleId),
+            taskId, vertexId, index, parallelism);
+    }
+
+    public static String getTaskTag(String pipelineName, int cycleId, long windowId,
+                                    int taskId, int vertexId, int index, int parallelism) {
+        return String.format("%s task#%d [%d-%d/%d]", getCycleTag(pipelineName, cycleId, windowId),
+            taskId, vertexId, index, parallelism);
     }
 
     /**

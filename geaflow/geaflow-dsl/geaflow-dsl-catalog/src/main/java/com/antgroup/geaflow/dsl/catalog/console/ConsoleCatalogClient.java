@@ -20,15 +20,19 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.utils.HttpUtil;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 
 public class ConsoleCatalogClient {
 
@@ -57,6 +61,36 @@ public class ConsoleCatalogClient {
         HttpUtil.post(createUrl, gson.toJson(graphModel), headers, Object.class);
     }
 
+    public void createEdgeEndpoints(String instanceName, String graphName, List<String> edgeNames,
+                                    List<String> srcVertexNames, List<String> targetVertexNames) {
+        assert srcVertexNames != null && targetVertexNames != null
+            && srcVertexNames.size() == targetVertexNames.size();
+        String createUrl = endpoint + "/api/instances/" + instanceName + "/graphs/" + graphName
+            + "/endpoints";
+        List<EndpointWrapper> endpointWrappers = new ArrayList<>();
+        for (int i = 0; i < srcVertexNames.size(); i++) {
+            endpointWrappers.add(new EndpointWrapper(srcVertexNames.get(i),
+                targetVertexNames.get(i), edgeNames.get(i)));
+        }
+        HttpUtil.post(createUrl, gson.toJson(endpointWrappers), headers, Object.class);
+    }
+
+    public static class EndpointWrapper {
+
+        public final String sourceName;
+        public final String targetName;
+        public final String edgeName;
+
+        public EndpointWrapper(String sourceName, String targetName, String edgeName) {
+            assert !StringUtils.isBlank(sourceName) && !StringUtils.isBlank(targetName)
+                && !StringUtils.isBlank(edgeName);
+            this.sourceName = sourceName;
+            this.targetName = targetName;
+            this.edgeName = edgeName;
+        }
+
+    }
+
     public GeaFlowTable getTable(String instanceName, String tableName) {
         String getUrl = endpoint + "/api/instances/" + instanceName + "/tables/" + tableName;
         TableModel tableModel = HttpUtil.get(getUrl, headers, TableModel.class);
@@ -67,6 +101,18 @@ public class ConsoleCatalogClient {
         String getUrl = endpoint + "/api/instances/" + instanceName + "/graphs/" + graphName;
         GraphModel graphModel = HttpUtil.get(getUrl, headers, GraphModel.class);
         return CatalogUtil.convertToGeaFlowGraph(graphModel, instanceName);
+    }
+
+    public VertexTable getVertex(String instanceName, String vertexName) {
+        String getUrl = endpoint + "/api/instances/" + instanceName + "/vertices/" + vertexName;
+        VertexModel vertexModel = HttpUtil.get(getUrl, headers, VertexModel.class);
+        return CatalogUtil.convertToVertexTable(instanceName, vertexModel);
+    }
+
+    public EdgeTable getEdge(String instanceName, String edgeName) {
+        String getUrl = endpoint + "/api/instances/" + instanceName + "/edges/" + edgeName;
+        EdgeModel edgeModel = HttpUtil.get(getUrl, headers, EdgeModel.class);
+        return CatalogUtil.convertToEdgeTable(instanceName, edgeModel);
     }
 
     public GeaFlowFunction getFunction(String instanceName, String functionName) {

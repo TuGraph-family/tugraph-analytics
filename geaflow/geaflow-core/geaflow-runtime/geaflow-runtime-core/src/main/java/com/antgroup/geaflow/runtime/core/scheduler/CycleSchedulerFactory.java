@@ -30,6 +30,7 @@ public class CycleSchedulerFactory {
                 scheduler = new ExecutionGraphCycleScheduler();
                 break;
             case ITERATION:
+            case ITERATION_WITH_AGG:
             case PIPELINE:
                 scheduler = new PipelineCycleScheduler();
                 break;

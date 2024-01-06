@@ -16,6 +16,7 @@ package com.antgroup.geaflow.dsl.runtime.traversal;
 
 import com.antgroup.geaflow.dsl.common.data.StepRecord;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLoopUntilOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepOperator;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
@@ -126,5 +127,57 @@ public class DagTopologyGroup {
 
     public Collection<StepOperator<StepRecord, StepRecord>> getAllOperators() {
         return globalOpId2Operators.values();
+    }
+
+    public int getIterationCount(int currentDepth, StepOperator stepOperator) {
+        List<String> subQueryNames = stepOperator.getSubQueryNames();
+        int maxSubDagIteration = 0;
+        for (String subQueryName : subQueryNames) {
+            DagTopology subDag = this.subDags.get(subQueryName);
+            assert subDag != null;
+            int subDagIterationCount =
+                addIteration(getIterationCount(1, subDag.getEntryOperator()), 1);
+            if (subDagIterationCount > maxSubDagIteration) {
+                maxSubDagIteration = subDagIterationCount;
+            }
+        }
+        currentDepth = addIteration(currentDepth, maxSubDagIteration);
+
+        if (stepOperator instanceof StepLoopUntilOperator) {
+            StepLoopUntilOperator loopUntilOperator = (StepLoopUntilOperator)stepOperator;
+            currentDepth = addIteration(currentDepth,
+                addIteration(loopUntilOperator.getMaxLoopCount(), 1));
+        }
+        int depth = currentDepth;
+        for (Object op : stepOperator.getNextOperators()) {
+            StepOperator next = (StepOperator) op;
+            int branchDepth = getIterationCount(currentDepth, next);
+            if (!isChained(stepOperator.getId(), next.getId())) {
+                branchDepth = addIteration(branchDepth, 1);
+            }
+            if (branchDepth > depth) {
+                depth = branchDepth;
+            }
+        }
+        return depth;
+    }
+
+    private static int addIteration(int iteration, int delta) {
+        if (iteration == Integer.MAX_VALUE || iteration < 0 || delta == 0) {
+            return iteration;
+        }
+        if (delta > 0) {
+            if (Integer.MAX_VALUE - iteration >= delta) {
+                return iteration + delta;
+            } else {
+                return Integer.MAX_VALUE;
+            }
+        } else {
+            if (iteration + delta >= 0) {
+                return iteration + delta;
+            } else {
+                return iteration;
+            }
+        }
     }
 }

@@ -31,6 +31,7 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowServeJob;
 import com.antgroup.geaflow.console.core.service.InstanceService;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
@@ -81,6 +82,12 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
             case PROCESS:
                 Optional.ofNullable(updateView.getUserCode()).ifPresent(view::setUserCode);
                 break;
+            case CUSTOM:
+                Optional.ofNullable(updateView.getEntryClass()).ifPresent(view::setEntryClass);
+                Optional.ofNullable(updateView.getJarPackage()).ifPresent(view::setJarPackage);
+                break;
+            case SERVE:
+                break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", view.getType());
         }
@@ -110,7 +117,7 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
     }
 
     public GeaflowJob convert(JobView view, List<GeaflowStruct> structs, List<GeaflowGraph> graphs,
-                              List<GeaflowFunction> functions, GeaflowRemoteFile jarPackage) {
+                              List<GeaflowFunction> functions, GeaflowRemoteFile jarFile) {
         GeaflowJobType jobType = view.getType();
         GeaflowJob job;
         switch (jobType) {
@@ -133,8 +140,13 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
             case CUSTOM:
                 GeaflowCustomJob customJob = (GeaflowCustomJob) viewToModel(view, GeaflowCustomJob.class);
                 customJob.setEntryClass(view.getEntryClass());
-                customJob.setJarPackage(jarPackage);
+                customJob.setJarPackage(jarFile);
                 job = customJob;
+                break;
+            case SERVE:
+                GeaflowServeJob serveJob = (GeaflowServeJob) viewToModel(view, GeaflowServeJob.class);
+                serveJob.setGraph(graphs);
+                job = serveJob;
                 break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", jobType);

@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.service.converter;
 
 import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.common.dal.entity.PluginConfigEntity;
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfig;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class PluginConfigConverter extends NameConverter<GeaflowPluginConfig, Pl
     @Override
     protected GeaflowPluginConfig entityToModel(PluginConfigEntity entity) {
         GeaflowPluginConfig model = super.entityToModel(entity);
-        model.setType(entity.getType());
+        model.setType(GeaflowPluginType.getName(entity.getType()));
         model.setConfig(JSON.parseObject(entity.getConfig(), GeaflowConfig.class));
         model.setCategory(entity.getCategory());
         return model;

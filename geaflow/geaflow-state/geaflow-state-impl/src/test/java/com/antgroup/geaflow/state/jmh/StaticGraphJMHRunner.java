@@ -24,10 +24,11 @@ public class StaticGraphJMHRunner {
     public static void main(String[] args) throws RunnerException {
 
         Options opt = new OptionsBuilder()
-            // import test class.
-            //.include(StaticNudeReadJMH.class.getSimpleName())
-            .include(StaticGraphStateReadJMH10.class.getSimpleName())
+            // 导入要测试的类
+            .include(DirectStoreReadJMH.class.getSimpleName())
+            //.include(StaticGraphStateReadJMH10.class.getSimpleName())
             //.include(StaticGraphStateWriteJMH10.class.getSimpleName())
+            //.include(DirectStoreReadJMH.class.getSimpleName())
             .build();
         new Runner(opt).run();
     }

@@ -16,6 +16,7 @@ package com.antgroup.geaflow.console.core.model.data;
 
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,8 @@ public class GeaflowGraph extends GeaflowData {
     private final Map<String, GeaflowVertex> vertices = new LinkedHashMap<>();
 
     private final Map<String, GeaflowEdge> edges = new LinkedHashMap<>();
+
+    private List<GeaflowEndpoint> endpoints = new ArrayList<>();
 
     private GeaflowPluginConfig pluginConfig;
 
@@ -72,5 +75,14 @@ public class GeaflowGraph extends GeaflowData {
     public void validate() {
         super.validate();
         Preconditions.checkNotNull(pluginConfig, "pluginConfig is null");
+    }
+
+    public int getShardCount() {
+        String shardCount = (String) pluginConfig.getConfig().get("geaflow.dsl.graph.store.shard.count");
+        if (shardCount != null) {
+            return Integer.parseInt(shardCount);
+        }
+
+        return Integer.parseInt((String) pluginConfig.getConfig().getOrDefault("shardCount", "2"));
     }
 }

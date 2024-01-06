@@ -1,0 +1,37 @@
+apiVersion: geaflow.antgroup.com/v1
+kind: GeaflowJob
+metadata:
+  name: geaflow-example
+spec:
+  image: geaflow:0.1
+  imagePullPolicy: IfNotPresent
+  serviceAccount: geaflow
+  entryClass: com.antgroup.geaflow.example.graph.statical.compute.khop.KHop
+  masterSpec:
+    resource:
+      cpuCores: 1
+      memoryMb: 1024
+      jvmOptions: -Xmx800m,-Xms800m,-Xmn300m
+  driverSpec:
+    resource:
+      cpuCores: 1
+      memoryMb: 1024
+      jvmOptions: -Xmx800m,-Xms800m,-Xmn300m
+    driverNum: 1
+  containerSpec:
+    resource:
+      cpuCores: 1
+      memoryMb: 1024
+      jvmOptions: -Xmx800m,-Xms800m,-Xmn300m
+    containerNum: 1
+    workerNumPerContainer: 4
+  userSpec:
+    metricConfig:
+      geaflow.metric.reporters: slf4j
+      geaflow.metric.stats.type: memory
+    stateConfig:
+      geaflow.file.persistent.type: LOCAL
+      geaflow.store.redis.host: host.minikube.internal
+      geaflow.store.redis.port: "6379"
+    additionalArgs:
+      geaflow.system.state.backend.type: MEMORY

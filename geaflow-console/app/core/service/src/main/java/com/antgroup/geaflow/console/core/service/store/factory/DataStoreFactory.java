@@ -16,7 +16,7 @@ package com.antgroup.geaflow.console.core.service.store.factory;
 
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
-import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
+import com.antgroup.geaflow.console.core.service.PluginService;
 import com.antgroup.geaflow.console.core.service.store.GeaflowDataStore;
 import com.antgroup.geaflow.console.core.service.store.impl.PersistentDataStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +29,12 @@ public class DataStoreFactory {
     @Autowired
     ApplicationContext context;
 
-    public GeaflowDataStore getDataStore(GeaflowPluginConfig pluginConfig) {
-        GeaflowPluginType type = pluginConfig.getType();
-        switch (type) {
+    @Autowired
+    PluginService pluginService;
+
+    public GeaflowDataStore getDataStore(String type) {
+        GeaflowPluginType typeEnum = GeaflowPluginType.of(type);
+        switch (typeEnum) {
             case LOCAL:
             case DFS:
             case OSS:

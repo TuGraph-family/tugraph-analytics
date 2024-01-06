@@ -19,17 +19,23 @@ import java.io.Serializable;
 
 public abstract class ReliableContainerContext implements IReliableContext, Serializable {
 
-    protected int id;
-    protected Configuration config;
+    protected final int id;
+    protected final String name;
+    protected final Configuration config;
     protected boolean isRecover;
 
-    public ReliableContainerContext(int id, Configuration config) {
+    public ReliableContainerContext(int id, String name, Configuration config) {
         this.id = id;
+        this.name = name;
         this.config = config;
     }
 
     public int getId() {
         return id;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public Configuration getConfig() {

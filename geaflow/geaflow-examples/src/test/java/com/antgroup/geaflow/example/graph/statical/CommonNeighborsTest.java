@@ -14,17 +14,25 @@
 
 package com.antgroup.geaflow.example.graph.statical;
 
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CLUSTER_TYPE;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.LOCAL_CLUSTER;
-
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.env.EnvironmentFactory;
+import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.statical.compute.commonneighbors.CommonNeighbors;
+import com.antgroup.geaflow.pipeline.IPipelineResult;
 import org.testng.annotations.Test;
 
-public class CommonNeighborsTest {
+public class CommonNeighborsTest extends BaseTest {
 
     @Test
-    public void testMainInvoke() {
-        System.setProperty(CLUSTER_TYPE, LOCAL_CLUSTER);
-        CommonNeighbors.main(null);
+    public void test() throws Exception {
+        environment = EnvironmentFactory.onLocalEnvironment();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.putAll(config);
+
+        IPipelineResult result = CommonNeighbors.submit(environment);
+        if (!result.isSuccess()) {
+            throw new Exception("execute failed");
+        }
+        CommonNeighbors.validateResult();
     }
 }

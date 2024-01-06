@@ -18,9 +18,11 @@ import com.antgroup.geaflow.cluster.collector.EmitterRunner;
 import com.antgroup.geaflow.cluster.fetcher.FetcherRunner;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IExecutableCommand;
+import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.cluster.worker.IWorker;
 import com.antgroup.geaflow.cluster.worker.IWorkerContext;
+import com.antgroup.geaflow.common.metric.EventMetrics;
 import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,9 +85,12 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
      * @param windowId
      * @param eventType
      */
-    protected void sendDoneEvent(int cycleId, long windowId, EventType eventType) {
-        AbstractWorkerContext workerContext = (AbstractWorkerContext) context;
-        DoneEvent doneEvent = new DoneEvent(cycleId, windowId, workerContext.getTaskId(), eventType);
-        workerContext.getPipelineMaster().send(doneEvent);
+    protected <T> void sendDoneEvent(String driverId, EventType sourceEventType, T result, boolean sendMetrics) {
+        AbstractWorkerContext workerContext = (AbstractWorkerContext) this.context;
+        int taskId = workerContext.getTaskId();
+        EventMetrics eventMetrics = sendMetrics ? workerContext.getEventMetrics() : null;
+        DoneEvent<T> doneEvent = new DoneEvent<>(this.cycleId, this.windowId, taskId, sourceEventType, result, eventMetrics);
+        RpcClient.getInstance().processPipeline(driverId, doneEvent);
     }
+
 }

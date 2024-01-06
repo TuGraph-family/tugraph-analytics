@@ -49,7 +49,9 @@ public class GeaFlowGqlClient {
         if (environment.getEnvType() == EnvType.LOCAL) {
             timeWait = 0; // Infinite wait for local test.
             Map<String, String> localConfig = new HashMap<>();
-            localConfig.put(FileConfigKeys.ROOT.getKey(), "/tmp/dsl/");
+            if (!environment.getEnvironmentContext().getConfig().contains(FileConfigKeys.ROOT.getKey())) {
+                localConfig.put(FileConfigKeys.ROOT.getKey(), "/tmp/dsl/");
+            }
             environment.getEnvironmentContext().withConfig(localConfig);
         }
         GQLPipeLine pipeLine = new GQLPipeLine(environment, timeWait, parallelismConfigMap);
@@ -86,8 +88,8 @@ public class GeaFlowGqlClient {
         switch (clusterType) {
             case K8S:
                 return EnvironmentFactory.onK8SEnvironment(args);
-            case RAY:
-                return EnvironmentFactory.onAntEnvironment(args);
+            case RAY_COMMUNITY:
+                return EnvironmentFactory.onRayCommunityEnvironment(args);
             default:
                 return EnvironmentFactory.onLocalEnvironment(args);
         }

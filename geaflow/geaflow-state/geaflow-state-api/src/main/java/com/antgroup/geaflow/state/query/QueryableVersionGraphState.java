@@ -23,12 +23,12 @@ import java.util.Map;
 public interface QueryableVersionGraphState<K, VV, EV, R> {
 
     /**
-     * query by a filter, sharing by the search keys.
+     * Query by a filter, sharing by the search keys.
      */
     QueryableVersionGraphState<K, VV, EV, R> by(IFilter filter);
 
     /**
-     * query result is a map, which key is the version.
+     * Query result is a map, which key is the version.
      */
     Map<Long, R> asMap();
 }

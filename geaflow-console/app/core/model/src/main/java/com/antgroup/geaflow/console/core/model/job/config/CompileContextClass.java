@@ -23,19 +23,19 @@ import lombok.Setter;
 @Setter
 public class CompileContextClass extends GeaflowConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "token")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.token.key", comment = "i18n.key.api.token")
     @GeaflowConfigValue(required = true)
     private String tokenKey;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.instance.name", comment = "实例名")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.instance.name", comment = "i18n.key.default.instance.name")
     @GeaflowConfigValue(required = true)
     private String instanceName;
 
-    @GeaflowConfigKey(value = "geaflow.dsl.catalog.type", comment = "作业Catalog存储类型")
+    @GeaflowConfigKey(value = "geaflow.dsl.catalog.type", comment = "i18n.key.job.catalog.type")
     @GeaflowConfigValue(required = true, defaultValue = "memory")
     private String catalogType;
 
-    @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "console地址")
+    @GeaflowConfigKey(value = "geaflow.gw.endpoint", comment = "i18n.key.k8s.server.url")
     @GeaflowConfigValue(required = true)
     private String endpoint;
 

@@ -14,32 +14,31 @@
 
 package com.antgroup.geaflow.cluster.client;
 
-import com.antgroup.geaflow.cluster.rpc.impl.RpcMessageEncoder;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
-import com.antgroup.geaflow.rpc.proto.Driver;
-import java.util.Iterator;
+import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
+import java.util.concurrent.CompletableFuture;
 
 public class PipelineResult<R> implements IPipelineResult<R> {
 
-    private Iterator<Driver.PipelineRes> resultIterator;
+    private final CompletableFuture<PipelineRes> resultFuture;
     private Boolean success;
     private R result;
 
-    public PipelineResult(Iterator<Driver.PipelineRes> resultIterator) {
-        this.resultIterator = resultIterator;
+    public PipelineResult(CompletableFuture<PipelineRes> resultFuture) {
+        this.resultFuture = resultFuture;
         this.success = null;
     }
 
     @Override
     public boolean isSuccess() {
         if (success == null) {
-            if (!resultIterator.hasNext()) {
-                throw new GeaflowRuntimeException("not found pipeline result");
-            }
-            result = RpcMessageEncoder.decode(resultIterator.next().getPayload());
-            if (resultIterator.hasNext()) {
-                throw new GeaflowRuntimeException("not support more than one result yet");
+            try {
+                PipelineRes pipelineRes = resultFuture.get();
+                result = RpcMessageEncoder.decode(pipelineRes.getPayload());
+            } catch (Exception e) {
+                throw new GeaflowRuntimeException("get pipeline result error", e);
             }
             success = true;
             return true;

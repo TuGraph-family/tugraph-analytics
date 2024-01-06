@@ -16,10 +16,13 @@ package com.antgroup.geaflow.dsl.planner;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.catalog.Catalog;
 import com.antgroup.geaflow.dsl.catalog.CatalogFactory;
 import com.antgroup.geaflow.dsl.catalog.CompileCatalog;
 import com.antgroup.geaflow.dsl.catalog.GeaFlowRootCalciteSchema;
+import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
+import com.antgroup.geaflow.dsl.common.descriptor.NodeDescriptor;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.optimize.GQLOptimizer;
@@ -44,11 +47,11 @@ import com.antgroup.geaflow.dsl.sqlnode.SqlTableColumn;
 import com.antgroup.geaflow.dsl.sqlnode.SqlTableProperty;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertex;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertexUsing;
+import com.antgroup.geaflow.dsl.util.GraphDescriptorUtil;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.antgroup.geaflow.dsl.util.StringLiteralUtil;
 import com.antgroup.geaflow.dsl.validator.GQLValidatorImpl;
 import com.antgroup.geaflow.dsl.validator.QueryNodeContext;
-import com.antgroup.geaflow.state.StoreType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -137,6 +140,8 @@ public class GQLContext {
 
     private String currentGraph;
 
+    private final Set<SqlNode> validatedRelNode;
+
     private static final Map<String, String> shortKeyMapping = new HashMap<>();
 
     static {
@@ -177,6 +182,7 @@ public class GQLContext {
             calciteCatalogReader, this.typeFactory, CONFORMANCE);
         this.validator.setIdentifierExpansion(true);
         this.convertLetTable = frameworkConfig.getConvertletTable();
+        this.validatedRelNode = new HashSet<>();
     }
 
     public static GQLContext create(Configuration conf, boolean isCompile) {
@@ -269,6 +275,7 @@ public class GQLContext {
     public GeaFlowView convertToView(SqlCreateView view) {
         String viewName = view.getName().getSimple();
         validator.validate(view.getSubQuery());
+        validatedRelNode.add(view.getSubQuery());
 
         RelRecordType recordType = (RelRecordType) validator.getValidatedNodeType(view.getSubQuery());
         Preconditions.checkArgument(recordType.getFieldCount() == view.getFields().size(),
@@ -297,21 +304,16 @@ public class GQLContext {
      * Convert {@link SqlCreateGraph} to {@link GeaFlowGraph}.
      */
     public GeaFlowGraph convertToGraph(SqlCreateGraph graph) {
-        return convertToGraph(graph, Collections.emptyList(), new Configuration());
-    }
-
-    public GeaFlowGraph convertToGraph(SqlCreateGraph graph, Configuration globalConfiguration) {
-        return convertToGraph(graph, Collections.emptyList(), globalConfiguration);
+        return convertToGraph(graph, Collections.emptyList());
     }
 
     public GeaFlowGraph convertToGraph(SqlCreateGraph graph,
-                                       Collection<GeaFlowTable> createTablesInScript,
-                                       Configuration globalConfiguration) {
+                                       Collection<GeaFlowTable> createTablesInScript) {
         List<VertexTable> vertexTables = new ArrayList<>();
         SqlNodeList vertices = graph.getVertices();
-        boolean isAllVertexEdgeStatic = true;
         Map<String, String> vertexEdgeName2UsingTableNameMap = new HashMap<>();
 
+        GraphDescriptor desc = new GraphDescriptor();
         for (SqlNode node : vertices) {
             String idFieldName = null;
             List<TableField> vertexFields = new ArrayList<>();
@@ -332,8 +334,10 @@ public class GQLContext {
                                 + " at " + tableColumn.getParserPosition());
                     }
                 }
-                isAllVertexEdgeStatic = false;
-                vertexTables.add(new VertexTable(vertex.getName().getSimple(), vertexFields, idFieldName));
+                vertexTables.add(new VertexTable(currentInstance, vertex.getName().getSimple(),
+                    vertexFields, idFieldName));
+                desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
+                    vertex.getName().getSimple()));
             } else if (node instanceof SqlVertexUsing) {
                 SqlVertexUsing vertexUsing = (SqlVertexUsing) node;
                 List<String> names = vertexUsing.getUsingTableName().names;
@@ -373,12 +377,12 @@ public class GQLContext {
                     throw new GeaFlowDSLException("Cannot found srcIdFieldName: {} in vertex {}",
                         idFieldName, vertexUsing.getName().getSimple());
                 }
-
-                isAllVertexEdgeStatic &= (usingTable instanceof GeaFlowTable)
-                    && ((GeaFlowTable)usingTable).isAllWindow(globalConfiguration);
                 vertexEdgeName2UsingTableNameMap.put(vertexUsing.getName().getSimple(),
                     vertexUsing.getUsingTableName().getSimple());
-                vertexTables.add(new VertexTable(vertexUsing.getName().getSimple(), vertexFields, idFieldName));
+                vertexTables.add(new VertexTable(currentInstance, vertexUsing.getName().getSimple(),
+                    vertexFields, idFieldName));
+                desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
+                    vertexUsing.getName().getSimple()));
             } else {
                 throw new GeaFlowDSLException("vertex not support: " + node);
             }
@@ -395,9 +399,21 @@ public class GQLContext {
 
             if (node instanceof SqlEdge) {
                 SqlEdge edge = (SqlEdge) node;
+                edge.validate();
                 for (SqlNode column : edge.getColumns()) {
                     SqlTableColumn tableColumn = (SqlTableColumn) column;
-                    edgeFields.add(tableColumn.toTableField());
+                    if (tableColumn.getTypeFrom() != null) {
+                        IType<?> columnType = null;
+                        for (VertexTable vertexTable : vertexTables) {
+                            if (vertexTable.getTypeName().equals(tableColumn.getTypeFrom().getSimple())) {
+                                columnType = vertexTable.getIdField().getType();
+                            }
+                        }
+                        assert columnType != null;
+                        edgeFields.add(tableColumn.toTableField(columnType, false));
+                    } else {
+                        edgeFields.add(tableColumn.toTableField());
+                    }
                     String columnName = tableColumn.getName().getSimple();
 
                     switch (tableColumn.getCategory()) {
@@ -417,9 +433,10 @@ public class GQLContext {
                                 + " at " + tableColumn.getParserPosition());
                     }
                 }
-                isAllVertexEdgeStatic = false;
                 String tableName = edge.getName().getSimple();
-                edgeTables.add(new EdgeTable(tableName, edgeFields, srcIdFieldName, targetIdFieldName, tsFieldName));
+                edgeTables.add(new EdgeTable(currentInstance, tableName, edgeFields, srcIdFieldName,
+                    targetIdFieldName, tsFieldName));
+                desc.addEdge(GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edge));
             } else if (node instanceof SqlEdgeUsing) {
                 SqlEdgeUsing edgeUsing = (SqlEdgeUsing)  node;
                 List<String> names = edgeUsing.getUsingTableName().names;
@@ -475,13 +492,12 @@ public class GQLContext {
                     throw new GeaFlowDSLException("Cannot found tsFieldName: {} in edge {}",
                         tsFieldName, edgeUsing.getName().getSimple());
                 }
-
-                isAllVertexEdgeStatic &= (usingTable instanceof GeaFlowTable)
-                    && ((GeaFlowTable)usingTable).isAllWindow(globalConfiguration);
                 vertexEdgeName2UsingTableNameMap.put(edgeUsing.getName().getSimple(),
                     edgeUsing.getUsingTableName().getSimple());
-                edgeTables.add(new EdgeTable(edgeUsing.getName().getSimple(), edgeFields,
+                edgeTables.add(new EdgeTable(currentInstance, edgeUsing.getName().getSimple(), edgeFields,
                     srcIdFieldName, targetIdFieldName, tsFieldName));
+                desc.addEdge(
+                    GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edgeUsing));
             }
         }
 
@@ -494,15 +510,31 @@ public class GQLContext {
                 config.put(key, value);
             }
         }
-        boolean isStaticGraph = isAllVertexEdgeStatic || config.getOrDefault(DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey(),
-            StoreType.MEMORY.name()).equalsIgnoreCase(StoreType.MEMORY.name());
-        return new GeaFlowGraph(currentInstance, graph.getName().getSimple(), vertexTables,
-            edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(), isStaticGraph,
-            graph.isTemporary());
+        GeaFlowGraph geaFlowGraph = new GeaFlowGraph(currentInstance, graph.getName().getSimple(),
+            vertexTables, edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(),
+            graph.isTemporary(), desc);
+        GraphDescriptor graphStats = geaFlowGraph.getValidDescriptorInGraph(desc);
+        if (graphStats.nodes.size() != desc.nodes.size()
+            || graphStats.edges.size() != desc.edges.size()
+            || graphStats.relations.size() != desc.relations.size()) {
+            throw new GeaFlowDSLException("Error occurred while generating desc as partially "
+                + "constraints are invalid. \n desc: {} \n valid: {}",
+                desc, graphStats);
+        }
+        geaFlowGraph.setDescriptor(graphStats);
+        return geaFlowGraph;
     }
 
     private String keyMapping(String key) {
         return shortKeyMapping.getOrDefault(key, key);
+    }
+
+    public Map<String, String> keyMapping(Map<String, String> input) {
+        Map<String, String> keyMapping = new HashMap<>();
+        for (Map.Entry<String, String> entry : input.entrySet()) {
+            keyMapping.put(keyMapping(entry.getKey()), entry.getValue());
+        }
+        return keyMapping;
     }
 
     /**
@@ -538,6 +570,9 @@ public class GQLContext {
     }
 
     public SqlNode validate(SqlNode node) {
+        if (validatedRelNode.contains(node)) {
+            return node;
+        }
         return validator.validate(node, new QueryNodeContext());
     }
 
@@ -710,7 +745,16 @@ public class GQLContext {
     }
 
     public void setCurrentGraph(String currentGraph) {
-        this.currentGraph = currentGraph;
+        Table graphTable = catalog.getGraph(currentInstance, currentGraph);
+        if (graphTable instanceof GeaFlowGraph) {
+            this.currentGraph = currentGraph;
+            GeaFlowGraph geaFlowGraph = (GeaFlowGraph) graphTable;
+            geaFlowGraph.getConfig().putAll(keyMapping(geaFlowGraph.getConfig().getConfigMap()));
+            getTypeFactory().setCurrentGraph(geaFlowGraph);
+        } else {
+            throw new GeaFlowDSLException("Graph: {} is not exists.", currentGraph);
+        }
+
     }
 
     public boolean isCaseSensitive() {

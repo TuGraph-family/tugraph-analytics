@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.container;
 
 import com.antgroup.geaflow.cluster.collector.EmitterService;
 import com.antgroup.geaflow.cluster.common.AbstractContainer;
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.fetcher.FetcherService;
 import com.antgroup.geaflow.cluster.protocol.ICommand;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
@@ -27,8 +28,10 @@ import com.antgroup.geaflow.cluster.task.service.TaskService;
 import com.antgroup.geaflow.cluster.worker.Dispatcher;
 import com.antgroup.geaflow.cluster.worker.DispatcherService;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.utils.ProcessUtil;
+import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
+import com.antgroup.geaflow.common.utils.PortUtil;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
+import com.baidu.brpc.server.RpcServerOptions;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +39,6 @@ import org.slf4j.LoggerFactory;
 public class Container extends AbstractContainer implements IContainer<IEvent, IEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Container.class);
-
-    private static final String CONTAINER_NAME_PREFIX = "container-";
-    private static final String CONTAINER_RPC_THREAD_PREFIX = "container-rpc-executor";
-    private static final int CONTAINER_RPC_THREAD_NUM = 1;
 
     private ContainerContext containerContext;
     private Dispatcher dispatcher;
@@ -60,7 +59,8 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
     public void init(ContainerContext containerContext) {
         try {
             this.containerContext = containerContext;
-            super.init(containerContext.getId(), CONTAINER_NAME_PREFIX, containerContext.getConfig());
+            String containerName = ClusterConstants.getContainerName(containerContext.getId());
+            super.init(containerContext.getId(), containerName, containerContext.getConfig());
             registerToMaster();
             LOGGER.info("container {} init finish", name);
         } catch (Throwable t) {
@@ -71,7 +71,8 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
 
     @Override
     protected void startRpcService() {
-        this.rpcService = new RpcServiceImpl(rpcPort, configuration);
+        RpcServerOptions serverOptions = ConfigurableServerOption.build(configuration);
+        this.rpcService = new RpcServiceImpl(PortUtil.getPort(rpcPort), serverOptions);
         this.rpcService.addEndpoint(new ContainerEndpoint(this));
         this.rpcPort = rpcService.startService();
     }
@@ -83,7 +84,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
             LOGGER.info("open container {} with {} executors", name, num);
 
             this.fetcherService = new FetcherService(num, configuration);
-            this.emitterService = new EmitterService(num);
+            this.emitterService = new EmitterService(num, configuration);
             this.workerService = new TaskService(id, num,
                 configuration, metricGroup, fetcherService, emitterService);
             this.dispatcher = new Dispatcher(workerService);
@@ -141,13 +142,10 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
         LOGGER.info("container {} closed", name);
     }
 
+    @Override
     protected ContainerInfo buildComponentInfo() {
         ContainerInfo containerInfo = new ContainerInfo();
-        containerInfo.setId(id);
-        containerInfo.setName(name);
-        containerInfo.setPid(ProcessUtil.getProcessId());
-        containerInfo.setHost(ProcessUtil.getHostIp());
-        containerInfo.setRpcPort(rpcPort);
+        fillComponentInfo(containerInfo);
         containerInfo.setShufflePort(ShuffleManager.getInstance().getShufflePort());
         return containerInfo;
     }

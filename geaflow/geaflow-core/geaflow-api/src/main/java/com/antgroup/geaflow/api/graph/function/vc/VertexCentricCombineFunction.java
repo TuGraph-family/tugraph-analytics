@@ -14,6 +14,10 @@
 
 package com.antgroup.geaflow.api.graph.function.vc;
 
+/**
+ * Interface for vertex centric combine function.
+ * @param <M> The type of combine message.
+ */
 public interface VertexCentricCombineFunction<M> {
 
     /**

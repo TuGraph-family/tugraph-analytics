@@ -60,17 +60,13 @@ public class ExecutionConfigKeys implements Serializable {
     // rpc
     // ------------------------------------------------------------------------
 
-    public static final ConfigKey MASTER_RPC_HOST = ConfigKeys.key("geaflow.master.rpc.host")
-        .noDefaultValue()
-        .description("master rpc host address");
-
-    public static final ConfigKey MASTER_RPC_PORT = ConfigKeys.key("geaflow.master.rpc.port")
-        .defaultValue(6123)
-        .description("master rpc port");
-
     public static final ConfigKey MASTER_HTTP_PORT = ConfigKeys.key("geaflow.master.http.port")
         .defaultValue(8090)
         .description("master http port");
+
+    public static final ConfigKey AGENT_HTTP_PORT = ConfigKeys.key("geaflow.agent.http.port")
+        .defaultValue(0)
+        .description("agent http port");
 
     public static final ConfigKey DRIVER_RPC_PORT = ConfigKeys.key("geaflow.driver.rpc.port")
         .defaultValue(6123)
@@ -113,8 +109,68 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey RPC_RETRY_INTERVAL_MS = ConfigKeys
         .key("geaflow.rpc.retry.interval.ms")
-        .defaultValue(3000)
+        .defaultValue(1000)
         .description("retry interval of rpc connection in ms");
+
+    public static final ConfigKey RPC_CONNECT_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.rpc.connect.timeout.ms")
+        .defaultValue(5000)
+        .description("rpc connect timeout");
+
+    public static final ConfigKey RPC_READ_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.rpc.read.timeout.ms")
+        .defaultValue(Integer.MAX_VALUE)
+        .description("rpc read timeout");
+
+    public static final ConfigKey RPC_WRITE_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.rpc.write.timeout.ms")
+        .defaultValue(Integer.MAX_VALUE)
+        .description("rpc write timeout");
+
+    public static final ConfigKey RPC_MAX_TOTAL_CONNECTION_NUM = ConfigKeys
+        .key("geaflow.rpc.max.total.connection.num")
+        .defaultValue(2)
+        .description("rpc max total connection num");
+
+    public static final ConfigKey RPC_MIN_IDLE_CONNECTION_NUM = ConfigKeys
+        .key("geaflow.rpc.min.idle.connection.num")
+        .defaultValue(2)
+        .description("rpc min idle connection num");
+
+    public static final ConfigKey RPC_MAX_RETRY_TIMES = ConfigKeys
+        .key("geaflow.rpc.max.retry.times")
+        .defaultValue(3)
+        .description("rpc max retry times");
+
+    public static final ConfigKey RPC_KEEP_ALIVE_TIME_SEC = ConfigKeys
+        .key("geaflow.rpc.keep.alive.time.sec")
+        .defaultValue(0)
+        .description("rpc keep alive time sec");
+
+    public static final ConfigKey RPC_THREADPOOL_SHARING_ENABLE = ConfigKeys
+        .key("geaflow.rpc.threadpool.sharing.enable")
+        .defaultValue(true)
+        .description("rpc threadpool sharing enable");
+
+    public static final ConfigKey RPC_IO_THREAD_NUM = ConfigKeys
+        .key("geaflow.rpc.io.thread.num")
+        .defaultValue(8)
+        .description("rpc io thread num");
+
+    public static final ConfigKey RPC_WORKER_THREAD_NUM = ConfigKeys
+        .key("geaflow.rpc.worker.thread.num")
+        .defaultValue(8)
+        .description("rpc worker thread num");
+
+    public static final ConfigKey RPC_BUFFER_SIZE_BYTES = ConfigKeys
+        .key("geaflow.rpc.buffer.size.bytes")
+        .defaultValue(256 * 1024)
+        .description("rpc buffer size bytes");
+
+    public static final ConfigKey RPC_CHANNEL_CONNECT_TYPE = ConfigKeys
+        .key("geaflow.rpc.channel.connect.type")
+        .defaultValue("pooled_connection")
+        .description("rpc channel connect type, e.g. [pooled_connection, short_connection, single_connection]");
 
     // ------------------------------------------------------------------------
     // cluster
@@ -148,7 +204,7 @@ public class ExecutionConfigKeys implements Serializable {
         .description("client container disk");
 
     public static final ConfigKey CLIENT_JVM_OPTIONS = ConfigKeys.key("geaflow.client.jvm.options")
-        .defaultValue("-Xmx1024m,-Xms1024m,-Xmn256m,-Xss256k,-XX:MaxDirectMemorySize=512m")
+        .defaultValue("-Xmx640m,-Xms640m,-Xmn256m,-Xss256k")
         .description("client jvm options");
 
     public static final ConfigKey MASTER_MEMORY_MB = ConfigKeys.key("geaflow.master.memory.mb")
@@ -220,11 +276,6 @@ public class ExecutionConfigKeys implements Serializable {
         .noDefaultValue()
         .description("container max heap size in mb");
 
-    public static final ConfigKey REGISTER_TIMEOUT = ConfigKeys
-        .key("geaflow.register.timeout.seconds")
-        .defaultValue(120)
-        .description("driver/container register timeout");
-
     public static final ConfigKey FO_ENABLE = ConfigKeys
         .key("geaflow.fo.enable")
         .defaultValue(true)
@@ -236,7 +287,7 @@ public class ExecutionConfigKeys implements Serializable {
         .description("whether to enable fo");
 
     public static final ConfigKey FO_TIMEOUT_MS = ConfigKeys.key("geaflow.fo.timeout.ms")
-        .defaultValue(600000)
+        .defaultValue(300000)
         .description("fo timeout in ms");
 
     public static final ConfigKey FO_MAX_RESTARTS = ConfigKeys
@@ -248,6 +299,55 @@ public class ExecutionConfigKeys implements Serializable {
         .key("geaflow.ha.service.type")
         .defaultValue("")
         .description("ha service type, e.g., [redis, hbase, memory]");
+
+    public static final ConfigKey ENABLE_MASTER_LEADER_ELECTION = ConfigKeys
+        .key("geaflow.master.leader-election.enable")
+        .defaultValue(false)
+        .description("whether to enable leader-election of master, currently only supports in k8s env");
+
+    public static final ConfigKey LEADER_ELECTION_TYPE = ConfigKeys
+        .key("geaflow.leader-election.type")
+        .defaultValue("kubernetes")
+        .description("leader-election type, e.g., [kubernetes]");
+
+    public static final ConfigKey HTTP_REST_SERVICE_ENABLE = ConfigKeys
+        .key("geaflow.http.rest.service.enable")
+        .defaultValue(true)
+        .description("whether to enable http rest service");
+
+    public static final ConfigKey PROFILER_FILENAME_EXTENSION = ConfigKeys
+        .key("geaflow.profiler.filename.extension")
+        .defaultValue(".html")
+        .description("filename extension of profiler results, e.g., [.html, .svg]");
+
+    // ------------------------------------------------------------------------
+    // supervisor
+    // ------------------------------------------------------------------------
+
+    public static final ConfigKey SUPERVISOR_ENABLE = ConfigKeys.key("geaflow.supervisor.enable")
+        .defaultValue(false)
+        .description("enable supervisor or not");
+
+    public static final ConfigKey SUPERVISOR_RPC_PORT = ConfigKeys.key("geaflow.supervisor.rpc.port")
+        .defaultValue(0)
+        .description("supervisor rpc port");
+
+    public static final ConfigKey SUPERVISOR_JVM_OPTIONS = ConfigKeys.key("geaflow.supervisor.jvm.options")
+        .defaultValue("-Xmx128m,-Xms64m,-Xmn32m")
+        .description("supervisor jvm options");
+
+    public static final ConfigKey LOG_DIR = ConfigKeys.key("geaflow.log.dir")
+        .defaultValue("/home/admin/logs/geaflow")
+        .description("geaflow job log directory");
+
+    public static final ConfigKey CONF_DIR = ConfigKeys.key("geaflow.conf.dir")
+        .defaultValue("/etc/geaflow/conf")
+        .description("geaflow conf directory");
+
+    public static final ConfigKey PROCESS_AUTO_RESTART = ConfigKeys
+        .key("geaflow.process.auto-restart")
+        .defaultValue("unexpected")
+        .description("whether to restart process automatically");
 
     // ------------------------------------------------------------------------
     // shuffle
@@ -264,16 +364,6 @@ public class ExecutionConfigKeys implements Serializable {
         .key("geaflow.shuffle.io.retry.wait.ms")
         .defaultValue(500)
         .description("time to wait in each shuffle io retry");
-
-    public static final ConfigKey SHUFFLE_SERDE_THREADS = ConfigKeys
-        .key("geaflow.shuffle.serde.thread.num")
-        .defaultValue(8)
-        .description("shuffle serde thread num");
-
-    public static final ConfigKey SHUFFLE_INFLIGHT_MEMORY_FRACTION = ConfigKeys
-        .key("geaflow.shuffle.inflight.memory.fraction")
-        .defaultValue(0.3)
-        .description("fraction of shuffle memory in flight");
 
     public static final ConfigKey SHUFFLE_MAX_BYTES_IN_FLIGHT = ConfigKeys
         .key("geaflow.shuffle.max.bytes.inflight")
@@ -352,11 +442,6 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(0)
         .description("netty send buffer size");
 
-    public static final ConfigKey NETTY_NUM_CONNECTIONS_PER_PEER = ConfigKeys
-        .key("geaflow.netty.connections.per.peer")
-        .defaultValue(1)
-        .description("num of netty connections per peer");
-
     public static final ConfigKey NETTY_THREAD_CACHE_ENABLE = ConfigKeys
         .key("geaflow.netty.thread.cache.enable")
         .defaultValue(true)
@@ -374,15 +459,15 @@ public class ExecutionConfigKeys implements Serializable {
 
     /** shuffle fetch config. */
 
-    public static final ConfigKey SHUFFLE_MAX_REQUESTS_IN_FLIGHT = ConfigKeys
-        .key("geaflow.shuffle.max.requests.inflight")
-        .defaultValue(2)
-        .description("max num of requests in flight");
-
     public static final ConfigKey SHUFFLE_FETCH_TIMEOUT_MS = ConfigKeys
         .key("geaflow.shuffle.fetch.timeout.ms")
         .defaultValue(600000)
         .description("shuffle fetch timeout in milliseconds");
+
+    public static final ConfigKey SHUFFLE_FETCH_QUEUE_SIZE = ConfigKeys
+        .key("geaflow.shuffle.fetch.queue.size")
+        .defaultValue(1)
+        .description("size of shuffle fetch queue");
 
     /** shuffle write config. */
 
@@ -396,15 +481,25 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(1610612736L) // 1.5G
         .description("max size of each spill per slice in Bytes");
 
-    public static final ConfigKey SHUFFLE_WRITE_BUFFER_SIZE = ConfigKeys
-        .key("geaflow.shuffle.write.buffer.size")
-        .defaultValue(15360)
+    public static final ConfigKey SHUFFLE_WRITE_BUFFER_SIZE_BYTES = ConfigKeys
+        .key("geaflow.shuffle.write.buffer.size.bytes")
+        .defaultValue(128 * 1024)
         .description("size of shuffle write buffer");
 
-    public static final ConfigKey SHUFFLE_FLUSH_BUFFER_TIMEOUT = ConfigKeys
-        .key("geaflow.shuffle.flush.buffer.timeout")
+    public static final ConfigKey SHUFFLE_EMIT_BUFFER_SIZE = ConfigKeys
+        .key("geaflow.shuffle.emit.buffer.size")
+        .defaultValue(1024)
+        .description("size of shuffle emit buffer of java object");
+
+    public static final ConfigKey SHUFFLE_EMIT_QUEUE_SIZE = ConfigKeys
+        .key("geaflow.shuffle.emit.queue.size")
+        .defaultValue(1)
+        .description("size of shuffle emit queue");
+
+    public static final ConfigKey SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.shuffle.flush.buffer.timeout.ms")
         .defaultValue(100)
-        .description("shuffle flush buffer timeout");
+        .description("shuffle flush buffer timeout ms");
 
     public static final ConfigKey SHUFFLE_CACHE_SPILL_THRESHOLD = ConfigKeys
         .key("geaflow.shuffle.cache.spill.threshold")
@@ -435,11 +530,6 @@ public class ExecutionConfigKeys implements Serializable {
 
     /** remote shuffle. */
 
-    public static final ConfigKey SHUFFLE_SPILL_TO_LOCAL = ConfigKeys
-        .key("geaflow.shuffle.spill.local.enable")
-        .defaultValue(true)
-        .description("whether to enable local spill");
-
     public static final ConfigKey SHUFFLE_SIZE_PER_HANDLER = ConfigKeys
         .key("geaflow.shuffle.size.per.handler")
         .defaultValue(32 * 1024 * 1024)
@@ -467,7 +557,7 @@ public class ExecutionConfigKeys implements Serializable {
     public static final ConfigKey REPORTER_LIST = ConfigKeys.key("geaflow.metric.reporters")
         .defaultValue("")
         .description("metric reporter list. Multiple reporters are seperated by comma. for "
-            + "example: influxdb,tsdb,slf4j");
+            + "example: influxdb,tsdb,prometheus,slf4j");
 
     public static final ConfigKey METRIC_META_REPORT_DELAY = ConfigKeys
         .key("geaflow.metric.meta.delay.sec")
@@ -484,6 +574,16 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(5)
         .description("metric meta report max retry times");
 
+    public static final ConfigKey METRIC_MAX_CACHED_PIPELINES = ConfigKeys
+        .key("geaflow.metric.max.cached.pipelines")
+        .defaultValue(50)
+        .description("max cached pipeline metrics");
+
+    public static final ConfigKey METRIC_SERVICE_PORT = ConfigKeys
+        .key("geaflow.metric.service.port")
+        .defaultValue(0)
+        .description("metric service port");
+
     public static final ConfigKey STATS_METRIC_STORE_TYPE = ConfigKeys
         .key("geaflow.metric.stats.type")
         .defaultValue("MEMORY")
@@ -491,7 +591,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey STATS_METRIC_FLUSH_THREADS = ConfigKeys
         .key("geaflow.metric.flush.threads")
-        .defaultValue(2)
+        .defaultValue(1)
         .description("stats metrics flush thread number");
 
     public static final ConfigKey STATS_METRIC_FLUSH_BATCH_SIZE = ConfigKeys
@@ -501,12 +601,27 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey STATS_METRIC_FLUSH_INTERVAL_MS = ConfigKeys
         .key("geaflow.metric.flush.interval.ms")
-        .defaultValue(100)
+        .defaultValue(1000)
         .description("stats flush interval in ms");
 
     public static final ConfigKey ENABLE_DETAIL_METRIC = ConfigKeys
         .key("geaflow.metric.detail.enable")
         .defaultValue(false)
         .description("if enable detail job metric");
+
+    public static final ConfigKey SERVICE_DISCOVERY_TYPE = ConfigKeys
+        .key("geaflow.service.discovery.type")
+        .defaultValue("zookeeper")
+        .description("service discovery type");
+
+    public static final ConfigKey JOB_MODE = ConfigKeys
+        .key("geaflow.job.mode")
+        .defaultValue("compute")
+        .description("job mode, e.g.[compute, olap service, state service]");
+
+    public static final ConfigKey META_SERVER_RETRY_TIMES = ConfigKeys
+        .key("geaflow.meta.server.retry.times")
+        .defaultValue(3)
+        .description("meta server connect retry times");
 
 }

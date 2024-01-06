@@ -31,4 +31,6 @@ public interface ExecuteDagGroup {
     long getEntryOpId();
 
     DagTopology getMainDag();
+
+    int getMaxIterationCount();
 }

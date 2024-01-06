@@ -14,11 +14,19 @@
 
 package com.antgroup.geaflow.dsl.schema.function;
 
+import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.util.ReflectiveSqlOperatorTable;
 
 public class BuildInSqlOperatorTable extends ReflectiveSqlOperatorTable {
+
+    public static final SqlAggFunction MIN = new GqlMinMaxAggFunction(SqlKind.MIN);
+    public static final SqlAggFunction MAX = new GqlMinMaxAggFunction(SqlKind.MAX);
+    public static final SqlAggFunction SUM = new GqlSumAggFunction(null);
+    public static final SqlAggFunction COUNT = new GqlCountAggFunction("COUNT");
+    public static final SqlAggFunction AVG = new GqlAvgAggFunction(SqlKind.AVG);
 
     private final SqlOperator[] buildInSqlOperators = {
         // SET OPERATORS
@@ -67,12 +75,12 @@ public class BuildInSqlOperatorTable extends ReflectiveSqlOperatorTable {
         SqlStdOperatorTable.GROUPING,
         SqlStdOperatorTable.GROUPING_ID,
         // AGGREGATE OPERATORS
-        SqlStdOperatorTable.SUM,
+        BuildInSqlOperatorTable.SUM,
         SqlStdOperatorTable.SUM0,
-        SqlStdOperatorTable.COUNT,
-        SqlStdOperatorTable.MIN,
-        SqlStdOperatorTable.MAX,
-        SqlStdOperatorTable.AVG,
+        BuildInSqlOperatorTable.COUNT,
+        BuildInSqlOperatorTable.MIN,
+        BuildInSqlOperatorTable.MAX,
+        BuildInSqlOperatorTable.AVG,
         SqlStdOperatorTable.STDDEV_POP,
         SqlStdOperatorTable.STDDEV_SAMP,
         SqlStdOperatorTable.VAR_POP,

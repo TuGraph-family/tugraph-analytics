@@ -1,0 +1,128 @@
+@perfix-cls: ant-tugraph;
+.@{perfix-cls}-switch-drawer {
+  height: 100%;
+  // position: fixed;
+  position: absolute;
+  z-index: 1000;
+  top: 0;
+  transition: all ease 0.3s;
+  background-color: #fff;
+
+  &-wrapper {
+    box-shadow: 0 2px 4px 0 rgba(4, 24, 94, 0.04),
+      0 4px 8px 0 rgba(4, 24, 94, 0.06);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &-header {
+    height: 44px;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    padding-left: 24px;
+  }
+
+  &-body {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  &-footer {
+    padding: 12px 16px;
+    text-align: right;
+    border-top: 1px solid #f2f2f2;
+  }
+
+  &-switcher {
+    position: absolute;
+    cursor: pointer;
+    top: 50%;
+    margin-top: -34px;
+    z-index: 1;
+
+    :global {
+      .anticon {
+        position: absolute;
+        top: 25px;
+        z-index: 99;
+        color: rgba(135, 140, 147, 1);
+        font-size: 12px;
+      }
+    }
+
+    &-bg {
+      width: 16px;
+      height: 63px;
+      background-color: #fff;
+      transform: perspective(6px) rotateX(0deg) rotateY(12deg) translateZ(0);
+    }
+
+    &-arrow {
+      :global {
+        .anticon {
+          color: rgba(221, 221, 223, 1);
+          font-size: 16px;
+        }
+      }
+    }
+
+    &-right {
+      left: -18px;
+
+      .@{perfix-cls}-switch-drawer-switcher-arrow {
+        :global {
+          .anticon {
+            margin-left: 2px;
+          }
+        }
+      }
+
+      .@{perfix-cls}-switch-drawer-switcher-bg {
+        transform: perspective(6px) rotateX(0deg) rotateY(-12deg) translateZ(0);
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+        border-left: 2px solid #f2f2f2;
+        border-top: 2px solid #f2f2f2;
+        border-bottom: 2px solid #f2f2f2;
+      }
+
+      :global {
+        .anticon {
+          left: 4px;
+        }
+      }
+    }
+
+    &-left {
+      right: -18px;
+
+      .@{perfix-cls}-switch-drawer-switcher-arrow {
+        :global {
+          .anticon {
+            margin-left: -5px;
+          }
+        }
+      }
+
+      .@{perfix-cls}-switch-drawer-switcher-bg {
+        transform: perspective(7px) rotateX(0deg) rotateY(11deg) translateZ(0);
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+        border-right: 2px solid #f2f2f2;
+        border-top: 1px solid #f2f2f2;
+        border-bottom: 1px solid #f2f2f2;
+        box-shadow: 0 2px -1px 0 rgba(4, 24, 94, 0.04),
+          0 4px 8px 0 rgba(4, 24, 94, 0.06);
+      }
+
+      :global {
+        .anticon {
+          left: -2px;
+        }
+      }
+    }
+  }
+}

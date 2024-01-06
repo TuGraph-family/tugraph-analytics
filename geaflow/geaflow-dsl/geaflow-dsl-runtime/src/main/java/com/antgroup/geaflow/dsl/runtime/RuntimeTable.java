@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.runtime.function.table.AggFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunction;
@@ -50,7 +51,7 @@ public interface RuntimeTable extends RDataView {
 
     SinkDataView write(GeaFlowGraph graph, QueryContext queryContext);
 
-    List<Row> take();
+    List<Row> take(IType<?> type);
 
     default ViewType getType() {
         return ViewType.TABLE;

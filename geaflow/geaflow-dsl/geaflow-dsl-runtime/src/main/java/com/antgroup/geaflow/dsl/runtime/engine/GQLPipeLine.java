@@ -34,6 +34,7 @@ import com.antgroup.geaflow.pipeline.callback.ICallbackFunction;
 import com.antgroup.geaflow.pipeline.callback.TaskCallBack;
 import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
 import com.antgroup.geaflow.pipeline.task.PipelineTask;
+import com.antgroup.geaflow.view.IViewDesc.BackendType;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
 import java.io.IOException;
@@ -123,7 +124,7 @@ public class GQLPipeLine {
 
         private final Configuration conf;
         private final List<GraphViewDesc> insertGraphs;
-        private final long checkpointDuration;
+        private long checkpointDuration;
 
         public SaveGraphWriteVersionCallbackFunction(Configuration conf, PreCompileResult compileResult) {
             this.conf = conf;
@@ -132,9 +133,17 @@ public class GQLPipeLine {
         }
 
         @Override
-        public void window(long windowId) {
+        public void window(long windowId, long checkpointDuration) {
+            if (checkpointDuration != this.checkpointDuration) {
+                LOGGER.info("Checkpoint duration changed. old: {}, new: {}",
+                    this.checkpointDuration, checkpointDuration);
+                this.checkpointDuration = checkpointDuration;
+            }
             if (CheckpointUtil.needDoCheckpoint(windowId, checkpointDuration)) {
                 for (GraphViewDesc graphViewDesc : insertGraphs) {
+                    if (graphViewDesc.getBackend().equals(BackendType.Memory)) {
+                        continue;
+                    }
                     long checkpointId = graphViewDesc.getCheckpoint(windowId);
                     try {
                         ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graphViewDesc.getName(), conf);
@@ -190,6 +199,7 @@ public class GQLPipeLine {
             if (pipelineHook != null) {
                 pipelineHook.afterExecute(queryClient, queryContext);
             }
+            queryContext.finish();
         }
     }
 

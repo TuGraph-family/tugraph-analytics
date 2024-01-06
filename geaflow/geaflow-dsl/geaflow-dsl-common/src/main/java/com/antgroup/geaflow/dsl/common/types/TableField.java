@@ -32,6 +32,10 @@ public class TableField implements Serializable {
         this.nullable = nullable;
     }
 
+    public TableField(String name, IType<?> type) {
+        this(name, type, true);
+    }
+
     public String getName() {
         return name;
     }

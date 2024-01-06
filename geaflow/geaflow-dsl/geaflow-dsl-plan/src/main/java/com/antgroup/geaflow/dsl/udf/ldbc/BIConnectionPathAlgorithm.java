@@ -25,6 +25,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
@@ -35,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Description(name = "bi15_connection", description = "LDBC BI15 Connection Path Algorithm")
 public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, ObjectRow> {
@@ -77,7 +79,8 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<ObjectRow> messages) {
+        updatedValues.ifPresent(vertex::setValue);
         //Stage 1 propagation
         if (context.getCurrentIterationId() < propagationIterations) {
             //Send heartbeat messages to keep nodes alive
@@ -244,7 +247,7 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
             new TableField("distance", DoubleType.INSTANCE, false)
         );
@@ -291,5 +294,9 @@ public class BIConnectionPathAlgorithm implements AlgorithmUserFunction<Object, 
             result.put(key, value);
         }
         return result;
+    }
+
+    @Override
+    public void finish(RowVertex vertex, Optional<Row> newValue) {
     }
 }

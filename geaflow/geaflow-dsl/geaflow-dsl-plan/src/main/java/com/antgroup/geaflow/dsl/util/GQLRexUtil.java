@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.util;
 
 import com.antgroup.geaflow.common.type.IType;
+import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.MetaFieldType;
 import com.antgroup.geaflow.dsl.calcite.MetaFieldType.MetaField;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
@@ -22,7 +23,6 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.rex.PathInputRef;
-import com.antgroup.geaflow.dsl.rex.RexParameterRef;
 import com.antgroup.geaflow.dsl.schema.function.GeaFlowBuiltinFunctions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -57,6 +57,7 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexTableInputRef;
 import org.apache.calcite.rex.RexVisitor;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.fun.SqlTrimFunction;
 import org.apache.calcite.sql.fun.SqlTrimFunction.Flag;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -323,16 +324,10 @@ public class GQLRexUtil {
                         RexNode idValue = null;
                         RexNode left = call.operands.get(0);
                         RexNode right = call.operands.get(1);
-                        if (left instanceof RexFieldAccess && isLiteralOrParameter(right, true)) {
-                            int index = ((RexFieldAccess) left).getField().getIndex();
-                            if (vertexRecordType.isId(index)) {
-                                idValue = right;
-                            }
-                        } else if (right instanceof RexFieldAccess && isLiteralOrParameter(left, true)) {
-                            int index = ((RexFieldAccess) right).getField().getIndex();
-                            if (vertexRecordType.isId(index)) {
-                                idValue = left;
-                            }
+                        if (isIdField(vertexRecordType, left) && isLiteralOrParameter(right, true)) {
+                            idValue = right;
+                        } else if (isIdField(vertexRecordType, right) && isLiteralOrParameter(left, true)) {
+                            idValue = left;
                         }
                         if (idValue != null) {
                             return Sets.newHashSet(idValue);
@@ -348,8 +343,17 @@ public class GQLRexUtil {
                     case OR:
                         return call.operands.stream()
                             .map(operand -> operand.accept(this))
-                            .reduce(Sets::union)
+                            .reduce((a, b) -> {
+                                if (a.isEmpty() || b.isEmpty()) {
+                                    // all child should be id condition, else return empty.
+                                    return Sets.newHashSet();
+                                } else {
+                                    return Sets.union(a, b);
+                                }
+                            })
                             .orElse(new HashSet<>());
+                    case CAST:
+                        return call.operands.get(0).accept(this);
                     default:
                         return new HashSet<>();
                 }
@@ -402,6 +406,86 @@ public class GQLRexUtil {
         });
     }
 
+
+    public static RexNode swapReverseEdgeRef(RexNode rexNode, String reverseEdgeName,
+                                             RexBuilder rexBuilder) {
+        return GQLRexUtil.replace(rexNode,
+            node -> {
+                if (node instanceof RexFieldAccess
+                    && ((RexFieldAccess) node).getReferenceExpr() instanceof PathInputRef) {
+                    RexFieldAccess fieldAccess = (RexFieldAccess) node;
+                    PathInputRef pathInputRef = (PathInputRef) fieldAccess.getReferenceExpr();
+                    if (pathInputRef.getLabel().equals(reverseEdgeName)
+                        && fieldAccess.getType() instanceof MetaFieldType) {
+                        if (((MetaFieldType)fieldAccess.getType()).getMetaField()
+                            .equals(MetaField.EDGE_SRC_ID)) {
+                            return rexBuilder.makeFieldAccess(pathInputRef,
+                                ((EdgeRecordType) pathInputRef.getType()).getTargetIdField()
+                                    .getIndex());
+                        } else if (((MetaFieldType)fieldAccess.getType()).getMetaField()
+                            .equals(MetaField.EDGE_TARGET_ID)) {
+                            return rexBuilder.makeFieldAccess(pathInputRef,
+                                ((EdgeRecordType) pathInputRef.getType()).getSrcIdField()
+                                    .getIndex());
+                        }
+                    }
+                }
+                return node;
+            });
+    }
+
+    public static RexNode removeIdCondition(RexNode condition, VertexRecordType vertexRecordType) {
+        if (condition instanceof RexCall) {
+            RexCall call = (RexCall) condition;
+            switch (call.getKind()) {
+                case EQUALS:
+                    RexNode left = call.operands.get(0);
+                    RexNode right = call.operands.get(1);
+                    if (isIdField(vertexRecordType, left) && isLiteralOrParameter(right, true)) {
+                        return null;
+                    }
+                    if (isIdField(vertexRecordType, right) && isLiteralOrParameter(left, true)) {
+                        return null;
+                    }
+                    break;
+                case AND:
+                    List<RexNode> filterOperands = call.operands.stream()
+                        .filter(operand -> removeIdCondition(operand, vertexRecordType) != null)
+                        .collect(Collectors.toList());
+                    if (filterOperands.size() == 0) {
+                        return null;
+                    } else if (filterOperands.size() == 1) {
+                        return filterOperands.get(0);
+                    }
+                    return call.clone(call.getType(), filterOperands);
+                case OR:
+                    boolean allRemove =
+                        call.operands.stream().allMatch(operand -> removeIdCondition(operand,
+                            vertexRecordType) == null);
+                    if (allRemove) {
+                        return null;
+                    }
+                    break;
+                case CAST:
+                    RexNode newOperand = removeIdCondition(call.operands.get(0), vertexRecordType);
+                    if (newOperand == null) {
+                        return null;
+                    }
+                    return call.clone(call.getType(), Collections.singletonList(newOperand));
+                default:
+            }
+        }
+        return condition;
+    }
+
+    private static boolean isIdField(VertexRecordType vertexRecordType, RexNode node) {
+        if (node instanceof RexFieldAccess) {
+            int index = ((RexFieldAccess) node).getField().getIndex();
+            return vertexRecordType.isId(index);
+        }
+        return false;
+    }
+
     public static Object getLiteralValue(RexNode node) {
         SqlKind kind = node.getKind();
         if (kind == SqlKind.LITERAL) {
@@ -447,8 +531,9 @@ public class GQLRexUtil {
             case FLOAT:
             case DOUBLE:
             case REAL:
-            case DECIMAL:
                 return ((BigDecimal) literal.getValue()).doubleValue();
+            case DECIMAL:
+                return literal.getValue();
 
             case CHAR:
             case VARCHAR:
@@ -512,7 +597,7 @@ public class GQLRexUtil {
         if (rexNode.getKind() == SqlKind.CAST && allowCast) {
             return isLiteralOrParameter(((RexCall) rexNode).operands.get(0), true);
         }
-        return rexNode instanceof RexLiteral || rexNode instanceof RexParameterRef;
+        return !contain(rexNode, RexInputRef.class) && !contain(rexNode, RexFieldAccess.class);
     }
 
     public static boolean isVertexIdFieldAccess(RexNode rexNode) {
@@ -521,9 +606,7 @@ public class GQLRexUtil {
             if (op.getReferenceExpr() instanceof PathInputRef
                 && op.getType() instanceof MetaFieldType) {
                 MetaFieldType opType = (MetaFieldType) op.getType();
-                if (opType.getMetaField() == MetaField.VERTEX_ID) {
-                    return true;
-                }
+                return opType.getMetaField() == MetaField.VERTEX_ID;
             }
         }
         return false;
@@ -659,5 +742,15 @@ public class GQLRexUtil {
             }
             return other;
         }
+    }
+
+    public static RexNode and(List<RexNode> conditions, RexBuilder builder) {
+        if (conditions == null) {
+            return null;
+        }
+        if (conditions.size() == 1) {
+            return conditions.get(0);
+        }
+        return builder.makeCall(SqlStdOperatorTable.AND, conditions);
     }
 }

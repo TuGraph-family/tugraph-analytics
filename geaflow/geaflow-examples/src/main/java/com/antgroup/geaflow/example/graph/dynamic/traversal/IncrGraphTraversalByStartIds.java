@@ -184,6 +184,16 @@ public class IncrGraphTraversalByStartIds {
                 }
 
                 @Override
+                public void finish() {
+
+                }
+
+                @Override
+                public void close() {
+
+                }
+
+                @Override
                 public void compute(Integer vertexId,
                                     Iterator<Integer> messageIterator) {
                     int sum = 0;

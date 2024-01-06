@@ -9,7 +9,7 @@ CREATE TABLE orders(
 	geaflow.dsl.file.path = 'resource:///data/orders.txt'
 );
 
-CREATE TABLE console(
+CREATE TABLE tbl_result (
 	user_name varchar,
 	user_count bigint,
 	user_units bigint
@@ -18,7 +18,7 @@ CREATE TABLE console(
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT
     user_name,
     orderId,

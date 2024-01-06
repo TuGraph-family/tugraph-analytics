@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.common.compile;
 import com.antgroup.geaflow.common.visualization.console.JsonPlan;
 import java.io.Serializable;
 import java.util.Set;
+import org.apache.calcite.rel.type.RelDataType;
 
 public class CompileResult implements Serializable {
 
@@ -30,8 +31,18 @@ public class CompileResult implements Serializable {
 
     private Set<GraphInfo> targetGraphs;
 
+    private RelDataType currentResultType;
+
     public CompileResult() {
 
+    }
+
+    public RelDataType getCurrentResultType() {
+        return currentResultType;
+    }
+
+    public void setCurrentResultType(RelDataType currentResultType) {
+        this.currentResultType = currentResultType;
     }
 
     public JsonPlan getPhysicPlan() {

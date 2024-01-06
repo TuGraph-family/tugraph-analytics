@@ -19,6 +19,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.operator.MatchVertexOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.MatchVirtualEdgeOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepEndOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepExchangeOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepGlobalAggregateOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepGlobalSortOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSubQueryStartOperator;
 import java.util.HashMap;
@@ -128,6 +129,12 @@ public class StepLogicalPlanSet {
             } else if (plan.getOperator() instanceof StepGlobalSortOperator) {
                 // after global sort, we should send the vertex back, so it cannot chain with the follow op.
                 // This is an implicit vertex load, so the init mv number should be 1.
+                plan.setAllowChain(false);
+                visitedPlanNumMV.put(plan.getId(), 1);
+            } else if (plan.getOperator() instanceof StepGlobalAggregateOperator) {
+                // after global aggregate, we should send the vertex back, so it cannot chain with
+                // the follow op. This is an implicit vertex load, so the init mv number should
+                // be 1.
                 plan.setAllowChain(false);
                 visitedPlanNumMV.put(plan.getId(), 1);
             } else if (plan.getOperator() instanceof MatchVirtualEdgeOperator) {

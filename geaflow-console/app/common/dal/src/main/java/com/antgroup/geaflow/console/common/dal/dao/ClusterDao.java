@@ -24,6 +24,6 @@ import org.springframework.stereotype.Repository;
 public class ClusterDao extends SystemLevelDao<ClusterMapper, ClusterEntity> implements NameDao<ClusterEntity, ClusterSearch> {
 
     public ClusterEntity getDefaultCluster() {
-        return lambdaQuery().orderByDesc(IdEntity::getModifierId).last("limit 1").one();
+        return lambdaQuery().orderByDesc(IdEntity::getGmtModified).last("limit 1").one();
     }
 }

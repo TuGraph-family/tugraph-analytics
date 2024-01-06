@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.runtime.core.scheduler.cycle;
 
 import com.antgroup.geaflow.core.graph.CycleGroupMeta;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionGraph;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import org.testng.annotations.Test;
@@ -27,8 +28,9 @@ public class ExecutionCycleBuilderTest {
         ExecutionGraph executionGraph = new ExecutionGraph();
         CycleGroupMeta meta = executionGraph.getCycleGroupMeta();
         meta.setFlyingCount(0);
+        meta.setGroupType(CycleGroupType.windowed);
 
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -37,7 +39,8 @@ public class ExecutionCycleBuilderTest {
         ExecutionGraph executionGraph = new ExecutionGraph();
         CycleGroupMeta meta = executionGraph.getCycleGroupMeta();
         meta.setIterationCount(0);
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null);
+        meta.setGroupType(CycleGroupType.windowed);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -53,7 +56,7 @@ public class ExecutionCycleBuilderTest {
         vertexGroup.getCycleGroupMeta().setIterationCount(1);
         executionGraph.getVertexGroupMap().put(1, vertexGroup);
 
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -69,6 +72,6 @@ public class ExecutionCycleBuilderTest {
         vertexGroup.getCycleGroupMeta().setIterationCount(0);
         executionGraph.getVertexGroupMap().put(1, vertexGroup);
 
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
     }
 }

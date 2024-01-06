@@ -14,8 +14,11 @@
 
 package com.antgroup.geaflow.common.utils;
 
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -42,7 +45,6 @@ public class ProcessUtil {
             RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
             String name = runtime.getName(); // format: "pid@hostname"
             PROCESS_ID = Integer.parseInt(name.substring(0, name.indexOf('@')));
-
             HOST_AND_PID = HOSTNAME + ":" + PROCESS_ID;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -92,6 +94,31 @@ public class ProcessUtil {
     public static long getFreeMemory() {
         Runtime runtime = Runtime.getRuntime();
         return (runtime.freeMemory()) / FileUtils.ONE_MB;
+    }
+
+    public static synchronized int getProcessPid(Process p) {
+        int pid = -1;
+        try {
+            if (p.getClass().getName().equals("java.lang.UNIXProcess")) {
+                Field f = p.getClass().getDeclaredField("pid");
+                f.setAccessible(true);
+                pid = f.getInt(p);
+                f.setAccessible(false);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("fail to get pid from {}", p.getClass().getCanonicalName());
+            pid = -1;
+        }
+        return pid;
+    }
+
+    public static synchronized void killProcess(int pid) {
+        LOGGER.info("Kill -9 {}", pid);
+        try {
+            Runtime.getRuntime().exec("kill -9 " + pid);
+        } catch (IOException e) {
+            throw new GeaflowRuntimeException(e);
+        }
     }
 
 }

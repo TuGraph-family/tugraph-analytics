@@ -14,19 +14,24 @@
 
 package com.antgroup.geaflow.state.iterator;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import java.util.Iterator;
 import java.util.function.Function;
 
 /**
  * This class accepts a iterator and makes its value transformed.
  */
-public class IteratorWithFn<T, R> implements Iterator<R> {
+public class IteratorWithFn<T, R> extends BaseCloseableIterator<T, R> {
 
-    protected final Iterator<T> iterator;
-    protected final Function<T,R> fn;
+    protected final Function<T, R> fn;
+
+    public IteratorWithFn(CloseableIterator<T> iterator, Function<T, R> function) {
+        super(iterator);
+        this.fn = function;
+    }
 
     public IteratorWithFn(Iterator<T> iterator, Function<T, R> function) {
-        this.iterator = iterator;
+        super(iterator);
         this.fn = function;
     }
 

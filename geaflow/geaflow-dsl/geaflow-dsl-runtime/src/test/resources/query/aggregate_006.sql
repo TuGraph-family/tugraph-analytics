@@ -7,7 +7,7 @@ CREATE TABLE users (
 	geaflow.dsl.file.path = 'resource:///data/users_duplication.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
   name varchar,
 	cnt long
 ) WITH (
@@ -15,7 +15,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 select
   groupName, sum(cnt)
 FROM (

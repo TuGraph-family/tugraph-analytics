@@ -14,14 +14,23 @@
 
 package com.antgroup.geaflow.dsl.runtime.query;
 
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
+import com.antgroup.geaflow.file.FileConfigKeys;
+import java.io.File;
+import java.io.IOException;
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
 public class GQLAlgorithmTest {
+
+    private final String TEST_GRAPH_PATH = "/tmp/geaflow/dsl/algorithm/test/graph";
 
     @Test
     public void testAlgorithm_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_algorithm_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +40,7 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_algorithm_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +50,7 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_algorithm_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,7 +60,6 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_004() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_algorithm_004.sql")
             .execute()
             .checkSinkResult();
@@ -59,7 +69,6 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_005() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_algorithm_005.sql")
             .execute()
             .checkSinkResult();
@@ -69,10 +78,86 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_006() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_algorithm_006.sql")
             .execute()
             .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmKHop() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_007.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmKCore() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_kcore.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmClosenessCentrality() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_closeness_centrality.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testAlgorithmWeakConnectedComponents() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_wcc.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_001() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_002() throws Exception {
+        clearGraph();
+        QueryTester
+            .build()
+            .withConfig(FileConfigKeys.ROOT.getKey(), TEST_GRAPH_PATH)
+            .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), 1)
+            .withQueryPath("/query/gql_using_001_ddl.sql")
+            .execute()
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), 1)
+            .withQueryPath("/query/gql_algorithm_inc_002.sql")
+            .execute()
+            .checkSinkResult();
+        clearGraph();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_003() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    private void clearGraph() throws IOException {
+        File file = new File(TEST_GRAPH_PATH);
+        if (file.exists()) {
+            FileUtils.deleteDirectory(file);
+        }
     }
 
     @Test

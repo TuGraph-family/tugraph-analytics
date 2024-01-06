@@ -34,7 +34,7 @@ public class GeaflowCluster extends GeaflowName {
     private GeaflowConfig config;
 
     public GeaflowCluster(GeaflowPluginConfig pluginConfig) {
-        this.type = pluginConfig.getType();
+        this.type = GeaflowPluginType.of(pluginConfig.getType());
         this.name = pluginConfig.getName();
         this.comment = pluginConfig.getComment();
         this.config = pluginConfig.getConfig();

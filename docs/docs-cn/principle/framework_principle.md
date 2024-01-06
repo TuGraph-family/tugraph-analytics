@@ -1,19 +1,16 @@
 # Framework原理介绍
 
 ## 架构图
+
 GeaFlow Framework的架构如下图所示：
 
-![framework_arch](../../static/img/framework_arch.png)
-* GraphView/StreamView API
-  API层是对外高阶用户提供的编程开发接口，其提供基于图视图和流视图的语义。
-* Unified Execution Graph
-  在GeaFlow内部，对于流/图会生成统一的执行计划，物理执行计划由统一的Plan模型构成DAG。
-* Unified Cycle Scheduler
-  为了让Execution Graph能够在计算引擎上run起来，首先会将ExecutionGraph和ExecutionVertexGroup映射成可调度的Cycle，Cycle可以嵌套。Framework直接针对Cycle通过state machine进行统一的调度执行，同时支持FO容错机制。
-* Unified Graph Engine
-  这一层是GeaFlow统一的图计算引擎层，支持流/图任务的计算执行。
-* Execution Engine
-  GeaFlow当前支持运行在云原生(K8S)分布式执行引擎之上。
+![framework_arch](../../static/img/framework_arch_new.png)
+
+* **高阶API**：GeaFlow通过Environment接口适配异构的分布式执行环境（K8S、Ray、Local），使用Pipeline封装了用户的数据处理流程，使用Window抽象统一了流处理（无界Window）和批处理（有界Window）。Graph接口提供了静态图和动态图（流图）上的计算API，如append/snapshot/compute/traversal等，Stream接口提供了统一流批处理API，如map/reduce/join/keyBy等。
+* **逻辑执行计划**：逻辑执行计划信息统一封装在PipelineGraph对象内，将高阶API对应的算子（Operator）组织在DAG中，算子一共分为5大类：SourceOperator对应数据源加载、OneInputOperator/TwoInputOperator对应传统的数据处理、IteratorOperator对应静态/动态图计算。DAG中的点（PipelineVertex）记录了算子（Operator）的关键信息，如类型、并发度、算子函数等信息，边（PipelineEdge）则记录了数据shuffle的关键信息，如Partition规则（forward/broadcast/key等）、编解码器等。
+* **物理执行计划**：物理执行计划信息统一封装在ExecutionGraph对象内，并支持二级嵌套结构，以尽可能将可以流水线执行的子图（ExecutionVertexGroup）结构统一调度。图中示例的物理执行计划DAG被划分为三部分子图结构分别执行。
+* **调度器**：GeaFlow设计了基于Cycle的调度器（CycleScheduler）实现对流、批、图的统一调度，调度过程通过事件驱动模型触发。物理执行计划中的每部分子图都会被转换为一个ExecutionCycle对象，调度器会向Cycle的头结点（Head）发送Event，并接收Cycle尾结点（Tail）的发回的Event，形成一个完整的调度闭环。对于流处理，每一轮Cycle调度会完成一个Window的数据的处理，并会一直不停地执行下去。对于批处理，整个Cycle调度仅执行一轮。对于图处理，每一轮Cycle调度会完成一次图计算迭代。
+* **运行时组件**：GeaFlow运行时会拉起Client、Master、Driver、Container组件。当Client提交Pipeline给Driver后，会触发执行计划构建、分配Task（ResourceManagement提供资源）和调度。每个Container内可以运行多个Worker组件，不同Worker组件之间通过Shuffle模块交换数据，所有的Worker都需要定期向Master上报心跳（HeartbeatManagement），并向时序数据库上报运行时指标信息。另外GeaFlow运行时也提供了故障容忍机制（FailOver），以便在异常/中断后能继续执行。
 
 ## 计算引擎
 GeaFlow计算引擎核心模块主要包括执行计划生成和优化、统一Cycle调度以及Worker运行时执行。下面就这几个核心模块进行介绍说明。

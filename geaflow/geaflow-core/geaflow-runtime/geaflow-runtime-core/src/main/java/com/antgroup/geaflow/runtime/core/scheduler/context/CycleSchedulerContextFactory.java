@@ -30,21 +30,27 @@ public class CycleSchedulerContextFactory {
     }
 
     public static ICycleSchedulerContext create(IExecutionCycle cycle, ICycleSchedulerContext parent) {
+        AbstractCycleSchedulerContext context;
         switch (cycle.getHighAvailableLevel()) {
             case CHECKPOINT:
                 LOGGER.info("create checkpoint scheduler context");
-                return new CheckpointSchedulerContext(cycle, parent);
+                context = new CheckpointSchedulerContext(cycle, parent);
+                break;
             case REDO:
-                if (cycle.getType() == ExecutionCycleType.ITERATION) {
+                if (cycle.getType() == ExecutionCycleType.ITERATION
+                    || cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG) {
                     LOGGER.info("create iteration redo scheduler context");
-                    return new IterationRedoSchedulerContext(cycle, parent);
+                    context = new IterationRedoSchedulerContext(cycle, parent);
                 } else {
                     LOGGER.info("create redo scheduler context");
-                    return new RedoSchedulerContext(cycle, parent);
+                    context = new RedoSchedulerContext(cycle, parent);
                 }
+                break;
             default:
                 throw new GeaflowRuntimeException(String.format("not support ha level %s for cycle %s",
                     cycle.getHighAvailableLevel(), cycle.getCycleId()));
         }
+        context.init();
+        return context;
     }
 }

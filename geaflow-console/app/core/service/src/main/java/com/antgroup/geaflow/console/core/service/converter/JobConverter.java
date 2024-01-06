@@ -19,6 +19,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
+import com.antgroup.geaflow.console.core.model.GeaflowId;
 import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
@@ -28,6 +29,8 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowCustomJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowServeJob;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,13 +47,14 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
         entity.setUserCode(Optional.ofNullable(model.getUserCode()).map(GeaflowCode::getText).orElse(null));
         entity.setStructMappings(Optional.ofNullable(model.getStructMappings()).map(JSON::toJSONString).orElse(null));
         entity.setInstanceId(model.getInstanceId());
+        entity.setJarPackageId(Optional.ofNullable(model.getJarPackage()).map(GeaflowId::getId).orElse(null));
         entity.setEntryClass(model.getEntryClass());
         return entity;
     }
 
 
-    public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions
-        , GeaflowRemoteFile jarPackage) {
+    public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions,
+         List<GeaflowPlugin> plugins, GeaflowRemoteFile jarPackage) {
         GeaflowJobType jobType = entity.getType();
         GeaflowJob job;
         switch (jobType) {
@@ -70,6 +74,7 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
                 GeaflowCode geaflowCode = new GeaflowCode(entity.getUserCode());
                 processJob.setUserCode(geaflowCode);
                 processJob.setFunctions(functions);
+                processJob.setPlugins(plugins);
                 processJob.setStructs(structs);
                 processJob.setGraph(graphs);
                 job = processJob;
@@ -79,6 +84,12 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
                 customJob.setEntryClass(entity.getEntryClass());
                 customJob.setJarPackage(jarPackage);
                 job = customJob;
+                break;
+            case SERVE:
+                GeaflowServeJob serveJob = (GeaflowServeJob) super.entityToModel(entity, GeaflowServeJob.class);
+                serveJob.setEntryClass(entity.getEntryClass());
+                serveJob.setGraph(graphs);
+                job = serveJob;
                 break;
             default:
                 throw new GeaflowException("Unsupported job type: {}", jobType);

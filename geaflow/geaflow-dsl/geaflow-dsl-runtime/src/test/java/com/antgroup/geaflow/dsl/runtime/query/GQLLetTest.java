@@ -22,6 +22,7 @@ public class GQLLetTest {
     public void testLet_001() throws Exception {
        QueryTester
            .build()
+           .withGraphDefine("/query/modern_graph.sql")
            .withQueryPath("/query/gql_let_001.sql")
            .execute()
            .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLLetTest {
     public void testLet_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_let_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLLetTest {
     public void testLet_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_let_003.sql")
             .execute()
             .checkSinkResult();

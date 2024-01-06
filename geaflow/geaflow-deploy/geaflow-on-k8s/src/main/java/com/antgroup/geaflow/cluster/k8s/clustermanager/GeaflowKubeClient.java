@@ -16,18 +16,31 @@ package com.antgroup.geaflow.cluster.k8s.clustermanager;
 
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.RetryCommand;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.Watcher.Action;
+import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.extended.leaderelection.LeaderElectionConfig;
+import io.fabric8.kubernetes.client.extended.leaderelection.LeaderElector;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +82,10 @@ public class GeaflowKubeClient implements Serializable {
 
     public ConfigMap createOrReplaceConfigMap(ConfigMap configMap) {
         return runWithRetries(() -> kubernetesClient.configMaps().createOrReplace(configMap));
+    }
+
+    public ConfigMap updateConfigMap(ConfigMap configMap) {
+        return runWithRetries(() -> kubernetesClient.resource(configMap).lockResourceVersion().replace());
     }
 
     public Service getService(String serviceName) {
@@ -121,12 +138,59 @@ public class GeaflowKubeClient implements Serializable {
         runWithRetries(action);
     }
 
+    public Watch createPodsWatcher(Map<String, String> labels,
+                                   BiConsumer<Action, Pod> eventHandler,
+                                   Consumer<Exception> closeHandler) {
+        Callable<Watch> action = () -> {
+            Watcher<Pod> watcher = createWatcher(eventHandler, closeHandler);
+            PodList podList = kubernetesClient.pods().withLabels(labels).list();
+            String resourceVersion = podList.getMetadata().getResourceVersion();
+            LOGGER.info("create watcher for {} pods with resource version: {} labels: {}", podList.getItems().size(), resourceVersion, labels);
+            return kubernetesClient.pods().withLabels(labels).withResourceVersion(resourceVersion).watch(watcher);
+        };
+        return runWithRetries(action);
+    }
+
+    public Watch createServiceWatcher(String serviceName,
+                                        BiConsumer<Action, Service> eventHandler,
+                                        Consumer<Exception> closeHandler) {
+        Callable<Watch> action = () -> {
+            Watcher<Service> watcher = createWatcher(eventHandler, closeHandler);
+            LOGGER.info("create watcher for service with name: {}", serviceName);
+            return kubernetesClient.services().withName(serviceName).watch(watcher);
+        };
+        return runWithRetries(action);
+    }
+
+    private  <R extends HasMetadata> Watcher<R> createWatcher(BiConsumer<Action, R> eventHandler,
+                                                       Consumer<Exception> closeHandler) {
+        Watcher<R> watcher = new Watcher<R>() {
+            @Override
+            public void eventReceived(Action action, R resource) {
+                eventHandler.accept(action, resource);
+            }
+
+            @Override
+            public void onClose(WatcherException e) {
+                if (e != null) {
+                    LOGGER.warn("Watcher onClose: {}", e.getMessage());
+                }
+                closeHandler.accept(e);
+            }
+        };
+        return watcher;
+    }
+
+    public LeaderElector createLeaderElector(LeaderElectionConfig config, ExecutorService service) {
+        return new LeaderElector(kubernetesClient, config, service);
+    }
+
     private <T> T runWithRetries(Callable<T> action) {
         return RetryCommand.run(action, retryCount, retryInterval);
     }
 
     public void destroyCluster(String clusterId) {
-        String serviceName = masterParam.getServiceName(clusterId);
+        String serviceName = KubernetesUtils.getMasterServiceName(clusterId);
         LOGGER.info("delete cluster with service:{}", serviceName);
         kubernetesClient.services().withName(serviceName).delete();
     }
@@ -138,12 +202,12 @@ public class GeaflowKubeClient implements Serializable {
 
     public void deletePod(Map<String, String> labels) {
         Callable<Void> action = () -> {
-            FilterWatchListDeletable<Pod, PodList> running =
-                kubernetesClient.pods().withField("status.phase", "Running").withLabels(labels);
-            if (!running.list().getItems().isEmpty()) {
-                LOGGER.info("delete {} running pod with label:{}", running.list().getItems().size(),
+            FilterWatchListDeletable<Pod, PodList, PodResource> running = kubernetesClient.pods().withLabels(labels);
+            List<Pod> pods = running.list().getItems();
+            if (!pods.isEmpty()) {
+                LOGGER.info("delete {} running pod with label:{}", pods.size(),
                     labels);
-                running.delete();
+                pods.forEach(pod -> kubernetesClient.resource(pod).delete());
             }
             return null;
         };

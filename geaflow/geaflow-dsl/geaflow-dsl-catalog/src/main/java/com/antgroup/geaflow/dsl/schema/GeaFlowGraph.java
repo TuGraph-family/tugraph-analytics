@@ -21,17 +21,21 @@ import com.antgroup.geaflow.common.type.Types;
 import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.GraphRecordType;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
+import com.antgroup.geaflow.dsl.common.descriptor.GraphDescriptor;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
@@ -49,19 +53,18 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
     private final List<EdgeTable> edgeTables;
     private final Map<String, String> usingTables;
     private final Map<String, String> config;
-    private boolean isStatic;
     private final boolean ifNotExists;
     private final boolean isTemporary;
+    private GraphDescriptor graphDescriptor;
 
     public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
                         List<EdgeTable> edgeTables, Map<String, String> config,
-                        Map<String, String> usingTables, boolean ifNotExists,
-                        boolean isStatic, boolean isTemporary) {
+                        Map<String, String> usingTables, boolean ifNotExists, boolean isTemporary) {
         this.instanceName = instanceName;
         this.name = name;
         this.vertexTables = vertexTables;
         this.edgeTables = edgeTables;
-        this.config = ImmutableMap.copyOf(config);
+        this.config = new HashMap<>(config);
         this.usingTables = ImmutableMap.copyOf(usingTables);
         this.ifNotExists = ifNotExists;
         this.isTemporary = isTemporary;
@@ -72,7 +75,67 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         for (EdgeTable edgeTable : this.edgeTables) {
             edgeTable.setGraph(this);
         }
-        this.isStatic = isStatic;
+        this.validate();
+    }
+
+    public GeaFlowGraph(String instanceName, String name, List<VertexTable> vertexTables,
+                        List<EdgeTable> edgeTables, Map<String, String> config,
+                        Map<String, String> usingTables, boolean ifNotExists, boolean isTemporary,
+                        GraphDescriptor descriptor) {
+        this(instanceName, name, vertexTables, edgeTables, config, usingTables, ifNotExists, isTemporary);
+        this.graphDescriptor = Objects.requireNonNull(descriptor);
+    }
+
+    public void validate() {
+        if (this.vertexTables.size() > 0) {
+            TableField commonVertexIdField = this.vertexTables.get(0).getIdField();
+            for (VertexTable vertexTable : this.vertexTables) {
+                if (!vertexTable.getIdField().getType().equals(commonVertexIdField.getType())) {
+                    throw new GeaFlowDSLException("Id field type should be same between vertex " + "tables");
+                }
+            }
+        }
+        if (this.edgeTables.size() > 0) {
+            TableField commonSrcIdField = this.edgeTables.get(0).getSrcIdField();
+            TableField commonTargetIdField = this.edgeTables.get(0).getTargetIdField();
+            Optional<TableField> commonTsField =
+                Optional.ofNullable(this.edgeTables.get(0).getTimestampField());
+            for (EdgeTable edgeTable : this.edgeTables) {
+                if (!edgeTable.getSrcIdField().getType().equals(commonSrcIdField.getType())) {
+                    throw new GeaFlowDSLException("SOURCE ID field type should be same between edge "
+                        + "tables");
+                } else if (!edgeTable.getTargetIdField().getType().equals(commonTargetIdField.getType())) {
+                    throw new GeaFlowDSLException("DESTINATION ID field type should be same "
+                        + "between edge tables");
+                }
+
+                if (commonTsField.isPresent()) {
+                    if (edgeTable.getTimestampField() == null) {
+                        throw new GeaFlowDSLException("TIMESTAMP should defined or not defined in all edge tables");
+                    } else if (!edgeTable.getTimestampField().getType().equals(commonTsField.get().getType())) {
+                        throw new GeaFlowDSLException("TIMESTAMP field type should be same between edge "
+                            + "tables");
+                    }
+                } else {
+                    if (edgeTable.getTimestampField() != null) {
+                        throw new GeaFlowDSLException("TIMESTAMP should defined or not defined in all edge tables");
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean containTable(GeaFlowTable table) {
+        if (table == null) {
+            return false;
+        }
+        if (table instanceof VertexTable) {
+            return this.getVertexTables().stream().anyMatch(v -> v.getName().equals(table.getName()));
+        }
+        if (table instanceof EdgeTable) {
+            return this.getEdgeTables().stream().anyMatch(v -> v.getName().equals(table.getName()));
+        }
+        return false;
     }
 
     @Override
@@ -80,11 +143,11 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         List<RelDataTypeField> fields = new ArrayList<>();
         for (VertexTable table : vertexTables) {
             VertexRecordType type = table.getRowType(typeFactory);
-            fields.add(new RelDataTypeFieldImpl(table.typeName, fields.size(), type));
+            fields.add(new RelDataTypeFieldImpl(table.getTypeName(), fields.size(), type));
         }
         for (EdgeTable table : edgeTables) {
             EdgeRecordType type = table.getRowType(typeFactory);
-            fields.add(new RelDataTypeFieldImpl(table.typeName, fields.size(), type));
+            fields.add(new RelDataTypeFieldImpl(table.getTypeName(), fields.size(), type));
         }
         return new GraphRecordType(name, fields);
     }
@@ -117,6 +180,52 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         return new Configuration(config);
     }
 
+    public GeaFlowGraph setDescriptor(GraphDescriptor desc) {
+        this.graphDescriptor = Objects.requireNonNull(desc);
+        return this;
+    }
+
+    public GraphDescriptor getValidDescriptorInGraph(GraphDescriptor desc) {
+        GraphDescriptor newDesc = new GraphDescriptor();
+        newDesc.addNode(desc.nodes.stream().filter(
+            node -> this.vertexTables.stream().anyMatch(v -> v.getTypeName().equals(node.type))
+        ).collect(Collectors.toList()));
+        newDesc.addEdge(desc.edges.stream().filter(
+            edge -> {
+                EdgeTable edgeTable = null;
+                for (EdgeTable e : this.getEdgeTables()) {
+                    if (e.getTypeName().equals(edge.type)) {
+                        edgeTable = e;
+                        break;
+                    }
+                }
+                VertexTable sourceVertexTable = null;
+                for (VertexTable v : this.getVertexTables()) {
+                    if (v.getTypeName().equals(edge.sourceType)) {
+                        sourceVertexTable = v;
+                        break;
+                    }
+                }
+                VertexTable targetVertexTable = null;
+                for (VertexTable v : this.getVertexTables()) {
+                    if (v.getTypeName().equals(edge.targetType)) {
+                        targetVertexTable = v;
+                        break;
+                    }
+                }
+                boolean exist = edgeTable != null
+                    && sourceVertexTable != null && targetVertexTable != null;
+                return exist && edgeTable.getSrcIdField().getType().equals(sourceVertexTable.getIdField().getType())
+                    && edgeTable.getTargetIdField().getType().equals(targetVertexTable.getIdField().getType());
+            }
+        ).collect(Collectors.toList()));
+        return newDesc;
+    }
+
+    public GraphDescriptor getDescriptor() {
+        return graphDescriptor == null ? new GraphDescriptor() : graphDescriptor;
+    }
+
     public Configuration getConfigWithGlobal(Configuration globalConf) {
         Map<String, String> conf = new HashMap<>(globalConf.getConfigMap());
         conf.putAll(this.config);
@@ -136,14 +245,6 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
     public int getShardCount() {
         return Configuration.getInteger(DSLConfigKeys.GEAFLOW_DSL_STORE_SHARD_COUNT, config);
-    }
-
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public void setStatic(boolean aStatic) {
-        isStatic = aStatic;
     }
 
     public IType<?> getIdType() {
@@ -181,28 +282,29 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         return usingTables;
     }
 
-    public static class VertexTable extends AbstractTable implements GraphElementTable, Serializable {
+    public static class VertexTable extends GeaFlowTable implements GraphElementTable, Serializable {
 
-        private final String typeName;
-        private final List<TableField> fields;
         private final String idField;
 
         private GeaFlowGraph graph;
 
-        public VertexTable(String typeName, List<TableField> fields, String idField) {
-            this.typeName = Objects.requireNonNull(typeName);
-            this.fields = Objects.requireNonNull(fields);
+        public VertexTable(String instanceName, String typeName, List<TableField> fields, String idField) {
+            super(instanceName, typeName, fields, Collections.singletonList(idField),
+                Collections.emptyList(), new HashMap<>(), true, true);
             this.idField = Objects.requireNonNull(idField);
             checkFields();
         }
 
         private void checkFields() {
-            Set<String> fieldNames = fields.stream().map(TableField::getName)
-                .collect(Collectors.toSet());
-            if (fieldNames.size() != fields.size()) {
-                throw new GeaFlowDSLException("Duplicate field has found in vertex table: " + typeName);
+            for (TableField field : getFields()) {
+                GraphRecordType.validateFieldName(field.getName());
             }
-            if (!fieldNames.contains(idField.toLowerCase())) {
+            Set<String> fieldNames = getFields().stream().map(TableField::getName)
+                .collect(Collectors.toSet());
+            if (fieldNames.size() != super.getFields().size()) {
+                throw new GeaFlowDSLException("Duplicate field has found in vertex table: " + getName());
+            }
+            if (!fieldNames.contains(idField)) {
                 throw new GeaFlowDSLException("id field:'" + idField + "' is not found in the fields: " + fieldNames);
             }
         }
@@ -218,15 +320,12 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
         @Override
         public String getTypeName() {
-            return typeName;
+            return getName();
         }
 
-        public List<TableField> getFields() {
-            return fields;
-        }
 
         public TableField getIdField() {
-            return findField(fields, idField);
+            return findField(getFields(), idField);
         }
 
         public String getIdFieldName() {
@@ -235,9 +334,9 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
         @Override
         public VertexRecordType getRowType(RelDataTypeFactory typeFactory) {
-            List<RelDataTypeField> dataFields = new ArrayList<>(fields.size());
-            for (int i = 0; i < fields.size(); i++) {
-                TableField field = fields.get(i);
+            List<RelDataTypeField> dataFields = new ArrayList<>(getFields().size());
+            for (int i = 0; i < getFields().size(); i++) {
+                TableField field = getFields().get(i);
                 RelDataType type = SqlTypeUtil.convertToRelType(field.getType(), field.isNullable(), typeFactory);
                 RelDataTypeField dataField = new RelDataTypeFieldImpl(field.getName(), i, type);
                 dataFields.add(dataField);
@@ -247,25 +346,23 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
         @Override
         public String toString() {
-            return "VertexTable{" + "typeName='" + typeName + '\'' + ", fields=" + fields
+            return "VertexTable{" + "typeName='" + getTypeName() + '\'' + ", fields=" + getFields()
                 + ", idField='" + idField + '\'' + '}';
         }
     }
 
-    public static class EdgeTable extends AbstractTable implements GraphElementTable, Serializable {
+    public static class EdgeTable extends GeaFlowTable implements GraphElementTable, Serializable {
 
-        private final String typeName;
-        private final List<TableField> fields;
         private final String srcIdField;
         private final String targetIdField;
         private final String timestampField;
 
         private GeaFlowGraph graph;
 
-        public EdgeTable(String typeName, List<TableField> fields, String srcIdField,
+        public EdgeTable(String instanceName, String typeName, List<TableField> fields, String srcIdField,
                          String targetIdField, String timestampField) {
-            this.typeName = Objects.requireNonNull(typeName);
-            this.fields = Objects.requireNonNull(fields);
+            super(instanceName, typeName, fields, Lists.newArrayList(srcIdField, targetIdField),
+                Collections.emptyList(), new HashMap<>(), true, true);
             this.srcIdField = Objects.requireNonNull(srcIdField);
             this.targetIdField = Objects.requireNonNull(targetIdField);
             this.timestampField = timestampField;
@@ -273,10 +370,13 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
         }
 
         private void checkFields() {
-            Set<String> fieldNames = fields.stream().map(TableField::getName)
+            for (TableField field : getFields()) {
+                GraphRecordType.validateFieldName(field.getName());
+            }
+            Set<String> fieldNames = getFields().stream().map(TableField::getName)
                 .collect(Collectors.toSet());
-            if (fieldNames.size() != fields.size()) {
-                throw new GeaFlowDSLException("Duplicate field has found in edge table: " + typeName);
+            if (fieldNames.size() != getFields().size()) {
+                throw new GeaFlowDSLException("Duplicate field has found in edge table: " + getName());
             }
             if (!fieldNames.contains(srcIdField)) {
                 throw new GeaFlowDSLException("source id:" + srcIdField + " is not found in fields: " + fieldNames);
@@ -298,26 +398,22 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
         @Override
         public String getTypeName() {
-            return typeName;
-        }
-
-        public List<TableField> getFields() {
-            return fields;
+            return getName();
         }
 
         public TableField getSrcIdField() {
-            return findField(fields, srcIdField);
+            return findField(getFields(), srcIdField);
         }
 
         public TableField getTargetIdField() {
-            return findField(fields, targetIdField);
+            return findField(getFields(), targetIdField);
         }
 
         public TableField getTimestampField() {
             if (timestampField == null) {
                 return null;
             }
-            return findField(fields, timestampField);
+            return findField(getFields(), timestampField);
         }
 
         public String getSrcIdFieldName() {
@@ -334,9 +430,9 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
         @Override
         public EdgeRecordType getRowType(RelDataTypeFactory typeFactory) {
-            List<RelDataTypeField> dataFields = new ArrayList<>(fields.size());
-            for (int i = 0; i < fields.size(); i++) {
-                TableField field = fields.get(i);
+            List<RelDataTypeField> dataFields = new ArrayList<>(getFields().size());
+            for (int i = 0; i < getFields().size(); i++) {
+                TableField field = getFields().get(i);
                 RelDataType type = SqlTypeUtil.convertToRelType(field.getType(), field.isNullable(), typeFactory);
                 RelDataTypeField dataField = new RelDataTypeFieldImpl(field.getName(), i, type);
                 dataFields.add(dataField);
@@ -346,7 +442,7 @@ public class GeaFlowGraph extends AbstractTable implements Serializable {
 
         @Override
         public String toString() {
-            return "EdgeTable{" + "typeName='" + typeName + '\'' + ", fields=" + fields
+            return "EdgeTable{" + "typeName='" + getName() + '\'' + ", fields=" + getFields()
                 + ", srcIdField='" + srcIdField + '\'' + ", targetIdField='" + targetIdField + '\''
                 + ", timestampField='" + timestampField + '\'' + '}';
         }

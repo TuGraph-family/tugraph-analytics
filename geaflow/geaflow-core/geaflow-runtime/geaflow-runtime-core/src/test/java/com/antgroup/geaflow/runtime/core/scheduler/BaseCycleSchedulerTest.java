@@ -31,6 +31,7 @@ import com.antgroup.geaflow.runtime.core.protocol.DoneEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -67,7 +68,9 @@ public class BaseCycleSchedulerTest {
         // mock container rpc
         Mockito.doAnswer(in -> {
             processor.process((IEvent) in.getArgument(1));
-            return null;
+            CompletableFuture future = new CompletableFuture<>();
+            future.complete(null);
+            return future;
         }).when(rpcClient).processContainer(any(), any());
 
         Mockito.doAnswer(in -> {
@@ -118,7 +121,7 @@ public class BaseCycleSchedulerTest {
                 switch (event.getEventType()) {
                     case LAUNCH_SOURCE:
                         LaunchSourceEvent sourceEvent = (LaunchSourceEvent) event;
-                        response = new DoneEvent(sourceEvent.getCycleId(), sourceEvent.getIterationWindowId(),
+                        response = new DoneEvent<>(sourceEvent.getCycleId(), sourceEvent.getIterationWindowId(),
                             sourceEvent.getWorkerId(), EventType.EXECUTE_COMPUTE);
                         ((IEventListener) scheduler).handleEvent(response);
                         break;
@@ -126,7 +129,7 @@ public class BaseCycleSchedulerTest {
                     case CLEAN_ENV:
                     case STASH_WORKER:
                         AbstractExecutableCommand executableCommand = (AbstractExecutableCommand) event;
-                        response = new DoneEvent(executableCommand.getCycleId(), executableCommand.getIterationWindowId(),
+                        response = new DoneEvent<>(executableCommand.getCycleId(), executableCommand.getIterationWindowId(),
                             executableCommand.getWorkerId(), executableCommand.getEventType());
                         ((IEventListener) scheduler).handleEvent(response);
                         break;

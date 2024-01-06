@@ -21,11 +21,13 @@ import com.antgroup.geaflow.state.action.ActionType;
 import com.antgroup.geaflow.state.action.hook.ActionHook;
 import com.antgroup.geaflow.state.action.hook.ActionHookBuilder;
 import com.antgroup.geaflow.state.context.StateContext;
+import com.antgroup.geaflow.state.manage.LoadOption;
 import com.antgroup.geaflow.state.strategy.accessor.AccessorBuilder;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
 import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
+import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +66,11 @@ public class BaseStateManager {
         for (ActionHook hook: actionHooks) {
             hook.doStoreAction(actionType, request);
         }
-        this.accessorMap.values().forEach(c -> c.doStoreAction(actionType, request));
+        if (actionType == ActionType.LOAD) {
+            KeyGroup loadKeyGroup = ((LoadOption)request.getRequest()).getKeyGroup();
+            Preconditions.checkArgument(loadKeyGroup == null || this.keyGroup.contains(loadKeyGroup));
+        }
+        this.accessorMap.forEach((key, value) -> value.doStoreAction(key, actionType, request));
+
     }
 }

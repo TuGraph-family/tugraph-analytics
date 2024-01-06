@@ -135,6 +135,7 @@ public class RocksdbClient {
 
     public void checkpoint(String path) {
         Checkpoint checkpoint = Checkpoint.create(rocksdb);
+        LOGGER.info("Delete path: {}", path);
         FileUtils.deleteQuietly(new File(path));
         try {
             checkpoint.createCheckpoint(path);

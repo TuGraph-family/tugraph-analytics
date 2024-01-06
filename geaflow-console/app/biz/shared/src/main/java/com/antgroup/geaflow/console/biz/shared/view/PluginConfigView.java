@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.biz.shared.view;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfig;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,9 +23,10 @@ import lombok.Setter;
 @Setter
 public class PluginConfigView extends NameView {
 
-    private GeaflowPluginType type;
+    private String type;
 
     private GeaflowConfig config;
 
     private GeaflowPluginCategory category;
+
 }

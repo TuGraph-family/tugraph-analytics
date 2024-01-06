@@ -30,14 +30,19 @@ public interface IHAService extends Serializable {
     void register(String resourceId, ResourceData resourceData);
 
     /**
-     * Returns resource data for corresponding resource id.
+     * Load and resolve resource by resource id.
      */
     ResourceData resolveResource(String resourceId);
 
     /**
+     * Load resource data for corresponding resource id.
+     */
+    ResourceData loadResource(String resourceId);
+
+    /**
      * Invalidate resource data for corresponding resource id.
      */
-    void invalidateResource(String resourceId);
+    ResourceData invalidateResource(String resourceId);
 
     /**
      * HA service close.

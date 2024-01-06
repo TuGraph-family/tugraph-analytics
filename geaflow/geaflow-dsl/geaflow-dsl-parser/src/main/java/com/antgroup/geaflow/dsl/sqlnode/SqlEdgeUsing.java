@@ -20,6 +20,7 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
@@ -35,18 +36,21 @@ public class SqlEdgeUsing extends SqlCall {
     private SqlIdentifier sourceId;
     private SqlIdentifier targetId;
     private SqlIdentifier timeField;
+    private SqlNodeList constraints;
 
     public SqlEdgeUsing(SqlParserPos pos, SqlIdentifier name,
                         SqlIdentifier usingTableName,
                         SqlIdentifier sourceId,
                         SqlIdentifier targetId,
-                        SqlIdentifier timeField) {
+                        SqlIdentifier timeField,
+                        SqlNodeList constraints) {
         super(pos);
         this.name = name;
         this.usingTableName = usingTableName;
         this.sourceId = sourceId;
         this.targetId = targetId;
         this.timeField = timeField;
+        this.constraints = constraints;
     }
 
     @Override
@@ -67,6 +71,9 @@ public class SqlEdgeUsing extends SqlCall {
             case 4:
                 this.timeField = (SqlIdentifier) operand;
                 break;
+            case 5:
+                this.constraints = (SqlNodeList) operand;
+                break;
             default:
                 throw new AssertionError();
         }
@@ -79,7 +86,8 @@ public class SqlEdgeUsing extends SqlCall {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableList.of(getName(), getUsingTableName(), getSourceId(), getTargetId(), getTimeField());
+        return ImmutableList.of(getName(), getUsingTableName(), getSourceId(), getTargetId(),
+            getTimeField(), getConstraints());
     }
 
     @Override
@@ -102,6 +110,14 @@ public class SqlEdgeUsing extends SqlCall {
             timeField.unparse(writer, 0, 0);
             writer.print(")");
         }
+        if (constraints != null && constraints.size() > 0) {
+            for (int i = 0; i < constraints.size(); i++) {
+                if (i > 0) {
+                    writer.print("\n");
+                }
+                constraints.get(i).unparse(writer, 0, 0);
+            }
+        }
     }
 
     public SqlIdentifier getName() {
@@ -122,6 +138,10 @@ public class SqlEdgeUsing extends SqlCall {
 
     public SqlIdentifier getTimeField() {
         return timeField;
+    }
+
+    public SqlNodeList getConstraints() {
+        return constraints;
     }
 
 }

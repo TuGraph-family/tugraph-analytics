@@ -15,20 +15,23 @@
 package com.antgroup.geaflow.state.pushdown;
 
 import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
+import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.EmptyGraphFilter;
 import com.antgroup.geaflow.state.pushdown.limit.IEdgeLimit;
 import com.antgroup.geaflow.state.pushdown.project.IProjector;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class StatePushDown<K, T, R> implements IStatePushDown {
 
-    private IProjector<T, R> projector;
-    private IFilter filter = EmptyGraphFilter.of();
-    private Map<K, IFilter> filters;
-    private IEdgeLimit edgeLimit;
-    private EdgeAtom orderField;
-    private PushDownType pushdownType = PushDownType.NORMAL;
+    protected IProjector<T, R> projector;
+    protected IFilter filter = EmptyGraphFilter.of();
+    protected Map<K, IFilter> filters;
+    protected IEdgeLimit edgeLimit;
+    protected List<EdgeAtom> orderFields;
+    protected PushDownType pushdownType = PushDownType.NORMAL;
 
     protected StatePushDown() {}
 
@@ -52,7 +55,14 @@ public class StatePushDown<K, T, R> implements IStatePushDown {
     }
 
     public StatePushDown withOrderField(EdgeAtom orderField) {
-        this.orderField = orderField;
+        if (orderField != null) {
+            this.orderFields = Collections.singletonList(orderField);
+        }
+        return this;
+    }
+
+    public StatePushDown withOrderFields(List<EdgeAtom> orderFields) {
+        this.orderFields = orderFields;
         return this;
     }
 
@@ -83,12 +93,20 @@ public class StatePushDown<K, T, R> implements IStatePushDown {
     }
 
     @Override
-    public EdgeAtom getOrderField() {
-        return orderField;
+    public List<EdgeAtom> getOrderFields() {
+        return orderFields;
     }
 
     @Override
     public PushDownType getType() {
         return pushdownType;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        boolean filterEmpty = filter == null || filter.getFilterType() == FilterType.EMPTY;
+        boolean filtersEmpty = filters == null || filters.isEmpty();
+        boolean orderEmpty = orderFields == null || orderFields.isEmpty();
+        return filterEmpty && filtersEmpty && orderEmpty && edgeLimit == null && projector == null;
     }
 }

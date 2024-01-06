@@ -40,6 +40,9 @@ public class VertexService extends DataService<GeaflowVertex, VertexEntity, Vert
     private VertexDao vertexDao;
 
     @Autowired
+    private GraphService graphService;
+
+    @Autowired
     private FieldService fieldService;
 
     @Autowired
@@ -93,14 +96,39 @@ public class VertexService extends DataService<GeaflowVertex, VertexEntity, Vert
 
     @Override
     public boolean drop(List<String> ids) {
+        // can't drop if is used in graph.
+        for (String id : ids) {
+            graphService.checkBindingRelations(id, GeaflowResourceType.VERTEX);
+        }
+
         fieldService.removeByResources(ids, resourceType);
         return super.drop(ids);
     }
 
+
     public List<GeaflowVertex> getVerticesByGraphId(String graphId) {
-        // get vertexEntity
-        List<VertexEntity> vertices = vertexDao.getByGraphId(graphId);
-        return parse(vertices);
+        List<VertexEntity> entities = vertexDao.getByGraphId(graphId);
+        return parse(entities);
+    }
+
+    public List<GeaflowVertex> getVerticesByGraphId(String graphId, Map<String, GeaflowVertex> vertexMap) {
+        List<VertexEntity> entities = vertexDao.getByGraphId(graphId);
+        // filter vertices that not exist
+        List<VertexEntity> rests = new ArrayList<>();
+        List<VertexEntity> exists = new ArrayList<>();
+
+        entities.forEach(e -> {
+            if (vertexMap.containsKey(e.getId())) {
+                exists.add(e);
+            } else {
+                rests.add(e);
+            }
+        });
+
+        List<GeaflowVertex> vertices = parse(rests);
+        List<GeaflowVertex> existVertices = ListUtil.convert(exists, e -> vertexMap.get(e.getId()));
+        vertices.addAll(existVertices);
+        return vertices;
     }
 
     public List<GeaflowVertex> getVerticesByEdgeId(String edgeId) {

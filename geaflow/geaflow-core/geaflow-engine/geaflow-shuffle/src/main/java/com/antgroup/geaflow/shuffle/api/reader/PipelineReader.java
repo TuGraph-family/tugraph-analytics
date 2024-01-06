@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.api.reader;
 
+import com.antgroup.geaflow.common.metric.ShuffleReadMetrics;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.shuffle.message.FetchRequest;
 import com.antgroup.geaflow.shuffle.message.PipelineEvent;
@@ -60,6 +61,11 @@ public class PipelineReader implements IShuffleReader {
     @Override
     public PipelineEvent next() {
         return shuffleFetcher.next();
+    }
+
+    @Override
+    public ShuffleReadMetrics getShuffleReadMetrics() {
+        return this.shuffleFetcher.getReadMetrics();
     }
 
     @Override

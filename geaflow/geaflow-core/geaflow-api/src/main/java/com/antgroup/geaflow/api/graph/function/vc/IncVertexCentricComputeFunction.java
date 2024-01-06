@@ -17,8 +17,14 @@ package com.antgroup.geaflow.api.graph.function.vc;
 import com.antgroup.geaflow.api.graph.function.vc.base.IncVertexCentricFunction;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 
-public interface IncVertexCentricComputeFunction<K, VV, EV, M> extends
-    IncVertexCentricFunction<K, VV, EV, M> {
+/**
+ * Interface for incremental vertex centric compute function with graph aggregation.
+ * @param <K> The id type of vertex/edge.
+ * @param <VV> The value type of vertex.
+ * @param <EV> The value type of edge.
+ * @param <M> The message type during iterations.
+ */
+public interface IncVertexCentricComputeFunction<K, VV, EV, M> extends IncVertexCentricFunction<K, VV, EV, M> {
 
     /**
      * Initialize compute function based on context.

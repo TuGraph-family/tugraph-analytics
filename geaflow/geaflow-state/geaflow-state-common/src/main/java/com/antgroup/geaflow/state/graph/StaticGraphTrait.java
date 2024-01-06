@@ -14,12 +14,12 @@
 
 package com.antgroup.geaflow.state.graph;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -56,49 +56,54 @@ public interface StaticGraphTrait<K, VV, EV> {
     /**
      * Fetch the iterator of the ids of all graph vertices.
      */
-    Iterator<K> vertexIDIterator();
+    CloseableIterator<K> vertexIDIterator();
+
+    /**
+     * Fetch the iterator of the ids of all graph vertices by pushdown condition.
+     */
+    CloseableIterator<K> vertexIDIterator(IStatePushDown pushDown);
 
     /**
      * Fetch the iterator of the graph vertices according to the pushdown condition.
      */
-    Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown);
+    CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of some vertices according to the ids and pushdown condition.
      */
-    Iterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of graph edges according to the pushdown condition.
      */
-    Iterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown);
+    CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of the graph edges according to the ids and pushdown condition.
      */
-    Iterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of one degree graph according to the pushdown condition.
      */
-    Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown);
+    CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown);
 
     /**
      * Fetch the iterator of one degree graph according to the ids and pushdown condition.
      */
-    Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown);
 
 
     /**
      * Fetch the project result of edges according to the pushdown condition.
      */
-    <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(
+    <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
         IStatePushDown<K, IEdge<K, EV>, R> pushdown);
 
     /**
      * Fetch the project result of edges according to the ids and pushdown condition.
      */
-    <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys, IStatePushDown<K, IEdge<K, EV>, R> pushdown);
+    <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys, IStatePushDown<K, IEdge<K, EV>, R> pushdown);
 
     /**
      * Fetch the aggregated results according to the pushdown condition.

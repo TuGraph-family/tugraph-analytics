@@ -14,18 +14,25 @@
 
 package com.antgroup.geaflow.example.graph.statical;
 
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CLUSTER_TYPE;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.LOCAL_CLUSTER;
-
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.env.EnvironmentFactory;
+import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.statical.compute.clustercoefficient.ClusterCoefficient;
+import com.antgroup.geaflow.pipeline.IPipelineResult;
 import org.testng.annotations.Test;
 
-public class ClusterCoefficientTest {
+public class ClusterCoefficientTest extends BaseTest {
 
     @Test
-    public void testMainInvoke() {
-        System.setProperty(CLUSTER_TYPE, LOCAL_CLUSTER);
-        ClusterCoefficient.main(null);
-    }
+    public void test() throws Exception {
+        environment = EnvironmentFactory.onLocalEnvironment();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.putAll(config);
 
+        IPipelineResult result = ClusterCoefficient.submit(environment);
+        if (!result.isSuccess()) {
+            throw new Exception("execute failed");
+        }
+        ClusterCoefficient.validateResult();
+    }
 }

@@ -15,22 +15,24 @@
 package com.antgroup.geaflow.dsl.udf.graph;
 
 import com.antgroup.geaflow.common.type.primitive.DoubleType;
-import com.antgroup.geaflow.common.type.primitive.LongType;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
+import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 @Description(name = "page_rank", description = "built-in udga for PageRank")
-public class PageRank implements AlgorithmUserFunction {
+public class PageRank implements AlgorithmUserFunction<Object, Double> {
 
     private AlgorithmRuntimeContext context;
     private double alpha = 0.85;
@@ -57,7 +59,8 @@ public class PageRank implements AlgorithmUserFunction {
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<Double> messages) {
+        updatedValues.ifPresent(vertex::setValue);
         List<RowEdge> outEdges = new ArrayList<>(context.loadEdges(EdgeDirection.OUT));
         if (context.getCurrentIterationId() == 1L) {
             double initValue = 1.0;
@@ -80,16 +83,21 @@ public class PageRank implements AlgorithmUserFunction {
             sendMessageToNeighbors(outEdges, currentPr / outEdges.size());
             context.sendMessage(vertex.getId(), -1.0);
             context.updateVertexValue(ObjectRow.create(pr));
-        } else {
-            double currentPr = (double) vertex.getValue().getField(0, DoubleType.INSTANCE);
+        }
+    }
+
+    @Override
+    public void finish(RowVertex vertex, Optional<Row> newValue) {
+        if (newValue.isPresent()) {
+            double currentPr = (double) newValue.get().getField(0, DoubleType.INSTANCE);
             context.take(ObjectRow.create(vertex.getId(), currentPr));
         }
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
-            new TableField("id", LongType.INSTANCE, false),
+            new TableField("id", graphSchema.getIdType(), false),
             new TableField("pr", DoubleType.INSTANCE, false)
         );
     }

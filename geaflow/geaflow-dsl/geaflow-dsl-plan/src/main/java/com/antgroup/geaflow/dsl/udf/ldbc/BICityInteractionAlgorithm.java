@@ -22,6 +22,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
@@ -32,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Description(name = "bi19_interaction", description = "LDBC BI19 City Interaction Algorithm")
 public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object, ObjectRow> {
@@ -73,11 +75,12 @@ public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object,
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<ObjectRow> messages) {
         if (context.getCurrentIterationId() > maxIterations) {
             return;
         }
         Long vId = (Long)vertex.getId();
+        updatedValues.ifPresent(vertex::setValue);
         switch ((int)(context.getCurrentIterationId() % 3)) {
             case personIteration:
                 if (vertex.getLabel().equals(personType)) {
@@ -209,7 +212,7 @@ public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object,
     }
 
     @Override
-    public StructType getOutputType() {
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
             new TableField("person1Id", LongType.INSTANCE, false),
             new TableField("person2Id", LongType.INSTANCE, false),
@@ -272,5 +275,9 @@ public class BICityInteractionAlgorithm implements AlgorithmUserFunction<Object,
             map2.put(key, value);
             ++i;
         }
+    }
+
+    @Override
+    public void finish(RowVertex vertex, Optional<Row> newValue) {
     }
 }

@@ -14,23 +14,30 @@
 
 package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical;
 
-
 import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction.EdgeQuery;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.InEdgeFilter;
 import com.antgroup.geaflow.state.pushdown.filter.OutEdgeFilter;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.List;
 
 public class StaticEdgeQueryImpl<K, VV, EV> implements EdgeQuery<K, EV> {
 
     protected K vId;
     private final GraphState<K, VV, EV> graphState;
+    protected KeyGroup keyGroup;
 
     public StaticEdgeQueryImpl(K vId, GraphState<K, VV, EV> graphState) {
         this.vId = vId;
         this.graphState = graphState;
+    }
+
+    public StaticEdgeQueryImpl(K vId, GraphState<K, VV, EV> graphState, KeyGroup keyGroup) {
+        this.vId = vId;
+        this.graphState = graphState;
+        this.keyGroup = keyGroup;
     }
 
     @Override

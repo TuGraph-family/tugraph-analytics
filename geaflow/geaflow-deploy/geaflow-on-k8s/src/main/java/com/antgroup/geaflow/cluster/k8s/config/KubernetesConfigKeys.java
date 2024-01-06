@@ -114,10 +114,10 @@ public class KubernetesConfigKeys {
         .defaultValue("IfNotPresent")
         .description("container image pull policy");
 
-    public static final ConfigKey CONTAINER_START_COMMAND_TEMPLATE = ConfigKeys
-        .key("kubernetes.container-start-command-template")
-        .defaultValue("%java% %classpath% %jvmmem% %jvmopts% %logging% %class% %redirects%")
-        .description("container start command template");
+    public static final ConfigKey CONTAINER_CONF_FILES = ConfigKeys
+        .key("kubernetes.container.conf.files")
+        .defaultValue("/opt/geaflow/conf/log4j.properties")
+        .description("files to be used within containers");
 
     public static final ConfigKey ENABLE_RESOURCE_MEMORY_LIMIT = ConfigKeys
         .key("kubernetes.enable.resource.memory.limit")
@@ -171,8 +171,13 @@ public class KubernetesConfigKeys {
             + "is null. For example, key1:Equal:value1:NoSchedule:-,key2:Exists:-:-:-,"
             + "key3:Equal:value3:NoExecute:3600");
 
+    public static final ConfigKey EVICTED_POD_LABELS = ConfigKeys
+        .key("kubernetes.pods.evict.labels")
+        .defaultValue("pod.sigma.ali/eviction:true")
+        .description("The labels of pod to be evicted");
+
     public static final ConfigKey CONF_DIR = ConfigKeys.key("kubernetes.geaflow.conf.dir")
-        .defaultValue("/opt/geaflow/conf")
+        .defaultValue("/etc/geaflow/conf")
         .description("geaflow conf directory");
 
     public static final ConfigKey LOG_DIR = ConfigKeys.key("kubernetes.geaflow.log.dir")
@@ -181,8 +186,13 @@ public class KubernetesConfigKeys {
 
     public static final ConfigKey CLUSTER_CLIENT_TIMEOUT_MS = ConfigKeys
         .key("kubernetes.geaflow.cluster.timeout.ms")
-        .defaultValue(200000)
+        .defaultValue(300000)
         .description("cluster client timeout in ms");
+
+    public static final ConfigKey WATCHER_CHECK_INTERVAL = ConfigKeys
+        .key("kubernetes.watcher.check.interval.seconds")
+        .defaultValue(60)
+        .description("time interval to check watcher liveness in seconds");
 
     public static final ConfigKey DRIVER_NODE_PORT = ConfigKeys.key("kubernetes.driver.node.port")
         .defaultValue(0)
@@ -210,6 +220,30 @@ public class KubernetesConfigKeys {
 
     public static final ConfigKey PROCESS_AUTO_RESTART = ConfigKeys.key("kubernetes.cluster.process.auto-restart")
         .defaultValue("unexpected")
-        .defaultValue("where to restart process automatically");
+        .description("whether to restart process automatically");
 
+    public static final ConfigKey CLIENT_KEY_ALGO = ConfigKeys.key("kubernetes.certs.client.key.algo")
+        .defaultValue("")
+        .description("client key algo");
+
+    public static final ConfigKey LEADER_ELECTION_LEASE_DURATION = ConfigKeys.key("kubernetes.leader-election.lease-duration")
+        .defaultValue(15)
+        .description("The duration seconds of once leader-election in kubernetes. Contenders can "
+            + "try to contend for a new leader after the previous leader invalid");
+
+    public static final ConfigKey LEADER_ELECTION_RENEW_DEADLINE = ConfigKeys.key("kubernetes.leader-election.renew-deadline")
+        .defaultValue(15)
+        .description("The deadline seconds of once leader-election in kubernetes. The current "
+            + "leader must renew the leadership within the deadline, or the leadership will be "
+            + "invalid after lease duration");
+
+    public static final ConfigKey LEADER_ELECTION_RETRY_PERIOD = ConfigKeys.key("kubernetes.leader-election.retry-period")
+        .defaultValue(5)
+        .description("The interval seconds of each contenders to try to contend for a new leader,"
+            + " also is the interval seconds of current leader to renew for its leadership lease");
+
+    public static final ConfigKey ALWAYS_PULL_ENGINE_JAR = ConfigKeys
+        .key("kubernetes.engine.jar.pull.always")
+        .defaultValue(false)
+        .description("whether to always pull the remote engine jar to replace local ones");
 }

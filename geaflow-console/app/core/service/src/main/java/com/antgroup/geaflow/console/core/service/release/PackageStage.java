@@ -25,6 +25,7 @@ import com.antgroup.geaflow.console.core.model.release.ReleaseUpdate;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,19 +43,24 @@ public class PackageStage extends GeaflowBuildStage {
     @Override
     public void init(GeaflowRelease release) {
         try {
-            String code = release.getJob().getUserCode().getText();
-            Map<String, Integer> parallelismMap = JobPlanBuilder.getParallelismMap(release.getJobPlan());
-            GeaflowZipEntry codeEntry = new GeaflowZipEntry(GQL_FILE_NAME, code);
-            GeaflowZipEntry confEntry = new GeaflowZipEntry(CONF_FILE_NAME, JSON.toJSONString(parallelismMap));
-            List<GeaflowZipEntry> zipEntries = Arrays.asList(codeEntry, confEntry);
+            List<GeaflowZipEntry> zipEntries;
+            if (release.getJob().isApiJob()) {
+                GeaflowZipEntry entry = new GeaflowZipEntry("empty.txt", "");
+                zipEntries = Collections.singletonList(entry);
 
+            } else {
+                String code = release.getJob().getUserCode().getText();
+                Map<String, Integer> parallelismMap = JobPlanBuilder.getParallelismMap(release.getJobPlan());
+                GeaflowZipEntry codeEntry = new GeaflowZipEntry(GQL_FILE_NAME, code);
+                GeaflowZipEntry confEntry = new GeaflowZipEntry(CONF_FILE_NAME, JSON.toJSONString(parallelismMap));
+                zipEntries = Arrays.asList(codeEntry, confEntry);
+            }
             // url and md5
             String path = RemoteFileStorage.getPackageFilePath(release.getJob().getId(), release.getReleaseVersion());
             release.setUrl(remoteFileStorage.upload(path, ZipUtil.buildZipInputStream(zipEntries)));
             release.setMd5(Md5Util.encodeFile(ZipUtil.buildZipInputStream(zipEntries)));
-
         } catch (IOException e) {
-            throw new GeaflowException("Compress fail ", e);
+            throw new GeaflowException("Package job {} fail ", release.getJob().getName(), e);
         }
     }
 

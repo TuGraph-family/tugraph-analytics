@@ -17,17 +17,15 @@ package com.antgroup.geaflow.cluster.k8s.clustermanager;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CA_DATA;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CERT_DATA;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CERT_KEY;
+import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLIENT_KEY_ALGO;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.MASTER_URL;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.PING_INTERVAL_MS;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.utils.HttpClientUtils;
-import okhttp3.Dispatcher;
-import okhttp3.OkHttpClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -51,9 +49,9 @@ public class KubernetesClientFactory {
             .withNamespace(namespace);
 
         clientConfig.withTrustCerts(true);
-        String certKet = config.getString(CERT_KEY);
-        if (!StringUtils.isBlank(certKet)) {
-            clientConfig.withClientKeyData(certKet);
+        String certKey = config.getString(CERT_KEY);
+        if (!StringUtils.isBlank(certKey)) {
+            clientConfig.withClientKeyData(certKey);
         }
 
         String certData = config.getString(CERT_DATA);
@@ -66,11 +64,14 @@ public class KubernetesClientFactory {
             clientConfig.withCaCertData(certData);
         }
 
-        Dispatcher dispatcher = new Dispatcher();
-        OkHttpClient httpClient = HttpClientUtils.createHttpClient(clientConfig.build())
-            .newBuilder().dispatcher(dispatcher).build();
+        String certKeyAlgo = config.getString(CLIENT_KEY_ALGO);
+        if (!StringUtils.isBlank(certKeyAlgo)) {
+            clientConfig.withClientKeyAlgo(certKeyAlgo);
+        }
 
-        return new DefaultKubernetesClient(httpClient, clientConfig.build());
+        return new KubernetesClientBuilder()
+            .withConfig(clientConfig.build())
+            .build();
     }
 
 }

@@ -9,7 +9,7 @@ CREATE TABLE orders (
 	geaflow.dsl.file.path = 'resource:///data/orders.txt'
 );
 
-CREATE TABLE console (
+CREATE TABLE tbl_result (
 	createTime bigint,
 	productId bigint,
 	orderId bigint,
@@ -20,7 +20,7 @@ CREATE TABLE console (
 	geaflow.dsl.file.path='${target}'
 );
 
-INSERT INTO console
+INSERT INTO tbl_result
 SELECT DISTINCT
   o.createTime,
   o.productId,

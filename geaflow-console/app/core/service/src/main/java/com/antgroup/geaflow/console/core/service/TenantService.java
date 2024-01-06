@@ -20,6 +20,8 @@ import com.antgroup.geaflow.console.common.dal.dao.TenantUserMappingDao;
 import com.antgroup.geaflow.console.common.dal.entity.TenantEntity;
 import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.dal.model.TenantSearch;
+import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.core.model.security.GeaflowTenant;
@@ -76,8 +78,8 @@ public class TenantService extends NameService<GeaflowTenant, TenantEntity, Tena
         String userName = user.getName();
         String userComment = user.getComment();
         String tenantName = "tenant_" + userName;
-        String tenantComment =
-            (StringUtils.isBlank(userComment) ? userName : userName + "【" + userComment + "】") + "的租户";
+        String userDisplayName = StringUtils.isBlank(userComment) ? userName : userComment;
+        String tenantComment = Fmt.as(I18nUtil.getMessage("i18n.key.default.tenant.comment.format"), userDisplayName);
 
         TenantEntity entity = new TenantEntity();
         entity.setName(tenantName);

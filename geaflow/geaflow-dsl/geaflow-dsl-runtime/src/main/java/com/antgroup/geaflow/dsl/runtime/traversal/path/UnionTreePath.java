@@ -17,6 +17,10 @@ package com.antgroup.geaflow.dsl.runtime.traversal.path;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,16 +28,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class UnionTreePath extends AbstractTreePath {
 
     private final List<ITreePath> nodes;
 
-    public UnionTreePath(List<ITreePath> nodes) {
+    private UnionTreePath(List<ITreePath> nodes) {
         this.nodes = Objects.requireNonNull(nodes);
     }
 
-    public UnionTreePath() {
+    public static ITreePath create(List<ITreePath> nodes) {
+        List<ITreePath> notEmptyTreePath =
+            Objects.requireNonNull(nodes).stream().filter(n -> n.getNodeType() != NodeType.EMPTY_TREE).collect(Collectors.toList());
+        if (notEmptyTreePath.isEmpty()) {
+            return EmptyTreePath.of();
+        } else if (notEmptyTreePath.size() == 1) {
+            return notEmptyTreePath.get(0);
+        } else {
+            return new UnionTreePath(notEmptyTreePath);
+        }
+    }
+
+    private UnionTreePath() {
         this(new ArrayList<>());
     }
 
@@ -86,10 +103,6 @@ public class UnionTreePath extends AbstractTreePath {
         return this;
     }
 
-    public void addNode(ITreePath node) {
-        this.nodes.add(node);
-    }
-
     private void addNode(ITreePath node, boolean mergeEdgeSet) {
         ITreePath existNode = null;
         for (ITreePath thisNode : nodes) {
@@ -139,6 +152,8 @@ public class UnionTreePath extends AbstractTreePath {
         }
         if (unionTreePath.nodes.size() == 1) {
             return unionTreePath.nodes.get(0);
+        } else if (unionTreePath.nodes.size() == 0) {
+            return EmptyTreePath.of();
         }
         return unionTreePath;
     }
@@ -185,7 +200,7 @@ public class UnionTreePath extends AbstractTreePath {
                 sessionNodes.add(nodeOnSession.getTreePath(sessionId));
             }
         }
-        return new UnionTreePath(sessionNodes);
+        return UnionTreePath.create(sessionNodes);
     }
 
     @Override
@@ -259,10 +274,7 @@ public class UnionTreePath extends AbstractTreePath {
                 filterNodes.add(filterNode);
             }
         }
-        if (filterNodes.size() > 0) {
-            return new UnionTreePath(filterNodes);
-        }
-        return EmptyTreePath.of();
+        return UnionTreePath.create(filterNodes);
     }
 
     @Override
@@ -314,4 +326,24 @@ public class UnionTreePath extends AbstractTreePath {
         }
         return paths;
     }
+
+    public static class UnionTreePathSerializer extends Serializer<UnionTreePath> {
+
+        @Override
+        public void write(Kryo kryo, Output output, UnionTreePath object) {
+            kryo.writeClassAndObject(output, object.getNodes());
+        }
+
+        @Override
+        public UnionTreePath read(Kryo kryo, Input input, Class<UnionTreePath> type) {
+            List<ITreePath> nodes = (List<ITreePath>) kryo.readClassAndObject(input);
+            return new UnionTreePath(nodes);
+        }
+
+        @Override
+        public UnionTreePath copy(Kryo kryo, UnionTreePath original) {
+            return (UnionTreePath) original.copy();
+        }
+    }
+
 }

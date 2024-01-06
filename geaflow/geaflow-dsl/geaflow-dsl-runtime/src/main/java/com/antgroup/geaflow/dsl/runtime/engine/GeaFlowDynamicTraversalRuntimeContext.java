@@ -19,11 +19,16 @@ import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunct
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction.TraversalGraphSnapShot;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.KVTraversalAgg;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageBox;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeaFlowDynamicTraversalRuntimeContext extends AbstractTraversalRuntimeContext {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GeaFlowDynamicTraversalRuntimeContext.class);
 
     private final IncVertexCentricTraversalFuncContext<Object, Row, Row, MessageBox, ITreePath> incVCTraversalCtx;
 
@@ -63,7 +68,11 @@ public class GeaFlowDynamicTraversalRuntimeContext extends AbstractTraversalRunt
 
     @Override
     public void sendCoordinator(String name, Object value) {
-
+        LOGGER.info("task: {} send to coordinator {}:{} isAggTraversal:{}", getTaskIndex(), name,
+            value, aggContext != null);
+        if (aggContext != null) {
+            aggContext.aggregate(new KVTraversalAgg(name, value));
+        }
     }
 
     @Override

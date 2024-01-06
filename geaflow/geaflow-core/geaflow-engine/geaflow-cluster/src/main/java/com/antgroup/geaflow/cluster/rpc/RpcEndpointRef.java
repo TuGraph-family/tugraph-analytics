@@ -19,6 +19,11 @@ import java.io.Serializable;
 
 public interface RpcEndpointRef extends Closeable, Serializable {
 
+    /**
+     * Close rpc endpoint.
+     */
+    void closeEndpoint();
+
     interface RpcCallback<T> {
 
         /**

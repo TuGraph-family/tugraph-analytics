@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.dsl.schema.function;
 
 import com.antgroup.geaflow.common.binary.BinaryString;
-import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -1732,10 +1731,6 @@ public final class GeaFlowBuiltinFunctions {
         return new Timestamp(System.currentTimeMillis());
     }
 
-    public static Object cast(Object o, Class<?> type) {
-        return TypeCastUtil.cast(o, type);
-    }
-
     public static final int TRIM_BOTH = 0;
     public static final int TRIM_LEFT = 1;
     public static final int TRIM_RIGHT = 2;
@@ -1855,6 +1850,35 @@ public final class GeaFlowBuiltinFunctions {
             case TRIM_RIGHT:
                 while (str.endsWith(removeStr)) {
                     str = str.substring(0, str.length() - removeStr.length());
+                }
+                return str;
+            default:
+                throw new UnsupportedOperationException("Not support trim flag: " + flag);
+        }
+    }
+
+    public static BinaryString trim(Integer flag,
+                              BinaryString removeStr, BinaryString str) {
+        if (flag == null || removeStr == null || str == null) {
+            return null;
+        }
+        switch (flag) {
+            case TRIM_BOTH:
+                while (str.startsWith(removeStr)) {
+                    str = str.substring(removeStr.getLength());
+                }
+                while (str.endsWith(removeStr)) {
+                    str = str.substring(0, str.getLength() - removeStr.getLength());
+                }
+                return str;
+            case TRIM_LEFT:
+                while (str.startsWith(removeStr)) {
+                    str = str.substring(removeStr.getLength());
+                }
+                return str;
+            case TRIM_RIGHT:
+                while (str.endsWith(removeStr)) {
+                    str = str.substring(0, str.getLength() - removeStr.getLength());
                 }
                 return str;
             default:

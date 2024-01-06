@@ -14,14 +14,34 @@
 
 package com.antgroup.geaflow.cluster.client;
 
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import com.antgroup.geaflow.pipeline.Pipeline;
 
+import java.util.Map;
+
 public interface IPipelineClient {
+
+    /**
+     * Init pipeline client.
+     * @param driverAddresses Driver Address map.
+     */
+    void init(Map<String, ConnectAddress> driverAddresses, Configuration config);
 
     /**
      * Submit pipeline to execute.
      */
     IPipelineResult submit(Pipeline pipeline);
+
+    /**
+     * Returns whether is sync client.
+     */
+    boolean isSync();
+
+    /**
+     * Close client.
+     */
+    void close();
 
 }

@@ -37,6 +37,8 @@ public class GQLOptimizer {
 
     private final List<RuleGroup> ruleGroups = new ArrayList<>();
 
+    private int times = 3;
+
     public GQLOptimizer(Context context) {
         this.context = context;
     }
@@ -52,10 +54,22 @@ public class GQLOptimizer {
         }
     }
 
+    public int setTimes(int newTimes) {
+        int oldTimes = this.times;
+        this.times = newTimes;
+        return oldTimes;
+    }
+
     public RelNode optimize(RelNode root) {
+        return optimize(root, this.times);
+    }
+
+    public RelNode optimize(RelNode root, int runTimes) {
         RelNode optimizedNode = root;
-        for (RuleGroup rules : ruleGroups) {
-            optimizedNode = applyRules(rules, optimizedNode);
+        for (int i = 0; i < runTimes ; i++) {
+            for (RuleGroup rules : ruleGroups) {
+                optimizedNode = applyRules(rules, optimizedNode);
+            }
         }
         return optimizedNode;
     }

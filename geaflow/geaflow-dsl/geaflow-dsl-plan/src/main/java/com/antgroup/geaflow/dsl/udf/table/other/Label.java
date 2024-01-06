@@ -19,9 +19,12 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
+import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
+import com.antgroup.geaflow.dsl.util.GraphSchemaUtil;
+import org.apache.calcite.rel.type.RelDataType;
 
 @Description(name = "label", description = "Returns label for edge or vertex")
-public class Label extends UDF  {
+public class Label extends UDF implements GraphMetaFieldAccessFunction {
 
     public BinaryString eval(RowEdge edge) {
         return edge.getBinaryLabel();
@@ -29,5 +32,10 @@ public class Label extends UDF  {
 
     public BinaryString eval(RowVertex vertex) {
         return vertex.getBinaryLabel();
+    }
+
+    @Override
+    public RelDataType getReturnRelDataType(GQLJavaTypeFactory typeFactory) {
+        return GraphSchemaUtil.getCurrentGraphLabelType(typeFactory);
     }
 }

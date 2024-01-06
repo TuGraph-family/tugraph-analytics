@@ -24,16 +24,19 @@ import com.antgroup.geaflow.store.IBaseStore;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class BaseActionAccess {
 
+    private Lock lock = new ReentrantLock();
     protected Map<ActionType, IAction> registeredAction = new HashMap<>();
 
     protected abstract List<ActionType> allowActionTypes();
 
     protected void initAction(IBaseStore baseStore, StateContext stateContext) {
         List<ActionType> allowActionTypes = allowActionTypes();
-        for (ActionType actionType : ActionType.values()) {
+        for (ActionType actionType : allowActionTypes()) {
             if (allowActionTypes.contains(actionType)) {
                 IAction action = ActionBuilder.build(actionType);
                 action.init(new StateActionContext(baseStore, stateContext.getConfig()));
@@ -50,7 +53,10 @@ public abstract class BaseActionAccess {
         }
     }
 
-    public void doStoreAction(ActionType actionType, ActionRequest request) {
+    public void doStoreAction(int shard, ActionType actionType, ActionRequest request) {
+        request.setShard(shard);
+        lock.lock();
         this.registeredAction.get(actionType).apply(request);
+        lock.unlock();
     }
 }

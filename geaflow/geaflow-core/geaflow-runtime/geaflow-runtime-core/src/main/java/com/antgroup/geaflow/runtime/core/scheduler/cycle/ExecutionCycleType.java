@@ -30,4 +30,9 @@ public enum ExecutionCycleType {
      * Iteration cycle that container data flow loop from cycle tail to cycle head.
      */
     ITERATION,
+
+    /**
+     * Iteration cycle that container data flow loop from cycle tail to cycle head with aggregation.
+     */
+    ITERATION_WITH_AGG,
 }

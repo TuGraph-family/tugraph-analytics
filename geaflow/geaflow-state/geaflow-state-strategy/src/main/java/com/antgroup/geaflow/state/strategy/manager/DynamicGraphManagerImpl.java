@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.state.strategy.manager;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.context.StateContext;
@@ -24,10 +25,10 @@ import com.antgroup.geaflow.state.iterator.IteratorWithFilter;
 import com.antgroup.geaflow.state.iterator.MultiIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -70,83 +71,97 @@ public class DynamicGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
-        List<Iterator<K>> iterators = new ArrayList<>();
+    public CloseableIterator<K> vertexIDIterator() {
+        List<CloseableIterator<K>> iterators = new ArrayList<>();
         for (Entry<Integer, DynamicGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            Iterator<K> iterator = entry.getValue().vertexIDIterator();
+            CloseableIterator<K> iterator = entry.getValue().vertexIDIterator();
             iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), k -> k) : iterator);
         }
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
+        List<CloseableIterator<K>> iterators = new ArrayList<>();
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        for (int shard = shardGroup.getStartKeyGroup(); shard <= shardGroup.getEndKeyGroup(); shard++) {
+            DynamicGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            CloseableIterator<K> iterator = trait.vertexIDIterator(version, pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, k -> k) : iterator);
+        }
+        return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
+    }
+
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
         return getIterator(IVertex::getId, pushdown, (trait, pushdown1) -> trait.getVertexIterator(version, pushdown1));
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
                                                       IStatePushDown pushdown) {
         return getIterator(keys, pushdown,
             (trait, keys1, pushdown1) -> trait.getVertexIterator(version, keys1, pushdown1));
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
         return getIterator(IEdge::getSrcId, pushdown, (trait, pushdown1) -> trait.getEdgeIterator(version, pushdown1));
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
                                                   IStatePushDown pushdown) {
         return getIterator(keys, pushdown,
             (trait, keys1, pushdown1) -> trait.getEdgeIterator(version, keys1, pushdown1));
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
                                                                          IStatePushDown pushdown) {
         return getIterator(OneDegreeGraph::getKey, pushdown,
             (trait, pushdown1) -> trait.getOneDegreeGraphIterator(version, pushdown1));
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
                                                                          IStatePushDown pushdown) {
         return getIterator(keys, pushdown,
             (trait, keys1, pushdown1) -> trait.getOneDegreeGraphIterator(version, keys1, pushdown1));
     }
 
-    private <R> Iterator<R> getIterator(List<K> keys,
+    private <R> CloseableIterator<R> getIterator(List<K> keys,
                                         IStatePushDown pushdown,
-                                        TriFunction<DynamicGraphTrait<K, VV, EV>, List<K>, IStatePushDown, Iterator<R>> function) {
-        List<Iterator<R>> iterators = new ArrayList<>();
+                                        TriFunction<DynamicGraphTrait<K, VV, EV>, List<K>, IStatePushDown, CloseableIterator<R>> function) {
+        List<CloseableIterator<R>> iterators = new ArrayList<>();
         Map<Integer, List<K>> keyGroupMap = getKeyGroupMap(keys);
         for (Entry<Integer, List<K>> entry: keyGroupMap.entrySet()) {
             Preconditions.checkArgument(
                 entry.getKey() >= this.shardGroup.getStartKeyGroup()
                 && entry.getKey() <= this.shardGroup.getEndKeyGroup());
 
-            Iterator<R> iterator = function.apply(getTraitById(entry.getKey()), entry.getValue(), pushdown);
+            CloseableIterator<R> iterator = function.apply(getTraitById(entry.getKey()), entry.getValue(), pushdown);
             iterators.add(iterator);
         }
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
 
 
-    private <R> Iterator<R> getIterator(
+    private <R> CloseableIterator<R> getIterator(
         Function<R, K> keyExtractor,
         IStatePushDown pushdown,
-        BiFunction<DynamicGraphTrait<K, VV, EV>, IStatePushDown, Iterator<R>> function) {
-        List<Iterator<R>> iterators = new ArrayList<>();
+        BiFunction<DynamicGraphTrait<K, VV, EV>, IStatePushDown, CloseableIterator<R>> function) {
+        List<CloseableIterator<R>> iterators = new ArrayList<>();
 
-        int startShard = this.shardGroup.getStartKeyGroup();
-        int endShard = this.shardGroup.getEndKeyGroup();
-        for (Entry<Integer, DynamicGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            if (entry.getKey() >= startShard && entry.getKey() <= endShard) {
-                Iterator<R> iterator = function.apply(entry.getValue(), pushdown);
-                iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), keyExtractor) : iterator);
-            }
+        KeyGroup shardGroup = getShardGroup(pushdown);
+        int startShard = shardGroup.getStartKeyGroup();
+        int endShard = shardGroup.getEndKeyGroup();
+
+        for (int shard = startShard; shard <= endShard; shard++) {
+            DynamicGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            CloseableIterator<R> iterator = function.apply(trait, pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, keyExtractor) : iterator);
         }
 
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
@@ -174,7 +189,7 @@ public class DynamicGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
         return getTraitByKey(id).getVersionData(id, versions, pushdown, dataType);
     }
 
-    private <T> Iterator<T> shardFilter(Iterator<T> iterator, int keyGroupId,
+    private <T> CloseableIterator<T> shardFilter(CloseableIterator<T> iterator, int keyGroupId,
                                         Function<T, K> keyExtractor) {
         return new IteratorWithFilter<>(iterator, t -> assigner.assign(keyExtractor.apply(t)) == keyGroupId);
     }

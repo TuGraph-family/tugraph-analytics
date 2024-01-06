@@ -38,7 +38,7 @@ public class WindowStreamWordCount {
         LoggerFactory.getLogger(WindowStreamWordCount.class);
 
     public static void main(String[] args) {
-        Environment environment = EnvironmentFactory.onAntEnvironment(args);
+        Environment environment = EnvironmentFactory.onRayCommunityEnvironment(args);
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
         pipeline.submit(new PipelineTask() {
             @Override

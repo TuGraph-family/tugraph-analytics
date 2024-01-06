@@ -19,6 +19,7 @@ import com.antgroup.geaflow.state.pushdown.filter.EmptyFilter;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.limit.IEdgeLimit;
 import com.antgroup.geaflow.state.pushdown.project.IProjector;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,4 +33,5 @@ public class QueryCondition<K> {
     public IProjector projector;
     public IEdgeLimit limit;
     public EdgeAtom order;
+    public KeyGroup keyGroup;
 }

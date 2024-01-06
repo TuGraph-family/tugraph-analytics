@@ -25,6 +25,13 @@ After compiling the GeaFlow code, execute the following command in the project d
 bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql
 ```
 
+If you want to use flame graph in the process for process analysis, you need to download and decompress async-profiler yourself.
+And add the path to profiler.sh in the decompressed folder to the parameters. For example:
+
+```shell
+bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql --profiler /tmp/async-profiler/profiler.sh
+```
+
 "loop_detection.sql" is a DSL calculation job for real-time querying all four-degree loops in a graph. Its contents are as follows:
 
 ```sql
@@ -81,7 +88,7 @@ FROM (
 );
 
 INSERT INTO dy_modern.knows
-SELECT
+SELECT DISTINCT
  cast(split_ex(t1, ',', 0) as bigint),
  cast(split_ex(t1, ',', 1) as bigint),
  cast(split_ex(t1, ',', 2) as double)
@@ -150,9 +157,26 @@ We can see that the new loop 3-4-5-6-3 is checked out:
 
 ![ide_socket_server_more](../static/img/ide_socket_server_more.png)
 
+4. Access the dashboard page
+
+The local mode will use the local 8090 and 8088 ports and comes with a dashboard page.
+
+Visit *http://localhost:8090* in the browser to access the front-end page.
+![dashboard_overview](../static/img/dashboard_overview.png)
+
+For more dashboard related content, please refer to the documentation:
+[Dashboard](dashboard.md)
+
 ## Running in GeaFlow Console
 GeaFlow Console is a graph computing research and development platform provided by GeaFlow. In this document, we will introduce how to launch the GeaFlow Console platform in a Docker container and submit graph computing jobs. 
 Document address: [Running in Docker](quick_start_docker.md)
+
+## Running with GeaFlow Kubernetes Operator
+Geaflow Kubernetes Operator is a deployment tool that can quickly deploy Geaflow applications to kubernetes clusters.
+We will introduce how to install geaflow-kubernetes-operator through Helm and quickly submit 
+geaflow jobs through yaml files, and in addition, how to visit the operator's dashboard page to 
+view the job details in the cluster.
+Document address: [Running By kubernetes operator](quick_start_operator.md)
 
 ## Visualization of flow graph computation jobs using G6VP
 

@@ -21,6 +21,7 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,6 +39,8 @@ public abstract class GeaflowJob extends GeaflowName {
 
     protected List<GeaflowFunction> functions = new ArrayList<>();
 
+    protected List<GeaflowPlugin> plugins = new ArrayList<>();
+
     @Setter
     protected GeaflowJobType type;
 
@@ -50,6 +53,9 @@ public abstract class GeaflowJob extends GeaflowName {
     public GeaflowJob(GeaflowJobType type) {
         this.type = type;
     }
+
+
+    public abstract boolean isApiJob();
 
     public abstract GeaflowRemoteFile getJarPackage();
 
@@ -88,10 +94,15 @@ public abstract class GeaflowJob extends GeaflowName {
         this.functions = functions;
     }
 
+    public void setPlugins(List<GeaflowPlugin> plugins) {
+        this.plugins = plugins;
+    }
+
     @Override
     public void validate() {
         super.validate();
         Preconditions.checkNotNull(type, "job type is null");
         Preconditions.checkNotNull(instanceId, "instanceId is null");
     }
+
 }

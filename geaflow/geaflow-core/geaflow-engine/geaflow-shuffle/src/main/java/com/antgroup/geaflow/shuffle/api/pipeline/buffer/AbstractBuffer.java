@@ -44,10 +44,15 @@ public abstract class AbstractBuffer implements OutBuffer {
         return memoryTrack;
     }
 
+    protected void requireMemory(long dataSize) {
+        if (memoryTrack) {
+            ShuffleMemoryTracker.getInstance().requireMemory(dataSize);
+        }
+    }
+
     protected void releaseMemory(long dataSize) {
         if (memoryTrack) {
-            ShuffleMemoryTracker tracker = ShuffleMemoryTracker.getInstance();
-            tracker.releaseMemory(dataSize);
+            ShuffleMemoryTracker.getInstance().releaseMemory(dataSize);
         }
     }
 

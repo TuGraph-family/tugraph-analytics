@@ -47,6 +47,6 @@ public class RecordArgs {
     }
 
     public enum GraphRecordNames {
-        Vertex, Edge, Request, Message;
+        Vertex, Edge, Request, Message, Aggregate;
     }
 }

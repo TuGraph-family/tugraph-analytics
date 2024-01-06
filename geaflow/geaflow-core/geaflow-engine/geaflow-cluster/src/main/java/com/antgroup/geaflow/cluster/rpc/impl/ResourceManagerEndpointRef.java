@@ -20,40 +20,38 @@ import com.antgroup.geaflow.cluster.resourcemanager.RequireResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.rpc.IResourceEndpointRef;
+import com.antgroup.geaflow.cluster.rpc.IResourceManagerEndpoint;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.rpc.proto.Resource;
-import com.antgroup.geaflow.rpc.proto.ResourceServiceGrpc;
-import io.grpc.ManagedChannel;
+import com.baidu.brpc.client.BrpcProxy;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implements
-    IResourceEndpointRef {
+public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implements IResourceEndpointRef {
 
-    private ResourceServiceGrpc.ResourceServiceBlockingStub stub;
+    private IResourceManagerEndpoint resourceManagerEndpoint;
 
-    public ResourceManagerEndpointRef(String host, int port, ExecutorService executorService) {
-        super(host, port, executorService);
+    public ResourceManagerEndpointRef(String host, int port,
+                                      Configuration configuration) {
+        super(host, port, configuration);
     }
 
     @Override
-    protected void createStub(ManagedChannel channel) {
-        this.stub = ResourceServiceGrpc.newBlockingStub(channel);
+    protected void getRpcEndpoint() {
+        this.resourceManagerEndpoint = BrpcProxy.getProxy(rpcClient, IResourceManagerEndpoint.class);
     }
 
     @Override
     public RequireResponse requireResource(RequireResourceRequest request) {
-        ensureChannelAlive();
-        Resource.RequireResourceResponse response = this.stub.requireResource(convertRequireRequest(request));
+        Resource.RequireResourceResponse response = this.resourceManagerEndpoint.requireResource(convertRequireRequest(request));
         return convertRequireResponse(response);
     }
 
     @Override
     public ReleaseResponse releaseResource(ReleaseResourceRequest request) {
-        ensureChannelAlive();
-        Resource.ReleaseResourceResponse response = this.stub.releaseResource(convertReleaseRequest(request));
+        Resource.ReleaseResourceResponse response = this.resourceManagerEndpoint.releaseResource(convertReleaseRequest(request));
         return convertReleaseResponse(response);
     }
 
@@ -62,6 +60,9 @@ public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implement
         switch (request.getAllocateStrategy()) {
             case ROUND_ROBIN:
                 strategy = Resource.AllocateStrategy.ROUND_ROBIN;
+                break;
+            case PROCESS_FAIR:
+                strategy = Resource.AllocateStrategy.PROCESS_FAIR;
                 break;
             default:
                 String msg = "unrecognized allocate strategy" + request.getAllocateStrategy();
@@ -82,7 +83,7 @@ public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implement
         }
         List<WorkerInfo> workers = response.getWorkerList().stream()
             .map(w -> WorkerInfo.build(w.getHost(), w.getRpcPort(),
-                w.getShufflePort(), w.getProcessId(), w.getWorkerId(), w.getContainerId()))
+                w.getShufflePort(), w.getProcessId(), w.getProcessIndex(), w.getWorkerId(), w.getContainerId()))
             .collect(Collectors.toList());
         return RequireResponse.success(requireId, workers);
     }
@@ -94,6 +95,7 @@ public class ResourceManagerEndpointRef extends AbstractRpcEndpointRef implement
             Resource.Worker worker = Resource.Worker.newBuilder()
                 .setHost(workerInfo.getHost())
                 .setProcessId(workerInfo.getProcessId())
+                .setProcessIndex(workerInfo.getProcessIndex())
                 .setRpcPort(workerInfo.getRpcPort())
                 .setWorkerId(workerInfo.getWorkerIndex())
                 .setContainerId(workerInfo.getContainerName())

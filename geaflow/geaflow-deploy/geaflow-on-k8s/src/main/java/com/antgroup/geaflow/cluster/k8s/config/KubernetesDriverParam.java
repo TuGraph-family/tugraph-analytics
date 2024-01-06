@@ -14,15 +14,16 @@
 
 package com.antgroup.geaflow.cluster.k8s.config;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DRIVER_LOG_SUFFIX;
+import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DRIVER_NODE_PORT;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_RPC_PORT;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_VCORES;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
-import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesDriverRunner;
-import com.antgroup.geaflow.cluster.k8s.utils.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.runner.entrypoint.DriverRunner;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
 import java.util.HashMap;
@@ -30,13 +31,11 @@ import java.util.Map;
 
 public class KubernetesDriverParam extends AbstractKubernetesParam {
 
+    public static final String DRIVER_ENV_PREFIX = "kubernetes.driver.env.";
+
     public static final String DRIVER_USER_ANNOTATIONS = "kubernetes.driver.user.annotations";
 
     public static final String DRIVER_NODE_SELECTOR = "kubernetes.driver.node-selector";
-
-    public static final String DRIVER_SERVICE_NAME_SUFFIX = "-driver-service";
-
-    public static final String DRIVER_LOG_SUFFIX = "driver.log";
 
     public KubernetesDriverParam(Configuration config) {
         super(config);
@@ -48,7 +47,7 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
 
     @Override
     public Double getContainerCpu() {
-        return config.getDouble(DRIVER_VCORES);
+        return clusterConfig.getDriverVcores();
     }
 
     @Override
@@ -64,8 +63,14 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     @Override
     public String getContainerShellCommand() {
         String logFileName = getLogDir() + File.separator + DRIVER_LOG_SUFFIX;
-        return getContainerShellCommand(clusterConfig.getDriverJvmOptions(),
-            KubernetesDriverRunner.class, logFileName);
+        return ClusterUtils.getStartCommand(clusterConfig.getDriverJvmOptions(),
+            DriverRunner.class, logFileName, config, JOB_CLASSPATH);
+    }
+
+    @Override
+    public Map<String, String> getAdditionEnvs() {
+        return KubernetesUtils
+            .getVariablesWithPrefix(DRIVER_ENV_PREFIX, config.getConfigMap());
     }
 
     @Override
@@ -76,11 +81,6 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     @Override
     public String getConfigMapName(String clusterId) {
         return clusterId + K8SConstants.WORKER_CONFIG_MAP_SUFFIX;
-    }
-
-    @Override
-    public String getServiceName(String clusterId) {
-        return clusterId + DRIVER_SERVICE_NAME_SUFFIX;
     }
 
     @Override
@@ -97,7 +97,7 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
         Map<String, String> driverPodLabels = new HashMap<>();
         driverPodLabels.put(K8SConstants.LABEL_APP_KEY, clusterId);
         driverPodLabels.put(K8SConstants.LABEL_COMPONENT_KEY, K8SConstants.LABEL_COMPONENT_DRIVER);
-        driverPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS.getKey()));
+        driverPodLabels.putAll(KubernetesUtils.getPairsConf(config, POD_USER_LABELS));
         return driverPodLabels;
     }
 

@@ -36,7 +36,6 @@ public class WordLengthService {
             public void execute(IPipelineServiceContext pipelineServiceContext) {
                 int sourceParallelism = pipelineServiceContext.getConfig().getInteger(ExampleConfigKeys.SOURCE_PARALLELISM);
                 String word = (String) pipelineServiceContext.getRequest();
-                word = "test";
                 PWindowSource<String> windowSource = pipelineServiceContext
                     .buildSource(new CollectionSource<>(Lists.newArrayList(word)), AllWindow.getInstance())
                     .withParallelism(sourceParallelism);

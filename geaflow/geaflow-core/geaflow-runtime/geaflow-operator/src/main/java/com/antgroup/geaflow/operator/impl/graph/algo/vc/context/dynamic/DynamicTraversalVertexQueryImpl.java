@@ -15,8 +15,9 @@
 package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic;
 
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.state.GraphState;
-import java.util.Iterator;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 
 public class DynamicTraversalVertexQueryImpl<K, VV, EV> extends DynamicVertexQueryImpl<K, VV, EV>
     implements TraversalVertexQuery<K, VV> {
@@ -26,8 +27,17 @@ public class DynamicTraversalVertexQueryImpl<K, VV, EV> extends DynamicVertexQue
         super(vertexId, versionId, graphState);
     }
 
+    public DynamicTraversalVertexQueryImpl(K vertexId, long versionId,
+                                           GraphState<K, VV, EV> graphState,
+                                           KeyGroup keyGroup) {
+        super(vertexId, versionId, graphState, keyGroup);
+    }
+
     @Override
-    public Iterator<K> loadIdIterator() {
-        return graphState.dynamicGraph().V().idIterator();
+    public CloseableIterator<K> loadIdIterator() {
+        if (keyGroup == null) {
+            return graphState.dynamicGraph().V().idIterator();
+        }
+        return graphState.dynamicGraph().V().query(versionId, keyGroup).idIterator();
     }
 }

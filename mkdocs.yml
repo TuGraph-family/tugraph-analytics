@@ -39,9 +39,14 @@ nav:
                           - 'docs-cn/application-development/dsl/build-in/string.md'
                           - 'docs-cn/application-development/dsl/build-in/table.md'
                     - 连接器(Connector):
+                          - 'docs-cn/application-development/dsl/connector/common.md'
                           - 'docs-cn/application-development/dsl/connector/file.md'
+                          - 'docs-cn/application-development/dsl/connector/console.md'
+                          - 'docs-cn/application-development/dsl/connector/jdbc.md'
                           - 'docs-cn/application-development/dsl/connector/hive.md'
                           - 'docs-cn/application-development/dsl/connector/kafka.md'
+                          - 'docs-cn/application-development/dsl/connector/hbase.md'
+                          - 'docs-cn/application-development/dsl/connector/hudi.md'
                           - 'docs-cn/application-development/dsl/connector/udc.md'
                     - 语法文档:
                           - 'docs-cn/application-development/dsl/reference/ddl.md'
@@ -63,6 +68,7 @@ nav:
               - 'docs-cn/principle/dsl_principle.md'
               - 'docs-cn/principle/framework_principle.md'
               - 'docs-cn/principle/state_principle.md'
+              - 'docs-cn/principle/vs_join.md'
         - './docs-cn/contribution.md'
 
   - 'index.md'
@@ -96,9 +102,14 @@ nav:
                 - 'docs-en/application-development/dsl/build-in/string.md'
                 - 'docs-en/application-development/dsl/build-in/table.md'
             - Connector:
+                - 'docs-en/application-development/dsl/connector/common.md'
                 - 'docs-en/application-development/dsl/connector/file.md'
+                - 'docs-en/application-development/dsl/connector/console.md'
+                - 'docs-en/application-development/dsl/connector/jdbc.md'
                 - 'docs-en/application-development/dsl/connector/hive.md'
                 - 'docs-en/application-development/dsl/connector/kafka.md'
+                - 'docs-en/application-development/dsl/connector/hbase.md'
+                - 'docs-en/application-development/dsl/connector/hudi.md'
                 - 'docs-en/application-development/dsl/connector/udc.md'
             - Reference:
                 - 'docs-en/application-development/dsl/reference/ddl.md'
@@ -120,6 +131,7 @@ nav:
         - 'docs-en/principle/dsl_principle.md'
         - 'docs-en/principle/framework_principle.md'
         - 'docs-en/principle/state_principle.md'
+        - 'docs-en/principle/vs_join.md'
     - './docs-en/contribution.md'
 
 markdown_extensions:

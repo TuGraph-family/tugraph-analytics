@@ -18,6 +18,7 @@ import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.EDGE_CF;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.VERTEX_CF;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
@@ -25,6 +26,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.graph.encoder.IEdgeKVEncoder;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
 import com.antgroup.geaflow.state.graph.encoder.IVertexKVEncoder;
+import com.antgroup.geaflow.state.iterator.IteratorWithClose;
 import com.antgroup.geaflow.state.iterator.IteratorWithFlatFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFnThenFilter;
@@ -125,7 +127,8 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
         IVertex<K, VV> vertex = getVertex(sid, pushdown);
         List<IEdge<K, EV>> edgeList = getEdges(sid, pushdown);
         IGraphFilter filter = GraphFilter.of(pushdown.getFilter(), pushdown.getEdgeLimit());
-        OneDegreeGraph<K, VV, EV> oneDegreeGraph = new OneDegreeGraph<>(sid, vertex, edgeList.iterator());
+        OneDegreeGraph<K, VV, EV> oneDegreeGraph = new OneDegreeGraph<>(sid, vertex,
+            IteratorWithClose.wrap(edgeList.iterator()));
         if (filter.filterOneDegreeGraph(oneDegreeGraph)) {
             return oneDegreeGraph;
         } else {
@@ -134,7 +137,7 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
+    public CloseableIterator<K> vertexIDIterator() {
         flush();
         RocksdbIterator it = new RocksdbIterator(this.rocksdbClient.getIterator(VERTEX_CF));
         return new IteratorWithFnThenFilter<>(it, tuple2 -> vertexEncoder.getVertexID(tuple2.f0),
@@ -150,31 +153,40 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
+    public CloseableIterator<K> vertexIDIterator(IStatePushDown pushDown) {
+        if (pushDown.getFilter() == null) {
+            return vertexIDIterator();
+        } else {
+            return new IteratorWithFn<>(getVertexIterator(pushDown), IVertex::getId);
+        }
+    }
+
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         flush();
         RocksdbIterator it = new RocksdbIterator(rocksdbClient.getIterator(VERTEX_CF));
         return new VertexScanIterator<>(it, pushdown, vertexEncoder::getVertex);
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
         return new KeysIterator<>(keys, this::getVertex, pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
         flush();
         RocksdbIterator it = new RocksdbIterator(rocksdbClient.getIterator(EDGE_CF));
         return new EdgeScanIterator<>(it, pushdown, edgeEncoder::getEdge);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
         return new IteratorWithFlatFn<>(new KeysIterator<>(keys, this::getEdges, pushdown), List::iterator);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
         IStatePushDown pushdown) {
         flush();
         return new OneDegreeGraphScanIterator<>(encoder.getKeyType(),
@@ -182,20 +194,20 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
         return new KeysIterator<>(keys, this::getOneDegreeGraph, pushdown);
     }
 
     @Override
-    public <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
         IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         flush();
         return new IteratorWithFn<>(getEdgeIterator(pushdown), e -> Tuple.of(e.getSrcId(), pushdown.getProjector().project(e)));
     }
 
     @Override
-    public <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
-                                                            IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
+                                                                     IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return new IteratorWithFn<>(getEdgeIterator(keys, pushdown), e -> Tuple.of(e.getSrcId(), pushdown.getProjector().project(e)));
     }
 

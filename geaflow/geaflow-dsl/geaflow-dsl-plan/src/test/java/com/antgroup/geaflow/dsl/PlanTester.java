@@ -85,6 +85,8 @@ public class PlanTester {
             gqlContext.setCurrentGraph(graph.getName());
         } catch (SqlParseException e) {
             throw new RuntimeException(e);
+        } catch (Exception e) {
+            this.validateException = e;
         }
         return this;
     }

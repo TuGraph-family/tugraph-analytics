@@ -24,15 +24,15 @@ import lombok.Setter;
 @Setter
 public abstract class PersistentPluginConfigClass extends PluginConfigClass {
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.root", comment = "Root路径", jsonIgnore = true)
+    @GeaflowConfigKey(value = "geaflow.file.persistent.root", comment = "i18n.key.root.path", jsonIgnore = true)
     @GeaflowConfigValue(required = true, defaultValue = "/")
     private String root;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.user.name", comment = "用户名", jsonIgnore = true)
+    @GeaflowConfigKey(value = "geaflow.file.persistent.user.name", comment = "i18n.key.username", jsonIgnore = true)
     @GeaflowConfigValue
     private String username;
 
-    @GeaflowConfigKey(value = "geaflow.file.persistent.thread.size", comment = "本地线程池大小", jsonIgnore = true)
+    @GeaflowConfigKey(value = "geaflow.file.persistent.thread.size", comment = "i18n.key.local.thread.pool.count", jsonIgnore = true)
     @GeaflowConfigValue
     private Integer threadSize;
 

@@ -16,22 +16,13 @@ package com.antgroup.geaflow.cluster.local.entrypoint;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
 import com.antgroup.geaflow.cluster.local.clustermanager.LocalClusterManager;
-import com.antgroup.geaflow.cluster.master.Master;
-import com.antgroup.geaflow.cluster.master.MasterContext;
+import com.antgroup.geaflow.cluster.runner.entrypoint.MasterRunner;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.env.IEnvironment.EnvType;
 
-public class LocalMasterRunner {
-
-    private final Master master;
+public class LocalMasterRunner extends MasterRunner {
 
     public LocalMasterRunner(Configuration configuration) {
-        master = new Master();
-        MasterContext context = new MasterContext(configuration);
-        context.setRecover(false);
-        context.setClusterManager(new LocalClusterManager());
-        context.setEnvType(EnvType.LOCAL);
-        master.init(context);
+        super(configuration, new LocalClusterManager());
     }
 
     public ClusterInfo init() {

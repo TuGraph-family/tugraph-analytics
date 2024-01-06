@@ -14,14 +14,13 @@
 
 package com.antgroup.geaflow.dsl.runtime.command;
 
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
-import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.runtime.QueryContext;
 import com.antgroup.geaflow.dsl.runtime.QueryResult;
+import com.antgroup.geaflow.dsl.runtime.util.QueryUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.GraphElementTable;
@@ -30,8 +29,6 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
 import com.antgroup.geaflow.dsl.sqlnode.SqlEdgeUsing;
 import com.antgroup.geaflow.dsl.sqlnode.SqlVertexUsing;
-import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +59,7 @@ public class CreateGraphCommand implements IQueryCommand {
     @Override
     public QueryResult execute(QueryContext context) {
         GQLContext gContext = context.getGqlContext();
-        GeaFlowGraph graph = gContext.convertToGraph(createGraph, context.getGlobalConf());
+        GeaFlowGraph graph = gContext.convertToGraph(createGraph);
         gContext.registerGraph(graph);
         processUsing(graph, context);
         LOGGER.info("Succeed to create graph: {}.", graph);
@@ -71,17 +68,9 @@ public class CreateGraphCommand implements IQueryCommand {
 
 
     private void processUsing(GeaFlowGraph graph, QueryContext context) {
+
         //Graph first time creation will trigger insert operations
-        boolean graphExists;
-        try {
-            Configuration globalConfig = graph.getConfigWithGlobal(context.getGlobalConf());
-            ViewMetaBookKeeper keeper = new ViewMetaBookKeeper(graph.getUniqueName(), globalConfig);
-            long lastCheckPointId = keeper.getLatestViewVersion(graph.getUniqueName());
-            graphExists = lastCheckPointId >= 0;
-        } catch (IOException e) {
-            throw new GeaFlowDSLException(e);
-        }
-        if (!graphExists) {
+        if (!QueryUtil.isGraphExists(graph, graph.getConfigWithGlobal(context.getGlobalConf()))) {
             //Convert graph construction using tables to equivalent insert statement
             Map<String, String> vertexEdgeName2UsingTableNameMap = graph.getUsingTables();
             List<GraphElementTable> graphElements = new ArrayList<>(graph.getVertexTables());

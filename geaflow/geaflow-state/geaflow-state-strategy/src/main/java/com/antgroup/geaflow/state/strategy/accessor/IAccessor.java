@@ -30,5 +30,5 @@ public interface IAccessor {
     // action
     void registerAction(IAction action);
 
-    void doStoreAction(ActionType actionType, ActionRequest request);
+    void doStoreAction(int shardId, ActionType actionType, ActionRequest request);
 }

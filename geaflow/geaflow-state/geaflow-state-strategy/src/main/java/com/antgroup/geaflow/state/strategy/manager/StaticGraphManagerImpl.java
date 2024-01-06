@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.state.strategy.manager;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
@@ -24,11 +25,11 @@ import com.antgroup.geaflow.state.iterator.IteratorWithFilter;
 import com.antgroup.geaflow.state.iterator.MultiIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -70,54 +71,68 @@ public class StaticGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
-        List<Iterator<K>> iterators = new ArrayList<>();
+    public CloseableIterator<K> vertexIDIterator() {
+        List<CloseableIterator<K>> iterators = new ArrayList<>();
         for (Entry<Integer, StaticGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            Iterator<K> iterator = entry.getValue().vertexIDIterator();
+            CloseableIterator<K> iterator = entry.getValue().vertexIDIterator();
             iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), k -> k) : iterator);
         }
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
+    public CloseableIterator<K> vertexIDIterator(IStatePushDown pushdown) {
+        List<CloseableIterator<K>> iterators = new ArrayList<>();
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        for (int shard = shardGroup.getStartKeyGroup(); shard <= shardGroup.getEndKeyGroup(); shard++) {
+            StaticGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            CloseableIterator<K> iterator = trait.vertexIDIterator(pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, k -> k) : iterator);
+        }
+        return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
+    }
+
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         return getIterator(IVertex::getId, pushdown, StaticGraphTrait::getVertexIterator);
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
         return getIterator(keys, pushdown, StaticGraphTrait::getVertexIterator);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
         return getIterator(IEdge::getSrcId, pushdown, StaticGraphTrait::getEdgeIterator);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
         return getIterator(keys, pushdown, StaticGraphTrait::getEdgeIterator);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
         IStatePushDown pushdown) {
         return getIterator(OneDegreeGraph::getKey, pushdown, StaticGraphTrait::getOneDegreeGraphIterator);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
         return getIterator(keys, pushdown, StaticGraphTrait::getOneDegreeGraphIterator);
     }
 
     @Override
-    public <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
         IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
-        return getIterator(Tuple::getF0, pushdown, (trait, pushdown1) -> (Iterator<Tuple<K, R>>) trait.getEdgeProjectIterator(pushdown1));
+        return getIterator(Tuple::getF0, pushdown,
+            (trait, pd) -> (CloseableIterator<Tuple<K, R>>) trait.getEdgeProjectIterator(pd));
     }
 
     @Override
-    public <R> Iterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
                                                             IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return getIterator(keys, pushdown,
             (trait, keys1, pushdown1) -> trait.getEdgeProjectIterator(keys1, pushdown1));
@@ -126,9 +141,12 @@ public class StaticGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
     @Override
     public Map<K, Long> getAggResult(IStatePushDown pushdown) {
         Map<Integer, Map<K, Long>> map = new HashMap<>();
-        for (Entry<Integer, StaticGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            map.put(entry.getKey(), entry.getValue().getAggResult(pushdown));
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        for (int shard = shardGroup.getStartKeyGroup(); shard <= shardGroup.getEndKeyGroup(); shard++) {
+            map.put(shard, traitMap.get(shard).getAggResult(pushdown));
         }
+
         Map<K, Long> res = new HashMap<>();
         for (Entry<Integer, Map<K, Long>> partRes : map.entrySet()) {
             int keyGroupId = partRes.getKey();
@@ -155,41 +173,42 @@ public class StaticGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
         return res;
     }
 
-    private <R> Iterator<R> getIterator(List<K> keys,
+    private <R> CloseableIterator<R> getIterator(List<K> keys,
                                         IStatePushDown pushdown,
-                                        TriFunction<StaticGraphTrait<K, VV, EV>, List<K>, IStatePushDown, Iterator<R>> function) {
-        List<Iterator<R>> iterators = new ArrayList<>();
+                                        TriFunction<StaticGraphTrait<K, VV, EV>, List<K>, IStatePushDown, CloseableIterator<R>> function) {
+        List<CloseableIterator<R>> iterators = new ArrayList<>();
         Map<Integer, List<K>> keyGroupMap = getKeyGroupMap(keys);
         for (Entry<Integer, List<K>> entry: keyGroupMap.entrySet()) {
             Preconditions.checkArgument(entry.getKey() >= this.shardGroup.getStartKeyGroup()
                 && entry.getKey() <= this.shardGroup.getEndKeyGroup());
 
-            Iterator<R> iterator = function.apply(getTraitById(entry.getKey()), entry.getValue(), pushdown);
+            CloseableIterator<R> iterator = function.apply(getTraitById(entry.getKey()), entry.getValue(), pushdown);
             iterators.add(iterator);
         }
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
 
-
-    private <R> Iterator<R> getIterator(
+    private <R> CloseableIterator<R> getIterator(
         Function<R, K> keyExtractor,
         IStatePushDown pushdown,
-        BiFunction<StaticGraphTrait<K, VV, EV>, IStatePushDown, Iterator<R>> function) {
-        List<Iterator<R>> iterators = new ArrayList<>();
+        BiFunction<StaticGraphTrait<K, VV, EV>, IStatePushDown, CloseableIterator<R>> function) {
+        List<CloseableIterator<R>> iterators = new ArrayList<>();
 
-        int startShard = this.shardGroup.getStartKeyGroup();
-        int endShard = this.shardGroup.getEndKeyGroup();
-        for (Entry<Integer, StaticGraphTrait<K, VV, EV>> entry : traitMap.entrySet()) {
-            if (entry.getKey() >= startShard && entry.getKey() <= endShard) {
-                Iterator<R> iterator = function.apply(entry.getValue(), pushdown);
-                iterators.add(this.mayScale ? shardFilter(iterator, entry.getKey(), keyExtractor) : iterator);
-            }
+        KeyGroup shardGroup = getShardGroup(pushdown);
+
+        int startShard = shardGroup.getStartKeyGroup();
+        int endShard = shardGroup.getEndKeyGroup();
+
+        for (int shard = startShard; shard <= endShard; shard++) {
+            StaticGraphTrait<K, VV, EV> trait = traitMap.get(shard);
+            CloseableIterator<R> iterator = function.apply(trait, pushdown);
+            iterators.add(this.mayScale ? shardFilter(iterator, shard, keyExtractor) : iterator);
         }
 
         return iterators.size() == 1 ? iterators.get(0) : new MultiIterator<>(iterators.iterator());
     }
 
-    private <T> Iterator<T> shardFilter(Iterator<T> iterator, int keyGroupId,
+    private <T> CloseableIterator<T> shardFilter(CloseableIterator<T> iterator, int keyGroupId,
                                           Function<T, K> keyExtractor) {
         return new IteratorWithFilter<>(iterator, t -> assigner.assign(keyExtractor.apply(t)) == keyGroupId);
     }

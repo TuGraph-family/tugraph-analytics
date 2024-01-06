@@ -18,11 +18,16 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLUST
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.REPORTER_LIST;
 
+import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
+import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.utils.FileUtil;
 import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
 import io.fabric8.kubernetes.api.model.Toleration;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
@@ -34,7 +39,7 @@ public class KubernetesUtilsTest {
     public void testGetEnvTest() {
         Map<String, String> env = System.getenv();
         try {
-            KubernetesUtils.getEnvValue(env, "envTestKey");
+            ClusterUtils.getEnvValue(env, "envTestKey");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(e.getMessage().contains("envTestKey is not set"));
         }
@@ -55,7 +60,7 @@ public class KubernetesUtilsTest {
     public void testGetContentFromFile() {
         String path =
             this.getClass().getClassLoader().getResource("geaflow-conf-test.yml").getPath();
-        String content = KubernetesUtils.getContentFromFile(path);
+        String content = FileUtil.getContentFromFile(path);
         Assert.assertNotNull(content);
     }
 
@@ -87,5 +92,16 @@ public class KubernetesUtilsTest {
         configuration.put(KubernetesConfigKeys.MATCH_EXPRESSION_LIST, "key1:In:value1,key2:In:-");
         matchExpressions = KubernetesUtils.getMatchExpressions(configuration);
         Assert.assertEquals(matchExpressions.size(), 2);
+    }
+
+    @Test
+    public void testAddressEncoding() {
+        Map<String, ConnectAddress> map = new HashMap<>();
+        for (int i = 0; i < 3; i++) {
+            map.put(ClusterConstants.getDriverName(i), new ConnectAddress("127.0.0.1", 80));
+        }
+        String encodedStr = KubernetesUtils.encodeRpcAddressMap(map);
+        Map<String, ConnectAddress> map2 = KubernetesUtils.decodeRpcAddressMap(encodedStr);
+        Assert.assertEquals(map, map2);
     }
 }

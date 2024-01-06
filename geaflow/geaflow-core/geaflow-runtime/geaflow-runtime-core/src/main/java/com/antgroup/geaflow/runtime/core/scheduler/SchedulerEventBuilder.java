@@ -31,6 +31,7 @@ import com.antgroup.geaflow.runtime.core.protocol.InitCollectCycleEvent;
 import com.antgroup.geaflow.runtime.core.protocol.InitCycleEvent;
 import com.antgroup.geaflow.runtime.core.protocol.InitIterationEvent;
 import com.antgroup.geaflow.runtime.core.protocol.InterruptTaskEvent;
+import com.antgroup.geaflow.runtime.core.protocol.IterationExecutionComputeWithAggEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LoadGraphProcessEvent;
 import com.antgroup.geaflow.runtime.core.protocol.PopWorkerEvent;
@@ -45,7 +46,6 @@ import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.runtime.core.scheduler.io.IoDescriptorBuilder;
 import com.antgroup.geaflow.runtime.shuffle.InputDescriptor;
 import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
-import com.antgroup.geaflow.shuffle.OutputDescriptor;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -105,8 +105,7 @@ public class SchedulerEventBuilder {
         Map<Integer, IEvent> events = new LinkedHashMap<>();
         for (ExecutionTask task : this.cycle.getTasks()) {
             IoDescriptor ioDescriptor =
-                IoDescriptorBuilder.buildPipelineIoDescriptor(task, this.cycle, this.outputExchangeMode,
-                    this.cycle.getConfig(), this.resultManager);
+                IoDescriptorBuilder.buildPipelineIoDescriptor(task, this.cycle, this.resultManager);
             events.put(task.getTaskId(), buildInitOrPopEvent(task, ioDescriptor));
         }
         return events;
@@ -115,11 +114,8 @@ public class SchedulerEventBuilder {
     private Map<Integer, IEvent> buildInitIteration() {
         Map<Integer, IEvent> events = new LinkedHashMap<>();
         for (ExecutionTask task : this.cycle.getTasks()) {
-            InputDescriptor inputDescriptor =
-                IoDescriptorBuilder.buildBatchInputDescriptorFromUpstream(task, this.cycle, this.resultManager);
-            OutputDescriptor outputDescriptor =
-                IoDescriptorBuilder.buildIterationOutputDescriptor(task, this.cycle);
-            IoDescriptor ioDescriptor = new IoDescriptor(inputDescriptor, outputDescriptor);
+            IoDescriptor ioDescriptor =
+                IoDescriptorBuilder.buildPipelineIoDescriptor(task, this.cycle, this.resultManager);
             events.put(task.getTaskId(), buildInitOrPopEvent(task, ioDescriptor));
         }
         return events;
@@ -140,9 +136,9 @@ public class SchedulerEventBuilder {
         }
     }
 
-    private IEvent buildCleanOrStashEvent(int workerId) {
+    private IEvent buildCleanOrStashEvent(int workerId, int taskId) {
         if (enableAffinity) {
-            return new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
+            return new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount(), taskId);
         } else {
             return new CleanCycleEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
         }
@@ -207,7 +203,8 @@ public class SchedulerEventBuilder {
     }
 
     private Map<Integer, IEvent> handleFinish() {
-        if (this.cycle.getType() == ExecutionCycleType.ITERATION) {
+        if (this.cycle.getType() == ExecutionCycleType.ITERATION
+            || this.cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG) {
             return finishIteration();
         } else {
             return finishPipeline();
@@ -236,7 +233,7 @@ public class SchedulerEventBuilder {
             int workerId = task.getWorkerInfo().getWorkerIndex();
             IEvent cleanEvent;
             if (enableAffinity) {
-                cleanEvent = new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
+                cleanEvent = new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount(), task.getTaskId());
             } else {
                 cleanEvent = new CleanCycleEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
             }
@@ -260,7 +257,7 @@ public class SchedulerEventBuilder {
             // finish iteration
             FinishIterationEvent iterationFinishEvent = new FinishIterationEvent(workerId,
                 context.getInitialIterationId(), cycle.getCycleId(), task.getTaskId());
-            IEvent cleanEvent = buildCleanOrStashEvent(workerId);
+            IEvent cleanEvent = buildCleanOrStashEvent(workerId, task.getTaskId());
 
             ComposeEvent composeEvent =
                 new ComposeEvent(task.getWorkerInfo().getWorkerIndex(),
@@ -274,23 +271,29 @@ public class SchedulerEventBuilder {
         if (cycle.getVertexGroup().getParentVertexGroupIds().isEmpty() && ExecutionTaskUtils.isCycleHead(task)) {
             return new LaunchSourceEvent(workerId, cycleId, iterationId);
         } else {
-            // TODO Remove init iteration during trigger
+            // TODO remove init iteration during trigger
             //      after worker fully support handle load graph and init iteration.
             if (isIteration && iterationId == DEFAULT_INITIAL_ITERATION_ID) {
-                // Load graph.
+                // load graph
                 IEvent loadGraph = new LoadGraphProcessEvent(workerId, cycle.getCycleId(), iterationId,
                     context.getInitialIterationId(), COMPUTE_FETCH_COUNT);
-                // Init iteration.
+                // init iteration
                 InitIterationEvent iterationInit = new InitIterationEvent(workerId, cycle.getCycleId(),
                     iterationId, cycle.getPipelineId(), cycle.getPipelineName());
                 iterationInit.setIoDescriptor(new IoDescriptor(
-                    IoDescriptorBuilder.buildPipelineInputDescriptorFromSelfLoop(task,
-                        this.cycle, iterationId),
+                    IoDescriptorBuilder.buildIterationInitInputDescriptor(task, this.cycle, resultManager),
                     null));
                 IEvent execute = new ExecuteFirstIterationEvent(workerId, cycleId, iterationId);
                 return new ComposeEvent(workerId, Arrays.asList(loadGraph, iterationInit, execute));
             } else {
-                return new ExecuteComputeEvent(workerId, cycleId, iterationId, fetchId, COMPUTE_FETCH_COUNT);
+                InputDescriptor inputDescriptor = IoDescriptorBuilder.buildIterationExecuteInputDescriptor(task,
+                    this.cycle, resultManager);
+                if (inputDescriptor.getInputDescMap().isEmpty()) {
+                    return new ExecuteComputeEvent(workerId, cycleId, iterationId, fetchId, COMPUTE_FETCH_COUNT);
+                } else {
+                    return new IterationExecutionComputeWithAggEvent(workerId, cycleId,
+                        iterationId, fetchId, COMPUTE_FETCH_COUNT, inputDescriptor);
+                }
             }
         }
     }

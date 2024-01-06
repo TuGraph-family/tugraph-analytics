@@ -23,6 +23,7 @@ import com.antgroup.geaflow.dsl.calcite.EdgeRecordType;
 import com.antgroup.geaflow.dsl.calcite.PathRecordType;
 import com.antgroup.geaflow.dsl.calcite.VertexRecordType;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.common.function.UDAF;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.PathType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
@@ -35,15 +36,20 @@ import com.antgroup.geaflow.dsl.rel.PathSort;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
+import com.antgroup.geaflow.dsl.rel.match.MatchAggregate;
 import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
+import com.antgroup.geaflow.dsl.rel.match.MatchExtend;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathModify;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathSort;
 import com.antgroup.geaflow.dsl.rel.match.MatchUnion;
+import com.antgroup.geaflow.dsl.rel.match.OptionalEdgeMatch;
+import com.antgroup.geaflow.dsl.rel.match.OptionalVertexMatch;
 import com.antgroup.geaflow.dsl.rel.match.SubQueryStart;
 import com.antgroup.geaflow.dsl.rel.match.VertexMatch;
 import com.antgroup.geaflow.dsl.rel.match.VirtualEdgeMatch;
+import com.antgroup.geaflow.dsl.rex.MatchAggregateCall;
 import com.antgroup.geaflow.dsl.rex.RexObjectConstruct.VariableInfo;
 import com.antgroup.geaflow.dsl.runtime.expression.Expression;
 import com.antgroup.geaflow.dsl.runtime.expression.ExpressionTranslator;
@@ -55,10 +61,14 @@ import com.antgroup.geaflow.dsl.runtime.function.graph.MatchVertexFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.MatchVertexFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.graph.MatchVirtualEdgeFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.MatchVirtualEdgeFunctionImpl;
+import com.antgroup.geaflow.dsl.runtime.function.graph.StepAggExpressionFunctionImpl;
+import com.antgroup.geaflow.dsl.runtime.function.graph.StepAggExpressionFunctionImpl.StepAggCall;
+import com.antgroup.geaflow.dsl.runtime.function.graph.StepAggregateFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepBoolFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepBoolFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunctionImpl;
+import com.antgroup.geaflow.dsl.runtime.function.graph.StepKeyExpressionFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepKeyFunction;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepKeyFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.graph.StepNodeTypeFilterFunction;
@@ -68,6 +78,12 @@ import com.antgroup.geaflow.dsl.runtime.function.graph.StepSortFunctionImpl;
 import com.antgroup.geaflow.dsl.runtime.function.table.order.OrderByField;
 import com.antgroup.geaflow.dsl.runtime.function.table.order.OrderByField.ORDER;
 import com.antgroup.geaflow.dsl.runtime.function.table.order.SortInfo;
+import com.antgroup.geaflow.dsl.runtime.plan.PhysicAggregateRelNode;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.MatchEdgeOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.MatchVertexOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLocalExchangeOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepLocalSingleValueAggregateOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepNodeFilterOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.ConstantStartId;
 import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepSourceOperator.ParameterStartId;
@@ -79,6 +95,8 @@ import com.antgroup.geaflow.state.data.TimeRange;
 import com.antgroup.geaflow.state.pushdown.filter.EdgeTsFilter;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -88,6 +106,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.JoinInfo;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
@@ -146,6 +166,10 @@ public class StepLogicalPlanTranslator {
         public StepLogicalPlan visitVertexMatch(VertexMatch vertexMatch) {
             String label = vertexMatch.getLabel();
             RexNode filter = nodePushDownFilters.get(vertexMatch);
+            // TODO use optimizer rule to push the filter to the vertex-match.
+            if (vertexMatch.getPushDownFilter() != null) {
+                filter = vertexMatch.getPushDownFilter();
+            }
             Set<StartId> startIds = new HashSet<>();
             if (vertexMatch.getInput() == null && filter != null) {
                 Set<RexNode> ids = GQLRexUtil.findVertexIds(filter, (VertexRecordType) vertexMatch.getNodeType());
@@ -193,7 +217,9 @@ public class StepLogicalPlanTranslator {
                 }
             }
             PathType outputPath = (PathType) SqlTypeUtil.convertType(vertexMatch.getPathSchema());
-            MatchVertexFunction mvf = new MatchVertexFunctionImpl(nodeTypes, label);
+            boolean isOptionalMatch = vertexMatch instanceof OptionalVertexMatch
+                && SqlTypeUtil.convertType(vertexMatch.getNodeType()) != null;
+            MatchVertexFunction mvf = new MatchVertexFunctionImpl(nodeTypes, isOptionalMatch, label);
             StepLogicalPlan plan = input.vertexMatch(mvf)
                 .withModifyGraphSchema(input.getModifyGraphSchema())
                 .withOutputPathSchema(outputPath)
@@ -239,10 +265,12 @@ public class StepLogicalPlanTranslator {
             Set<BinaryString> edgeTypes = edgeMatch.getTypes().stream()
                 .map(s -> (BinaryString) BinaryUtil.toBinaryForString(s))
                 .collect(Collectors.toSet());
+            boolean isOptionalMatch = edgeMatch instanceof OptionalEdgeMatch
+                && SqlTypeUtil.convertType(edgeMatch.getNodeType()) != null;
             MatchEdgeFunction mef =
                 pushDownFilter == null ? new MatchEdgeFunctionImpl(edgeMatch.getDirection(),
-                    edgeTypes, label) :
-                new MatchEdgeFunctionImpl(edgeMatch.getDirection(), edgeTypes,
+                    edgeTypes, isOptionalMatch, label) :
+                new MatchEdgeFunctionImpl(edgeMatch.getDirection(), edgeTypes, isOptionalMatch,
                     label, pushDownFilter);
 
             StepLogicalPlan plan = input.edgeMatch(mef)
@@ -274,7 +302,9 @@ public class StepLogicalPlanTranslator {
             StepLogicalPlan input = this.visit(filter.getInput());
             PathType outputPath = (PathType) SqlTypeUtil.convertType(filter.getPathSchema());
             PathRecordType inputPath = ((IMatchNode) filter.getInput()).getPathSchema();
-            Expression condition = ExpressionTranslator.of(inputPath, logicalPlanSet).translate(filter.getCondition());
+
+            Expression condition =
+                ExpressionTranslator.of(inputPath, logicalPlanSet).translate(filter.getCondition());
             StepBoolFunction fn = new StepBoolFunctionImpl(condition);
             return input.filter(fn).withModifyGraphSchema(input.getModifyGraphSchema())
                 .withOutputPathSchema(outputPath);
@@ -298,7 +328,6 @@ public class StepLogicalPlanTranslator {
                         .getFieldList().get(index).getType()))
                 .collect(Collectors.toList())
                 .toArray(new IType[]{});
-
             StepKeyFunction leftKeyFn = new StepKeyFunctionImpl(toIntArray(joinInfo.leftKeys), leftKeyTypes);
             StepKeyFunction rightKeyFn = new StepKeyFunctionImpl(toIntArray(joinInfo.rightKeys), rightKeyTypes);
 
@@ -307,23 +336,33 @@ public class StepLogicalPlanTranslator {
             IType<?>[] leftPathTypes = leftPlan.getOutputPathSchema().getTypes();
             IType<?>[] rightPathTypes = rightPlan.getOutputPathSchema().getTypes();
 
+            Expression joinConditionExp =
+                ExpressionTranslator.of(join.getPathSchema()).translate(join.getCondition());
             StepJoinFunction joinFunction = new StepJoinFunctionImpl(join.getJoinType(),
-                leftPathTypes, rightPathTypes);
+                leftPathTypes, rightPathTypes, joinConditionExp);
 
             PathType inputJoinPath = (PathType) SqlTypeUtil.convertType(leftPathType.join(rightPathType,
                 join.getCluster().getTypeFactory()));
             PathType joinOutputPath = (PathType) SqlTypeUtil.convertType(join.getPathSchema());
-            StepLogicalPlan joinPlan = leftPlan.join(rightPlan, leftKeyFn, rightKeyFn, joinFunction, inputJoinPath)
-                .withOutputPathSchema(joinOutputPath);
 
-            if (!joinInfo.isEqui()) {
-                RexNode nonEqFilter = joinInfo.getRemaining(join.getCluster().getRexBuilder());
-                Expression nonEqFilterExp = ExpressionTranslator.of(join.getPathSchema()).translate(nonEqFilter);
-
-                StepBoolFunction filterFn = new StepBoolFunctionImpl(nonEqFilterExp);
-                return joinPlan.filter(filterFn).withOutputPathSchema(joinOutputPath);
+            List<StepLogicalPlan> leftChainableVertex =
+                StepLogicalPlanTranslator.getChainableVertexMatch(leftPlan);
+            List<StepLogicalPlan> rightChainableVertex =
+                StepLogicalPlanTranslator.getChainableVertexMatch(rightPlan);
+            boolean isLocalJoin = false;
+            if (leftChainableVertex.size() == 1
+                && rightChainableVertex.size() == 1
+                && joinInfo.leftKeys.size() == 1 && joinInfo.rightKeys.size() == 1) {
+                String leftVertexLabel = ((MatchVertexOperator)leftChainableVertex.get(0).getOperator()).getLabel();
+                String rightVertexLabel = ((MatchVertexOperator)rightChainableVertex.get(0).getOperator()).getLabel();
+                if (leftPathType.getFieldList().get(joinInfo.leftKeys.get(0)).getName().equals(leftVertexLabel)
+                    && rightPathType.getFieldList().get(joinInfo.rightKeys.get(0)).getName().equals(rightVertexLabel)) {
+                    isLocalJoin = true;
+                }
             }
-            return joinPlan;
+            return leftPlan
+                .join(rightPlan, leftKeyFn, rightKeyFn, joinFunction, inputJoinPath, isLocalJoin)
+                .withOutputPathSchema(joinOutputPath);
         }
 
         @Override
@@ -452,6 +491,42 @@ public class StepLogicalPlanTranslator {
         }
 
         @Override
+        public StepLogicalPlan visitExtend(MatchExtend matchExtend) {
+            StepLogicalPlan input = visit(matchExtend.getInput());
+            List<PathModifyExpression> modifyExpressions = matchExtend.getExpressions();
+            int[] updatePathIndices = new int[modifyExpressions.size()];
+            Expression[] updateExpressions = new Expression[modifyExpressions.size()];
+
+            ExpressionTranslator translator = ExpressionTranslator.of(
+                matchExtend.getInput().getRowType(), logicalPlanSet);
+            int offset = 0;
+            for (int i = 0; i < modifyExpressions.size(); i++) {
+                PathModifyExpression modifyExpression = modifyExpressions.get(i);
+                if (matchExtend.getRewriteFields().contains(modifyExpression.getLeftVar().getLabel())) {
+                    updatePathIndices[i] = modifyExpression.getIndex();
+                } else {
+                    updatePathIndices[i] = input.getOutputPathSchema().size() + offset;
+                    offset++;
+                }
+                updateExpressions[i] = translator.translate(modifyExpression.getObjectConstruct());
+            }
+            IType<?>[] inputFieldTypes = input.getOutputPathSchema().getFields()
+                .stream()
+                .map(TableField::getType)
+                .collect(Collectors.toList())
+                .toArray(new IType[]{});
+            GraphSchema modifyGraphSchema = (GraphSchema) SqlTypeUtil.convertType(matchExtend.getModifyGraphType());
+            StepPathModifyFunction modifyFunction = new StepPathModifyFunction(updatePathIndices,
+                updateExpressions, inputFieldTypes);
+            return input.map(modifyFunction, false)
+                .withGraphSchema(graphSchema)
+                .withModifyGraphSchema(modifyGraphSchema)
+                .withInputPathSchema(input.getOutputPathSchema())
+                .withOutputPathSchema((PathType) SqlTypeUtil.convertType(matchExtend.getRowType()))
+                .withOutputType(input.getOutputType());
+        }
+
+        @Override
         public StepLogicalPlan visitSort(MatchPathSort pathSort) {
             StepLogicalPlan input = visit(pathSort.getInput());
             SortInfo sortInfo = buildSortInfo(pathSort);
@@ -461,6 +536,52 @@ public class StepLogicalPlanTranslator {
                 .withModifyGraphSchema(input.getModifyGraphSchema())
                 .withInputPathSchema(inputPath)
                 .withOutputPathSchema(inputPath).withOutputType(inputPath);
+        }
+
+        @Override
+        public StepLogicalPlan visitAggregate(MatchAggregate matchAggregate) {
+            StepLogicalPlan input = visit(matchAggregate.getInput());
+            List<RexNode> groupList = matchAggregate.getGroupSet();
+            RelDataType inputRelDataType = matchAggregate.getInput().getRowType();
+            List<Expression> groupListExpressions = groupList.stream().map(rex ->
+                ExpressionTranslator.of(inputRelDataType, logicalPlanSet).translate(rex)).collect(
+                Collectors.toList());
+            StepKeyFunction keyFunction = new StepKeyExpressionFunctionImpl(
+                groupListExpressions.toArray(new Expression[0]),
+                groupListExpressions.stream().map(Expression::getOutputType).toArray(IType<?>[]::new));
+
+            List<MatchAggregateCall> aggCalls = matchAggregate.getAggCalls();
+            List<StepAggCall> aggFnCalls = new ArrayList<>();
+            for (MatchAggregateCall aggCall : aggCalls) {
+                String name = aggCall.getName();
+                Expression[] argFields = aggCall.getArgList().stream().map(
+                    rex -> ExpressionTranslator.of(inputRelDataType, logicalPlanSet).translate(rex))
+                    .toArray(Expression[]::new);
+                IType<?>[] argFieldTypes = Arrays.stream(argFields).map(Expression::getOutputType)
+                    .toArray(IType<?>[]::new);
+                Class<? extends UDAF<?, ?, ?>> udafClass =
+                    PhysicAggregateRelNode.findUDAF(aggCall.getAggregation(), argFieldTypes);
+                StepAggCall functionCall = new StepAggCall(name, argFields, argFieldTypes, udafClass,
+                    aggCall.isDistinct());
+                aggFnCalls.add(functionCall);
+            }
+
+            List<IType<?>> aggOutputTypes = aggCalls.stream()
+                .map(call -> SqlTypeUtil.convertType(call.getType()))
+                .collect(Collectors.toList());
+            int[] pathPruneIndices = inputRelDataType.getFieldList().stream().filter(
+                f -> matchAggregate.getPathSchema().getFieldNames().contains(f.getName())
+            ).map(RelDataTypeField::getIndex).mapToInt(Integer::intValue).toArray();
+            IType<?>[] inputPathTypes = inputRelDataType.getFieldList().stream()
+                .map(f -> SqlTypeUtil.convertType(f.getType())).toArray(IType<?>[]::new);
+            IType<?>[] pathPruneTypes = matchAggregate.getPathSchema().getFieldList().stream()
+                .map(f -> SqlTypeUtil.convertType(f.getType())).toArray(IType<?>[]::new);
+            StepAggregateFunction aggFn = new StepAggExpressionFunctionImpl(pathPruneIndices,
+                pathPruneTypes, inputPathTypes, aggFnCalls, aggOutputTypes);
+
+            PathType inputPath = input.getOutputPathSchema();
+            PathType outputPath = (PathType) SqlTypeUtil.convertType(matchAggregate.getRowType());
+            return input.aggregate(inputPath, outputPath, keyFunction, aggFn);
         }
 
         private SortInfo buildSortInfo(PathSort sort) {
@@ -508,5 +629,22 @@ public class StepLogicalPlanTranslator {
             });
             return new ParameterStartId(idExpression);
         }
+    }
+
+    public static List<StepLogicalPlan> getChainableVertexMatch(StepLogicalPlan startPlan) {
+        if (startPlan == null) {
+            return Collections.emptyList();
+        }
+        if (startPlan.getOperator() instanceof MatchVertexOperator) {
+            return Collections.singletonList(startPlan);
+        } else if (startPlan.getOperator() instanceof MatchEdgeOperator
+            || startPlan.getOperator() instanceof StepNodeFilterOperator
+            || startPlan.getOperator() instanceof StepLocalExchangeOperator
+            || startPlan.getOperator() instanceof StepLocalSingleValueAggregateOperator) {
+            return startPlan.getInputs().stream().flatMap(
+                input -> StepLogicalPlanTranslator.getChainableVertexMatch(input).stream()
+            ).collect(Collectors.toList());
+        }
+        return Collections.emptyList();
     }
 }

@@ -36,6 +36,17 @@ public class JobResourceMappingDao extends TenantLevelDao<JobResourceMappingMapp
             .eq(JobResourceMappingEntity::getResourceType, resourceType).list();
     }
 
+    public List<JobResourceMappingEntity> getJobByResources(String resourceName,String instanceId, GeaflowResourceType resourceType) {
+        if (resourceName == null || instanceId == null) {
+            return new ArrayList<>();
+        }
+
+        return lambdaQuery()
+            .eq(JobResourceMappingEntity::getResourceName, resourceName)
+            .eq(JobResourceMappingEntity::getInstanceId, instanceId)
+            .eq(JobResourceMappingEntity::getResourceType, resourceType).list();
+    }
+
     public boolean dropByJobIds(List<String> jobIds) {
         if (CollectionUtils.isEmpty(jobIds)) {
             return true;

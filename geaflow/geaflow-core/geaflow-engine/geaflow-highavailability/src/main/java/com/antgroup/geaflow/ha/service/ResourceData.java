@@ -17,14 +17,17 @@ package com.antgroup.geaflow.ha.service;
 import java.io.Serializable;
 
 public class ResourceData implements Serializable {
-
     private String host;
     private int processId;
-
     /** rpc service port.*/
+
     private int rpcPort;
     /** shuffle service port.*/
     private int shufflePort;
+    /** shuffle service port.*/
+    private int metricPort;
+    /** worker rpc porker. */
+    private int supervisorPort;
 
     public String getHost() {
         return host;
@@ -58,9 +61,26 @@ public class ResourceData implements Serializable {
         this.shufflePort = shufflePort;
     }
 
+    public int getMetricPort() {
+        return metricPort;
+    }
+
+    public void setMetricPort(int metricPort) {
+        this.metricPort = metricPort;
+    }
+
+    public int getSupervisorPort() {
+        return supervisorPort;
+    }
+
+    public void setSupervisorPort(int supervisorPort) {
+        this.supervisorPort = supervisorPort;
+    }
+
     @Override
     public String toString() {
         return "ResourceData{" + "host='" + host + '\'' + ", processId=" + processId + ", rpcPort="
-            + rpcPort + ", shufflePort=" + shufflePort + '}';
+            + rpcPort + ", shufflePort=" + shufflePort + ", metricPort=" + metricPort
+            + ", supervisorPort=" + supervisorPort + '}';
     }
 }

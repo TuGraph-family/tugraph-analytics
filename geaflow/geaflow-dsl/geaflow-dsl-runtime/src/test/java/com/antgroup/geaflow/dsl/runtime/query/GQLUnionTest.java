@@ -22,6 +22,7 @@ public class GQLUnionTest {
     public void testUnion_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLUnionTest {
     public void testUnion_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLUnionTest {
     public void testUnion_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLUnionTest {
     public void testUnion_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLUnionTest {
     public void testUnion_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLUnionTest {
     public void testUnion_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_006.sql")
             .execute()
             .checkSinkResult();
@@ -76,6 +82,7 @@ public class GQLUnionTest {
     public void testUnion_007() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_007.sql")
             .execute()
             .checkSinkResult();
@@ -85,6 +92,7 @@ public class GQLUnionTest {
     public void testUnion_008() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_008.sql")
             .execute()
             .checkSinkResult();
@@ -94,6 +102,7 @@ public class GQLUnionTest {
     public void testUnion_009() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_009.sql")
             .execute()
             .checkSinkResult();
@@ -103,6 +112,7 @@ public class GQLUnionTest {
     public void testUnion_010() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_010.sql")
             .execute()
             .checkSinkResult();
@@ -112,6 +122,7 @@ public class GQLUnionTest {
     public void testUnion_011() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_011.sql")
             .execute()
             .checkSinkResult();
@@ -121,6 +132,7 @@ public class GQLUnionTest {
     public void testUnion_012() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_012.sql")
             .execute()
             .checkSinkResult();
@@ -130,6 +142,7 @@ public class GQLUnionTest {
     public void testUnion_013() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_013.sql")
             .execute()
             .checkSinkResult();
@@ -139,6 +152,7 @@ public class GQLUnionTest {
     public void testUnion_014() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_union_014.sql")
             .execute()
             .checkSinkResult();

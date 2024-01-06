@@ -14,8 +14,9 @@
 
 package com.antgroup.geaflow.cluster.clustermanager;
 
-import com.antgroup.geaflow.cluster.rpc.RpcAddress;
+import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import java.io.Serializable;
+import java.util.Map;
 
 public interface IClusterManager extends Serializable {
 
@@ -30,19 +31,19 @@ public interface IClusterManager extends Serializable {
     ClusterId startMaster();
 
     /**
-     * Start driver.
+     * Start drivers drivers and returns rpc addresses.
      */
-    RpcAddress startDriver();
+    Map<String, ConnectAddress> startDrivers();
 
     /**
-     * Start workers.
+     * Start worker threads.
      */
     void allocateWorkers(int workerNum);
 
     /**
-     * Restart container of container id.
+     * Trigger job failover.
      */
-    void restartContainer(int containerId);
+    void doFailover(int componentId, Throwable cause);
 
     /**
      * Close cluster manager.

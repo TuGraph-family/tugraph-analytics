@@ -44,6 +44,12 @@ public class VertexRecordType extends RelRecordType {
 
     public static VertexRecordType createVertexType(List<RelDataTypeField> fields, String idField,
                                                     RelDataTypeFactory typeFactory) {
+        boolean hasMultiIdFields = fields.stream().filter(f -> f.getType() instanceof MetaFieldType
+            && ((MetaFieldType) f.getType()).getMetaField().equals(MetaField.VERTEX_ID)).count() > 1;
+        if (hasMultiIdFields) {
+            idField = VertexType.DEFAULT_ID_FIELD_NAME;
+            fields = GraphRecordType.renameMetaField(fields, MetaField.VERTEX_ID, idField);
+        }
         List<RelDataTypeField> reorderFields = reorderFields(fields, idField, typeFactory);
         return new VertexRecordType(reorderFields);
     }
@@ -84,7 +90,7 @@ public class VertexRecordType extends RelRecordType {
 
     public VertexRecordType add(String fieldName, RelDataType type, boolean caseSensitive) {
         if (type instanceof MetaFieldType) {
-            throw new IllegalArgumentException("Cannot add MetaFieldType");
+            type = ((MetaFieldType) type).getType();
         }
         List<RelDataTypeField> fields = new ArrayList<>(getFieldList());
 
@@ -109,10 +115,10 @@ public class VertexRecordType extends RelRecordType {
 
         // put id field at position 0.
         reorderFields.add(new RelDataTypeFieldImpl(idTypeField.getName(), VertexType.ID_FIELD_POSITION,
-            vertexId(idTypeField.getType())));
+            vertexId(idTypeField.getType(), typeFactory)));
         // put label field at position 1.
         reorderFields.add(new RelDataTypeFieldImpl(GraphSchema.LABEL_FIELD_NAME, VertexType.LABEL_FIELD_POSITION,
-            vertexType(typeFactory.createSqlType(SqlTypeName.VARCHAR))));
+            vertexType(typeFactory.createSqlType(SqlTypeName.VARCHAR), typeFactory)));
         // put other fields by order exclude ~label.
         int labelIndex = EdgeRecordType.indexOf(fields, GraphSchema.LABEL_FIELD_NAME);
         for (int k = 0; k < fields.size(); k++) {

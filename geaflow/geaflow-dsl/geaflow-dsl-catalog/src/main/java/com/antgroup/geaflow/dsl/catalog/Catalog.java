@@ -18,6 +18,8 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.catalog.exception.ObjectAlreadyExistException;
 import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.EdgeTable;
+import com.antgroup.geaflow.dsl.schema.GeaFlowGraph.VertexTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.schema.GeaFlowView;
 import java.util.Set;
@@ -61,6 +63,10 @@ public interface Catalog {
     Table getGraph(String instanceName, String graphName);
 
     Table getTable(String instanceName, String tableName);
+
+    VertexTable getVertex(String instanceName, String vertexName);
+
+    EdgeTable getEdge(String instanceName, String edgeName);
 
     GeaFlowFunction getFunction(String instanceName, String functionName);
 

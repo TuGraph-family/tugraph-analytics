@@ -53,7 +53,7 @@ public class PluginConfigViewConverterTest {
         view.setId("xxxx");
         view.setName("test-plugin");
         view.setComment("test plugin");
-        view.setType(GeaflowPluginType.MEMORY);
+        view.setType(GeaflowPluginType.MEMORY.name());
         view.setConfig(geaflowConfig);
 
         GeaflowPluginConfig model = pluginConfigViewConverter.convert(view);

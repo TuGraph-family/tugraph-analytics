@@ -62,7 +62,7 @@ public class DefaultRowDecoder implements RowDecoder {
         for (int i = 0; i < fields.size(); i++) {
             TableField field = fields.get(i);
             if (valueDecoders[i] != null) {
-                values[i] = valueDecoders[i].decode(row);
+                values[i] = valueDecoders[i].decode((Row) row.getField(i, field.getType()));
             } else {
                 values[i] = decode(row.getField(i, field.getType()), field.getType());
             }

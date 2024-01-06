@@ -19,120 +19,96 @@ import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.container.ContainerInfo;
 import com.antgroup.geaflow.cluster.driver.DriverInfo;
 import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
-import com.antgroup.geaflow.cluster.master.Master;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.cluster.master.IMaster;
+import com.antgroup.geaflow.cluster.rpc.IMasterEndpoint;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
-import com.antgroup.geaflow.rpc.proto.Master.ContainerIds;
-import com.antgroup.geaflow.rpc.proto.Master.ContainerInfos;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest;
+import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterRequest;
 import com.antgroup.geaflow.rpc.proto.Master.RegisterResponse;
-import com.antgroup.geaflow.rpc.proto.MasterServiceGrpc;
 import com.google.protobuf.Empty;
-import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MasterEndpoint extends MasterServiceGrpc.MasterServiceImplBase implements RpcEndpoint {
+public class MasterEndpoint implements IMasterEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MasterEndpoint.class);
 
-    private final Master master;
+    private final IMaster master;
     private final IClusterManager clusterManager;
 
-    public MasterEndpoint(Master master, IClusterManager clusterManager) {
+    public MasterEndpoint(IMaster master, IClusterManager clusterManager) {
         this.master = master;
         this.clusterManager = clusterManager;
     }
 
     @Override
-    public void registerContainer(RegisterRequest request,
-                                  StreamObserver<RegisterResponse> responseObserver) {
+    public RegisterResponse registerContainer(RegisterRequest request) {
         try {
             ContainerInfo containerInfo = RpcMessageEncoder.decode(request.getPayload());
-            RegisterResponse response = ((AbstractClusterManager) clusterManager)
-                .registerContainer(containerInfo);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+            return ((AbstractClusterManager) clusterManager).registerContainer(containerInfo);
         } catch (Throwable t) {
             LOGGER.error("register container failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("register container failed: %s",
+                t.getMessage()), t);
         }
     }
 
     @Override
-    public void registerDriver(RegisterRequest request,
-                               StreamObserver<RegisterResponse> responseObserver) {
+    public RegisterResponse registerDriver(RegisterRequest request) {
         try {
             DriverInfo driverInfo = RpcMessageEncoder.decode(request.getPayload());
-            RegisterResponse response = ((AbstractClusterManager) clusterManager)
-                .registerDriver(driverInfo);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+            return ((AbstractClusterManager) clusterManager).registerDriver(driverInfo);
         } catch (Throwable t) {
             LOGGER.error("register driver failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("register driver failed: %s",
+                t.getMessage()), t);
         }
     }
 
     @Override
-    public void receiveHeartbeat(HeartbeatRequest request, StreamObserver<Empty> responseObserver) {
+    public HeartbeatResponse receiveHeartbeat(HeartbeatRequest request) {
         try {
-            HeartbeatManager heartbeatManager = ((AbstractClusterManager) clusterManager).getClusterContext()
-                .getHeartbeatManager();
             Heartbeat heartbeat = new Heartbeat(request.getId());
             heartbeat.setTimestamp(request.getTimestamp());
+            heartbeat.setContainerName(RpcMessageEncoder.decode(request.getName()));
             heartbeat.setProcessMetrics(RpcMessageEncoder.decode(request.getPayload()));
-            heartbeatManager.receivedHeartbeat(heartbeat);
-            responseObserver.onNext(Empty.newBuilder().build());
-            responseObserver.onCompleted();
+            HeartbeatManager heartbeatManager =
+                ((AbstractClusterManager) clusterManager).getClusterContext().getHeartbeatManager();
+            return heartbeatManager.receivedHeartbeat(heartbeat);
         } catch (Throwable t) {
             LOGGER.error("process {} heartbeat failed: {}", request.getId(), t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("process %s heartbeat failed: %s",
+                request.getId(), t.getMessage()), t);
         }
     }
 
     @Override
-    public void receiveException(com.antgroup.geaflow.rpc.proto.Master.HeartbeatRequest request,
-                                 StreamObserver<Empty> responseObserver) {
+    public Empty receiveException(HeartbeatRequest request) {
         try {
             int containerId = request.getId();
-            LOGGER.info("received exception from container/driver {}, {}", containerId, RpcMessageEncoder.decode(request.getPayload()));
-            ((AbstractClusterManager) clusterManager).clusterFailover(containerId);
-            responseObserver.onNext(Empty.newBuilder().build());
-            responseObserver.onCompleted();
+            String containerName = RpcMessageEncoder.decode(request.getName());
+            String errMessage = RpcMessageEncoder.decode(request.getPayload());
+            LOGGER.info("received exception from {}: {}", containerName, errMessage);
+            clusterManager.doFailover(containerId, new RuntimeException(errMessage));
+            return Empty.newBuilder().build();
         } catch (Throwable t) {
             LOGGER.error("process {} heartbeat failed: {}", request.getId(), t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("process %s heartbeat failed: %s",
+                request.getId(), t.getMessage()), t);
         }
     }
 
     @Override
-    public void getContainerInfo(ContainerIds request,
-                                 StreamObserver<ContainerInfos> responseObserver) {
-        //TODO
-        responseObserver.onNext(ContainerInfos.newBuilder().build());
-        responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getAllContainerInfos(Empty request,
-                                     StreamObserver<ContainerInfos> responseObserver) {
-        //TODO
-        responseObserver.onNext(ContainerInfos.newBuilder().build());
-        responseObserver.onCompleted();
-    }
-
-    public void close(Empty request,
-                      StreamObserver<Empty> responseObserver) {
+    public Empty close(Empty request) {
         try {
             master.close();
-            responseObserver.onNext(Empty.newBuilder().build());
-            responseObserver.onCompleted();
+            return Empty.newBuilder().build();
         } catch (Throwable t) {
             LOGGER.error("close failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("close failed: %s", t.getMessage()), t);
         }
     }
-
 }

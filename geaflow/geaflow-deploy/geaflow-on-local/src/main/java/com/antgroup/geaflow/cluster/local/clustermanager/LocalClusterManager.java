@@ -18,8 +18,8 @@ import com.antgroup.geaflow.cluster.clustermanager.AbstractClusterManager;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.container.ContainerContext;
 import com.antgroup.geaflow.cluster.driver.DriverContext;
+import com.antgroup.geaflow.cluster.failover.FailoverStrategyFactory;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
-import com.antgroup.geaflow.cluster.failover.FoStrategyFactory;
 import com.antgroup.geaflow.cluster.failover.IFailoverStrategy;
 import com.antgroup.geaflow.cluster.local.context.LocalContainerContext;
 import com.antgroup.geaflow.cluster.local.context.LocalDriverContext;
@@ -43,8 +43,9 @@ public class LocalClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    protected IFailoverStrategy buildFoStrategy() {
-        return FoStrategyFactory.loadFoStrategy(IEnvironment.EnvType.LOCAL, FailoverStrategyType.disable_fo.name());
+    protected IFailoverStrategy buildFailoverStrategy() {
+        return FailoverStrategyFactory.loadFailoverStrategy(IEnvironment.EnvType.LOCAL,
+            FailoverStrategyType.disable_fo.name());
     }
 
     @Override
@@ -55,22 +56,27 @@ public class LocalClusterManager extends AbstractClusterManager {
     }
 
     @Override
-    public void restartContainer(int containerId) {
-        // do nothing.
-    }
-
-    @Override
-    public void doStartContainer(int containerId, boolean isRecover) {
+    public void createNewContainer(int containerId, boolean isRecover) {
         ContainerContext containerContext = new LocalContainerContext(containerId,
             clusterConfig.getConfig());
         LocalClient.createContainer(clusterConfig, containerContext);
     }
 
     @Override
-    public void doStartDriver(int driverId) {
-        DriverContext driverContext = new LocalDriverContext(driverId, clusterConfig.getConfig());
+    public void createNewDriver(int driverId, int driverIndex) {
+        DriverContext driverContext = new LocalDriverContext(driverId, driverIndex,
+            clusterConfig.getConfig());
         LocalClient.createDriver(clusterConfig, driverContext);
-        LOGGER.info("call driver start");
+        LOGGER.info("call driver start id:{} index:{}", driverId, driverIndex);
+    }
+
+
+    @Override
+    public void restartDriver(int driverId) {
+    }
+
+    @Override
+    public void restartContainer(int containerId) {
     }
 
     @Override

@@ -18,6 +18,7 @@ import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.EDGE_CF;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.VERTEX_CF;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.VERTEX_INDEX_CF;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.DataType;
@@ -31,7 +32,6 @@ import com.antgroup.geaflow.store.rocksdb.proxy.IGraphMultiVersionedRocksdbProxy
 import com.antgroup.geaflow.store.rocksdb.proxy.ProxyBuilder;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -80,40 +80,45 @@ public class GraphMultiVersionedRocksdbStore<K, VV, EV> extends BaseRocksdbGraph
     }
 
     @Override
-    public Iterator<K> vertexIDIterator() {
+    public CloseableIterator<K> vertexIDIterator() {
         return this.proxy.vertexIDIterator();
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<K> vertexIDIterator(long version, IStatePushDown pushdown) {
+        return this.proxy.vertexIDIterator(version, pushdown);
+    }
+
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
         return proxy.getVertexIterator(version, pushdown);
     }
 
     @Override
-    public Iterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
                                                       IStatePushDown pushdown) {
         return proxy.getVertexIterator(version, keys, pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
         return proxy.getEdgeIterator(version, pushdown);
     }
 
     @Override
-    public Iterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
                                                   IStatePushDown pushdown) {
         return proxy.getEdgeIterator(version, keys, pushdown);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
                                                                          IStatePushDown pushdown) {
         return proxy.getOneDegreeGraphIterator(version, pushdown);
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
                                                                          IStatePushDown pushdown) {
         return proxy.getOneDegreeGraphIterator(version, keys, pushdown);
     }

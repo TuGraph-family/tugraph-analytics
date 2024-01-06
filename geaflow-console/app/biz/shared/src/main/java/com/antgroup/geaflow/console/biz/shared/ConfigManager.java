@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.biz.shared;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.config.ConfigDescItem;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public interface ConfigManager {
 
     List<GeaflowPluginCategory> getPluginCategories();
 
-    List<GeaflowPluginType> getPluginCategoryTypes(GeaflowPluginCategory category);
+    List<String> getPluginCategoryTypes(GeaflowPluginCategory category);
 
-    List<ConfigDescItem> getPluginConfig(GeaflowPluginCategory category, GeaflowPluginType type);
+    List<ConfigDescItem> getPluginConfig(GeaflowPluginCategory category, String type);
 }

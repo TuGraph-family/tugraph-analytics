@@ -14,11 +14,12 @@
 
 package com.antgroup.geaflow.api.graph.compute;
 
-import com.antgroup.geaflow.api.graph.base.algo.VertexCentricAlgo;
+import com.antgroup.geaflow.api.graph.base.algo.AbstractIncVertexCentricComputeAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunction;
 
-public abstract class IncVertexCentricCompute<K, VV, EV, M> extends VertexCentricAlgo<K, VV, EV,
-    M> {
+
+public abstract class IncVertexCentricCompute<K, VV, EV, M>
+    extends AbstractIncVertexCentricComputeAlgo<K, VV, EV, M, IncVertexCentricComputeFunction<K, VV, EV, M>> {
 
     public IncVertexCentricCompute(long iterations) {
         super(iterations);

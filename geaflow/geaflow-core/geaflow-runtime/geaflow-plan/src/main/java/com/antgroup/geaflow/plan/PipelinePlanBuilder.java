@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.plan;
 
+import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.ENABLE_EXTRA_OPTIMIZE;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.ENABLE_EXTRA_OPTIMIZE_SINK;
 
@@ -22,11 +23,16 @@ import com.antgroup.geaflow.api.graph.materialize.PGraphMaterialize;
 import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.api.pdata.base.PAction;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.context.AbstractPipelineContext;
+import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
-import com.antgroup.geaflow.partitioner.impl.ForwardPartitioner;
+import com.antgroup.geaflow.operator.OpArgs;
+import com.antgroup.geaflow.operator.base.AbstractOperator;
+import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricAggOp;
+import com.antgroup.geaflow.partitioner.impl.KeyPartitioner;
 import com.antgroup.geaflow.pdata.graph.view.compute.ComputeIncGraph;
 import com.antgroup.geaflow.pdata.graph.view.materialize.MaterializedIncGraph;
 import com.antgroup.geaflow.pdata.graph.view.traversal.TraversalIncGraph;
@@ -49,7 +55,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +64,9 @@ import org.slf4j.LoggerFactory;
 public class PipelinePlanBuilder implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelinePlanBuilder.class);
+
+    private static final int SINGLE_WINDOW_CHECKPOINT_DURATION = 1;
+    public static final int ITERATION_AGG_VERTEX_ID = 0;
 
     private PipelineGraph pipelineGraph;
     private HashSet<Integer> visitedVIds;
@@ -87,6 +95,14 @@ public class PipelinePlanBuilder implements Serializable {
             LOGGER.info(pipelineVertex.getVertexString());
             DAGValidator.checkVertexValidity(this.pipelineGraph, pipelineVertex, true);
         });
+
+        boolean isSingleWindow = this.pipelineGraph.getSourceVertices().stream().allMatch(v ->
+            ((AbstractOperator) v.getOperator()).getOpArgs().getOpType() == OpArgs.OpType.SINGLE_WINDOW_SOURCE);
+        if (isSingleWindow) {
+            pipelineContext.getConfig().put(BATCH_NUMBER_PER_CHECKPOINT.getKey(),
+                String.valueOf(SINGLE_WINDOW_CHECKPOINT_DURATION));
+            LOGGER.info("reset checkpoint duration for all single window source pipeline graph");
+        }
 
         return this.pipelineGraph;
     }
@@ -213,10 +229,12 @@ public class PipelinePlanBuilder implements Serializable {
                         stream.getId(), edgeStreamInput.getPartition(), edgeStreamInput.getEncoder());
                     edgeInputEdge.setEdgeName(GraphRecordNames.Edge.name());
                     this.pipelineGraph.addEdge(edgeInputEdge);
-                    PipelineEdge iterationEdge = new PipelineEdge(this.edgeIdGenerator++, vId, vId,
-                        new ForwardPartitioner<>(vId), pGraphCompute.getMsgEncoder());
-                    iterationEdge.setEdgeName(GraphRecordNames.Message.name());
-                    this.pipelineGraph.addIterationEdge(iterationEdge);
+
+                    // iteration loop edge
+                    PipelineEdge iterationEdge = buildIterationEdge(vId, pGraphCompute.getMsgEncoder());
+                    this.pipelineGraph.addEdge(iterationEdge);
+
+                    buildIterationAggVertexAndEdge(pipelineVertex);
 
                     visitNode(vertexStreamInput);
                     visitNode(edgeStreamInput);
@@ -249,10 +267,12 @@ public class PipelinePlanBuilder implements Serializable {
                         stream.getId(), edgeStreamInput.getPartition(), edgeStreamInput.getEncoder());
                     edgeInputEdge.setEdgeName(GraphRecordNames.Edge.name());
                     this.pipelineGraph.addEdge(edgeInputEdge);
-                    PipelineEdge iterationEdge = new PipelineEdge(this.edgeIdGenerator++, vId, vId,
-                        new ForwardPartitioner<>(vId), pGraphCompute.getMsgEncoder());
-                    iterationEdge.setEdgeName(GraphRecordNames.Message.name());
-                    this.pipelineGraph.addIterationEdge(iterationEdge);
+
+                    // iteration loop edge
+                    PipelineEdge iterationEdge = buildIterationEdge(vId, pGraphCompute.getMsgEncoder());
+                    this.pipelineGraph.addEdge(iterationEdge);
+
+                    buildIterationAggVertexAndEdge(pipelineVertex);
 
                     visitNode(vertexStreamInput);
                     visitNode(edgeStreamInput);
@@ -297,10 +317,11 @@ public class PipelinePlanBuilder implements Serializable {
                         visitNode(requestStreamInput);
                     }
 
-                    PipelineEdge iterationEdge = new PipelineEdge(this.edgeIdGenerator++, vId, vId,
-                        new ForwardPartitioner<>(vId), windowGraph.getMsgEncoder());
-                    iterationEdge.setEdgeName(GraphRecordNames.Message.name());
-                    this.pipelineGraph.addIterationEdge(iterationEdge);
+                    // iteration loop edge
+                    PipelineEdge iterationEdge = buildIterationEdge(vId, windowGraph.getMsgEncoder());
+                    this.pipelineGraph.addEdge(iterationEdge);
+
+                    buildIterationAggVertexAndEdge(pipelineVertex);
 
                     visitNode(vertexStreamInput);
                     visitNode(edgeStreamInput);
@@ -348,11 +369,11 @@ public class PipelinePlanBuilder implements Serializable {
                         visitNode(requestStreamInput);
                     }
 
-                    // Add iteration edge.
-                    PipelineEdge iterationEdge = new PipelineEdge(this.edgeIdGenerator++, vId, vId,
-                        new ForwardPartitioner<>(vId), windowGraph.getMsgEncoder());
-                    iterationEdge.setEdgeName(GraphRecordNames.Message.name());
-                    this.pipelineGraph.addIterationEdge(iterationEdge);
+                    // Add iteration loop edge
+                    PipelineEdge iterationEdge = buildIterationEdge(vId, windowGraph.getMsgEncoder());
+                    this.pipelineGraph.addEdge(iterationEdge);
+
+                    buildIterationAggVertexAndEdge(pipelineVertex);
 
                     visitNode(vertexStreamInput);
                     visitNode(edgeStreamInput);
@@ -409,6 +430,34 @@ public class PipelinePlanBuilder implements Serializable {
                     throw new GeaflowRuntimeException("Not supported transform type: " + stream.getTransformType());
             }
             this.pipelineGraph.addVertex(pipelineVertex);
+        }
+    }
+
+    private PipelineEdge buildIterationEdge(int vid, IEncoder<?> encoder) {
+        PipelineEdge iterationEdge = new PipelineEdge(this.edgeIdGenerator++, vid, vid,
+            new KeyPartitioner<>(vid), encoder, CollectType.LOOP);
+        iterationEdge.setEdgeName(GraphRecordNames.Message.name());
+        return iterationEdge;
+    }
+
+    private void buildIterationAggVertexAndEdge(PipelineVertex iterationVertex) {
+        if (iterationVertex.getOperator() instanceof IGraphVertexCentricAggOp) {
+            PipelineVertex aggVertex = new PipelineVertex(ITERATION_AGG_VERTEX_ID,
+                iterationVertex.getOperator(), 0);
+            aggVertex.setType(VertexType.iteration_aggregation);
+            this.pipelineGraph.addVertex(aggVertex);
+
+            PipelineEdge inputEdge = new PipelineEdge(this.edgeIdGenerator++,
+                iterationVertex.getVertexId(), ITERATION_AGG_VERTEX_ID,
+                new KeyPartitioner<>(iterationVertex.getVertexId()), null, CollectType.RESPONSE);
+            inputEdge.setEdgeName(GraphRecordNames.Aggregate.name());
+            this.pipelineGraph.addEdge(inputEdge);
+
+            PipelineEdge outputEdge = new PipelineEdge(this.edgeIdGenerator++,
+                ITERATION_AGG_VERTEX_ID, iterationVertex.getVertexId(),
+                new KeyPartitioner<>(ITERATION_AGG_VERTEX_ID), null, CollectType.RESPONSE);
+            outputEdge.setEdgeName(GraphRecordNames.Aggregate.name());
+            this.pipelineGraph.addEdge(outputEdge);
         }
     }
 

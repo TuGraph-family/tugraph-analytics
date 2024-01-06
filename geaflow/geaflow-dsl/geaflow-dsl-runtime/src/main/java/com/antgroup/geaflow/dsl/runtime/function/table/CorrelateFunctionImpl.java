@@ -18,6 +18,7 @@ import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.FunctionContext;
+import com.antgroup.geaflow.dsl.runtime.expression.Expression;
 import com.antgroup.geaflow.dsl.runtime.expression.UDTFExpression;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,15 +28,19 @@ public class CorrelateFunctionImpl implements CorrelateFunction {
 
     private final UDTFExpression expression;
 
+    private final Expression filterExpression;
+
     private final List<IType<?>> leftOutputTypes;
 
     private final List<IType<?>> rightOutputTypes;
 
     public CorrelateFunctionImpl(UDTFExpression expression,
+                                 Expression filterExpression,
                                  List<IType<?>> leftOutputTypes,
                                  List<IType<?>> rightOutputTypes) {
         this.expression = Objects.requireNonNull(expression,
             "CorrelateFunctionImpl: expression is null");
+        this.filterExpression = filterExpression;
         this.leftOutputTypes = Objects.requireNonNull(leftOutputTypes,
             "CorrelateFunctionImpl: output type is null");
         this.rightOutputTypes = Objects.requireNonNull(rightOutputTypes,
@@ -51,7 +56,15 @@ public class CorrelateFunctionImpl implements CorrelateFunction {
     public List<Row> process(Row row) {
         List<Row> results = new ArrayList<>();
         for (Object[] value : (List<Object[]>) expression.evaluate(row)) {
-            results.add(ObjectRow.create(value));
+            Row newRow = ObjectRow.create(value);
+            if (filterExpression == null) {
+                results.add(newRow);
+            } else {
+                Object accept = filterExpression.evaluate(newRow);
+                if (accept != null && ((Boolean) accept)) {
+                    results.add(newRow);
+                }
+            }
         }
         return results;
     }

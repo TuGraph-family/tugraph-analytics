@@ -14,7 +14,9 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
+import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 public interface IShuffleWriter<T, R>  {
@@ -35,12 +37,30 @@ public interface IShuffleWriter<T, R>  {
     void emit(long batchId, T value, boolean isRetract, int[] channels) throws IOException;
 
     /**
+     * Emit values to output channels.
+     *
+     * @param batchId batch id
+     * @param value data list
+     * @param isRetract if retract
+     * @param channels output channels
+     * @throws IOException err
+     */
+    void emit(long batchId, List<T> value, boolean isRetract, int channels) throws IOException;
+
+    /**
      * Flush buffered data.
      *
      * @return shuffle result.
      * @throws IOException io exception.
      */
     Optional<R> flush(long batchId) throws IOException;
+
+    /**
+     * Get write metrics.
+     *
+     * @return write metrics.
+     */
+    ShuffleWriteMetrics getShuffleWriteMetrics();
 
     /**
      * Close.

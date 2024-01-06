@@ -14,6 +14,9 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.context;
 
+import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT;
+
+import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
@@ -46,7 +49,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
     protected transient long initialIterationId;
     protected transient Map<Long, List<SchedulerState>> schedulerStateMap;
     protected transient long lastCheckpointId;
-    protected transient long allSourceFinishIterationId;
+    protected transient long terminateIterationId;
 
     protected transient ICycleSchedulerContext parentContext;
     protected IScheduledWorkerManager workerManager;
@@ -57,14 +60,20 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         this.cycle = cycle;
         this.parentContext = parentContext;
 
-        long startIterationId;
         if (parentContext != null) {
             // Get worker manager from parent context, no need to init.
             this.workerManager = parentContext.getSchedulerWorkerManager();
-            startIterationId = parentContext.getCurrentIterationId();
         } else {
             this.workerManager = ScheduledWorkerManagerFactory.createScheduledWorkerManager(cycle.getConfig(),
                 getHaLevel());
+        }
+    }
+
+    public void init() {
+        long startIterationId;
+        if (parentContext != null) {
+            startIterationId = parentContext.getCurrentIterationId();
+        } else {
             startIterationId = DEFAULT_INITIAL_ITERATION_ID;
         }
         this.finishIterationId = cycle.getIterationCount() == Long.MAX_VALUE
@@ -78,7 +87,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         this.initialIterationId = startIterationId;
         this.iterationIdGenerator = new AtomicLong(currentIterationId);
         this.lastCheckpointId = 0;
-        this.allSourceFinishIterationId = Long.MAX_VALUE;
+        this.terminateIterationId = Long.MAX_VALUE;
         this.schedulerStateMap = new HashMap<>();
         if (parentContext != null) {
             this.cycleResultManager = parentContext.getResultManager();
@@ -88,7 +97,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
         this.workerManager.init(cycle);
 
-        LOGGER.info("init cycle {} context onTheFlyThreshold {}, currentIterationId {}, "
+        LOGGER.info("{} init cycle context onTheFlyThreshold {}, currentIterationId {}, "
                 + "iterationCount {}, finishIterationId {}, initialIterationId {}",
             cycle.getPipelineName(), cycle.getFlyingCount(), this.currentIterationId,
             cycle.getIterationCount(), this.finishIterationId, this.initialIterationId);
@@ -107,7 +116,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public boolean isCycleFinished() {
-        return (iterationIdGenerator.get() > finishIterationId || lastCheckpointId >= allSourceFinishIterationId)
+        return (iterationIdGenerator.get() > finishIterationId || lastCheckpointId >= terminateIterationId)
             && flyingIterations.isEmpty();
     }
 
@@ -123,7 +132,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public boolean hasNextIteration() {
-        return iterationIdGenerator.get() <= finishIterationId && lastCheckpointId < allSourceFinishIterationId
+        return iterationIdGenerator.get() <= finishIterationId && lastCheckpointId < terminateIterationId
             && flyingIterations.size() < cycle.getFlyingCount();
     }
 
@@ -169,8 +178,8 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         return parentContext;
     }
 
-    public void setFinishedSourceIterationId(long iterationId) {
-        allSourceFinishIterationId = iterationId;
+    public void setTerminateIterationId(long iterationId) {
+        terminateIterationId = iterationId;
     }
 
     public void setCallbackFunction(ICallbackFunction callbackFunction) {
@@ -179,8 +188,9 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public void finish(long windowId) {
+        long checkpointDuration = getConfig().getLong(BATCH_NUMBER_PER_CHECKPOINT);
         if (callbackFunction != null) {
-            callbackFunction.window(windowId);
+            callbackFunction.window(windowId, checkpointDuration);
         }
         checkpoint(windowId);
     }
@@ -204,7 +214,9 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     @Override
     public void close() {
-        workerManager.close();
+        if (!PipelineUtil.isAsync(getConfig())) {
+            workerManager.close();
+        }
     }
 
     abstract void checkpoint(long windowId);

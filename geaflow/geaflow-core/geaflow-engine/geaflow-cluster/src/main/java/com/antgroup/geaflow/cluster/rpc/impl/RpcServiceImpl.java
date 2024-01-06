@@ -14,14 +14,10 @@
 
 package com.antgroup.geaflow.cluster.rpc.impl;
 
-import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpointRefFactory;
 import com.antgroup.geaflow.cluster.rpc.RpcService;
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import io.grpc.BindableService;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
+import com.baidu.brpc.server.RpcServer;
+import com.baidu.brpc.server.RpcServerOptions;
 import java.io.Serializable;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -31,36 +27,29 @@ public class RpcServiceImpl implements RpcService, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RpcServiceImpl.class);
 
-    private int port;
-    private Server server;
-    private final ServerBuilder serverBuilder;
+    private final int port;
 
-    public RpcServiceImpl(Configuration config) {
-        this(0, config);
+    private final RpcServer server;
+
+    public RpcServiceImpl(int port, RpcServerOptions options) {
+        this.port = port;
+        this.server = new RpcServer(port, options);
     }
 
-    public RpcServiceImpl(int port, Configuration config) {
-        this.serverBuilder = ServerBuilder.forPort(port);
-        RpcEndpointRefFactory.getInstance(config);
-    }
-
-    public void addEndpoint(RpcEndpoint rpcEndpoint) {
-        if (rpcEndpoint instanceof BindableService) {
-            serverBuilder.addService((BindableService) rpcEndpoint);
-        }
+    public void addEndpoint(Object rpcEndpoint) {
+        server.registerService(rpcEndpoint);
     }
 
     @Override
     public int startService() {
         try {
-            this.server = serverBuilder.build().start();
-            this.port = server.getPort();
-            LOGGER.info("Server started, listening on: {}", port);
+            this.server.start();
+            LOGGER.info("Brpc Server started: {}", port);
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
                     // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-                    LOGGER.warn("*** shutting down gRPC server since JVM is shutting down");
+                    LOGGER.warn("*** shutting down bRPC server since JVM is shutting down");
                     stopService();
                     LOGGER.warn("*** server shut down");
                 }
@@ -74,10 +63,14 @@ public class RpcServiceImpl implements RpcService, Serializable {
 
     @Test
     public void waitTermination() {
-        try {
-            server.awaitTermination();
-        } catch (InterruptedException e) {
-            LOGGER.warn("shutdown is interrupted");
+        synchronized (server) {
+            while (!server.isShutdown()) {
+                try {
+                    server.wait();
+                } catch (InterruptedException e) {
+                    LOGGER.warn("shutdown is interrupted");
+                }
+            }
         }
     }
 

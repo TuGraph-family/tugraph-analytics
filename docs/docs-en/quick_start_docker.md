@@ -49,17 +49,17 @@ Below is an introduction on running the flow graph job mentioned in Local Mode E
 
 **x86 architecture**
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console:0.1
 ```
 
 **arm Architecture**
 ```
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 tugraph/geaflow-console-arm:0.1
+docker run -d --name geaflow-console -p 8888:8888 tugraph/geaflow-console-arm:0.1
 ```
 
 * For the Local Image
 ```shell
-docker run -d --name geaflow-console -p 8080:8080 -p 8888:8888 geaflow-console:0.1
+docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1
 ```
 
 **Note**: The tag name of the remote image is different from that of the local build image, and the startup 
@@ -78,7 +78,7 @@ GeaflowApplication:61   - Started GeaflowApplication in 11.437 seconds (JVM runn
 
 The first registered user will be set as the default administrator. Log in as an administrator and use the one-click installation feature to start system initialization.
 
-![install_welcome](../static/img/install_welcome.png)
+![install_welcome](../static/img/install_welcome_en.png)
 
 
 3. Config GeaFlow
@@ -89,33 +89,33 @@ GeaFlow requires configuration of runtime environment settings during its initia
 
 Click "Next" and use the default Container mode, which is local container mode.
 
-![install_container](../static/img/install_container.png)
+![install_container](../static/img/install_container_en.png)
 
 3.2 Runtime Config
 
 For local runtime mode, you can skip this step and use the default system settings by clicking "Next" directly.
 
-![install_conainer_meta_config.png](../static/img/install_conainer_meta_config.png)
+![install_conainer_meta_config.png](../static/img/install_container_meta_config_en.png)
 
 3.3 Storage Config
 
 Select the graph data storage location. For local mode, select LOCAL and enter a local directory. If you don't need to fill it out, click "Next" directly.
 
-![install_storage_config](../static/img/install_storage_config.png)
+![install_storage_config](../static/img/install_storage_config_en.png)
 
 3.4 File Config
 
 This configuration is for the persistent storage of GeaFlow engine JAR and user JAR files, such as in HDFS. For local runtime mode, it is the same as the data storage configuration, so select LOCAL mode and enter a local directory. If you don't need to fill it out, click "Next" directly.
 
-![install_jar_config](../static/img/install_jar_config.png)
+![install_jar_config](../static/img/install_jar_config_en.png)
 After completing the configuration, click the one-click installation button. After successful installation, the administrator will automatically switch to the default instance under the personal tenant and can directly create and publish graph computing tasks.
 
 4. Create Job
 
-Go to the Graph Development page, select the Graph Calculation tab on the left, click the "New" button in the upper right corner, and create a new DSL job.
+Go to the `DEVELOPMENT` page, select the `Jobs` tab on the left, click the "Add" button in the upper right corner, and create a new DSL job.
 
-![create_job](../static/img/create_job.png)
-Fill in the task name, task description, and DSL content. The DSL content is the same as described in the local runtime job section earlier, just modify the DSL and replace tbl_source and tbl_result tables with ${your.host.ip}.
+![create_job](../static/img/create_job_en.png)
+Fill in the job name, task description, and DSL content. The DSL content is the same as described in the local runtime job section earlier, just modify the DSL and replace tbl_source and tbl_result tables with ${your.host.ip}.
 
 ```sql
 set geaflow.dsl.window.size = 1;
@@ -182,7 +182,7 @@ FROM (
 );
 
 INSERT INTO tbl_result
-SELECT
+SELECT DISTINCT
   a_id,
   b_id,
   c_id,
@@ -195,14 +195,14 @@ FROM (
 );
 ```
 
-![add_dsl_job](../static/img/add_dsl_job.png)
+![add_dsl_job](../static/img/add_dsl_job_en.png)
 After creating the job, click the "Publish" button to publish the job. 
 
-![add_dsl_job](../static/img/job_list.png)
+![add_dsl_job](../static/img/job_list_en.png)
 
 Then go to the Job Management page and click the "Submit" button to submit the taslk for execution.
 
-![task_detail](../static/img/task_detail.png)
+![task_detail](../static/img/task_detail_en.png)
 
 5. Start the socket service and input data
 

@@ -14,18 +14,18 @@
 
 package com.antgroup.geaflow.state.data;
 
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import java.io.Serializable;
-import java.util.Iterator;
 
 public class OneDegreeGraph<K, VV, EV> implements Serializable {
 
     private IVertex<K, VV> vertex;
-    protected Iterator<IEdge<K, EV>> edgeIterator;
+    protected CloseableIterator<IEdge<K, EV>> edgeIterator;
     protected K key;
 
-    public OneDegreeGraph(K key, IVertex<K, VV> vertex, Iterator<IEdge<K, EV>> edgeIterator) {
+    public OneDegreeGraph(K key, IVertex<K, VV> vertex, CloseableIterator<IEdge<K, EV>> edgeIterator) {
         this.key = key;
         this.vertex = vertex;
         this.edgeIterator = edgeIterator;
@@ -39,7 +39,7 @@ public class OneDegreeGraph<K, VV, EV> implements Serializable {
         return vertex;
     }
 
-    public Iterator<IEdge<K, EV>> getEdgeIterator() {
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator() {
         return edgeIterator;
     }
 }

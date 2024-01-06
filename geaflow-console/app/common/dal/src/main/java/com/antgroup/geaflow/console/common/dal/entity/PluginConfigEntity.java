@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.common.dal.entity;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +26,7 @@ public class PluginConfigEntity extends UserLevelEntity {
 
     protected GeaflowPluginCategory category;
 
-    protected GeaflowPluginType type;
+    protected String type;
 
     protected String config;
 

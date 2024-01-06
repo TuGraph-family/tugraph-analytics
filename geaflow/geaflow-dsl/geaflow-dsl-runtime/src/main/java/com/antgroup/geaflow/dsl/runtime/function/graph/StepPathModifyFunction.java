@@ -27,6 +27,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
 import com.antgroup.geaflow.dsl.runtime.traversal.collector.StepCollector;
 import com.antgroup.geaflow.dsl.runtime.traversal.data.GlobalVariable;
 import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
@@ -43,6 +44,8 @@ public class StepPathModifyFunction implements StepMapFunction {
 
     private FunctionSchemas schemas;
 
+    private final int newFieldNum;
+
     public StepPathModifyFunction(int[] updatePathIndices,
                                   Expression[] modifyExpressions,
                                   IType<?>[] fieldTypes) {
@@ -50,6 +53,8 @@ public class StepPathModifyFunction implements StepMapFunction {
         this.modifyExpressions = Objects.requireNonNull(modifyExpressions);
         assert updatePathIndices.length == modifyExpressions.length;
         this.fieldTypes = Objects.requireNonNull(fieldTypes);
+        this.newFieldNum = this.updatePathIndices.length > 0 ? Math.max(fieldTypes.length,
+            1 + Arrays.stream(updatePathIndices).max().getAsInt()) : fieldTypes.length;
     }
 
     @Override
@@ -77,8 +82,8 @@ public class StepPathModifyFunction implements StepMapFunction {
 
     @Override
     public Path map(Row record) {
-        Row[] values = new Row[fieldTypes.length];
-        for (int i = 0; i < values.length; i++) {
+        Row[] values = new Row[newFieldNum];
+        for (int i = 0; i < fieldTypes.length; i++) {
             values[i] = (Row) record.getField(i, fieldTypes[i]);
         }
         for (int i = 0; i < updatePathIndices.length; i++) {

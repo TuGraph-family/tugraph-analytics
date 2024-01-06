@@ -28,6 +28,10 @@ public class ComponentInfo implements Serializable {
     protected int pid;
     /** rpc service port. */
     protected int rpcPort;
+    /** metric query port. */
+    protected int metricPort;
+    /** agent service port. */
+    protected int agentPort;
 
     public ComponentInfo() {
     }
@@ -80,4 +84,19 @@ public class ComponentInfo implements Serializable {
         this.rpcPort = rpcPort;
     }
 
+    public int getMetricPort() {
+        return metricPort;
+    }
+
+    public void setMetricPort(int metricPort) {
+        this.metricPort = metricPort;
+    }
+
+    public int getAgentPort() {
+        return agentPort;
+    }
+
+    public void setAgentPort(int agentPort) {
+        this.agentPort = agentPort;
+    }
 }

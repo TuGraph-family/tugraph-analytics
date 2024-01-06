@@ -111,15 +111,115 @@ public class KryoSerializer implements ISerializer {
                 }
             }
 
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.BinaryRow", 1011);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.DefaultParameterizedPath",
+                "com.antgroup.geaflow.dsl.common.data.impl.DefaultParameterizedPath$DefaultParameterizedPathSerializer", 1012);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.DefaultParameterizedRow",
+                "com.antgroup.geaflow.dsl.common.data.impl.DefaultParameterizedRow$DefaultParameterizedRowSerializer", 1013);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.DefaultPath",
+                "com.antgroup.geaflow.dsl.common.data.impl.DefaultPath$DefaultPathSerializer", 1014);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.DefaultRowKeyWithRequestId",
+                "com.antgroup.geaflow.dsl.common.data.impl.DefaultRowKeyWithRequestId$DefaultRowKeyWithRequestIdSerializer", 1015);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.ObjectRow",
+                "com.antgroup.geaflow.dsl.common.data.impl.ObjectRow$ObjectRowSerializer", 1016);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.ObjectRowKey",
+                "com.antgroup.geaflow.dsl.common.data.impl.ObjectRowKey$ObjectRowKeySerializer", 1017);
+
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.BinaryStringEdge", 1018);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.BinaryStringTsEdge", 1019);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.BinaryStringVertex", 1020);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.DoubleEdge", 1021);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.DoubleTsEdge", 1022);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.DoubleVertex", 1023);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.IntEdge", 1024);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.IntTsEdge", 1025);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.IntVertex", 1026);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.LongEdge", 1027);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.LongTsEdge", 1028);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.LongVertex", 1029);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.ObjectEdge", 1030);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.ObjectTsEdge", 1031);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.types.ObjectVertex", 1032);
+
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignEdge",
+                "com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignEdge$FieldAlignEdgeSerializer", 1033);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignPath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignPath$FieldAlignPathSerializer", 1034);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignVertex",
+                "com.antgroup.geaflow.dsl.runtime.traversal.data.FieldAlignVertex$FieldAlignVertexSerializer", 1035);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.data.IdOnlyVertex", 1036);
+
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.ParameterizedRow", 1037);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.Path", 1038);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.Row", 1039);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.RowEdge", 1040);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.RowKey", 1041);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.RowKeyWithRequestId", 1042);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.RowVertex", 1043);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.common.data.impl.ParameterizedPath", 1044);
+
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.EODMessage",
+                "com.antgroup.geaflow.dsl.runtime.traversal.message.EODMessage$EODMessageSerializer", 1045);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.IPathMessage", 1046);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.JoinPathMessage",
+                "com.antgroup.geaflow.dsl.runtime.traversal.message.JoinPathMessage$JoinPathMessageSerializer", 1047);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.KeyGroupMessage", 1048);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.KeyGroupMessageImpl",
+                "com.antgroup.geaflow.dsl.runtime.traversal.message.KeyGroupMessageImpl$KeyGroupMessageImplSerializer", 1049);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.ParameterRequestMessage",
+                "com.antgroup.geaflow.dsl.runtime.traversal.message.ParameterRequestMessage$ParameterRequestMessageSerializer", 1050);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.RequestIsolationMessage", 1051);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.ReturnMessage", 1052);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.message.ReturnMessageImpl",
+                "com.antgroup.geaflow.dsl.runtime.traversal.message.ReturnMessageImpl$ReturnMessageImplSerializer", 1053);
+
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.AbstractSingleTreePath", 1054);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.AbstractTreePath", 1055);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.EdgeTreePath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.path.EdgeTreePath$EdgeTreePathSerializer", 1056);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.EmptyTreePath", 1057);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath", 1058);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.ParameterizedTreePath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.path.ParameterizedTreePath$ParameterizedTreePathSerializer", 1059);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.SourceEdgeTreePath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.path.SourceEdgeTreePath$SourceEdgeTreePathSerializer", 1060);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.SourceVertexTreePath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.path.SourceVertexTreePath$SourceVertexTreePathSerializer", 1061);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.UnionTreePath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.path.UnionTreePath$UnionTreePathSerializer", 1062);
+            registerClass(kryo, "com.antgroup.geaflow.dsl.runtime.traversal.path.VertexTreePath",
+                "com.antgroup.geaflow.dsl.runtime.traversal.path.VertexTreePath$VertexTreePathSerializer", 1063);
+
             return kryo;
         }
     };
 
     private void registerClass(Kryo kryo, String className, int kryoId) {
         try {
-            LOGGER.info("register class:{} id:{}", className, kryoId);
+            LOGGER.debug("register class:{} id:{}", className, kryoId);
             Class<?> clazz = ClassUtil.classForName(className);
             kryo.register(clazz, kryoId);
+        } catch (GeaflowRuntimeException e) {
+            if (e.getCause() instanceof ClassNotFoundException) {
+                LOGGER.warn("class not found: {} skip register id:{}", className, kryoId);
+            }
+        } catch (Throwable e) {
+            LOGGER.error("error in register class: {} to kryo.", className);
+            throw new GeaflowRuntimeException(e);
+        }
+    }
+
+    private void registerClass(Kryo kryo, String className, String serializerClassName, int kryoId) {
+        try {
+            LOGGER.debug("register class:{} id:{}", className, kryoId);
+            Class<?> clazz = ClassUtil.classForName(className);
+            Class<?> serializerClazz = ClassUtil.classForName(serializerClassName);
+            Serializer serializer = (Serializer) serializerClazz.newInstance();
+            kryo.register(clazz, serializer, kryoId);
+        } catch (GeaflowRuntimeException e) {
+            if (e.getCause() instanceof ClassNotFoundException) {
+                LOGGER.warn("class not found: {} skip register id:{}", className, kryoId);
+            }
         } catch (Throwable e) {
             LOGGER.error("error in register class: {} to kryo.", className);
             throw new GeaflowRuntimeException(e);

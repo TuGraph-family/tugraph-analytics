@@ -22,6 +22,7 @@ public class GQLMatchTest {
     public void testMatch_001() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_001.sql")
             .execute()
             .checkSinkResult();
@@ -31,6 +32,7 @@ public class GQLMatchTest {
     public void testMatch_002() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_002.sql")
             .execute()
             .checkSinkResult();
@@ -40,6 +42,7 @@ public class GQLMatchTest {
     public void testMatch_003() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_003.sql")
             .execute()
             .checkSinkResult();
@@ -49,6 +52,7 @@ public class GQLMatchTest {
     public void testMatch_004() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_004.sql")
             .execute()
             .checkSinkResult();
@@ -58,6 +62,7 @@ public class GQLMatchTest {
     public void testMatch_005() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_005.sql")
             .execute()
             .checkSinkResult();
@@ -67,6 +72,7 @@ public class GQLMatchTest {
     public void testMatch_006() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_006.sql")
             .execute()
             .checkSinkResult();
@@ -76,7 +82,6 @@ public class GQLMatchTest {
     public void testMatch_007() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_match_007.sql")
             .execute()
             .checkSinkResult();
@@ -86,7 +91,6 @@ public class GQLMatchTest {
     public void testMatch_008() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_match_008.sql")
             .execute()
             .checkSinkResult();
@@ -96,7 +100,6 @@ public class GQLMatchTest {
     public void testMatch_009() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withQueryPath("/query/gql_match_009.sql")
             .execute()
             .checkSinkResult();
@@ -106,7 +109,27 @@ public class GQLMatchTest {
     public void testMatch_010() throws Exception {
         QueryTester
             .build()
+            .withGraphDefine("/query/modern_graph.sql")
             .withQueryPath("/query/gql_match_010.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testMatch_011() throws Exception {
+        QueryTester
+            .build()
+            .withGraphDefine("/query/modern_graph.sql")
+            .withQueryPath("/query/gql_match_011.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testMatch_012() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_match_012.sql")
             .execute()
             .checkSinkResult();
     }

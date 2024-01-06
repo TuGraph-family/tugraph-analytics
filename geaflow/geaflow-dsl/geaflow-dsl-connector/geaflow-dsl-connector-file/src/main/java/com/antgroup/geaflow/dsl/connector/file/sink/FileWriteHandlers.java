@@ -14,12 +14,21 @@
 
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
-import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_LOCAL_FILE;
+import static com.antgroup.geaflow.dsl.connector.file.FileConstants.PREFIX_S3_RESOURCE;
+
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 
 public class FileWriteHandlers {
 
-    public static FileWriteHandler from(String path) {
-        if (path.startsWith(PREFIX_LOCAL_FILE)) {
+    public static FileWriteHandler from(String path, Configuration conf) {
+        if (path.startsWith(PREFIX_S3_RESOURCE)) {
+            return new S3FileWriteHandler(path);
+        }
+        FileSystem fs = FileConnectorUtil.getHdfsFileSystem(conf);
+        if (fs instanceof LocalFileSystem) {
             return new LocalFileWriteHandler(path);
         }
         return new HdfsFileWriteHandler(path);

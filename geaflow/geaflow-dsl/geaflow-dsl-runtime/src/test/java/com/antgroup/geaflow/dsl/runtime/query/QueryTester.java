@@ -43,14 +43,14 @@ public class QueryTester implements Serializable {
 
     private int testTimeWaitSeconds = 0;
 
-    private static final String INIT_DDL = "/query/init_ddl.sql";
+    public static final String INIT_DDL = "/query/modern_graph.sql";
     public static final String DSL_STATE_REMOTE_PATH = "/tmp/dsl/";
 
     private String queryPath;
 
     private boolean compareWithOrder = false;
 
-    private boolean enableInitDDL = true;
+    private String graphDefinePath;
 
     private final Map<String, String> config = new HashMap<>();
 
@@ -96,7 +96,6 @@ public class QueryTester implements Serializable {
         if (queryPath == null) {
             throw new IllegalArgumentException("You should call withQueryPath() before execute().");
         }
-
         Map<String, String> config = new HashMap<>();
         config.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), String.valueOf(-1L));
         config.put(FileConfigKeys.ROOT.getKey(), DSL_STATE_REMOTE_PATH);
@@ -104,12 +103,16 @@ public class QueryTester implements Serializable {
         config.putAll(this.config);
         initResultDirectory();
 
-        Environment environment = EnvironmentFactory.onLocalEnvironment(new String[]{});
+        Environment environment = EnvironmentFactory.onLocalEnvironment();
         environment.getEnvironmentContext().withConfig(config);
 
         GQLPipeLine gqlPipeLine = new GQLPipeLine(environment, testTimeWaitSeconds);
 
-        gqlPipeLine.setPipelineHook(new TestGQLPipelineHook(enableInitDDL, queryPath));
+        String graphDefinePath = null;
+        if (this.graphDefinePath != null) {
+            graphDefinePath = this.graphDefinePath;
+        }
+        gqlPipeLine.setPipelineHook(new TestGQLPipelineHook(graphDefinePath, queryPath));
         try {
             gqlPipeLine.execute();
         } finally {
@@ -165,6 +168,9 @@ public class QueryTester implements Serializable {
 
     private String readFile(String path) throws IOException {
         File file = new File(path);
+        if (file.isHidden()) {
+            return "";
+        }
         if (file.isFile()) {
             return IOUtils.toString(new File(path).toURI(), Charset.defaultCharset()).trim();
         }
@@ -172,13 +178,17 @@ public class QueryTester implements Serializable {
         StringBuilder content = new StringBuilder();
         if (files != null) {
             for (File subFile : files) {
+                String readText = readFile(subFile.getAbsolutePath());
+                if (StringUtils.isBlank(readText)) {
+                    continue;
+                }
                 if (content.length() > 0) {
                     content.append("\n");
                 }
-                content.append(readFile(subFile.getAbsolutePath()));
+                content.append(readText);
             }
         }
-        return content.toString();
+        return content.toString().trim();
     }
 
     private static String getTargetPath(String queryPath) {
@@ -191,33 +201,32 @@ public class QueryTester implements Serializable {
         return targetPath;
     }
 
-    public QueryTester enableInitDDL(boolean enableInitDDL) {
-        this.enableInitDDL = enableInitDDL;
+    public QueryTester withGraphDefine(String graphDefinePath) {
+        this.graphDefinePath = Objects.requireNonNull(graphDefinePath);
         return this;
     }
 
     private static class TestGQLPipelineHook implements GQLPipelineHook {
 
-        private final boolean enableInitDDL;
+        private final String graphDefinePath;
 
         private final String queryPath;
 
-        public TestGQLPipelineHook(boolean enableInitDDL, String queryPath) {
-            this.enableInitDDL = enableInitDDL;
+        public TestGQLPipelineHook(String graphDefinePath, String queryPath) {
+            this.graphDefinePath = graphDefinePath;
             this.queryPath = queryPath;
         }
 
         @Override
         public String rewriteScript(String script, Configuration configuration) {
-            return script.replace("${target}",
-                FileConstants.PREFIX_LOCAL_FILE + getTargetPath(queryPath));
+            return script.replace("${target}", getTargetPath(queryPath));
         }
 
         @Override
         public void beforeExecute(QueryClient queryClient, QueryContext queryContext) {
-            if (enableInitDDL) {
+            if (graphDefinePath != null) {
                 try {
-                    String ddl = IOUtils.resourceToString(INIT_DDL, Charset.defaultCharset());
+                    String ddl = IOUtils.resourceToString(graphDefinePath, Charset.defaultCharset());
                     queryClient.executeQuery(ddl, queryContext);
                 } catch (IOException e) {
                     throw new GeaFlowDSLException(e);

@@ -33,9 +33,7 @@ public enum GeaflowOperationType {
 
     REFRESH,
 
-    CLEAN_DATA,
-
-    CLEAN_META,
+    RESET,
 
     STARTUP_NOTIFY
 

@@ -17,10 +17,12 @@ package com.antgroup.geaflow.store.memory;
 import com.antgroup.geaflow.collection.array.PrimitiveArray;
 import com.antgroup.geaflow.collection.array.PrimitiveArrayFactory;
 import com.antgroup.geaflow.collection.map.MapFactory;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
+import com.antgroup.geaflow.state.iterator.IteratorWithClose;
 import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFnThenFilter;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
@@ -35,7 +37,6 @@ import com.antgroup.geaflow.store.memory.csr.vertex.VertexArrayFactory;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -93,14 +94,16 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
         OneDegreeGraph<K, VV, EV> oneDegreeGraph;
         IGraphFilter filter = GraphFilter.of(pushdown.getFilter(), pushdown.getEdgeLimit());
         if (pos == CSRStore.NON_EXIST) {
-            return new OneDegreeGraph<>(sid, null, Collections.emptyIterator());
+            return new OneDegreeGraph<>(sid, null,
+                IteratorWithClose.wrap(Collections.emptyIterator()));
         } else {
             IVertex<K, VV> vertex = csrStore.getVertex(sid, pos);
             if (vertex == null || !filter.filterVertex(vertex)) {
                 vertex = null;
             }
             List<IEdge<K, EV>> stream = pushdownEdges(csrStore.getEdges(sid, pos), pushdown);
-            oneDegreeGraph = new OneDegreeGraph<>(sid, vertex, stream.iterator());
+            oneDegreeGraph = new OneDegreeGraph<>(sid, vertex,
+                IteratorWithClose.wrap(stream.iterator()));
         }
         return filter.filterOneDegreeGraph(oneDegreeGraph) ? oneDegreeGraph : null;
     }
@@ -119,14 +122,14 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
     }
 
     @Override
-    protected Iterator<List<IEdge<K, EV>>> getEdgesIterator() {
+    protected CloseableIterator<List<IEdge<K, EV>>> getEdgesIterator() {
         Preconditions.checkArgument(isBuilt, "flush first.");
         return new IteratorWithFn<>(IntStream.range(0, csrStore.getDict().size()).iterator(),
             p -> csrStore.getEdges(csrStore.reverse.get(p), p));
     }
 
     @Override
-    protected Iterator<IVertex<K, VV>> getVertexIterator() {
+    protected CloseableIterator<IVertex<K, VV>> getVertexIterator() {
         Preconditions.checkArgument(isBuilt, "flush first.");
 
         return new IteratorWithFnThenFilter<>(IntStream.range(0, csrStore.getDict().size()).iterator(),
@@ -134,8 +137,7 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
     }
 
     @Override
-    public Iterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
-        IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown) {
         Preconditions.checkArgument(isBuilt, "flush first.");
 
         return new IteratorWithFnThenFilter<>(IntStream.range(0, csrStore.getDict().size()).iterator(),
@@ -146,8 +148,8 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
     }
 
     @Override
-    protected Iterator<K> getKeyIterator() {
-        return csrStore.getDict().keySet().iterator();
+    protected CloseableIterator<K> getKeyIterator() {
+        return IteratorWithClose.wrap(csrStore.getDict().keySet().iterator());
     }
 
     @Override

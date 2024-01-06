@@ -24,7 +24,6 @@ public class GQLWriteAndReadTest {
     public void testInsertDynamicGraph_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), 1)
             .withQueryPath("/query/gql_graph_write_001.sql")
             .execute() // write data to graph
@@ -37,7 +36,6 @@ public class GQLWriteAndReadTest {
     public void testInsertDynamicGraph_002() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), -1)
             .withQueryPath("/query/gql_graph_write_002.sql")
             .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), 1)
@@ -53,7 +51,6 @@ public class GQLWriteAndReadTest {
     public void testInsertStaticGraph_001() throws Exception {
         QueryTester
             .build()
-            .enableInitDDL(false)
             .withConfig(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT.getKey(), 1)
             .withQueryPath("/query/gql_static_graph_001.sql")
             .execute() // write data to graph

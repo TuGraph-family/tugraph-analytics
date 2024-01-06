@@ -16,7 +16,7 @@ package com.antgroup.geaflow.cluster.local.client;
 
 import com.antgroup.geaflow.cluster.client.AbstractClusterClient;
 import com.antgroup.geaflow.cluster.client.IPipelineClient;
-import com.antgroup.geaflow.cluster.client.PipelineClient;
+import com.antgroup.geaflow.cluster.client.PipelineClientFactory;
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.ClusterInfo;
@@ -24,7 +24,10 @@ import com.antgroup.geaflow.cluster.local.clustermanager.LocalClient;
 import com.antgroup.geaflow.cluster.local.clustermanager.LocalClusterId;
 import com.antgroup.geaflow.cluster.local.clustermanager.LocalClusterManager;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.env.ctx.IEnvironmentContext;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +36,8 @@ public class LocalClusterClient extends AbstractClusterClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalClusterClient.class);
     private LocalClusterManager localClusterManager;
     private ClusterContext clusterContext;
+    private final ExecutorService agentService = Executors.newSingleThreadExecutor(
+        ThreadUtil.namedThreadFactory(true, "local-agent"));
 
     @Override
     public void init(IEnvironmentContext environmentContext) {
@@ -50,7 +55,8 @@ public class LocalClusterClient extends AbstractClusterClient {
             ClusterMeta clusterMeta = new ClusterMeta(clusterInfo);
             callback.onSuccess(clusterMeta);
             LOGGER.info("cluster info: {}", clusterInfo);
-            return new PipelineClient(clusterInfo.getDriverAddress(), clusterContext.getConfig());
+            return PipelineClientFactory.createPipelineClient(
+                clusterInfo.getDriverAddresses(), clusterContext.getConfig());
         } catch (Throwable e) {
             LOGGER.error("deploy cluster failed", e);
             callback.onFailure(e);

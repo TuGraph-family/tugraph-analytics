@@ -42,20 +42,24 @@ public class DoneEvent<T> implements ICycleResponseEvent {
     private EventMetrics eventMetrics;
 
     public DoneEvent(int cycleId, long windowId, int tailTaskId, EventType sourceEvent) {
+        this(cycleId, windowId, tailTaskId, sourceEvent, null, null);
+    }
+
+    public DoneEvent(int cycleId, long windowId, int tailTaskId, EventType sourceEvent, T result) {
+        this(cycleId, windowId, tailTaskId, sourceEvent, result, null);
+    }
+
+    public DoneEvent(int cycleId,
+                     long windowId,
+                     int tailTaskId,
+                     EventType sourceEvent,
+                     T result,
+                     EventMetrics eventMetrics) {
         this.cycleId = cycleId;
         this.windowId = windowId;
         this.taskId = tailTaskId;
         this.sourceEvent = sourceEvent;
-    }
-
-    public DoneEvent(int cycleId, long windowId, int tailTaskId, EventType sourceEvent, T result) {
-        this(cycleId, windowId, tailTaskId, sourceEvent);
         this.result = result;
-    }
-
-    public DoneEvent(int cycleId, long windowId, int tailTaskId, EventType sourceEvent, T result,
-                     EventMetrics eventMetrics) {
-        this(cycleId, windowId, tailTaskId, sourceEvent, result);
         this.eventMetrics = eventMetrics;
     }
 

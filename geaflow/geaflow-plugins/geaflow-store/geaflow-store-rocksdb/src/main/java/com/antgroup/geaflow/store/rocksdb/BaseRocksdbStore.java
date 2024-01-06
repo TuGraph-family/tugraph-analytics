@@ -27,8 +27,12 @@ import com.antgroup.geaflow.store.context.StoreContext;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseRocksdbStore.class);
 
     protected Configuration config;
     protected String rocksdbPath;
@@ -41,6 +45,7 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
     protected String jobName;
     protected StoreContext storeContext;
     protected int shardId;
+    protected long recoveryVersion = -1;
 
     @Override
     public void init(StoreContext storeContext) {
@@ -83,6 +88,11 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
 
     @Override
     public void recovery(long version) {
+        if (version <= recoveryVersion) {
+            LOGGER.info("shardId {} recovery version {} <= last recovery version {}, ignore",
+                shardId, version, recoveryVersion);
+            return;
+        }
         drop();
         String chkPath = RocksdbConfigKeys.getChkPath(this.rocksdbPath, version);
         String recoverPath = remotePath;
@@ -100,6 +110,7 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
             shardId = storeContext.getShardId();
         }
         this.rocksdbClient.initDB();
+        recoveryVersion = version;
     }
 
     protected Path getRemotePath() {

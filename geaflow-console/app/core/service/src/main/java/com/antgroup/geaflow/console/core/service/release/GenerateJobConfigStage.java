@@ -18,22 +18,28 @@ import com.antgroup.geaflow.console.core.model.config.GeaflowConfig;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.release.ReleaseUpdate;
 import org.apache.commons.collections.MapUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GenerateJobConfigStage extends GeaflowBuildStage {
 
-    private GeaflowConfig getDefaultConfig() {
-        return new GeaflowConfig();
-    }
+    @Autowired
+    private JobConfigBuilder jobConfigBuilder;
 
     @Override
     public void init(GeaflowRelease release) {
         // generate default job config from job plan
-        GeaflowConfig defaultConfig = getDefaultConfig();
-        defaultConfig.put("geaflow.heartbeat.timeout.ms", "300000");
-        release.setJobConfig(defaultConfig);
+        GeaflowConfig jobConfig = jobConfigBuilder.buildDefaultConfig(release);
+
+        if (release.getJobConfig() != null) {
+            jobConfig.putAll(release.getJobConfig());
+        }
+
+        release.setJobConfig(jobConfig);
+
     }
+
 
     @Override
     public boolean update(GeaflowRelease release, ReleaseUpdate update) {

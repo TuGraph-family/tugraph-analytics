@@ -66,7 +66,7 @@ public class FilterGenerator {
 
     private static FilterNode getLogicalPlan(FilterType filterType, List<IFilter> filters) {
         return FilterNode.newBuilder()
-            .setFilterOrdinal(filterType.ordinal())
+            .setFilterType(filterType.toPbFilterType())
             .addAllFilters(filters.stream()
                 .sorted(Comparator.comparingInt(o -> o.getFilterType().ordinal()))
                 .map(FilterGenerator::getFilterPlan).collect(Collectors.toList()))
@@ -75,11 +75,11 @@ public class FilterGenerator {
 
     private static FilterNode getNormalPlan(FilterType filterType) {
         return FilterNode.newBuilder()
-            .setFilterOrdinal(filterType.ordinal())
+            .setFilterType(filterType.toPbFilterType())
             .build();
     }
 
-    private static FilterNode getFilterData(IFilter filter) {
+    public static FilterNode getFilterData(IFilter filter) {
         FilterType filterType = filter.getFilterType();
         switch (filterType) {
             case AND:
@@ -103,8 +103,9 @@ public class FilterGenerator {
             case VERTEX_VALUE_DROP:
             case EDGE_VALUE_DROP:
             case VERTEX_MUST_CONTAIN:
+            case EMPTY:
                 return FilterNode.newBuilder()
-                    .setFilterOrdinal(filterType.ordinal())
+                    .setFilterType(filterType.toPbFilterType())
                     .build();
             default:
                 throw new GeaflowRuntimeException("not support user defined filter " + filter.getFilterType());
@@ -113,7 +114,7 @@ public class FilterGenerator {
 
     private static FilterNode getLogicalFilterData(FilterType filterType, List<IFilter> filters) {
         return FilterNode.newBuilder()
-            .setFilterOrdinal(filterType.ordinal())
+            .setFilterType(filterType.toPbFilterType())
             .addAllFilters(filters.stream()
                 .sorted(Comparator.comparingInt(o -> o.getFilterType().ordinal()))
                 .map(FilterGenerator::getFilterData).collect(Collectors.toList()))
@@ -122,21 +123,21 @@ public class FilterGenerator {
 
     private static FilterNode getStringFilterData(FilterType filterType, Collection<String> strs) {
         return FilterNode.newBuilder()
-            .setFilterOrdinal(filterType.ordinal())
+            .setFilterType(filterType.toPbFilterType())
             .setStrContent(StringList.newBuilder().addAllStr(strs).build())
             .build();
     }
 
     private static FilterNode getLongFilterData(FilterType filterType, Collection<Long> longs) {
         return FilterNode.newBuilder()
-            .setFilterOrdinal(filterType.ordinal())
+            .setFilterType(filterType.toPbFilterType())
             .setLongContent(LongList.newBuilder().addAllLong(longs).build())
             .build();
     }
 
     private static FilterNode getIntFilterData(FilterType filterType, Collection<Integer> ints) {
         return FilterNode.newBuilder()
-            .setFilterOrdinal(filterType.ordinal())
+            .setFilterType(filterType.toPbFilterType())
             .setIntContent(IntList.newBuilder().addAllInt(ints).build())
             .build();
     }

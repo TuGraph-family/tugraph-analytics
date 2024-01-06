@@ -15,17 +15,17 @@
 package com.antgroup.geaflow.cluster.rpc.impl;
 
 import com.antgroup.geaflow.cluster.driver.IDriver;
-import com.antgroup.geaflow.cluster.rpc.RpcEndpoint;
+import com.antgroup.geaflow.cluster.rpc.IDriverEndpoint;
+import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineReq;
 import com.antgroup.geaflow.rpc.proto.Driver.PipelineRes;
-import com.antgroup.geaflow.rpc.proto.DriverServiceGrpc;
 import com.google.protobuf.Empty;
-import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DriverEndpoint extends DriverServiceGrpc.DriverServiceImplBase implements RpcEndpoint {
+public class DriverEndpoint implements IDriverEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DriverEndpoint.class);
 
@@ -36,32 +36,28 @@ public class DriverEndpoint extends DriverServiceGrpc.DriverServiceImplBase impl
     }
 
     @Override
-    public void executePipeline(PipelineReq request, StreamObserver<PipelineRes> responseObserver) {
+    public PipelineRes executePipeline(PipelineReq request) {
         try {
-            // Send sync message to driver.
-            responseObserver.onNext(PipelineRes.newBuilder().build());
-            Pipeline pipeline = RpcMessageEncoder
-                .decode(request.getPayload());
+            Pipeline pipeline = RpcMessageEncoder.decode(request.getPayload());
             Object result = driver.executePipeline(pipeline);
-            responseObserver.onNext(PipelineRes.newBuilder()
+            return PipelineRes.newBuilder()
                 .setPayload(RpcMessageEncoder.encode(result))
-                .build());
-            responseObserver.onCompleted();
+                .build();
         } catch (Throwable e) {
             LOGGER.error("execute pipeline failed: {}", e.getMessage(), e);
-            responseObserver.onError(e);
+            throw new GeaflowRuntimeException(String.format("execute pipeline failed: %s",
+                e.getMessage()), e);
         }
     }
 
-    public void close(Empty request,
-                      StreamObserver<Empty> responseObserver) {
+    @Override
+    public Empty close(Empty request) {
         try {
             driver.close();
-            responseObserver.onNext(Empty.newBuilder().build());
-            responseObserver.onCompleted();
+            return Empty.newBuilder().build();
         } catch (Throwable t) {
             LOGGER.error("close failed: {}", t.getMessage(), t);
-            responseObserver.onError(t);
+            throw new GeaflowRuntimeException(String.format("close failed: %s", t.getMessage(), t));
         }
     }
 }

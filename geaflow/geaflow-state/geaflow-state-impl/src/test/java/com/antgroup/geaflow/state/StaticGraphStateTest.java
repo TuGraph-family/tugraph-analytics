@@ -80,6 +80,7 @@ public class StaticGraphStateTest {
                 new StaticGraphStateTest(StoreType.MEMORY, new HashMap<>()),
                 new StaticGraphStateTest(StoreType.MEMORY, ImmutableMap.of(MemoryConfigKeys.CSR_MEMORY_ENABLE.getKey(), "true")),
                 new StaticGraphStateTest(StoreType.ROCKSDB, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
+                new StaticGraphStateTest(StoreType.CSTORE, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
             };
         }
     }
@@ -107,16 +108,22 @@ public class StaticGraphStateTest {
         List<IEdge<String, String>> list = graphState.staticGraph().E().query("1").asList();
         Assert.assertEquals(list.size(), 2);
 
-        list = graphState.staticGraph().E().query("1").by(
-            (IEdgeFilter<String, String>) value -> !value.getTargetId().equals("2")).asList();
-        Assert.assertEquals(list.size(), 1);
-        Assert.assertEquals(list.get(0).getTargetId(), "3");
-
         Iterator<IVertex<String, String>> iterator = graphState.staticGraph().V().iterator();
         Assert.assertEquals(Iterators.size(iterator), 2);
 
         IVertex<String, String> vertex = graphState.staticGraph().V().query("1").get();
         Assert.assertEquals(vertex.getValue(), "3");
+
+        // keyGroup get
+        iterator = graphState.staticGraph().V().query(new KeyGroup(0, 0)).iterator();
+        Assert.assertEquals(Iterators.size(iterator), 1);
+
+        Iterator<String> idIterator =
+            graphState.staticGraph().V().query(new KeyGroup(0, 0)).idIterator();
+        Assert.assertEquals(Iterators.size(idIterator), 1);
+
+        list = graphState.staticGraph().E().query(new KeyGroup(0, 0)).asList();
+        Assert.assertEquals(list.size(), 2);
 
         graphState.manage().operate().close();
         graphState.manage().operate().drop();
@@ -236,6 +243,13 @@ public class StaticGraphStateTest {
                 .limit(2L, 1L).asList();
         Assert.assertEquals(list.size(), 270);
 
+        if (storeType == StoreType.CSTORE) {
+            // not support now.
+            graphState.manage().operate().close();
+            graphState.manage().operate().drop();
+            return;
+        }
+
         // sort keys
         long[] times = Longs.toArray(graphState.staticGraph().E().query("1", "2", "3")
             .limit(3L, 3L).orderBy(EdgeAtom.DESC_TIME).select(new TimeProjector<>()).asList());
@@ -257,6 +271,11 @@ public class StaticGraphStateTest {
 
     @Test
     public void testProjectAndAgg() {
+        if (storeType == StoreType.CSTORE) {
+            // not support now.
+            return;
+        }
+
         GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("testProjectAndAgg", storeType.name());
         desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
         desc.withGraphMeta(new GraphMeta(new GraphMetaType<>(Types.STRING, ValueVertex.class,

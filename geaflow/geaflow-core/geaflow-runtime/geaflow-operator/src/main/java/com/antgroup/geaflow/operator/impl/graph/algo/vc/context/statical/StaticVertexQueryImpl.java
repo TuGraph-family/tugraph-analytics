@@ -18,15 +18,23 @@ import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction.Ver
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
+import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 
 public class StaticVertexQueryImpl<K, VV, EV> implements VertexQuery<K, VV> {
 
     private K vertexId;
     protected GraphState<K, VV, EV> graphState;
+    protected KeyGroup keyGroup;
 
     public StaticVertexQueryImpl(K vertexId, GraphState<K, VV, EV> graphState) {
         this.vertexId = vertexId;
         this.graphState = graphState;
+    }
+
+    public StaticVertexQueryImpl(K vertexId, GraphState<K, VV, EV> graphState, KeyGroup keyGroup) {
+        this.vertexId = vertexId;
+        this.graphState = graphState;
+        this.keyGroup = keyGroup;
     }
 
     @Override

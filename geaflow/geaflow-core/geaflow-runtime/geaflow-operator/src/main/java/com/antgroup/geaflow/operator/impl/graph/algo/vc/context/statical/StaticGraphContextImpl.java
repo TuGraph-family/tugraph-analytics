@@ -16,11 +16,12 @@ package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox;
 import com.antgroup.geaflow.state.GraphState;
-import java.util.Iterator;
 
 public class StaticGraphContextImpl<K, VV, EV, M>
     implements VertexCentricFunction.VertexCentricFuncContext<K, VV, EV, M> {
@@ -88,10 +89,14 @@ public class StaticGraphContextImpl<K, VV, EV, M>
         if (this.iterationId >= this.maxIteration) {
             return;
         }
-        Iterator<IEdge<K, EV>> edgeIterator = this.graphState.staticGraph().E().query(this.vertexId).iterator();
-        while (edgeIterator.hasNext()) {
-            IEdge<K, EV> edge = edgeIterator.next();
-            this.graphMsgBox.addOutMessage(edge.getTargetId(), message);
+        try (CloseableIterator<IEdge<K, EV>> edgeIterator
+                = this.graphState.staticGraph().E().query(this.vertexId).iterator()) {
+            while (edgeIterator.hasNext()) {
+                IEdge<K, EV> edge = edgeIterator.next();
+                this.graphMsgBox.addOutMessage(edge.getTargetId(), message);
+            }
+        } catch (Exception e) {
+            throw new GeaflowRuntimeException(e);
         }
     }
 

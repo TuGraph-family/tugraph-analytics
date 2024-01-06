@@ -17,24 +17,30 @@ package com.antgroup.geaflow.stats.collector;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.metric.CycleMetrics;
 import com.antgroup.geaflow.common.metric.PipelineMetrics;
+import com.antgroup.geaflow.stats.model.MetricCache;
 import com.antgroup.geaflow.stats.model.StatsMetricType;
 import com.antgroup.geaflow.stats.sink.IStatsWriter;
 
 public class PipelineStatsCollector extends BaseStatsCollector {
 
     private static final String KEY_SPLIT = "_";
+    private final MetricCache metricCache;
 
-    PipelineStatsCollector(IStatsWriter statsWriter, Configuration configuration) {
+    PipelineStatsCollector(IStatsWriter statsWriter, Configuration configuration,
+                           MetricCache metricCache) {
         super(statsWriter, configuration);
+        this.metricCache = metricCache;
     }
 
     public void reportPipelineMetrics(PipelineMetrics pipelineMetric) {
         addToWriterQueue(genMetricKey(PipelineMetricsType.PIPELINE, pipelineMetric.getName()), pipelineMetric);
+        metricCache.addPipelineMetrics(pipelineMetric);
     }
 
     public void reportCycleMetrics(CycleMetrics cycleMetrics) {
         String name = cycleMetrics.getPipelineName() + KEY_SPLIT + cycleMetrics.getName();
         addToWriterQueue(genMetricKey(PipelineMetricsType.CYCLE, name), cycleMetrics);
+        metricCache.addCycleMetrics(cycleMetrics);
     }
 
     private String genMetricKey(PipelineMetricsType type, String name) {

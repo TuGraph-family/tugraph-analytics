@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_UNIQUE_ID;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RUN_LOCAL_MODE;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM_STATE_BACKEND_TYPE;
@@ -22,6 +23,7 @@ import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
@@ -30,6 +32,7 @@ import com.antgroup.geaflow.runtime.core.protocol.ComposeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import com.antgroup.geaflow.runtime.core.protocol.RollbackCycleEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
+import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
@@ -60,8 +63,9 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         config.put(JOB_UNIQUE_ID.getKey(), "scheduler-fo-test" + System.currentTimeMillis());
         config.put(RUN_LOCAL_MODE.getKey(), "true");
         config.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
+        config.put(CONTAINER_HEAP_SIZE_MB.getKey(), String.valueOf(1024));
         configuration = new Configuration(config);
-        ClusterMetaStore.init(0, configuration);
+        ClusterMetaStore.init(0, "driver-0", configuration);
     }
 
     @AfterMethod
@@ -77,7 +81,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         ShuffleManager.getInstance().initShuffleMaster();
         StatsCollectorFactory.init(configuration);
 
-        CheckpointSchedulerContext context = new CheckpointSchedulerContext(buildMockCycle(configuration), null);
+        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(configuration), null);
         mockPersistContext = context;
         scheduler.init(context);
         scheduler.execute();
@@ -192,7 +196,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
         vertexGroup.getCycleGroupMeta().setFlyingCount(1);
         vertexGroup.getCycleGroupMeta().setIterationCount(finishIterationId);
-        vertexGroup.getCycleGroupMeta().setIterative(false);
+        vertexGroup.getCycleGroupMeta().setGroupType(CycleGroupType.pipelined);
         ExecutionVertex vertex = new ExecutionVertex(0, "test");
         vertex.setParallelism(1);
         vertexGroup.getVertexMap().put(0, vertex);
@@ -208,7 +212,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id");
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

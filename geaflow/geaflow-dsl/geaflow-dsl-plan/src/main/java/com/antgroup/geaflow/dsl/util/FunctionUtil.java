@@ -28,6 +28,7 @@ import com.antgroup.geaflow.dsl.schema.function.GeaFlowUserDefinedAggFunction;
 import com.antgroup.geaflow.dsl.schema.function.GeaFlowUserDefinedGraphAlgorithm;
 import com.antgroup.geaflow.dsl.schema.function.GeaFlowUserDefinedScalarFunction;
 import com.antgroup.geaflow.dsl.schema.function.GeaFlowUserDefinedTableFunction;
+import com.antgroup.geaflow.dsl.udf.table.other.GraphMetaFieldAccessFunction;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,6 +173,19 @@ public class FunctionUtil {
                 SqlTypeUtil.convertToJavaTypes(opBinding.collectOperandTypes(), typeFactory);
 
             Method method = FunctionCallUtils.findMatchMethod(clazz, functionName, paramJavaTypes);
+            if (GraphMetaFieldAccessFunction.class.isAssignableFrom(clazz)) {
+                Class<?> returnClazz = method.getReturnType();
+                if (returnClazz.equals(Object.class)) {
+                    try {
+                        GraphMetaFieldAccessFunction func =
+                            ((GraphMetaFieldAccessFunction)clazz.newInstance());
+                        return func.getReturnRelDataType((GQLJavaTypeFactory) typeFactory);
+                    } catch (Exception e) {
+                        throw new GeaFlowDSLException(e,
+                            "Cannot get instance of {}", clazz.getName());
+                    }
+                }
+            }
             return typeFactory.createType(method.getReturnType());
         };
     }

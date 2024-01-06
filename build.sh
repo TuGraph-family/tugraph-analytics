@@ -51,7 +51,6 @@ GEAFLOW_PACKAGE_DIR=$GEAFLOW_DIR/geaflow-deploy/geaflow-assembly/target
 GEAFLOW_CONSOLE_DIR=$BASE_DIR/geaflow-console
 GEAFLOW_CONSOLE_DOCKER_DIR=$GEAFLOW_CONSOLE_DIR
 GEAFLOW_CONSOLE_PACKAGE_DIR=$GEAFLOW_CONSOLE_DIR/target
-GEAFLOW_WEB_DIR=$BASE_DIR/geaflow-web
 
 # parse args
 for arg in $*
@@ -77,7 +76,7 @@ if [[ $# -eq 0 || -n "$HELP" || -n "$ERROR" ]]; then
   echo -n 'Usage: build.sh [-options]
 Options:
     --all                       Build package and image of all modules.
-    --module=<name>             Build given module name, default all. values: geaflow|geaflow-console|geaflow-web
+    --module=<name>             Build given module name, default all. values: geaflow|geaflow-console
     --output=<type>             Build given output type, default all. values: package|image
     --help                      Show this help message.
 '
@@ -96,7 +95,7 @@ if [[ -z "$MODULE" ]]; then
   BUILD_GEAFLOW="true"
   BUILD_GEAFLOW_CONSOLE="true"
   BUILD_GEAFLOW_WEB="true"
-  MODULES="geaflow,geaflow-console,geaflow-web"
+  MODULES="geaflow,geaflow-console"
   MVN_BUILD_DIR=$BASE_DIR
 elif [[ "$MODULE" = "geaflow" ]]; then
   BUILD_GEAFLOW="true"
@@ -104,10 +103,6 @@ elif [[ "$MODULE" = "geaflow" ]]; then
   MVN_BUILD_DIR=$GEAFLOW_DIR
 elif [[ "$MODULE" = "geaflow-console" ]]; then
   BUILD_GEAFLOW_CONSOLE="true"
-  MODULES=$MODULE
-  MVN_BUILD_DIR=$GEAFLOW_CONSOLE_DIR
-elif [[ "$MODULE" = "geaflow-web" ]]; then
-  BUILD_GEAFLOW_WEB="true"
   MODULES=$MODULE
   MVN_BUILD_DIR=$GEAFLOW_CONSOLE_DIR
 else
@@ -140,14 +135,6 @@ function buildJarPackage() {
   mvn clean install -DskipTests -Dcheckstyle.skip -T4 || return 1
 }
 
-function buildGeaflowWebPackage() {
-  echo -e "\033[32mpackage geaflow-web to $BASE_DIR/target ...\033[0m"
-
-  mkdir -p $BASE_DIR/target
-  cd $GEAFLOW_WEB_DIR
-  bash -c 'tar czvf geaflow-web.tar.gz --exclude=.git * .[!.]* &> /dev/null' || return 1
-  mv geaflow-web.tar.gz $BASE_DIR/target
-}
 
 function buildGeaflowImage() {
   echo -e "\033[32mbuild geaflow image ...\033[0m"
@@ -161,16 +148,33 @@ function buildGeaflowImage() {
   checkMinikube
   MINIKUBE_INSTALLED=$?
 
+  TMPDIR=${GEAFLOW_DOCKER_DIR}/_TMP_
+  PACKAGE_NAME=geaflow
+
+  cleanup() {
+      echo "cleanup:${TMPDIR}"
+      rm -rf "${TMPDIR}"
+  }
+  trap cleanup EXIT
+
+  mkdir -p "${TMPDIR}"
+
+  cp "${ARCHIVE}" "${TMPDIR}/"
+  GEAFLOW_ENGINE_FILE=$(find ${TMPDIR} -name 'geaflow-*-bin.tar.gz')
+
+  GEAFLOW_ENGINE_TAR=_TMP_/geaflow.tar.gz
+
   cd $GEAFLOW_DOCKER_DIR
+  mv ${GEAFLOW_ENGINE_FILE} ${GEAFLOW_ENGINE_TAR}
   if [[ $MINIKUBE_INSTALLED = "0" ]]; then
     echo "build geaflow image in minikube env"
     eval $(minikube docker-env 2> /dev/null) &> /dev/null
-    docker build -f $DOCKER_FILE --network=host -t $GEAFLOW_IMAGE_NAME:0.1 .
+    docker build -f $DOCKER_FILE --network=host --build-arg geaflow_engine_tar=${GEAFLOW_ENGINE_TAR} -t $GEAFLOW_IMAGE_NAME:0.1 .
     RETURN_CODE=$?
     eval $(minikube docker-env --unset 2> /dev/null) &> /dev/null
   else
     echo -e '\033[31mbuild geaflow image in local env\033[0m'
-    docker build -f $DOCKER_FILE --network=host -t $GEAFLOW_IMAGE_NAME:0.1 .
+    docker build -f $DOCKER_FILE --network=host --build-arg geaflow_engine_tar=${GEAFLOW_ENGINE_TAR} -t $GEAFLOW_IMAGE_NAME:0.1 .
     RETURN_CODE=$?
   fi
 
@@ -204,10 +208,6 @@ if [[ -n $BUILD_PACKAGE ]]; then
   if [[ -n "$BUILD_GEAFLOW" || -n "$BUILD_GEAFLOW_CONSOLE" ]]; then
     buildJarPackage || exit $?
   fi
-
-  if [[ -n "$BUILD_GEAFLOW_WEB" ]]; then
-    buildGeaflowWebPackage || exit $?
-  fi
 fi
 
 # build image
@@ -218,10 +218,6 @@ if [[ -n "$BUILD_IMAGE" ]]; then
 
   if [[ -n "$BUILD_GEAFLOW_CONSOLE" ]]; then
     buildGeaflowConsoleImage || exit $?
-  fi
-
-  if [[ -n "$BUILD_GEAFLOW_WEB" ]]; then
-    echo "build geaflow-web image is skipped"
   fi
 fi
 

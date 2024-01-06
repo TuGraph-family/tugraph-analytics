@@ -46,7 +46,7 @@ public class FunctionCallUtils {
             new Class<?>[]{Integer.class, Long.class, Double.class, BigDecimal.class});
         TYPE_DEGREE_MAP.put(Short.class,
             new Class<?>[]{Integer.class, Long.class, Double.class, BigDecimal.class});
-        TYPE_DEGREE_MAP.put(Double.class, new Class<?>[]{BigDecimal.class});
+        TYPE_DEGREE_MAP.put(BigDecimal.class, new Class<?>[]{Double.class});
     }
 
     private static final Map<Class<?>, Class<?>> BOX_TYPE_MAPS = new HashMap<>();
@@ -161,6 +161,9 @@ public class FunctionCallUtils {
         if (defineType == callType) {
             return 1d;
         } else {
+            if (callType == null) { // the input parameter is null
+                return 1d;
+            }
             int typeDegreeIndex = findTypeDegreeIndex(defineType, callType);
 
             if (typeDegreeIndex != -1) {
@@ -369,7 +372,11 @@ public class FunctionCallUtils {
                 castParams[i] = TypeCastUtil.cast(params[i], getBoxType(defineTypes[i]));
             }
         }
-        return method.invoke(target, castParams);
+        Object result = method.invoke(target, castParams);
+        if (result instanceof String) { // convert string to binary string if the udf return string type.
+            result = BinaryString.fromString((String) result);
+        }
+        return result;
     }
 
     public static Class<?> typeClass(Class<?> type, boolean useBinary) {

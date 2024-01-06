@@ -87,7 +87,7 @@ public class ClusterCoefficient {
                 pipelineTaskCxt.buildSource(eSource, AllWindow.getInstance()).withParallelism(sourceParallelism);
             GraphViewDesc graphViewDesc = GraphViewBuilder
                 .createGraphView(GraphViewBuilder.DEFAULT_GRAPH)
-                .withShardNum(2)
+                .withShardNum(iterationParallelism)
                 .withBackend(BackendType.Memory)
                 .build();
             PWindowStream<IVertex<Integer, Double>> result =

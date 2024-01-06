@@ -20,7 +20,7 @@ import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 public class CollectExecutionNodeCycle extends ExecutionNodeCycle {
 
     public CollectExecutionNodeCycle(long pipelineId, String pipelineName, ExecutionVertexGroup vertexGroup,
-                                     Configuration config, String driverId) {
-        super(pipelineId, pipelineName, vertexGroup, config, driverId);
+                                     Configuration config, String driverId, int driverIndex) {
+        super(pipelineId, pipelineName, vertexGroup, config, driverId, driverIndex);
     }
 }

@@ -27,6 +27,6 @@ public class VersionView extends NameView {
 
     private RemoteFileView langJarPackage;
 
-    private Boolean publish = true;
+    private Boolean publish = false;
 
 }
