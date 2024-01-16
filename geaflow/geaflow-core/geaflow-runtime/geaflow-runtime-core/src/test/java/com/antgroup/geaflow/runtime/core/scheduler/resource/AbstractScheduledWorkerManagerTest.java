@@ -16,6 +16,7 @@ package com.antgroup.geaflow.runtime.core.scheduler.resource;
 
 import static org.mockito.ArgumentMatchers.any;
 
+import com.antgroup.geaflow.cluster.resourcemanager.ResourceInfo;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
@@ -25,13 +26,20 @@ import com.antgroup.geaflow.rpc.proto.Container;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 public class AbstractScheduledWorkerManagerTest {
+
+    @AfterMethod
+    public void afterMethod() {
+        AbstractScheduledWorkerManager.closeInstance();
+    }
 
     @Test
     public void testInitWorkerSuccess() {
@@ -53,12 +61,13 @@ public class AbstractScheduledWorkerManagerTest {
             workers.add(new WorkerInfo("", 0, 0, 0, i, "worker-" + i));
         }
         AbstractScheduledWorkerManager workerManager = buildMockWorkerManager();
-        workerManager.initWorkers(workers, null);
+        workerManager.workers = new ConcurrentHashMap<>();
+        workerManager.initWorkers(0L, workers, null);
         Assert.assertEquals(count.get(), workers.size());
 
         count.set(0);
-        workerManager.workers = workers;
-        workerManager.initWorkers(workers, null);
+        workerManager.workers.put(0L, new ResourceInfo(workerManager.genResourceId(0, 0L), workers));
+        workerManager.initWorkers(0L, workers, null);
         Assert.assertEquals(count.get(), 0);
         rpcClientMs.close();
     }
@@ -81,8 +90,9 @@ public class AbstractScheduledWorkerManagerTest {
             workers.add(new WorkerInfo("", 0, 0, 0, i, "worker-" + i));
         }
         AbstractScheduledWorkerManager workerManager = buildMockWorkerManager();
+        workerManager.workers = new ConcurrentHashMap<>();
         try {
-            workerManager.initWorkers(workers, null);
+            workerManager.initWorkers(0L, workers, null);
         } finally {
             rpcClientMs.close();
         }

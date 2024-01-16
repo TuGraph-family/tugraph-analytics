@@ -85,11 +85,11 @@ public class BaseCycleSchedulerContextTest {
         }
 
         @Override
-        public void clean(CleanWorkerFunction cleaFunc) {
+        public void clean(CleanWorkerFunction cleaFunc, IExecutionCycle cycle) {
         }
 
         @Override
-        public void close() {
+        public void close(IExecutionCycle cycle) {
         }
     }
 }

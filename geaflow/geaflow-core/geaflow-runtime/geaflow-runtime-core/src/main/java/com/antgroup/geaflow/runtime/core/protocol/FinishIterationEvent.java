@@ -28,8 +28,8 @@ public class FinishIterationEvent extends AbstractExecutableCommand {
 
     private int taskId;
 
-    public FinishIterationEvent(int workerId, long windowId, int cycleId, int taskId) {
-        super(workerId, cycleId, windowId);
+    public FinishIterationEvent(long schedulerId, int workerId, long windowId, int cycleId, int taskId) {
+        super(schedulerId, workerId, cycleId, windowId);
         this.taskId = taskId;
     }
 
@@ -55,7 +55,8 @@ public class FinishIterationEvent extends AbstractExecutableCommand {
     @Override
     public String toString() {
         return "FinishIterationEvent{"
-                + "workerId=" + workerId
+                + "schedulerId=" + schedulerId
+                + ", workerId=" + workerId
                 + ", windowId=" + windowId
                 + ", cycleId=" + cycleId
                 + ", taskId=" + taskId

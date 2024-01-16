@@ -14,10 +14,11 @@
 
 package com.antgroup.geaflow.runtime.pipeline.task;
 
+import com.antgroup.geaflow.pipeline.context.IPipelineExecutorContext;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.runner.PipelineRunner;
 
-public class PipelineTaskExecutorContext {
+public class PipelineTaskExecutorContext implements IPipelineExecutorContext {
 
     private String driverId;
     private long pipelineTaskId;
@@ -57,4 +58,8 @@ public class PipelineTaskExecutorContext {
         return pipelineRunner;
     }
 
+    @Override
+    public int getDriverIndex() {
+        return 0;
+    }
 }

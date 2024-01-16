@@ -611,7 +611,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey SERVICE_DISCOVERY_TYPE = ConfigKeys
         .key("geaflow.service.discovery.type")
-        .defaultValue("zookeeper")
+        .defaultValue("redis")
         .description("service discovery type");
 
     public static final ConfigKey JOB_MODE = ConfigKeys

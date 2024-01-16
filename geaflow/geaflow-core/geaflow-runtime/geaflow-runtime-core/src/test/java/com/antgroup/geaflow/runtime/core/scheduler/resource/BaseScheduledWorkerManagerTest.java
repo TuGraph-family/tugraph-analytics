@@ -27,6 +27,7 @@ import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.state.StoreType;
 import java.util.ArrayList;
 import java.util.List;
+import org.testng.annotations.AfterMethod;
 
 public abstract class BaseScheduledWorkerManagerTest {
 
@@ -50,9 +51,15 @@ public abstract class BaseScheduledWorkerManagerTest {
             ExecutionTask task = new ExecutionTask(i, i, taskNum, taskNum, taskNum, 0);
             tasks.add(task);
         }
-        ExecutionNodeCycle cycle =  new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        ExecutionNodeCycle cycle =  new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup,
+            configuration, "driver_id", 0);
         cycle.setTasks(tasks);
         return cycle;
+    }
+
+    @AfterMethod
+    public void afterMethod() {
+        AbstractScheduledWorkerManager.closeInstance();
     }
 
 }

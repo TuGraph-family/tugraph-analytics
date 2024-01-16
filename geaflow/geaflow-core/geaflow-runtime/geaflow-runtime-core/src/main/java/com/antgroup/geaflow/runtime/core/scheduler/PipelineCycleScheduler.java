@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.runtime.core.scheduler.io.IoDescriptorBuilder
 import com.antgroup.geaflow.cluster.common.IEventListener;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
+import com.antgroup.geaflow.cluster.protocol.ScheduleStateType;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.response.IResult;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
@@ -40,6 +41,9 @@ import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.runtime.core.scheduler.response.EventListenerKey;
 import com.antgroup.geaflow.runtime.core.scheduler.response.SourceFinishResponseEventListener;
+import com.antgroup.geaflow.runtime.core.scheduler.statemachine.ComposeState;
+import com.antgroup.geaflow.runtime.core.scheduler.statemachine.IScheduleState;
+import com.antgroup.geaflow.runtime.core.scheduler.statemachine.pipeline.PipelineStateMachine;
 import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
@@ -74,6 +78,7 @@ public class PipelineCycleScheduler<E>
     private String pipelineName;
     private long pipelineId;
     private int cycleId;
+    private long schedulerId;
     private long scheduleStartTime;
     private boolean isIteration;
 
@@ -85,6 +90,10 @@ public class PipelineCycleScheduler<E>
     private String cycleLogTag;
 
     public PipelineCycleScheduler() {
+    }
+
+    public PipelineCycleScheduler(long schedulerId) {
+        this.schedulerId = schedulerId;
     }
 
     @Override
@@ -104,6 +113,9 @@ public class PipelineCycleScheduler<E>
         this.dispatcher = new SchedulerEventDispatcher(cycleLogTag);
         this.initMetrics();
 
+        this.stateMachine = new PipelineStateMachine();
+        this.stateMachine.init(context);
+
         inputExchangeMode = DataExchangeMode.BATCH;
         if (nodeCycle.isPipelineDataLoop()) {
             outputExchangeMode = DataExchangeMode.PIPELINE;
@@ -115,7 +127,7 @@ public class PipelineCycleScheduler<E>
         if (workers != null && workers.isEmpty()) {
             throw new GeaflowRuntimeException(String.format("failed to assign resource for cycle %s", null));
         }
-        this.eventBuilder = new SchedulerEventBuilder(context, outputExchangeMode, resultManager);
+        this.eventBuilder = new SchedulerEventBuilder(schedulerId, context, outputExchangeMode, resultManager);
         if (nodeCycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG) {
             this.aggregator = new SchedulerGraphAggregateProcessor(nodeCycle,
                 (AbstractCycleSchedulerContext) context, resultManager);
@@ -145,24 +157,42 @@ public class PipelineCycleScheduler<E>
             ShuffleManager.getInstance().close();
         }
         if (((AbstractCycleSchedulerContext) context).getParentContext() == null) {
-            context.close();
+            context.close(cycle);
         }
         LOGGER.info("{} closed", cycleLogTag);
     }
 
+    public long getSchedulerId() {
+        return schedulerId;
+    }
 
-    protected void execute(long iterationId) {
+    public void setSchedulerId(long schedulerId) {
+        this.schedulerId = schedulerId;
+    }
+
+
+    protected void execute(IScheduleState state) {
+        Map<Integer, IEvent> events;
+        if (state.getScheduleStateType() == ScheduleStateType.COMPOSE) {
+            List<Map<Integer, IEvent>> taskEvents = new ArrayList<>();
+            List<IScheduleState> states = ((ComposeState) state).getStates();
+            for (IScheduleState s : states) {
+                getNextIterationId(context, s);
+                Map<Integer, IEvent> es = eventBuilder.build(s.getScheduleStateType(),
+                    context.getCurrentIterationId());
+                taskEvents.add(es);
+            }
+            events = mergeEvents(taskEvents);
+        } else {
+            getNextIterationId(context, state);
+            events = eventBuilder.build(state.getScheduleStateType(), context.getCurrentIterationId());
+        }
+
+        long iterationId = context.getCurrentIterationId();
         String iterationLogTag = getCycleIterationTag(iterationId);
         LOGGER.info("{} execute", iterationLogTag);
-        iterationIdToFinishedTasks.put(iterationId, new ArrayList<>());
-        List<ICycleSchedulerContext.SchedulerState> schedulerStates = context.getSchedulerState(iterationId);
-        Map<Integer, IEvent> events;
-        if (schedulerStates == null) {
-            // Default execute trigger.
-            events = eventBuilder.build(ICycleSchedulerContext.SchedulerState.EXECUTE, iterationId);
-        } else {
-            events = buildEvents(schedulerStates, iterationId);
-        }
+        iterationIdToFinishedTasks.put(context.getCurrentIterationId(), new ArrayList<>());
+
         int eventSize = events.size();
         List<Future<IEvent>> submitFutures = new ArrayList<>(eventSize);
         for (Map.Entry<Integer, IEvent> entry : events.entrySet()) {
@@ -179,21 +209,12 @@ public class PipelineCycleScheduler<E>
                 task.getWorkerInfo().getWorkerIndex(),
                 task.getWorkerInfo().getHost(),
                 task.getWorkerInfo().getProcessId());
-
             Future<IEvent> future = RpcClient.getInstance()
                 .processContainer(task.getWorkerInfo().getContainerName(), entry.getValue());
             submitFutures.add(future);
         }
 
         FutureUtil.wait(submitFutures);
-    }
-
-    private Map<Integer, IEvent> buildEvents(List<ICycleSchedulerContext.SchedulerState> states, long iterationId) {
-        List<Map<Integer, IEvent>> list = new ArrayList<>();
-        for (ICycleSchedulerContext.SchedulerState state : states) {
-            list.add(eventBuilder.build(state, iterationId));
-        }
-        return mergeEvents(list);
     }
 
     protected void finish(long iterationId) {
@@ -236,18 +257,6 @@ public class PipelineCycleScheduler<E>
         long finishIterationId = this.isIteration
             ? this.context.getFinishIterationId() + 1 : this.context.getFinishIterationId();
         String finishLogTag = this.getCycleIterationTag(finishIterationId);
-
-        Map<Integer, IEvent> events = eventBuilder.build(ICycleSchedulerContext.SchedulerState.FINISH,
-            context.getCurrentIterationId());
-        List<Future<IEvent>> submitFutures = new ArrayList<>(events.size());
-        for (Map.Entry<Integer, IEvent> entry : events.entrySet()) {
-            ExecutionTask task = cycleTasks.get(entry.getKey());
-            Future<IEvent> future = RpcClient.getInstance()
-                .processContainer(task.getWorkerInfo().getContainerName(), entry.getValue());
-            LOGGER.info("{} submit finish event {} ", finishLogTag, entry);
-            submitFutures.add(future);
-        }
-        FutureUtil.wait(submitFutures);
 
         // Need receive all tail responses.
         int responseCount = 0;
@@ -412,6 +421,12 @@ public class PipelineCycleScheduler<E>
         return result;
     }
 
+    private void getNextIterationId(ICycleSchedulerContext context, IScheduleState state) {
+        if (state.getScheduleStateType() == ScheduleStateType.EXECUTE_COMPUTE || state.getScheduleStateType() == ScheduleStateType.ITERATION_INIT) {
+            context.getNextIterationId();
+        }
+    }
+
     private String getCycleIterationTag(long iterationId) {
         return this.isIteration
             ? LoggerFormatter.getCycleTag(this.pipelineName, this.cycleId, iterationId)
@@ -438,7 +453,8 @@ public class PipelineCycleScheduler<E>
 
                     ICycleSchedulerContext parentContext = ((AbstractCycleSchedulerContext) context).getParentContext();
                     if (parentContext != null) {
-                        DoneEvent sourceFinishEvent = new DoneEvent(parentContext.getCycle().getCycleId(),
+                        DoneEvent sourceFinishEvent = new DoneEvent(schedulerId,
+                            parentContext.getCycle().getCycleId(),
                             sourceFinishWindowId, cycle.getCycleId(),
                             EventType.LAUNCH_SOURCE, cycle.getCycleId());
                         RpcClient.getInstance().processPipeline(cycle.getDriverId(), sourceFinishEvent);

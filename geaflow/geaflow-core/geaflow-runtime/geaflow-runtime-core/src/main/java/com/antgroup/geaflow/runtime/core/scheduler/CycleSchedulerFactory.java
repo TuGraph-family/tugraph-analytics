@@ -27,12 +27,12 @@ public class CycleSchedulerFactory {
         ICycleScheduler scheduler;
         switch (cycle.getType()) {
             case GRAPH:
-                scheduler = new ExecutionGraphCycleScheduler();
+                scheduler = new ExecutionGraphCycleScheduler(cycle.getSchedulerId());
                 break;
             case ITERATION:
             case ITERATION_WITH_AGG:
             case PIPELINE:
-                scheduler = new PipelineCycleScheduler();
+                scheduler = new PipelineCycleScheduler(cycle.getSchedulerId());
                 break;
             default:
                 throw new GeaflowRuntimeException(String.format("not support cycle %s yet", cycle));

@@ -17,15 +17,16 @@ package com.antgroup.geaflow.runtime.pipeline.runner;
 import com.antgroup.geaflow.cluster.common.ExecutionIdGenerator;
 import com.antgroup.geaflow.cluster.common.IEventListener;
 import com.antgroup.geaflow.cluster.driver.DriverEventDispatcher;
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.core.graph.ExecutionGraph;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.builder.ExecutionGraphBuilder;
 import com.antgroup.geaflow.pipeline.callback.TaskCallBack;
+import com.antgroup.geaflow.pipeline.context.IPipelineExecutorContext;
 import com.antgroup.geaflow.plan.graph.PipelineGraph;
 import com.antgroup.geaflow.runtime.core.scheduler.CycleSchedulerFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.ExecutionCycleTaskAssigner;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutionGraphCycleScheduler;
 import com.antgroup.geaflow.runtime.core.scheduler.ICycleScheduler;
 import com.antgroup.geaflow.runtime.core.scheduler.context.AbstractCycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
@@ -33,6 +34,7 @@ import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContex
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionCycleBuilder;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.result.IExecutionResult;
+import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.service.PipelineServiceExecutorContext;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskExecutorContext;
 import java.util.List;
@@ -51,26 +53,18 @@ public class PipelineRunner {
         this.eventDispatcher = eventDispatcher;
     }
 
-    public IExecutionResult executePipelineGraph(String name, String driverId, int driverIndex,
-                                                 Configuration config, TaskCallBack taskCallBack,
-                                                 PipelineGraph pipelineGraph) {
-        context = CycleSchedulerContextFactory.build(() -> {
-            ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
-            ExecutionGraph graph = builder.buildExecutionGraph(config);
+    public IExecutionResult executePipelineGraph(IPipelineExecutorContext pipelineExecutorContext,
+                                                 PipelineGraph pipelineGraph,
+                                                 TaskCallBack taskCallBack) {
+        ICycleSchedulerContext context = loadOrCreateContext(pipelineExecutorContext, pipelineGraph);
 
-            Map<Integer, List<ExecutionTask>> vertex2Tasks = ExecutionCycleTaskAssigner.assign(graph);
-
-            IExecutionCycle cycle = ExecutionCycleBuilder.buildExecutionCycle(graph, vertex2Tasks,
-                config, ExecutionIdGenerator.getInstance().generateId(), name, driverId, driverIndex);
-            return CycleSchedulerContextFactory.create(cycle, context);
-        });
         if (taskCallBack != null) {
             ((AbstractCycleSchedulerContext) context).setCallbackFunction(taskCallBack.getCallbackFunction());
         }
 
         ICycleScheduler scheduler = CycleSchedulerFactory.create(context.getCycle());
         if (scheduler instanceof IEventListener) {
-            eventDispatcher.registerListener((IEventListener) scheduler);
+            eventDispatcher.registerListener(context.getCycle().getSchedulerId(), (IEventListener) scheduler);
         }
 
         scheduler.init(context);
@@ -78,16 +72,14 @@ public class PipelineRunner {
         LOGGER.info("final result of pipeline is {}", result.getResult());
         scheduler.close();
         if (scheduler instanceof IEventListener) {
-            eventDispatcher.removeListener((IEventListener) scheduler);
+            eventDispatcher.removeListener(((ExecutionGraphCycleScheduler) scheduler).getSchedulerId());
         }
         return result;
     }
 
     public void runPipelineGraph(PipelineGraph pipelineGraph, TaskCallBack taskCallBack,
                                  PipelineTaskExecutorContext taskExecutorContext) {
-        IExecutionResult result = executePipelineGraph(taskExecutorContext.getPipelineTaskName(),
-            taskExecutorContext.getDriverId(), 0, taskExecutorContext.getPipelineContext().getConfig(),
-            taskCallBack, pipelineGraph);
+        IExecutionResult result = executePipelineGraph(taskExecutorContext, pipelineGraph, taskCallBack);
         if (!result.isSuccess()) {
             throw new GeaflowRuntimeException("run pipeline task failed, cause: " + result.getError());
         }
@@ -96,9 +88,26 @@ public class PipelineRunner {
     public IExecutionResult runPipelineGraph(PipelineGraph pipelineGraph,
                                  PipelineServiceExecutorContext serviceExecutorContext) {
         //TODO Service task callback.
-        return executePipelineGraph(serviceExecutorContext.getPipelineTaskName(),
-            serviceExecutorContext.getDriverId(),
-            serviceExecutorContext.getDriverIndex(),
-            serviceExecutorContext.getPipelineContext().getConfig(), null, pipelineGraph );
+        return executePipelineGraph(serviceExecutorContext, pipelineGraph, null);
+    }
+
+    private ICycleSchedulerContext loadOrCreateContext(IPipelineExecutorContext pipelineExecutorContext,
+                                                       PipelineGraph pipelineGraph) {
+
+        ICycleSchedulerContext context = CycleSchedulerContextFactory.loadOrCreate(pipelineExecutorContext.getPipelineTaskId(), () -> {
+            ExecutionGraphBuilder builder = new ExecutionGraphBuilder(pipelineGraph);
+            PipelineContext pipelineContext = (PipelineContext) pipelineExecutorContext.getPipelineContext();
+            ExecutionGraph graph = builder.buildExecutionGraph(pipelineContext.getConfig());
+
+            Map<Integer, List<ExecutionTask>> vertex2Tasks = ExecutionCycleTaskAssigner.assign(graph);
+
+            IExecutionCycle cycle = ExecutionCycleBuilder.buildExecutionCycle(graph, vertex2Tasks,
+                pipelineContext.getConfig(), ExecutionIdGenerator.getInstance().generateId(),
+                pipelineExecutorContext.getPipelineTaskId(), pipelineExecutorContext.getPipelineTaskName(),
+                ExecutionIdGenerator.getInstance().generateId(), pipelineExecutorContext.getDriverId(),
+                pipelineExecutorContext.getDriverIndex());
+            return CycleSchedulerContextFactory.create(cycle, null);
+        });
+        return context;
     }
 }

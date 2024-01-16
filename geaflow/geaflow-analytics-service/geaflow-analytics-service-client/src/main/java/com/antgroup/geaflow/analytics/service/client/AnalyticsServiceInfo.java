@@ -18,8 +18,7 @@ import com.antgroup.geaflow.common.rpc.HostAndPort;
 import java.util.List;
 
 public class AnalyticsServiceInfo {
-
-    private final String serverName;
+    private String serverName;
     private final List<HostAndPort> coordinatorAddresses;
     private final int coordinatorNum;
 
@@ -29,6 +28,10 @@ public class AnalyticsServiceInfo {
         this.coordinatorNum = coordinatorAddresses.size();
     }
 
+    public AnalyticsServiceInfo(List<HostAndPort> coordinatorAddresses) {
+        this.coordinatorAddresses = coordinatorAddresses;
+        this.coordinatorNum = coordinatorAddresses.size();
+    }
 
     public String getServerName() {
         return serverName;

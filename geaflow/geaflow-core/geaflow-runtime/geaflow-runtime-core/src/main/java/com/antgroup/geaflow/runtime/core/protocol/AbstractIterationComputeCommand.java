@@ -17,6 +17,7 @@ package com.antgroup.geaflow.runtime.core.protocol;
 import com.antgroup.geaflow.cluster.fetcher.ReFetchRequest;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
+import com.antgroup.geaflow.runtime.core.worker.AbstractWorker;
 import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import java.util.HashMap;
@@ -34,8 +35,8 @@ public abstract class AbstractIterationComputeCommand extends AbstractExecutable
     protected Map<Long, Long> windowCount;
     protected Map<Long, List<PipelineMessage>> batchMessageCache;
 
-    public AbstractIterationComputeCommand(int workerId, int cycleId, long windowId, long fetchWindowId, long fetchCount) {
-        super(workerId, cycleId, windowId);
+    public AbstractIterationComputeCommand(long schedulerId, int workerId, int cycleId, long windowId, long fetchWindowId, long fetchCount) {
+        super(schedulerId, workerId, cycleId, windowId);
         this.fetchWindowId = fetchWindowId;
         this.fetchCount = fetchCount;
         this.windowCount = new HashMap<>();
@@ -46,10 +47,11 @@ public abstract class AbstractIterationComputeCommand extends AbstractExecutable
     public void execute(ITaskContext taskContext) {
         final long start = System.currentTimeMillis();
         super.execute(taskContext);
-        AbstractAlignedWorker alignedWorker = (AbstractAlignedWorker) worker;
-        alignedWorker.init(windowId);
+        AbstractWorker abstractWorker = (AbstractWorker) worker;
+        abstractWorker.init(windowId);
         fetcherRunner.add(new ReFetchRequest(fetchWindowId, fetchCount));
-        alignedWorker.alignedProcess(fetchCount);
+        abstractWorker.process(fetchCount,
+            this instanceof LoadGraphProcessEvent || worker instanceof AbstractAlignedWorker);
         ((AbstractWorkerContext) this.context).getEventMetrics().addProcessCostMs(System.currentTimeMillis() - start);
     }
 

@@ -68,6 +68,8 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
             Math.max(this.config.getInteger(StateConfigKeys.STATE_ARCHIVED_VERSION_NUM), chkRate * 2);
 
         this.rocksdbClient = new RocksdbClient(rocksdbPath, getCfList(), config);
+        LOGGER.info("ThreadId {}, BaseRocksdbStore initDB",
+            Thread.currentThread().getId());
         this.rocksdbClient.initDB();
     }
 

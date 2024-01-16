@@ -33,10 +33,10 @@ public class IterationExecutionComputeWithAggEvent extends AbstractIterationComp
 
     private final InputDescriptor inputDescriptor;
 
-    public IterationExecutionComputeWithAggEvent(int workerId, int cycleId, long windowId,
+    public IterationExecutionComputeWithAggEvent(long schedulerId, int workerId, int cycleId, long windowId,
                                                  long fetchWindowId, long fetchCount,
                                                  InputDescriptor inputDescriptor) {
-        super(workerId, cycleId, windowId, fetchWindowId, fetchCount);
+        super(schedulerId, workerId, cycleId, windowId, fetchWindowId, fetchCount);
         this.inputDescriptor = inputDescriptor;
     }
 
@@ -99,7 +99,8 @@ public class IterationExecutionComputeWithAggEvent extends AbstractIterationComp
     @Override
     public String toString() {
         return "IterationExecutionComputeWithAggEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", fetchWindowId=" + fetchWindowId

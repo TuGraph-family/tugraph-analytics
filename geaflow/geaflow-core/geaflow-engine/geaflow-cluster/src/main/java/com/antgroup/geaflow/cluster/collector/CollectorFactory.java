@@ -31,7 +31,7 @@ public class CollectorFactory {
             case RESPONSE:
                 return new CollectResponseCollector<>((ResponseOutputDesc) outputDesc);
             default:
-                throw new GeaflowRuntimeException("not support output type {}" + outputDesc.getType());
+                throw new GeaflowRuntimeException("not support output type " + outputDesc.getType());
 
         }
     }

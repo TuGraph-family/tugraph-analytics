@@ -19,7 +19,7 @@ import com.antgroup.geaflow.cluster.protocol.IExecutableCommand;
 import com.antgroup.geaflow.cluster.protocol.IHighAvailableEvent;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
-import com.antgroup.geaflow.runtime.core.worker.impl.ComputeWorker;
+import com.antgroup.geaflow.runtime.core.worker.WorkerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class CreateWorkerEvent implements IExecutableCommand, IHighAvailableEven
 
     @Override
     public void execute(ITaskContext context) {
-        context.registerWorker(new ComputeWorker());
+        context.registerWorker(WorkerFactory.createWorker(context.getConfig()));
         LOGGER.info("create worker {} worker Id {}", context.getWorker(), workerId);
     }
 

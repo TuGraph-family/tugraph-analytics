@@ -20,6 +20,7 @@ import com.antgroup.geaflow.analytics.service.query.QueryInfo;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
 import com.antgroup.geaflow.analytics.service.query.StandardError;
 import com.antgroup.geaflow.analytics.service.server.AbstractAnalyticsServiceServer;
+import com.antgroup.geaflow.common.blocking.map.BlockingMap;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
@@ -29,10 +30,12 @@ import com.antgroup.geaflow.rpc.proto.Analytics.QueryCancelRequest;
 import com.antgroup.geaflow.rpc.proto.Analytics.QueryCancelResult;
 import com.antgroup.geaflow.rpc.proto.Analytics.QueryResult;
 import com.antgroup.geaflow.rpc.proto.AnalyticsServiceGrpc;
+import com.antgroup.geaflow.runtime.core.scheduler.result.IExecutionResult;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +61,7 @@ public class RpcAnalyticsServiceServer extends AbstractAnalyticsServiceServer {
                 LOGGER.warn("*** Geaflow analytics server shutdown.");
             }));
         } catch (Throwable t) {
-            LOGGER.error("errorRpc: " + t.getMessage(), t);
+            LOGGER.error(t.getMessage(), t);
             throw new GeaflowRuntimeException(t);
         }
         waitForExecuted();
@@ -80,7 +83,7 @@ public class RpcAnalyticsServiceServer extends AbstractAnalyticsServiceServer {
     static class CoordinatorImpl extends AnalyticsServiceGrpc.AnalyticsServiceImplBase {
 
         private final BlockingQueue<QueryInfo> requestBlockingQueue;
-        private final BlockingQueue<QueryResults> responseBlockingQueue;
+        private final BlockingMap<String, Future<IExecutionResult>> responseBlockingMap;
         private final BlockingQueue<Long> cancelRequestBlockingQueue;
         private final BlockingQueue<Object> cancelResponseBlockingQueue;
         private final QueryIdGenerator queryIdGenerator;
@@ -88,7 +91,7 @@ public class RpcAnalyticsServiceServer extends AbstractAnalyticsServiceServer {
 
         public CoordinatorImpl(RpcAnalyticsServiceServer server) {
             this.requestBlockingQueue = server.requestBlockingQueue;
-            this.responseBlockingQueue = server.responseBlockingQueue;
+            this.responseBlockingMap = server.responseBlockingMap;
             this.cancelRequestBlockingQueue = server.cancelRequestBlockingQueue;
             this.cancelResponseBlockingQueue = server.cancelResponseBlockingQueue;
             this.semaphore = server.semaphore;
@@ -112,7 +115,7 @@ public class RpcAnalyticsServiceServer extends AbstractAnalyticsServiceServer {
                 QueryInfo queryInfo = new QueryInfo(queryId, query);
                 final long start = System.currentTimeMillis();
                 requestBlockingQueue.put(queryInfo);
-                QueryResults queryResults = responseBlockingQueue.take();
+                QueryResults queryResults = getQueryResults(queryInfo, responseBlockingMap);
                 LOGGER.info("finish execute query [{}], cost {}ms, query result {}", queryInfo,
                     System.currentTimeMillis() - start, queryResults);
                 QueryResult queryResult = QueryResult.newBuilder()

@@ -21,16 +21,11 @@ import com.antgroup.geaflow.api.graph.traversal.VertexCentricAggTraversal;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.GraphVertexCentricOpAggregator;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.IGraphVertexCentricAggOp;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class StaticGraphVertexCentricTraversalAllWithAggOp<K, VV, EV, M, R, I, PA, PR, GR,
     FUNC extends VertexCentricTraversalFunction<K, VV, EV, M, R> & VertexCentricAggContextFunction<I, GR>>
     extends StaticGraphVertexCentricTraversalAllOp<K, VV, EV, M, R, FUNC>
     implements IGraphVertexCentricAggOp<K, VV, EV, M, I, PA, PR, GR> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-        StaticGraphVertexCentricTraversalAllWithAggOp.class);
 
     private GraphVertexCentricOpAggregator<K, VV, EV, M, I, ?, ?, ?, GR,
             VertexCentricAggTraversal<K, VV, EV, M, R, I, ?, ?, ?, GR>> aggregator;

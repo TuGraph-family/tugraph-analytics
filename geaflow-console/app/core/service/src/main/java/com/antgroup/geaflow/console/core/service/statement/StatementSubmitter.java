@@ -21,7 +21,6 @@ import com.antgroup.geaflow.console.common.util.type.GeaflowStatementStatus;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.statement.GeaflowStatement;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
-import com.antgroup.geaflow.console.core.service.ReleaseService;
 import com.antgroup.geaflow.console.core.service.StatementService;
 import com.antgroup.geaflow.console.core.service.version.VersionFactory;
 import java.util.concurrent.ExecutorService;
@@ -50,9 +49,6 @@ public class StatementSubmitter {
     @Autowired
     private StatementService statementService;
 
-    @Autowired
-    private ReleaseService releaseService;
-
     public void asyncSubmitQuery(GeaflowStatement query, GeaflowTask task) {
         final String sessionToken = ContextHolder.get().getSessionToken();
         EXECUTOR_SERVICE.submit(() -> {
@@ -76,9 +72,9 @@ public class StatementSubmitter {
             String script = formatQuery(query.getScript(), task);
             client = analyticsClientPool.getClient(task);
             QueryResults queryResults = client.executeQuery(script);
-            if (queryResults.isQueryStatus()) {
+            if (queryResults.getQueryStatus()) {
                 status = GeaflowStatementStatus.FINISHED;
-                result = releaseService.formatOlapResult(script, queryResults.getData(), task);
+                result = queryResults.getFormattedData();
             } else {
                 status = GeaflowStatementStatus.FAILED;
                 result = queryResults.getError().getName();

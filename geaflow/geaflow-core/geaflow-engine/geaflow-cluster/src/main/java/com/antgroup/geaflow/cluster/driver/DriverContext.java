@@ -14,11 +14,16 @@
 
 package com.antgroup.geaflow.cluster.driver;
 
+import static com.antgroup.geaflow.cluster.failover.FailoverStrategyType.component_fo;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.FO_STRATEGY;
+
+import com.antgroup.geaflow.cluster.common.ExecutionIdGenerator;
 import com.antgroup.geaflow.cluster.common.IReliableContext;
 import com.antgroup.geaflow.cluster.common.ReliableContainerContext;
 import com.antgroup.geaflow.cluster.constants.ClusterConstants;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.pipeline.Pipeline;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +35,12 @@ public class DriverContext extends ReliableContainerContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(Driver.class);
 
     private Pipeline pipeline;
+
+    public List<Long> getPipelineTaskIds() {
+        return pipelineTaskIds;
+    }
+
+    private List<Long> pipelineTaskIds;
     private List<Integer> finishedPipelineTasks;
     private int index;
 
@@ -37,6 +48,7 @@ public class DriverContext extends ReliableContainerContext {
         super(id, ClusterConstants.getDriverName(id), config);
         this.index = index;
         this.finishedPipelineTasks = new ArrayList<>();
+        this.pipelineTaskIds = new ArrayList<>();
     }
 
     public DriverContext(int id, int index, Configuration config, boolean isRecover) {
@@ -46,15 +58,23 @@ public class DriverContext extends ReliableContainerContext {
 
     @Override
     public void load() {
-        Pipeline pipeline = ClusterMetaStore.getInstance(id, name, config).getPipeline();
+        Pipeline pipeline =
+            ClusterMetaStore.getInstance(id, name, config).getPipeline();
         if (pipeline != null) {
             List<Integer> finishedPipelineTasks = ClusterMetaStore.getInstance().getPipelineTasks();
             if (finishedPipelineTasks == null) {
                 finishedPipelineTasks = new ArrayList<>();
             }
+            List<Long> pipelineTaskIds = ClusterMetaStore.getInstance().getPipelineTaskIds();
+            if (pipeline.getPipelineTaskList() != null && pipelineTaskIds == null) {
+                throw new GeaflowRuntimeException(String.format("driver %s recover context %s "
+                    + "error: pipeline task ids is null", id, this));
+            }
             this.pipeline = pipeline;
             this.finishedPipelineTasks = finishedPipelineTasks;
-            LOGGER.info("driver {} recover context {}", id, this);
+            this.pipelineTaskIds = pipelineTaskIds;
+            LOGGER.info("driver {} recover context {} pipeline {} finishedPipelineTasks {} pipelineTaskIds {}",
+                id, this, pipeline, finishedPipelineTasks, pipelineTaskIds);
         }
     }
 
@@ -63,6 +83,8 @@ public class DriverContext extends ReliableContainerContext {
     }
 
     public void addPipeline(Pipeline pipeline) {
+        genPipelineTaskIds(pipeline);
+        validatePipeline(pipeline);
         if (!pipeline.equals(this.pipeline)) {
             this.pipeline = pipeline;
         }
@@ -82,6 +104,15 @@ public class DriverContext extends ReliableContainerContext {
         }
     }
 
+    private void validatePipeline(Pipeline pipeline) {
+        // Given that partial components fo only supported for pipeline service,
+        // do validation for pipeline.
+        if (!pipeline.getPipelineTaskList().isEmpty()
+            && config.getString(FO_STRATEGY).equalsIgnoreCase(component_fo.name())) {
+            throw new GeaflowRuntimeException("not support component_fo for executing pipeline tasks");
+        }
+    }
+
     public static class PipelineCheckpointFunction implements IReliableContextCheckpointFunction {
 
         @Override
@@ -89,7 +120,9 @@ public class DriverContext extends ReliableContainerContext {
             DriverContext driverContext = ((DriverContext) context);
             if (driverContext.getPipeline() != null) {
                 ClusterMetaStore.getInstance().savePipeline(driverContext.getPipeline()).flush();
-                LOGGER.info("driver {} checkpoint pipeline", driverContext.getId());
+                ClusterMetaStore.getInstance().savePipelineTaskIds(driverContext.getPipelineTaskIds()).flush();
+                LOGGER.info("driver {} checkpoint context {} pipeline {}, PipelineTaskIds {}",
+                    driverContext.getId(), driverContext, driverContext.getPipeline(), driverContext.getPipelineTaskIds());
             }
         }
     }
@@ -103,6 +136,15 @@ public class DriverContext extends ReliableContainerContext {
                 ClusterMetaStore.getInstance().savePipelineTasks(driverContext.getFinishedPipelineTasks()).flush();
                 LOGGER.info("driver {} checkpoint pipeline finished tasks {}",
                     driverContext.getId(), driverContext.getFinishedPipelineTasks());
+            }
+        }
+    }
+
+    private void genPipelineTaskIds(Pipeline pipeline) {
+        // When recover, we need not generate pipeline task ids.
+        if (this.pipelineTaskIds.isEmpty()) {
+            for (int i = 0, size = pipeline.getPipelineTaskList().size(); i < size; i++) {
+                this.pipelineTaskIds.add(ExecutionIdGenerator.getInstance().generateId());
             }
         }
     }

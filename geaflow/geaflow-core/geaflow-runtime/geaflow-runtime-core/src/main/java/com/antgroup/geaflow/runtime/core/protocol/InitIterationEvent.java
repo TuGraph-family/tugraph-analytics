@@ -23,8 +23,8 @@ import com.antgroup.geaflow.cluster.task.ITaskContext;
  */
 public class InitIterationEvent<T> extends AbstractInitCommand {
 
-    public InitIterationEvent(int workerId, int cycleId, long iterationId, long pipelineId, String pipelineName) {
-        super(workerId, cycleId, iterationId, pipelineId, pipelineName);
+    public InitIterationEvent(long schedulerId, int workerId, int cycleId, long iterationId, long pipelineId, String pipelineName) {
+        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName);
     }
 
     @Override
@@ -46,7 +46,8 @@ public class InitIterationEvent<T> extends AbstractInitCommand {
     @Override
     public String toString() {
         return "InitIterationEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", iterationId=" + windowId
             + '}';

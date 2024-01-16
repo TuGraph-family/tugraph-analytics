@@ -21,25 +21,22 @@ import com.antgroup.geaflow.pipeline.callback.TaskCallBack;
 import com.antgroup.geaflow.pipeline.service.PipelineService;
 import com.antgroup.geaflow.pipeline.task.PipelineTask;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
+import com.antgroup.geaflow.runtime.pipeline.PipelineTaskType;
 import com.antgroup.geaflow.runtime.pipeline.runner.PipelineRunner;
 import com.antgroup.geaflow.runtime.pipeline.service.PipelineServiceExecutor;
 import com.antgroup.geaflow.runtime.pipeline.service.PipelineServiceExecutorContext;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskExecutor;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskExecutorContext;
 import com.antgroup.geaflow.view.IViewDesc;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PipelineExecutor implements IPipelineExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineExecutor.class);
-
-    private static final String DEFAULT_PIPELINE_NAME = "PipelineTask";
     private PipelineRunner pipelineRunner;
     private PipelineExecutorContext executorContext;
     private List<IViewDesc> viewDescList;
@@ -59,10 +56,11 @@ public class PipelineExecutor implements IPipelineExecutor {
     @Override
     public void runPipelineTask(PipelineTask pipelineTask, TaskCallBack taskCallBack) {
         int pipelineTaskId = executorContext.getIdGenerator().getAndIncrement();
-        String pipelineTaskName = String.format("%s#%s", DEFAULT_PIPELINE_NAME, pipelineTaskId);
+        String pipelineTaskName = String.format("%s#%s", PipelineTaskType.PipelineTask.name(),
+            executorContext.getIdGenerator().getAndIncrement());
         LOGGER.info("run pipeline task {}", pipelineTaskName);
 
-        PipelineContext pipelineContext = new PipelineContext(DEFAULT_PIPELINE_NAME,
+        PipelineContext pipelineContext = new PipelineContext(PipelineTaskType.PipelineTask.name(),
             executorContext.getEnvConfig());
         this.viewDescList.stream().forEach(viewDesc -> pipelineContext.addView(viewDesc));
 
@@ -76,13 +74,13 @@ public class PipelineExecutor implements IPipelineExecutor {
     @Override
     public void startPipelineService(PipelineService pipelineService) {
         int pipelineTaskId = executorContext.getIdGenerator().getAndIncrement();
-        String pipelineTaskName = String.format("%s#%s", DEFAULT_PIPELINE_NAME, pipelineTaskId);
+        String pipelineTaskName = String.format("%s#%s", PipelineTaskType.PipelineTask.name(), pipelineTaskId);
         LOGGER.info("run pipeline task {}", pipelineTaskName);
 
         Configuration configuration = new Configuration();
         configuration.putAll(executorContext.getEnvConfig().getConfigMap());
         configuration.setMasterId(executorContext.getEnvConfig().getMasterId());
-        PipelineContext pipelineContext = new PipelineContext(DEFAULT_PIPELINE_NAME,
+        PipelineContext pipelineContext = new PipelineContext(PipelineTaskType.PipelineTask.name(),
             configuration);
         this.viewDescList.stream().forEach(viewDesc -> pipelineContext.addView(viewDesc));
 

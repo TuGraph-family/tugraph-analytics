@@ -29,7 +29,7 @@ public interface ServiceConsumer {
     /**
      * Register the specified listener to receive updated events.
      */
-    void register(ServiceListener listener);
+    default void register(ServiceListener listener){}
 
     /**
      * close the consumer.

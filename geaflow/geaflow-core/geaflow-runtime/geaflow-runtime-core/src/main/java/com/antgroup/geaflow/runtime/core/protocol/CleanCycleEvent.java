@@ -33,8 +33,8 @@ public class CleanCycleEvent extends AbstractCleanCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CleanCycleEvent.class);
 
-    public CleanCycleEvent(int workerId, int cycleId, long windowId) {
-        super(workerId, cycleId, windowId);
+    public CleanCycleEvent(long schedulerId, int workerId, int cycleId, long windowId) {
+        super(schedulerId, workerId, cycleId, windowId);
     }
 
     @Override
@@ -74,7 +74,8 @@ public class CleanCycleEvent extends AbstractCleanCommand {
     @Override
     public String toString() {
         return "CleanCycleEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", windowId=" + windowId
             + '}';
     }

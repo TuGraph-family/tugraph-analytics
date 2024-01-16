@@ -24,7 +24,6 @@ import com.antgroup.geaflow.common.utils.CheckpointUtil;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.google.common.base.Preconditions;
-import java.util.Arrays;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,21 +35,23 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
     private long checkpointDuration;
     private boolean isNeedFullCheckpoint = true;
     private transient long currentCheckpointId;
+    private transient boolean isRecovered = false;
 
     public CheckpointSchedulerContext(IExecutionCycle cycle, ICycleSchedulerContext parentContext) {
         super(cycle, parentContext);
-        if (parentContext != null) {
-            throw new GeaflowRuntimeException("not support nested scheduler context fo checkpoint");
-        }
         this.checkpointDuration = getConfig().getLong(BATCH_NUMBER_PER_CHECKPOINT);
+        if (parentContext != null) {
+            this.callbackFunction = ((AbstractCycleSchedulerContext) parentContext).callbackFunction;
+            ((AbstractCycleSchedulerContext) parentContext).setCallbackFunction(null);
+        }
     }
 
     @Override
     public void init() {
-        super.init();
-        this.schedulerStateMap.put(getCurrentIterationId(),
-            Arrays.asList(SchedulerState.INIT, SchedulerState.EXECUTE));
-        checkpoint(new CycleCheckpointFunction());
+        load();
+        if (!isRecovered) {
+            checkpoint(new CycleCheckpointFunction());
+        }
     }
 
     @Override
@@ -68,46 +69,36 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
 
     @Override
     public void load() {
+        long windowId = loadWindowId(cycle.getPipelineTaskId());
+        init(windowId);
+        if (!isRecovered && windowId != CheckpointSchedulerContext.DEFAULT_INITIAL_ITERATION_ID) {
+            setRollback(true);
+        }
     }
 
     /**
      * Load cycle if exists, otherwise rebuild one by input func.
      */
-    public static AbstractCycleSchedulerContext build(Supplier<? extends ICycleSchedulerContext> builder) {
-        AbstractCycleSchedulerContext context = loadCycle();
-        long windowId = loadWindowId();
-        boolean recovered = true;
+    public static AbstractCycleSchedulerContext build(long pipelineTaskId, Supplier<? extends ICycleSchedulerContext> builder) {
+        AbstractCycleSchedulerContext context = loadCycle(pipelineTaskId);
         if (context == null) {
             Preconditions.checkArgument(builder != null, "should provide function to build new context");
             context = (AbstractCycleSchedulerContext) builder.get();
             if (context == null) {
                 throw new GeaflowRuntimeException("build new context failed");
             }
-            recovered = false;
-        }
-        if (context.getHaLevel() == CHECKPOINT) {
-            context.init(windowId);
-
-            if (recovered) {
-                LOGGER.info("rollback");
-                context.schedulerStateMap.put(context.getCurrentIterationId(),
-                    Arrays.asList(SchedulerState.ROLLBACK, SchedulerState.EXECUTE));
-            } else {
-                LOGGER.info("init and rollback");
-                context.schedulerStateMap.put(context.getCurrentIterationId(),
-                    Arrays.asList(SchedulerState.INIT, SchedulerState.ROLLBACK, SchedulerState.EXECUTE));
-            }
         }
         return context;
     }
 
-    private static long loadWindowId() {
-        Long lastWindowId = ClusterMetaStore.getInstance().getWindowId();
+    private static long loadWindowId(long pipelineTaskId) {
+        Long lastWindowId = ClusterMetaStore.getInstance().getWindowId(pipelineTaskId);
         long windowId;
         if (lastWindowId == null) {
             windowId = CheckpointSchedulerContext.DEFAULT_INITIAL_ITERATION_ID;
             LOGGER.info("not found last success batchId, set startIterationId to {}", windowId);
         } else {
+            // driver fo recover windowId
             windowId = lastWindowId + 1;
             LOGGER.info("load scheduler context, lastWindowId {}, current start windowId {}",
                 lastWindowId, windowId);
@@ -115,12 +106,14 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
         return windowId;
     }
 
-    private static CheckpointSchedulerContext loadCycle() {
-        CheckpointSchedulerContext context = (CheckpointSchedulerContext) ClusterMetaStore.getInstance().getCycle();
+    private static CheckpointSchedulerContext loadCycle(long pipelineTaskId) {
+        CheckpointSchedulerContext context = (CheckpointSchedulerContext) ClusterMetaStore.getInstance().getCycle(pipelineTaskId);
         if (context == null) {
             LOGGER.info("not found recoverable cycle");
             return null;
         }
+        context.isRecovered = true;
+        context.init();
         return context;
     }
 
@@ -130,8 +123,8 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
     }
 
     @Override
-    public void close() {
-        super.close();
+    public void close(IExecutionCycle cycle) {
+        super.close(cycle);
     }
 
     @Override
@@ -139,12 +132,21 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
         return CHECKPOINT;
     }
 
+    public boolean isRecovered() {
+        return isRecovered;
+    }
+
+    public void setRecovered(boolean isRecovered) {
+        this.isRecovered = isRecovered;
+    }
+
     public class IterationIdCheckpointFunction implements IReliableContextCheckpointFunction {
 
         @Override
         public void doCheckpoint(IReliableContext context) {
             long checkpointId = ((CheckpointSchedulerContext) context).currentCheckpointId;
-            ClusterMetaStore.getInstance().saveWindowId(checkpointId);
+            ClusterMetaStore.getInstance().saveWindowId(checkpointId,
+                (((CheckpointSchedulerContext) context).getCycle().getPipelineTaskId()));
             LOGGER.info("cycle {} do checkpoint {}",
                 ((CheckpointSchedulerContext) context).getCycle().getCycleId(), checkpointId);
         }
@@ -155,7 +157,8 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
         @Override
         public void doCheckpoint(IReliableContext context) {
             long checkpointId = ((CheckpointSchedulerContext) context).currentCheckpointId;
-            ClusterMetaStore.getInstance().saveCycle(context).flush();
+            ClusterMetaStore.getInstance().saveCycle(context,
+                ((CheckpointSchedulerContext) context).getCycle().getPipelineTaskId()).flush();
             LOGGER.info("cycle {} do checkpoint {} for full context",
                 ((CheckpointSchedulerContext) context).getCycle().getCycleId(), checkpointId);
         }

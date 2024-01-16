@@ -33,10 +33,10 @@ public class InitCollectCycleEvent extends InitCycleEvent {
 
     private static final int COLLECT_BUCKET_NUM = 1;
 
-    public InitCollectCycleEvent(int workerId, int cycleId, long iterationId,
+    public InitCollectCycleEvent(long schedulerId, int workerId, int cycleId, long iterationId,
                                  long pipelineId, String pipelineName,
                                  ExecutionTask task, HighAvailableLevel haLevel, long nestedWindowId) {
-        super(workerId, cycleId, iterationId, pipelineId, pipelineName, task, haLevel, nestedWindowId);
+        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName, task, haLevel, nestedWindowId);
     }
 
     @Override

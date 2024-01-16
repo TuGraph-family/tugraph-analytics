@@ -86,7 +86,9 @@ public class IoDescriptorBuilderTest extends TestCase {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup,
+            configuration,
+            "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

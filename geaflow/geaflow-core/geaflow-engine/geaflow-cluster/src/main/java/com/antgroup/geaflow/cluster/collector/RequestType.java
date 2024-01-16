@@ -30,6 +30,12 @@ public enum RequestType {
      * Close request.
      */
     CLOSE,
+
+    /**
+     * Stash request.
+     */
+    STASH,
+
     /**
      * Clear the init emitter request in cache.
      */

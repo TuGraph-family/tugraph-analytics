@@ -52,4 +52,9 @@ public interface IWorker<I, O> extends Serializable {
      * Returns the runtime context of worker.
      */
     IWorkerContext getWorkerContext();
+
+    /**
+     * Returns the worker type.
+     */
+    WorkerType getWorkerType();
 }

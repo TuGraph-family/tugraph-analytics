@@ -25,6 +25,16 @@ public interface IExecutionCycle {
     String getPipelineName();
 
     /**
+     * Returns pipelineTask id.
+     */
+    long getPipelineTaskId();
+
+    /**
+     * Returns scheduler id.
+     */
+    long getSchedulerId();
+
+    /**
      * Returns cycle id.
      */
     int getCycleId();

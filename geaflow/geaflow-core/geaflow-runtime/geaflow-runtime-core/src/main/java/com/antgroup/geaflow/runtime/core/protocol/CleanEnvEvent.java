@@ -26,8 +26,8 @@ public class CleanEnvEvent extends AbstractCleanCommand {
     private final long pipelineId;
     private final String driverId;
 
-    public CleanEnvEvent(int workerId, int cycleId, long windowId, long pipelineId, String driverId) {
-        super(workerId, cycleId, windowId);
+    public CleanEnvEvent(long schedulerId, int workerId, int cycleId, long windowId, long pipelineId, String driverId) {
+        super(schedulerId, workerId, cycleId, windowId);
         this.pipelineId = pipelineId;
         this.driverId = driverId;
     }
@@ -61,14 +61,15 @@ public class CleanEnvEvent extends AbstractCleanCommand {
 
     @Override
     protected <T> void sendDoneEvent(String driverId, EventType sourceEventType, T result, boolean sendMetrics) {
-        DoneEvent<T> doneEvent = new DoneEvent<>(this.cycleId, this.windowId, 0, sourceEventType, result);
+        DoneEvent<T> doneEvent = new DoneEvent<>(this.schedulerId, this.cycleId, this.windowId, 0, sourceEventType, result);
         RpcClient.getInstance().processPipeline(driverId, doneEvent);
     }
 
     @Override
     public String toString() {
         return "CleanEnvEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", pipelineId=" + pipelineId

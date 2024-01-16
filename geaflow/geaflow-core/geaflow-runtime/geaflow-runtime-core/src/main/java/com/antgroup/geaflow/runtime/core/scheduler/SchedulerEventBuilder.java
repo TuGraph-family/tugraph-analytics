@@ -17,6 +17,7 @@ package com.antgroup.geaflow.runtime.core.scheduler;
 import static com.antgroup.geaflow.runtime.core.scheduler.context.AbstractCycleSchedulerContext.DEFAULT_INITIAL_ITERATION_ID;
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
+import com.antgroup.geaflow.cluster.protocol.ScheduleStateType;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
@@ -60,10 +61,13 @@ public class SchedulerEventBuilder {
     private CycleResultManager resultManager;
     private boolean enableAffinity;
     private boolean isIteration;
+    private long schedulerId;
 
-    public SchedulerEventBuilder(ICycleSchedulerContext context,
+    public SchedulerEventBuilder(long schedulerId,
+                                 ICycleSchedulerContext context,
                                  DataExchangeMode outputExchangeMode,
                                  CycleResultManager resultManager) {
+        this.schedulerId = schedulerId;
         this.context = context;
         this.cycle = (ExecutionNodeCycle) context.getCycle();
         this.outputExchangeMode = outputExchangeMode;
@@ -73,15 +77,18 @@ public class SchedulerEventBuilder {
         this.isIteration = cycle.getVertexGroup().getCycleGroupMeta().isIterative();
     }
 
-
-    public Map<Integer, IEvent> build(ICycleSchedulerContext.SchedulerState state, long iterationId) {
+    public Map<Integer, IEvent> build(ScheduleStateType state, long iterationId) {
         switch (state) {
             case INIT:
                 return buildInit();
-            case EXECUTE:
+            case ITERATION_INIT:
+                return buildInitIteration(iterationId);
+            case EXECUTE_COMPUTE:
                 return buildExecute(iterationId);
-            case FINISH:
-                return handleFinish();
+            case ITERATION_FINISH:
+                return finishIteration();
+            case CLEAN_CYCLE:
+                return finishPipeline();
             case ROLLBACK:
                 return handleRollback();
             default:
@@ -128,19 +135,12 @@ public class SchedulerEventBuilder {
             return initEvent;
 
         } else {
-            PopWorkerEvent popWorkerEvent = new PopWorkerEvent(task.getWorkerInfo().getWorkerIndex(),
+            PopWorkerEvent popWorkerEvent = new PopWorkerEvent(schedulerId,
+                task.getWorkerInfo().getWorkerIndex(),
                 cycle.getCycleId(),
                 context.getInitialIterationId(), cycle.getPipelineId(), cycle.getPipelineName(), task.getTaskId());
             popWorkerEvent.setIoDescriptor(ioDescriptor);
             return popWorkerEvent;
-        }
-    }
-
-    private IEvent buildCleanOrStashEvent(int workerId, int taskId) {
-        if (enableAffinity) {
-            return new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount(), taskId);
-        } else {
-            return new CleanCycleEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
         }
     }
 
@@ -153,12 +153,12 @@ public class SchedulerEventBuilder {
         }
 
         if (cycle instanceof CollectExecutionNodeCycle) {
-            init = new InitCollectCycleEvent(workerId, cycle.getCycleId(),
+            init = new InitCollectCycleEvent(schedulerId, workerId, cycle.getCycleId(),
                 context.getInitialIterationId(), cycle.getPipelineId(), cycle.getPipelineName(),
                 task, highAvailableLevel, context.getInitialIterationId());
 
         } else {
-            init = new InitCycleEvent(workerId, cycle.getCycleId(),
+            init = new InitCycleEvent(schedulerId, workerId, cycle.getCycleId(),
                 context.getInitialIterationId(), cycle.getPipelineId(), cycle.getPipelineName(),
                 task, highAvailableLevel, context.getInitialIterationId());
         }
@@ -190,7 +190,7 @@ public class SchedulerEventBuilder {
             } else if (iterationId == context.getInitialIterationId()) {
                 // Build execute compute for non-tail event during first window.
                 int workerId = task.getWorkerInfo().getWorkerIndex();
-                ExecuteComputeEvent execute = new ExecuteComputeEvent(workerId,
+                ExecuteComputeEvent execute = new ExecuteComputeEvent(schedulerId, workerId,
                     cycle.getCycleId(), context.getInitialIterationId(),
                     context.getInitialIterationId(),
                     context.getFinishIterationId() - context.getInitialIterationId() + 1,
@@ -202,13 +202,37 @@ public class SchedulerEventBuilder {
         return events;
     }
 
-    private Map<Integer, IEvent> handleFinish() {
-        if (this.cycle.getType() == ExecutionCycleType.ITERATION
-            || this.cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG) {
-            return finishIteration();
-        } else {
-            return finishPipeline();
+    private Map<Integer, IEvent> buildInitIteration(long iterationId) {
+        Map<Integer, IEvent> events = new LinkedHashMap<>();
+        for (ExecutionTask task : cycle.getTasks()) {
+            if (ExecutionTaskUtils.isCycleHead(task)) {
+                int workerId = task.getWorkerInfo().getWorkerIndex();
+                if (cycle.getVertexGroup().getParentVertexGroupIds().isEmpty()
+                    && ExecutionTaskUtils.isCycleHead(task)) {
+                    LaunchSourceEvent launchSourceEvent = new LaunchSourceEvent(schedulerId, workerId,
+                        cycle.getCycleId(), iterationId);
+                    events.put(task.getTaskId(), launchSourceEvent);
+                } else {
+                    // Load graph.
+                    IEvent loadGraph = new LoadGraphProcessEvent(schedulerId, workerId, cycle.getCycleId(),
+                        iterationId, context.getInitialIterationId(), COMPUTE_FETCH_COUNT);
+                    // Init iteration.
+                    InitIterationEvent iterationInit = new InitIterationEvent(schedulerId, workerId,
+                        cycle.getCycleId(),
+                        iterationId, cycle.getPipelineId(), cycle.getPipelineName());
+                    iterationInit.setIoDescriptor(new IoDescriptor(
+                        IoDescriptorBuilder.buildIterationInitInputDescriptor(task, this.cycle,
+                            resultManager),
+                        null));
+                    IEvent execute = new ExecuteFirstIterationEvent(schedulerId, workerId,
+                        cycle.getCycleId(), iterationId);
+                    ComposeEvent composeEvent = new ComposeEvent(workerId,
+                        Arrays.asList(loadGraph, iterationInit, execute));
+                    events.put(task.getTaskId(), composeEvent);
+                }
+            }
         }
+        return events;
     }
 
     private Map<Integer, IEvent> handleRollback() {
@@ -217,7 +241,7 @@ public class SchedulerEventBuilder {
             int workerId = task.getWorkerInfo().getWorkerIndex();
             // Do not do rollback if recover from initial iteration id.
             if (context.getCurrentIterationId() != DEFAULT_INITIAL_ITERATION_ID) {
-                RollbackCycleEvent rollbackCycleEvent = new RollbackCycleEvent(workerId,
+                RollbackCycleEvent rollbackCycleEvent = new RollbackCycleEvent(schedulerId, workerId,
                     this.cycle.getCycleId(),
                     context.getCurrentIterationId() - 1);
                 events.put(task.getTaskId(), rollbackCycleEvent);
@@ -233,11 +257,12 @@ public class SchedulerEventBuilder {
             int workerId = task.getWorkerInfo().getWorkerIndex();
             IEvent cleanEvent;
             if (enableAffinity) {
-                cleanEvent = new StashWorkerEvent(workerId, cycle.getCycleId(), cycle.getIterationCount(), task.getTaskId());
+                cleanEvent = new StashWorkerEvent(schedulerId, workerId, cycle.getCycleId(), cycle.getIterationCount(), task.getTaskId());
             } else {
-                cleanEvent = new CleanCycleEvent(workerId, cycle.getCycleId(), cycle.getIterationCount());
+                cleanEvent = new CleanCycleEvent(schedulerId, workerId, cycle.getCycleId(), cycle.getIterationCount());
             }
-            if (needInterrupt) {
+            if (needInterrupt && context.getCycle().getType() != ExecutionCycleType.ITERATION
+                && context.getCycle().getType() != ExecutionCycleType.ITERATION_WITH_AGG) {
                 InterruptTaskEvent interruptTaskEvent = new InterruptTaskEvent(workerId, cycle.getCycleId());
                 ComposeEvent composeEvent =
                     new ComposeEvent(task.getWorkerInfo().getWorkerIndex(),
@@ -254,46 +279,28 @@ public class SchedulerEventBuilder {
         Map<Integer, IEvent> events = new LinkedHashMap<>();
         for (ExecutionTask task : cycle.getTasks()) {
             int workerId = task.getWorkerInfo().getWorkerIndex();
-            // finish iteration
-            FinishIterationEvent iterationFinishEvent = new FinishIterationEvent(workerId,
-                context.getInitialIterationId(), cycle.getCycleId(), task.getTaskId());
-            IEvent cleanEvent = buildCleanOrStashEvent(workerId, task.getTaskId());
+            // Finish iteration
+            FinishIterationEvent iterationFinishEvent = new FinishIterationEvent(schedulerId,
+                workerId, context.getInitialIterationId(), cycle.getCycleId(), task.getTaskId());
 
-            ComposeEvent composeEvent =
-                new ComposeEvent(task.getWorkerInfo().getWorkerIndex(),
-                    Arrays.asList(iterationFinishEvent, cleanEvent));
-            events.put(task.getTaskId(), composeEvent);
+            events.put(task.getTaskId(), iterationFinishEvent);
         }
         return events;
     }
 
     private IEvent buildExecute(ExecutionTask task, int workerId, int cycleId, long iterationId, long fetchId) {
         if (cycle.getVertexGroup().getParentVertexGroupIds().isEmpty() && ExecutionTaskUtils.isCycleHead(task)) {
-            return new LaunchSourceEvent(workerId, cycleId, iterationId);
+            return new LaunchSourceEvent(schedulerId, workerId, cycleId, iterationId);
         } else {
             // TODO remove init iteration during trigger
             //      after worker fully support handle load graph and init iteration.
-            if (isIteration && iterationId == DEFAULT_INITIAL_ITERATION_ID) {
-                // load graph
-                IEvent loadGraph = new LoadGraphProcessEvent(workerId, cycle.getCycleId(), iterationId,
-                    context.getInitialIterationId(), COMPUTE_FETCH_COUNT);
-                // init iteration
-                InitIterationEvent iterationInit = new InitIterationEvent(workerId, cycle.getCycleId(),
-                    iterationId, cycle.getPipelineId(), cycle.getPipelineName());
-                iterationInit.setIoDescriptor(new IoDescriptor(
-                    IoDescriptorBuilder.buildIterationInitInputDescriptor(task, this.cycle, resultManager),
-                    null));
-                IEvent execute = new ExecuteFirstIterationEvent(workerId, cycleId, iterationId);
-                return new ComposeEvent(workerId, Arrays.asList(loadGraph, iterationInit, execute));
+            InputDescriptor inputDescriptor = IoDescriptorBuilder.buildIterationExecuteInputDescriptor(task,
+                this.cycle, resultManager);
+            if (inputDescriptor.getInputDescMap().isEmpty()) {
+                return new ExecuteComputeEvent(schedulerId, workerId, cycleId, iterationId, fetchId, COMPUTE_FETCH_COUNT);
             } else {
-                InputDescriptor inputDescriptor = IoDescriptorBuilder.buildIterationExecuteInputDescriptor(task,
-                    this.cycle, resultManager);
-                if (inputDescriptor.getInputDescMap().isEmpty()) {
-                    return new ExecuteComputeEvent(workerId, cycleId, iterationId, fetchId, COMPUTE_FETCH_COUNT);
-                } else {
-                    return new IterationExecutionComputeWithAggEvent(workerId, cycleId,
-                        iterationId, fetchId, COMPUTE_FETCH_COUNT, inputDescriptor);
-                }
+                return new IterationExecutionComputeWithAggEvent(schedulerId, workerId, cycleId,
+                    iterationId, fetchId, COMPUTE_FETCH_COUNT, inputDescriptor);
             }
         }
     }

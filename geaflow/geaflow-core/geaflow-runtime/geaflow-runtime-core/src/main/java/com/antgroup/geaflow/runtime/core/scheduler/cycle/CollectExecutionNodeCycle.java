@@ -19,8 +19,9 @@ import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 
 public class CollectExecutionNodeCycle extends ExecutionNodeCycle {
 
-    public CollectExecutionNodeCycle(long pipelineId, String pipelineName, ExecutionVertexGroup vertexGroup,
+    public CollectExecutionNodeCycle(long schedulerId, long pipelineId, long pipelineTaskId,
+                                     String pipelineName, ExecutionVertexGroup vertexGroup,
                                      Configuration config, String driverId, int driverIndex) {
-        super(pipelineId, pipelineName, vertexGroup, config, driverId, driverIndex);
+        super(schedulerId, pipelineId, pipelineTaskId, pipelineName, vertexGroup, config, driverId, driverIndex);
     }
 }

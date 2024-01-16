@@ -26,34 +26,74 @@ import org.testng.annotations.Test;
 public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTest {
 
     @Test
+    public void testNewContext() {
+        long finishIterationId = 100;
+        String testName = "testName";
+        ExecutionNodeCycle cycle = buildMockCycle(false);
+        cycle.setName(testName);
+        cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
+
+        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
+
+        Assert.assertEquals(1, context.getCurrentIterationId());
+        Assert.assertEquals(finishIterationId, context.getFinishIterationId());
+
+    }
+
+    @Test
     public void testRestartContext() {
         long finishIterationId = 100;
         String testName = "testName";
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.setName(testName);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
-        CheckpointSchedulerContext context = new CheckpointSchedulerContext(cycle, null);
+        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
 
+        ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test1");
-        CheckpointSchedulerContext loaded = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> context);
-        loaded.getCurrentIterationId();
+        ClusterMetaStore.init(0, "driver-0", configuration);
+
+        CheckpointSchedulerContext loaded =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), () -> context);
         Assert.assertEquals(1, loaded.getCurrentIterationId());
 
         long checkpointId = 10;
         loaded.checkpoint(checkpointId);
-        Assert.assertNotNull(ClusterMetaStore.getInstance().getCycle());
+        Assert.assertNotNull(ClusterMetaStore.getInstance().getCycle(context.getCycle().getPipelineTaskId()));
 
-        // mock restart job
+        // Mock restart job.
         ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
         ClusterMetaStore.init(0, "driver-0", configuration);
 
-        CheckpointSchedulerContext loaded2 = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> context);
+        CheckpointSchedulerContext loaded2 =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), () ->
+            CycleSchedulerContextFactory.create(cycle, null));
         Assert.assertEquals(checkpointId + 1, loaded2.getCurrentIterationId());
-        Assert.assertNull(ClusterMetaStore.getInstance().getCycle());
-
     }
 
+    @Test
+    public void testFailoverRecover() {
+        configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test1");
+        long finishIterationId = 100;
+        String testName = "testName";
+        ExecutionNodeCycle cycle = buildMockCycle(false);
+        cycle.setName(testName);
+        cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
+
+        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
+        long checkpointId = 10;
+        context.checkpoint(checkpointId);
+
+        ClusterMetaStore.close();
+        ClusterMetaStore.init(0, "driver-0", configuration);
+
+        CheckpointSchedulerContext loaded =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), () -> context);
+
+        Assert.assertEquals(checkpointId + 1, loaded.getCurrentIterationId());
+        Assert.assertEquals(finishIterationId, context.getFinishIterationId());
+    }
 
     private ExecutionNodeCycle buildMockCycle(boolean isIterative) {
         ClusterMetaStore.init(0, "driver-0", configuration);
@@ -71,7 +111,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         vertex.setParallelism(2);
         vertexGroup.getVertexMap().put(0, vertex);
 
-        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        return new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup, configuration, "driver_id", 0);
     }
 
 }

@@ -23,15 +23,10 @@ import com.antgroup.geaflow.example.stream.StreamKeyAggPipeline;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class IncrKeyAggTest extends BaseTest {
-
-    private static final Logger LOGGER =
-        LoggerFactory.getLogger(IncrKeyAggTest.class);
 
     private Map<String, String> config;
 

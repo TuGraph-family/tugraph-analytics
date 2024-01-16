@@ -15,9 +15,11 @@
 package com.antgroup.geaflow.example.base;
 
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.util.ExampleSinkFunctionFactory.SinkType;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -43,6 +45,7 @@ public class BaseTest {
     public void setup() {
         config = new HashMap<>();
         config.put(ExampleConfigKeys.GEAFLOW_SINK_TYPE.getKey(), SinkType.FILE_SINK.name());
+        config.put(ExecutionConfigKeys.HTTP_REST_SERVICE_ENABLE.getKey(), "false");
     }
 
     @AfterMethod
@@ -50,6 +53,8 @@ public class BaseTest {
         if (environment != null) {
             environment.shutdown();
         }
+        ClusterMetaStore.close();
+        AbstractScheduledWorkerManager.closeInstance();
     }
 
     public Map<String, String> getConfig() {

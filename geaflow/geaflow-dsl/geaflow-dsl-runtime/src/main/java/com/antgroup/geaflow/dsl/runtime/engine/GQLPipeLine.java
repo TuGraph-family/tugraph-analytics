@@ -65,8 +65,8 @@ public class GQLPipeLine {
         this(environment, -1, parallelismConfigMap);
     }
 
-    public GQLPipeLine(Environment environment, int timeWaitSeconds) {
-        this(environment, timeWaitSeconds, null);
+    public GQLPipeLine(Environment environment, int timeOutSeconds) {
+        this(environment, timeOutSeconds, null);
     }
 
     public GQLPipeLine(Environment environment, int timeWaitSeconds,
@@ -83,7 +83,6 @@ public class GQLPipeLine {
     public void execute() throws Exception {
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         String queryPath = configuration.getString(DSLConfigKeys.GEAFLOW_DSL_QUERY_PATH, GQL_FILE_NAME);
-        LOGGER.info("queryPath:{}", queryPath);
         String script;
         if (queryPath.startsWith(FileConstants.PREFIX_JAVA_RESOURCE)) {
             script = IOUtils.resourceToString(
@@ -93,6 +92,7 @@ public class GQLPipeLine {
             script = IOUtils.resourceToString(queryPath, Charset.defaultCharset(),
                 GQLPipeLine.class.getClassLoader());
         }
+        LOGGER.info("queryPath:{}", queryPath);
 
         if (pipelineHook != null) {
             script = pipelineHook.rewriteScript(script, configuration);
@@ -124,7 +124,7 @@ public class GQLPipeLine {
 
         private final Configuration conf;
         private final List<GraphViewDesc> insertGraphs;
-        private long checkpointDuration;
+        private final long checkpointDuration;
 
         public SaveGraphWriteVersionCallbackFunction(Configuration conf, PreCompileResult compileResult) {
             this.conf = conf;
@@ -133,12 +133,7 @@ public class GQLPipeLine {
         }
 
         @Override
-        public void window(long windowId, long checkpointDuration) {
-            if (checkpointDuration != this.checkpointDuration) {
-                LOGGER.info("Checkpoint duration changed. old: {}, new: {}",
-                    this.checkpointDuration, checkpointDuration);
-                this.checkpointDuration = checkpointDuration;
-            }
+        public void window(long windowId) {
             if (CheckpointUtil.needDoCheckpoint(windowId, checkpointDuration)) {
                 for (GraphViewDesc graphViewDesc : insertGraphs) {
                     if (graphViewDesc.getBackend().equals(BackendType.Memory)) {

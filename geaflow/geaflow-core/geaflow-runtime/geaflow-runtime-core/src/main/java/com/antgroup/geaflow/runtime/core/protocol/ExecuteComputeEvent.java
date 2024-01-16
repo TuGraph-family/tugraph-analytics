@@ -24,14 +24,14 @@ public class ExecuteComputeEvent extends AbstractIterationComputeCommand {
 
     private boolean recoverable;
 
-    public ExecuteComputeEvent(int workerId, int cycleId, long windowId, long fetchWindowId, long fetchCount) {
-        super(workerId, cycleId, windowId, fetchWindowId, fetchCount);
+    public ExecuteComputeEvent(long schedulerId, int workerId, int cycleId, long windowId, long fetchWindowId, long fetchCount) {
+        super(schedulerId, workerId, cycleId, windowId, fetchWindowId, fetchCount);
     }
 
-    public ExecuteComputeEvent(int workerId, int cycleId, long windowId,
+    public ExecuteComputeEvent(long schedulerId, int workerId, int cycleId, long windowId,
                                long fetchWindowId, long fetchCount,
                                boolean recoverable) {
-        this(workerId, cycleId, windowId, fetchWindowId, fetchCount);
+        this(schedulerId, workerId, cycleId, windowId, fetchWindowId, fetchCount);
         this.recoverable = recoverable;
     }
 
@@ -53,7 +53,8 @@ public class ExecuteComputeEvent extends AbstractIterationComputeCommand {
     @Override
     public String toString() {
         return "ExecuteComputeEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", fetchWindowId=" + fetchWindowId

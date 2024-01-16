@@ -23,7 +23,8 @@ import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.function.FileSink;
-import com.antgroup.geaflow.example.function.FileSource;
+import com.antgroup.geaflow.example.function.RecoverableFileSource;
+import com.antgroup.geaflow.example.util.EnvironmentUtil;
 import com.antgroup.geaflow.example.util.ExampleSinkFunctionFactory;
 import com.antgroup.geaflow.example.util.ResultValidator;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
@@ -50,7 +51,12 @@ public class StreamWordCountCallBackPipeline implements Serializable {
     public static final String REF_FILE_PATH = "data/reference/wordcount";
     private static final List<Long> taskCallBackList = new ArrayList<>();
 
-    public IPipelineResult submit(Environment environment) {
+    public static void main(String[] args) {
+        Environment environment = EnvironmentUtil.loadEnvironment(args);
+        submit(environment);
+    }
+
+    public static IPipelineResult submit(Environment environment) {
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
         Configuration envConfig = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
         envConfig.getConfigMap().put(FileSink.OUTPUT_DIR, RESULT_FILE_PATH);
@@ -60,7 +66,7 @@ public class StreamWordCountCallBackPipeline implements Serializable {
             public void execute(IPipelineTaskContext pipelineTaskCxt) {
                 Configuration conf = pipelineTaskCxt.getConfig();
                 PWindowSource<String> streamSource = pipelineTaskCxt.buildSource(
-                    new FileSource<String>("data/input/email_edge",
+                    new RecoverableFileSource<String>("data/input/email_edge",
                         line -> {
                             String[] fields = line.split(",");
                             return Collections.singletonList(fields[0]);
@@ -73,7 +79,7 @@ public class StreamWordCountCallBackPipeline implements Serializable {
                     .keyBy(e -> e.f0)
                     .reduce((x, y) -> Tuple.of(x.f0, x.f1 + y.f1))
                     .withParallelism(conf.getInteger(ExampleConfigKeys.REDUCE_PARALLELISM))
-                    .map(v -> String.format("(%s,%s)", ((Tuple) v).f0, ((Tuple) v).f1))
+                    .map(v -> String.format("%s,%s", ((Tuple) v).f0, ((Tuple) v).f1))
                     .sink(sink)
                     .withParallelism(conf.getInteger(ExampleConfigKeys.SINK_PARALLELISM));
             }
@@ -82,7 +88,7 @@ public class StreamWordCountCallBackPipeline implements Serializable {
         taskCallBackList.clear();
         taskCallBack.addCallBack(new ICallbackFunction() {
             @Override
-            public void window(long windowId, long checkpointDuration) {
+            public void window(long windowId) {
                 LOGGER.info("finish windowId:{}", windowId);
                 taskCallBackList.add(windowId);
             }

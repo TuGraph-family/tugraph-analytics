@@ -39,6 +39,9 @@ public class EmitterRunner extends AbstractTaskRunner<IEmitterRequest> {
             case CLOSE:
                 this.outputEmitter.close((CloseEmitterRequest) request);
                 break;
+            case STASH:
+                this.outputEmitter.stash((StashEmitterRequest) request);
+                break;
             case CLEAR:
                 this.outputEmitter.clear();
                 break;

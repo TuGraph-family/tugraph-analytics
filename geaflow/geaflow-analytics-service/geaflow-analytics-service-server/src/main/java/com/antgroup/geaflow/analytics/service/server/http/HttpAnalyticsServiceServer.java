@@ -51,7 +51,7 @@ public class HttpAnalyticsServiceServer extends AbstractAnalyticsServiceServer {
         super.init(context);
 
         this.httpHandler = new HttpAnalyticsServiceHandler(requestBlockingQueue,
-            responseBlockingQueue, semaphore);
+            responseBlockingMap, semaphore);
         this.threadPool = new QueuedThreadPool();
         this.threadPool.setDaemon(true);
         this.threadPool.setName(SERVER_NAME);

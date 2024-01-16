@@ -33,13 +33,12 @@ import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import com.antgroup.geaflow.runtime.core.protocol.RollbackCycleEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
-import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +70,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
     @AfterMethod
     public void cleanUp() {
         ClusterMetaStore.close();
+        AbstractScheduledWorkerManager.closeInstance();
     }
 
     @Test(priority = 0)
@@ -122,15 +122,14 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         // mock recover context from previous case.
         CheckpointSchedulerContext context = mockPersistContext;
         context.init(3);
-        context.getSchedulerStateMap().put(context.getCurrentIterationId(),
-            Arrays.asList(ICycleSchedulerContext.SchedulerState.INIT,
-                ICycleSchedulerContext.SchedulerState.ROLLBACK,
-                ICycleSchedulerContext.SchedulerState.EXECUTE));
+        context.setRecovered(false);
+        context.setRollback(true);
 
         scheduler.init(context);
         scheduler.execute();
         scheduler.close();
 
+        context.setRollback(false);
 
         List<IEvent> events = processor.getProcessed();
         LOGGER.info("processed events {}", events.size());
@@ -163,9 +162,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         // mock recover context from previous case.
         CheckpointSchedulerContext context = mockPersistContext;
         context.init(4);
-        context.getSchedulerStateMap().put(context.getCurrentIterationId(),
-            Arrays.asList(ICycleSchedulerContext.SchedulerState.ROLLBACK,
-                ICycleSchedulerContext.SchedulerState.EXECUTE));
+        context.setRecovered(true);
 
         scheduler.init(context);
         scheduler.execute();
@@ -212,7 +209,8 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup,
+            configuration, "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

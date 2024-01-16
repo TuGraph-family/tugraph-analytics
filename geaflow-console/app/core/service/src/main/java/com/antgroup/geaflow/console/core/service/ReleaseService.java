@@ -35,7 +35,6 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.config.CompileContextClass;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
-import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.config.DeployConfig;
 import com.antgroup.geaflow.console.core.service.converter.IdConverter;
@@ -154,17 +153,6 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
                 .compile(job.generateCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Compile job code failed", e);
-        }
-    }
-
-    public String formatOlapResult(String queryScript, Object resultData, GeaflowTask task) {
-        CompilerAndContext compilerAndContext = getCompilerAndContext(task.getRelease().getVersion(),
-            task.getRelease().getJob().getInstanceId(), CatalogType.CONSOLE);
-        try {
-            return compilerAndContext.getCompiler()
-                .formatOlapResult(queryScript, resultData, compilerAndContext.getContext());
-        } catch (Exception e) {
-            throw new GeaflowCompileException("Format olap result failed", e);
         }
     }
 

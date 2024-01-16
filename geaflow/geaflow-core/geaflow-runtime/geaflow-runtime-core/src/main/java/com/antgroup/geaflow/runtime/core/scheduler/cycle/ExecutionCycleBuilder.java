@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.runtime.core.scheduler.cycle;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionGraph;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
@@ -37,41 +36,41 @@ public class ExecutionCycleBuilder {
                                                       Map<Integer, List<ExecutionTask>> vertex2Tasks,
                                                       Configuration config,
                                                       long pipelineId,
+                                                      long pipelineTaskId,
                                                       String name,
+                                                      long schedulerId,
                                                       String driverId,
                                                       int driverIndex) {
 
-        if (executionGraph.getCycleGroupMeta().getGroupType() == CycleGroupType.pipelined) {
-            ExecutionVertexGroup vertexGroup = executionGraph.getVertexGroupMap().values().iterator().next();
-            return buildExecutionCycle(vertexGroup,
-                vertex2Tasks, config, pipelineId, name, driverId, driverIndex);
-        } else {
-            int flyingCount = executionGraph.getCycleGroupMeta().getFlyingCount();
-            long iterationCount = executionGraph.getCycleGroupMeta().getIterationCount();
-            ExecutionGraphCycle graphCycle = new ExecutionGraphCycle(pipelineId, name, GRAPH_CYCLE_ID,
-                flyingCount, iterationCount, config, driverId, driverIndex);
-            for (ExecutionVertexGroup vertexGroup : executionGraph.getVertexGroupMap().values()) {
-                ExecutionNodeCycle nodeCycle = buildExecutionCycle(vertexGroup,
-                    vertex2Tasks, config, pipelineId, name, driverId, driverIndex);
-                graphCycle.addCycle(nodeCycle);
-            }
-            return graphCycle;
+        int flyingCount = executionGraph.getCycleGroupMeta().getFlyingCount();
+        long iterationCount = executionGraph.getCycleGroupMeta().getIterationCount();
+        ExecutionGraphCycle graphCycle = new ExecutionGraphCycle(schedulerId, pipelineId,
+            pipelineTaskId, name, GRAPH_CYCLE_ID, flyingCount, iterationCount, config, driverId, driverIndex);
+        for (ExecutionVertexGroup vertexGroup : executionGraph.getVertexGroupMap().values()) {
+            ExecutionNodeCycle nodeCycle = buildExecutionCycle(vertexGroup,
+                vertex2Tasks, config, pipelineId, pipelineTaskId, name, schedulerId, driverId, driverIndex);
+            graphCycle.addCycle(nodeCycle);
         }
+        return graphCycle;
     }
 
     private static ExecutionNodeCycle buildExecutionCycle(ExecutionVertexGroup vertexGroup,
                                                           Map<Integer, List<ExecutionTask>> vertex2Tasks,
                                                           Configuration config,
                                                           long pipelineId,
+                                                          long pipelineTaskId,
                                                           String name,
+                                                          long schedulerId,
                                                           String driverId,
                                                           int driverIndex) {
         ExecutionNodeCycle cycle;
         if (vertexGroup.getVertexMap().size() == 1
             && vertexGroup.getVertexMap().values().iterator().next().getChainTailType() == VertexType.collect) {
-            cycle = new CollectExecutionNodeCycle(pipelineId, name, vertexGroup, config, driverId, driverIndex);
+            cycle = new CollectExecutionNodeCycle(schedulerId, pipelineId, pipelineTaskId, name,
+                vertexGroup, config, driverId, driverIndex);
         } else {
-            cycle = new ExecutionNodeCycle(pipelineId, name, vertexGroup, config, driverId, driverIndex);
+            cycle = new ExecutionNodeCycle(schedulerId, pipelineId, pipelineTaskId, name,
+                vertexGroup, config, driverId, driverIndex);
         }
         List<ExecutionTask> allTasks = new ArrayList<>();
         List<ExecutionTask> headTasks = new ArrayList<>();

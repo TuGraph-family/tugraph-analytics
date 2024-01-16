@@ -101,6 +101,7 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
         GraphStateDescriptor<K, VV, EV> desc = buildGraphStateDesc(opArgs.getOpName());
         desc.withMetricGroup(runtimeContext.getMetric());
         this.graphState = StateFactory.buildGraphState(desc, runtimeContext.getConfiguration());
+        LOGGER.info("ThreadId {}, open graphState", Thread.currentThread().getId());
         if (!shareEnable) {
             this.taskKeyGroup = keyGroup;
             LOGGER.info("recovery graph state {}", graphState);
