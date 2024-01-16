@@ -19,9 +19,11 @@ import com.antgroup.geaflow.state.manage.ManageableGraphState;
 import com.antgroup.geaflow.state.manage.ManageableGraphStateImpl;
 import com.antgroup.geaflow.state.strategy.manager.GraphManagerImpl;
 import com.antgroup.geaflow.state.strategy.manager.IGraphManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GraphStateImpl<K, VV, EV> implements GraphState<K, VV, EV> {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(GraphStateImpl.class);
     private final IGraphManager<K, VV, EV> graphManager;
     private final ManageableGraphState manageableGraphState;
 
@@ -30,6 +32,7 @@ public class GraphStateImpl<K, VV, EV> implements GraphState<K, VV, EV> {
 
     public GraphStateImpl(StateContext context) {
         this.graphManager = new GraphManagerImpl<>();
+        LOGGER.info("ThreadId {}, GraphStateImpl initDB", Thread.currentThread().getId());
         this.graphManager.init(context);
         this.manageableGraphState = new ManageableGraphStateImpl(this.graphManager);
         this.staticGraphState = new StaticGraphStateImpl<>(this.graphManager);

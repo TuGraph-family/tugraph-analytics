@@ -59,7 +59,7 @@ public class StaticGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R,
             int currentKeyGroup = KeyGroupAssignment.assignToKeyGroup(traversalRequest.getVId(), maxParallelism);
             LOGGER.info("maxParallelism {}", maxParallelism);
 
-            if (currentKeyGroup >= keyGroup.getStartKeyGroup() && currentKeyGroup <= keyGroup.getEndKeyGroup()) {
+            if (currentKeyGroup >= taskKeyGroup.getStartKeyGroup() && currentKeyGroup <= taskKeyGroup.getEndKeyGroup()) {
                 currentTaskRequest.add(traversalRequest);
             }
         }

@@ -41,8 +41,4 @@ public class ServeJobConfigClass extends JobConfigClass {
     @GeaflowConfigKey(value = "geaflow.driver.num", comment = "")
     private Integer driverNum;
 
-    @GeaflowConfigKey(value = "geaflow.zookeeper.quorum.servers", comment = "")
-    @GeaflowConfigValue(required = true, defaultValue = "127.0.0.1:2181")
-    private String quorumServers;
-
 }

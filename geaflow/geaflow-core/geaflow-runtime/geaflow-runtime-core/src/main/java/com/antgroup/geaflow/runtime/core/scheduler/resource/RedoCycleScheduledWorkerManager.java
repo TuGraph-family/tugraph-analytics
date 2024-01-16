@@ -23,22 +23,28 @@ import java.util.List;
 
 public class RedoCycleScheduledWorkerManager extends AbstractScheduledWorkerManager {
 
-    public RedoCycleScheduledWorkerManager(Configuration config) {
+    private static volatile RedoCycleScheduledWorkerManager INSTANCE = null;
+
+    private RedoCycleScheduledWorkerManager(Configuration config) {
         super(config);
     }
 
     public List<WorkerInfo> assign(ExecutionNodeCycle cycle) {
         int parallelism = getExecutionGroupParallelism(cycle.getVertexGroup());
-        if (parallelism > available.size()) {
+        if (this.workers.get(cycle.getSchedulerId()) == null) {
+            init(cycle);
+        }
+        if (parallelism > this.workers.get(cycle.getSchedulerId()).getWorkers().size()) {
             return Collections.emptyList();
         }
         List<WorkerInfo> workers = new ArrayList<>();
+        List<WorkerInfo> workerInfos = this.workers.get(cycle.getSchedulerId()).getWorkers();
         for (int i = 0; i < parallelism; i++) {
-            cycle.getTasks().get(i).setWorkerInfo(this.available.get(i));
-            workers.add(this.available.get(i));
+            cycle.getTasks().get(i).setWorkerInfo(workerInfos.get(i));
+            workers.add(workerInfos.get(i));
         }
         cycle.setWorkerAssigned(false);
-        assigned.addAll(workers);
+        assigned.put(cycle.getSchedulerId(), workers);
         return workers;
     }
 

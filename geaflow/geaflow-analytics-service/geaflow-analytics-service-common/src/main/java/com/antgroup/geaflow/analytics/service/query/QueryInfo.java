@@ -14,15 +14,27 @@
 
 package com.antgroup.geaflow.analytics.service.query;
 
+import org.apache.calcite.rel.type.RelDataType;
+
 public class QueryInfo {
 
     private final String queryId;
 
     private final String queryScript;
 
+    private RelDataType scriptSchema;
+
     public QueryInfo(String queryId, String queryScript) {
         this.queryId = queryId;
         this.queryScript = queryScript;
+    }
+
+    public RelDataType getScriptSchema() {
+        return scriptSchema;
+    }
+
+    public void setScriptSchema(RelDataType scriptSchema) {
+        this.scriptSchema = scriptSchema;
     }
 
     public String getQueryId() {

@@ -31,6 +31,11 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractExecutableCommand.class);
 
+    /**
+     * Scheduler id of the current event.
+     */
+    protected long schedulerId;
+
     protected int workerId;
 
     /**
@@ -48,7 +53,8 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
     protected transient FetcherRunner fetcherRunner;
     protected transient EmitterRunner emitterRunner;
 
-    public AbstractExecutableCommand(int workerId, int cycleId, long windowId) {
+    public AbstractExecutableCommand(long schedulerId, int workerId, int cycleId, long windowId) {
+        this.schedulerId = schedulerId;
         this.workerId = workerId;
         this.cycleId = cycleId;
         this.windowId = windowId;
@@ -67,6 +73,10 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
 
     public int getCycleId() {
         return cycleId;
+    }
+
+    public long getSchedulerId() {
+        return schedulerId;
     }
 
     public long getIterationWindowId() {
@@ -89,7 +99,7 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
         AbstractWorkerContext workerContext = (AbstractWorkerContext) this.context;
         int taskId = workerContext.getTaskId();
         EventMetrics eventMetrics = sendMetrics ? workerContext.getEventMetrics() : null;
-        DoneEvent<T> doneEvent = new DoneEvent<>(this.cycleId, this.windowId, taskId, sourceEventType, result, eventMetrics);
+        DoneEvent<T> doneEvent = new DoneEvent<>(this.schedulerId, this.cycleId, this.windowId, taskId, sourceEventType, result, eventMetrics);
         RpcClient.getInstance().processPipeline(driverId, doneEvent);
     }
 

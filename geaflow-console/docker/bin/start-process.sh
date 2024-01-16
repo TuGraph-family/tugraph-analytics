@@ -81,20 +81,6 @@ function startRedis() {
   }
 }
 
-function startZookeeper() {
-  cd /usr/lib/apache-zookeeper-3.8.3-bin/conf
-
-  # config zk data dir
-  sed -i 's/^dataDir=.*/dataDir=\/usr\/lib\/apache-zookeeper-3.8.3-bin\/zkData/' zoo.cfg
-  sed -i '1i admin.enableServer=false' zoo.cfg
-
-  echo srvr | nc 127.0.0.1 2181 &> /dev/null && echo "zookeeper has been started" || {
-    echo 'starting zookeeper...'
-    nohup /usr/lib/apache-zookeeper-3.8.3-bin/bin/zkServer.sh start >> $ZOOKEEPER_LOG_DIR/stdout.log \
-      2>> $ZOOKEEPER_LOG_DIR/stderr.log &
-  }
-}
-
 function startInfluxdb() {
   /usr/local/bin/influx ping &> /dev/null && echo "influxdb has been started" || {
     echo 'starting influxdb...'
@@ -119,7 +105,6 @@ function startGeaflowConsole() {
 if [ "$DEPLOY_MODE" == "local" ]; then
   startMysql || exit 1
   startRedis || exit 1
-  startZookeeper || exit 1
   startInfluxdb || exit 1
 fi
 

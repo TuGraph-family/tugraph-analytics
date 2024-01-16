@@ -31,9 +31,9 @@ public class PopWorkerEvent extends AbstractInitCommand {
 
     private final int taskId;
 
-    public PopWorkerEvent(int workerId, int cycleId, long windowId,
+    public PopWorkerEvent(long schedulerId, int workerId, int cycleId, long windowId,
                           long pipelineId, String pipelineName, int taskId) {
-        super(workerId, cycleId, windowId, pipelineId, pipelineName);
+        super(schedulerId, workerId, cycleId, windowId, pipelineId, pipelineName);
         this.taskId = taskId;
     }
 
@@ -46,6 +46,7 @@ public class PopWorkerEvent extends AbstractInitCommand {
         popWorkerContext.setPipelineName(pipelineName);
         popWorkerContext.setWindowId(windowId);
         popWorkerContext.setTaskId(taskId);
+        popWorkerContext.setSchedulerId(schedulerId);
 
         ((IAffinityWorker) worker).pop(popWorkerContext);
         context = worker.getWorkerContext();
@@ -75,7 +76,8 @@ public class PopWorkerEvent extends AbstractInitCommand {
     @Override
     public String toString() {
         return "PopWorkerEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", pipelineId=" + pipelineId

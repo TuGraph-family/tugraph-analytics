@@ -31,10 +31,12 @@ public class EventContext implements IEventContext {
     private IoDescriptor ioDescriptor;
     private String driverId;
     private long windowId;
+    private long schedulerId;
 
-    private EventContext(long currentWindowId, int taskId, int cycleId, long pipelineId,
-                        String pipelineName, Processor processor, ExecutionTask executionTask,
-                        IoDescriptor ioDescriptor, String driverId, long windowId) {
+    private EventContext(long schedulerId, long currentWindowId, int taskId, int cycleId, long pipelineId,
+                         String pipelineName, Processor processor, ExecutionTask executionTask,
+                         IoDescriptor ioDescriptor, String driverId, long windowId) {
+        this.schedulerId = schedulerId;
         this.currentWindowId = currentWindowId;
         this.taskId = taskId;
         this.cycleId = cycleId;
@@ -87,6 +89,10 @@ public class EventContext implements IEventContext {
         return windowId;
     }
 
+    public long getSchedulerId() {
+        return schedulerId;
+    }
+
     public static EventContextBuilder builder() {
         return new EventContextBuilder();
     }
@@ -102,6 +108,7 @@ public class EventContext implements IEventContext {
         private IoDescriptor ioDescriptor;
         private String driverId;
         private long windowId;
+        private long schedulerId;
 
         public EventContextBuilder withExecutionTask(ExecutionTask executionTask) {
             this.executionTask = executionTask;
@@ -145,8 +152,13 @@ public class EventContext implements IEventContext {
             return this;
         }
 
+        public EventContextBuilder withSchedulerId(long schedulerId) {
+            this.schedulerId = schedulerId;
+            return this;
+        }
+
         public EventContext build() {
-            return new EventContext(currentWindowId, taskId, cycleId, pipelineId,
+            return new EventContext(schedulerId, currentWindowId, taskId, cycleId, pipelineId,
                 pipelineName, processor, executionTask, ioDescriptor, driverId, windowId);
         }
     }

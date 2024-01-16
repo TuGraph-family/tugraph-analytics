@@ -91,4 +91,9 @@ public class DSLConfigKeys implements Serializable {
         .defaultValue(false)
         .description("Whether enable the split of the ids for traversal all. ");
 
+    public static final ConfigKey GEAFLOW_DSL_COMPILE_PHYSICAL_PLAN_ENABLE = ConfigKeys
+        .key("geaflow.dsl.compile.physical.plan.enable")
+        .defaultValue(true)
+        .description("Whether enable compile query physical plan. ");
+
 }

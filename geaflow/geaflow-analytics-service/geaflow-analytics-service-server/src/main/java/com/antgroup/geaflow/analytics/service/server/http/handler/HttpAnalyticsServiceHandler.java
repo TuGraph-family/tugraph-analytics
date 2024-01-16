@@ -14,16 +14,25 @@
 
 package com.antgroup.geaflow.analytics.service.server.http.handler;
 
-import com.alibaba.fastjson.JSONObject;
+import static com.antgroup.geaflow.analytics.service.server.AbstractAnalyticsServiceServer.getQueryResults;
+
 import com.antgroup.geaflow.analytics.service.query.QueryError;
 import com.antgroup.geaflow.analytics.service.query.QueryIdGenerator;
 import com.antgroup.geaflow.analytics.service.query.QueryInfo;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
 import com.antgroup.geaflow.analytics.service.query.StandardError;
+import com.antgroup.geaflow.common.blocking.map.BlockingMap;
+import com.antgroup.geaflow.common.serialize.SerializerFactory;
+import com.antgroup.geaflow.runtime.core.scheduler.result.IExecutionResult;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -32,53 +41,51 @@ import org.slf4j.LoggerFactory;
 public class HttpAnalyticsServiceHandler extends AbstractHttpHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpAnalyticsServiceHandler.class);
-
+    private static final Type DEFAULT_REQUEST_TYPE = new TypeToken<Map<String, Object>>(){}.getType();
     private static final String QUERY = "query";
-    public static final String QUERY_RESULT = "query_result";
 
     private final BlockingQueue<QueryInfo> requestBlockingQueue;
-    private final BlockingQueue<QueryResults> responseBlockingQueue;
+    private final BlockingMap<String, Future<IExecutionResult>> responseBlockingMap;
     private final QueryIdGenerator queryIdGenerator;
     private final Semaphore semaphore;
 
     public HttpAnalyticsServiceHandler(BlockingQueue<QueryInfo> requestBlockingQueue,
-                                       BlockingQueue<QueryResults> responseBlockingQueue,
+                                       BlockingMap<String, Future<IExecutionResult>> responseBlockingMap,
                                        Semaphore semaphore) {
         this.requestBlockingQueue = requestBlockingQueue;
-        this.responseBlockingQueue = responseBlockingQueue;
+        this.responseBlockingMap = responseBlockingMap;
         this.semaphore = semaphore;
         this.queryIdGenerator = new QueryIdGenerator();
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        JSONObject ret = new JSONObject();
+        QueryResults result = null;
         String queryId = queryIdGenerator.createQueryId();
         try {
             if (!this.semaphore.tryAcquire()) {
                 QueryError queryError = StandardError.ANALYTICS_SERVER_BUSY.getQueryError();
-                QueryResults queryResults = new QueryResults(queryId, queryError);
-                ret.put(QUERY_RESULT, queryResults);
+                result = new QueryResults(queryId, queryError);
                 resp.setStatus(HttpServletResponse.SC_OK);
             } else {
-                String query = req.getParameter(QUERY);
+                String requestBody = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+                Map<String, Object> requestParam = new Gson().fromJson(requestBody, DEFAULT_REQUEST_TYPE);
+                String query = requestParam.get(QUERY).toString();
                 QueryInfo queryInfo = new QueryInfo(queryId, query);
                 LOGGER.info("start execute query [{}]", queryInfo);
-                long start = System.currentTimeMillis();
+                final long start = System.currentTimeMillis();
                 requestBlockingQueue.put(queryInfo);
-                QueryResults queryResults = responseBlockingQueue.take();
-                ret.put(QUERY_RESULT, queryResults);
-                LOGGER.info("finish execute query [{}], result {}, cost {}ms", query, queryResults, System.currentTimeMillis() - start);
+                result = getQueryResults(queryInfo, responseBlockingMap);
+                LOGGER.info("finish execute query [{}], result {}, cost {}ms", result, resp, System.currentTimeMillis() - start);
                 resp.setStatus(HttpServletResponse.SC_OK);
             }
         } catch (Throwable t) {
-            QueryResults queryResults = new QueryResults(queryId, new QueryError(t.getMessage()));
-            ret.put(ERROR_KEY, queryResults);
+            result = new QueryResults(queryId, new QueryError(t.getMessage()));
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             addHeader(resp);
-            byte[] resultBytes = ret.toJSONString().getBytes(StandardCharsets.UTF_8);
-            resp.getOutputStream().write(resultBytes);
+            byte[] serializeResult = SerializerFactory.getKryoSerializer().serialize(result);
+            resp.getOutputStream().write(serializeResult);
             resp.getOutputStream().flush();
             this.semaphore.release();
         }

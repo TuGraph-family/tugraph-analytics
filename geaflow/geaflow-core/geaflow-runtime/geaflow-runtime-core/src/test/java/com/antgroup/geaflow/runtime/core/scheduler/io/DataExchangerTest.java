@@ -39,6 +39,7 @@ public class DataExchangerTest extends TestCase {
         vertex.setParallelism(parallelism);
         int edgeId = 0;
         ExecutionEdge edge = new ExecutionEdge(null, edgeId, null, 0, 1, null);
+        vertex.setInputEdges(Arrays.asList(edge));
 
         CycleResultManager resultManager = new CycleResultManager();
         ShardResult shards1 = new ShardResult(edgeId, CollectType.FORWARD, buildSlices(parallelism));
@@ -49,9 +50,13 @@ public class DataExchangerTest extends TestCase {
         Map<Integer, List<Shard>> result = DataExchanger.buildInput(vertex, edge, resultManager);
         Assert.assertEquals(parallelism, result.size());
         for (int i = 0; i < parallelism; i++) {
-            Assert.assertEquals(2, result.get(i).size());
-            Assert.assertEquals(i, result.get(i).get(0).getSlices().get(0).getSourceIndex());
-            Assert.assertEquals(i, result.get(i).get(0).getSlices().get(0).getTargetIndex());
+            Assert.assertEquals(result.get(i).size(), 1);
+            Shard shard = result.get(i).get(0);
+            Assert.assertEquals(shard.getSlices().size(), 2);
+            for (ISliceMeta sliceMeta : shard.getSlices()) {
+                Assert.assertEquals(i, sliceMeta.getSourceIndex());
+                Assert.assertEquals(i, sliceMeta.getTargetIndex());
+            }
         }
     }
 
@@ -80,9 +85,13 @@ public class DataExchangerTest extends TestCase {
         Map<Integer, List<Shard>> result = DataExchanger.buildInput(vertex, edge, resultManager);
         Assert.assertEquals(parallelism, result.size());
         for (int i = 0; i < parallelism; i++) {
-            Assert.assertEquals(2, result.get(i).size());
-            Assert.assertEquals(i, result.get(i).get(0).getSlices().get(0).getSourceIndex());
-            Assert.assertEquals(i, result.get(i).get(0).getSlices().get(0).getTargetIndex());
+            Assert.assertEquals(result.get(i).size(), 1);
+            Shard shard = result.get(i).get(0);
+            Assert.assertEquals(shard.getSlices().size(), 2);
+            for (ISliceMeta sliceMeta : shard.getSlices()) {
+                Assert.assertEquals(i, sliceMeta.getSourceIndex());
+                Assert.assertEquals(i, sliceMeta.getTargetIndex());
+            }
         }
     }
 

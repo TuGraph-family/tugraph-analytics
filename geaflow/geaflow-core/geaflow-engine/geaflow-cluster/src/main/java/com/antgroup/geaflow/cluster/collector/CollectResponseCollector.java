@@ -25,7 +25,6 @@ import java.util.List;
 
 public class CollectResponseCollector<T> extends AbstractCollector
     implements IResultCollector<ResponseResult>, ICollector<T> {
-
     private int edgeId;
     private CollectType collectorType;
     private String edgeName;

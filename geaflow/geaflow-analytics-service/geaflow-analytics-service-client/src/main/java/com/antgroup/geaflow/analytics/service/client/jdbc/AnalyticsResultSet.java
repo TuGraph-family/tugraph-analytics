@@ -15,13 +15,27 @@
 package com.antgroup.geaflow.analytics.service.client.jdbc;
 
 import static java.lang.String.format;
+import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 
-import com.antgroup.geaflow.analytics.service.client.IAnalyticsManager;
+import com.antgroup.geaflow.analytics.service.query.IQueryStatus;
 import com.antgroup.geaflow.analytics.service.query.QueryError;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.analytics.service.query.QueryStatusInfo;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.common.type.IType;
+import com.antgroup.geaflow.dsl.common.data.Row;
+import com.antgroup.geaflow.dsl.common.data.RowEdge;
+import com.antgroup.geaflow.dsl.common.data.RowVertex;
+import com.antgroup.geaflow.dsl.common.types.EdgeType;
+import com.antgroup.geaflow.dsl.common.types.TableField;
+import com.antgroup.geaflow.dsl.common.types.VertexType;
+import com.antgroup.geaflow.model.graph.edge.IEdge;
+import com.antgroup.geaflow.model.graph.edge.impl.ValueLabelEdge;
+import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import com.antgroup.geaflow.model.graph.vertex.impl.ValueLabelVertex;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableMap;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -42,89 +56,124 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AnalyticsResultSet implements ResultSet {
 
-    private final AtomicBoolean closed = new AtomicBoolean();
-    private final Statement statement;
-    private final IAnalyticsManager client;
-    private final QueryResults queryResults;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyticsResultSet.class);
 
-    public AnalyticsResultSet(Statement statement, IAnalyticsManager client, QueryResults result) {
-        requireNonNull(statement, "statement is null");
-        requireNonNull(client, "client is null");
+    private final QueryResults queryResults;
+    private final Statement statement;
+    private final Iterator<List<Object>> dataResults;
+    private final AtomicReference<List<Object>> currentResult = new AtomicReference<>();
+    private final AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicBoolean wasNull = new AtomicBoolean();
+    private String queryId;
+    private final AnalyticsResultMetaData resultSetMetaData;
+    private final Map<String, Integer> fieldLabel2Index;
+    private final Map<Integer, String> fieldIndex2Label;
+
+    public AnalyticsResultSet(AnalyticsStatement statement, QueryResults result) {
         requireNonNull(result, "query result is null");
         this.statement = statement;
-        this.client = client;
+        this.resultSetMetaData = new AnalyticsResultMetaData(result.getResultMeta());
+        this.queryId = result.getQueryId();
         this.queryResults = result;
+        this.fieldLabel2Index = getFieldLabel2IndexMap(result.getResultMeta());
+        this.fieldIndex2Label = getFieldIndex2LabelMap(result.getResultMeta());
+        List<List<Object>> iteratorData = queryResults.getRawData();
+        this.dataResults = flatten(new PageIterator(iteratorData), Long.MAX_VALUE);
     }
 
-    public static GeaflowRuntimeException resultsException(QueryStatusInfo result) {
+    public static GeaflowRuntimeException resultsException(IQueryStatus result) {
         QueryError error = requireNonNull(result.getError());
         String message = format("QueryId failed (#%s): %s", result.getQueryId(), error.getName());
         return new GeaflowRuntimeException(message);
     }
 
-    public QueryResults getQueryResults() {
-        return this.queryResults;
+    public String getQueryId() {
+        return this.queryId;
     }
 
     @Override
     public boolean next() throws SQLException {
-        return true;
+        checkResultSetOpen();
+        try {
+            if (!dataResults.hasNext()) {
+                currentResult.set(null);
+                return false;
+            }
+            currentResult.set(dataResults.next());
+            return true;
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof SQLException) {
+                throw new GeaflowRuntimeException(e);
+            }
+            throw new GeaflowRuntimeException("fetching results failed", e);
+        }
     }
 
     @Override
     public void close() throws SQLException {
         closed.set(true);
-        client.close();
+        statement.close();
     }
 
     @Override
     public boolean wasNull() throws SQLException {
-        return false;
+        return wasNull.get();
     }
 
     @Override
     public String getString(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        Object value = getFiledByIndex(index);
+        return (value != null) ? value.toString() : null;
     }
 
     @Override
     public boolean getBoolean(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        Object value = getFiledByIndex(index);
+        return (value != null) ? (Boolean) value : false;
     }
 
     @Override
     public byte getByte(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByIndex(index)).byteValue();
     }
 
     @Override
     public short getShort(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByIndex(index)).shortValue();
     }
 
     @Override
     public int getInt(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByIndex(index)).intValue();
     }
 
     @Override
     public long getLong(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByIndex(index)).longValue();
     }
 
     @Override
     public float getFloat(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByIndex(index)).floatValue();
     }
 
     @Override
     public double getDouble(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByIndex(index)).doubleValue();
     }
 
     @Override
@@ -140,6 +189,34 @@ public class AnalyticsResultSet implements ResultSet {
     @Override
     public Date getDate(int index) throws SQLException {
         throw new UnsupportedOperationException();
+    }
+
+    public IVertex<Object, Map<Object, Object>> getVertex(int index) throws SQLException {
+        Object field = getObject(index);
+        Preconditions.checkState(field instanceof RowVertex, "field index " + index + " must be "
+            + "vertex, but get type is " + field.getClass().getCanonicalName());
+        RowVertex rowVertex = (RowVertex) field;
+        String fieldLabel = getFieldLabelByIndex(index);
+        Map<Object, Object> properties = parseVertexValue(rowVertex, fieldLabel);
+        return new ValueLabelVertex<>(rowVertex.getId(), properties, rowVertex.getLabel());
+    }
+
+    public IVertex<Object, Map<Object, Object>> getVertex(String label) throws SQLException {
+        return getVertex(getFieldIndexByLabel(label));
+    }
+
+    public IEdge<Object, Map<Object, Object>> getEdge(int index) throws SQLException {
+        Object field = getObject(index);
+        Preconditions.checkState(field instanceof RowEdge, "field index " + index + " must be "
+            + "edge, but get type is " + field.getClass().getCanonicalName());
+        RowEdge rowEdge = (RowEdge) field;
+        String fieldLabel = getFieldLabelByIndex(index);
+        Map<Object, Object> properties = parseEdgeValue(rowEdge, fieldLabel);
+        return new ValueLabelEdge<>(rowEdge.getSrcId(), rowEdge.getTargetId(), properties, rowEdge.getDirect(), rowEdge.getLabel());
+    }
+
+    public IEdge<Object, Map<Object, Object>> getEdge(String label) throws SQLException {
+        return getEdge(getFieldIndexByLabel(label));
     }
 
     @Override
@@ -169,42 +246,44 @@ public class AnalyticsResultSet implements ResultSet {
 
     @Override
     public String getString(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        Object value = getFiledByLabel(columnLabel);
+        return (value != null) ? value.toString() : null;
     }
 
     @Override
     public boolean getBoolean(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        Object value = getFiledByLabel(columnLabel);
+        return (value != null) ? (Boolean) value : false;
     }
 
     @Override
     public byte getByte(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByLabel(columnLabel)).byteValue();
     }
 
     @Override
     public short getShort(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByLabel(columnLabel)).shortValue();
     }
 
     @Override
     public int getInt(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByLabel(columnLabel)).intValue();
     }
 
     @Override
     public long getLong(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByLabel(columnLabel)).longValue();
     }
 
     @Override
     public float getFloat(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByLabel(columnLabel)).floatValue();
     }
 
     @Override
     public double getDouble(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return convertNumber(getFiledByLabel(columnLabel)).doubleValue();
     }
 
     @Override
@@ -214,7 +293,7 @@ public class AnalyticsResultSet implements ResultSet {
 
     @Override
     public byte[] getBytes(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return (byte[]) getFiledByLabel(columnLabel);
     }
 
     @Override
@@ -268,18 +347,21 @@ public class AnalyticsResultSet implements ResultSet {
     }
 
     @Override
-    public Object getObject(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+    public Object getObject(int columnIndex) throws SQLException {
+        return getFiledByIndex(columnIndex);
     }
 
     @Override
     public Object getObject(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        return getObject(getFieldIndexByLabel(columnLabel));
     }
+
+
 
     @Override
     public int findColumn(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException();
+        checkResultSetOpen();
+        return getFieldIndexByLabel(columnLabel);
     }
 
     @Override
@@ -294,7 +376,11 @@ public class AnalyticsResultSet implements ResultSet {
 
     @Override
     public BigDecimal getBigDecimal(int index) throws SQLException {
-        throw new UnsupportedOperationException();
+        Object value = getFiledByIndex(index);
+        if (value == null) {
+            return null;
+        }
+        return new BigDecimal(String.valueOf(value));
     }
 
     @Override
@@ -887,8 +973,7 @@ public class AnalyticsResultSet implements ResultSet {
     }
 
     @Override
-    public void updateBinaryStream(int index, InputStream x, long length)
-        throws SQLException {
+    public void updateBinaryStream(int index, InputStream x, long length) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
@@ -916,8 +1001,7 @@ public class AnalyticsResultSet implements ResultSet {
     }
 
     @Override
-    public void updateBlob(int index, InputStream inputStream, long length)
-        throws SQLException {
+    public void updateBlob(int index, InputStream inputStream, long length) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
@@ -1037,4 +1121,191 @@ public class AnalyticsResultSet implements ResultSet {
         throw new UnsupportedOperationException();
     }
 
+    private void checkResultSetOpen() throws SQLException {
+        if (isClosed()) {
+            throw new SQLException("Analytics result set is closed");
+        }
+    }
+
+    private int getFieldIndexByLabel(String label) throws SQLException {
+        if (label == null) {
+            throw new SQLException("field label is null");
+        }
+        Integer index = fieldLabel2Index.get(label.toLowerCase(ENGLISH));
+        if (index == null) {
+            throw new SQLException("invalid field label: " + label);
+        }
+        return index;
+    }
+
+    private String getFieldLabelByIndex(int index) throws SQLException {
+        if (index <= 0) {
+            throw new SQLException(String.format("field index must be positive，but current index is %d",
+                index));
+        }
+        String label = fieldIndex2Label.get(index);
+        if (label == null) {
+            throw new SQLException(String.format("label is not exist, index is %d", index));
+        }
+        return label;
+    }
+
+    private static Number convertNumber(Object value) throws SQLException {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number) {
+            return (Number) value;
+        }
+        if (value instanceof Boolean) {
+            return ((Boolean) value) ? 1 : 0;
+        }
+        throw new SQLException(
+            String.format("value %s is not number", value.getClass().getCanonicalName()));
+    }
+
+    private Object getFiledByIndex(int index) throws SQLException {
+        checkResultSetOpen();
+        checkValidResult();
+        if ((index <= 0) || (index > resultSetMetaData.getColumnCount())) {
+            throw new SQLException("Invalid column index: " + index);
+        }
+        Object value = currentResult.get().get(index - 1);
+        wasNull.set(value == null);
+        return value;
+    }
+
+    private Object getFiledByLabel(String label) throws SQLException {
+        checkResultSetOpen();
+        checkValidResult();
+        Object value = currentResult.get().get(getFieldIndexByLabel(label) - 1);
+        wasNull.set(value == null);
+        return value;
+    }
+
+    private static Map<String, Integer> getFieldLabel2IndexMap(RelDataType relDataType) {
+        Map<String, Integer> map = new HashMap<>();
+        List<RelDataTypeField> fieldList = relDataType.getFieldList();
+        for (int i = 0; i < fieldList.size(); i++) {
+            String name = fieldList.get(i).getName().toLowerCase(ENGLISH);
+            if (!map.containsKey(name)) {
+                map.put(name, i + 1);
+            }
+        }
+        return ImmutableMap.copyOf(map);
+    }
+
+    private Map<Object, Object> parseVertexValue(RowVertex rowVertex, String fieldLabel) {
+        Row vertexValue = rowVertex.getValue();
+        Map<Object, Object> properties = new HashMap<>();
+        if (vertexValue != null) {
+            Map<String, IType<?>> tableFieldName2Type = resultSetMetaData.getTableFieldName2Type();
+            for (Entry<String, IType<?>> entry : tableFieldName2Type.entrySet()) {
+                if (fieldLabel.equalsIgnoreCase(entry.getKey())) {
+                    VertexType vertexType = (VertexType) entry.getValue();
+                    List<TableField> valueFields = vertexType.getValueFields();
+                    for (int i = 0; i < valueFields.size(); i++) {
+                        TableField tableField = valueFields.get(i);
+                        Object valueField = vertexValue.getField(i, tableField.getType());
+                        properties.put(tableField.getName(), valueField);
+                    }
+                }
+            }
+        }
+        return properties;
+    }
+
+    private Map<Object, Object> parseEdgeValue(RowEdge rowEdge, String fieldLabel) {
+        Row edgeValue = rowEdge.getValue();
+        Map<Object, Object> properties = new HashMap<>();
+        if (edgeValue != null) {
+            Map<String, IType<?>> tableFieldName2Type = resultSetMetaData.getTableFieldName2Type();
+            for (Entry<String, IType<?>> entry : tableFieldName2Type.entrySet()) {
+                if (fieldLabel.equalsIgnoreCase(entry.getKey())) {
+                    EdgeType edgeType = (EdgeType) entry.getValue();
+                    List<TableField> valueFields = edgeType.getValueFields();
+                    for (int i = 0; i < valueFields.size(); i++) {
+                        TableField tableField = valueFields.get(i);
+                        Object valueField = edgeValue.getField(i, tableField.getType());
+                        properties.put(tableField.getName(), valueField);
+                    }
+                }
+            }
+        }
+        return properties;
+    }
+
+    private static Map<Integer, String> getFieldIndex2LabelMap(RelDataType relDataType) {
+        Map<Integer, String> map = new HashMap<>();
+        List<RelDataTypeField> fieldList = relDataType.getFieldList();
+        for (int i = 0; i < fieldList.size(); i++) {
+            String name = fieldList.get(i).getName().toLowerCase(ENGLISH);
+            if (!map.containsValue(name)) {
+                map.put(i + 1, name);
+            }
+        }
+        return ImmutableMap.copyOf(map);
+    }
+
+    private void checkValidResult() throws SQLException {
+        if (currentResult.get() == null) {
+            throw new SQLException("Not on a valid row");
+        }
+    }
+
+
+    private static <T> Iterator<T> flatten(Iterator<T> rowsIterator, long maxRows) {
+        return (maxRows > 0) ? new RowLimitedIterator<>(rowsIterator, maxRows) : rowsIterator;
+    }
+
+    private static class RowLimitedIterator<T> implements Iterator<T> {
+
+        private final Iterator<T> iterator;
+
+        private final long maxRows;
+
+        private long cursor;
+
+        public RowLimitedIterator(Iterator<T> iterator, long maxRows) {
+            Preconditions.checkState(maxRows >= 0, "max rows is negative");
+            this.iterator = iterator;
+            this.maxRows = maxRows;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor < maxRows && iterator.hasNext();
+        }
+
+        @Override
+        public T next() {
+            if (!hasNext()) {
+                throw new GeaflowRuntimeException("no such element");
+            }
+            cursor++;
+            return iterator.next();
+        }
+    }
+
+    private static class PageIterator extends AbstractIterator<List<Object>> {
+
+        private final List<List<Object>> queryData;
+        private int cursor;
+
+        private PageIterator(List<List<Object>> queryData) {
+            this.queryData = queryData;
+            this.cursor = 0;
+        }
+
+        @Override
+        protected List<Object> computeNext() {
+            if (cursor < queryData.size()) {
+                List<Object> element = queryData.get(cursor);
+                cursor++;
+                return element;
+            } else {
+                return endOfData();
+            }
+        }
+    }
 }

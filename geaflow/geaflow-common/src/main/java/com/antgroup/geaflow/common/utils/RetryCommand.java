@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.common.utils;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 public class RetryCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RetryCommand.class);
+    private static final Random RANDOM = new Random();
 
     public static <T> T run(Callable<T> function, int retryCount) {
         return run(function, retryCount, 0);
@@ -36,23 +38,32 @@ public class RetryCommand {
 
     public static <T> T run(Callable<T> function, Callable retryFunction, int retryCount,
                             long retryIntervalMs) {
-        while (0 < retryCount) {
+        return run(function, retryFunction, retryCount, retryIntervalMs, false);
+    }
+
+    public static <T> T run(Callable<T> function, Callable retryFunction, final int retryCount,
+                            long retryIntervalMs, boolean needRandom) {
+        int i = retryCount;
+        while (0 < i) {
             try {
                 return function.call();
             } catch (Exception e) {
-                retryCount--;
+                i--;
 
-                if (retryCount == 0) {
+                if (i == 0) {
                     LOGGER.error("Retry failed and reached the maximum retried times.", e);
                     throw new GeaflowRuntimeException(e);
                 }
-                LOGGER.warn("Retry failed, will retry {} times with interval {} ms.", retryCount,
-                    retryIntervalMs);
+
                 try {
+                    long sleepTime = needRandom ? retryIntervalMs * (RANDOM.nextInt(retryCount) + 1)
+                                                : retryIntervalMs;
+                    LOGGER.warn("Retry failed, will retry {} times with interval {} ms", i,
+                        sleepTime);
+                    Thread.sleep(sleepTime);
                     if (retryFunction != null) {
                         retryFunction.call();
                     }
-                    Thread.sleep(retryIntervalMs);
                 } catch (Exception e1) {
                     throw new RuntimeException(e1);
                 }

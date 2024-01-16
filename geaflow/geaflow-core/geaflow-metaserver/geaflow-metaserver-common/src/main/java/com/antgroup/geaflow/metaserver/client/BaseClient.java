@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseClient implements ServiceListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseClient.class);
-    private int maxRetry;
+    private static final int MAX_RETRY = 5;
     private static final int RETRY_MS = 10000;
     protected ServiceConsumer serviceConsumer;
     protected RpcClient rpcClient;
@@ -58,7 +58,6 @@ public abstract class BaseClient implements ServiceListener {
         serviceConsumer = serviceBuilder.buildConsumer(configuration);
         serviceConsumer.register(this);
         buildServerConnect(true);
-        maxRetry = configuration.getInteger(ExecutionConfigKeys.META_SERVER_RETRY_TIMES);
     }
 
     protected synchronized void buildServerConnect(boolean force) {
@@ -99,7 +98,7 @@ public abstract class BaseClient implements ServiceListener {
                 buildServerConnect(false);
                 return true;
             },
-            maxRetry, RETRY_MS);
+            MAX_RETRY, RETRY_MS,true);
     }
 
     @Override

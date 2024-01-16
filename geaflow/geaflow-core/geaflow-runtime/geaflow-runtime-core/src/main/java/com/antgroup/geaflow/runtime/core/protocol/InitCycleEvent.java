@@ -34,11 +34,11 @@ public class InitCycleEvent extends AbstractInitCommand implements IHighAvailabl
     private HighAvailableLevel haLevel;
     private long iterationWindowId;
 
-    public InitCycleEvent(int workerId, int cycleId, long iterationId,
+    public InitCycleEvent(long schedulerId, int workerId, int cycleId, long iterationId,
                           long pipelineId, String pipelineName,
                           ExecutionTask task, HighAvailableLevel haLevel,
                           long windowId) {
-        super(workerId, cycleId, iterationId, pipelineId, pipelineName);
+        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName);
         this.task = task;
         this.haLevel = haLevel;
         this.iterationWindowId = windowId;
@@ -59,12 +59,14 @@ public class InitCycleEvent extends AbstractInitCommand implements IHighAvailabl
             .withCurrentWindowId(windowId)
             .withPipelineName(pipelineName)
             .withWindowId(iterationWindowId)
+            .withSchedulerId(schedulerId)
             .build();
         workerContext.init(eventContext);
 
         this.initFetcher();
         this.initEmitter();
         worker.open(context);
+
     }
 
     @Override
@@ -101,7 +103,8 @@ public class InitCycleEvent extends AbstractInitCommand implements IHighAvailabl
     @Override
     public String toString() {
         return "InitCycleEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", pipelineId=" + pipelineId

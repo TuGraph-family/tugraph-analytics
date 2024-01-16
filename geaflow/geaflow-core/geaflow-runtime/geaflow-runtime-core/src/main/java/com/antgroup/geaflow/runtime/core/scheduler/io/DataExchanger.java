@@ -21,12 +21,13 @@ import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class DataExchanger {
+
+    private static ThreadLocal<Map<Integer, Map<Integer, List<Shard>>>> taskInputEdgeShards = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Build task input for execution vertex.
@@ -37,21 +38,31 @@ public class DataExchanger {
                                                        ExecutionEdge inputEdge,
                                                        CycleResultManager resultManager) {
 
+        if (taskInputEdgeShards.get().containsKey(inputEdge.getEdgeId())) {
+            return taskInputEdgeShards.get().get(inputEdge.getEdgeId());
+        }
         Map<Integer, List<Shard>> result = new HashMap<>();
+
         int edgeId = inputEdge.getEdgeId();
         List<IResult> eventResults = resultManager.get(edgeId);
+        Map<Integer, Shard> taskIdToInputShard = new HashMap<>();
         for (IResult eventResult : eventResults) {
             ShardResult shard = (ShardResult) eventResult;
             for (int i = 0; i < shard.getResponse().size(); i++) {
                 int index = i % vertex.getParallelism();
-                if (!result.containsKey(index)) {
-                    result.put(index, new ArrayList<>());
+                if (!taskIdToInputShard.containsKey(index)) {
+                    taskIdToInputShard.put(index, new Shard(shard.getId(), new ArrayList<>()));
                 }
-                Shard newShard = new Shard(
-                    shard.getId(), Arrays.asList(shard.getResponse().get(i)));
-                result.get(index).add(newShard);
+                taskIdToInputShard.get(index).getSlices().add(shard.getResponse().get(i));
             }
         }
+        for (Map.Entry<Integer, Shard> entry : taskIdToInputShard.entrySet()) {
+            if (!result.containsKey(entry.getKey())) {
+                result.put(entry.getKey(), new ArrayList<>());
+            }
+            result.get(entry.getKey()).add(entry.getValue());
+        }
+        taskInputEdgeShards.get().put(inputEdge.getEdgeId(), result);
         return result;
     }
 
@@ -76,5 +87,9 @@ public class DataExchanger {
             }
         }
         return false;
+    }
+
+    public static void clear() {
+        taskInputEdgeShards.get().clear();
     }
 }

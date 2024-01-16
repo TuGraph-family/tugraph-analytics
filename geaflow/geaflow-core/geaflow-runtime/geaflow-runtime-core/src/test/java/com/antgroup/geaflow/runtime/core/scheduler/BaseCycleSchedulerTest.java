@@ -121,7 +121,7 @@ public class BaseCycleSchedulerTest {
                 switch (event.getEventType()) {
                     case LAUNCH_SOURCE:
                         LaunchSourceEvent sourceEvent = (LaunchSourceEvent) event;
-                        response = new DoneEvent<>(sourceEvent.getCycleId(), sourceEvent.getIterationWindowId(),
+                        response = new DoneEvent<>(sourceEvent.getSchedulerId(), sourceEvent.getCycleId(), sourceEvent.getIterationWindowId(),
                             sourceEvent.getWorkerId(), EventType.EXECUTE_COMPUTE);
                         ((IEventListener) scheduler).handleEvent(response);
                         break;
@@ -129,7 +129,7 @@ public class BaseCycleSchedulerTest {
                     case CLEAN_ENV:
                     case STASH_WORKER:
                         AbstractExecutableCommand executableCommand = (AbstractExecutableCommand) event;
-                        response = new DoneEvent<>(executableCommand.getCycleId(), executableCommand.getIterationWindowId(),
+                        response = new DoneEvent<>(executableCommand.getSchedulerId(), executableCommand.getCycleId(), executableCommand.getIterationWindowId(),
                             executableCommand.getWorkerId(), executableCommand.getEventType());
                         ((IEventListener) scheduler).handleEvent(response);
                         break;

@@ -31,10 +31,10 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
     private final Map<Integer, List<Integer>> cycleParents;
     private HighAvailableLevel haLevel;
 
-    public ExecutionGraphCycle(long pipelineId, String pipelineName, int cycleId,
-                               int flyingCount, long iterationCount,
+    public ExecutionGraphCycle(long schedulerId, long pipelineId, long pipelineTaskId,
+                               String pipelineName, int cycleId, int flyingCount, long iterationCount,
                                Configuration config, String driverId, int driverIndex) {
-        super(pipelineId, pipelineName, cycleId, flyingCount, iterationCount, config);
+        super(schedulerId, pipelineId, pipelineTaskId, pipelineName, cycleId, flyingCount, iterationCount, config);
         this.driverId = driverId;
         this.driverIndex = driverIndex;
         this.cycleMap = new HashMap<>();

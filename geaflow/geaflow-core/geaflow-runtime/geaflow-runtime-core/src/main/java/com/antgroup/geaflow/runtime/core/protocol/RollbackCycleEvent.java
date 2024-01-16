@@ -28,8 +28,8 @@ public class RollbackCycleEvent extends AbstractExecutableCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollbackCycleEvent.class);
 
 
-    public RollbackCycleEvent(int workerId, int cycleId, long windowId) {
-        super(workerId, cycleId, windowId);
+    public RollbackCycleEvent(long schedulerId, int workerId, int cycleId, long windowId) {
+        super(schedulerId, workerId, cycleId, windowId);
     }
 
     @Override
@@ -62,7 +62,8 @@ public class RollbackCycleEvent extends AbstractExecutableCommand {
     @Override
     public String toString() {
         return "RollbackCycleEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + '}';

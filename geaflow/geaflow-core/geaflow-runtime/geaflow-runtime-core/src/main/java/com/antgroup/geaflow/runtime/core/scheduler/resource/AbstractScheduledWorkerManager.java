@@ -18,6 +18,7 @@ import com.antgroup.geaflow.cluster.client.utils.PipelineUtil;
 import com.antgroup.geaflow.cluster.resourcemanager.ReleaseResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResourceRequest;
 import com.antgroup.geaflow.cluster.resourcemanager.RequireResponse;
+import com.antgroup.geaflow.cluster.resourcemanager.ResourceInfo;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.resourcemanager.allocator.IAllocator;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
@@ -34,11 +35,15 @@ import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionCycleType;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
+import com.google.common.annotations.VisibleForTesting;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,48 +53,83 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractScheduledWorkerManager implements IScheduledWorkerManager<IExecutionCycle, ExecutionNodeCycle> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractScheduledWorkerManager.class);
+    private static final String SEPARATOR = "#";
     protected static final String DEFAULT_RESOURCE_ID = "default_";
 
     protected static final int RETRY_REQUEST_RESOURCE_INTERVAL = 5;
     protected static final int REPORT_RETRY_TIMES = 50;
     protected String masterId;
-    protected List<WorkerInfo> workers;
-    protected String resourceId;
+    protected Map<Long, ResourceInfo> workers;
     protected boolean isAsync;
-    protected transient List<WorkerInfo> available;
-    protected transient Set<WorkerInfo> assigned;
-    protected transient boolean isAssigned = false;
+    protected transient List<ResourceInfo> available;
+    protected transient Map<Long, List<WorkerInfo>> assigned;
+    protected transient Map<Long, Boolean> isAssigned;
+    private static Map<Class, AbstractScheduledWorkerManager> classToInstance = new HashMap<>();
 
     public AbstractScheduledWorkerManager(Configuration config) {
         this.masterId = config.getMasterId();
         this.isAsync = PipelineUtil.isAsync(config);
     }
 
+    public static AbstractScheduledWorkerManager getInstance(Configuration config, Class<? extends AbstractScheduledWorkerManager> clazz) {
+        if (classToInstance.get(clazz) == null) {
+            synchronized (AbstractScheduledWorkerManager.class) {
+                if (classToInstance.get(clazz) == null) {
+                    try {
+                        Constructor<? extends AbstractScheduledWorkerManager> constructor = clazz.getDeclaredConstructor(
+                            Configuration.class);
+                        constructor.setAccessible(true);
+                        classToInstance.put(clazz, constructor.newInstance(config));
+                    } catch (Throwable e) {
+                        throw new GeaflowRuntimeException(String.format("create worker manager %s fail, errorMsg: %s",
+                            clazz, e.getMessage()));
+                    }
+                }
+            }
+        }
+        return classToInstance.get(clazz);
+    }
+
     @Override
-    public void init(IExecutionCycle graph) {
-        resourceId = DEFAULT_RESOURCE_ID + graph.getDriverIndex();
+    public synchronized void init(IExecutionCycle graph) {
+
+        String resourceId = genResourceId(graph.getDriverIndex(), graph.getSchedulerId());
         LOGGER.info("resource id {}, driver id {}, available {}, isAsync {}",
             resourceId, graph.getDriverId(), available, isAsync);
-        
         if (available == null) {
-            workers = requestWorker(graph);
-            available = new ArrayList<>(workers);
-            LOGGER.info("request workers {}", workers.size());
-        } else {
-            LOGGER.info("reuse workers {}", workers.size());
+            available = new ArrayList<>();
+            assigned = new ConcurrentHashMap<>();
+            isAssigned = new ConcurrentHashMap<>();
         }
-        assigned = new HashSet<>();
+        if (workers == null) {
+            workers = new ConcurrentHashMap<>();
+        }
+
+        if (workers.get(graph.getSchedulerId()) != null) {
+            LOGGER.info("reuse workers {}", workers.get(graph.getSchedulerId()));
+        } else if (available.size() == 0) {
+            List<WorkerInfo> workerInfos = requestWorker(graph, resourceId);
+            workers.put(graph.getSchedulerId(), new ResourceInfo(resourceId, workerInfos));
+            LOGGER.info("schedulerId: {}, request workers {} from resourceManager",
+                graph.getSchedulerId(), workerInfos);
+        } else {
+            ResourceInfo resourceInfo = available.remove(0);
+            workers.put(graph.getSchedulerId(), resourceInfo);
+            LOGGER.info("reuse workers {} from available", resourceInfo);
+        }
     }
 
     @Override
-    public void clean(CleanWorkerFunction function) {
-        function.clean(assigned);
-        isAssigned = true;
+    public void clean(CleanWorkerFunction function, IExecutionCycle cycle) {
+        function.clean(assigned.get(cycle.getSchedulerId()));
+        isAssigned.put(cycle.getSchedulerId(), true);
     }
 
     @Override
-    public void close() {
-        RpcClient.getInstance().releaseResource(masterId, ReleaseResourceRequest.build(resourceId, workers));
+    public synchronized void close(IExecutionCycle cycle) {
+        ResourceInfo resourceInfo = this.workers.remove(cycle.getSchedulerId());
+        this.available.add(resourceInfo);
+        isAssigned.put(cycle.getSchedulerId(), false);
     }
 
     protected int getExecutionGroupParallelism(ExecutionVertexGroup vertexGroup) {
@@ -97,7 +137,7 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
             .map(e -> e.getParallelism()).reduce((x, y) -> x + y).get();
     }
 
-    protected List<WorkerInfo> requestWorker(IExecutionCycle graph) {
+    protected List<WorkerInfo> requestWorker(IExecutionCycle graph, String resourceId) {
         int requestResourceNum;
         if (graph.getType() == ExecutionCycleType.GRAPH) {
             requestResourceNum = ((ExecutionGraphCycle) graph).getCycleMap().values().stream()
@@ -110,12 +150,15 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
         IAllocator.AllocateStrategy allocateStrategy = isAsync
             ? IAllocator.AllocateStrategy.PROCESS_FAIR : IAllocator.AllocateStrategy.ROUND_ROBIN;
         RequireResponse response = RpcClient.getInstance().requireResource(masterId,
-            RequireResourceRequest.build(resourceId, requestResourceNum, allocateStrategy));
+            RequireResourceRequest.build(resourceId, requestResourceNum,
+                allocateStrategy));
         int retryTimes = 1;
         while (!response.isSuccess() || response.getWorkers().isEmpty()) {
             try {
                 response = RpcClient.getInstance().requireResource(masterId,
-                    RequireResourceRequest.build(resourceId, requestResourceNum, allocateStrategy));
+                    RequireResourceRequest.build(resourceId,
+                        requestResourceNum,
+                        allocateStrategy));
                 if (retryTimes % REPORT_RETRY_TIMES == 0) {
                     String msg = String.format("request %s worker with allocateStrategy %s failed after %s times: %s",
                         requestResourceNum, allocateStrategy, retryTimes, response.getMsg());
@@ -130,13 +173,13 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
         }
 
         List<WorkerInfo> workers = response.getWorkers();
-        initWorkers(workers, graph.getHighAvailableLevel());
+        initWorkers(graph.getSchedulerId(), workers, ScheduledWorkerManagerFactory.getWorkerManagerHALevel(graph));
         return workers;
     }
 
-    protected void initWorkers(List<WorkerInfo> workers, HighAvailableLevel highAvailableLevel) {
-        if (this.workers != null) {
-            LOGGER.info("recovered workers {] already init, ignore init again", workers.size());
+    protected void initWorkers(long schedulerId, List<WorkerInfo> workers, HighAvailableLevel highAvailableLevel) {
+        if (this.workers.get(schedulerId) != null) {
+            LOGGER.info("recovered workers {} already init, ignore init again", workers.size());
             return;
         }
         LOGGER.info("do init workers {}", workers.size());
@@ -174,5 +217,34 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
         } catch (InterruptedException e) {
             throw new GeaflowRuntimeException(e);
         }
+    }
+
+    public String genResourceId(int driverIndex, long schedulerId) {
+        return DEFAULT_RESOURCE_ID + driverIndex + SEPARATOR + schedulerId;
+    }
+
+    @VisibleForTesting
+    public static synchronized void closeInstance() {
+        for (Entry<Class, AbstractScheduledWorkerManager> entry : classToInstance.entrySet()) {
+            AbstractScheduledWorkerManager workerManager = entry.getValue();
+            if (workerManager != null) {
+                // Release workers to resourceManager.
+                if (workerManager.workers != null) {
+                    for (Entry<Long, ResourceInfo> workerEntry : workerManager.workers.entrySet()) {
+                        RpcClient.getInstance().releaseResource(workerManager.masterId,
+                            ReleaseResourceRequest.build(workerEntry.getValue().getResourceId(),
+                                workerEntry.getValue().getWorkers()));
+                    }
+                }
+                if (workerManager.available != null) {
+                    for (ResourceInfo resourceInfo : workerManager.available) {
+                        RpcClient.getInstance().releaseResource(workerManager.masterId,
+                            ReleaseResourceRequest.build(resourceInfo.getResourceId(),
+                                resourceInfo.getWorkers()));
+                    }
+                }
+            }
+        }
+        classToInstance.clear();
     }
 }

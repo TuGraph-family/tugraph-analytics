@@ -26,14 +26,13 @@ public class ExecuteFirstIterationEvent extends AbstractExecutableCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExecuteFirstIterationEvent.class);
 
-    public ExecuteFirstIterationEvent(int workerId, int cycleId, long windowId) {
-        super(workerId, cycleId, windowId);
+    public ExecuteFirstIterationEvent(long schedulerId, int workerId, int cycleId, long windowId) {
+        super(schedulerId, workerId, cycleId, windowId);
     }
 
     @Override
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
-        worker.init(windowId);
     }
 
     @Override
@@ -49,7 +48,8 @@ public class ExecuteFirstIterationEvent extends AbstractExecutableCommand {
     @Override
     public String toString() {
         return "ExecuteFirstIterationEvent{"
-                + "workerId=" + workerId
+                + "schedulerId=" + schedulerId
+                + ", workerId=" + workerId
                 + ", cycleId=" + cycleId
                 + ", windowId=" + windowId
                 + '}';

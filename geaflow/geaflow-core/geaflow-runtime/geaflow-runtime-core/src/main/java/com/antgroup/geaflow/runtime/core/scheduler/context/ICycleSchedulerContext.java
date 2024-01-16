@@ -40,6 +40,16 @@ public interface ICycleSchedulerContext extends Serializable {
     boolean isCycleFinished();
 
     /**
+     * Returns when cycle is recovered.
+     */
+    boolean isRecovered();
+
+    /**
+     * Returns whether cycle need rollback.
+     */
+    boolean isRollback();
+
+    /**
      * Returns current iteration id.
      */
     long getCurrentIterationId();
@@ -75,11 +85,6 @@ public interface ICycleSchedulerContext extends Serializable {
     long getInitialIterationId();
 
     /**
-     * Returns scheduler state.
-     */
-    List<SchedulerState> getSchedulerState(long iterationId);
-
-    /**
      * Returns cycle result manager.
      */
     CycleResultManager getResultManager();
@@ -107,7 +112,7 @@ public interface ICycleSchedulerContext extends Serializable {
     /**
      * Close workerManager.
      */
-    void close();
+    void close(IExecutionCycle cycle);
 
     /**
      * Returns scheduler worker manager.

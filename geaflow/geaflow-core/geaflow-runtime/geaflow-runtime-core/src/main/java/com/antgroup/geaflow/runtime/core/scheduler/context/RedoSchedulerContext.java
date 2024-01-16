@@ -16,8 +16,6 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
-import java.util.ArrayList;
-import java.util.List;
 
 public class RedoSchedulerContext extends AbstractCycleSchedulerContext {
 
@@ -28,26 +26,6 @@ public class RedoSchedulerContext extends AbstractCycleSchedulerContext {
     @Override
     public void init() {
         super.init();
-        List<SchedulerState> states = new ArrayList<>();
-        states.add(SchedulerState.INIT);
-        if (parentContext != null) {
-            // Add states of parent if not exists.
-            List<SchedulerState> parentStates = parentContext.getSchedulerState(parentContext.getCurrentIterationId());
-            if (parentStates != null) {
-                for (SchedulerState state : parentStates) {
-                    addSchedulerState(states, state);
-                }
-            }
-        }
-        // Add execute state.
-        addSchedulerState(states, SchedulerState.EXECUTE);
-        this.schedulerStateMap.put(getCurrentIterationId(), states);
-    }
-
-    private void addSchedulerState(List<SchedulerState> states, SchedulerState state) {
-        if (!states.contains(state)) {
-            states.add(state);
-        }
     }
 
     @Override

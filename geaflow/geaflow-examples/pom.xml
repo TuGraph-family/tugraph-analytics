@@ -69,7 +69,7 @@
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-service-discovery-zookeeper</artifactId>
+            <artifactId>geaflow-service-discovery-redis</artifactId>
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
@@ -80,8 +80,8 @@
             <artifactId>geaflow-analytics-service-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.curator</groupId>
-            <artifactId>curator-test</artifactId>
+            <groupId>com.github.fppt</groupId>
+            <artifactId>jedis-mock</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -14,68 +14,114 @@
 
 package com.antgroup.geaflow.example.service;
 
-import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsServiceConfigKeys;
+import static com.antgroup.geaflow.analytics.service.client.utils.JDBCUtils.DRIVER_URL_START;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CONTAINER_WORKER_NUM;
+import static com.antgroup.geaflow.file.FileConfigKeys.ROOT;
+
+import com.antgroup.geaflow.analytics.service.client.AnalyticsClient;
+import com.antgroup.geaflow.analytics.service.client.jdbc.AnalyticsDriver;
+import com.antgroup.geaflow.analytics.service.client.jdbc.AnalyticsResultSet;
+import com.antgroup.geaflow.analytics.service.config.AnalyticsServiceConfigKeys;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
-import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
-import com.antgroup.geaflow.common.serialize.SerializerFactory;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.SleepUtils;
-import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import com.antgroup.geaflow.rpc.proto.Analytics.QueryRequest;
-import com.antgroup.geaflow.rpc.proto.Analytics.QueryResult;
-import com.antgroup.geaflow.rpc.proto.AnalyticsServiceGrpc;
-import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
+import com.antgroup.geaflow.model.graph.vertex.IVertex;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
+import java.util.Properties;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class QueryServiceTest extends BaseServiceTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceTest.class);
-
     @Test
-    public void testQueryService() throws Exception {
+    public void testQueryService() {
         int port = 8093;
-        Environment environment = EnvironmentFactory.onLocalEnvironment();
+        environment = EnvironmentFactory.onLocalEnvironment();
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_PORT, String.valueOf(port));
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_REGISTER_ENABLE, Boolean.FALSE.toString());
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, analyticsQuery);
+        configuration.put(ROOT, TEST_GRAPH_PATH);
+        configuration.put(CONTAINER_WORKER_NUM, String.valueOf(4));
+        configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY_PARALLELISM,
+            String.valueOf(4));
         // Collection source must be set all window size in order to only execute one batch.
         configuration.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE, "-1");
 
         QueryService queryService = new QueryService();
         queryService.submit(environment);
+        SleepUtils.sleepSecond(DEFAULT_WAITING_TIME);
 
-        testQuery(port);
+        AnalyticsClient analyticsClient = AnalyticsClient.builder().withHost(HOST_NAME)
+            .withPort(port).withRetryNum(3).build();
 
-        environment.shutdown();
+        QueryResults queryResults = analyticsClient.executeQuery(executeQuery);
+        Assert.assertNotNull(queryResults);
+        Object defaultFormattedResult = queryResults.getFormattedData();
+        List<List<Object>> rawData = queryResults.getRawData();
+        Assert.assertEquals(1, rawData.size());
+        Assert.assertEquals(3, rawData.get(0).size());
+        Assert.assertEquals(rawData.get(0).get(0), 1100001L);
+        Assert.assertEquals(rawData.get(0).get(1).toString(), "一");
+        Assert.assertEquals(rawData.get(0).get(2).toString(), "王");
+        Assert.assertEquals(defaultFormattedResult.toString(),
+            "{\"viewResult\":{\"nodes\":[],\"edges\":[]},\"jsonResult\":[{\"firstName\":\"一\","
+                + "\"lastName\":\"王\",\"id\":\"1100001\"}]}");
+        analyticsClient.shutdown();
     }
 
-    private void testQuery(int port) {
-        SleepUtils.sleepSecond(3);
+    @Test
+    public void  testJDBCResultSet() {
+        int port = 8094;
+        environment = EnvironmentFactory.onLocalEnvironment();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_PORT, String.valueOf(port));
+        configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_SERVICE_REGISTER_ENABLE,
+            Boolean.FALSE.toString());
+        configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, analyticsQuery);
+        configuration.put(ROOT, TEST_GRAPH_PATH);
+        configuration.put(CONTAINER_WORKER_NUM, String.valueOf(4));
+        configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY_PARALLELISM,
+            String.valueOf(4));
+        // Collection source must be set all window size in order to only execute one batch.
+        configuration.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE, "-1");
 
-        ManagedChannel channel = buildChannel("localhost", port, 3000);
-        AnalyticsServiceGrpc.AnalyticsServiceBlockingStub stub = AnalyticsServiceGrpc.newBlockingStub(channel);
-        ByteString.Output output = ByteString.newOutput();
-        SerializerFactory.getKryoSerializer().serialize("request", output);
-        QueryRequest request = QueryRequest.newBuilder()
-            .setQuery(executeQuery)
-            .setQueryConfig(output.toByteString())
-            .build();
-        QueryResult queryResult = stub.executeQuery(request);
-        Assert.assertNotNull(queryResult);
-        QueryResults result = RpcMessageEncoder.decode(queryResult.getQueryResult());
-        List<List<ResponseResult>> list = (List<List<ResponseResult>>) result.getData();
-        LOGGER.info("result list {}", list);
-        Assert.assertTrue(list.size() == 1);
-        Assert.assertTrue(list.get(0).get(0).getResponse().size() == 0);
+        QueryService queryService = new QueryService();
+        queryService.submit(environment);
+        SleepUtils.sleepSecond(DEFAULT_WAITING_TIME);
+        String url = DRIVER_URL_START + HOST_NAME + ":" + port;
+        Properties properties = new Properties();
+        properties.put("user", "analytics_test");
+        String testQuery = graphView + "MATCH (person:Person where id = 1100001)-[:isLocatedIn]->(city:City)\n"
+            + "RETURN person, person.id, person.firstName, person.lastName";
+        try {
+            Class.forName(AnalyticsDriver.class.getCanonicalName());
+            Connection connection = DriverManager.getConnection(url, properties);
+            Statement statement = connection.createStatement();
+            AnalyticsResultSet resultSet = (AnalyticsResultSet) statement.executeQuery(testQuery);
+            Assert.assertNotNull(resultSet);
+            Assert.assertTrue(resultSet.next());
+            long personId = resultSet.getLong(2);
+            Assert.assertEquals(1100001L, personId);
+            Assert.assertEquals(resultSet.getLong("id"), personId);
+            String personFirstName = resultSet.getString(3);
+            Assert.assertEquals("一", personFirstName);
+            Assert.assertEquals(resultSet.getString("firstName"), personFirstName);
+            IVertex<Object, Map<Object, Object>> personVertexByLabel = resultSet.getVertex("person");
+            IVertex<Object, Map<Object, Object>> personVertexByIndex = resultSet.getVertex(1);
+            Assert.assertNotNull(personVertexByLabel);
+            Assert.assertEquals(personVertexByLabel, personVertexByIndex);
+            Assert.assertFalse(resultSet.next());
+        } catch (Exception e) {
+            throw new GeaflowRuntimeException(e);
+        }
     }
 
 }

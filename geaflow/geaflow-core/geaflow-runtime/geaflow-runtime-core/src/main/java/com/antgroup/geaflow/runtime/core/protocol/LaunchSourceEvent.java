@@ -27,20 +27,37 @@ public class LaunchSourceEvent extends AbstractExecutableCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LaunchSourceEvent.class);
 
-    public LaunchSourceEvent(int workerId, int cycleId, long windowId) {
-        super(workerId, cycleId, windowId);
+    public LaunchSourceEvent(long schedulerId, int workerId, int cycleId, long windowId) {
+        super(schedulerId, workerId, cycleId, windowId);
     }
 
     @Override
     public void execute(ITaskContext taskContext) {
         final long start = System.currentTimeMillis();
         super.execute(taskContext);
-        worker.init(windowId);
-        boolean hasData = (boolean) worker.process(null);
         WorkerContext workerContext = (WorkerContext) this.context;
-        if (!hasData) {
-            LOGGER.info("source is finished");
-            this.sendDoneEvent(workerContext.getDriverId(), EventType.LAUNCH_SOURCE, false, false);
+        worker.init(windowId);
+        if (!workerContext.isFinished()) {
+            boolean hasData = (boolean) worker.process(null);
+            if (!hasData) {
+                workerContext.setFinished(true);
+                this.sendDoneEvent(
+                    workerContext.getDriverId(),
+                    EventType.LAUNCH_SOURCE,
+                    false,
+                    false);
+                LOGGER.info("source is finished at {}, workerId {}, taskId {}",
+                    windowId, workerId, workerContext.getTaskId());
+            }
+        } else {
+            this.sendDoneEvent(
+                workerContext.getDriverId(),
+                EventType.LAUNCH_SOURCE,
+                false,
+                false);
+            LOGGER.info("source already finished, workerId {}, taskId {}",
+                workerId,
+                workerContext.getTaskId());
         }
         worker.finish(windowId);
         workerContext.getEventMetrics().addProcessCostMs(System.currentTimeMillis() - start);
@@ -67,7 +84,8 @@ public class LaunchSourceEvent extends AbstractExecutableCommand {
     @Override
     public String toString() {
         return "LaunchSourceEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + '}';

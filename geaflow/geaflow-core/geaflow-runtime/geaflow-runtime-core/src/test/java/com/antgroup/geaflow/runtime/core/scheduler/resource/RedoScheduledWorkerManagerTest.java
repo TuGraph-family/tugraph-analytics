@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.runtime.core.scheduler.resource;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.eq;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
@@ -31,7 +32,8 @@ public class RedoScheduledWorkerManagerTest extends BaseScheduledWorkerManagerTe
     public void testRequestMultiTimes() {
 
         RedoCycleScheduledWorkerManager wm
-            = new RedoCycleScheduledWorkerManager(new Configuration());
+            = (RedoCycleScheduledWorkerManager) AbstractScheduledWorkerManager.getInstance(new Configuration(),
+            RedoCycleScheduledWorkerManager.class);
         RedoCycleScheduledWorkerManager workerManager = Mockito.spy(wm);
 
         int parallelism = 3;
@@ -40,14 +42,17 @@ public class RedoScheduledWorkerManagerTest extends BaseScheduledWorkerManagerTe
         for (int i = 0; i < parallelism; i++) {
             workers.add(new WorkerInfo("", 0, 0, 0, i, "worker-" + i));
         }
-        Mockito.doReturn(workers).when(workerManager).requestWorker(any());
+        String resourceId = workerManager.genResourceId(cycle.getDriverIndex(),
+            cycle.getSchedulerId());
+        Mockito.doReturn(workers).when(workerManager).requestWorker(any(), eq(resourceId));
         workerManager.init(cycle);
-        Assert.assertEquals(parallelism, workerManager.workers.size());
+        Assert.assertEquals(parallelism,
+            workerManager.workers.get(cycle.getSchedulerId()).getWorkers().size());
 
         for (int i = 0; i < 10; i++) {
             workerManager.assign(cycle);
             workerManager.release(cycle);
-            Assert.assertEquals(parallelism, workerManager.workers.size());
+            Assert.assertEquals(parallelism, workerManager.workers.get(cycle.getSchedulerId()).getWorkers().size());
         }
     }
 }

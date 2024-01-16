@@ -16,6 +16,10 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dsl-runtime</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

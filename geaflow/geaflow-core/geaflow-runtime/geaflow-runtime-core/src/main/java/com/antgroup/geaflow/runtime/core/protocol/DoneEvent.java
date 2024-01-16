@@ -24,6 +24,9 @@ import com.antgroup.geaflow.common.metric.EventMetrics;
  */
 public class DoneEvent<T> implements ICycleResponseEvent {
 
+    // Scheduler id of the current event.
+    private long schedulerId;
+
     // Cycle id of the current event.
     private int cycleId;
 
@@ -41,26 +44,32 @@ public class DoneEvent<T> implements ICycleResponseEvent {
 
     private EventMetrics eventMetrics;
 
-    public DoneEvent(int cycleId, long windowId, int tailTaskId, EventType sourceEvent) {
-        this(cycleId, windowId, tailTaskId, sourceEvent, null, null);
+    public DoneEvent(long schedulerId, int cycleId, long windowId, int tailTaskId, EventType sourceEvent) {
+        this(schedulerId, cycleId, windowId, tailTaskId, sourceEvent, null, null);
     }
 
-    public DoneEvent(int cycleId, long windowId, int tailTaskId, EventType sourceEvent, T result) {
-        this(cycleId, windowId, tailTaskId, sourceEvent, result, null);
+    public DoneEvent(long schedulerId, int cycleId, long windowId, int tailTaskId, EventType sourceEvent, T result) {
+        this(schedulerId, cycleId, windowId, tailTaskId, sourceEvent, result, null);
     }
 
-    public DoneEvent(int cycleId,
+    public DoneEvent(long schedulerId,
+                     int cycleId,
                      long windowId,
                      int tailTaskId,
                      EventType sourceEvent,
                      T result,
                      EventMetrics eventMetrics) {
+        this.schedulerId = schedulerId;
         this.cycleId = cycleId;
         this.windowId = windowId;
         this.taskId = tailTaskId;
         this.sourceEvent = sourceEvent;
         this.result = result;
         this.eventMetrics = eventMetrics;
+    }
+
+    public long getSchedulerId() {
+        return schedulerId;
     }
 
     @Override
@@ -104,7 +113,8 @@ public class DoneEvent<T> implements ICycleResponseEvent {
     @Override
     public String toString() {
         return "DoneEvent{"
-            + "cycleId=" + cycleId
+            + "schedulerId=" + schedulerId
+            + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", taskId=" + taskId
             + ", sourceEvent=" + sourceEvent

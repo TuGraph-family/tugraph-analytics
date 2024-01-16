@@ -14,26 +14,46 @@
 
 package com.antgroup.geaflow.analytics.service.client.jdbc;
 
-import com.antgroup.geaflow.analytics.service.client.SocketChannelSocketFactory;
+import static com.google.common.base.Strings.nullToEmpty;
+import static java.lang.Integer.parseInt;
+
+import com.antgroup.geaflow.analytics.service.client.utils.JDBCUtils;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import java.io.Closeable;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
-import okhttp3.OkHttpClient;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class AnalyticsDriver implements Driver, Closeable {
+/**
+ * This class is an adaptation of Presto's com.facebook.presto.jdbc.PrestoDriver.
+ */
+public class AnalyticsDriver implements Driver {
 
-    public static final String DRIVER_URL_START = "jdbc:geaflow://";
-
-    private OkHttpClient httpClient;
+    static final String DRIVER_VERSION;
+    static final int DRIVER_MAJOR_VERSION;
+    static final int DRIVER_MINOR_VERSION;
 
     static {
+        String version = nullToEmpty(AnalyticsDriver.class.getPackage().getImplementationVersion());
+        Matcher matcher = Pattern.compile("^(\\d+)\\.(\\d+)($|[.-])").matcher(version);
+        if (!matcher.find()) {
+            DRIVER_VERSION = "unknown";
+            DRIVER_MAJOR_VERSION = 0;
+            DRIVER_MINOR_VERSION = 0;
+        } else {
+            DRIVER_VERSION = version;
+            DRIVER_MAJOR_VERSION = parseInt(matcher.group(1));
+            DRIVER_MINOR_VERSION = parseInt(matcher.group(2));
+        }
+
         try {
             DriverManager.registerDriver(new AnalyticsDriver());
         } catch (SQLException e) {
@@ -42,42 +62,39 @@ public class AnalyticsDriver implements Driver, Closeable {
     }
 
     @Override
-    public void close() throws IOException {
-        httpClient.dispatcher().executorService().shutdown();
-        httpClient.connectionPool().evictAll();
-    }
-
-    @Override
     public Connection connect(String url, Properties properties) {
         if (!acceptsURL(url)) {
             return null;
         }
-        AnalyticsDriverUri driverUri = new AnalyticsDriverUri(url, properties);
-        httpClient = new OkHttpClient.Builder()
-            .socketFactory(new SocketChannelSocketFactory())
-            .build();
-        HttpQueryChannel executor = new HttpQueryChannel(httpClient);
-        return new AnalyticsConnection(driverUri, executor);
+        return AnalyticsConnection.newInstance(url, properties);
     }
 
     @Override
     public boolean acceptsURL(String url) {
-        return url.startsWith(DRIVER_URL_START);
+        return JDBCUtils.acceptsURL(url);
     }
 
     @Override
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
-        return new DriverPropertyInfo[0];
+        AnalyticsDriverURI analyticsDriverURI = new AnalyticsDriverURI(url, info);
+        Properties properties = analyticsDriverURI.getProperties();
+        ArrayList<DriverPropertyInfo> driverPropertyInfos = new ArrayList<>();
+        Set<String> keySets = properties.keySet().stream().map(Object::toString)
+            .collect(Collectors.toSet());
+        for (String key : keySets) {
+            driverPropertyInfos.add(new DriverPropertyInfo(key, properties.getProperty(key)));
+        }
+        return driverPropertyInfos.toArray(new DriverPropertyInfo[0]);
     }
 
     @Override
     public int getMajorVersion() {
-        return 0;
+        return DRIVER_MAJOR_VERSION;
     }
 
     @Override
     public int getMinorVersion() {
-        return 0;
+        return DRIVER_MINOR_VERSION;
     }
 
     @Override
@@ -89,4 +106,5 @@ public class AnalyticsDriver implements Driver, Closeable {
     public Logger getParentLogger() {
         throw new UnsupportedOperationException();
     }
+
 }

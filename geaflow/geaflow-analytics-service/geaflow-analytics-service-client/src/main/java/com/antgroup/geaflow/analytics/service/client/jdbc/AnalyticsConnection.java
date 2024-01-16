@@ -18,10 +18,8 @@ import static com.google.common.collect.Maps.fromProperties;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-import com.antgroup.geaflow.analytics.service.client.AnalyticsManagerSession;
-import com.antgroup.geaflow.analytics.service.client.IAnalyticsManager;
+import com.antgroup.geaflow.analytics.service.client.AnalyticsClient;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import java.net.URI;
 import java.sql.Array;
@@ -39,60 +37,74 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AnalyticsConnection implements Connection {
 
-    private static final String SOURCE = "geaflow-jdbc";
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyticsConnection.class);
 
+    private static final String SEPARATOR_COLON = ":";
     private final AtomicReference<Integer> networkTimeoutMillis = new AtomicReference<>(Ints.saturatedCast(MINUTES.toMillis(2)));
-
     private final Map<String, String> clientInfo = new ConcurrentHashMap<>();
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicReference<String> catalog = new AtomicReference<>();
-    private final HttpQueryChannel queryExecutor;
     private final URI httpUri;
     private final String user;
-    private final boolean compressionDisabled;
     private final Map<String, String> sessionProperties;
-    private final Map<String, String> customHeaders;
 
-    public AnalyticsConnection(AnalyticsDriverUri uri, HttpQueryChannel queryExecutor) {
+    private final AnalyticsDriverURI analyticsDriverURI;
+
+    private AnalyticsClient client;
+
+    public static Connection newInstance(String url, Properties properties) {
+        AnalyticsDriverURI analyticsDriverURI = new AnalyticsDriverURI(url, properties);
+        return new AnalyticsConnection(analyticsDriverURI);
+    }
+
+    private AnalyticsConnection(AnalyticsDriverURI uri) {
         requireNonNull(uri, "analytics driver uri is null");
-        this.httpUri = uri.getHttpUri();
-        this.catalog.set(uri.getGraphView());
+        this.analyticsDriverURI = uri;
         this.user = uri.getUser();
-        this.compressionDisabled = uri.isCompressionDisabled();
-        this.queryExecutor = requireNonNull(queryExecutor, "query executor is null");
+        this.httpUri = uri.getHttpUri();
         this.sessionProperties = new ConcurrentHashMap<>(uri.getSessionProperties());
-        this.customHeaders = uri.getCustomHeaders();
+        initAnalyticsClient();
+    }
+
+
+    private void initAnalyticsClient() {
+        String authority = this.analyticsDriverURI.getAuthority();
+        try {
+            if (authority != null && !authority.isEmpty()) {
+                String[] split = authority.split(SEPARATOR_COLON);
+                if (split.length == 2) {
+                    String host = split[0];
+                    int port = Integer.parseInt(split[1]);
+                    this.client = AnalyticsClient.builder()
+                        .withHost(host).withPort(port).build();
+                    LOGGER.info("init tugraph analytics connection with host [{}] and port [{}]",
+                        host, port);
+                } else {
+                    LOGGER.warn("illegal authority: [{}]", authority);
+                    throw new GeaflowRuntimeException("illegal authority: " + authority);
+                }
+            }
+        } catch (Throwable e) {
+            LOGGER.warn("parse authority from driver uri failed [{}]", authority, e);
+            throw new GeaflowRuntimeException("analytics jdbc create client failed");
+        }
     }
 
     @Override
     public Statement createStatement() throws SQLException {
         checkOpen();
-        return new AnalyticsStatement(this);
-    }
-
-    IAnalyticsManager executeQuery(String query, Map<String, String> properties) {
-        Map<String, String> allProperties = new HashMap<>(sessionProperties);
-        allProperties.putAll(properties);
-        AnalyticsManagerSession clientSession = AnalyticsManagerSession.builder()
-            .setServer(httpUri)
-            .setClientUser(user)
-            .setClientSource(SOURCE)
-            .setClientRequestTimeoutMs(networkTimeoutMillis.get())
-            .setProperties(ImmutableMap.copyOf(allProperties))
-            .setCompressionDisabled(compressionDisabled)
-            .setCustomHeaders(customHeaders)
-            .build();
-        return queryExecutor.executeQuery(clientSession, query);
+        return AnalyticsStatement.newInstance(this, client);
     }
 
     private void checkOpen() throws SQLException {
@@ -140,6 +152,7 @@ public class AnalyticsConnection implements Connection {
     @Override
     public void close() throws SQLException {
         closed.set(true);
+        this.client.shutdown();
     }
 
     @Override

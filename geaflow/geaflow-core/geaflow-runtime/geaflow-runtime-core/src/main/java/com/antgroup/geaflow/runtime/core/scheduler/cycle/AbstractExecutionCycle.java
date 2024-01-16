@@ -20,20 +20,24 @@ import com.google.common.base.Preconditions;
 public abstract class AbstractExecutionCycle implements IExecutionCycle {
 
     protected long pipelineId;
+    protected long pipelineTaskId;
+    protected long schedulerId;
     protected String pipelineName;
     protected int cycleId;
     protected int flyingCount;
     protected long iterationCount;
     private Configuration config;
 
-    public AbstractExecutionCycle(long pipelineId, String pipelineName, int cycleId,
-                                  int flyingCount, long iterationCount,
+    public AbstractExecutionCycle(long schedulerId, long pipelineId, long pipelineTaskId, String pipelineName,
+                                  int cycleId, int flyingCount, long iterationCount,
                                   Configuration config) {
         this.pipelineName = pipelineName;
         this.cycleId = cycleId;
         this.flyingCount = flyingCount;
         this.iterationCount = iterationCount;
         this.pipelineId = pipelineId;
+        this.pipelineTaskId = pipelineTaskId;
+        this.schedulerId = schedulerId;
         this.config = config;
 
         Preconditions.checkArgument(flyingCount > 0,
@@ -49,6 +53,24 @@ public abstract class AbstractExecutionCycle implements IExecutionCycle {
 
     public long getPipelineId() {
         return pipelineId;
+    }
+
+    public void setPipelineTaskId(long pipelineTaskId) {
+        this.pipelineTaskId = pipelineTaskId;
+    }
+
+    @Override
+    public long getPipelineTaskId() {
+        return pipelineTaskId;
+    }
+
+    public void setSchedulerId(long schedulerId) {
+        this.schedulerId = schedulerId;
+    }
+
+    @Override
+    public long getSchedulerId() {
+        return schedulerId;
     }
 
     public void setPipelineName(String pipelineName) {

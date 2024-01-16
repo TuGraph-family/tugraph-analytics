@@ -15,16 +15,19 @@
 package com.antgroup.geaflow.console.common.service.integration.engine.analytics;
 
 import com.antgroup.geaflow.console.common.util.proxy.ProxyClass;
+import java.util.List;
 
 @ProxyClass("com.antgroup.geaflow.analytics.service.query.QueryResults")
 public interface QueryResults {
 
     String getQueryId();
 
-    Object getData();
+    List<List<Object>> getRawData();
 
     QueryError getError();
 
-    boolean isQueryStatus();
+    boolean getQueryStatus();
+
+    String getFormattedData();
 
 }

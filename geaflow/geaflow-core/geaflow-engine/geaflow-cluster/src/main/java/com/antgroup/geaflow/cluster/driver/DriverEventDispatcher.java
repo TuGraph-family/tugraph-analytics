@@ -16,29 +16,34 @@ package com.antgroup.geaflow.cluster.driver;
 
 import com.antgroup.geaflow.cluster.common.IDispatcher;
 import com.antgroup.geaflow.cluster.common.IEventListener;
+import com.antgroup.geaflow.cluster.protocol.ICycleResponseEvent;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
-import java.util.ArrayList;
-import java.util.List;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DriverEventDispatcher implements IDispatcher {
 
-    private List<IEventListener> eventListenerList;
+    private Map<Long, IEventListener> eventListenerMap;
 
     public DriverEventDispatcher() {
-        this.eventListenerList = new ArrayList<>();
+        this.eventListenerMap = new HashMap<>();
     }
 
     public void dispatch(IEvent event) {
-        for (IEventListener eventHandler : eventListenerList) {
-            eventHandler.handleEvent(event);
+        ICycleResponseEvent doneEvent = (ICycleResponseEvent) event;
+        IEventListener eventListener = eventListenerMap.get(doneEvent.getSchedulerId());
+        if (eventListener == null) {
+            throw new GeaflowRuntimeException(String.format("event %s do not find handle listener %s", event, doneEvent.getSchedulerId()));
         }
+        eventListener.handleEvent(event);
     }
 
-    public void registerListener(IEventListener eventListener) {
-        this.eventListenerList.add(eventListener);
+    public void registerListener(long schedulerId, IEventListener eventListener) {
+        this.eventListenerMap.put(schedulerId, eventListener);
     }
 
-    public void removeListener(IEventListener eventListener) {
-        this.eventListenerList.remove(eventListener);
+    public void removeListener(long schedulerId) {
+        this.eventListenerMap.remove(schedulerId);
     }
 }

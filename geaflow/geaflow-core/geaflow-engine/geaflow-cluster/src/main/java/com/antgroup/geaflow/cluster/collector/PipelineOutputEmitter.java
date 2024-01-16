@@ -130,14 +130,12 @@ public class PipelineOutputEmitter {
 
     public void close(CloseEmitterRequest request) {
         int taskId = request.getTaskId();
-        if (!this.runningFlags.containsKey(taskId)) {
-            return;
-        }
-        for (AtomicBoolean flag : this.runningFlags.remove(taskId)) {
-            if (flag != null) {
-                flag.set(false);
-            }
-        }
+        this.initRequestCache.remove(taskId);
+        this.handleRunningFlags(taskId);
+    }
+
+    public void stash(StashEmitterRequest request) {
+        this.handleRunningFlags(request.getTaskId());
     }
 
     public Configuration getConfiguration() {
@@ -147,6 +145,17 @@ public class PipelineOutputEmitter {
     public void clear() {
         LOGGER.info("clear emitter cache of task {}", this.initRequestCache.keySet());
         this.initRequestCache.clear();
+    }
+
+    private void handleRunningFlags(int taskId) {
+        if (!this.runningFlags.containsKey(taskId)) {
+            return;
+        }
+        for (AtomicBoolean flag : this.runningFlags.remove(taskId)) {
+            if (flag != null) {
+                flag.set(false);
+            }
+        }
     }
 
     private static class EmitterTask<T> implements Runnable {

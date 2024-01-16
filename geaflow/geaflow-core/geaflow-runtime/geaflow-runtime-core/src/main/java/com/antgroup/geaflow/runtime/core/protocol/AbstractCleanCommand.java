@@ -16,7 +16,7 @@ package com.antgroup.geaflow.runtime.core.protocol;
 
 public abstract class AbstractCleanCommand extends AbstractExecutableCommand {
 
-    public AbstractCleanCommand(int workerId, int cycleId, long windowId) {
-        super(workerId, cycleId, windowId);
+    public AbstractCleanCommand(long schedulerId, int workerId, int cycleId, long windowId) {
+        super(schedulerId, workerId, cycleId, windowId);
     }
 }

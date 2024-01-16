@@ -20,24 +20,14 @@ import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.stream.StreamWordCountCallBackPipeline;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
-import java.util.HashMap;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class IncrWordCountCallBackTest extends BaseTest {
 
     private static final Logger LOGGER =
         LoggerFactory.getLogger(IncrWordCountCallBackTest.class);
-
-    private Map<String, String> config;
-
-    @BeforeMethod
-    public void setUp() {
-        config = new HashMap<>();
-    }
 
     @Test
     public void testTaskCallBack() throws Exception {

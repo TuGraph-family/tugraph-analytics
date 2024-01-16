@@ -91,6 +91,11 @@ public class ClusterMetaStore {
         return this;
     }
 
+    public ClusterMetaStore savePipelineTaskIds(List<Long> pipelineTaskIds) {
+        save(ClusterMetaKey.PIPELINE_TASK_IDS, pipelineTaskIds);
+        return this;
+    }
+
     public ClusterMetaStore savePipelineTasks(List<Integer> taskIndices) {
         save(ClusterMetaKey.PIPELINE_TASKS, taskIndices);
         return this;
@@ -99,12 +104,12 @@ public class ClusterMetaStore {
     /**
      * Auto flush after save value.
      */
-    public void saveWindowId(Long windowId) {
-        save(ClusterMetaKey.WINDOW_ID, windowId);
+    public void saveWindowId(Long windowId, long pipelineTaskId) {
+        save(ClusterMetaKey.WINDOW_ID, windowId, pipelineTaskId);
     }
 
-    public ClusterMetaStore saveCycle(Object cycle) {
-        save(ClusterMetaKey.CYCLE, cycle);
+    public ClusterMetaStore saveCycle(Object cycle, long pipelineTaskId) {
+        save(ClusterMetaKey.CYCLE, cycle, pipelineTaskId);
         return this;
     }
     
@@ -139,16 +144,20 @@ public class ClusterMetaStore {
         return get(ClusterMetaKey.PIPELINE);
     }
 
+    public List<Long> getPipelineTaskIds() {
+        return get(ClusterMetaKey.PIPELINE_TASK_IDS);
+    }
+
     public List<Integer> getPipelineTasks() {
         return get(ClusterMetaKey.PIPELINE_TASKS);
     }
 
-    public Long getWindowId() {
-        return get(ClusterMetaKey.WINDOW_ID);
+    public Long getWindowId(long pipelineTaskId) {
+        return get(ClusterMetaKey.WINDOW_ID, pipelineTaskId);
     }
 
-    public Object getCycle() {
-        return get(ClusterMetaKey.CYCLE);
+    public Object getCycle(long pipelineTaskId) {
+        return get(ClusterMetaKey.CYCLE, pipelineTaskId);
     }
 
     public List<IEvent> getEvents() {
@@ -183,8 +192,20 @@ public class ClusterMetaStore {
         getBackend(key).put(key.name(), value);
     }
 
+    private <T> void save(ClusterMetaKey key, T value, long pipelineTaskId) {
+        getBackend(key).put(getKeyTag(key.name(), pipelineTaskId), value);
+    }
+
     private <T> T get(ClusterMetaKey key) {
         return (T) getBackend(key).get(key.name());
+    }
+
+    private <T> T get(ClusterMetaKey key, long pipelineTaskId) {
+        return (T) getBackend(key).get(getKeyTag(key.name(), pipelineTaskId));
+    }
+
+    private String getKeyTag(String key, long pipelineTaskId) {
+        return String.format("%s#%s", key, pipelineTaskId);
     }
 
     private IClusterMetaKVStore<String, Object> getBackend(ClusterMetaKey metaKey) {
@@ -221,6 +242,7 @@ public class ClusterMetaStore {
     public enum ClusterMetaKey {
 
         PIPELINE,
+        PIPELINE_TASK_IDS,
         PIPELINE_TASKS,
         WINDOW_ID,
         CYCLE,

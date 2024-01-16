@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.analytics.service.client;
 
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.pipeline.service.ServiceType;
 import java.io.Closeable;
 
@@ -24,12 +23,12 @@ public interface IQueryRunner extends Closeable {
     /**
      * Init query runner.
      */
-    void init(ClientHandlerContext handlerContext);
+    void init(QueryRunnerContext handlerContext);
 
     /**
      * Execute query.
      */
-    QueryResults executeQuery(String queryScript, HostAndPort address);
+    QueryResults executeQuery(String queryScript);
 
     /**
      * Get service type.
@@ -41,4 +40,23 @@ public interface IQueryRunner extends Closeable {
      */
     QueryResults cancelQuery(long queryId);
 
+    /**
+     * Query runner is running.
+     */
+    boolean isRunning();
+
+    /**
+     * Query runner is aborted, when request fail.
+     */
+    boolean isAborted();
+
+    /**
+     * Query runner is error.
+     */
+    boolean isError();
+
+    /**
+     * Query runner is finished.
+     */
+    boolean isFinished();
 }
