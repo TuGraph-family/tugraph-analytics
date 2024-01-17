@@ -45,15 +45,6 @@ public class RpcServiceImpl implements RpcService, Serializable {
         try {
             this.server.start();
             LOGGER.info("Brpc Server started: {}", port);
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-                    LOGGER.warn("*** shutting down bRPC server since JVM is shutting down");
-                    stopService();
-                    LOGGER.warn("*** server shut down");
-                }
-            });
             return port;
         } catch (Throwable t) {
             LOGGER.error(t.getMessage(), t);

@@ -65,6 +65,13 @@ public abstract class AbstractComponent {
         RpcClient.init(configuration);
         ClusterMetaStore.init(id, name, configuration);
         StatsCollectorFactory.init(configuration);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            // Use stderr here since the logger may have been reset by its JVM shutdown hook.
+            LOGGER.warn("*** Shutting ClusterMetaStore since JVM is shutting down.");
+            ClusterMetaStore.close();
+            LOGGER.warn("*** ClusterMetaStore is shutdown.");
+        }));
     }
 
     protected void registerHAService() {

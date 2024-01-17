@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.cluster.k8s.config;
 
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLUSTER_CLIENT_TIMEOUT_MS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONNECTION_RETRY_INTERVAL_MS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CONNECTION_RETRY_TIMES;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.DEFAULT_RESOURCE_EPHEMERAL_STORAGE_SIZE;
@@ -26,6 +25,7 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.MASTE
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WORK_DIR;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_CLIENT_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
 
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;

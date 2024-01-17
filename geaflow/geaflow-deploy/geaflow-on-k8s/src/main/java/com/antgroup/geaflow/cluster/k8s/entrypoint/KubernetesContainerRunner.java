@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
+
 import com.antgroup.geaflow.cluster.container.Container;
 import com.antgroup.geaflow.cluster.container.ContainerContext;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
@@ -74,8 +76,8 @@ public class KubernetesContainerRunner {
             LOGGER.info("Completed container init in {}ms", System.currentTimeMillis() - startTime);
             kubernetesContainerRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FETAL: process exits", e);
-            throw e;
+            LOGGER.error("FATAL: process exits", e);
+            System.exit(EXIT_CODE);
         }
     }
 

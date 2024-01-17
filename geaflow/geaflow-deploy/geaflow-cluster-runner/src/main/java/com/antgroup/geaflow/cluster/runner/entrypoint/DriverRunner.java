@@ -18,6 +18,7 @@ import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CONTAINER_
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CONTAINER_INDEX;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.ENV_AGENT_PORT;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.ENV_SUPERVISOR_PORT;
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.AGENT_HTTP_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_RPC_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_RPC_PORT;
@@ -84,8 +85,8 @@ public class DriverRunner {
             LOGGER.info("Completed driver init in {} ms", System.currentTimeMillis() - startTime);
             driverRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FETAL: process exits", e);
-            throw e;
+            LOGGER.error("FATAL: process exits", e);
+            System.exit(EXIT_CODE);
         }
     }
 

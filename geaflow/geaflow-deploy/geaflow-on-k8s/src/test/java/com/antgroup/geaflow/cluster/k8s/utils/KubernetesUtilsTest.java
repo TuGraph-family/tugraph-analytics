@@ -14,8 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.utils;
 
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.CLUSTER_CLIENT_TIMEOUT_MS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_CLIENT_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.REPORTER_LIST;
 
 import com.antgroup.geaflow.cluster.constants.ClusterConstants;
