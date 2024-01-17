@@ -248,7 +248,7 @@ public class BaseServiceTest {
         defaultConfig = new Configuration();
         defaultConfig.put(RedisConfigKeys.REDIS_HOST, server.getHost());
         defaultConfig.put(RedisConfigKeys.REDIS_PORT, String.valueOf(server.getBindPort()));
-        defaultConfig.put(ExecutionConfigKeys.JOB_UNIQUE_ID, jobName);
+        defaultConfig.put(ExecutionConfigKeys.JOB_APP_NAME, jobName);
         metaServer = new MetaServer();
         metaServer.init(new MetaServerContext(defaultConfig));
     }

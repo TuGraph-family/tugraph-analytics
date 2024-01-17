@@ -39,7 +39,7 @@ public class AnalyticsClientFactory {
         configuration.putAll(task.getRelease().getJobConfig().toStringMap());
         configuration.put("brpc.connect.timeout.ms", String.valueOf(8000));
         configuration.put("geaflow.meta.server.retry.times", String.valueOf(2));
-        configuration.put("geaflow.job.unique.id", redisParentNamespace);
+        configuration.put("geaflow.job.runtime.name", redisParentNamespace);
         return builder.withConfiguration(configuration)
             .withInitChannelPools(true)
             .build();

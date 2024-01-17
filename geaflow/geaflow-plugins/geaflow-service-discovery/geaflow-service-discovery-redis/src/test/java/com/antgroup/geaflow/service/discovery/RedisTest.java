@@ -32,7 +32,7 @@ public class RedisTest {
         this.configuration.put(RedisConfigKeys.REDIS_HOST, redisServer.getHost());
         this.configuration.put(RedisConfigKeys.REDIS_PORT, String.valueOf(redisServer.getBindPort()));
         this.configuration.put(SERVICE_DISCOVERY_TYPE, "redis");
-        this.configuration.put(ExecutionConfigKeys.JOB_UNIQUE_ID, "testJob123");
+        this.configuration.put(ExecutionConfigKeys.JOB_APP_NAME, "testJob123");
     }
 
     @AfterClass
@@ -110,7 +110,7 @@ public class RedisTest {
     public void testBaseKey() {
         Map<String, String> config = configuration.getConfigMap();
         Configuration newConfig = new Configuration(new HashMap<>(config));
-        newConfig.put(ExecutionConfigKeys.JOB_UNIQUE_ID, "234");
+        newConfig.put(ExecutionConfigKeys.JOB_APP_NAME, "234");
         this.consumer = ServiceBuilderFactory.build(serviceType).buildConsumer(newConfig);
         this.provider = ServiceBuilderFactory.build(serviceType).buildProvider(newConfig);
         Assert.assertTrue(provider.exists(null));

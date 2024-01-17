@@ -19,8 +19,8 @@ public class RedisServiceConsumer implements ServiceConsumer {
 
     public RedisServiceConsumer(Configuration configuration) {
         this.recoverableRedis = new RecoverableRedis();
-        String jobUniqueId = configuration.getString(ExecutionConfigKeys.JOB_UNIQUE_ID);
-        this.baseKey = jobUniqueId.startsWith("/") ? jobUniqueId : "/" + jobUniqueId;
+        String appName = configuration.getString(ExecutionConfigKeys.JOB_APP_NAME);
+        this.baseKey = appName.startsWith("/") ? appName : "/" + appName;
         StoreContext storeContext = new StoreContext(baseKey);
         storeContext.withKeySerializer(new DefaultKVSerializer(String.class, null));
         storeContext.withConfig(configuration);
