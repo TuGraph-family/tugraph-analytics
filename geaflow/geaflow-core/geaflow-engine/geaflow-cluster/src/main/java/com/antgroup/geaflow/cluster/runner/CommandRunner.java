@@ -70,7 +70,7 @@ public class CommandRunner {
                 restarts--;
             } while (true);
         } catch (Exception e) {
-            LOGGER.error("FETAL: start command failed: {}", command, e);
+            LOGGER.error("FATAL: start command failed: {}", command, e);
             if (e instanceof GeaflowRuntimeException) {
                 throw (GeaflowRuntimeException) e;
             }

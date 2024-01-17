@@ -184,11 +184,6 @@ public class KubernetesConfigKeys {
         .defaultValue("/home/admin/logs/geaflow")
         .description("geaflow job log directory");
 
-    public static final ConfigKey CLUSTER_CLIENT_TIMEOUT_MS = ConfigKeys
-        .key("kubernetes.geaflow.cluster.timeout.ms")
-        .defaultValue(300000)
-        .description("cluster client timeout in ms");
-
     public static final ConfigKey WATCHER_CHECK_INTERVAL = ConfigKeys
         .key("kubernetes.watcher.check.interval.seconds")
         .defaultValue(60)

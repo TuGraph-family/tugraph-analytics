@@ -320,6 +320,16 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(".html")
         .description("filename extension of profiler results, e.g., [.html, .svg]");
 
+    public static final ConfigKey CLUSTER_CLIENT_TIMEOUT_MS = ConfigKeys
+        .key("geaflow.cluster.client.timeout.ms")
+        .defaultValue(300000)
+        .description("cluster client timeout in ms");
+
+    public static final ConfigKey CLIENT_EXIT_WAIT_SECONDS = ConfigKeys
+        .key("geaflow.cluster.client.exit.wait.secs")
+        .defaultValue(5)
+        .description("cluster client exit wait time in seconds");
+
     // ------------------------------------------------------------------------
     // supervisor
     // ------------------------------------------------------------------------

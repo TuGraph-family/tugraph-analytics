@@ -18,9 +18,11 @@
 
 package com.antgroup.geaflow.cluster.k8s.handler;
 
+import com.antgroup.geaflow.cluster.k8s.handler.PodHandlerRegistry.EventKind;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import io.fabric8.kubernetes.api.model.ContainerState;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import java.util.ArrayList;
@@ -33,31 +35,30 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PodOOMHandler implements IPodEventHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PodOOMHandler.class);
+public class PodOOMHandler extends AbstractPodHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PodOOMHandler.class);
     private static final String OOM_KILLED_KEY = "OOMKilled";
     private static final Exception POD_OOM_MSG = new Exception("pod overused memory");
 
     private final DateTimeFormatter parser = ISODateTimeFormat.dateTimeNoMillis();
+    private final Map<Long, List<Tuple<String, Exception>>> exceptions;
     private int totalOOMCount;
-    private Map<Long, List<Tuple<String, Exception>>> exceptions;
 
     public PodOOMHandler() {
-        this.exceptions = new HashMap<>();
         this.totalOOMCount = 0;
+        this.exceptions = new HashMap<>();
     }
 
     @Override
     public void handle(Pod pod) {
         if (pod.getStatus() != null && !pod.getStatus().getContainerStatuses().isEmpty()) {
             for (ContainerStatus containerStatus : pod.getStatus().getContainerStatuses()) {
-                if (containerStatus.getState() != null
-                    && containerStatus.getState().getTerminated() != null
-                    && containerStatus.getState().getTerminated().getReason() != null
-                    && containerStatus.getState().getTerminated().getFinishedAt() != null) {
-                    if (containerStatus.getState().getTerminated().getReason()
-                        .contains(OOM_KILLED_KEY)) {
+                ContainerState state = containerStatus.getState();
+                if (state != null && state.getTerminated() != null
+                    && state.getTerminated().getReason() != null
+                    && state.getTerminated().getFinishedAt() != null) {
+                    if (state.getTerminated().getReason().contains(OOM_KILLED_KEY)) {
                         String finishTime = containerStatus.getState().getTerminated()
                             .getFinishedAt();
                         DateTime parsed;
@@ -67,15 +68,11 @@ public class PodOOMHandler implements IPodEventHandler {
                             LOGGER.error("Failed to parse finish time: {}", finishTime, e);
                             return;
                         }
-
                         long exceptionTime = parsed.getMillis();
                         List<Tuple<String, Exception>> oldList = exceptions.get(exceptionTime);
 
                         boolean added = true;
                         String componentId = KubernetesUtils.extractComponentId(pod);
-                        if (componentId == null) {
-                            return;
-                        }
                         Tuple<String, Exception> newException = new Tuple<>(componentId,
                             POD_OOM_MSG);
                         if (oldList == null) {
@@ -91,11 +88,19 @@ public class PodOOMHandler implements IPodEventHandler {
 
                         if (added) {
                             totalOOMCount++;
-                            String errMsg = String
-                                .format("pod %s oom killed at %s", pod.getMetadata().getName(),
-                                    parsed);
-                            LOGGER.info("pod {} oom killed at {}, totally: {}",
+                            LOGGER.info("Pod #{} {} oom killed at {}, totally: {}", componentId,
                                 pod.getMetadata().getName(), parsed, totalOOMCount);
+
+                            PodEvent oomEvent = new PodEvent();
+                            oomEvent.setEventKind(EventKind.OOM);
+                            oomEvent.setTs(exceptionTime);
+                            oomEvent.setPodIp(pod.getStatus().getPodIP());
+                            oomEvent.setHostIp(pod.getStatus().getHostIP());
+                            oomEvent.setContainerId(componentId);
+                            notifyListeners(oomEvent);
+
+                            String errMsg = String.format("pod %s oom killed at %s",
+                                pod.getMetadata().getName(), parsed);
                             StatsCollectorFactory.getInstance().getExceptionCollector()
                                 .reportException(new OutOfMemoryError(errMsg));
                         }

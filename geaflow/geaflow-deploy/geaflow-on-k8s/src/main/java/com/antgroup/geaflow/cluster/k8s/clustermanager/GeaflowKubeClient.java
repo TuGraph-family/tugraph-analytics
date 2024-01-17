@@ -152,8 +152,8 @@ public class GeaflowKubeClient implements Serializable {
     }
 
     public Watch createServiceWatcher(String serviceName,
-                                        BiConsumer<Action, Service> eventHandler,
-                                        Consumer<Exception> closeHandler) {
+                                      BiConsumer<Action, Service> eventHandler,
+                                      Consumer<Exception> closeHandler) {
         Callable<Watch> action = () -> {
             Watcher<Service> watcher = createWatcher(eventHandler, closeHandler);
             LOGGER.info("create watcher for service with name: {}", serviceName);
@@ -163,7 +163,7 @@ public class GeaflowKubeClient implements Serializable {
     }
 
     private  <R extends HasMetadata> Watcher<R> createWatcher(BiConsumer<Action, R> eventHandler,
-                                                       Consumer<Exception> closeHandler) {
+                                                              Consumer<Exception> closeHandler) {
         Watcher<R> watcher = new Watcher<R>() {
             @Override
             public void eventReceived(Action action, R resource) {

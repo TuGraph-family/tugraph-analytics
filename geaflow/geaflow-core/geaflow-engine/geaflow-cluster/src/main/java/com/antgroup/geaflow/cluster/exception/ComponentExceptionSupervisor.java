@@ -28,9 +28,6 @@ public class ComponentExceptionSupervisor extends AbstractTaskRunner<ComponentEx
 
     @Override
     protected void process(ExceptionElement exceptionElement) {
-        LOGGER.error(String.format("%s occur fatal exception, exit process now",
-                exceptionElement.thread), exceptionElement.cause);
-
         // Send exception to master.
         ExceptionClient exceptionClient = ExceptionClient.getInstance();
         if (exceptionClient != null) {
@@ -38,6 +35,8 @@ public class ComponentExceptionSupervisor extends AbstractTaskRunner<ComponentEx
         }
         // Exit current process if supervisor is running.
         if (running) {
+            LOGGER.error(String.format("%s occur fatal exception, exit process now",
+                exceptionElement.thread), exceptionElement.cause);
             System.exit(EXIT_CODE);
         } else {
             LOGGER.info("{} ignore exception because supervisor is shutdown", exceptionElement.thread);

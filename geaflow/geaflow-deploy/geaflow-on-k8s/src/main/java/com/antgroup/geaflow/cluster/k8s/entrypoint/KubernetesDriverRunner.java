@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
+
 import com.antgroup.geaflow.cluster.driver.Driver;
 import com.antgroup.geaflow.cluster.driver.DriverContext;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
@@ -76,8 +78,8 @@ public class KubernetesDriverRunner {
             LOGGER.info("Completed driver init in {} ms", System.currentTimeMillis() - startTime);
             kubernetesDriverRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FETAL: process exits", e);
-            throw e;
+            LOGGER.error("FATAL: process exits", e);
+            System.exit(EXIT_CODE);
         }
     }
 
