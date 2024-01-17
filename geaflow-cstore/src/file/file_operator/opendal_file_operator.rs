@@ -92,7 +92,7 @@ impl OpenDalFileOperator {
         let dir_path = normalize_dir_path(path);
         let result = self.operator.stat(&dir_path);
         match result {
-            Ok(metadata) => Ok(metadata.last_modified().is_some()),
+            Ok(metadata) => Ok(metadata.is_dir()),
             Err(err) => match err.kind() {
                 opendal::ErrorKind::NotFound => Ok(false),
                 _ => Err(OpenDalError(err)),
@@ -108,7 +108,7 @@ impl OpenDalFileOperator {
     fn list_recursive_files(&self, dir_path: &str, abs_path: bool) -> Result<FxHashSet<String>> {
         let mut file_names: FxHashSet<String> = FxHashSet::default();
 
-        let entries = self.operator.list_with(dir_path).delimiter("").call()?;
+        let entries = self.operator.list_with(dir_path).recursive(true).call()?;
 
         for entry in entries {
             if entry.metadata().is_file() {
@@ -234,10 +234,10 @@ mod tests {
     };
 
     const TEST_DATA_LENGTH: usize = 16 * 1024 * 1024;
-    const TEST_STD_DIR_PATH: &str = "/tmp/geaflow_cstore_local/test_fs_file";
-    const TEST_LIST_DIR_PATH: &str = "/tmp/geaflow_cstore_local/test_fs_list";
+    const TEST_STD_DIR_PATH: &str = "/tmp/geaflow_cstore_local/test_fs_file/";
+    const TEST_LIST_DIR_PATH: &str = "/tmp/geaflow_cstore_local/test_fs_list/";
     const TEST_LIST_FILE_RELATIVE_PATH_DIR_PATH: &str =
-        "/tmp/geaflow_cstore_local/test_list_relative";
+        "/tmp/geaflow_cstore_local/test_list_relative/";
 
     const TEST_CREATE_FILES_NUM: usize = 5;
     const TEST_FILE_EXTENSION: &str = "test";
@@ -282,8 +282,8 @@ mod tests {
 
     #[test]
     fn test_local_rename_dir() {
-        let src = "/tmp/geaflow_cstore_local/test_rename_dir_1";
-        let dst = "/tmp/geaflow_cstore_local/test_rename_dir_2";
+        let src = "/tmp/geaflow_cstore_local/test_rename_dir_1/";
+        let dst = "/tmp/geaflow_cstore_local/test_rename_dir_2/";
 
         let operator = OpenDalFileOperator::new(&build_local_test_config()).unwrap();
         operator.remove_path(Path::new(dst)).unwrap();
@@ -438,14 +438,14 @@ mod tests {
         let persistent_config = &build_oss_persistent_config("test_oss_list");
         let file_operator = OpenDalFileOperator::new(persistent_config).unwrap();
 
-        let list_dir_1 = PathBuf::from(&persistent_config.root).join("test_list1");
+        let list_dir_1 = PathBuf::from(&persistent_config.root).join("test_list1/");
         test_list(
             &file_operator,
             &FileHandleType::Oss,
             list_dir_1.to_str().unwrap(),
         );
 
-        let list_dir_2 = PathBuf::from(&persistent_config.root).join("test_list2");
+        let list_dir_2 = PathBuf::from(&persistent_config.root).join("test_list2/");
         test_list_file_relative_path(
             &file_operator,
             &FileHandleType::Oss,
@@ -469,7 +469,7 @@ mod tests {
         let persistent_config = &build_oss_persistent_config("test_oss_file");
         let operator = OpenDalFileOperator::new(persistent_config).unwrap();
 
-        let dir_path = Path::new(&persistent_config.root).join("test_oss_file");
+        let dir_path = Path::new(&persistent_config.root).join("test_oss_file/");
         let file_path = dir_path.join(TEST_FILE_NAME);
 
         operator.remove_path(&dir_path).unwrap();
@@ -513,8 +513,8 @@ mod tests {
     fn test_rename_dir(persistent_config: &PersistentConfig) {
         let operator = OpenDalFileOperator::new(persistent_config).unwrap();
 
-        let src = PathBuf::from(&persistent_config.root).join("test_rename_dir_1");
-        let dst = PathBuf::from(&persistent_config.root).join("test_rename_dir_2");
+        let src = PathBuf::from(&persistent_config.root).join("test_rename_dir_1/");
+        let dst = PathBuf::from(&persistent_config.root).join("test_rename_dir_2/");
 
         operator.remove_path(&dst).unwrap();
         operator.create_dir(&src).unwrap();

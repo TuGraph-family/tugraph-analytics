@@ -725,6 +725,7 @@ pub fn build_hdfs_test_config(_config_map: &mut ConfigMap) {
     // _config_map.insert("persistent.persistent_type", "Hdfs");
     // _config_map.insert("persistent.root", "/geaflow/chk/cstore_test/");
     // _config_map.insert("persistent.config.name_node", "hdfs://localhost:9000");
+    // _config_map.insert("persistent.config.enable_append", "true");
 }
 
 #[cfg(feature = "hdfs")]
