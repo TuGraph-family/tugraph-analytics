@@ -22,13 +22,11 @@ BASE_LOG_DIR=/tmp/logs
 GEAFLOW_LOG_DIR=$BASE_LOG_DIR/geaflow
 GEAFLOW_TASK_LOG_DIR=$BASE_LOG_DIR/task
 REDIS_LOG_DIR=$BASE_LOG_DIR/redis
-ZOOKEEPER_LOG_DIR=$BASE_LOG_DIR/zookeeper
 INFLUXDB_LOG_DIR=$BASE_LOG_DIR/influxdb
 mkdir -p $BASE_LOG_DIR
 mkdir -p $GEAFLOW_LOG_DIR
 mkdir -p $GEAFLOW_TASK_LOG_DIR
 mkdir -p $REDIS_LOG_DIR
-mkdir -p $ZOOKEEPER_LOG_DIR
 mkdir -p $INFLUXDB_LOG_DIR
 if [[ ! -L $GEAFLOW_HOME/logs ]]; then
   ln -s $BASE_LOG_DIR $GEAFLOW_HOME/logs
@@ -101,7 +99,7 @@ function startGeaflowConsole() {
   }
 }
 
-# start mysql, redis, zookeeper, influxdb
+# start mysql, redis, influxdb
 if [ "$DEPLOY_MODE" == "local" ]; then
   startMysql || exit 1
   startRedis || exit 1
