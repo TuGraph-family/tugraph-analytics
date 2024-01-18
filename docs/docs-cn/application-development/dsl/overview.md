@@ -86,6 +86,7 @@
   * [Hive Connector](connector/hive.md)
   * [File Connector](connector/file.md)
   * [Kafka Connector](connector/kafka.md)
+  * [Pulsar Connector](connector/pulsar.md)
   * [用户自定义Connector](connector/udc.md)
 
    

@@ -196,6 +196,12 @@
                 <version>${kafka.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-dsl-connector-pulsar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 </project>
