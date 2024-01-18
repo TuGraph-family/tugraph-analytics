@@ -21,6 +21,7 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -63,11 +64,9 @@ public abstract class GeaflowJob extends GeaflowName {
 
     public abstract List<GeaflowFunction> getFunctions();
 
-    public abstract Map<String, Map<String, Map<String, String>>> getStructMappings();
+    public abstract List<StructMapping> getStructMappings();
 
     public abstract GeaflowCode getUserCode();
-
-    public abstract GeaflowCode generateCode();
 
     public List<GeaflowGraph> getGraphs() {
         return new ArrayList<>(graphs.values());
@@ -90,7 +89,7 @@ public abstract class GeaflowJob extends GeaflowName {
         }
     }
 
-    public void setFunctions(List<GeaflowFunction> functions) {
+    public void setFunctions(List<GeaflowFunction> functions) {                    
         this.functions = functions;
     }
 

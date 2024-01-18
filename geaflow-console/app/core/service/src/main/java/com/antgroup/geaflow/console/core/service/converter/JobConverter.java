@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.console.core.service.converter;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
@@ -30,9 +29,9 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowServeJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 
@@ -54,25 +53,22 @@ public class JobConverter extends NameConverter<GeaflowJob, JobEntity> {
 
 
     public GeaflowJob convert(JobEntity entity, List<GeaflowStruct> structs, List<GeaflowGraph> graphs, List<GeaflowFunction> functions,
-         List<GeaflowPlugin> plugins, GeaflowRemoteFile jarPackage) {
+                              List<GeaflowPlugin> plugins, GeaflowRemoteFile jarPackage) {
         GeaflowJobType jobType = entity.getType();
         GeaflowJob job;
         switch (jobType) {
             case INTEGRATE:
                 GeaflowIntegrateJob integrateJob = (GeaflowIntegrateJob) super.entityToModel(entity, GeaflowIntegrateJob.class);
-
-                Map<String, Map<String, Map<String, String>>> structMapping = JSON.parseObject(entity.getStructMappings(),
-                    new TypeReference<Map<String, Map<String, Map<String, String>>>>() {
-                    });
-                integrateJob.setStructMappings(structMapping);
+                List<StructMapping> structMappings = JSON.parseArray(entity.getStructMappings(), StructMapping.class);
+                integrateJob.setStructMappings(structMappings);
                 integrateJob.setGraph(graphs);
                 integrateJob.setStructs(structs);
+                integrateJob.setUserCode(entity.getUserCode());
                 job = integrateJob;
                 break;
             case PROCESS:
                 GeaflowProcessJob processJob = (GeaflowProcessJob) super.entityToModel(entity, GeaflowProcessJob.class);
-                GeaflowCode geaflowCode = new GeaflowCode(entity.getUserCode());
-                processJob.setUserCode(geaflowCode);
+                processJob.setUserCode(entity.getUserCode());
                 processJob.setFunctions(functions);
                 processJob.setPlugins(plugins);
                 processJob.setStructs(structs);

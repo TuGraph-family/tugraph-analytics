@@ -81,6 +81,11 @@
             <artifactId>testng</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>com.springsource.org.apache.velocity</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

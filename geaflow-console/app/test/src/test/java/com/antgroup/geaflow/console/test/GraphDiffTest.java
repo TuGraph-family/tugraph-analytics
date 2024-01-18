@@ -16,9 +16,11 @@ package com.antgroup.geaflow.console.test;
 
 import com.antgroup.geaflow.console.common.util.ListUtil;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -82,6 +84,20 @@ public class GraphDiffTest {
 
         Assert.assertEquals(diff3.size(), 0);
         Assert.assertEquals(diff4.get(0).getInstanceId(), "3");
+    }
+
+    @Test
+    public void testStructMappingDiff() {
+        List<StructMapping> structMappings = new ArrayList<>();
+        structMappings.add(new StructMapping("t1", "v1", null));
+        structMappings.add(new StructMapping("t1", "v1", null));
+        structMappings.add(new StructMapping("t2", "v2", null));
+        structMappings.add(new StructMapping("t2", "v2", null));
+
+        List<StructMapping> distinctList = structMappings.stream().distinct().collect(Collectors.toList());
+        List<StructMapping> diff = ListUtil.diff(structMappings, distinctList);
+        Assert.assertEquals(diff.size(), 2);
+
     }
 
 }

@@ -33,5 +33,6 @@ public abstract class GeaflowName extends GeaflowId {
     public void validate() {
         super.validate();
         Preconditions.checkArgument(StringUtils.isNotBlank(name), "Invalid name");
+        Preconditions.checkArgument(!name.contains(" "), "Name '%s' can't contain space.", name);
     }
 }

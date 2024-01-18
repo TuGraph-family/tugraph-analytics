@@ -23,6 +23,7 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.collections.MapUtils;
 
 @Getter
 @Setter
@@ -75,6 +76,8 @@ public class GeaflowGraph extends GeaflowData {
     public void validate() {
         super.validate();
         Preconditions.checkNotNull(pluginConfig, "pluginConfig is null");
+        Preconditions.checkArgument(MapUtils.isNotEmpty(vertices), "Graph needs at least one vertex");
+        Preconditions.checkArgument(MapUtils.isNotEmpty(edges), "Graph needs at least one edge");
     }
 
     public int getShardCount() {

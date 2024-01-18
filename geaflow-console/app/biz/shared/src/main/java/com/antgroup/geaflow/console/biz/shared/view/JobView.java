@@ -16,7 +16,6 @@ package com.antgroup.geaflow.console.biz.shared.view;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
 import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,7 +31,7 @@ public class JobView extends NameView {
 
     private String userCode;
 
-    private Map<String, Map<String, Map<String, String>>> structMappings;
+    private String structMappings;
 
     private List<StructView> structs;
 

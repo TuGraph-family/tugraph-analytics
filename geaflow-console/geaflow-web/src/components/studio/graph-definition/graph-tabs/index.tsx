@@ -133,7 +133,7 @@ export const GraphDefintionTab: React.FC<Props> = ({
   const edgeColumns: ColumnsType<DataType> = [
     {
       title: $i18n.get({
-        id: "openpiece-geaflow.geaflow.table-definition.EdgeList",
+        id: "openpiece-geaflow.geaflow.table-definition.EdgesList",
         dm: "边列表",
       }),
       dataIndex: "name",

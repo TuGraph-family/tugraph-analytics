@@ -16,10 +16,11 @@ package com.antgroup.geaflow.console.core.model.job;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
+import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
 import com.antgroup.geaflow.console.core.model.data.GeaflowTable;
-import java.util.Map;
+import java.util.List;
 
 public class GeaflowDistributeJob extends GeaflowTransferJob {
 
@@ -29,8 +30,13 @@ public class GeaflowDistributeJob extends GeaflowTransferJob {
     }
 
     public void fromGraphToTable(GeaflowGraph graph, GeaflowStructType type, String name, GeaflowTable table,
-                                 Map<String, String> fieldMapping) {
+                                List<FieldMappingItem> fieldMapping) {
         GeaflowStruct struct = super.importGraphStruct(graph, type, name);
         super.addStructMapping(struct, table, fieldMapping);
+    }
+
+    @Override
+    public GeaflowCode generateCode() {
+        return null;
     }
 }

@@ -7,6 +7,7 @@ import ClusterConfig from "./clusterConfig";
 import UserCode from "./userCode";
 import { isEmpty } from "lodash";
 import $i18n from "@/components/i18n";
+import { GraphDefintionTab } from "@/components/studio/computing/graph-tabs";
 
 interface BasicTabsProps {
   record: any;
@@ -26,6 +27,9 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
   redirectPath,
 }) => {
   const { dsl = "" } = jobItem;
+  const structMappings =
+    !isEmpty(jobItem.release.job.structMappings) &&
+    JSON.parse(jobItem.release.job.structMappings);
   const jobType = record?.release?.job?.type;
   const items = [
     ...(jobType !== "SERVE"
@@ -52,6 +56,26 @@ const BasicTabs: React.FC<BasicTabsProps> = ({
                   redirectPath={redirectPath}
                 />
               ),
+          },
+        ]
+      : []),
+    ...(jobType === "INTEGRATE"
+      ? [
+          {
+            label: $i18n.get({
+              id: "openpiece-geaflow.job-detail.components.basicTabs.StructMapping",
+              dm: "数据映射",
+            }),
+            key: "4",
+            children: (
+              <GraphDefintionTab
+                form={form}
+                serveList={jobItem.release.job.graphs}
+                tableList={[]}
+                fields={structMappings}
+                check={true}
+              />
+            ),
           },
         ]
       : []),

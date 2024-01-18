@@ -18,15 +18,17 @@ import styles from "./index.module.less";
 
 const { Option } = Select;
 type Prop = {
-  onSelect: (id: string, result: string) => void;
+  onSelect: (id: string, result: string, record: any, script: string) => void;
   instance?: any;
   isOlaps: string;
+  record?: any;
 };
 
 export const StatementList: React.FC<Prop> = ({
   onSelect,
   instance,
   isOlaps,
+  record,
 }) => {
   const { visible, onShow, onClose } = useVisible({ defaultVisible: true });
   const [state, updateState] = useImmer<{
@@ -121,6 +123,22 @@ export const StatementList: React.FC<Prop> = ({
           draft.queryList = [...res?.list];
           draft.dataTotal = res?.total;
         });
+        if (!isEmpty(record)) {
+          const filters = res?.list.filter((item) => item.id === record?.id);
+          if (!isEmpty(filters)) {
+            if (
+              record.status === "RUNNING" &&
+              filters[0].status !== "RUNNING"
+            ) {
+              onSelect?.(
+                filters[0].id,
+                filters[0].result,
+                filters[0],
+                filters[0].script
+              );
+            }
+          }
+        }
       });
     }
   };
@@ -132,11 +150,11 @@ export const StatementList: React.FC<Prop> = ({
   useEffect(() => {
     const getStance = window.setInterval(() => {
       handleInstance();
-    }, 8000);
+    }, 6000);
     return () => {
       getStance && window.clearInterval(getStance);
     };
-  }, [instance]);
+  }, [instance, record]);
 
   return (
     <div
