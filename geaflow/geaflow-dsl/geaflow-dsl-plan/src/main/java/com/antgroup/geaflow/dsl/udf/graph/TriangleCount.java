@@ -102,7 +102,7 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
     @Override
     public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
-            new TableField("id", LongType.INSTANCE, false),
+            new TableField("id", graphSchema.getIdType(), false),
             new TableField("count", LongType.INSTANCE, false)
         );
     }

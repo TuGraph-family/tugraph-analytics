@@ -120,6 +120,16 @@ public class GQLAlgorithmTest {
     }
 
     @Test
+    public void testAlgorithmTriangleCount() throws Exception {
+        QueryTester
+            .build()
+            .withGraphDefine("/query/modern_graph.sql")
+            .withQueryPath("/query/gql_algorithm_tc.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testIncGraphAlgorithm_001() throws Exception {
         QueryTester
             .build()
@@ -158,23 +168,5 @@ public class GQLAlgorithmTest {
         if (file.exists()) {
             FileUtils.deleteDirectory(file);
         }
-    }
-
-    @Test
-    public void testAlgorithm_007() throws Exception {
-        QueryTester
-            .build()
-            .withQueryPath("/query/gql_algorithm_007.sql")
-            .execute()
-            .checkSinkResult();
-    }
-
-    @Test
-    public void testAlgorithm_008() throws Exception {
-        QueryTester
-            .build()
-            .withQueryPath("/query/gql_algorithm_008.sql")
-            .execute()
-            .checkSinkResult();
     }
 }

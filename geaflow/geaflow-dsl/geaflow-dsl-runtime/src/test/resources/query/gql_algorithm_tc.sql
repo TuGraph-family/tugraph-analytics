@@ -1,4 +1,4 @@
-CREATE TABLE console (
+CREATE TABLE result_tb (
    vid int,
    cnt bigint
 ) WITH (
@@ -8,7 +8,7 @@ CREATE TABLE console (
 
 USE GRAPH modern;
 
-INSERT INTO console
+INSERT INTO result_tb
 CALL triangle_count("person") YIELD (vid, cnt)
 RETURN cast (vid as int), cnt
 ;
