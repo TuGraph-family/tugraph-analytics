@@ -22,6 +22,7 @@ import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.function.Description;
+import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
@@ -31,6 +32,7 @@ import com.google.common.collect.Sets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Description(name = "triangle_count", description = "built-in udga for Triangle Count.")
@@ -55,7 +57,9 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
     }
 
     @Override
-    public void process(RowVertex vertex, Iterator<ObjectRow> messages) {
+    public void process(RowVertex vertex, Optional<Row> updatedValues, Iterator<ObjectRow> messages) {
+        updatedValues.ifPresent(vertex::setValue);
+
         if (context.getCurrentIterationId() == 1L) {
             if (Objects.nonNull(vertexType) && !vertexType.equals(vertex.getLabel())) {
                 excludeSet.add((Long) vertex.getId());
@@ -91,7 +95,12 @@ public class TriangleCount implements AlgorithmUserFunction<Object, ObjectRow> {
     }
 
     @Override
-    public StructType getOutputType() {
+    public void finish(RowVertex graphVertex, Optional<Row> updatedValues) {
+
+    }
+
+    @Override
+    public StructType getOutputType(GraphSchema graphSchema) {
         return new StructType(
             new TableField("id", LongType.INSTANCE, false),
             new TableField("count", LongType.INSTANCE, false)
