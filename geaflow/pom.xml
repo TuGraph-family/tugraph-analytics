@@ -697,6 +697,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-service-discovery-redis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
                 <version>${joda-time.version}</version>

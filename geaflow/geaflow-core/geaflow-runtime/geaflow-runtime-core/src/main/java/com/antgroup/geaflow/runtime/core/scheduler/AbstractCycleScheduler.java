@@ -14,11 +14,15 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler;
 
+import static com.antgroup.geaflow.cluster.protocol.ScheduleStateType.END;
+
 import com.antgroup.geaflow.common.utils.LoggerFormatter;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.result.ExecutionResult;
 import com.antgroup.geaflow.runtime.core.scheduler.result.IExecutionResult;
+import com.antgroup.geaflow.runtime.core.scheduler.statemachine.IScheduleState;
+import com.antgroup.geaflow.runtime.core.scheduler.statemachine.IStateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +33,7 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
     protected IExecutionCycle cycle;
     protected ICycleSchedulerContext context;
     protected SchedulerEventDispatcher dispatcher;
+    protected IStateMachine stateMachine;
 
     @Override
     public void init(ICycleSchedulerContext context) {
@@ -40,23 +45,23 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
 
         String cycleLogTag = LoggerFormatter.getCycleTag(cycle.getPipelineName(), cycle.getCycleId());
         try {
-            long finishedIterationId = 0;
-            while (!context.isCycleFinished()) {
-
-                // Submit tasks to cycle head until run out of on the fly permits.
-                while (context.hasNextIteration()) {
-                    long iterationId = context.getNextIterationId();
-                    execute(iterationId);
-                }
-
-                // Handle response task until received all responses of certain iteration.
-                while (context.hasNextToFinish()) {
-                    finishedIterationId = context.getNextFinishIterationId();
-                    finish(finishedIterationId);
-                    context.finish(finishedIterationId);
+            while (!stateMachine.isTerminated()) {
+                while (true) {
+                    IScheduleState oldState = stateMachine.getCurrentState();
+                    IScheduleState state = stateMachine.readyToTransition();
+                    if (state == null) {
+                        finishFlyingEvent();
+                        break;
+                    }
+                    if (state.getScheduleStateType() == END) {
+                        break;
+                    }
+                    LOGGER.info("{} state transition from {} to {}",
+                        this.getClass(), oldState.getScheduleStateType(), state.getScheduleStateType());
+                    execute(state);
                 }
             }
-            LOGGER.info("{} finished at {}", cycleLogTag, finishedIterationId);
+            LOGGER.info("{} finished at {}", cycleLogTag, context.getFinishIterationId());
             R result = finish();
             context.finish();
             return ExecutionResult.buildSuccessResult(result);
@@ -70,7 +75,16 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
     public void close() {
     }
 
-    protected abstract void execute(long iterationId);
+    protected abstract void execute(IScheduleState state);
+
+    protected void finishFlyingEvent() {
+        // Handle response task until received all responses of certain iteration.
+        while (context.hasNextToFinish()) {
+            long finishedIterationId = context.getNextFinishIterationId();
+            finish(finishedIterationId);
+            context.finish(finishedIterationId);
+        }
+    }
 
     protected abstract void finish(long iterationId);
 

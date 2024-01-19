@@ -37,4 +37,5 @@ public interface IServiceServer extends Serializable {
      * Returns service type.
      */
     ServiceType getServiceType();
+
 }

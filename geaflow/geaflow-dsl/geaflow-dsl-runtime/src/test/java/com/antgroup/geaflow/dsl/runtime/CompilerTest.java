@@ -14,23 +14,20 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
-import com.antgroup.geaflow.cluster.response.ResponseResult;
+import static com.antgroup.geaflow.common.config.keys.DSLConfigKeys.GEAFLOW_DSL_COMPILE_PHYSICAL_PLAN_ENABLE;
+
 import com.antgroup.geaflow.dsl.common.compile.CompileContext;
 import com.antgroup.geaflow.dsl.common.compile.CompileResult;
 import com.antgroup.geaflow.dsl.common.compile.FunctionInfo;
 import com.antgroup.geaflow.dsl.common.compile.QueryCompiler;
 import com.antgroup.geaflow.dsl.common.compile.TableInfo;
-import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
-import com.antgroup.geaflow.dsl.common.data.impl.types.IntEdge;
-import com.antgroup.geaflow.dsl.common.data.impl.types.IntVertex;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
@@ -44,7 +41,9 @@ public class CompilerTest {
         QueryCompiler compiler = new QueryClient();
         String script = IOUtils.resourceToString("/query/compile.sql", Charset.defaultCharset());
         CompileContext context = new CompileContext();
-        context.setConfig(new HashMap<>());
+        Map<String, String> config = new HashMap<>();
+        config.put(GEAFLOW_DSL_COMPILE_PHYSICAL_PLAN_ENABLE.getKey(), Boolean.TRUE.toString());
+        context.setConfig(config);
         context.setParallelisms(new HashMap<>());
 
         CompileResult result = compiler.compile(script, context);
@@ -81,26 +80,6 @@ public class CompilerTest {
         );
     }
 
-    @Test
-    public void testFormatOlapResult() throws IOException {
-        QueryCompiler compiler = new QueryClient();
-        String script = IOUtils.resourceToString("/query/olap_result.sql", Charset.defaultCharset());
-        CompileContext context = new CompileContext();
-        context.setConfig(new HashMap<>());
-        context.setParallelisms(new HashMap<>());
-
-        List<List<ResponseResult>> data = new ArrayList<>();
-        List<ResponseResult> data1 = new ArrayList<>();
-        data.add(data1);
-        data1.add(new ResponseResult(0, null, Lists.newArrayList(
-            ObjectRow.create(new IntVertex(1), new IntEdge(1,3), new IntVertex(3), 1))));
-
-        String result = compiler.formatOlapResult(script, data, context);
-        Assert.assertEquals(result,"{\"viewResult\":{\"nodes\":[{\"id\":\"1\",\"properties\":{}},{\"id\":\"3\",\"properties\":{}}]," 
-            + "\"edges\":[{\"direction\":\"OUT\",\"properties\":{},\"source\":\"1\",\"target\":\"3\"}]}," 
-            + "\"jsonResult\":[{\"a\":{\"id\":\"1\",\"properties\":{}},\"b\":{\"direction\":\"OUT\",\"properties\":{},\"source\":\"1\"," 
-            + "\"target\":\"3\"},\"e\":{\"id\":\"3\",\"properties\":{}},\"id\":1}]}");
-    }
 
     @Test
     public void testFindUnResolvedFunctions() {

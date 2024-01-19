@@ -85,5 +85,10 @@ public class FrameworkConfigKeys implements Serializable {
         .defaultValue(2 * 60 * 1000)
         .description("analytics client request max run time");
 
+    public static final ConfigKey ASP_ENABLE = ConfigKeys
+        .key("geaflow.iteration.asp.enable")
+        .defaultValue(false)
+        .description("whether enable iteration asp mode, disabled by default");
+
 }
 

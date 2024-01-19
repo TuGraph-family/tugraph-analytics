@@ -30,8 +30,9 @@ public class CheckpointCycleScheduledWorkerManager extends AbstractScheduledWork
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckpointCycleScheduledWorkerManager.class);
 
+    private static volatile CheckpointCycleScheduledWorkerManager INSTANCE = null;
 
-    public CheckpointCycleScheduledWorkerManager(Configuration config) {
+    private CheckpointCycleScheduledWorkerManager(Configuration config) {
         super(config);
     }
 
@@ -40,44 +41,48 @@ public class CheckpointCycleScheduledWorkerManager extends AbstractScheduledWork
 
         boolean isWorkerAssigned = cycle.getTasks().stream().allMatch(t -> t.getWorkerInfo() != null);
         int parallelism = getExecutionGroupParallelism(cycle.getVertexGroup());
-        if (!isWorkerAssigned && parallelism > available.size()) {
-            return Collections.emptyList();
+        if (!isWorkerAssigned && this.workers.get(cycle.getSchedulerId()) == null) {
+            init(cycle);
+            if (parallelism > this.workers.get(cycle.getSchedulerId()).getWorkers().size()) {
+                return Collections.emptyList();
+            }
         }
         List<WorkerInfo> workers = new ArrayList<>();
+        List<WorkerInfo> workerInfos = this.workers.get(cycle.getSchedulerId()).getWorkers();
         for (int i = 0; i < parallelism; i++) {
             WorkerInfo worker = assignTaskWorker(cycle.getTasks().get(i),
-                cycle.getVertexGroup().getCycleGroupMeta().getAffinityLevel());
+                cycle.getVertexGroup().getCycleGroupMeta().getAffinityLevel(), workerInfos);
             workers.add(worker);
         }
-        cycle.setWorkerAssigned(isAssigned);
-        this.assigned.addAll(workers);
+        cycle.setWorkerAssigned(isAssigned.getOrDefault(cycle.getSchedulerId(), false));
+        this.assigned.put(cycle.getSchedulerId(), workers);
         return workers;
     }
 
     @Override
     public void release(ExecutionNodeCycle cycle) {
-        List<WorkerInfo> workers = new ArrayList<>();
+        List<WorkerInfo> workerInfos = this.workers.get(cycle.getSchedulerId()).getWorkers();
         for (int i = 0, size = cycle.getTasks().size(); i < size; i++) {
-            workers.add(cycle.getTasks().get(i).getWorkerInfo());
+            workerInfos.add(cycle.getTasks().get(i).getWorkerInfo());
         }
-        this.available.addAll(0, workers);
-        LOGGER.debug("current workers {}", this.available);
+        LOGGER.info("current workers {}", this.workers.get(cycle.getSchedulerId()));
     }
 
-    private WorkerInfo assignTaskWorker(ExecutionTask task, AffinityLevel affinityLevel) {
+    private WorkerInfo assignTaskWorker(ExecutionTask task, AffinityLevel affinityLevel, List<WorkerInfo> workInfos) {
         switch (affinityLevel) {
             case worker:
                 WorkerInfo worker;
                 if (task.getWorkerInfo() == null) {
-                    worker = this.available.remove(0);
+                    worker = workInfos.remove(0);
                     task.setWorkerInfo(worker);
                 } else {
                     worker = task.getWorkerInfo();
-                    this.available.remove(worker);
+                    workInfos.remove(worker);
                 }
                 return worker;
             default:
                 throw new GeaflowRuntimeException("not support affinity level yet " + affinityLevel);
         }
     }
+
 }

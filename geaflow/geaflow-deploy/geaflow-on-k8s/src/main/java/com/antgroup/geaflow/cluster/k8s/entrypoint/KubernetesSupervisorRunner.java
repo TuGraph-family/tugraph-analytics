@@ -62,7 +62,7 @@ public class KubernetesSupervisorRunner {
             workerRunner.waitForTermination();
             LOGGER.info("Exit worker process");
         } catch (Throwable e) {
-            LOGGER.error("FETAL: process exits", e);
+            LOGGER.error("FATAL: process exits", e);
             throw e;
         }
     }

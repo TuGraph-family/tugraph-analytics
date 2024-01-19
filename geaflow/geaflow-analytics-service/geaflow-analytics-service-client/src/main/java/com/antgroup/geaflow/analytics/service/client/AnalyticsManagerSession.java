@@ -26,14 +26,13 @@ public class AnalyticsManagerSession {
     private static final String USER = "user";
     private static final String SERVER = "server";
     private static final String PROPERTIES = "properties";
-
-    private final URI server;
-    private final String user;
-    private final String source;
-    private final Map<String, String> properties;
-    private final Map<String, String> customHeaders;
-    private final boolean compressionDisabled;
-    private final long clientRequestTimeoutMs;
+    private URI server;
+    private String user;
+    private String source;
+    private Map<String, String> properties;
+    private Map<String, String> customHeaders;
+    private boolean compressionDisabled;
+    private long clientRequestTimeoutMs;
 
     public static Builder builder() {
         return new Builder();
@@ -50,6 +49,9 @@ public class AnalyticsManagerSession {
         this.properties = ImmutableMap.copyOf(requireNonNull(properties, "properties is null"));
         this.customHeaders = ImmutableMap.copyOf(
             requireNonNull(customHeaders, "customHeaders is null"));
+    }
+
+    public AnalyticsManagerSession() {
     }
 
     public long getClientRequestTimeout() {

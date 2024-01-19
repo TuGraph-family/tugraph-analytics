@@ -39,7 +39,7 @@ public class WordLengthService {
                 PWindowSource<String> windowSource = pipelineServiceContext
                     .buildSource(new CollectionSource<>(Lists.newArrayList(word)), AllWindow.getInstance())
                     .withParallelism(sourceParallelism);
-                PWindowCollect collect = windowSource.map(x -> x.length()).collect();
+                PWindowCollect collect = windowSource.map(String::length).collect();
                 pipelineServiceContext.response(collect);
             }
         });

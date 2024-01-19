@@ -39,7 +39,8 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
 
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
-        CheckpointSchedulerContext newContext = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(null);
+        CheckpointSchedulerContext newContext =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), null);
 
         Assert.assertEquals(checkpointId + 1, newContext.getCurrentIterationId());
         Assert.assertEquals(finishIterationId, newContext.getFinishIterationId());
@@ -55,7 +56,8 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
 
         long checkpointId = 20L;
         context.checkpoint(checkpointId);
-        CheckpointSchedulerContext newContext = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(null);
+        CheckpointSchedulerContext newContext =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(),  null);
 
         long currentIterationId = checkpointId + 1;
         context.init(currentIterationId);
@@ -66,7 +68,6 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
 
         Assert.assertNotNull(context.getResultManager());
         Assert.assertNotNull(context.getSchedulerWorkerManager());
-        Assert.assertNull(context.getSchedulerState(currentIterationId));
     }
 
 
@@ -85,7 +86,8 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         // clean checkpoint cycle.
         ClusterMetaStore.getInstance(0, "driver-0", new Configuration()).clean();
         CheckpointSchedulerContext newContext =
-            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> CycleSchedulerContextFactory.create(cycle, null));
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(),
+                () -> CycleSchedulerContextFactory.create(cycle, null));
 
         long currentIterationId = checkpointId + 1;
         context.init(currentIterationId);
@@ -96,7 +98,6 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
 
         Assert.assertNotNull(context.getResultManager());
         Assert.assertNotNull(context.getSchedulerWorkerManager());
-        Assert.assertNull(context.getSchedulerState(currentIterationId));
     }
 
     @Test
@@ -109,21 +110,24 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         // not do checkpoint at 17
         long checkpointId = 17L;
         context.checkpoint(checkpointId);
-        Assert.assertNull(ClusterMetaStore.getInstance().getWindowId());
-        CheckpointSchedulerContext newContext = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(null);
+        Assert.assertNull(ClusterMetaStore.getInstance().getWindowId(context.getCycle().getPipelineTaskId()));
+        CheckpointSchedulerContext newContext =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), null);
         Assert.assertNotNull(newContext);
         Assert.assertEquals(1, newContext.getCurrentIterationId());
 
         checkpointId = 20L;
         context.checkpoint(checkpointId);
-        newContext = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(null);
+        newContext =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(),null);
         Assert.assertEquals(checkpointId + 1, newContext.getCurrentIterationId());
 
 
         // loaded is still previous checkpointId
         long newCheckpointId = 23L;
         context.checkpoint(newCheckpointId);
-        newContext = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(null);
+        newContext =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(),null);
         Assert.assertEquals(checkpointId + 1, newContext.getCurrentIterationId());
     }
 
@@ -146,6 +150,6 @@ public class AbstractCycleSchedulerContextTest extends BaseCycleSchedulerContext
         vertex.setParallelism(2);
         vertexGroup.getVertexMap().put(0, vertex);
 
-        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        return new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup, configuration, "driver_id", 0);
     }
 }

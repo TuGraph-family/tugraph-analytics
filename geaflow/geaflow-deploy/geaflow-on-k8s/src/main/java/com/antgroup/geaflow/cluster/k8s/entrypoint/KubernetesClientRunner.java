@@ -15,9 +15,9 @@
 package com.antgroup.geaflow.cluster.k8s.entrypoint;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CLUSTER_TYPE;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_WAIT_SECONDS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USER_CLASS_ARGS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.USER_MAIN_CLASS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLIENT_EXIT_WAIT_SECONDS;
 
 import com.antgroup.geaflow.cluster.client.callback.ClusterCallbackFactory;
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback;
@@ -79,9 +79,10 @@ public class KubernetesClientRunner {
     }
 
     private void cleanAndExit() {
-        LOGGER.info("Try to delete client config map.");
         try {
-            SleepUtils.sleepSecond(EXIT_WAIT_SECONDS);
+            int waitTime = config.getInteger(CLIENT_EXIT_WAIT_SECONDS);
+            LOGGER.info("Sleep {} seconds before client exits...", waitTime);
+            SleepUtils.sleepSecond(waitTime);
             deleteClientConfigMap();
         } catch (Throwable e) {
             LOGGER.error("delete client config map failed: {}", e.getMessage(), e);

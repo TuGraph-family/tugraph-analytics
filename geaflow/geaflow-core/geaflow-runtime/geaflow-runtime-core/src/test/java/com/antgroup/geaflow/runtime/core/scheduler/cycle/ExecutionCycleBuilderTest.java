@@ -30,7 +30,7 @@ public class ExecutionCycleBuilderTest {
         meta.setFlyingCount(0);
         meta.setGroupType(CycleGroupType.windowed);
 
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, 0, null, 0,null, 0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -40,7 +40,7 @@ public class ExecutionCycleBuilderTest {
         CycleGroupMeta meta = executionGraph.getCycleGroupMeta();
         meta.setIterationCount(0);
         meta.setGroupType(CycleGroupType.windowed);
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, 0, null, 0, null, 0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -56,7 +56,8 @@ public class ExecutionCycleBuilderTest {
         vertexGroup.getCycleGroupMeta().setIterationCount(1);
         executionGraph.getVertexGroupMap().put(1, vertexGroup);
 
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, 0,  null, 0, null,
+            0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -72,6 +73,7 @@ public class ExecutionCycleBuilderTest {
         vertexGroup.getCycleGroupMeta().setIterationCount(0);
         executionGraph.getVertexGroupMap().put(1, vertexGroup);
 
-        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, null, null, 0);
+        ExecutionCycleBuilder.buildExecutionCycle(executionGraph, null, null, 0, 0,  null, 0, null,
+            0);
     }
 }

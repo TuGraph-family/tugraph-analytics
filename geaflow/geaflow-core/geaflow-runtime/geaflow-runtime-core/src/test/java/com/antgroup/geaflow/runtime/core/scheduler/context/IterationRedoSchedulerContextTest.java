@@ -55,7 +55,7 @@ public class IterationRedoSchedulerContextTest extends BaseCycleSchedulerContext
         vertex.setParallelism(2);
         vertexGroup.getVertexMap().put(0, vertex);
 
-        return new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        return new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup, configuration, "driver_id", 0);
     }
 
 }

@@ -15,15 +15,18 @@
 package com.antgroup.geaflow.analytics.service.query;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import java.io.Serializable;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Objects;
 
-public class QueryError implements Serializable {
+public class QueryError implements Externalizable {
 
     private static final int DEFAULT_ERROR_CODE = 0;
     private static final String DELIMITER = ":";
-    private final int code;
-    private final String name;
+    private int code;
+    private String name;
 
     public QueryError(String name, int code) {
         if (code < 0) {
@@ -36,6 +39,9 @@ public class QueryError implements Serializable {
     public QueryError(String name) {
         this.name = name;
         this.code = DEFAULT_ERROR_CODE;
+    }
+
+    public QueryError() {
     }
 
     public int getCode() {
@@ -67,5 +73,17 @@ public class QueryError implements Serializable {
     @Override
     public String toString() {
         return name + DELIMITER + code;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeInt(code);
+        out.writeObject(name);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        code = in.readInt();
+        name = (String) in.readObject();
     }
 }

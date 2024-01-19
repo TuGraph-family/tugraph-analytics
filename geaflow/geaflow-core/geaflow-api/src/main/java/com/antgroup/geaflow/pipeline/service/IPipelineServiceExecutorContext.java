@@ -15,8 +15,9 @@
 package com.antgroup.geaflow.pipeline.service;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.pipeline.context.IPipelineExecutorContext;
 
-public interface IPipelineServiceExecutorContext {
+public interface IPipelineServiceExecutorContext extends IPipelineExecutorContext {
 
     /**
      * Returns the config of pipeline service executor context.

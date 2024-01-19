@@ -28,7 +28,7 @@ import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.util.ExecutionTaskUtils;
 import com.antgroup.geaflow.io.CollectType;
-import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
+import com.antgroup.geaflow.runtime.core.worker.AbstractWorker;
 import com.antgroup.geaflow.runtime.core.worker.InputReader;
 import com.antgroup.geaflow.runtime.core.worker.OutputWriter;
 import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
@@ -51,8 +51,8 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
     protected final String pipelineName;
     protected IoDescriptor ioDescriptor;
 
-    public AbstractInitCommand(int workerId, int cycleId, long windowId, long pipelineId, String pipelineName) {
-        super(workerId, cycleId, windowId);
+    public AbstractInitCommand(long schedulerId, int workerId, int cycleId, long windowId, long pipelineId, String pipelineName) {
+        super(schedulerId, workerId, cycleId, windowId);
         this.pipelineId = pipelineId;
         this.pipelineName = pipelineName;
     }
@@ -66,7 +66,7 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
         if (!(ExecutionTaskUtils.isCycleHead(workerContext.getExecutionTask())
             && this.ioDescriptor.getInputTaskNum() == 0)) {
             InitFetchRequest request = this.buildInitFetchRequest(workerContext.getExecutionTask());
-            InputReader<?> inputReader = ((AbstractAlignedWorker<?, ?>) this.worker).getInputReader();
+            InputReader<?> inputReader = ((AbstractWorker<?, ?>) this.worker).getInputReader();
             inputReader.setEventMetrics(workerContext.getEventMetrics());
             request.addListener(inputReader);
             this.fetcherRunner.add(request);

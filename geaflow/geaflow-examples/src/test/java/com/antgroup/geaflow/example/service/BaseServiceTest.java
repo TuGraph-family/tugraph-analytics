@@ -14,84 +14,268 @@
 
 package com.antgroup.geaflow.example.service;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CONTAINER_WORKER_NUM;
+
+import com.antgroup.geaflow.analytics.service.config.AnalyticsServiceConfigKeys;
+import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.utils.FileUtil;
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.env.Environment;
+import com.antgroup.geaflow.example.base.BaseQueryTest;
+import com.antgroup.geaflow.file.FileConfigKeys;
 import com.antgroup.geaflow.metaserver.MetaServer;
 import com.antgroup.geaflow.metaserver.MetaServerContext;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.store.redis.RedisConfigKeys;
+import com.github.fppt.jedismock.RedisServer;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
 import java.io.File;
 import java.io.IOException;
-import org.apache.curator.test.TestingServer;
+import org.apache.commons.io.FileUtils;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 
 public class BaseServiceTest {
 
-    protected TestingServer server;
-    protected File testDir;
+    protected static final String TEST_GRAPH_PATH = "/tmp/geaflow/analytics/test/graph";
+    protected static final String HOST_NAME = "localhost";
+    protected static final int DEFAULT_WAITING_TIME = 5;
+    protected RedisServer server;
     protected MetaServer metaServer;
-
-    protected Configuration configuration;
+    protected Configuration defaultConfig;
+    protected Environment environment;
 
     public final String graphView =
-        "CREATE GRAPH IF NOT EXISTS modern_2 (\n" +
-            "\tVertex person (\n" +
-            "\t  id bigint ID,\n" +
-            "\t  name varchar,\n" +
-            "\t  age int\n" +
-            "\t),\n" +
-            "\tVertex software (\n" +
-            "\t  id bigint ID,\n" +
-            "\t  name varchar,\n" +
-            "\t  lang varchar\n" +
-            "\t),\n" +
-            "\tEdge knows (\n" +
-            "\t  srcId bigint SOURCE ID,\n" +
-            "\t  targetId bigint DESTINATION ID,\n" +
-            "\t  weight double\n" +
-            "\t),\n" +
-            "\tEdge created (\n" +
-            "\t  srcId bigint SOURCE ID,\n" +
-            "\t  targetId bigint DESTINATION ID,\n" +
-            "\t  weight double\n" +
-            "\t)\n" +
-            ") WITH (\n" +
-                "\tstoreType='memory',\n" +
-                "\tshardCount = 2\n" +
-            ");\n" +
-            "USE GRAPH modern_2;\n";
+        "CREATE GRAPH bi (\n"
+            + "  --static\n"
+            + "  --Place\n"
+            + "  Vertex Country (\n"
+            + "    id bigint ID,\n"
+            + "    name varchar,\n"
+            + "    url varchar\n"
+            + "  ),\n"
+            + "  Vertex City (\n"
+            + "    id bigint ID,\n"
+            + "    name varchar,\n"
+            + "    url varchar\n"
+            + "  ),\n"
+            + "  Vertex Continent (\n"
+            + "    id bigint ID,\n"
+            + "    name varchar,\n"
+            + "    url varchar\n"
+            + "  ),\n"
+            + "  --Organisation\n"
+            + "  Vertex Company (\n"
+            + "    id bigint ID,\n"
+            + "    name varchar,\n"
+            + "    url varchar\n"
+            + "  ),\n"
+            + "  Vertex University (\n"
+            + "    id bigint ID,\n"
+            + "    name varchar,\n"
+            + "    url varchar\n"
+            + "  ),\n"
+            + "  --Tag\n"
+            + "\tVertex TagClass (\n"
+            + "\t  id bigint ID,\n"
+            + "\t  name varchar,\n"
+            + "\t  url varchar\n"
+            + "\t),\n"
+            + "\tVertex Tag (\n"
+            + "\t  id bigint ID,\n"
+            + "\t  name varchar,\n"
+            + "\t  url varchar\n"
+            + "\t),\n"
+            + "\n"
+            + "  --dynamic\n"
+            + "  Vertex Person (\n"
+            + "    id bigint ID,\n"
+            + "    creationDate bigint,\n"
+            + "    firstName varchar,\n"
+            + "    lastName varchar,\n"
+            + "    gender varchar,\n"
+            + "    --birthday Date,\n"
+            + "    --email {varchar},\n"
+            + "    --speaks {varchar},\n"
+            + "    browserUsed varchar,\n"
+            + "    locationIP varchar\n"
+            + "  ),\n"
+            + "  Vertex Forum (\n"
+            + "    id bigint ID,\n"
+            + "    creationDate bigint,\n"
+            + "    title varchar\n"
+            + "  ),\n"
+            + "  --Message\n"
+            + "  Vertex Post (\n"
+            + "    id bigint ID,\n"
+            + "    creationDate bigint,\n"
+            + "    browserUsed varchar,\n"
+            + "    locationIP varchar,\n"
+            + "    content varchar,\n"
+            + "    length bigint,\n"
+            + "    lang varchar,\n"
+            + "    imageFile varchar\n"
+            + "  ),\n"
+            + "  Vertex Comment (\n"
+            + "    id bigint ID,\n"
+            + "    creationDate bigint,\n"
+            + "    browserUsed varchar,\n"
+            + "    locationIP varchar,\n"
+            + "    content varchar,\n"
+            + "    length bigint\n"
+            + "  ),\n"
+            + "\n"
+            + "  --relations\n"
+            + "  --static\n"
+            + "\tEdge isLocatedIn (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID\n"
+            + "\t),\n"
+            + "\tEdge isPartOf (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID\n"
+            + "\t),\n"
+            + "  Edge isSubclassOf (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID\n"
+            + "  ),\n"
+            + "  Edge hasType (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID\n"
+            + "  ),\n"
+            + "\n"
+            + "  --dynamic\n"
+            + "\tEdge hasModerator (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID\n"
+            + "\t),\n"
+            + "\tEdge containerOf (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID\n"
+            + "\t),\n"
+            + "\tEdge replyOf (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID\n"
+            + "\t),\n"
+            + "\tEdge hasTag (\n"
+            + "\t  srcId bigint SOURCE ID,\n"
+            + "\t  targetId bigint DESTINATION ID\n"
+            + "\t),\n"
+            + "  Edge hasInterest (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID\n"
+            + "  ),\n"
+            + "  Edge hasCreator (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID\n"
+            + "  ),\n"
+            + "  Edge workAt (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID,\n"
+            + "    workForm bigint\n"
+            + "  ),\n"
+            + "  Edge studyAt (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID,\n"
+            + "    classYear bigint\n"
+            + "  ),\n"
+            + "\n"
+            + "  --temporary\n"
+            + "  Edge hasMember (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID,\n"
+            + "    creationDate bigint\n"
+            + "  ),\n"
+            + "  Edge likes (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID,\n"
+            + "    creationDate bigint\n"
+            + "  ),\n"
+            + "  Edge knows (\n"
+            + "    srcId bigint SOURCE ID,\n"
+            + "    targetId bigint DESTINATION ID,\n"
+            + "    creationDate bigint\n"
+            + "  )\n"
+            + ") WITH (\n"
+            + "  \t\tstoreType='rocksdb',\n"
+            + "    \tshardCount = 4\n"
+            + " );\n"
+            + "\n"
+            + "USE GRAPH bi;";
 
     public final String analyticsQuery = graphView + "MATCH (a) RETURN a limit 0";
-    public final String executeQuery = graphView + "MATCH (a) RETURN a limit 1";
+    public final String executeQuery =
+        graphView + "MATCH (person:Person where id = 1100001)-[:isLocatedIn]->(city:City)\n"
+            + "RETURN person.id, person.firstName, person.lastName";
 
     @BeforeClass
-    public void beforeClass() {
-        String jobName = "test_analytics_" + System.currentTimeMillis();
-        testDir = new File(FileUtil.constitutePath("tmp","zk",jobName));
-        configuration = new Configuration();
-        configuration.put("geaflow.zookeeper.znode.parent", File.separator + jobName);
-        configuration.put("geaflow.zookeeper.quorum.servers", "localhost:2181");
+    public void beforeClass() throws Exception {
+        File file = new File(TEST_GRAPH_PATH);
+        if (file.exists()) {
+            FileUtils.deleteDirectory(file);
+        }
+
+        BaseQueryTest
+            .build()
+            .withConfig(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), "1")
+            .withConfig(FileConfigKeys.PERSISTENT_TYPE.getKey(), "DFS")
+            .withConfig(CONTAINER_WORKER_NUM.getKey(), String.valueOf(20))
+            .withConfig(FileConfigKeys.ROOT.getKey(), TEST_GRAPH_PATH)
+            .withConfig(AnalyticsServiceConfigKeys.ANALYTICS_COMPILE_SCHEMA_ENABLE.getKey(),
+                String.valueOf(false))
+            .withConfig(FileConfigKeys.JSON_CONFIG.getKey(), "{\"fs.defaultFS\":\"local\"}")
+            .withQueryPath("/ldbc/bi_insert_01.sql")
+            .execute()
+            .withQueryPath("/ldbc/bi_insert_02.sql")
+            .execute()
+            .withQueryPath("/ldbc/bi_insert_03.sql")
+            .execute()
+            .withQueryPath("/ldbc/bi_insert_04.sql")
+            .execute()
+            .withQueryPath("/ldbc/bi_insert_05.sql")
+            .execute()
+            .withQueryPath("/ldbc/bi_insert_06.sql")
+            .execute();
     }
 
     public void before() throws Exception {
-        if (testDir.exists()) {
-            testDir.delete();
-        }
-        if (!testDir.exists()) {
-            testDir.mkdir();
-        }
-        server = new TestingServer(2181, testDir);
-        server.start();
-
+        String jobName = "test_analytics_" + System.currentTimeMillis();
+        server = RedisServer.newRedisServer().start();
+        defaultConfig = new Configuration();
+        defaultConfig.put(RedisConfigKeys.REDIS_HOST, server.getHost());
+        defaultConfig.put(RedisConfigKeys.REDIS_PORT, String.valueOf(server.getBindPort()));
+        defaultConfig.put(ExecutionConfigKeys.JOB_APP_NAME, jobName);
         metaServer = new MetaServer();
-        metaServer.init(new MetaServerContext(configuration));
+        metaServer.init(new MetaServerContext(defaultConfig));
     }
 
-    public void after() throws IOException {
-        metaServer.close();
-        server.stop();
-        testDir.delete();
+    @AfterClass
+    public void cleanGraphStore() throws IOException {
+        File file = new File(TEST_GRAPH_PATH);
+        if (file.exists()) {
+            FileUtils.deleteDirectory(file);
+        }
+    }
+
+    @AfterMethod
+    public void clean() throws IOException {
+        if (metaServer != null) {
+            metaServer.close();
+        }
+        if (server != null) {
+            server.stop();
+        }
+
+        if (environment != null) {
+            environment.shutdown();
+            environment = null;
+        }
+        ClusterMetaStore.close();
+        AbstractScheduledWorkerManager.closeInstance();
     }
 
     protected static ManagedChannel buildChannel(String host, int port, int timeoutMs) {

@@ -1,0 +1,2 @@
+com.antgroup.geaflow.runtime.core.worker.impl.AlignedComputeWorker
+com.antgroup.geaflow.runtime.core.worker.impl.UnAlignedComputeWorker

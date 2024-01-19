@@ -87,5 +87,6 @@ Hybrid-DSL is a data analysis language provided by GeaFlow, which supports stand
     * [Hive Connector](connector/hive.md)
     * [File Connector](connector/file.md)
     * [Kafka Connector](connector/kafka.md)
+    * [Pulsar Connector](connector/pulsar.md)
     * [User Defined Connector](connector/udc.md)
    

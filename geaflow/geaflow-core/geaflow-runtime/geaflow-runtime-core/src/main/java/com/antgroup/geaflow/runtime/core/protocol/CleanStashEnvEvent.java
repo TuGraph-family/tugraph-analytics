@@ -24,9 +24,9 @@ public class CleanStashEnvEvent extends AbstractCleanCommand {
     protected final long pipelineId;
     protected final String driverId;
 
-    public CleanStashEnvEvent(int workerId, int cycleId, long iterationId, long pipelineId,
-                              String driverId) {
-        super(workerId, cycleId, iterationId);
+    public CleanStashEnvEvent(long schedulerId, int workerId, int cycleId, long iterationId,
+                              long pipelineId, String driverId) {
+        super(schedulerId, workerId, cycleId, iterationId);
         this.pipelineId = pipelineId;
         this.driverId = driverId;
     }
@@ -58,14 +58,15 @@ public class CleanStashEnvEvent extends AbstractCleanCommand {
 
     @Override
     protected <T> void sendDoneEvent(String driverId, EventType sourceEventType, T result, boolean sendMetrics) {
-        DoneEvent<T> doneEvent = new DoneEvent<>(this.cycleId, this.windowId, 0, sourceEventType, result);
+        DoneEvent<T> doneEvent = new DoneEvent<>(this.schedulerId, this.cycleId, this.windowId, 0, sourceEventType, result);
         RpcClient.getInstance().processPipeline(driverId, doneEvent);
     }
 
     @Override
     public String toString() {
         return "CleanStashEnvEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", pipelineId=" + pipelineId

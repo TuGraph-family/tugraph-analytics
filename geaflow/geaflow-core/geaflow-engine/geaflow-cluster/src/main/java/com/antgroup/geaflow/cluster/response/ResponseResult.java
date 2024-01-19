@@ -15,9 +15,10 @@
 package com.antgroup.geaflow.cluster.response;
 
 import com.antgroup.geaflow.io.CollectType;
+import java.io.Serializable;
 import java.util.List;
 
-public class ResponseResult implements IResult<Object> {
+public class ResponseResult implements IResult<Object>, Serializable {
 
     private int collectId;
     private CollectType outputType;

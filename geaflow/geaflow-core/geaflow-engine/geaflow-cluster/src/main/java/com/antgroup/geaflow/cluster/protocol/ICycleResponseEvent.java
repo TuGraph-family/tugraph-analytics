@@ -20,4 +20,9 @@ public interface ICycleResponseEvent extends IEvent {
      * The cycle id of the callback event.
      */
     int getCycleId();
+
+    /**
+     * Returns the scheduler id of the callback event.
+     */
+    long getSchedulerId();
 }

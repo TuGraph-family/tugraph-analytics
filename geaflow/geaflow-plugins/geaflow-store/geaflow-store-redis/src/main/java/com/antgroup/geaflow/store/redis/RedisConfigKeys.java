@@ -21,7 +21,7 @@ public class RedisConfigKeys {
 
     public static final ConfigKey REDIS_HOST = ConfigKeys
         .key("geaflow.store.redis.host")
-        .noDefaultValue()
+        .defaultValue("127.0.0.1")
         .description("geaflow store redis server host");
 
     public static final ConfigKey REDIS_PORT = ConfigKeys

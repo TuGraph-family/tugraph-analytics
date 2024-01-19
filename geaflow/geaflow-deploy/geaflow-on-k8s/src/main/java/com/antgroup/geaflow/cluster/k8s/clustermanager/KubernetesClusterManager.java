@@ -25,7 +25,6 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.LOG_D
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_EXPOSED_TYPE;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.SERVICE_SUFFIX;
-import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.WATCHER_CHECK_INTERVAL;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CLUSTER_ID;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
@@ -38,14 +37,10 @@ import com.antgroup.geaflow.cluster.k8s.config.KubernetesContainerParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesDriverParam;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
 import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesSupervisorRunner;
-import com.antgroup.geaflow.cluster.k8s.handler.IPodEventHandler;
-import com.antgroup.geaflow.cluster.k8s.handler.PodEvictHandler;
-import com.antgroup.geaflow.cluster.k8s.handler.PodOOMHandler;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.cluster.runner.manager.GeaFlowClusterManager;
 import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
 import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -54,20 +49,10 @@ import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher;
-import io.fabric8.kubernetes.client.Watcher.Action;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,10 +74,6 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
     private ServiceExposedType serviceExposedType;
     private GeaflowKubeClient kubernetesClient;
 
-    private Watch watcher;
-    private int checkInterval;
-    private volatile boolean watcherClosed;
-    private List<IPodEventHandler> eventHandlers;
 
     public KubernetesClusterManager() {
         super(EnvType.K8S);
@@ -112,8 +93,6 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
         this.serviceExposedType = KubernetesConfig.getServiceExposedType(config);
         this.masterParam = new KubernetesMasterParam(clusterConfig);
         this.clusterId = config.getString(CLUSTER_ID);
-        this.checkInterval = config.getInteger(WATCHER_CHECK_INTERVAL);
-        this.watcherClosed = true;
 
         if (config.contains(KubernetesConfig.CLUSTER_START_TIME)) {
             this.containerParam = new KubernetesContainerParam(clusterConfig);
@@ -122,8 +101,6 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
             this.driverPodNamePrefix = driverParam.getPodNamePrefix(clusterId);
             setupOwnerReference();
             setupConfigMap();
-            createPodEventHandlers();
-            createAndStartPodsWatcher();
         }
     }
 
@@ -337,48 +314,6 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
         String logFile = config.getString(LOG_DIR) + File.separator + fileName;
         return ClusterUtils.getStartCommand(clusterConfig.getSupervisorJvmOptions(),
             KubernetesSupervisorRunner.class, logFile, config, JOB_CLASSPATH);
-    }
-
-    private void createPodEventHandlers() {
-        eventHandlers = new ArrayList<>();
-        eventHandlers.add(new PodOOMHandler());
-        eventHandlers.add(new PodEvictHandler(config));
-    }
-
-    private void createAndStartPodsWatcher() {
-        BiConsumer<Action, Pod> eventHandler = this::handlePodMessage;
-        Consumer<Exception> exceptionHandler = (exception) -> {
-            watcherClosed = true;
-            LOGGER.warn("watch exception: {}", exception.getMessage(), exception);
-        };
-
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
-            ThreadUtil.namedThreadFactory(true, "watcher-creator"));
-        executorService.scheduleAtFixedRate(() -> {
-            if (watcherClosed) {
-                if (watcher != null) {
-                    watcher.close();
-                }
-                watcher = kubernetesClient.createPodsWatcher(containerParam.getPodLabels(clusterId),
-                    eventHandler, exceptionHandler);
-                if (watcher != null) {
-                    watcherClosed = false;
-                }
-            }
-        }, checkInterval, checkInterval, TimeUnit.SECONDS);
-    }
-
-    private void handlePodMessage(Watcher.Action action, Pod pod) {
-        String componentId = KubernetesUtils.extractComponentId(pod);
-        if (componentId == null) {
-            LOGGER.warn("Unexpected pod {} event:{}", pod.getMetadata().getName(), action);
-            return;
-        }
-        if (action == Action.MODIFIED) {
-            eventHandlers.forEach(h -> h.handle(pod));
-        } else {
-            LOGGER.info("Skip handling {} event for pod {}", action, pod.getMetadata().getName());
-        }
     }
 
     @Override

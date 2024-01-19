@@ -27,6 +27,7 @@ import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesConfig;
 import com.antgroup.geaflow.cluster.k8s.config.KubernetesMasterParam;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import com.antgroup.geaflow.cluster.k8s.watcher.KubernetesPodWatcher;
 import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.cluster.runner.entrypoint.MasterRunner;
 import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
@@ -55,10 +56,16 @@ public class KubernetesMasterRunner extends MasterRunner {
 
     @Override
     public ClusterInfo init() {
-        ClusterInfo clusterInfo = super.init();
+        startClusterWatcher();
 
+        ClusterInfo clusterInfo = super.init();
         updateConfigMap(clusterInfo);
         return clusterInfo;
+    }
+
+    protected void startClusterWatcher() {
+        KubernetesPodWatcher watcher = new KubernetesPodWatcher(config);
+        watcher.start();
     }
 
     @Override
@@ -126,8 +133,8 @@ public class KubernetesMasterRunner extends MasterRunner {
             LOGGER.info("Completed master init in {} ms", System.currentTimeMillis() - startTime);
             masterRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FETAL: process exits", e);
-            throw e;
+            LOGGER.error("FATAL: process exits", e);
+            System.exit(EXIT_CODE);
         }
     }
 

@@ -32,17 +32,6 @@ RUN rpm -Uvh https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rp
 RUN yum install -y epel-release \
     && yum install -y redis
 
-# zookeeper
-RUN yum install -y ca-certificates
-RUN yum install -y nc
-RUN cd /usr/lib \
-    && wget  https://mirrors.aliyun.com/apache/zookeeper/zookeeper-3.8.3/apache-zookeeper-3.8.3-bin.tar.gz \
-    && tar xf apache-zookeeper-3.8.3-bin.tar.gz \
-    && mkdir /usr/lib/apache-zookeeper-3.8.3-bin/zkData \
-    && cd /usr/lib/apache-zookeeper-3.8.3-bin/conf \
-    && mv zoo_sample.cfg zoo.cfg \
-    && rm -rf /usr/lib/apache-zookeeper-3.8.3-bin.tar.gz
-
 # influxdb
 RUN echo '[influxdata]' >> /etc/yum.repos.d/influxdata.repo \
     && echo 'name = InfluxData Repository - Stable' >> /etc/yum.repos.d/influxdata.repo \

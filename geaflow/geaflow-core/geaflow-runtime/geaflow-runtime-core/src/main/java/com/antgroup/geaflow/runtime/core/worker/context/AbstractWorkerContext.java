@@ -41,6 +41,7 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
     protected IoDescriptor ioDescriptor;
     protected int cycleId;
     protected long pipelineId;
+    protected long schedulerId;
     protected String pipelineName;
     protected String driverId;
     protected MetricGroup metricGroup;
@@ -48,6 +49,7 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
     protected List<ICollector<?>> collectors;
     protected long windowId;
     protected RuntimeContext runtimeContext;
+    protected boolean isFinished;
 
     public AbstractWorkerContext(ITaskContext taskContext) {
         this.config = taskContext.getConfig();
@@ -58,17 +60,19 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
     @Override
     public void init(IEventContext eventContext) {
         EventContext context = (EventContext) eventContext;
-        currentWindowId = context.getCurrentWindowId();
-        cycleId = context.getCycleId();
-        pipelineId = context.getPipelineId();
-        pipelineName = context.getPipelineName();
-        driverId = context.getDriverId();
-        ioDescriptor = context.getIoDescriptor();
-        executionTask = context.getExecutionTask();
-        processor = executionTask.getProcessor();
-        taskId = executionTask.getTaskId();
-        windowId = context.getWindowId();
-        runtimeContext = createRuntimeContext();
+        this.currentWindowId = context.getCurrentWindowId();
+        this.cycleId = context.getCycleId();
+        this.pipelineId = context.getPipelineId();
+        this.schedulerId = context.getSchedulerId();
+        this.pipelineName = context.getPipelineName();
+        this.driverId = context.getDriverId();
+        this.ioDescriptor = context.getIoDescriptor();
+        this.executionTask = context.getExecutionTask();
+        this.processor = executionTask.getProcessor();
+        this.taskId = executionTask.getTaskId();
+        this.windowId = context.getWindowId();
+        this.runtimeContext = createRuntimeContext();
+        this.isFinished = false;
         this.initEventMetrics();
     }
 
@@ -133,12 +137,20 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
         return pipelineId;
     }
 
+    public void setSchedulerId(long schedulerId) {
+        this.schedulerId = schedulerId;
+    }
+
     public String getPipelineName() {
         return pipelineName;
     }
 
     public void setPipelineId(long pipelineId) {
         this.pipelineId = pipelineId;
+    }
+
+    public long getSchedulerId() {
+        return schedulerId;
     }
 
     public void setPipelineName(String pipelineName) {
@@ -159,6 +171,14 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
 
     public boolean isIterativeTask() {
         return this.executionTask.isIterative();
+    }
+
+    public boolean isFinished() {
+        return isFinished;
+    }
+
+    public void setFinished(boolean finished) {
+        isFinished = finished;
     }
 
     public void initEventMetrics() {

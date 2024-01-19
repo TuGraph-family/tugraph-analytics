@@ -14,20 +14,20 @@
 
 package com.antgroup.geaflow.example.service;
 
-import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsServiceConfigKeys;
+import static com.antgroup.geaflow.file.FileConfigKeys.ROOT;
+
+import com.antgroup.geaflow.analytics.service.config.AnalyticsServiceConfigKeys;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.encoder.RpcMessageEncoder;
+import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.utils.SleepUtils;
-import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.metaserver.client.MetaServerQueryClient;
-import com.antgroup.geaflow.common.rpc.HostAndPort;
 import com.antgroup.geaflow.metaserver.service.NamespaceType;
 import com.antgroup.geaflow.rpc.proto.Analytics.QueryRequest;
 import com.antgroup.geaflow.rpc.proto.Analytics.QueryResult;
@@ -47,28 +47,26 @@ public class MultiQueryServiceTest extends BaseServiceTest {
     @Test
     public void testQueryService() throws Exception {
         before();
-        Environment environment = EnvironmentFactory.onLocalEnvironment();
+        environment = EnvironmentFactory.onLocalEnvironment();
         Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.put(ExecutionConfigKeys.DRIVER_NUM, "2");
         configuration.put(FrameworkConfigKeys.SERVICE_SHARE_ENABLE, Boolean.TRUE.toString());
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY, analyticsQuery);
         configuration.put(AnalyticsServiceConfigKeys.ANALYTICS_QUERY_PARALLELISM, "2");
+        configuration.put(ROOT, TEST_GRAPH_PATH);
         // Collection source must be set all window size in order to only execute one batch.
         configuration.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE, "-1");
-        configuration.putAll(this.configuration.getConfigMap());
+        configuration.putAll(defaultConfig.getConfigMap());
 
         QueryService queryService = new QueryService();
         queryService.submit(environment);
         testQuery();
-
-        environment.shutdown();
-        after();
     }
 
     private void testQuery() {
-        SleepUtils.sleepSecond(10);
+        SleepUtils.sleepSecond(DEFAULT_WAITING_TIME);
 
-        MetaServerQueryClient queryClient = new MetaServerQueryClient(configuration);
+        MetaServerQueryClient queryClient = new MetaServerQueryClient(defaultConfig);
         List<HostAndPort> serviceInfos = queryClient.queryAllServices(NamespaceType.DEFAULT);
         for (HostAndPort hostAndPort : serviceInfos) {
             LOGGER.info("host and port {}", hostAndPort);
@@ -84,12 +82,15 @@ public class MultiQueryServiceTest extends BaseServiceTest {
             QueryResult queryResult = stub.executeQuery(request);
             Assert.assertNotNull(queryResult);
             QueryResults result = RpcMessageEncoder.decode(queryResult.getQueryResult());
-            List<List<ResponseResult>> list = (List<List<ResponseResult>>) result.getData();
-            LOGGER.info("result list {}", list);
-            Assert.assertTrue(list.size() == 1);
-            Assert.assertTrue(list.get(0).get(0).getResponse().size() == 0);
+            Object defaultFormattedResult = result.getFormattedData();
+            List<List<Object>> rawData = result.getRawData();
+            Assert.assertEquals(1, rawData.size());
+            Assert.assertEquals(3, rawData.get(0).size());
+            Assert.assertEquals(rawData.get(0).get(0), 1100001L);
+            Assert.assertEquals(rawData.get(0).get(1).toString(), "一");
+            Assert.assertEquals(rawData.get(0).get(2).toString(), "王");
+            Assert.assertEquals(defaultFormattedResult.toString(), "{\"viewResult\":{\"nodes\":[],\"edges\":[]},\"jsonResult\":[{\"firstName\":\"一\",\"lastName\":\"王\",\"id\":\"1100001\"}]}");
         }
-
         queryClient.close();
     }
 

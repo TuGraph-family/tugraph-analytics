@@ -16,7 +16,6 @@ package com.antgroup.geaflow.example.graph;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.graph.statical.compute.allshortestpath.AllShortestPath;

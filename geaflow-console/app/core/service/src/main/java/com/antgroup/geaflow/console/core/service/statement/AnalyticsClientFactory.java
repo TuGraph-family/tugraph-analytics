@@ -32,21 +32,16 @@ public class AnalyticsClientFactory {
     private VersionFactory versionFactory;
 
     public AnalyticsClient buildClient(GeaflowTask task) {
-
         final VersionClassLoader classLoader = versionFactory.getClassLoader(task.getRelease().getVersion());
         final AnalyticsClientBuilder builder = classLoader.newInstance(AnalyticsClientBuilder.class);
-
-        final String zkNode = "/geaflow" + task.getId();
-        final String zkQuoRumServer = (String) task.getRelease().getJobConfig().get("geaflow.zookeeper.quorum.servers");
-
         Configuration configuration = classLoader.newInstance(Configuration.class);
+        final String redisParentNamespace = "/geaflow" + task.getId();
         configuration.putAll(task.getRelease().getJobConfig().toStringMap());
         configuration.put("brpc.connect.timeout.ms", String.valueOf(8000));
         configuration.put("geaflow.meta.server.retry.times", String.valueOf(2));
+        configuration.put("geaflow.job.runtime.name", redisParentNamespace);
         return builder.withConfiguration(configuration)
-            .withAnalyticsZkNode(zkNode)
             .withInitChannelPools(true)
-            .withAnalyticsZkQuorumServers(zkQuoRumServer)
             .build();
     }
 

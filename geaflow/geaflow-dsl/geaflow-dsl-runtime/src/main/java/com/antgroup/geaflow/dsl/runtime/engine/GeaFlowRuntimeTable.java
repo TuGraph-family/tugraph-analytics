@@ -255,6 +255,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         return new GeaFlowSinkIncGraphView(context);
     }
 
+
     private static class TableProjectFunction implements MapFunction<Row, Row>, Serializable {
 
         private final ProjectFunction projectFunction;

@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+import static com.antgroup.geaflow.common.config.keys.DSLConfigKeys.GEAFLOW_DSL_COMPILE_PHYSICAL_PLAN_ENABLE;
+
 import com.antgroup.geaflow.common.config.ConfigHelper;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.compile.CompileContext;
@@ -38,6 +40,7 @@ import com.antgroup.geaflow.plan.PipelinePlanBuilder;
 import com.antgroup.geaflow.plan.graph.PipelineGraph;
 import com.antgroup.geaflow.plan.visualization.JsonPlanGraphVisualization;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
+import com.antgroup.geaflow.runtime.pipeline.PipelineTaskType;
 import com.antgroup.geaflow.runtime.pipeline.task.PipelineTaskContext;
 import com.google.common.collect.ImmutableList;
 import java.util.HashSet;
@@ -103,8 +106,8 @@ public class QueryClient implements QueryCompiler {
 
     @Override
     public CompileResult compile(String script, CompileContext context) {
-        PipelineContext pipelineContext =
-            new PipelineContext("compileTask", new Configuration(context.getConfig()));
+        PipelineContext pipelineContext = new PipelineContext(PipelineTaskType.CompileTask.name(),
+            new Configuration(context.getConfig()));
         PipelineTaskContext pipelineTaskCxt = new PipelineTaskContext(0L, pipelineContext);
         QueryEngine engineContext = new GeaFlowQueryEngine(pipelineTaskCxt);
         QueryContext queryContext = QueryContext.builder()
@@ -116,7 +119,7 @@ public class QueryClient implements QueryCompiler {
         executeQuery(script, queryContext);
 
         CompileResult compileResult = new CompileResult();
-        // get current schema before finish.
+        // Get current schema before finish.
         compileResult.setCurrentResultType(queryContext.getCurrentResultType());
 
         queryContext.finish();
@@ -126,8 +129,7 @@ public class QueryClient implements QueryCompiler {
         compileResult.setSourceGraphs(queryContext.getReferSourceGraphs());
         compileResult.setTargetGraphs(queryContext.getReferTargetGraphs());
 
-
-        boolean needPlan = ConfigHelper.getBooleanOrDefault(context.getConfig(), "needPhysicalPlan", true);
+        boolean needPlan = ConfigHelper.getBooleanOrDefault(context.getConfig(), GEAFLOW_DSL_COMPILE_PHYSICAL_PLAN_ENABLE.getKey(), Boolean.TRUE);
         if (needPlan) {
             PipelinePlanBuilder pipelinePlanBuilder = new PipelinePlanBuilder();
             PipelineGraph pipelineGraph = pipelinePlanBuilder.buildPlan(pipelineContext);

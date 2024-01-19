@@ -19,8 +19,8 @@ import com.antgroup.geaflow.cluster.task.ITaskContext;
 
 public class LoadGraphProcessEvent extends AbstractIterationComputeCommand {
 
-    public LoadGraphProcessEvent(int workerId, int cycleId, long windowId, long fetchWindowId, long fetchCount) {
-        super(workerId, cycleId, windowId, fetchWindowId, fetchCount);
+    public LoadGraphProcessEvent(long schedulerId, int workerId, int cycleId, long windowId, long fetchWindowId, long fetchCount) {
+        super(schedulerId, workerId, cycleId, windowId, fetchWindowId, fetchCount);
     }
 
     @Override
@@ -53,7 +53,8 @@ public class LoadGraphProcessEvent extends AbstractIterationComputeCommand {
     @Override
     public String toString() {
         return "LoadGraphProcessEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + ", fetchWindowId=" + fetchWindowId

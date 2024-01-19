@@ -14,21 +14,16 @@
 
 package com.antgroup.geaflow.analytics.service.client.jdbc;
 
-import static com.antgroup.geaflow.analytics.service.client.jdbc.AnalyticsResultSet.resultsException;
 import static java.util.Objects.requireNonNull;
 
-import com.antgroup.geaflow.analytics.service.client.IAnalyticsManager;
+import com.antgroup.geaflow.analytics.service.client.AnalyticsClient;
 import com.antgroup.geaflow.analytics.service.query.QueryResults;
-import com.antgroup.geaflow.analytics.service.query.QueryStatusInfo;
-import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.google.common.collect.ImmutableMap;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -36,17 +31,25 @@ public class AnalyticsStatement implements Statement {
 
     private final AtomicReference<AnalyticsConnection> connection;
     private final AtomicInteger queryTimeoutSeconds = new AtomicInteger();
-    private final AtomicReference<AnalyticsResultSet> currentResult = new AtomicReference<>();
-    private final AtomicReference<IAnalyticsManager> executingClient = new AtomicReference<>();
+    private final AtomicReference<ResultSet> currentResult = new AtomicReference<>();
+    private final AtomicReference<AnalyticsClient> executingClient;
 
-    public AnalyticsStatement(AnalyticsConnection connection) {
-        this.connection = new AtomicReference<>(requireNonNull(connection, "connection is null"));
+    private AnalyticsStatement(AnalyticsConnection connection, AnalyticsClient client) {
+        this.connection = new AtomicReference<>(requireNonNull(connection, "analytics connection "
+            + "is null"));
+        this.executingClient = new AtomicReference<>(requireNonNull(client, "analytics client "
+            + "is null"));
+    }
+
+    protected static AnalyticsStatement newInstance(AnalyticsConnection connection,
+                                                    AnalyticsClient client) {
+        return new AnalyticsStatement(connection, client);
     }
 
     @Override
-    public AnalyticsResultSet executeQuery(String statement) throws SQLException {
-        if (!execute(statement)) {
-            throw new GeaflowRuntimeException("Execute statement is not a query: " + statement);
+    public ResultSet executeQuery(String script) throws SQLException {
+        if (!execute(script)) {
+            throw new GeaflowRuntimeException("Execute statement is not a query: " + script);
         }
         return currentResult.get();
     }
@@ -63,28 +66,25 @@ public class AnalyticsStatement implements Statement {
 
     @Override
     public void close() throws SQLException {
-
+        if (executingClient.get() != null) {
+            executingClient.get().shutdown();
+        }
+        if (connection.get() != null) {
+            connection.get().close();
+        }
     }
 
-    private boolean executeQueryInternal(String statement) throws SQLException {
+    private boolean executeQueryInternal(String script) throws SQLException {
         // Remove current results.
         removeCurrentResults();
         // Check connection.
         checkConnect();
-        IAnalyticsManager client = null;
-        AnalyticsResultSet resultSet = null;
+        AnalyticsClient client = executingClient.get();
+        ResultSet resultSet = null;
         try {
-            AnalyticsConnection connection = connection();
-            client = connection.executeQuery(statement, getStatementSessionProperties());
-            if (client.isFinished()) {
-                QueryStatusInfo finalStatusInfo = client.getFinalStatusInfo();
-                if (finalStatusInfo.getError() != null) {
-                    throw resultsException(finalStatusInfo);
-                }
-            }
+            QueryResults queryResults = client.executeQuery(script);
+            resultSet = new AnalyticsResultSet(this, queryResults);
             executingClient.set(client);
-            QueryResults queryResults = client.getCurrentQueryResult();
-            resultSet = new AnalyticsResultSet(this, client, queryResults);
             currentResult.set(resultSet);
             return true;
         } catch (Exception e) {
@@ -96,14 +96,14 @@ public class AnalyticsStatement implements Statement {
                     resultSet.close();
                 }
                 if (client != null) {
-                    client.close();
+                    client.shutdown();
                 }
             }
         }
     }
 
     private void removeCurrentResults() throws SQLException {
-        AnalyticsResultSet resultSet = currentResult.getAndSet(null);
+        ResultSet resultSet = currentResult.getAndSet(null);
         if (resultSet != null) {
             resultSet.close();
         }
@@ -111,15 +111,6 @@ public class AnalyticsStatement implements Statement {
 
     private void checkConnect() throws SQLException {
         connection();
-    }
-
-    private Map<String, String> getStatementSessionProperties() {
-        ImmutableMap.Builder<String, String> sessionProperties = ImmutableMap.builder();
-        if (queryTimeoutSeconds.get() > 0) {
-            sessionProperties.put(FrameworkConfigKeys.CLIENT_QUERY_TIMEOUT.getKey(),
-                queryTimeoutSeconds.get() + "s");
-        }
-        return sessionProperties.build();
     }
 
     private AnalyticsConnection connection() throws SQLException {
@@ -158,7 +149,8 @@ public class AnalyticsStatement implements Statement {
 
     @Override
     public int getQueryTimeout() throws SQLException {
-        return 0;
+        checkConnect();
+        return this.queryTimeoutSeconds.get();
     }
 
     @Override
@@ -173,11 +165,11 @@ public class AnalyticsStatement implements Statement {
     @Override
     public void cancel() throws SQLException {
         checkConnect();
-        IAnalyticsManager statementClient = executingClient.get();
-        if (statementClient != null) {
-            statementClient.close();
-        }
+        AnalyticsClient analyticsClient = executingClient.get();
         removeCurrentResults();
+        if (analyticsClient != null) {
+            analyticsClient.shutdown();
+        }
     }
 
     @Override
@@ -197,7 +189,7 @@ public class AnalyticsStatement implements Statement {
 
     @Override
     public ResultSet getResultSet() throws SQLException {
-        throw new UnsupportedOperationException();
+        return this.currentResult.get();
     }
 
     @Override
@@ -311,7 +303,7 @@ public class AnalyticsStatement implements Statement {
     }
 
     @Override
-    public void setPoolable(boolean poolable) throws SQLException {
+    public void setPoolable(boolean enablePool) throws SQLException {
 
     }
 
@@ -331,12 +323,12 @@ public class AnalyticsStatement implements Statement {
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> param) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> param) throws SQLException {
         throw new UnsupportedOperationException();
     }
 

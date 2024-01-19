@@ -38,9 +38,10 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
     private boolean isCollectResult;
     private transient boolean workerAssigned;
 
-    public ExecutionNodeCycle(long pipelineId, String pipelineName, ExecutionVertexGroup vertexGroup,
+    public ExecutionNodeCycle(long schedulerId, long pipelineId, long pipelineTaskId, String pipelineName,
+                              ExecutionVertexGroup vertexGroup,
                               Configuration config, String driverId, int driverIndex) {
-        super(pipelineId, pipelineName, vertexGroup.getGroupId(),
+        super(schedulerId, pipelineId, pipelineTaskId, pipelineName, vertexGroup.getGroupId(),
             vertexGroup.getCycleGroupMeta().getFlyingCount(), vertexGroup.getCycleGroupMeta().getIterationCount(),
             config);
         this.vertexGroup = vertexGroup;

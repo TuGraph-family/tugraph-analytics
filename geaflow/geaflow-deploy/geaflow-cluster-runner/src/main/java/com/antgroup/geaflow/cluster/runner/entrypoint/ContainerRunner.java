@@ -16,6 +16,7 @@ package com.antgroup.geaflow.cluster.runner.entrypoint;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.ENV_AGENT_PORT;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.ENV_SUPERVISOR_PORT;
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.IS_RECOVER;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_ID;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.AGENT_HTTP_PORT;
@@ -82,8 +83,8 @@ public class ContainerRunner {
             LOGGER.info("Completed container init in {}ms", System.currentTimeMillis() - startTime);
             containerRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FETAL: process exits", e);
-            throw e;
+            LOGGER.error("FATAL: process exits", e);
+            System.exit(EXIT_CODE);
         }
     }
 

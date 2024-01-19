@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.runtime.core.protocol;
 
-import com.antgroup.geaflow.cluster.collector.CloseEmitterRequest;
+import com.antgroup.geaflow.cluster.collector.StashEmitterRequest;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.cluster.worker.IAffinityWorker;
@@ -32,8 +32,8 @@ public class StashWorkerEvent extends AbstractCleanCommand {
 
     private final int taskId;
 
-    public StashWorkerEvent(int workerId, int cycleId, long windowId, int taskId) {
-        super(workerId, cycleId, windowId);
+    public StashWorkerEvent(long schedulerId, int workerId, int cycleId, long windowId, int taskId) {
+        super(schedulerId, workerId, cycleId, windowId);
         this.taskId = taskId;
     }
 
@@ -54,7 +54,7 @@ public class StashWorkerEvent extends AbstractCleanCommand {
         // Stash worker context.
         ((IAffinityWorker) worker).stash();
 
-        this.emitterRunner.add(new CloseEmitterRequest(this.taskId, this.windowId));
+        this.emitterRunner.add(new StashEmitterRequest(this.taskId, this.windowId));
         worker.close();
         LOGGER.info("stash worker context, taskId {}", ((WorkerContext) context).getTaskId());
 
@@ -82,7 +82,8 @@ public class StashWorkerEvent extends AbstractCleanCommand {
     @Override
     public String toString() {
         return "StashWorkerEvent{"
-            + "workerId=" + workerId
+            + "schedulerId=" + schedulerId
+            + ", workerId=" + workerId
             + ", cycleId=" + cycleId
             + ", windowId=" + windowId
             + '}';

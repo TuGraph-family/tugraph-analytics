@@ -25,8 +25,9 @@ public class CycleSchedulerContextFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CycleSchedulerContextFactory.class);
 
-    public static ICycleSchedulerContext build(Supplier<? extends ICycleSchedulerContext> func) {
-        return CheckpointSchedulerContext.build(func);
+    public static ICycleSchedulerContext loadOrCreate(long pipelineTaskId, Supplier<?
+        extends ICycleSchedulerContext> buildFunc) {
+        return CheckpointSchedulerContext.build(pipelineTaskId, buildFunc);
     }
 
     public static ICycleSchedulerContext create(IExecutionCycle cycle, ICycleSchedulerContext parent) {

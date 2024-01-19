@@ -33,6 +33,7 @@ import com.antgroup.geaflow.common.utils.PortUtil;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
 
     private ContainerContext containerContext;
     private Dispatcher dispatcher;
+    private AtomicBoolean isOpened;
     protected FetcherService fetcherService;
     protected EmitterService emitterService;
     protected TaskService workerService;
@@ -53,6 +55,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
 
     public Container(int rpcPort) {
         super(rpcPort);
+        this.isOpened = new AtomicBoolean(false);
     }
 
     @Override
@@ -79,30 +82,32 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
 
     public OpenContainerResponseEvent open(OpenContainerEvent event) {
         try {
-            int num = event.getExecutorNum();
-            Preconditions.checkArgument(num > 0, "worker num should > 0");
-            LOGGER.info("open container {} with {} executors", name, num);
+            if (isOpened.compareAndSet(false, true)) {
+                int num = event.getExecutorNum();
+                Preconditions.checkArgument(num > 0, "worker num should > 0");
+                LOGGER.info("open container {} with {} executors", name, num);
 
-            this.fetcherService = new FetcherService(num, configuration);
-            this.emitterService = new EmitterService(num, configuration);
-            this.workerService = new TaskService(id, num,
-                configuration, metricGroup, fetcherService, emitterService);
-            this.dispatcher = new Dispatcher(workerService);
-            this.dispatcherService = new DispatcherService(dispatcher);
+                this.fetcherService = new FetcherService(num, configuration);
+                this.emitterService = new EmitterService(num, configuration);
+                this.workerService = new TaskService(id, num,
+                    configuration, metricGroup, fetcherService, emitterService);
+                this.dispatcher = new Dispatcher(workerService);
+                this.dispatcherService = new DispatcherService(dispatcher);
 
-            // start task service
-            this.fetcherService.start();
-            this.emitterService.start();
-            this.workerService.start();
-            this.dispatcherService.start();
+                // start task service
+                this.fetcherService.start();
+                this.emitterService.start();
+                this.workerService.start();
+                this.dispatcherService.start();
 
-            if (containerContext.getReliableEvents() != null) {
-                for (IEvent reliableEvent : containerContext.getReliableEvents()) {
-                    LOGGER.info("{} replay event {}", name, reliableEvent);
-                    this.dispatcher.add((ICommand) reliableEvent);
+                if (containerContext.getReliableEvents() != null) {
+                    for (IEvent reliableEvent : containerContext.getReliableEvents()) {
+                        LOGGER.info("{} replay event {}", name, reliableEvent);
+                        this.dispatcher.add((ICommand) reliableEvent);
+                    }
                 }
+                registerHAService();
             }
-            registerHAService();
             return new OpenContainerResponseEvent(id, 0);
         } catch (Throwable throwable) {
             LOGGER.error("{} open error", name, throwable);

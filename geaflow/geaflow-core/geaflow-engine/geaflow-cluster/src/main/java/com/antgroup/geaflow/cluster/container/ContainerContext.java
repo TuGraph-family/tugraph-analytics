@@ -103,7 +103,7 @@ public class ContainerContext extends ReliableContainerContext {
             List<IEvent> reliableEvents = ClusterMetaStore.getInstance().getEvents();
 
             if (reliableEvents == null) {
-                reliableEvents = containerContext.waitingCheckpointEvents;
+                reliableEvents = new ArrayList<>(containerContext.waitingCheckpointEvents);
             } else {
                 for (IEvent event : containerContext.waitingCheckpointEvents) {
                     if (reliableEvents.contains(event)) {

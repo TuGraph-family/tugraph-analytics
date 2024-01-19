@@ -75,7 +75,7 @@ public class DynamicGraphVertexCentricTraversalStartByIdsOp<K, VV, EV, M, R,
             int maxParallelism = graphViewDesc.getShardNum();
             int currentKeyGroup = KeyGroupAssignment.assignToKeyGroup(traversalRequest.getVId(),
                 maxParallelism);
-            if (currentKeyGroup >= keyGroup.getStartKeyGroup() && currentKeyGroup <= keyGroup.getEndKeyGroup()) {
+            if (currentKeyGroup >= taskKeyGroup.getStartKeyGroup() && currentKeyGroup <= taskKeyGroup.getEndKeyGroup()) {
                 currentTaskRequest.add(traversalRequest);
             }
         }

@@ -15,8 +15,8 @@
 package com.antgroup.geaflow.runtime.core.scheduler.resource;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import java.util.List;
-import java.util.Set;
 
 public interface IScheduledWorkerManager<G, V> {
 
@@ -40,19 +40,19 @@ public interface IScheduledWorkerManager<G, V> {
     /**
      * Clean worker runtime context for used workers by specified clean function.
      */
-    void clean(CleanWorkerFunction cleaFunc);
+    void clean(CleanWorkerFunction cleaFunc, IExecutionCycle cycle);
 
     /**
      * Release all worker to master resource manager.
      */
-    void close();
+    void close(IExecutionCycle cycle);
 
     /**
      * Function interface to clean runtime context for already assigned workers.
      */
     interface CleanWorkerFunction {
 
-        void clean(Set<WorkerInfo> assignedWorkers);
+        void clean(List<WorkerInfo> assignedWorkers);
 
     }
 }

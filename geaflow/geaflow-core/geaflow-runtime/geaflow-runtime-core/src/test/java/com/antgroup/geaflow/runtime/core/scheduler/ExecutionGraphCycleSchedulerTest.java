@@ -38,14 +38,13 @@ import com.antgroup.geaflow.runtime.core.protocol.ComposeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.LaunchSourceEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
-import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +79,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
     @AfterMethod
     public void cleanUp() {
         ClusterMetaStore.close();
+        AbstractScheduledWorkerManager.closeInstance();
     }
 
     @Test
@@ -140,18 +140,18 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
 
         configuration.put(CLUSTER_ID, "restart");
         ClusterMetaStore.init(0, "driver-0", configuration);
-        ClusterMetaStore.getInstance().saveWindowId(5L);
+        ClusterMetaStore.getInstance().saveWindowId(5L, 0);
 
         ExecutionGraphCycleScheduler scheduler = new ExecutionGraphCycleScheduler();
         processor.register(scheduler);
 
         // mock recover context from previous case.
         CheckpointSchedulerContext newContext = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockGraphCycle(), null);
-        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CheckpointSchedulerContext.build(() -> newContext);
+        CheckpointSchedulerContext context =
+            (CheckpointSchedulerContext) CheckpointSchedulerContext.build(newContext.getCycle().getPipelineTaskId(),
+                () -> newContext);
         context.init(6);
-        context.getSchedulerStateMap().put(context.getCurrentIterationId(),
-            Arrays.asList(ICycleSchedulerContext.SchedulerState.ROLLBACK,
-                ICycleSchedulerContext.SchedulerState.EXECUTE));
+
 
         scheduler.init(context);
         scheduler.execute();
@@ -201,7 +201,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
 
     private ExecutionGraphCycle buildMockGraphCycle() {
 
-        ExecutionGraphCycle graphCycle = new ExecutionGraphCycle(0, "graph_cycle", 0,
+        ExecutionGraphCycle graphCycle = new ExecutionGraphCycle(0, 0, 0, "graph_cycle", 0,
             1, 10, configuration, "driver_id", 0);
         ExecutionNodeCycle nodeCycle = buildMockIterationNodeCycle(configuration);
 
@@ -237,7 +237,8 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
             headTasks.add(task);
         }
 
-        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, "test", vertexGroup, configuration, "driver_id", 0);
+        ExecutionNodeCycle cycle = new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup,
+            configuration, "driver_id", 0);
         cycle.setCycleHeads(headTasks);
         cycle.setCycleTails(tailTasks);
         cycle.setTasks(headTasks);

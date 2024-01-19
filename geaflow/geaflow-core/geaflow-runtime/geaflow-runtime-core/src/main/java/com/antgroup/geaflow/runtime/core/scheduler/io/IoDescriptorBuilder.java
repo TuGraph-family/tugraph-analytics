@@ -172,7 +172,7 @@ public class IoDescriptorBuilder {
                 if (isBatchDataExchange(vertexGroup, inputEdge.getSrcId())) {
                     shuffleDescriptor = ShuffleDescriptor.BATCH;
                     Map<Integer, List<Shard>> taskInputs =
-                        DataExchanger.buildInput(vertexGroup.getVertexMap().get(vertexId),inputEdge, resultManager);
+                        DataExchanger.buildInput(vertexGroup.getVertexMap().get(vertexId), inputEdge, resultManager);
                     inputs = taskInputs.get(task.getIndex());
                 } else {
                     shuffleDescriptor = ShuffleDescriptor.PIPELINE;

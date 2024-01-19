@@ -329,7 +329,6 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public RuntimeTable runAlgorithm(GraphAlgorithm graphAlgorithm) {
         Class<? extends AlgorithmUserFunction> algorithmUserFunctionClass = graphAlgorithm.getUserFunctionClass();
         AlgorithmUserFunction algorithm;

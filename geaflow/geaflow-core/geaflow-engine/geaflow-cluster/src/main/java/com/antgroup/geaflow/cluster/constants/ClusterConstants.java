@@ -28,7 +28,6 @@ public class ClusterConstants {
 
     public static final int DEFAULT_MASTER_ID = 0;
     public static final int EXIT_CODE = -1;
-    public static final int EXIT_WAIT_SECONDS = 5;
 
     public static final String ENV_AGENT_PORT = "AGENT_PORT";
     public static final String ENV_SUPERVISOR_PORT = "SUPERVISOR_PORT";

@@ -21,15 +21,10 @@ import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.impl.VertexBeginTraversalRequest;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class StaticGraphVertexCentricTraversalAllOp<K, VV, EV, M, R,
     FUNC extends VertexCentricTraversalFunction<K, VV, EV, M, R>>
     extends AbstractStaticGraphVertexCentricTraversalOp<K, VV, EV, M, R, FUNC> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-        StaticGraphVertexCentricTraversalAllOp.class);
 
     public StaticGraphVertexCentricTraversalAllOp(GraphViewDesc graphViewDesc,
                                                   AbstractVertexCentricTraversalAlgo<K, VV, EV, M, R, FUNC> vcTraversal) {

@@ -50,7 +50,6 @@ public class JobConfigBuilder {
         configClass.setJobMode("OLAP_SERVICE");
         configClass.setServiceShareEnable(true);
         configClass.setGraphName(graph.getName());
-        configClass.setQuorumServers("127.0.0.1:2181");
 
         int shardCount = graph.getShardCount();
         int driverNum = 1;

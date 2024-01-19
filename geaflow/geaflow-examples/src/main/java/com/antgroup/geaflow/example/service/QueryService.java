@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.example.service;
 
-import com.antgroup.geaflow.analytics.service.config.keys.AnalyticsServiceConfigKeys;
+import com.antgroup.geaflow.analytics.service.config.AnalyticsServiceConfigKeys;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.runtime.QueryClient;
 import com.antgroup.geaflow.dsl.runtime.QueryContext;

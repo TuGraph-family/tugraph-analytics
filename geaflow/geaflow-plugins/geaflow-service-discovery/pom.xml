@@ -15,6 +15,7 @@
     <modules>
         <module>geaflow-service-discovery-api</module>
         <module>geaflow-service-discovery-zookeeper</module>
+        <module>geaflow-service-discovery-redis</module>
     </modules>
 
 
