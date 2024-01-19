@@ -120,6 +120,16 @@ public class GQLAlgorithmTest {
     }
 
     @Test
+    public void testAlgorithmTriangleCount() throws Exception {
+        QueryTester
+            .build()
+            .withGraphDefine("/query/modern_graph.sql")
+            .withQueryPath("/query/gql_algorithm_tc.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testIncGraphAlgorithm_001() throws Exception {
         QueryTester
             .build()
