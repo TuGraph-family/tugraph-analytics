@@ -35,4 +35,4 @@ FAT_JAR=`ls $GEAFLOW_JAR_DIR | grep "^geaflow-assembly-.*[^sources].jar"`
 CLASSPATH="$GEAFLOW_JAR_DIR/$FAT_JAR"
 echo "CLASSPATH:$CLASSPATH"
 
-$JAVACMD -cp "$CLASSPATH" com.antgroup.geaflow.dsl.connector.socket.server.SocketServer "$@"
+$JAVACMD -cp "$CLASSPATH" -Dlog4j.configuration= com.antgroup.geaflow.dsl.connector.socket.server.SocketServer "$@"
