@@ -84,7 +84,7 @@
 
         <dependency>
             <groupId>org.apache.velocity</groupId>
-            <artifactId>com.springsource.org.apache.velocity</artifactId>
+            <artifactId>velocity</artifactId>
         </dependency>
     </dependencies>
 
