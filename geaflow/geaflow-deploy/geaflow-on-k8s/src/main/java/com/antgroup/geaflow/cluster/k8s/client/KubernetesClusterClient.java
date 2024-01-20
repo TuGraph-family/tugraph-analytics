@@ -73,7 +73,7 @@ public class KubernetesClusterClient extends AbstractClusterClient {
             config.put(JOB_WORK_PATH, config.getString(WORK_DIR));
         }
         if (!config.contains(CLUSTER_ID)) {
-            config.put(CLUSTER_ID, UUID.randomUUID().toString());
+            config.put(CLUSTER_ID, K8SConstants.RANDOM_CLUSTER_ID_PREFIX + UUID.randomUUID());
         }
         this.clusterId = config.getString(CLUSTER_ID);
         String masterUrl = KubernetesConfig.getClientMasterUrl(config);

@@ -18,7 +18,9 @@ package com.antgroup.geaflow.cluster.k8s.config;
  * Constants for kubernetes.
  */
 public final class K8SConstants {
-
+    
+    public static final String RANDOM_CLUSTER_ID_PREFIX = "geaflow";
+    
     public static final String RPC_PORT = "rpc";
 
     public static final String HTTP_PORT = "rest";
