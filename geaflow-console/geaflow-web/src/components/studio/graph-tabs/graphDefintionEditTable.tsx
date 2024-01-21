@@ -171,72 +171,72 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
       },
     },
 
-    {
-      title: $i18n.get({
-        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldConstraints",
-        dm: "字段约束",
-      }),
-      dataIndex: "category",
-      valueType: "select",
-      formItemProps: {
-        rules: [
-          {
-            required: true,
-            whitespace: true,
-            message: $i18n.get({
-              id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.SelectAFieldType",
-              dm: "请选择字段类型",
-            }),
-          },
-        ],
-      },
-      valueEnum: categoryType[type],
-      fieldProps: (_, { rowIndex }) => {
-        if (readonly || (editable && !!name)) {
-          return {
-            disabled: true,
-          };
-        }
-        return {
-          onSelect: (value: string) => {
-            if (type === "VERTEX") {
-              if (value === "VERTEX_ID") {
-                if (dataSource?.some((i) => i.category === value)) {
-                  message.error(
-                    $i18n.get({
-                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointEdgeVAlreadyContains",
-                      dm: "点/边v已包含字段约束",
-                    })
-                  );
-                  editableFormRef.current?.setRowData?.(rowIndex, {
-                    category: [],
-                  });
-                }
-              }
-            }
-            if (type === "EDGE") {
-              if (
-                ["EDGE_SOURCE_ID", "EDGE_TARGET_ID", "EDGE_TIMESTAMP"].includes(
-                  value
-                )
-              ) {
-                if (dataSource?.some((i) => i.category === value)) {
-                  message.error(
-                    $i18n.get({
-                      id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointEdgeVAlreadyContains",
-                      dm: "点/边v已包含字段约束",
-                    })
-                  );
-                  editableFormRef.current?.setRowData?.(rowIndex, {
-                    category: [],
-                  });
-                }
-              }
-            }
-          },
-        };
-      },
-    },
+    // {
+    //   title: $i18n.get({
+    //     id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldConstraints",
+    //     dm: "字段约束",
+    //   }),
+    //   dataIndex: "category",
+    //   valueType: "select",
+    //   formItemProps: {
+    //     rules: [
+    //       {
+    //         required: true,
+    //         whitespace: true,
+    //         message: $i18n.get({
+    //           id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.SelectAFieldType",
+    //           dm: "请选择字段类型",
+    //         }),
+    //       },
+    //     ],
+    //   },
+    //   valueEnum: categoryType[type],
+    //   fieldProps: (_, { rowIndex }) => {
+    //     if (readonly || (editable && !!name)) {
+    //       return {
+    //         disabled: true,
+    //       };
+    //     }
+    //     return {
+    //       onSelect: (value: string) => {
+    //         if (type === "VERTEX") {
+    //           if (value === "VERTEX_ID") {
+    //             if (dataSource?.some((i) => i.category === value)) {
+    //               message.error(
+    //                 $i18n.get({
+    //                   id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointEdgeVAlreadyContains",
+    //                   dm: "点/边v已包含字段约束",
+    //                 })
+    //               );
+    //               editableFormRef.current?.setRowData?.(rowIndex, {
+    //                 category: [],
+    //               });
+    //             }
+    //           }
+    //         }
+    //         if (type === "EDGE") {
+    //           if (
+    //             ["EDGE_SOURCE_ID", "EDGE_TARGET_ID", "EDGE_TIMESTAMP"].includes(
+    //               value
+    //             )
+    //           ) {
+    //             if (dataSource?.some((i) => i.category === value)) {
+    //               message.error(
+    //                 $i18n.get({
+    //                   id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.PointEdgeVAlreadyContains",
+    //                   dm: "点/边v已包含字段约束",
+    //                 })
+    //               );
+    //               editableFormRef.current?.setRowData?.(rowIndex, {
+    //                 category: [],
+    //               });
+    //             }
+    //           }
+    //         }
+    //       },
+    //     };
+    //   },
+    // },
     {
       title: $i18n.get({
         id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Remarks",
@@ -280,13 +280,13 @@ export const GraphDefintionEditTable: React.FC<Props> = ({
       dataIndex: "type",
     },
 
-    {
-      title: $i18n.get({
-        id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldConstraints",
-        dm: "字段约束",
-      }),
-      dataIndex: "category",
-    },
+    // {
+    //   title: $i18n.get({
+    //     id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.FieldConstraints",
+    //     dm: "字段约束",
+    //   }),
+    //   dataIndex: "category",
+    // },
     {
       title: $i18n.get({
         id: "openpiece-geaflow.geaflow.graph-tabs.graphDefintionEditTable.Remarks",

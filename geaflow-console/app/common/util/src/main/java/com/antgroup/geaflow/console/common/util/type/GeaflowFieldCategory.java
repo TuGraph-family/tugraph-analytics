@@ -61,7 +61,7 @@ public enum GeaflowFieldCategory {
         return constraints;
     }
 
-    enum NumConstraint {
+    public enum NumConstraint {
         /**
          * count == 1.
          */
@@ -71,6 +71,10 @@ public enum GeaflowFieldCategory {
          */
         AT_MOST_ONCE,
         NONE
+    }
+
+    public NumConstraint getNumConstraint() {
+        return numConstraint;
     }
 
     public void validate(int count) {

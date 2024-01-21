@@ -15,9 +15,13 @@
 package com.antgroup.geaflow.console.core.model.job;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
+import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import java.util.Optional;
 
 public abstract class GeaflowCodeJob extends GeaflowJob {
+
+    protected GeaflowCode userCode;
 
     public GeaflowCodeJob(GeaflowJobType type) {
         super(type);
@@ -36,5 +40,14 @@ public abstract class GeaflowCodeJob extends GeaflowJob {
     @Override
     public boolean isApiJob() {
         return false;
+    }
+
+    @Override
+    public GeaflowCode getUserCode() {
+        return userCode;
+    }
+
+    public void setUserCode(String code) {
+        this.userCode = Optional.ofNullable(code).map(e -> new GeaflowCode(code)).orElse(null);
     }
 }

@@ -41,6 +41,7 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowTable;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob;
 import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.security.GeaflowAuthorization;
 import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
@@ -159,42 +160,53 @@ public class JobService extends NameService<GeaflowJob, JobEntity, JobSearch> im
                 continue;
             }
 
-            String jobId = newJob.getId();
-            GeaflowJob oldJob = this.get(jobId);
-            if (oldJob.getUserCode().getText().equals(newJob.getUserCode().getText())) {
+            GeaflowJob oldJob = this.get(newJob.getId());
+            if (newJob instanceof GeaflowTransferJob) {
+                updateRefStructs(oldJob, newJob);
                 continue;
             }
+
+            if ((oldJob.getUserCode() == null && newJob.getUserCode() == null)
+                || (oldJob.getUserCode() != null && oldJob.getUserCode() != null
+                && oldJob.getUserCode().getText().equals(newJob.getUserCode().getText()))) {
+                continue;
+            }
+
             parseUserCode(newJob, version);
-            // calculate subset of graphs
-            List<GeaflowGraph> oldGraphs = oldJob.getGraphs();
-            List<GeaflowGraph> newGraphs = newJob.getGraphs();
-            List<GeaflowGraph> addGraphs = ListUtil.diff(newGraphs, oldGraphs, this::getResourceKey);
-            List<GeaflowGraph> removeGraphs = ListUtil.diff(oldGraphs, newGraphs, this::getResourceKey);
-
-            // calculate subset of structs
-            List<GeaflowStruct> oldStructs = oldJob.getStructs();
-            List<GeaflowStruct> newStructs = newJob.getStructs();
-            List<GeaflowStruct> addStructs = ListUtil.diff(newStructs, oldStructs, this::getResourceKey);
-            List<GeaflowStruct> removeStructs = ListUtil.diff(oldStructs, newStructs, this::getResourceKey);
-
-            // calculate subset of functions
-            List<GeaflowFunction> oldFunctions = oldJob.getFunctions();
-            List<GeaflowFunction> newFunctions = newJob.getFunctions();
-            List<GeaflowFunction> addFunctions = ListUtil.diff(newFunctions, oldFunctions, this::getResourceKey);
-            List<GeaflowFunction> removeFunctions = ListUtil.diff(oldFunctions, newFunctions, this::getResourceKey);
-
-            // calculate subset of functions
-            List<GeaflowPlugin> oldJobPlugins = oldJob.getPlugins();
-            List<GeaflowPlugin> newJobPlugins = newJob.getPlugins();
-            List<GeaflowPlugin> addPlugins = ListUtil.diff(newJobPlugins, oldJobPlugins, e -> e.getType() + e.getCategory());
-            List<GeaflowPlugin> removePlugins = ListUtil.diff(oldJobPlugins, newJobPlugins, e -> e.getType() + e.getCategory());
-
-            // add resources
-            createJobResources(jobId, addStructs, addGraphs, addFunctions, addPlugins);
-            removeJobResources(jobId, removeStructs, removeGraphs, removeFunctions, removePlugins);
+            updateRefStructs(oldJob, newJob);
         }
 
         return super.update(jobs);
+    }
+
+    void updateRefStructs(GeaflowJob oldJob, GeaflowJob newJob) {
+        // calculate subset of graphs
+        List<GeaflowGraph> oldGraphs = oldJob.getGraphs();
+        List<GeaflowGraph> newGraphs = newJob.getGraphs();
+        List<GeaflowGraph> addGraphs = ListUtil.diff(newGraphs, oldGraphs, this::getResourceKey);
+        List<GeaflowGraph> removeGraphs = ListUtil.diff(oldGraphs, newGraphs, this::getResourceKey);
+
+        // calculate subset of structs
+        List<GeaflowStruct> oldStructs = oldJob.getStructs();
+        List<GeaflowStruct> newStructs = newJob.getStructs();
+        List<GeaflowStruct> addStructs = ListUtil.diff(newStructs, oldStructs, this::getResourceKey);
+        List<GeaflowStruct> removeStructs = ListUtil.diff(oldStructs, newStructs, this::getResourceKey);
+
+        // calculate subset of functions
+        List<GeaflowFunction> oldFunctions = oldJob.getFunctions();
+        List<GeaflowFunction> newFunctions = newJob.getFunctions();
+        List<GeaflowFunction> addFunctions = ListUtil.diff(newFunctions, oldFunctions, this::getResourceKey);
+        List<GeaflowFunction> removeFunctions = ListUtil.diff(oldFunctions, newFunctions, this::getResourceKey);
+
+        // calculate subset of functions
+        List<GeaflowPlugin> oldJobPlugins = oldJob.getPlugins();
+        List<GeaflowPlugin> newJobPlugins = newJob.getPlugins();
+        List<GeaflowPlugin> addPlugins = ListUtil.diff(newJobPlugins, oldJobPlugins, e -> e.getType() + e.getCategory());
+        List<GeaflowPlugin> removePlugins = ListUtil.diff(oldJobPlugins, newJobPlugins, e -> e.getType() + e.getCategory());
+
+        // add resources
+        createJobResources(newJob.getId(), addStructs, addGraphs, addFunctions, addPlugins);
+        removeJobResources(newJob.getId(), removeStructs, removeGraphs, removeFunctions, removePlugins);
     }
 
     public void dropResources(List<String> jobIds) {

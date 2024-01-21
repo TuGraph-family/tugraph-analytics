@@ -12,14 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.core.model.job;
+package com.antgroup.geaflow.console.core.model.job.config;
 
-import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
+import com.antgroup.geaflow.console.core.model.config.GeaflowConfigKey;
+import com.antgroup.geaflow.console.core.model.config.GeaflowConfigValue;
+import lombok.Getter;
+import lombok.Setter;
 
-public abstract class GeaflowAnalysisJob extends GeaflowApiJob {
+@Setter
+@Getter
+public class CodeJobConfigClass extends JobConfigClass {
 
-    public GeaflowAnalysisJob(GeaflowJobType type) {
-        super(type);
-    }
+    @GeaflowConfigKey(value = "geaflow.dsl.window.size", comment = "i18n.key.dsl.window.size")
+    @GeaflowConfigValue(defaultValue = "-1")
+    private Integer windowSize;
     
 }

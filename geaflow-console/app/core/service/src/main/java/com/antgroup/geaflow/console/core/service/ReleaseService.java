@@ -113,7 +113,7 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
         CompilerAndContext compilerAndContext = getCompilerAndContext(version, job.getInstanceId(), CatalogType.MEMORY);
         try {
             return compilerAndContext.getCompiler()
-                .getUnResolvedFunctions(job.generateCode().getText(), compilerAndContext.getContext());
+                .getUnResolvedFunctions(job.getUserCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Parse functions failed", e);
         }
@@ -150,7 +150,7 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
         }
         try {
             return compilerAndContext.getCompiler()
-                .compile(job.generateCode().getText(), compilerAndContext.getContext());
+                .compile(job.getUserCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Compile job code failed", e);
         }
@@ -171,7 +171,7 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
         CompilerAndContext compilerAndContext = getCompilerAndContext(version, job.getInstanceId(), CatalogType.MEMORY);
         try {
             return compilerAndContext.getCompiler()
-                .getDeclaredTablePlugins(job.generateCode().getText(), compilerAndContext.getContext());
+                .getDeclaredTablePlugins(job.getUserCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Parse plugins failed", e);
         }
@@ -181,7 +181,7 @@ public class ReleaseService extends IdService<GeaflowRelease, ReleaseEntity, Rel
         CompilerAndContext compilerAndContext = getCompilerAndContext(version, job.getInstanceId(), CatalogType.MEMORY);
         try {
             return compilerAndContext.getCompiler()
-                .getUnResolvedTables(job.generateCode().getText(), compilerAndContext.getContext());
+                .getUnResolvedTables(job.getUserCode().getText(), compilerAndContext.getContext());
         } catch (Exception e) {
             throw new GeaflowCompileException("Parse plugins failed", e);
         }

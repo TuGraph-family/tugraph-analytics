@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.biz.shared.convert;
 
+import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.biz.shared.view.FunctionView;
 import com.antgroup.geaflow.console.biz.shared.view.GraphView;
 import com.antgroup.geaflow.console.biz.shared.view.JobView;
@@ -32,12 +33,15 @@ import com.antgroup.geaflow.console.core.model.job.GeaflowIntegrateJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowProcessJob;
 import com.antgroup.geaflow.console.core.model.job.GeaflowServeJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.FieldMappingItem;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
 import com.antgroup.geaflow.console.core.service.InstanceService;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -79,6 +83,10 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
     public void merge(JobView view, JobView updateView) {
         super.merge(view, updateView);
         switch (view.getType()) {
+            case INTEGRATE:
+                Optional.ofNullable(updateView.getStructMappings()).ifPresent(view::setStructMappings);
+                Optional.ofNullable(updateView.getGraphs()).ifPresent(view::setGraphs);
+                break;
             case PROCESS:
                 Optional.ofNullable(updateView.getUserCode()).ifPresent(view::setUserCode);
                 break;
@@ -104,7 +112,8 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
 
         jobView.setStructs(structs);
         jobView.setGraphs(graphs);
-        jobView.setStructMappings(model.getStructMappings());
+
+        jobView.setStructMappings(JSON.toJSONString(model.getStructMappings()));
 
         List<FunctionView> functions = ListUtil.convert(model.getFunctions(), e -> functionViewConverter.convert(e));
         jobView.setFunctions(functions);
@@ -123,8 +132,15 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
         switch (jobType) {
             case INTEGRATE:
                 GeaflowIntegrateJob integrateJob = (GeaflowIntegrateJob) viewToModel(view, GeaflowIntegrateJob.class);
-                Map<String, Map<String, Map<String, String>>> structMappings = view.getStructMappings();
-                Preconditions.checkNotNull(structMappings);
+
+                Preconditions.checkNotNull(view.getStructMappings());
+
+                List<StructMapping> structMappings = JSON.parseArray(view.getStructMappings(), StructMapping.class);
+                // dedup duplicated field mappings
+                for (StructMapping structMapping : structMappings) {
+                    List<FieldMappingItem> distinctMapping = structMapping.getFieldMappings().stream().distinct().collect(Collectors.toList());
+                    structMapping.setFieldMappings(distinctMapping);
+                }
                 integrateJob.setStructMappings(structMappings);
                 integrateJob.setGraph(graphs);
                 integrateJob.setStructs(structs);
@@ -132,8 +148,7 @@ public class JobViewConverter extends NameViewConverter<GeaflowJob, JobView> {
                 break;
             case PROCESS:
                 GeaflowProcessJob processJob = (GeaflowProcessJob) viewToModel(view, GeaflowProcessJob.class);
-                GeaflowCode geaflowCode = new GeaflowCode(view.getUserCode());
-                processJob.setUserCode(geaflowCode);
+                processJob.setUserCode(view.getUserCode());
                 processJob.setFunctions(functions);
                 job = processJob;
                 break;

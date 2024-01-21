@@ -15,13 +15,14 @@
 package com.antgroup.geaflow.console.core.model.code;
 
 import lombok.Getter;
+import lombok.NonNull;
 
 @Getter
 public class GeaflowCode {
 
     private final String text;
 
-    public GeaflowCode(String text) {
+    public GeaflowCode(@NonNull String text) {
         this.text = text;
     }
 }

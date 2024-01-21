@@ -15,10 +15,12 @@
 package com.antgroup.geaflow.console.core.model.job;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
+import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,12 +42,17 @@ public abstract class GeaflowApiJob extends GeaflowJob {
         return functions;
     }
 
-    public Map<String, Map<String, Map<String, String>>> getStructMappings() {
-        return null;
+    public List<StructMapping> getStructMappings() {
+        return new ArrayList<>();
     }
 
     @Override
     public boolean isApiJob() {
         return true;
+    }
+
+    @Override
+    public GeaflowCode getUserCode() {
+        return null;
     }
 }

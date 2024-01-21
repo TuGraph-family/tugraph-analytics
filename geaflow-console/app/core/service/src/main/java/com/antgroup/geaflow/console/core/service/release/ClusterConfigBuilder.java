@@ -28,7 +28,7 @@ public class ClusterConfigBuilder {
     private static ClusterConfigClass getDefaultClusterConfig() {
         ClusterConfigClass clusterConfig = new ClusterConfigClass();
         clusterConfig.setContainers(1);
-        clusterConfig.setContainerWorkers(3);
+        clusterConfig.setContainerWorkers(5);
         clusterConfig.setContainerMemory(1024);
         clusterConfig.setContainerCores(1.5);
         clusterConfig.setContainerJvmOptions("-Xmx512m,-Xms512m,-Xmn256m");

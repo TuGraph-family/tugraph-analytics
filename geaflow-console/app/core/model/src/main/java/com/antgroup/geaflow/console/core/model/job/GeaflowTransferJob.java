@@ -24,27 +24,25 @@ import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
 import com.antgroup.geaflow.console.core.model.data.GeaflowTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 public abstract class GeaflowTransferJob extends GeaflowCodeJob {
 
-    protected Map<String, Map<String, Map<String, String>>> structMappings = new LinkedHashMap<>();
+    protected List<StructMapping> structMappings = new ArrayList<>();
 
     public GeaflowTransferJob(GeaflowJobType type) {
         super(type);
     }
 
-    @Override
-    public GeaflowCode generateCode() {
-        //TODO generateCode
-        return null;
-    }
+
+    public abstract GeaflowCode generateCode();
 
     @Override
     public List<GeaflowStruct> getStructs() {
@@ -56,28 +54,21 @@ public abstract class GeaflowTransferJob extends GeaflowCodeJob {
         return new ArrayList<>();
     }
 
-    public Map<String, Map<String, Map<String, String>>> getStructMappings() {
+    public List<StructMapping> getStructMappings() {
         return structMappings;
     }
 
-    @Override
-    public GeaflowCode getUserCode() {
-        return null;
-    }
-
-    public void fromTableToTable(GeaflowTable input, GeaflowTable output, Map<String, String> fieldMapping) {
+    public void fromTableToTable(GeaflowTable input, GeaflowTable output, List<FieldMappingItem> fieldMapping) {
         addStructMapping(input, output, fieldMapping);
     }
 
-    protected void addStructMapping(GeaflowStruct input, GeaflowStruct output, Map<String, String> fieldMapping) {
+    protected void addStructMapping(GeaflowStruct input, GeaflowStruct output, List<FieldMappingItem> fieldMapping) {
         String inputName = input.getName();
         String outputName = output.getName();
 
         //inputStructs.put(inputName, input);
         //outputStructs.put(outputName, output);
-
-        structMappings.putIfAbsent(inputName, new LinkedHashMap<>());
-        structMappings.get(inputName).putIfAbsent(outputName, fieldMapping);
+        structMappings.add(new StructMapping(inputName, outputName, fieldMapping));
     }
 
     protected GeaflowStruct importGraphStruct(GeaflowGraph graph, GeaflowStructType type, String name) {
@@ -98,4 +89,28 @@ public abstract class GeaflowTransferJob extends GeaflowCodeJob {
         }
         return struct;
     }
+
+    @Setter
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode(of = {"tableName", "structName"})
+    public static class StructMapping {
+
+        private String tableName;
+        private String structName;
+        private List<FieldMappingItem> fieldMappings = new ArrayList<>();
+    }
+
+    @Setter
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode(of = {"tableFieldName", "structFieldName"})
+    public static class FieldMappingItem {
+
+        private String tableFieldName;
+        private String structFieldName;
+    }
+
 }

@@ -7,6 +7,12 @@ interface ComputingParams {
   name?: string;
 }
 
+interface GraphDefinitionParams {
+  instanceName: string;
+  page?: number;
+  name?: string;
+}
+
 /**
  * 查询图计算列表
  */
@@ -223,5 +229,32 @@ export const deleteOlapQueryId = async (olapQueryId: string) => {
     );
     return "";
   }
+  return response;
+};
+
+export const getTablesDefinitionList = async (
+  params: GraphDefinitionParams
+) => {
+  const { instanceName, ...others } = params;
+  const response = await request(
+    `${HTTP_SERVICE_URL}/api/instances/${instanceName}/tables`,
+    {
+      method: "get",
+      params: others,
+    }
+  );
+
+  if (!response?.success || !response?.data) {
+    // message.error(`搜索失败: ${response?.message}`);
+    return [];
+  }
+  return response.data?.list || [response.data];
+};
+
+export const getJobs = async (jobId: string) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/jobs/${jobId}`, {
+    method: "get",
+  });
+
   return response;
 };

@@ -15,12 +15,11 @@
 package com.antgroup.geaflow.console.core.model.job;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
-import com.antgroup.geaflow.console.core.model.code.GeaflowCode;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,16 +27,9 @@ import lombok.Setter;
 @Setter
 public class GeaflowProcessJob extends GeaflowCodeJob {
 
-    protected GeaflowCode userCode;
-
 
     public GeaflowProcessJob() {
         super(GeaflowJobType.PROCESS);
-    }
-
-    @Override
-    public GeaflowCode generateCode() {
-        return userCode;
     }
 
     @Override
@@ -46,13 +38,8 @@ public class GeaflowProcessJob extends GeaflowCodeJob {
     }
 
     @Override
-    public Map<String, Map<String, Map<String, String>>> getStructMappings() {
-        return new HashMap<>();
-    }
-
-    @Override
-    public GeaflowCode getUserCode() {
-        return userCode;
+    public List<StructMapping> getStructMappings() {
+        return new ArrayList<>();
     }
 
     @Override

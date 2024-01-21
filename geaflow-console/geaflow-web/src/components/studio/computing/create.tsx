@@ -15,27 +15,47 @@ import {
   Upload,
   Card,
 } from "antd";
-import { getJobsCreat, getJobsEdit } from "../services/computing";
+import {
+  getJobsCreat,
+  getJobsEdit,
+  getJobs,
+  getTablesDefinitionList,
+} from "../services/computing";
 import { getGraphDefinitionList } from "../services/graphDefinition";
 import styles from "./index.module.less";
 import $i18n from "@/components/i18n";
-import { isEmpty } from "lodash";
+import { isEmpty, last } from "lodash";
 import { InboxOutlined } from "@ant-design/icons";
 import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
+import { GraphDefintionTab } from "./graph-tabs/index";
 
 const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState<boolean>(false);
   const [state, setState] = useState({
     serveList: [],
+    serves: [],
+    fields: [],
+    tableList: [],
   });
+
   const isWay = Form.useWatch("type", form);
   const isRadio = Form.useWatch("radio", form);
   const currentInstance = localStorage.getItem("GEAFLOW_CURRENT_INSTANCE")
     ? JSON.parse(localStorage.getItem("GEAFLOW_CURRENT_INSTANCE"))
     : {};
   const instanceName = currentInstance.value;
+
+  const handleStructMapping = (value: any, name: string) => {
+    return value?.map((item: { name: string; structFieldName: string }) => {
+      return {
+        tableFieldName: item[name],
+        structFieldName: item.structFieldName,
+      };
+    });
+  };
+
   const handleOk = () => {
     form.validateFields().then((val) => {
       setLoading(true);
@@ -49,6 +69,26 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
         fileId,
         graphIds,
       } = val;
+      let structMappings: {
+        tableName: string;
+        structName: string;
+        fieldMappings: { tableName: string; strcutFieldName: string }[];
+      }[] = [];
+      const filterFieldName = Object.keys(val).filter(
+        (item) => !item.indexOf("tableName")
+      );
+      filterFieldName?.map((item) => {
+        const fieldMappings = Object.values(val)?.filter(
+          (str) => str && Object.keys(str).indexOf(item) !== -1
+        );
+
+        structMappings.push({
+          tableName: val[item],
+          structName: val[`structName${last(item)}`],
+          fieldMappings: handleStructMapping(fieldMappings, item),
+        });
+      });
+
       const { id, instanceId } = instance.instanceList || {};
       const formData = new FormData();
       !isEmpty(jarFile) &&
@@ -63,6 +103,8 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
       fileId && formData.append("fileId", fileId);
       comment && formData.append("comment", comment);
       graphIds && formData.append("graphIds", [graphIds]);
+      type === "INTEGRATE" &&
+        formData.append("structMappings", JSON.stringify(structMappings));
       if (id) {
         getJobsEdit(formData, id).then((res) => {
           setLoading(false);
@@ -117,26 +159,43 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
   };
 
   useEffect(() => {
+    handleInstance();
+  }, [instance, instanceName]);
+
+  const handleInstance = async () => {
+    let fields;
+    let serveList;
+    let tableList;
     if (!isEmpty(instance?.instanceList)) {
-      form.setFieldsValue(instance?.instanceList);
+      fields = await getJobs(instance.instanceList.id);
+      form.setFieldsValue(fields?.data);
       form.setFieldsValue({
-        graphIds: instance?.instanceList?.graphs[0]?.id,
+        graphIds: fields?.data?.graphs[0]?.id,
       });
     }
-  }, [instance]);
-  const handelTemplata = async () => {
-    const serveList = await getGraphDefinitionList({
-      instanceName,
-    });
-    setState({ ...state, serveList });
-  };
-
-  useEffect(() => {
-    // 只有当实例存在时才查询
     if (instanceName) {
-      handelTemplata();
+      serveList = await getGraphDefinitionList({
+        instanceName,
+      });
+
+      tableList = await getTablesDefinitionList({
+        instanceName,
+      });
     }
-  }, [instanceName]);
+    const structMappings =
+      !isEmpty(fields) && JSON.parse(fields?.data?.structMappings);
+
+    const serves = serveList.filter(
+      (item) => item.id === fields?.data?.graphs[0]?.id
+    );
+    setState({
+      ...state,
+      serves: serves,
+      fields: structMappings,
+      tableList: tableList,
+      serveList,
+    });
+  };
 
   const normFile = (e: any) => {
     if (Array.isArray(e)) {
@@ -168,6 +227,28 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
       key: "modifyTime",
     },
   ];
+
+  const initMappings = (graph: any) => {
+    const vertexList = graph.vertices?.map((v: any) => {
+      const fieldMappings = v.fields.map((field: any) => {
+        return { structFieldName: field.name };
+      });
+      return {
+        structName: v.name,
+        fieldMappings: fieldMappings,
+      };
+    });
+    const edgeList = graph.edges?.map((e: any) => {
+      const fieldMappings = e.fields.map((field: any) => {
+        return { structFieldName: field.name };
+      });
+      return {
+        structName: e.name,
+        fieldMappings: fieldMappings,
+      };
+    });
+    return [...vertexList, ...edgeList];
+  };
 
   return (
     <div className={styles["definition-create"]}>
@@ -274,6 +355,13 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
                   label: $i18n.get({
                     id: "openpiece-geaflow.geaflow.computing.Serve",
                     dm: "图查询",
+                  }),
+                },
+                {
+                  value: "INTEGRATE",
+                  label: $i18n.get({
+                    id: "openpiece-geaflow.geaflow.computing.Integrated",
+                    dm: "集成",
                   }),
                 },
               ]}
@@ -428,7 +516,7 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
               )}
             </>
           )}
-          {isWay === "SERVE" && (
+          {["INTEGRATE", "SERVE"].includes(isWay) && (
             <Form.Item
               name="graphIds"
               label={$i18n.get({
@@ -445,7 +533,16 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
                 },
               ]}
             >
-              <Select disabled={instance.check || instance.edit}>
+              <Select
+                disabled={instance.check || instance.edit}
+                onChange={(value: string) => {
+                  const serves = state.serveList.filter(
+                    (item) => item.id === value
+                  );
+                  const initialValues = initMappings(serves[0]) || [];
+                  setState({ ...state, serves, fields: initialValues });
+                }}
+              >
                 {state.serveList?.map((item) => {
                   return (
                     <Select.Option value={item.id}>{item.name}</Select.Option>
@@ -453,6 +550,15 @@ const CreateCompute = ({ handleCancel, instance, files, handleSuccess }) => {
                 })}
               </Select>
             </Form.Item>
+          )}
+          {isWay === "INTEGRATE" && (
+            <GraphDefintionTab
+              form={form}
+              serveList={state.serves}
+              tableList={state.tableList}
+              fields={state.fields}
+              check={instance.check}
+            />
           )}
         </Form>
       </div>

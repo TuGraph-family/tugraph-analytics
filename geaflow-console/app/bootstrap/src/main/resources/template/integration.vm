@@ -1,0 +1,16 @@
+USE GRAPH ${graphName};
+
+#foreach(${insert} in ${inserts})
+insert into ${graphName}(
+    #foreach(${strcut} in  ${insert.structs})
+    ${strcut.structName}.${strcut.structFieldName},
+    #end
+    ${END_FLAG}
+) select
+    #foreach(${strcut} in ${insert.structs})
+    ${strcut.tableFieldName},
+    #end
+    ${END_FLAG}
+from ${insert.tableName};
+    
+#end

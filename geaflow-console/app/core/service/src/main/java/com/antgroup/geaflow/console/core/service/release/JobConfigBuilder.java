@@ -17,6 +17,7 @@ package com.antgroup.geaflow.console.core.service.release;
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfig;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
+import com.antgroup.geaflow.console.core.model.job.config.CodeJobConfigClass;
 import com.antgroup.geaflow.console.core.model.job.config.JobConfigClass;
 import com.antgroup.geaflow.console.core.model.job.config.ServeJobConfigClass;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
@@ -33,6 +34,10 @@ public class JobConfigBuilder {
         switch (job.getType()) {
             case SERVE:
                 configClass = initServeJobConfigClass(release);
+                break;
+            case INTEGRATE:
+                configClass = new CodeJobConfigClass();
+                ((CodeJobConfigClass) configClass).setWindowSize(-1);
                 break;
             default:
                 configClass = new JobConfigClass();

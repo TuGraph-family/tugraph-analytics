@@ -16,6 +16,8 @@ package com.antgroup.geaflow.console.biz.shared.impl;
 
 import static com.antgroup.geaflow.console.core.service.RemoteFileService.JAR_FILE_SUFFIX;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.antgroup.geaflow.console.biz.shared.JobManager;
 import com.antgroup.geaflow.console.biz.shared.RemoteFileManager;
 import com.antgroup.geaflow.console.biz.shared.TaskManager;
@@ -25,7 +27,6 @@ import com.antgroup.geaflow.console.biz.shared.view.GraphView;
 import com.antgroup.geaflow.console.biz.shared.view.IdView;
 import com.antgroup.geaflow.console.biz.shared.view.JobView;
 import com.antgroup.geaflow.console.biz.shared.view.RemoteFileView;
-import com.antgroup.geaflow.console.biz.shared.view.StructView;
 import com.antgroup.geaflow.console.common.dal.entity.JobEntity;
 import com.antgroup.geaflow.console.common.dal.model.JobSearch;
 import com.antgroup.geaflow.console.common.util.ListUtil;
@@ -34,28 +35,27 @@ import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowIllegalException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowJobType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowResourceType;
-import com.antgroup.geaflow.console.common.util.type.GeaflowStructType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskType;
 import com.antgroup.geaflow.console.core.model.data.GeaflowFunction;
 import com.antgroup.geaflow.console.core.model.data.GeaflowGraph;
 import com.antgroup.geaflow.console.core.model.data.GeaflowStruct;
 import com.antgroup.geaflow.console.core.model.file.GeaflowRemoteFile;
 import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
+import com.antgroup.geaflow.console.core.model.job.GeaflowTransferJob.StructMapping;
 import com.antgroup.geaflow.console.core.service.AuthorizationService;
-import com.antgroup.geaflow.console.core.service.DataService;
 import com.antgroup.geaflow.console.core.service.IdService;
 import com.antgroup.geaflow.console.core.service.JobService;
 import com.antgroup.geaflow.console.core.service.ReleaseService;
 import com.antgroup.geaflow.console.core.service.RemoteFileService;
 import com.antgroup.geaflow.console.core.service.StatementService;
+import com.antgroup.geaflow.console.core.service.TableService;
 import com.antgroup.geaflow.console.core.service.TaskService;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -96,6 +96,9 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
     @Autowired
     private StatementService statementService;
 
+    @Autowired
+    private TableService tableService;
+
     @Override
     public IdViewConverter<GeaflowJob, JobView> getConverter() {
         return jobViewConverter;
@@ -111,7 +114,6 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
         return ListUtil.convert(views, v -> {
             GeaflowJobType type = v.getType();
             Preconditions.checkNotNull(type, "job Type is null");
-
             switch (type) {
                 case PROCESS:
                     // get functions
@@ -126,14 +128,12 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
                 case SERVE:
                     List<GeaflowStruct> structs = null;
                     if (type == GeaflowJobType.INTEGRATE) {
-                        // get graphs and tables
-                        structs = getResource(v.getStructs());
+                        // get tables
+                        structs = getStructs(v);
                     }
+                    Preconditions.checkArgument(v.getGraphs() != null && v.getGraphs().size() == 1,
+                        "Must have one graph");
 
-                    if (type == GeaflowJobType.SERVE) {
-                        Preconditions.checkArgument(v.getGraphs().size() == 1,
-                            "AnalysisJob job must have one graph");
-                    }
                     List<String> graphIds = ListUtil.convert(v.getGraphs(), IdView::getId);
                     List<GeaflowGraph> graphs = ListUtil.convert(graphIds, id -> {
                         GeaflowGraph g = (GeaflowGraph) jobService.getResourceService(GeaflowResourceType.GRAPH).get(id);
@@ -148,20 +148,13 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
         });
     }
 
-    private List<GeaflowStruct> getResource(List<StructView> views) {
-        if (CollectionUtils.isEmpty(views)) {
-            return new ArrayList<>();
-        }
-        // group by the structType
-        Map<GeaflowStructType, List<StructView>> group = views.stream().collect(Collectors.groupingBy(StructView::getType));
-        List<GeaflowStruct> res = new ArrayList<>();
-        // use services according to the group
-        for (Entry<GeaflowStructType, List<StructView>> entry : group.entrySet()) {
-            DataService dataService = jobService.getResourceService(GeaflowResourceType.valueOf(entry.getKey().name()));
-            List<String> ids = ListUtil.convert(entry.getValue(), IdView::getId);
-            res.addAll(dataService.get(ids));
-        }
-        return res;
+    private List<GeaflowStruct> getStructs(JobView jobView) {
+        List<StructMapping> structMappings = JSON.parseObject(jobView.getStructMappings(),
+            new TypeReference<List<StructMapping>>() {
+            });
+        Set<String> tableNames = structMappings.stream().map(StructMapping::getTableName).collect(Collectors.toSet());
+        return tableNames.stream().map(e -> tableService.getByName(jobView.getInstanceId(), e))
+            .collect(Collectors.toList());
     }
 
 

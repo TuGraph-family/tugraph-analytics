@@ -185,7 +185,7 @@ export const GraphQuery = (props: any) => {
               });
               window.clearInterval(getOlapId);
             });
-          }, 2500);
+          }, 2000);
         } else {
           updateState((draft) => {
             draft.loading = false;
@@ -268,6 +268,7 @@ export const GraphQuery = (props: any) => {
               draft.script = script;
             });
           }}
+          record={record}
           instance={instance}
           isOlaps={isOlaps}
         />

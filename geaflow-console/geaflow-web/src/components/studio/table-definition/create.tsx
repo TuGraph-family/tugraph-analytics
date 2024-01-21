@@ -37,7 +37,7 @@ const CreateTableDefinition = ({ currentItem, toBackList, readonly }) => {
         name: item[name],
         type: item.type,
         comment: item.comment,
-        category: item.category,
+        category: "PROPERTY",
       };
     });
   };
