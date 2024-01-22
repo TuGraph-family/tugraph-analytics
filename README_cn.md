@@ -86,11 +86,25 @@ JOIN student s ON sc.srcId = s.id
 
 **如果您对GeaFlow感兴趣，欢迎给我们项目一颗[ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics)。**
 
-# 联系我们
+## 合作伙伴
+<table cellspacing="0" cellpadding="0">
+  <tr align="center">
+    <td height="80"><a href="https://github.com/CGCL-codes/YiTu"><img src="docs/static/img/partners/hust.png" width="300" alt="HUST" /></a></td>
+    <td height="80"><a href="http://kw.fudan.edu.cn/"><img src="docs/static/img/partners/fu.png" width="300" alt="FU" /></a></td>
+    <td height="80"><img src="docs/static/img/partners/zju.png" width="300" alt="ZJU" /></td>
+  </tr>
+  <tr align="center">
+    <td height="80"><a href="http://www.whaleops.com/"><img src="docs/static/img/partners/whaleops.png" width="300" alt="WhaleOps" /></a></td>
+    <td height="80"><a href="https://github.com/oceanbase/oceanbase"><img src="docs/static/img/partners/oceanbase.png" width="300" alt="OceanBase" /></a></td>
+    <td height="80"><a href="https://github.com/secretflow/secretflow"><img src="docs/static/img/partners/secretflow.png" width="300" alt="SecretFlow" /></a></td>
+  </tr>
+</table>
+
+## 联系我们
 您可以通过以下方式联系我们。
 
 ![contacts](docs/static/img/contacts.jpg)
 
-## 感谢
+## 致谢
 GeaFlow开发过程中部分模块参考了一些业界优秀的开源项目，包括Apache Flink、Apache Spark以及Apache Calcite等, 这里表示特别的感谢。
 <!--intro-end-->
