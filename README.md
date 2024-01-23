@@ -84,6 +84,20 @@ Thank you very much for contributing to GeaFlow, whether bug reporting, document
 
 For more information: [Contribution](docs/docs-en/contribution.md).
 
+## Partners
+<table cellspacing="0" cellpadding="0">
+  <tr align="center">
+    <td height="80"><a href="https://github.com/CGCL-codes/YiTu"><img src="docs/static/img/partners/hust.png" width="300" alt="HUST" /></a></td>
+    <td height="80"><a href="http://kw.fudan.edu.cn/"><img src="docs/static/img/partners/fu.png" width="300" alt="FU" /></a></td>
+    <td height="80"><img src="docs/static/img/partners/zju.png" width="300" alt="ZJU" /></td>
+  </tr>
+  <tr align="center">
+    <td height="80"><a href="http://www.whaleops.com/"><img src="docs/static/img/partners/whaleops.png" width="300" alt="WhaleOps" /></a></td>
+    <td height="80"><a href="https://github.com/oceanbase/oceanbase"><img src="docs/static/img/partners/oceanbase.png" width="300" alt="OceanBase" /></a></td>
+    <td height="80"><a href="https://github.com/secretflow/secretflow"><img src="docs/static/img/partners/secretflow.png" width="300" alt="SecretFlow" /></a></td>
+  </tr>
+</table>
+
 ## Contact Us
 You can contact us through the following methods:
 
