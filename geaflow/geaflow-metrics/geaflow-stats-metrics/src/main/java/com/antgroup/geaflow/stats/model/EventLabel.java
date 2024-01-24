@@ -14,27 +14,16 @@
 
 package com.antgroup.geaflow.stats.model;
 
-public enum StatsMetricType {
+public enum EventLabel {
 
-    /** exception log. */
-    Exception("_exception_"),
+    START_CLUSTER_SUCCESS,
 
-    /** event log. */
-    Event("_event_"),
+    START_CLUSTER_FAILED,
 
-    /** runtime metrics. */
-    Metrics("_metrics_"),
+    WORKER_PROCESS_EXITED,
 
-    /** runtime heartbeat map. */
-    Heartbeat("_heartbeat_");
+    FAILOVER_START,
 
-    private final String value;
+    FAILOVER_FINISH
 
-    StatsMetricType(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }

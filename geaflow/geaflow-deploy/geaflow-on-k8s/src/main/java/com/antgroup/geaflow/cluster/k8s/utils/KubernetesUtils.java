@@ -331,6 +331,11 @@ public class KubernetesUtils {
         return pod.getMetadata().getLabels().get(K8SConstants.LABEL_COMPONENT_ID_KEY);
     }
 
+    @Nullable
+    public static String extractComponent(Pod pod) {
+        return pod.getMetadata().getLabels().get(K8SConstants.LABEL_COMPONENT_KEY);
+    }
+
     public static String encodeRpcAddressMap(Map<String, ?> addressMap) {
         return Joiner.on(CONFIG_LIST_SEPARATOR).withKeyValueSeparator(ADDRESS_SEPARATOR)
             .join(addressMap);

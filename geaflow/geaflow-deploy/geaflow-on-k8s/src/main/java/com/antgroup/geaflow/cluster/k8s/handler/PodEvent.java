@@ -15,6 +15,8 @@
 package com.antgroup.geaflow.cluster.k8s.handler;
 
 import com.antgroup.geaflow.cluster.k8s.handler.PodHandlerRegistry.EventKind;
+import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
+import io.fabric8.kubernetes.api.model.Pod;
 import java.io.Serializable;
 
 public class PodEvent implements Serializable {
@@ -24,6 +26,18 @@ public class PodEvent implements Serializable {
     private String podIp;
     private long ts;
     private String containerId;
+
+    public PodEvent(Pod pod, EventKind kind) {
+        this(pod, kind, System.currentTimeMillis());
+    }
+
+    public PodEvent(Pod pod, EventKind kind, long ts) {
+        this.eventKind = kind;
+        this.containerId = KubernetesUtils.extractComponentId(pod);
+        this.podIp = pod.getStatus().getPodIP();
+        this.hostIp = pod.getStatus().getHostIP();
+        this.ts = ts;
+    }
 
     public EventKind getEventKind() {
         return eventKind;

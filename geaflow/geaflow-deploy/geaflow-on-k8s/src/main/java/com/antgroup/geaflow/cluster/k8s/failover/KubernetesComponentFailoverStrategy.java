@@ -20,6 +20,8 @@ import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.runner.failover.ComponentFailoverStrategy;
 import com.antgroup.geaflow.common.exception.GeaflowHeartbeatException;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
+import com.antgroup.geaflow.stats.model.EventLabel;
+import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +44,22 @@ public class KubernetesComponentFailoverStrategy extends ComponentFailoverStrate
     public void doFailover(int componentId, Throwable cause) {
         if (componentId != DEFAULT_MASTER_ID) {
             if (cause instanceof GeaflowHeartbeatException) {
+                String startMessage = String.format("Start component failover for component #%s "
+                        + "cause by %s.", componentId, cause.getMessage());
+                LOGGER.info(startMessage);
+                reportFailoverEvent(ExceptionLevel.ERROR, EventLabel.FAILOVER_START, startMessage);
+
                 long startTime = System.currentTimeMillis();
                 if (clusterContext.getDriverIds().containsKey(componentId)) {
                     clusterManager.restartDriver(componentId);
                 } else {
                     clusterManager.restartContainer(componentId);
                 }
-                LOGGER.info("Completed failover in {} ms", System.currentTimeMillis() - startTime);
+
+                String finishMessage = String.format("Completed component failover for component "
+                    + "#%s in %s ms.", componentId, System.currentTimeMillis() - startTime);
+                LOGGER.info(finishMessage);
+                reportFailoverEvent(ExceptionLevel.INFO, EventLabel.FAILOVER_FINISH, finishMessage);
             } else {
                 String reason = cause == null ? null : cause.getMessage();
                 LOGGER.warn("{} throws exception: {}", componentId, reason);

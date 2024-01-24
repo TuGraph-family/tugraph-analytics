@@ -21,6 +21,8 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCES
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
+import com.antgroup.geaflow.stats.model.EventLabel;
+import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +51,16 @@ public class ClusterFailoverStrategy extends AbstractFailoverStrategy {
             clusterManager.restartAllDrivers();
             clusterManager.restartAllContainers();
             doKilling.set(false);
-            LOGGER.info("Completed failover in {} ms.", System.currentTimeMillis() - startTime);
+            String finishMessage = String.format("Completed cluster failover in %s ms.",
+                System.currentTimeMillis() - startTime);
+            LOGGER.info(finishMessage);
+            reportFailoverEvent(ExceptionLevel.INFO, EventLabel.FAILOVER_FINISH, finishMessage);
         } else if (doKilling.compareAndSet(false, true)) {
             String reason = cause == null ? null : cause.getMessage();
-            LOGGER.info("Start master failover triggered by component #{}: {}.",
-                componentId, reason);
+            String startMessage = String.format("Start master cluster failover triggered by "
+                    + "component #%s: %s.", componentId, reason);
+            LOGGER.info(startMessage);
+            reportFailoverEvent(ExceptionLevel.ERROR, EventLabel.FAILOVER_START, startMessage);
             System.exit(EXIT_CODE);
         }
     }

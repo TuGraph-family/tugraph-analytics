@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.cluster.k8s.handler;
 
+import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +35,16 @@ public abstract class AbstractPodHandler implements IPodEventHandler {
         for (IEventListener listener : listeners) {
             listener.onEvent(event);
         }
+    }
+
+    protected void reportPodEvent(PodEvent event, ExceptionLevel level, String message) {
+        String eventMessage = buildEventMessage(event, message);
+        StatsCollectorFactory.getInstance().getEventCollector()
+            .reportEvent(level, event.getEventKind().name(), eventMessage);
+    }
+
+    private String buildEventMessage(PodEvent event, String message) {
+        return message + "\n" + event.toString();
     }
 
 }

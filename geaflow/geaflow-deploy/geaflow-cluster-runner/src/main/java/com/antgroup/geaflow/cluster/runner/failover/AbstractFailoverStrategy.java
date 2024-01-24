@@ -21,12 +21,16 @@ import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.clustermanager.IClusterManager;
 import com.antgroup.geaflow.cluster.failover.IFailoverStrategy;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
+import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import com.antgroup.geaflow.stats.model.EventLabel;
+import com.antgroup.geaflow.stats.model.ExceptionLevel;
 
 public abstract class AbstractFailoverStrategy implements IFailoverStrategy {
 
     protected EnvType envType;
     protected AbstractClusterManager clusterManager;
     protected boolean enableSupervisor;
+    protected ClusterContext context;
 
     public AbstractFailoverStrategy(EnvType envType) {
         this.envType = envType;
@@ -34,7 +38,13 @@ public abstract class AbstractFailoverStrategy implements IFailoverStrategy {
 
     @Override
     public void init(ClusterContext context) {
+        this.context = context;
         this.enableSupervisor = context.getConfig().getBoolean(SUPERVISOR_ENABLE);
+    }
+
+    protected void reportFailoverEvent(ExceptionLevel level, EventLabel label, String message) {
+        StatsCollectorFactory.init(context.getConfig()).getEventCollector()
+            .reportEvent(level, label, message);
     }
 
     public void setClusterManager(IClusterManager clusterManager) {

@@ -15,19 +15,30 @@
 package com.antgroup.geaflow.cluster.k8s.handler;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import java.util.Collection;
+import io.fabric8.kubernetes.client.Watcher.Action;
 import java.util.HashMap;
 import java.util.Map;
 
 public class PodHandlerRegistry {
 
-    private final Map<EventKind, IPodEventHandler> eventHandlerMap;
+    private final Map<Action, Map<EventKind, IPodEventHandler>> eventHandlerMap;
     private static PodHandlerRegistry INSTANCE;
 
     private PodHandlerRegistry(Configuration configuration) {
         this.eventHandlerMap = new HashMap<>();
-        this.eventHandlerMap.put(EventKind.OOM, new PodOOMHandler()) ;
-        this.eventHandlerMap.put(EventKind.EVICTION, new PodEvictHandler(configuration));
+
+        Map<EventKind, IPodEventHandler> modifiedHandlerMap = new HashMap<>();
+        modifiedHandlerMap.put(EventKind.POD_OOM, new PodOOMHandler()) ;
+        modifiedHandlerMap.put(EventKind.POD_EVICTION, new PodEvictHandler(configuration));
+        this.eventHandlerMap.put(Action.MODIFIED, modifiedHandlerMap);
+
+        Map<EventKind, IPodEventHandler> addedHandlerMap = new HashMap<>();
+        addedHandlerMap.put(EventKind.POD_ADDED, new PodAddedHandler());
+        this.eventHandlerMap.put(Action.ADDED, addedHandlerMap);
+
+        Map<EventKind, IPodEventHandler> deletedHandlerMap = new HashMap<>();
+        deletedHandlerMap.put(EventKind.POD_DELETED, new PodDeletedHandler());
+        this.eventHandlerMap.put(Action.DELETED, deletedHandlerMap);
     }
 
     public static synchronized PodHandlerRegistry getInstance(Configuration configuration) {
@@ -37,13 +48,19 @@ public class PodHandlerRegistry {
         return INSTANCE;
     }
 
-    public Collection<IPodEventHandler> getHandlers() {
-        return eventHandlerMap.values();
+    public void registerListener(Action action, EventKind eventKind, IEventListener listener) {
+        ((AbstractPodHandler) eventHandlerMap.get(action).get(eventKind)).addListener(listener);
+    }
+
+    public Map<Action, Map<EventKind, IPodEventHandler>> getHandlerMap() {
+        return eventHandlerMap;
     }
 
     public enum EventKind {
-        OOM,
-        EVICTION
+        POD_ADDED,
+        POD_DELETED,
+        POD_OOM,
+        POD_EVICTION
     }
 
 }

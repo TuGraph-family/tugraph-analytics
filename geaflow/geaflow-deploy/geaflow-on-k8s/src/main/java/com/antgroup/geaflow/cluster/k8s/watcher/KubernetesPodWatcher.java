@@ -21,6 +21,7 @@ import com.antgroup.geaflow.cluster.k8s.clustermanager.GeaflowKubeClient;
 import com.antgroup.geaflow.cluster.k8s.config.K8SConstants;
 import com.antgroup.geaflow.cluster.k8s.handler.IPodEventHandler;
 import com.antgroup.geaflow.cluster.k8s.handler.PodHandlerRegistry;
+import com.antgroup.geaflow.cluster.k8s.handler.PodHandlerRegistry.EventKind;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.ThreadUtil;
@@ -28,7 +29,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.Watcher.Action;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -45,7 +45,7 @@ public class KubernetesPodWatcher {
     private Watch watcher;
     private final int checkInterval;
     private volatile boolean watcherClosed;
-    private final Collection<IPodEventHandler> eventHandlers;
+    private final Map<Action, Map<EventKind, IPodEventHandler>> eventHandlerMap;
     private final GeaflowKubeClient kubernetesClient;
     private final Map<String, String> labels;
     private final ScheduledExecutorService executorService;
@@ -62,7 +62,7 @@ public class KubernetesPodWatcher {
             ThreadUtil.namedThreadFactory(true, "cluster-watcher"));
 
         PodHandlerRegistry registry = PodHandlerRegistry.getInstance(config);
-        this.eventHandlers = registry.getHandlers();
+        this.eventHandlerMap = registry.getHandlerMap();
     }
 
     public void start() {
@@ -93,7 +93,7 @@ public class KubernetesPodWatcher {
                     watcherClosed = false;
                 }
             }
-        }, checkInterval, checkInterval, TimeUnit.SECONDS);
+        }, 0, checkInterval, TimeUnit.SECONDS);
     }
 
     private void handlePodMessage(Watcher.Action action, Pod pod) {
@@ -103,8 +103,12 @@ public class KubernetesPodWatcher {
                 pod.getMetadata().getLabels(), action);
             return;
         }
-        if (action == Action.MODIFIED) {
-            eventHandlers.forEach(h -> h.handle(pod));
+        String component = KubernetesUtils.extractComponent(pod);
+        if (K8SConstants.LABEL_COMPONENT_CLIENT.equals(component)) {
+            return;
+        }
+        if (eventHandlerMap.containsKey(action)) {
+            eventHandlerMap.get(action).forEach((kind, handler) -> handler.handle(pod));
         } else {
             LOGGER.info("Skip {} event for pod {}", action, pod.getMetadata().getName());
         }
