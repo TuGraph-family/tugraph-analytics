@@ -21,7 +21,7 @@ package com.antgroup.geaflow.cluster.k8s.handler;
 import com.antgroup.geaflow.cluster.k8s.handler.PodHandlerRegistry.EventKind;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
 import com.antgroup.geaflow.common.tuple.Tuple;
-import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import io.fabric8.kubernetes.api.model.ContainerState;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -91,18 +91,12 @@ public class PodOOMHandler extends AbstractPodHandler {
                             LOGGER.info("Pod #{} {} oom killed at {}, totally: {}", componentId,
                                 pod.getMetadata().getName(), parsed, totalOOMCount);
 
-                            PodEvent oomEvent = new PodEvent();
-                            oomEvent.setEventKind(EventKind.OOM);
-                            oomEvent.setTs(exceptionTime);
-                            oomEvent.setPodIp(pod.getStatus().getPodIP());
-                            oomEvent.setHostIp(pod.getStatus().getHostIP());
-                            oomEvent.setContainerId(componentId);
+                            PodEvent oomEvent = new PodEvent(pod, EventKind.POD_OOM, exceptionTime);
                             notifyListeners(oomEvent);
 
                             String errMsg = String.format("pod %s oom killed at %s",
                                 pod.getMetadata().getName(), parsed);
-                            StatsCollectorFactory.getInstance().getExceptionCollector()
-                                .reportException(new OutOfMemoryError(errMsg));
+                            reportPodEvent(oomEvent, ExceptionLevel.ERROR, errMsg);
                         }
                     }
                 }

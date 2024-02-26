@@ -22,6 +22,7 @@ import com.antgroup.geaflow.stats.sink.StatsWriterFactory;
 public class StatsCollectorFactory {
 
     private final ExceptionCollector exceptionCollector;
+    private final EventCollector eventCollector;
     private final PipelineStatsCollector pipelineStatsCollector;
     private final ProcessStatsCollector processStatsCollector;
     private final MetricMetaCollector metricMetaCollector;
@@ -33,6 +34,7 @@ public class StatsCollectorFactory {
     private StatsCollectorFactory(Configuration configuration) {
         this.syncWriter = StatsWriterFactory.getStatsWriter(configuration, true);
         this.exceptionCollector = new ExceptionCollector(syncWriter, configuration);
+        this.eventCollector = new EventCollector(syncWriter, configuration);
         this.metricCache = new MetricCache(configuration);
         IStatsWriter statsWriter = StatsWriterFactory.getStatsWriter(configuration);
         this.pipelineStatsCollector = new PipelineStatsCollector(statsWriter, configuration, metricCache);
@@ -54,6 +56,10 @@ public class StatsCollectorFactory {
 
     public ExceptionCollector getExceptionCollector() {
         return exceptionCollector;
+    }
+
+    public EventCollector getEventCollector() {
+        return eventCollector;
     }
 
     public PipelineStatsCollector getPipelineStatsCollector() {

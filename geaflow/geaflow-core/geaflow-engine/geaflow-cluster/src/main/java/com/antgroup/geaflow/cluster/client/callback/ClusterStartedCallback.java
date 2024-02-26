@@ -75,6 +75,12 @@ public interface ClusterStartedCallback extends Serializable {
         public void setClientAddress(String clientAddress) {
             this.clientAddress = clientAddress;
         }
+
+        @Override
+        public String toString() {
+            return "ClusterMeta{" + "clientAddress='" + clientAddress + '\'' + ", masterAddress='"
+                + masterAddress + '\'' + ", driverAddresses=" + driverAddresses + '}';
+        }
     }
 
 }

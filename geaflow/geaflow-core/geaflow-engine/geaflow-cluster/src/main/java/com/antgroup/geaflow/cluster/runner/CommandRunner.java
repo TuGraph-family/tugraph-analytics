@@ -18,6 +18,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import com.antgroup.geaflow.stats.model.EventLabel;
 import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
@@ -50,8 +51,9 @@ public class CommandRunner {
                 startProcess();
             } catch (Throwable e) {
                 LOGGER.error("Start process failed: {}", e.getMessage(), e);
-                StatsCollectorFactory.init(configuration).getExceptionCollector().reportException(
-                    ExceptionLevel.FATAL, e);
+                String errMsg = String.format("Worker process exited: %s", e.getMessage());
+                StatsCollectorFactory.init(configuration).getEventCollector()
+                    .reportEvent(ExceptionLevel.ERROR, EventLabel.WORKER_PROCESS_EXITED, errMsg);
             }
         });
     }
@@ -64,8 +66,13 @@ public class CommandRunner {
                 int code = childProcess.waitFor();
                 LOGGER.warn("Child process {} exits with code: {} and alive: {}", pid, code,
                     childProcess.isAlive());
-                if (code == 0 || restarts == 0) {
+                if (code == 0) {
                     break;
+                }
+                if (restarts == 0) {
+                    String errMsg = String.format("Latest process %s exits with code: %s: "
+                            + "Exhausted after retrying startup %s times. ", pid, code, maxRestarts + 1);
+                    throw new GeaflowRuntimeException(errMsg);
                 }
                 restarts--;
             } while (true);

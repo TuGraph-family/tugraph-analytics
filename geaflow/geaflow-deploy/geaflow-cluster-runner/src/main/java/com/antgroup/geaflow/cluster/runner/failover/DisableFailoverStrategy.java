@@ -19,8 +19,14 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCES
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DisableFailoverStrategy extends AbstractFailoverStrategy {
+
+    private static final Logger LOGGER =
+        LoggerFactory.getLogger(DisableFailoverStrategy.class);
+
 
     public DisableFailoverStrategy(EnvType envType) {
         super(envType);
@@ -33,6 +39,8 @@ public class DisableFailoverStrategy extends AbstractFailoverStrategy {
 
     @Override
     public void doFailover(int componentId, Throwable cause) {
+        LOGGER.info("Failover is disabled, do nothing. Triggered by component #{}: {}.",
+            componentId, cause == null ? null : cause.getMessage());
     }
 
     @Override

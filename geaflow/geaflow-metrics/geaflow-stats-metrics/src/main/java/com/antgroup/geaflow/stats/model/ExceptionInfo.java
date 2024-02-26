@@ -18,21 +18,21 @@ import java.io.Serializable;
 
 public class ExceptionInfo implements Serializable {
 
-    private String hostname;
-    private String ip;
-    private int processId;
-    private String severity;
-    private String message;
-    private long timestamp;
+    protected String hostname;
+    protected String ip;
+    protected int processId;
+    protected String severity;
+    protected String message;
+    protected long timestamp;
 
     public ExceptionInfo(String hostname, String ip, int processId, String message,
-                         String label) {
+                         String severity) {
         this.hostname = hostname;
         this.ip = ip;
         this.processId = processId;
         this.message = message;
         this.timestamp = System.currentTimeMillis();
-        this.severity = label;
+        this.severity = severity;
     }
 
     public String getIp() {
@@ -81,6 +81,13 @@ public class ExceptionInfo implements Serializable {
 
     public void setSeverity(String severity) {
         this.severity = severity;
+    }
+
+    @Override
+    public String toString() {
+        return "ExceptionInfo{" + "hostname='" + hostname + '\'' + ", ip='" + ip + '\''
+            + ", processId=" + processId + ", severity='" + severity + '\'' + ", message='"
+            + message + '\'' + ", timestamp=" + timestamp + '}';
     }
 }
 

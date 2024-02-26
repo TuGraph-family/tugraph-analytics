@@ -41,6 +41,9 @@ import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.env.ctx.IEnvironmentContext;
+import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
+import com.antgroup.geaflow.stats.model.EventLabel;
+import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import com.google.common.base.Preconditions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
@@ -92,10 +95,16 @@ public class KubernetesClusterClient extends AbstractClusterClient {
                 config.getString(MASTER_EXPOSED_ADDRESS));
             callback.onSuccess(clusterMeta);
             LOGGER.info("Cluster info: {} config: {}", clusterMeta, config);
+            String successMsg = String.format("Start cluster success. Cluster info: %s", clusterMeta);
+            StatsCollectorFactory.init(config).getEventCollector()
+                .reportEvent(ExceptionLevel.INFO, EventLabel.START_CLUSTER_SUCCESS, successMsg);
             return PipelineClientFactory.createPipelineClient(driverAddresses, config);
         } catch (Throwable e) {
             LOGGER.error("Deploy failed.", e);
             callback.onFailure(e);
+            String failMsg = String.format("Start cluster failed: %s", e.getMessage());
+            StatsCollectorFactory.init(config).getEventCollector()
+                .reportEvent(ExceptionLevel.FATAL, EventLabel.START_CLUSTER_FAILED, failMsg);
             kubernetesClient.destroyCluster(clusterId);
             throw new GeaflowRuntimeException(e);
         }
