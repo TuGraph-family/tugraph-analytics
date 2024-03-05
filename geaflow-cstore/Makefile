@@ -24,7 +24,7 @@ else
 endif
 
 # Variable of enable nightly.
-NIGHTLY := +nightly
+NIGHTLY := +nightly-2023-08-15
 
 # Variable of build command.
 BUILD_RELEASE := $(CARGO_DWF) rustc --release --crate-type=cdylib $(SUFFIX)
