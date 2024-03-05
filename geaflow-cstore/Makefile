@@ -16,15 +16,15 @@ CARGO_NET_FLAGS := CARGO_NET_RETRY=5 HTTP_TIMEOUT=60
 
 # Generate differentiated commands based on environment variable 'FEATURES'
 ifeq ($(FEATURES),1)
-    CARGO_DWF := $(RUST_BACKTRACE) $(RUST_FLAGS_LOCAL) $(CARGO_NET_FLAGS) $(CARGO)
+    CARGO_DWF := $(RUST_BACKTRACE) $(CARGO_NET_FLAGS) $(CARGO)
     SUFFIX := --features hdfs
 else
-	CARGO_DWF := $(RUST_BACKTRACE) $(RUST_FLAGS_LOCAL) $(CARGO_NET_FLAGS) $(CARGO)
+	CARGO_DWF := $(RUST_BACKTRACE) $(CARGO_NET_FLAGS) $(CARGO)
 	SUFFIX := 
 endif
 
 # Variable of enable nightly.
-NIGHTLY := +nightly
+NIGHTLY := +nightly-2023-08-15
 
 # Variable of build command.
 BUILD_RELEASE := $(CARGO_DWF) rustc --release --crate-type=cdylib $(SUFFIX)

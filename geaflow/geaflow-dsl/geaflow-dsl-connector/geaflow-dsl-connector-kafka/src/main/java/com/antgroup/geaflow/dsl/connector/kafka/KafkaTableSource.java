@@ -84,6 +84,8 @@ public class KafkaTableSource implements TableSource {
             (String) ConnectorConfigKeys.GEAFLOW_DSL_START_TIME.getDefaultValue());
         if (startTimeStr.equalsIgnoreCase(KafkaConstants.KAFKA_BEGIN)) {
             startTime = 0;
+        } else if (startTimeStr.equalsIgnoreCase(KafkaConstants.KAFKA_LATEST)) {
+            startTime = Integer.MAX_VALUE;
         } else {
             startTime = DateTimeUtil.toUnixTime(startTimeStr, ConnectorConstants.START_TIME_FORMAT);
         }
@@ -151,6 +153,16 @@ public class KafkaTableSource implements TableSource {
                 Map<TopicPartition, Long> partition2Offset =
                     consumer.beginningOffsets(singletonPartition, OPERATION_TIMEOUT);
                 Long beginningOffset = partition2Offset.get(topicPartition);
+                if (beginningOffset == null) {
+                    throw new GeaFlowDSLException("Cannot get beginning offset for partition: {}, "
+                        + "startTime: {}.", topicPartition, startTime);
+                } else {
+                    consumer.seek(topicPartition, beginningOffset);
+                }
+            } else if (startTime == Integer.MAX_VALUE) {
+                Map<TopicPartition, Long> endOffsets =
+                    consumer.endOffsets(Collections.singletonList(topicPartition), OPERATION_TIMEOUT);
+                Long beginningOffset = endOffsets.get(topicPartition);
                 if (beginningOffset == null) {
                     throw new GeaFlowDSLException("Cannot get beginning offset for partition: {}, "
                         + "startTime: {}.", topicPartition, startTime);

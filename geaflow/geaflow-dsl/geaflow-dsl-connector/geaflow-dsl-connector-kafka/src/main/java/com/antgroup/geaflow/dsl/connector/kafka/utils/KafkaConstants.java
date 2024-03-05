@@ -29,6 +29,7 @@ public class KafkaConstants {
         "org.apache.kafka.common.serialization.StringDeserializer";
 
     public static final String KAFKA_BEGIN = "begin";
+    public static final String KAFKA_LATEST = "latest";
     public static final int KAFKA_OPERATION_TIMEOUT_SECONDS = 10;
     public static final int KAFKA_DATA_TIMEOUT_SECONDS = 30;
 }
