@@ -37,7 +37,7 @@ public class SplitEx extends UDF {
     }
 
     public BinaryString eval(BinaryString str, BinaryString separator, Integer index) {
-        if ((str == null) || separator == null || index == null) {
+        if ((str == null) || separator == null || separator.equals(BinaryString.EMPTY_STRING) || index == null) {
             return null;
         }
         if (index < 0) {

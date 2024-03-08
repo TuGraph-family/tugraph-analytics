@@ -28,6 +28,7 @@ public class Reverse extends UDF {
 
     public BinaryString eval(BinaryString s) {
         if (s == null) return null;
-        return s.reverse();
+        String reverse = StringUtils.reverse(s.toString());
+        return BinaryString.fromString(reverse);
     }
 }
