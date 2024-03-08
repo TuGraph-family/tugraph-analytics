@@ -54,6 +54,7 @@ public class Substr extends UDF {
     public BinaryString eval(BinaryString str, Integer start) {
         return eval(str, start, -1);
     }
+
     public BinaryString eval(BinaryString str, Integer pos, Integer length) {
         if (str == null || pos == null || length == null) {
             return null;
