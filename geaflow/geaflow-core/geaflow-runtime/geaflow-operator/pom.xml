@@ -60,6 +60,10 @@
            <groupId>com.antgroup.tugraph</groupId>
            <artifactId>geaflow-view-meta</artifactId>
        </dependency>
+       <dependency>
+           <groupId>com.antgroup.tugraph</groupId>
+           <artifactId>geaflow-infer</artifactId>
+       </dependency>
    </dependencies>
 
 

@@ -33,6 +33,7 @@ import com.antgroup.geaflow.utils.keygroup.IKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -127,6 +128,9 @@ public class RecoverableFileSource<OUT> extends FileSource<OUT> {
                         KeyValueStateDescriptor descriptor = KeyValueStateDescriptor.build(
                             taskName,
                             runtimeContext.getConfiguration().getString(SYSTEM_OFFSET_BACKEND_TYPE));
+                        for (Entry<String, String> entry : runtimeContext.getConfiguration().getConfigMap().entrySet()) {
+                            LOGGER.info("runtime key {} value {}", entry.getKey(), entry.getValue());
+                        }
                         if (descriptor.getStoreType().equalsIgnoreCase(new RocksdbStoreBuilder().getStoreDesc().name())) {
                             throw new GeaflowRuntimeException("GeaFlow offset not support ROCKSDB storage and should "
                                 + "be configured as JDBC or MEMORY");

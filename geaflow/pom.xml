@@ -95,6 +95,7 @@
         <module>geaflow-collection</module>
         <module>geaflow-dashboard</module>
         <module>geaflow-analytics-service</module>
+        <module>geaflow-infer</module>
     </modules>
 
     <dependencyManagement>
@@ -707,6 +708,16 @@
                 <version>${joda-time.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-infer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jctools-core</artifactId>
+                <groupId>org.jctools</groupId>
+                <version>${jctools.version}</version>
+            </dependency>
             <!-- jackson -->
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>

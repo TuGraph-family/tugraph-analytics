@@ -22,8 +22,10 @@ import com.antgroup.geaflow.cluster.heartbeat.HeartbeatClient;
 import com.antgroup.geaflow.cluster.web.metrics.MetricServer;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.ha.service.ResourceData;
+import com.antgroup.geaflow.infer.InferEnvironmentManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 
 public abstract class AbstractContainer extends AbstractComponent {
@@ -33,6 +35,7 @@ public abstract class AbstractContainer extends AbstractComponent {
     protected MetricServer metricServer;
     protected int metricPort;
     protected int supervisorPort;
+    protected boolean enableInfer;
 
     public AbstractContainer(int rpcPort) {
         super(rpcPort);
@@ -50,6 +53,8 @@ public abstract class AbstractContainer extends AbstractComponent {
         this.metricServer = new MetricServer(configuration);
         this.metricPort = metricServer.start();
         this.supervisorPort = configuration.getInteger(SUPERVISOR_RPC_PORT);
+        this.enableInfer = configuration.getBoolean(FrameworkConfigKeys.INFER_ENV_ENABLE);
+        initInferEnvironment(configuration);
     }
 
     protected void registerToMaster() {
@@ -88,6 +93,14 @@ public abstract class AbstractContainer extends AbstractComponent {
         }
         if (metricServer != null) {
             metricServer.stop();
+        }
+    }
+
+    private void initInferEnvironment(Configuration configuration) {
+        if (enableInfer) {
+            InferEnvironmentManager inferEnvironmentManager =
+                InferEnvironmentManager.buildInferEnvironmentManager(configuration);
+            inferEnvironmentManager.createEnvironment();
         }
     }
 

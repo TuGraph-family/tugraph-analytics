@@ -18,7 +18,12 @@ import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
 import com.antgroup.geaflow.api.graph.base.algo.AbstractIncVertexCentricComputeAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunction;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricComputeFunction.IncGraphComputeContext;
+import com.antgroup.geaflow.api.graph.function.vc.base.IncGraphInferContext;
 import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.infer.InferContext;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
@@ -29,6 +34,7 @@ import com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic.IncGraph
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.msgbox.IGraphMsgBox.MsgProcessFunc;
 import com.antgroup.geaflow.operator.impl.iterator.IteratorOperator;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +54,8 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M, FUNC extends IncVe
 
     private ICollector<IVertex<K, VV>> vertexCollector;
 
+    protected Configuration configuration;
+
     public DynamicGraphVertexCentricComputeOp(GraphViewDesc graphViewDesc,
                                               AbstractIncVertexCentricComputeAlgo<K, VV, EV, M, FUNC> incVCAlgorithm) {
         super(graphViewDesc, incVCAlgorithm);
@@ -59,7 +67,9 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M, FUNC extends IncVe
     public void open(OpContext opContext) {
         super.open(opContext);
         this.incVCComputeFunction = this.function.getIncComputeFunction();
-        this.graphIncVCComputeCtx = new IncGraphComputeContextImpl();
+        this.configuration = runtimeContext.getConfiguration();
+        this.graphIncVCComputeCtx = configuration.getBoolean(FrameworkConfigKeys.INFER_ENV_ENABLE)
+                                    ? new IncGraphInferComputeContextImpl() : new IncGraphComputeContextImpl();
         this.incVCComputeFunction.init(this.graphIncVCComputeCtx);
 
         this.invokeVIds = new HashSet<>();
@@ -136,6 +146,44 @@ public class DynamicGraphVertexCentricComputeOp<K, VV, EV, M, FUNC extends IncVe
         @Override
         public void collect(IVertex vertex) {
             vertexCollector.partition(vertex.getId(), vertex);
+        }
+    }
+
+    class IncGraphInferComputeContextImpl<OUT> extends IncGraphComputeContextImpl implements
+        IncGraphInferContext<OUT> {
+
+        private final ThreadLocal<InferContext> clientLocal = new ThreadLocal<>();
+
+        private final InferContext<OUT> inferContext;
+
+        public IncGraphInferComputeContextImpl() {
+            if (clientLocal.get() == null) {
+                try {
+                    inferContext = new InferContext<>(runtimeContext.getConfiguration());
+                } catch (Exception e) {
+                    throw new GeaflowRuntimeException(e);
+                }
+                clientLocal.set(inferContext);
+            } else {
+                inferContext = clientLocal.get();
+            }
+        }
+
+        @Override
+        public OUT infer(Object... modelInputs) {
+            try {
+                return inferContext.infer(modelInputs);
+            } catch (Exception e) {
+                throw new GeaflowRuntimeException("model infer failed", e);
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (clientLocal.get() != null) {
+                clientLocal.get().close();
+                clientLocal.remove();
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 # base image
-FROM docker.io/library/centos:7@sha256:9d4bcbbb213dfd745b58be38b13b996ebb5ac315fe75711bd618426a630e0987
+FROM docker.io/library/centos:latest@sha256:65a4aad1156d8a0679537cb78519a17eb7142e05a968b26a5361153006224fdc
 
 VOLUME /tmp
 
@@ -9,8 +9,13 @@ ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+RUN sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-*
+RUN sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-*
+RUN yum update -y
+
 # base packages
-RUN yum -y install wget ps vim curl
+RUN yum -y install wget vim curl
+RUN yum -y install gcc-c++
 RUN wget --no-check-certificate http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo
 
 # jdk
@@ -23,27 +28,22 @@ RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
     && source /etc/profile
 
 # mysql
-RUN yum install -y libaio numactl net-tools
-RUN rpm -ivh https://dev.mysql.com/get/mysql-community-icu-data-files-8.0.30-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-client-plugins-8.0.30-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-common-8.0.30-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-libs-8.0.30-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-client-8.0.30-1.el7.aarch64.rpm \
-    && rpm -ivh https://dev.mysql.com/get/mysql-community-server-8.0.30-1.el7.aarch64.rpm \
-    && mysqld  --initialize-insecure --user=mysql
+RUN yum install -y libaio numactl net-tools perl
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-icu-data-files-8.0.30-1.el8.aarch64.rpm
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-client-plugins-8.0.30-1.el8.aarch64.rpm
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-common-8.0.30-1.el8.aarch64.rpm
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-libs-8.0.30-1.el8.aarch64.rpm
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-client-8.0.30-1.el8.aarch64.rpm
+RUN rpm -ivh https://dev.mysql.com/get/mysql-community-server-8.0.30-1.el8.aarch64.rpm
+RUN  mysqld  --initialize-insecure --user=mysql
 
 # redis
 RUN yum install -y epel-release \
     && yum install -y redis
 
 # influxdb
-RUN echo '[influxdata]' >> /etc/yum.repos.d/influxdata.repo \
-    && echo 'name = InfluxData Repository - Stable' >> /etc/yum.repos.d/influxdata.repo \
-    && echo 'baseurl = https://repos.influxdata.com/stable/\$basearch/main' >> /etc/yum.repos.d/influxdata.repo \
-    && echo 'enabled = 1' >> /etc/yum.repos.d/influxdata.repo \
-    && echo 'gpgcheck = 1' >> /etc/yum.repos.d/influxdata.repo \
-    && echo 'gpgkey = https://repos.influxdata.com/influxdata-archive_compat.key' >> /etc/yum.repos.d/influxdata.repo \
-    && yum install -y influxdb2 \
+RUN curl -O https://dl.influxdata.com/influxdb/releases/influxdb2-2.7.3-1.aarch64.rpm \
+    && yum localinstall -y influxdb2-2.7.3-1.aarch64.rpm \
     && mkdir /usr/lib/influxdb2-client-2.7.3-linux-amd64 \
     && cd /usr/lib/influxdb2-client-2.7.3-linux-amd64 \
     && wget https://dl.influxdata.com/influxdb/releases/influxdb2-client-2.7.3-linux-amd64.tar.gz \
