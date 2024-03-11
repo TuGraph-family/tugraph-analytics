@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.table.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 import org.apache.commons.lang3.StringUtils;
@@ -23,5 +24,13 @@ public class Reverse extends UDF {
 
     public String eval(String s) {
         return StringUtils.reverse(s);
+    }
+
+    public BinaryString eval(BinaryString s) {
+        if (s == null) {
+            return null;
+        }
+        String reverse = StringUtils.reverse(s.toString());
+        return BinaryString.fromString(reverse);
     }
 }

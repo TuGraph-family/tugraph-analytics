@@ -372,6 +372,15 @@ public class BinaryString implements Comparable<BinaryString>, Serializable, Kry
         }
     }
 
+    public BinaryString reverse() {
+        byte[] bytes = new byte[numBytes];
+
+        for (int i = 0 ; i < numBytes ; i++) {
+            bytes[i] = getByte(numBytes - i - 1);
+        }
+        return fromBytes(bytes);
+    }
+
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeInt(numBytes);

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.table.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 
@@ -48,5 +49,33 @@ public class Substr extends UDF {
 
     public String eval(String str, Integer start) {
         return eval(str, start, -1);
+    }
+
+    public BinaryString eval(BinaryString str, Integer start) {
+        return eval(str, start, -1);
+    }
+
+    public BinaryString eval(BinaryString str, Integer pos, Integer length) {
+        if (str == null || pos == null || length == null) {
+            return null;
+        }
+        if (Math.abs(pos) > str.getLength()) {
+            return null;
+        }
+        int start;
+        int end;
+        if (pos > 0) {
+            start = pos - 1;
+        } else if (pos < 0) {
+            start = str.getLength() + pos;
+        } else {
+            start = 0;
+        }
+        if (length == -1) {
+            end = str.getLength();
+        } else {
+            end = Math.min(start + length, str.getLength());
+        }
+        return str.substring(start, end);
     }
 }

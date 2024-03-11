@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.udf.table.string.Substr;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -30,5 +31,11 @@ public class SubstrTest {
         Assert.assertEquals(sb.eval("Facebook", 5), "book");
         Assert.assertEquals(sb.eval("Facebook", -5), "ebook");
         Assert.assertEquals(sb.eval("Facebook", 5, 1), "b");
+        Assert.assertEquals(sb.eval(BinaryString.fromString("01021000100000000017"), 1, 1).toString(), "0");
+        Assert.assertEquals(sb.eval(BinaryString.fromString("01021000100000000017"), 2, 1).toString(), "1");
+        Assert.assertNull(sb.eval(BinaryString.fromString("01021000100000000017").toString(), null, 1));
+        Assert.assertEquals(sb.eval(BinaryString.fromString("Facebook"), 5).toString(), "book");
+        Assert.assertEquals(sb.eval(BinaryString.fromString("Facebook"), -5).toString(), "ebook");
+        Assert.assertEquals(sb.eval(BinaryString.fromString("Facebook"), 5, 1).toString(), "b");
     }
 }

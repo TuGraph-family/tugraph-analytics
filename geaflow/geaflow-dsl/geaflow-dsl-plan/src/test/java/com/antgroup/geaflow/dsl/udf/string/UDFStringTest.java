@@ -259,7 +259,9 @@ public class UDFStringTest {
         Reverse test = new Reverse();
         test.open(null);
         assertEquals(test.eval("AntGroup"), "puorGtnA");
-        assertNull(test.eval(null));
+        assertEquals(test.eval(BinaryString.fromString("AntGroup")), BinaryString.fromString("puorGtnA"));
+        assertNull(test.eval((String)null));
+        assertNull(test.eval((BinaryString) null));
     }
 
     @Test
@@ -286,6 +288,11 @@ public class UDFStringTest {
         assertNull(test.eval(null, ".", 1));
         assertNull(test.eval("a.b.c.d.e", ".", -1));
         assertNull(test.eval("a.b.c.d.e", ".", 5));
+        assertEquals(test.eval(BinaryString.fromString("a.b.c.d.e"), BinaryString.fromString("."), 1), BinaryString.fromString("b"));
+        assertNull(test.eval(null, BinaryString.fromString("."), 1));
+        assertNull(test.eval(null, BinaryString.fromString(""), 1));
+        assertNull(test.eval(BinaryString.fromString("a.b.c.d.e"), BinaryString.fromString("."), -1));
+        assertNull(test.eval(BinaryString.fromString("a.b.c.d.e"), BinaryString.fromString("."), 5));
     }
 
     @Test

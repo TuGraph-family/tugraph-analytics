@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.udf.table.string;
 
+import com.antgroup.geaflow.common.binary.BinaryString;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 import org.apache.commons.lang3.StringUtils;
@@ -33,5 +34,19 @@ public class SplitEx extends UDF {
             return null;
         }
         return values[index];
+    }
+
+    public BinaryString eval(BinaryString str, BinaryString separator, Integer index) {
+        if ((str == null) || separator == null || separator.equals(BinaryString.EMPTY_STRING) || index == null) {
+            return null;
+        }
+        if (index < 0) {
+            return null;
+        }
+        String[] values = StringUtils.splitByWholeSeparatorPreserveAllTokens(str.toString(), separator.toString());
+        if (index >= values.length) {
+            return null;
+        }
+        return BinaryString.fromString(values[index]);
     }
 }
