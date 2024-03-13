@@ -85,6 +85,67 @@ public class FrameworkConfigKeys implements Serializable {
         .defaultValue(2 * 60 * 1000)
         .description("analytics client request max run time");
 
+
+    public static final ConfigKey INFER_ENV_ENABLE = ConfigKeys
+        .key("geaflow.infer.env.enable")
+        .defaultValue(false)
+        .description("infer env enable, default is false");
+
+    public static final ConfigKey INFER_ENV_SHARE_MEMORY_QUEUE_SIZE = ConfigKeys
+        .key("geaflow.infer.env.share.memory.queue.size")
+        .defaultValue(8 * 1024 * 1024)
+        .description("infer env share memory queue size, default is 8 * 1024 * 1024");
+
+    public static final ConfigKey INFER_ENV_SO_LIB_URL = ConfigKeys
+        .key("geaflow.infer.env.so.lib.url")
+        .noDefaultValue()
+        .description("infer env so lib package oss url");
+
+    public static final ConfigKey INFER_ENV_INIT_TIMEOUT_SEC = ConfigKeys
+        .key("geaflow.infer.env.init.timeout.sec")
+        .defaultValue(120)
+        .description("infer env init timeout sec, default is 120");
+
+    public static final ConfigKey INFER_ENV_SUPPRESS_LOG_ENABLE = ConfigKeys
+        .key("geaflow.infer.env.suppress.log.enable")
+        .defaultValue(true)
+        .description("infer env suppress log enable, default is true");
+
+    public static final ConfigKey INFER_USER_DEFINE_LIB_PATH = ConfigKeys
+        .key("geaflow.infer.user.define.lib.path")
+        .noDefaultValue()
+        .description("infer user define lib path");
+
+    public static final ConfigKey INFER_ENV_USER_TRANSFORM_CLASSNAME = ConfigKeys
+        .key("geaflow.infer.env.user.transform.classname")
+        .noDefaultValue()
+        .description("infer env user custom define transform class name");
+
+    public static final ConfigKey INFER_ENV_OSS_ACCESS_KEY = ConfigKeys
+        .key("geaflow.infer.env.oss.access.key")
+        .noDefaultValue()
+        .description("infer env oss access key");
+
+    public static final ConfigKey INFER_ENV_OSS_ACCESS_ID = ConfigKeys
+        .key("geaflow.infer.env.oss.access.id")
+        .noDefaultValue()
+        .description("infer env oss access id");
+
+    public static final ConfigKey INFER_ENV_OSS_ENDPOINT = ConfigKeys
+        .key("geaflow.infer.env.oss.endpoint")
+        .noDefaultValue()
+        .description("infer env oss endpoint");
+
+    public static final ConfigKey INFER_ENV_OSS_DOWNLOAD_RETRY_NUM = ConfigKeys
+        .key("geaflow.infer.env.oss.download.retry.num")
+        .defaultValue(3)
+        .description("infer env oss download retry num, default is 3");
+
+    public static final ConfigKey INFER_ENV_CONDA_URL = ConfigKeys
+        .key("geaflow.infer.env.conda.url")
+        .noDefaultValue()
+        .description("infer env conda url");
+
     public static final ConfigKey ASP_ENABLE = ConfigKeys
         .key("geaflow.iteration.asp.enable")
         .defaultValue(false)

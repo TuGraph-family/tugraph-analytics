@@ -58,6 +58,7 @@ public class StateFactory implements Serializable {
 
     public static <K, V> KeyValueState<K, V> buildKeyValueState(
         KeyValueStateDescriptor<K, V> descriptor, Configuration configuration) {
+
         Preconditions.checkArgument(SUPPORTED_KEY_STORE_TYPES.contains(
             StoreType.getEnum(descriptor.getStoreType())),
             "only support %s", SUPPORTED_KEY_STORE_TYPES);

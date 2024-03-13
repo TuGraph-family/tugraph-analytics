@@ -139,6 +139,10 @@
            <groupId>com.antgroup.tugraph</groupId>
            <artifactId>geaflow-metaserver-engine</artifactId>
        </dependency>
+       <dependency>
+           <groupId>com.antgroup.tugraph</groupId>
+           <artifactId>geaflow-infer</artifactId>
+       </dependency>
    </dependencies>
 
 </project>
