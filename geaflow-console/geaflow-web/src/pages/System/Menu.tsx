@@ -26,6 +26,13 @@ export const MENU_List_MAP = [
         }),
       },
       {
+        key: "/system/ColLanguageManage",
+        label: $i18n.get({
+          id: "openpiece-geaflow.Languages",
+          dm: "模型管理",
+        }),
+      },
+      {
         key: "/system/ColGeaflowJarfileManage",
         label: $i18n.get({
           id: "openpiece-geaflow.Files",

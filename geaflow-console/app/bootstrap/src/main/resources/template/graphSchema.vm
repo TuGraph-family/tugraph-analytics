@@ -1,0 +1,31 @@
+CREATE GRAPH g (
+#foreach(${vertex} in ${vertices})
+    Vertex ${vertex.name} (
+    #foreach(${field} in ${vertex.fields})
+        #if(${field.category} == 'VERTEX_ID')
+        ${field.name} ${field.type} ID,
+        #else
+        ${field.name} ${field.type},
+        #end
+    #end
+    ${endFlag}
+    ),
+#end
+#foreach(${edge} in ${edges})
+    Edge ${edge.name} (
+    #foreach(${field} in  ${edge.fields})
+        #set($endpoint = $endpoints.get(${edge.name}))
+        #if(${field.category} == 'EDGE_SOURCE_ID')
+        ${field.name} ${field.type}#if($!{endpoint}) FROM $!{endpoint.sourceName} SOURCE ID#end,
+        #elseif(${field.category} == 'EDGE_TARGET_ID')
+        ${field.name} ${field.type}#if($!{endpoint}) FROM $!{endpoint.targetName} DESTINATION ID#end,
+        #else
+        ${field.name} ${field.type},
+        #end
+        #set($endpoint = false)
+    #end
+    ${endFlag}
+    ),
+#end
+${endFlag}
+);

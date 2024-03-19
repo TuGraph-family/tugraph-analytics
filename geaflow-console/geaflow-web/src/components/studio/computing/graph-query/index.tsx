@@ -1,10 +1,4 @@
-import {
-  AppstoreAddOutlined,
-  ArrowLeftOutlined,
-  DownloadOutlined,
-  QuestionCircleOutlined,
-  SaveOutlined,
-} from "@ant-design/icons";
+import { SendOutlined, CommentOutlined } from "@ant-design/icons";
 import GremlinEditor from "ace-gremlin-editor";
 import $i18n from "@/components/i18n";
 import {
@@ -18,11 +12,14 @@ import {
   Switch,
   Table,
   Tabs,
-  Tooltip,
+  FloatButton,
   message,
+  Input,
+  Drawer,
+  Tooltip,
 } from "antd";
 import { filter, find, isEmpty, join, map, uniqueId } from "lodash";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useImmer } from "use-immer";
 import IconFont from "./icon-font";
 import { SplitPane } from "./split-panle";
@@ -40,15 +37,24 @@ import {
   getOlapsResult,
   deleteOlapQueryId,
   getOlapQueryId,
+  getChat,
+  postChat,
+  DeleteChat,
+  getllmsList,
+  postCallSync,
 } from "../../services/computing";
-
+import ReceiverItem from "./components/receiver-item";
+import SenderItem from "./components/sender-item";
+import { CaretRightOutlined } from "@ant-design/icons";
 import styles from "./index.module.less";
+import moment from "moment";
 
 const { Option } = Select;
 
 export const GraphQuery = (props: any) => {
+  const receiverName = "GPT";
+
   const { instance } = props;
-  useEffect(() => {}, [instance]);
 
   const getLocalData = (key: string) => {
     if (!key) {
@@ -62,23 +68,12 @@ export const GraphQuery = (props: any) => {
     }
   };
 
-  const graphList = getLocalData("TUGRAPH_SUBGRAPH_LIST");
+  const [open, setOpen] = useState<boolean>(false);
   const [state, updateState] = useImmer<{
-    activeTab: string;
-    isListShow: boolean;
     currentGraphName: string;
-    graphListOptions: { label: string; value: string }[];
-    editorWidth: number | string;
     editorHeight: number;
-    pathHeight: number;
     script: string;
     resultData: Array<any & { id?: string }>;
-    queryList: Array<{
-      id: string;
-      value: string;
-      script: string;
-      isEdit?: boolean;
-    }>;
     editorKey: string;
     graphData?: {
       nodes: Array<{
@@ -96,69 +91,76 @@ export const GraphQuery = (props: any) => {
       }>;
     };
     editor: any;
-    storedVisible: boolean;
     result: string;
     record?: any;
     loading: boolean;
     isOlaps: string;
+    chatList: any;
+    chatValue: string;
+    llsList: any;
+    modelId: string;
+    withSchema: boolean;
   }>({
-    graphListOptions: map(graphList, (graph: any) => {
-      return {
-        label: graph.graph_name,
-        value: graph.graph_name,
-      };
-    }),
-    activeTab: IQUIRE_LIST[0].key,
-    isListShow: true,
     currentGraphName: "",
-    editorWidth: 350,
     editorHeight: 372,
-    pathHeight: 388,
     script: "match (a)-[e]->(b) return a,e,b limit 10",
     resultData: [],
-    queryList: [],
     editorKey: "",
     graphData: { nodes: [], edges: [] },
     editor: {},
-    storedVisible: false,
     result: "",
     record: {},
     loading: false,
     isOlaps: "",
+    chatList: [],
+    chatValue: "",
+    llsList: [],
+    modelId: "",
+    withSchema: true,
   });
   const {
-    activeTab,
-    isListShow,
     currentGraphName,
-    graphListOptions,
-    editorWidth,
     editorHeight,
-    pathHeight,
     script,
     resultData,
-    queryList,
     editorKey,
     graphData,
     editor,
-    storedVisible,
     record,
     loading,
     isOlaps,
+    chatList,
+    chatValue,
+    llsList,
+    modelId,
+    withSchema,
   } = state;
 
-  const onSplitPaneWidthChange = useCallback((size: number) => {
-    updateState((draft) => {
-      draft.editorWidth = size;
+  const handleChat = () => {
+    getChat({
+      jobId: instance.id,
+    }).then((res) => {
+      if (res.success) {
+        updateState((draft) => {
+          draft.chatList = res.data.list;
+        });
+      }
     });
-  }, []);
+  };
+
+  useEffect(() => {
+    handleChat();
+    getllmsList().then((res) => {
+      updateState((draft) => {
+        draft.llsList = res;
+        draft.modelId = res[0]?.id;
+      });
+    });
+  }, [instance, open]);
+
   const onSplitPaneHeightChange = useCallback((size: number) => {
     updateState((draft) => {
       draft.editorHeight = size;
-    });
-  }, []);
-  const onSplitPanePathHeightChange = useCallback((size: number) => {
-    updateState((draft) => {
-      draft.pathHeight = size;
     });
   }, []);
 
@@ -222,7 +224,7 @@ export const GraphQuery = (props: any) => {
     <div className={styles[`${PUBLIC_PERFIX_CLASS}-right-bar`]}>
       <div className={styles[`${PUBLIC_PERFIX_CLASS}-left-btn`]}>
         <Space split={<Divider type="vertical" />}>
-          <div style={{ gap: "24px", display: "flex" }}>
+          <div style={{ gap: "24px", display: "flex", alignItems: "center" }}>
             <Select disabled defaultValue={"ISOGQL"}>
               <Option value="Cypher">Cypher</Option>
               <Option value="ISOGQL">ISOGQL</Option>
@@ -246,11 +248,59 @@ export const GraphQuery = (props: any) => {
                 dm: "执行",
               })}
             </Button>
+            <img
+              src="https://mdn.alipayobjects.com/huamei_0bwegv/afts/img/A*k1GoQ5rfeCcAAAAAAAAAAAAADu3UAQ/original"
+              alt=""
+              style={{ width: 32, height: 32, cursor: "pointer" }}
+              onClick={() => {
+                setOpen(true);
+              }}
+            />
           </div>
         </Space>
       </div>
     </div>
   );
+
+  const onSendMessage = (answer?: string) => {
+    updateState((draft) => {
+      draft.chatValue = "";
+    });
+    if ((chatValue || answer) && modelId) {
+      console.log(answer, "answer");
+      const date = new Date();
+      const tmpRecord = {
+        prompt: chatValue,
+        answer: `${$i18n.get({
+          id: "openpiece-geaflow.job-detail.components.query.running",
+          dm: "思考中,请稍等...",
+        })}`,
+        status: "RUNNING",
+        createTime: moment(date).format("yyyy-MM-DD HH:mm:ss"),
+      };
+      const tmpList = [...chatList, tmpRecord];
+      updateState((draft) => {
+        draft.chatList = tmpList;
+      });
+      postCallSync({
+        modelId,
+        withSchema,
+        jobId: instance.id,
+        prompt: chatValue || answer,
+        saveRecord: true,
+      }).then((res) => {
+        if (res.success) {
+          // const getChatAnwser = window.setInterval(() => {
+          handleChat();
+          //   window.clearInterval(getChatAnwser);
+          // }, 2500);
+        }
+      });
+    }
+  };
+  const onClose = () => {
+    setOpen(false);
+  };
 
   return (
     <div className={styles[`${PUBLIC_PERFIX_CLASS}-container`]}>
@@ -353,6 +403,141 @@ export const GraphQuery = (props: any) => {
               </SplitPane>
             </div>
           </div>
+          <Drawer
+            // title="Basic Drawer"
+            placement="right"
+            width={500}
+            onClose={onClose}
+            open={open}
+            extra={
+              <Space>
+                <div className={styles["schema"]}>
+                  <p className={styles["schema-label"]}>
+                    {$i18n.get({
+                      id: "openpiece-geaflow.job-detail.components.query.schema",
+                      dm: "带schema",
+                    })}
+                  </p>
+
+                  <Switch
+                    checked={withSchema}
+                    onChange={(checked: boolean) => {
+                      updateState((draft) => {
+                        draft.withSchema = checked;
+                      });
+                    }}
+                  />
+                </div>
+
+                <Select
+                  style={{ width: 200 }}
+                  placeholder="请选择模型"
+                  defaultValue={llsList[0]?.name}
+                  onChange={(value) => {
+                    updateState((draft) => {
+                      draft.modelId = value;
+                    });
+                  }}
+                >
+                  {llsList?.map((item: { id: string; name: string }) => {
+                    return (
+                      <Select.Option value={item.id} key={item.id}>
+                        {item.name}
+                      </Select.Option>
+                    );
+                  })}
+                </Select>
+                <Button
+                  onClick={() => {
+                    DeleteChat(instance.id).then((res) => {
+                      if (res.success) {
+                        handleChat();
+                      }
+                    });
+                  }}
+                >
+                  {$i18n.get({
+                    id: "openpiece-geaflow.job-detail.components.query.Clear",
+                    dm: "清空",
+                  })}
+                </Button>
+              </Space>
+            }
+          >
+            <div className={styles["chat-container"]}>
+              <div id="chatItems" className={styles["chat-items"]}>
+                {loading && (
+                  <div className={styles["chat-loading"]}>
+                    <Spin />
+                  </div>
+                )}
+                {!isEmpty(chatList) &&
+                  chatList?.map((item, index) => {
+                    return (
+                      <div>
+                        <div className={styles["chat-item"]} key={index}>
+                          <SenderItem
+                            userName={item?.creatorName}
+                            item={item}
+                          />
+                        </div>
+                        <div className={styles["chat-item"]} key={index}>
+                          <ReceiverItem
+                            userName={receiverName}
+                            item={item}
+                            onCopy={(copyScript) => {
+                              if (!isEmpty(editor)) {
+                                editor?.editorInstance?.setValue?.(copyScript);
+                              }
+                              updateState((draft) => {
+                                draft.script = copyScript;
+                              });
+                            }}
+                            onSend={(answer) => {
+                              onSendMessage(answer);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+              <div className={styles["chat-input-operator"]}>
+                <Input.TextArea
+                  className={styles["chat-input"]}
+                  placeholder={$i18n.get({
+                    id: "openpiece-geaflow.job-detail.components.query.info",
+                    dm: "请输入消息",
+                  })}
+                  autoSize={{ minRows: 4, maxRows: 6 }}
+                  value={chatValue}
+                  onChange={(e) => {
+                    updateState((draft) => {
+                      draft.chatValue = e.target.value;
+                    });
+                  }}
+                  onPressEnter={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      !event.shiftKey &&
+                      event.keyCode == 13
+                    ) {
+                      event.preventDefault();
+                      onSendMessage();
+                    }
+                  }}
+                  // 按下回车后的回调
+                />
+
+                <SendOutlined
+                  className={styles["chat-button"]}
+                  onClick={() => {
+                    onSendMessage();
+                  }}
+                />
+              </div>
+            </div>
+          </Drawer>
         </div>
       </div>
     </div>

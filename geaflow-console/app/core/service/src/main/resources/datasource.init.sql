@@ -555,3 +555,38 @@ PRIMARY KEY(`id`),
 UNIQUE KEY `uk_guid`(`guid`),
 KEY `idx_job_id`(`job_id`)
 ) DEFAULT CHARSET = utf8mb4 COMMENT = 'Statemnet Table';
+
+CREATE TABLE `geaflow_llm` (
+`id` bigint unsigned NOT NULL AUTO_INCREMENT,
+`gmt_create` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`gmt_modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+`tenant_id` char(64) DEFAULT NULL,
+`guid` char(64) NOT NULL COMMENT 'id',
+`creator_id` char(64) NOT NULL COMMENT 'id',
+`modifier_id` char(64) NOT NULL COMMENT 'id',
+`name` varchar(128) NOT NULL,
+`comment` varchar(512) DEFAULT NULL,
+`url` varchar(512) NOT NULL,
+`type` varchar(32) NOT NULL,
+`args` text DEFAULT NULL COMMENT 'args',
+PRIMARY KEY (`id`),
+UNIQUE KEY `uk_guid` (`guid`),
+UNIQUE KEY `uk_name` (`name`)
+) DEFAULT CHARSET = utf8mb4 COMMENT = 'Language Models';
+
+CREATE TABLE `geaflow_chat` (
+`id` bigint unsigned NOT NULL AUTO_INCREMENT,
+`gmt_create` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`gmt_modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+`tenant_id` char(64) DEFAULT NULL,
+`guid` char(64) NOT NULL COMMENT 'id',
+`creator_id` char(64) NOT NULL COMMENT 'id',
+`modifier_id` char(64) NOT NULL COMMENT 'id',
+`prompt` text NOT NULL,
+`answer` text DEFAULT NULL,
+`model_id` char(64) NOT NULL COMMENT 'modelId',
+`job_id` char(64) DEFAULT NULL COMMENT 'jobId',
+`status` varchar(32) DEFAULT NULL COMMENT 'stauts',
+PRIMARY KEY (`id`),
+UNIQUE KEY `uk_guid` (`guid`)
+) DEFAULT CHARSET = utf8mb4 COMMENT = 'Chat Records';

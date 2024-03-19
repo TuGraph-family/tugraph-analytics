@@ -3,7 +3,7 @@ import { defineConfig } from "umi";
 export default defineConfig({
   hash: true,
   history: {
-    type: 'hash'
+    type: "hash",
   },
   routes: [
     {
@@ -117,14 +117,20 @@ export default defineConfig({
               component: "./System/components/ColTenantManage",
               path: "ColTenantManage",
             },
+            {
+              component: "./System/components/ColLanguageManage",
+              path: "ColLanguageManage",
+            },
           ],
         },
       ],
     },
   ],
-  publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
+  publicPath: process.env.NODE_ENV === "production" ? "./" : "/",
   outputPath: "../app/bootstrap/src/main/resources/public/",
   npmClient: "pnpm",
-  favicons: ['https://gw.alipayobjects.com/zos/bmw-prod/6290edfc-e134-4074-a550-079eeba9926d.svg'],
-  esbuildMinifyIIFE: true
+  favicons: [
+    "https://gw.alipayobjects.com/zos/bmw-prod/6290edfc-e134-4074-a550-079eeba9926d.svg",
+  ],
+  esbuildMinifyIIFE: true,
 });
