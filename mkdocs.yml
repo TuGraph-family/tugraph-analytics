@@ -1,8 +1,6 @@
 site_name: GeaFlow Docs
 
-theme:
-  name: cerulean
-  nav_style: dark
+theme: readthedocs
 
 plugins:
   - include-markdown
