@@ -6,7 +6,7 @@ theme:
 
     prev_next_buttons_location: both # 在顶部和底部都显示“上一页”和“下一页”的按钮
 
-    navigation_depth: 4 # 设置侧边栏导航深度为4级（即展示4级标题）
+    navigation_depth: 2 # 设置侧边栏导航深度为4级（即展示4级标题）
 
     collapse_navigation: True # 当用户浏览到其他页面时，收缩侧边栏导航，只显示当前页面所在的层级
 
