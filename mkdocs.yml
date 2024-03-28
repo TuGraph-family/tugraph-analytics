@@ -10,7 +10,7 @@ theme:
 
     collapse_navigation: True # 当用户浏览到其他页面时，收缩侧边栏导航，只显示当前页面所在的层级
 
-    titles_only: False # 在侧边栏中除了主标题外，还展示所有子标题，默认为不只展示标题
+    titles_only: true # 在侧边栏中除了主标题外，还展示所有子标题，默认为不只展示标题
 
     sticky_navigation: True # 使侧边栏在滚动页面时固定在视窗内，跟随主要内容滚动readthedocs
 
