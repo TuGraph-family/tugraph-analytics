@@ -6,8 +6,7 @@ plugins:
   - include-markdown
 
 nav:
-  - GeaFlow 中文文档导航页: 
-        - index_cn.md
+  - GeaFlow 中文文档: 
         - GeaFlow简介: docs-cn/introduction.md
         - 快速上手(本地运行): docs-cn/quick_start.md
         - 开始上手(GeaFlow Console运行): docs-cn/quick_start_docker.md
