@@ -18,7 +18,6 @@ plugins:
   - include-markdown
 
 nav:
-  - 'index_cn.md'
   - 中文文档:
         - 'docs-cn/introduction.md'
         - 'docs-cn/quick_start.md'
@@ -81,7 +80,6 @@ nav:
               - 'docs-cn/principle/vs_join.md'
         - './docs-cn/contribution.md'
 
-  - 'index.md'
   - English Document:
     - 'docs-en/introduction.md'
     - 'docs-en/quick_start.md'
