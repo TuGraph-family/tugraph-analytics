@@ -1,6 +1,7 @@
 site_name: GeaFlow Docs
 
-theme: readthedocs
+theme: 
+    name: readthedocs
     include_homepage_in_sidebar: True # 在侧边栏菜单中显示主页链接
 
     prev_next_buttons_location: both # 在顶部和底部都显示“上一页”和“下一页”的按钮
