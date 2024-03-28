@@ -1,6 +1,7 @@
 site_name: GeaFlow Docs
 
-theme: ivory
+theme: 
+  name: ivory
 
 plugins:
   - include-markdown
