@@ -6,46 +6,45 @@ plugins:
   - include-markdown
 
 nav:
-  - 'index_cn.md'
-  - 中文文档:
-        - 'docs-cn/introduction.md'
-        - 'docs-cn/quick_start.md'
-        - 'docs-cn/quick_start_docker.md'
+  - GeaFlow 中文文档导航页: index_cn.md
+        - GeaFlow简介: docs-cn/introduction.md
+        - 快速上手(本地运行): docs-cn/quick_start.md
+        - 开始上手(GeaFlow Console运行): docs-cn/quick_start_docker.md
         - 概念:
-              - 'docs-cn/concepts/glossary.md'
-              - 'docs-cn/concepts/graph_view.md'
-              - 'docs-cn/concepts/stream_graph.md'
+              - 名称解释: docs-cn/concepts/glossary.md
+              - Graph View: docs-cn/concepts/graph_view.md
+              - Stream Graph: docs-cn/concepts/stream_graph.md
         - GeaFlow应用开发:
               - API:
-                    - 'docs-cn/application-development/api/overview.md'
-                    - 'docs-cn/application-development/api/guid.md'
+                    -API介绍: docs-cn/application-development/api/overview.md
+                    -Guid: docs-cn/application-development/api/guid.md
                     - 图:
-                          - 'docs-cn/application-development/api/graph/compute.md'
-                          - 'docs-cn/application-development/api/graph/traversal.md'
+                          - Compute API介绍: docs-cn/application-development/api/graph/compute.md
+                          - Traversal API介绍: docs-cn/application-development/api/graph/traversal.md
                     - 流:
-                          - 'docs-cn/application-development/api/stream/process.md'
-                          - 'docs-cn/application-development/api/stream/sink.md'
-                          - 'docs-cn/application-development/api/stream/source.md'
+                          - Process API介绍: docs-cn/application-development/api/stream/process.md
+                          - Sink API介绍: docs-cn/application-development/api/stream/sink.md
+                          - Source API介绍: docs-cn/application-development/api/stream/source.md
               - DSL:
-                    - 'docs-cn/application-development/dsl/overview.md'
+                    - 融合DSL概述: docs-cn/application-development/dsl/overview.md
                     - 内置函数:
-                          - 'docs-cn/application-development/dsl/build-in/aggregate.md'
-                          - 'docs-cn/application-development/dsl/build-in/condition.md'
-                          - 'docs-cn/application-development/dsl/build-in/date.md'
-                          - 'docs-cn/application-development/dsl/build-in/logical.md'
-                          - 'docs-cn/application-development/dsl/build-in/math.md'
-                          - 'docs-cn/application-development/dsl/build-in/string.md'
-                          - 'docs-cn/application-development/dsl/build-in/table.md'
+                          - aggregate: docs-cn/application-development/dsl/build-in/aggregate.md
+                          - condition: docs-cn/application-development/dsl/build-in/condition.md
+                          - date: docs-cn/application-development/dsl/build-in/date.md
+                          - logical: docs-cn/application-development/dsl/build-in/logical.md
+                          - math: docs-cn/application-development/dsl/build-in/math.md
+                          - string: docs-cn/application-development/dsl/build-in/string.md
+                          - table: docs-cn/application-development/dsl/build-in/table.md
                     - 连接器(Connector):
-                          - 'docs-cn/application-development/dsl/connector/common.md'
-                          - 'docs-cn/application-development/dsl/connector/file.md'
-                          - 'docs-cn/application-development/dsl/connector/console.md'
-                          - 'docs-cn/application-development/dsl/connector/jdbc.md'
-                          - 'docs-cn/application-development/dsl/connector/hive.md'
-                          - 'docs-cn/application-development/dsl/connector/kafka.md'
-                          - 'docs-cn/application-development/dsl/connector/hbase.md'
-                          - 'docs-cn/application-development/dsl/connector/hudi.md'
-                          - 'docs-cn/application-development/dsl/connector/udc.md'
+                          - common: docs-cn/application-development/dsl/connector/common.md
+                          - file: docs-cn/application-development/dsl/connector/file.md
+                          - console: docs-cn/application-development/dsl/connector/console.md
+                          - jdbc: docs-cn/application-development/dsl/connector/jdbc.md
+                          - hive: docs-cn/application-development/dsl/connector/hive.md
+                          - kafka: docs-cn/application-development/dsl/connector/kafka.md
+                          - hbase: docs-cn/application-development/dsl/connector/hbase.md
+                          - hudi: docs-cn/application-development/dsl/connector/hudi.md
+                          - udc: docs-cn/application-development/dsl/connector/udc.md
                     - 语法文档:
                           - 'docs-cn/application-development/dsl/reference/ddl.md'
                           - 'docs-cn/application-development/dsl/reference/dml.md'
