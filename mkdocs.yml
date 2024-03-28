@@ -8,10 +8,12 @@ plugins:
 nav:
   - 中文导航: 'index.md'
   - 详细文档:
-      - 简介: 'docs-cn/introduction.md'
-      - 启动: 'docs-cn/quick_start.md'
-  - 概念:
-    - glossar: 'docs-cn/concepts/glossary.md'
+        - 简介: 'docs-cn/introduction.md'
+        - 启动: 'docs-cn/quick_start.md'
+        - 概念:
+              - glossar: 'docs-cn/concepts/glossary.md'
+
+
 
 markdown_extensions:
   - toc:
