@@ -6,11 +6,11 @@ theme:
 
     prev_next_buttons_location: both # 在顶部和底部都显示“上一页”和“下一页”的按钮
 
-    navigation_depth: 2 # 设置侧边栏导航深度为4级（即展示4级标题）
+    navigation_depth: 2 # 设置侧边栏导航深度为2级（即展示2级标题）
 
     collapse_navigation: True # 当用户浏览到其他页面时，收缩侧边栏导航，只显示当前页面所在的层级
 
-    titles_only: true # 在侧边栏中除了主标题外，还展示所有子标题，默认为不只展示标题
+    titles_only: false # 在侧边栏中除了主标题外，还展示所有子标题，默认为不只展示标题
 
     sticky_navigation: True # 使侧边栏在滚动页面时固定在视窗内，跟随主要内容滚动readthedocs
 
@@ -18,6 +18,7 @@ plugins:
   - include-markdown
 
 nav:
+  - 'index_cn.md'
   - 中文文档:
         - 'docs-cn/introduction.md'
         - 'docs-cn/quick_start.md'
@@ -79,7 +80,8 @@ nav:
               - 'docs-cn/principle/state_principle.md'
               - 'docs-cn/principle/vs_join.md'
         - './docs-cn/contribution.md'
-
+        
+  - 'index.md'
   - English Document:
     - 'docs-en/introduction.md'
     - 'docs-en/quick_start.md'
