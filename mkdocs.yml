@@ -2,49 +2,36 @@ site_name: GeaFlow Docs
 
 theme: 
     name: readthedocs
-    include_homepage_in_sidebar: True # 在侧边栏菜单中显示主页链接
-
-    prev_next_buttons_location: both # 在顶部和底部都显示“上一页”和“下一页”的按钮
-
-    navigation_depth: 2 # 设置侧边栏导航深度为2级（即展示2级标题）
-
-    collapse_navigation: True # 当用户浏览到其他页面时，收缩侧边栏导航，只显示当前页面所在的层级
-
-    titles_only: false # 在侧边栏中除了主标题外，还展示所有子标题，默认为不只展示标题
-
-    sticky_navigation: True # 使侧边栏在滚动页面时固定在视窗内，跟随主要内容滚动readthedocs
 
 plugins:
   - include-markdown
 
 nav:
-  - 'index_cn.md'
-        - 简介: 
-              - 'docs-cn/introduction.md'
-        - 快速: 
-              - 'docs-cn/quick_start.md'
-        - 快速上手: 
-              - 'docs-cn/quick_start_docker.md'
-        - 概念:
-              - 'docs-cn/concepts/glossary.md'
-              - 'docs-cn/concepts/graph_view.md'
-              - 'docs-cn/concepts/stream_graph.md'
-        - GeaFlow应用开发:
-              - API:
-                    - 'docs-cn/application-development/api/overview.md'
-                    - 'docs-cn/application-development/api/guid.md'
-                    - 图:
-                          - 'docs-cn/application-development/api/graph/compute.md'
-                          - 'docs-cn/application-development/api/graph/traversal.md'
-                    - 流:
-                          - 'docs-cn/application-development/api/stream/process.md'
-                          - 'docs-cn/application-development/api/stream/sink.md'
-                          - 'docs-cn/application-development/api/stream/source.md'
+  - Home: 'index_cn.md'
+  - '简介':
+      - 'docs-cn/introduction.md' 
+      - 'docs-cn/quick_start.md'
+      - 'docs-cn/quick_start_docker.md'
+  - 概念:
+      - 'docs-cn/concepts/glossary.md'
+      - 'docs-cn/concepts/graph_view.md'
+      - 'docs-cn/concepts/stream_graph.md'
+  - GeaFlow应用开发:
+      - API:
+          - 'docs-cn/application-development/api/overview.md'
+          - 'docs-cn/application-development/api/guid.md'
+          - 图:
+              - 'docs-cn/application-development/api/graph/compute.md'
+              - 'docs-cn/application-development/api/graph/traversal.md'
+                  - 流:
+                      - 'docs-cn/application-development/api/stream/process.md'
+                      - 'docs-cn/application-development/api/stream/sink.md'
+                      - 'docs-cn/application-development/api/stream/source.md'
         
 
 markdown_extensions:
   - toc:
-      toc_depth: 2
+      toc_depth: 4
 
 python_version: 3.8 # use Python 3.8
 jinja2:
