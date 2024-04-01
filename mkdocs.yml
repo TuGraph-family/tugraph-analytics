@@ -7,8 +7,13 @@ plugins:
   - include-markdown
 
 nav:
-  - Home: 'index_cn.md'
-
+  - ‘中文导航页’: 'index_cn.md'
+  - '中文文档':
+    - 'geaflow简介': 'docs-cn/introduction.md'
+    - '快速上手': 'docs-cn/quick_start.md'
+    - '概念':
+      - 'glossary': 'docs-cn/concepts/glossary.md'
+    
 markdown_extensions:
   - toc:
       toc_depth: 4
