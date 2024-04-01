@@ -134,9 +134,6 @@ nav:
         - 'docs-en/principle/vs_join.md'
     - './docs-en/contribution.md'
 
-markdown_extensions:
-  - toc:
-      toc_depth: 4
 
 python_version: 3.8 # use Python 3.8
 jinja2:
