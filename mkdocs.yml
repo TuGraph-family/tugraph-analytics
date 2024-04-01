@@ -19,9 +19,12 @@ plugins:
 
 nav:
   - 'index_cn.md'
-        - 简介: 'docs-cn/introduction.md'
-        - 快速: 'docs-cn/quick_start.md'
-        - 快速上手: 'docs-cn/quick_start_docker.md'
+        - 简介: 
+              - 'docs-cn/introduction.md'
+        - 快速: 
+              - 'docs-cn/quick_start.md'
+        - 快速上手: 
+              - 'docs-cn/quick_start_docker.md'
         - 概念:
               - 'docs-cn/concepts/glossary.md'
               - 'docs-cn/concepts/graph_view.md'
