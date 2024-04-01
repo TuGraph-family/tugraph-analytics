@@ -101,7 +101,7 @@ For more information: [Contribution](docs/docs-en/contribution.md).
 ## Contact Us
 You can contact us through the following methods:
 
-![contacts](docs/static/img/contacts.jpg)
+![contacts](docs/static/img/contacts-en.png)
 
 **If you are interested in GeaFlow, please give our project a [ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics).**
 
