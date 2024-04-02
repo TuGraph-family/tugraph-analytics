@@ -13,7 +13,7 @@ When the job is running in a k8s cluster, the HTTP service can be exposed extern
 In the local or development environment, you can also directly map to the master pod port through the kubectl port-forward command.
 
 ### Take minikube as an example
-1. Deploy the job to minikube. For how to deploy the job, please refer to [Quick Start](quick_start.md).
+1. Deploy the job to minikube. For how to deploy the job, please refer to [Quick Start](source/3.quick_start.md).
 2. Open minikube-dashboard and find the pod name of the master (or enter the following command in the terminal to obtain it).
 ```shell
 kubectl get pods
