@@ -3,3 +3,5 @@ myst-parser
 sphinx-panels
 sphinx-rtd-theme
 breathe
+recommonmark
+m2r2
