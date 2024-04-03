@@ -232,6 +232,7 @@ export const deleteOlapQueryId = async (olapQueryId: string) => {
   return response;
 };
 
+
 export const getTablesDefinitionList = async (
   params: GraphDefinitionParams
 ) => {
@@ -257,4 +258,108 @@ export const getJobs = async (jobId: string) => {
   });
 
   return response;
+}
+
+export const postChat = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/chats`, {
+    method: "post",
+    params: params,
+  });
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return "";
+  }
+  return response;
+};
+export const postCallSync = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/chats/callSync`, {
+    method: "post",
+    params: params,
+  });
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return "";
+  }
+  return response;
+};
+export const getChat = async (params: any) => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/chats`, {
+    method: "get",
+    params: params,
+  });
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return "";
+  }
+  return response;
+};
+
+export const DeleteChat = async (jobId: string) => {
+  const response = await request(
+    `${HTTP_SERVICE_URL}/api/chats/jobs/${jobId}`,
+    {
+      method: "delete",
+    }
+  );
+
+  if (!response.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.computing.QueryFailedResponsemessage",
+          dm: "删除失败: {responseMessage}",
+        },
+        { responseMessage: response.message }
+      )
+    );
+    return "";
+  }
+  return response;
+};
+export const getllmsList = async () => {
+  const response = await request(`${HTTP_SERVICE_URL}/api/llms`, {
+    method: "get",
+  });
+
+  if (!response?.success) {
+    message.error(
+      $i18n.get(
+        {
+          id: "openpiece-geaflow.geaflow.services.file-manage.QueryFailedResponsemessage",
+          dm: "查询失败: {responseMessage}",
+        },
+        { responseMessage: response?.message }
+      )
+    );
+    return [];
+  }
+  return response?.data.list;
+
 };

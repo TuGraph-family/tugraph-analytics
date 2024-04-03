@@ -12,3 +12,4 @@ export { VersionManage } from "./version-manage";
 export { TenantManage } from "./tenant-manage";
 export { GeaflowFunctionManage } from "./function-manage";
 export { GeaflowPlugManage } from "./plug-manage/index";
+export { LanguageManage } from "./language-manage";

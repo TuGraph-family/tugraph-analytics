@@ -38,7 +38,7 @@ public class GeaflowConfig extends LinkedHashMap<String, Object> {
         return stringMap;
     }
 
-    public final <T extends GeaflowConfigClass> T parse(Class<T> clazz) {
+    public final <T extends GeaflowConfigClass> T parse(Class<T> clazz, boolean fillWithDefault) {
         if (Modifier.isAbstract(clazz.getModifiers())) {
             throw new GeaflowException("Config field abstract type {} can't be parsed", clazz);
         }
@@ -53,7 +53,9 @@ public class GeaflowConfig extends LinkedHashMap<String, Object> {
             for (ConfigDescItem item : configDesc.getItems()) {
                 String key = item.getKey();
                 Object value = this.get(key);
-
+                if (value == null && fillWithDefault) {
+                    value = item.getDefaultValue();
+                }
                 if (GeaflowConfigType.CONFIG.equals(item.getType())) {
                     value = innerParse(item, value);
 
@@ -82,6 +84,10 @@ public class GeaflowConfig extends LinkedHashMap<String, Object> {
         } catch (Exception e) {
             throw new GeaflowException("Parse config with {} failed", clazz.getSimpleName(), e);
         }
+    }
+
+    public final <T extends GeaflowConfigClass> T parse(Class<T> clazz) {
+        return parse(clazz, false);
     }
 
     private Object innerParse(ConfigDescItem item, Object value) {
