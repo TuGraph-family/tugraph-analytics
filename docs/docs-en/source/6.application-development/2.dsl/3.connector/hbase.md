@@ -1,7 +1,7 @@
 # Hbase Connector Introduction
 The HBase Connector is contributed by the community and supports Sink yet.
 
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE hbase_table (
@@ -15,7 +15,7 @@ CREATE TABLE hbase_table (
     geaflow.dsl.hbase.rowkey.column = 'id'
 );
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
@@ -27,7 +27,7 @@ CREATE TABLE hbase_table (
 | geaflow.dsl.hbase.familyname.mapping     | false     | HBase column family name mapping.     |
 | geaflow.dsl.hbase.buffersize     | false     | HBase writer buffer size.     |
 
-# Example
+## Example
 
 ```sql
 CREATE TABLE file_source (

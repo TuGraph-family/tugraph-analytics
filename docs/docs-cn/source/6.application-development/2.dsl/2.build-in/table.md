@@ -1,3 +1,5 @@
+# Table
+
 TABLE 函数对每个输入返回若干行数据。
 
 **Table Function Syntax**
@@ -8,7 +10,7 @@ FROM (Table | SubQuery),
 LATERAL TABLE '('TableFunctionRef')' AS Identifier '(' Identifier (,Identifier)* ')'
 ```
 
-# split
+## split
 **Syntax**
 
 ```sql

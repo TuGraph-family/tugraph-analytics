@@ -1,6 +1,6 @@
 # Console Connector Introduction
 
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE console_table (
@@ -12,13 +12,13 @@ CREATE TABLE console_table (
     geaflow.dsl.console.skip = true
 )
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- |------------------------|
 | geaflow.dsl.console.skip     | false     | Whether to skip the log, i.e., no output at all. The default value is false. |
 
-# Example
+## Example
 
 ```sql
 CREATE TABLE file_source (

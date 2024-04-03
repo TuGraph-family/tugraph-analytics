@@ -116,10 +116,10 @@ public interface TableSink extends Serializable {
 }
 ```
 
-# Example
+## Example
 Here is an example for console table connector.
 
-## Implement TableConnector
+### Implement TableConnector
 
 ```java
 public class ConsoleTableConnector implements TableWritableConnector {
@@ -173,7 +173,7 @@ public class ConsoleTableSink implements TableSink {
 After implement the **ConsoleTableConnector**, you should put the full class name to
 the **resources/META-INF.services/com.antgroup.geaflow.dsl.connector.api.TableConnector**
 
-## Usage
+### Usage
 
 ```java
 CREATE TABLE file_source (

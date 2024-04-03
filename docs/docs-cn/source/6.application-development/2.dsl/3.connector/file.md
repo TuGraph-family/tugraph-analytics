@@ -1,6 +1,6 @@
 # File Connector介绍
 GeaFlow 支持从文件中读取数据，也支持向文件写入数据。
-# 语法
+## 语法
 
 ```sql
 CREATE TABLE file_table (
@@ -12,7 +12,7 @@ CREATE TABLE file_table (
     geaflow.dsl.file.path = '/path/to/file'
 )
 ```
-# 参数
+## 参数
 
 | 参数名 | 是否必须 | 描述                           |
 | -------- |------|------------------------------|
@@ -23,7 +23,7 @@ CREATE TABLE file_table (
 | geaflow.dsl.file.name.regex    | 否    | 读取文件名称正则过滤规则，默认为空。           |
 | geaflow.dsl.file.format     | 否    | 读写文件格式，支持parquet、txt，默认为txt。 |
 
-# 示例
+## 示例
 
 ```sql
 CREATE TABLE file_source (

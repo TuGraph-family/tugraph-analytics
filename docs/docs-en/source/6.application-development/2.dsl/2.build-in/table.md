@@ -1,3 +1,5 @@
+# Table
+
 The table function returns a list of rows for each input.
 **Table Function Syntax**
 
@@ -7,7 +9,7 @@ FROM (Table | SubQuery),
 LATERAL TABLE '('TableFunctionRef')' AS Identifier '(' Identifier (,Identifier)* ')'
 ```
 
-# split
+## split
 **Syntax**
 
 ```sql

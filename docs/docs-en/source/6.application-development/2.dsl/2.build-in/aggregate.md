@@ -1,3 +1,5 @@
+# Aggregate
+
 GeaFlow support the following aggregate functions:
 * [COUNT](#COUNT)
 * [MAX](#MAX)
@@ -5,7 +7,7 @@ GeaFlow support the following aggregate functions:
 * [SUM](#SUM)
 * [AVG](#AVG)
 
-# COUNT
+## COUNT
 **Syntax**
 
 ```sql
@@ -22,7 +24,7 @@ select count(distinct id) from user;
 select count(1) from user;
 ```
 
-# MAX
+## MAX
 **Syntax**
 
 ```sql
@@ -41,7 +43,7 @@ select id, max(age) from user group by id;
 select max(name) from user;
 ```
 
-# MIN
+## MIN
 **Syntax**
 
 ```sql
@@ -60,7 +62,7 @@ select id, min(age) from user group by id;
 select min(name) from user;
 ```
 
-# SUM
+## SUM
 **Syntax**
 
 ```sql
@@ -79,7 +81,7 @@ select sum(DISTINCT age) from user;
 select sum(1) from user;
 ```
 
-# AVG
+## AVG
 **Syntax**
 
 ```sql

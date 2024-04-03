@@ -1,3 +1,5 @@
+# String
+
 GeaFlow support the following string functions.
 * [ascii2str](#ascii2str)
 * [base64_decode](#base64_decode)
@@ -27,7 +29,7 @@ GeaFlow support the following string functions.
 * [urldecode](#urldecode)
 * [urlencode](#urlencode)
 
-# ascii2str
+## ascii2str
 **Syntax**
 
 ```sql
@@ -44,7 +46,7 @@ ascii2str(66) = 'B'
 ascii2str(48) = '0'
 ```
 
-# base64_decode
+## base64_decode
 **Syntax**
 
 ```sql
@@ -61,7 +63,7 @@ base64_decode('dGVzdF9zdHJpbmc=') = 'test_string'
 base64_decode(null) = null
 ```
 
-# base64_encode
+## base64_encode
 **Syntax**
 
 ```sql
@@ -77,7 +79,7 @@ base64_encode('abc ') = 'YWJjIA=='
 base64_encode('test_string') = 'dGVzdF9zdHJpbmc='
 ```
 
-# concat
+## concat
 **Syntax**
 
 ```sql
@@ -94,7 +96,7 @@ concat('1','2',null) = '12'
 concat(null) = null;
 ```
 
-# concat_ws
+## concat_ws
 **Syntax**
 
 ```sql
@@ -112,7 +114,7 @@ concat_ws(',','1',null,'c') = '1,,c'
 concat_ws(null, 'a','b','c') = 'abc'
 ```
 
-# hash
+## hash
 **Syntax**
 
 ```sql
@@ -128,7 +130,7 @@ hash('1') = 49
 hash(2) = 2
 ```
 
-# index_of
+## index_of
 **Syntax**
 
 ```sql
@@ -146,7 +148,7 @@ index_of('a test string', 'test') = 2
 index_of(null, 'test') = -1
 ```
 
-# instr
+## instr
 **Syntax**
 
 ```sql
@@ -168,7 +170,7 @@ instr('abc', 'a', 3, -1) = null
 instr('abc', null) = null
 ```
 
-# isBlank
+## isBlank
 **Syntax**
 
 ```sql
@@ -184,7 +186,7 @@ isBlank('test') = false
 isBlank(' ') = true
 ```
 
-# length
+## length
 **Syntax**
 
 ```sql
@@ -200,7 +202,7 @@ length('abc') = 3
 length('abc  ') = 5
 ```
 
-# like
+## like
 **Syntax**
 
 ```sql
@@ -217,7 +219,7 @@ like('test', 'abc\\%') = false
 like('abc', 'a%bc') = true
 ```
 
-# lower
+## lower
 **Syntax**
 
 ```sql
@@ -233,7 +235,7 @@ lower('ABC') = 'abc'
 lower(null) = null
 ```
 
-# ltrim
+## ltrim
 **Syntax**
 
 ```sql
@@ -249,7 +251,7 @@ ltrim('    abc    ') = 'abc    '
 ltrim('   test') = 'test'
 ```
 
-# regexp
+## regexp
 **Syntax**
 
 ```sql
@@ -266,7 +268,7 @@ regexp('a.b.c.d.e.f', '.d%') = false
 regexp('a.b.c.d.e.f', null) = null
 ```
 
-# regexp_count
+## regexp_count
 **Syntax**
 
 ```sql
@@ -284,7 +286,7 @@ regexp('ab1d2d3dsss', '[0-9]d', 8) = 0
 regexp('ab1d2d3dsss', '.b') = 1
 ```
 
-# regexp_extract
+## regexp_extract
 **Syntax**
 
 ```sql
@@ -301,7 +303,7 @@ regexp_extract('abchebar', 'abc(.*?)(bar)', 1) = 'he'
 regexp_extract('100-200', '(\d+)-(\d+)') = '100'
 ```
 
-# regexp_replace
+## regexp_replace
 **Syntax**
 
 ```sql
@@ -319,7 +321,7 @@ regexp_replace('adfabadfasdf', '[a]', '3') = '3df3b3df3sdf'
 ```
 
 
-# repeat
+## repeat
 **Syntax**
 
 ```sql
@@ -335,7 +337,7 @@ repeat('abc', 3) = 'abcabcabc'
 repeat(null, 4) = null
 ```
 
-# replace
+## replace
 **Syntax**
 
 ```sql
@@ -351,7 +353,7 @@ replace('test test', 'test', 'c') = 'c c'
 replace('test test', 'test', '') = ' '
 ```
 
-# reverse
+## reverse
 **Syntax**
 
 ```sql
@@ -367,7 +369,7 @@ reverse('abc') = 'cba'
 reverse(null) = null
 ```
 
-# rtrim
+## rtrim
 **Syntax**
 
 ```sql
@@ -383,7 +385,7 @@ rtrim('    abc    ') = '    abc'
 rtrim('test') = 'test'
 ```
 
-# space
+## space
 **Syntax**
 
 ```sql
@@ -399,7 +401,7 @@ space(5) = '     '
 space(null) = null
 ```
 
-# split_ex
+## split_ex
 **Syntax**
 
 ```sql
@@ -417,7 +419,7 @@ split_ex('a.b.c.d.e', '.', -1) = null
 ```
 
 
-# substr
+## substr
 **Syntax**
 
 ```sql
@@ -434,7 +436,7 @@ substr('testString', 5, 10) = 'String'
 substr('testString', -6) = 'String'
 ```
 
-# trim
+## trim
 **Syntax**
 
 ```sql
@@ -450,7 +452,7 @@ trim('    abc    ') = 'abc'
 trim('abc') = 'abc'
 ```
 
-# upper
+## upper
 **Syntax**
 
 ```sql
@@ -466,7 +468,7 @@ upper('abc') = 'ABC'
 upper(null) = null
 ```
 
-# urldecode
+## urldecode
 **Syntax**
 
 ```sql
@@ -482,7 +484,7 @@ urldecode('a%3d0%26c%3d1') = 'a=0&c=1'
 urldecode('a%3D2') = 'a=2'
 ```
 
-# urlencode
+## urlencode
 **Syntax**
 
 ```sql

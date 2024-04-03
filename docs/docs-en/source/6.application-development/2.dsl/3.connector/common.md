@@ -1,7 +1,7 @@
 # Introduction to Connector Basics
 GeaFlow supports reading and writing data from various connectors. GeaFlow identifies them as external tables and stores the metadata in the Catalog.
 
-# Syntax
+## Syntax
 
 ```sql
 CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table (
@@ -25,7 +25,7 @@ The WITH clause is used to specify the configuration information for the Connect
 
 Additionally, we can add table parameters in the WITH clause. These parameters will override the external (SQL file, job parameters) configurations and have the highest priority.
 
-# Common Options
+## Common Options
 
 | Key                                             | Required | Description                                     |
 |-----------------------------------------------|----------|-------------------------------------------------|
@@ -34,7 +34,7 @@ Additionally, we can add table parameters in the WITH clause. These parameters w
 | geaflow.dsl.partitions.per.source.parallelism | false        | Groups several shards of the Source together to reduce the resource usage associated with concurrency.                |
 
 
-# Example
+## Example
 
 ```sql
 CREATE TABLE console_sink (

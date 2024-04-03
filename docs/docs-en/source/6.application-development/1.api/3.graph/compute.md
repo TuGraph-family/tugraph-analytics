@@ -1,8 +1,8 @@
 # Graph Compute Introduction
 GeaFlow provides interfaces for implementing graph computing algorithms, and static or dynamic graph computing can be performed by implementing the corresponding interfaces. Users can define specific computing logic and maximum iteration times in the compute algorithm.
 
-# Dynamic Graph
-## Interface
+## Dynamic Graph
+### Interface
 | API | Interface Description | Input Parameter Description |
 | -------- | -------- | -------- |
 | void init(IncGraphComputeContext<K, VV, EV, M> incGraphContext) | Graph computing initialization interface | incGraphContext: Context for incremental dynamic graph computing, where K represents the type of vertex ID, VV represents the type of vertex value, EV represents the type of edge value, and M represents the type of message to be sent |
@@ -116,7 +116,7 @@ public interface IncVertexCentricComputeFunction<K, VV, EV, M> extends
 }
 ```
 
-## Example
+### Example
 
 ```java
 public class IncrGraphCompute {
@@ -232,8 +232,8 @@ public class IncrGraphCompute {
 }
 ```
 
-# Static Graph
-## Interface
+## Static Graph
+### Interface
 | API | Interface Description | Input Parameter Description |
 | -------- | -------- | -------- |
 | void init(VertexCentricComputeFuncContext<K, VV, EV, M> vertexCentricFuncContext) | Iterative computing initialization interface | vertexCentricFuncContext: Context for static graph computing, where K represents the type of vertex ID, VV represents the type of vertex value, EV represents the type of edge value, and M represents the type of message to be sent |
@@ -263,7 +263,7 @@ EV, M> {
 }
 ```
 
-## Example
+### Example
 ```java
 public class StaticsGraphCompute {
     

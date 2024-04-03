@@ -1,3 +1,5 @@
+# Logical
+
 Geaflow supports the following logical operations.
 
 Operation|Description

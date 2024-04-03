@@ -1,6 +1,6 @@
 # Hive Connector Introduction
 GeaFlow support read data from hive table through the hive metastore server. Currently we support Hive 2.3.x version.
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE hive_table (
@@ -14,7 +14,7 @@ CREATE TABLE hive_table (
 	geaflow.dsl.hive.metastore.uris = 'thrift://localhost:9083'
 )
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
@@ -23,7 +23,7 @@ CREATE TABLE hive_table (
 | geaflow.dsl.hive.metastore.uris     | true     | The hive metastore uris     |
 | geaflow.dsl.hive.splits.per.partition     | false     | The number of splits for each hive partition.Default value is 1.     |
 
-# Example
+## Example
 
 ```sql
 CREATE TABLE hive_table (

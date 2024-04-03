@@ -1,8 +1,10 @@
+# Condition
+
 GeaFlow支持**Case**和**If**条件函数。
 * [Case](#Case)
 * [If](#If)
 
-# Case
+## Case
 **Syntax**
 
 ```sql
@@ -42,7 +44,7 @@ CASE WHEN a = 1 THEN '1'
 END
 ```
 
-# If
+## If
 **Syntax**
 
 ```sql

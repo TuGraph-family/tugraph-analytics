@@ -2,7 +2,7 @@
 GeaFlow provides Source API to the public, and IWindow needs to be provided at the interface level to build the corresponding window source. Users can define the specific source reading logic by implementing SourceFunction.
 
 
-# Interface
+## Interface
 
 | API | Interface Description | Input Parameter Description |
 | -------- | -------- | -------- |
@@ -21,7 +21,7 @@ To build a window source, users can generally use the buildSource interface prov
             SizeTumblingWindow.of(2));
 ```
 
-# Example
+## Example
 ```java
 public class WindowStreamWordCount {
 

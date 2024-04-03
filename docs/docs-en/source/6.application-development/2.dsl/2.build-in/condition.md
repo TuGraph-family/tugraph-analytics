@@ -1,8 +1,10 @@
+# condition
+
 GeaFlow support both **Case** And **If** condition functions.
 * [Case](#Case)
 * [If](#If)
 
-# Case
+## Case
 **Syntax**
 
 ```sql
@@ -42,7 +44,7 @@ CASE WHEN a = 1 THEN '1'
 END
 ```
 
-# If
+## If
 **Syntax**
 
 ```sql

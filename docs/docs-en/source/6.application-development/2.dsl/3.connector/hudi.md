@@ -1,6 +1,6 @@
 # Hudi Connector Introduction
 GeaFlow Hudi currently supports reading data from files.
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE IF NOT EXISTS hudi_person (
@@ -12,14 +12,14 @@ CREATE TABLE IF NOT EXISTS hudi_person (
   geaflow.dsl.file.path='/path/to/hudi_person'
 );
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
 | geaflow.dsl.file.path     | true     | The path of the file or folder to read from or write to.     |
 | geaflow.file.persistent.config.json     | false    | JSON-formatted DFS configuration, which will override the system environment configuration.      |
 
-# Example
+## Example
 
 ```sql
 set geaflow.dsl.window.size = -1;

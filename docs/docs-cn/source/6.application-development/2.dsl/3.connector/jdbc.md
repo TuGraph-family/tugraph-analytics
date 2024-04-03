@@ -1,6 +1,6 @@
 # JDBC Connector介绍
 JDBC Connector由社区贡献，支持读和写。
-# 语法
+## 语法
 
 ```sql
 CREATE TABLE jdbc_table (
@@ -16,7 +16,7 @@ CREATE TABLE jdbc_table (
     geaflow.dsl.jdbc.table.name = 'source_table'
 );
 ```
-# 参数
+## 参数
 
 | 参数名 | 是否必须 | 描述                                                |
 | -------- |------|---------------------------------------------------|
@@ -31,7 +31,7 @@ CREATE TABLE jdbc_table (
 | geaflow.dsl.jdbc.partition.upperbound     | 否    | The upperbound of JDBC partition, just used to decide the partition stride, not for filtering the rows in table.                            |
 
 
-# 示例
+## 示例
 
 ```sql
 set geaflow.dsl.jdbc.driver = 'org.h2.Driver';

@@ -1,4 +1,4 @@
-流
+Stream
 ====
 
 .. toctree::

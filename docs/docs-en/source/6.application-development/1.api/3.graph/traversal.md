@@ -1,8 +1,8 @@
 # Graph Traversal Introduction
 GeaFlow provides interfaces for implementing graph traversal algorithms, which can be used for subgraph traversal and full graph traversal. Users can choose to continue traversing vertices or edges in the traversal algorithm and define the number of iterations.
 
-# Dynamic Graph
-## Interface
+## Dynamic Graph
+### Interface
 | API | Interface Description | Input Parameter Description |
 | -------- | -------- | -------- |
 | void open(IncVertexCentricTraversalFuncContext<K, VV, EV, M, R> vertexCentricFuncContext) | Perform the open operation of vertexCentricFunction | vertexCentricFuncContext: where K represents the type of vertex ID, VV represents the type of vertex value, EV represents the type of edge value, M represents the type of message defined in graph traversal, and R represents the type of traversal result |
@@ -53,7 +53,7 @@ GeaFlow provides interfaces for implementing graph traversal algorithms, which c
 }
 ```
 
-## Example
+### Example
 ```java
 public class IncrGraphTraversalAll {
 
@@ -202,9 +202,9 @@ public class IncrGraphTraversalAll {
 }
 ```
 
-# Statical Graph
+## Statical Graph
 
-## Interface
+### Interface
 | API | Interface Description | Input Parameter Description |
 | -------- | -------- | -------- |
 | void open(VertexCentricTraversalFuncContext<K, VV, EV, M, R> vertexCentricFuncContext) | Perform open operation using vertexCentric function | vertexCentricFuncContext: K represents the type of vertex ID, VV represents the type of vertex value, EV represents the type of edge value, M represents the type of message defined in graph traversal, and R represents the type of traversal result |
@@ -251,7 +251,7 @@ public interface VertexCentricTraversalFunction<K, VV, EV, M, R> extends VertexC
 }
 ```
 
-## Example
+### Example
 ```java
 public class StaticGraphTraversalAllExample {
     private static final Logger LOGGER =

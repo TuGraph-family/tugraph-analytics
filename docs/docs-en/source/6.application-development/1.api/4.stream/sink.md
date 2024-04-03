@@ -1,7 +1,7 @@
 # Sink Introduction
 GeaFlow provides Sink API to the public, used to build Window Sink. Users can define specific output logic by implementing SinkFunction.
 
-# Interface
+## Interface
 | API | Interface Description | Input Parameter Description |
 | -------- | -------- | -------- |
 | PStreamSink<T> sink(SinkFunction<T> sinkFunction)     | Output the result     |SinkFunction: Users can define their respective output semantics by implementing the SinkFunction interface. GeaFlow has integrated several sink functions internally, such as Console, File, etc.|
@@ -11,7 +11,7 @@ GeaFlow provides Sink API to the public, used to build Window Sink. Users can de
 	source.sink(v -> {LOGGER.info("result: {}", v)});
 ```
 
-# Example
+## Example
 ```java
 public class WindowStreamWordCount {
 

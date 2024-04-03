@@ -1,3 +1,5 @@
+# Glossary
+
 **K8S**：k8s is short for Kubernetes, which is an open-source container orchestration platform that provides automated deployment, scaling, and management of containerized applications. It can run on various cloud platforms, physical servers, and virtual machines, and supports multiple container runtimes, enabling high availability, load balancing, automatic scaling, and automatic repair, and other functions.
 
 **Graph Processing**： Graph Processing is a computing model used to solve computational problems related to graph data structures. The graph computing model can be applied to solve many real-world problems, such as social network analysis, network traffic analysis, medical diagnosis, and more.

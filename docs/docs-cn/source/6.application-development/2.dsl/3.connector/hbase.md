@@ -1,7 +1,7 @@
 # Hbase Connector介绍
 Hbase Connector由社区贡献，目前仅支持Sink。
 
-# 语法示例
+## 语法示例
 
 ```sql
 CREATE TABLE hbase_table (
@@ -15,7 +15,7 @@ CREATE TABLE hbase_table (
     geaflow.dsl.hbase.rowkey.column = 'id'
 );
 ```
-# 参数
+## 参数
 
 | 参数名 | 是否必须 | 描述 |
 | -------- | -------- | -------- |
@@ -27,7 +27,7 @@ CREATE TABLE hbase_table (
 | geaflow.dsl.hbase.familyname.mapping     | 否     | HBase column family name mapping.     |
 | geaflow.dsl.hbase.buffersize     | 否     | HBase writer buffer size.     |
 
-# 示例
+## 示例
 
 ```sql
 CREATE TABLE file_source (

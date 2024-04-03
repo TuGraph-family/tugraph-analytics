@@ -1,6 +1,6 @@
 # UDGA Introduction
 The UDGA (User Defined Graph Algorithm) defined a graph algorithm.e.g. sssp, pagerank.
-# Interface
+## Interface
 
 ```java
 /**
@@ -30,7 +30,7 @@ public interface AlgorithmUserFunction<K, M> extends Serializable {
 
 ```
 
-# Example
+## Example
 
 ```java
 public class PageRank implements AlgorithmUserFunction {

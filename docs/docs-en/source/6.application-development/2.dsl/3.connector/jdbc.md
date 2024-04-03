@@ -1,6 +1,6 @@
 # JDBC Connector Introduction
 The JDBC Connector is contributed by the community and supports both reading and writing operations.
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE jdbc_table (
@@ -16,7 +16,7 @@ CREATE TABLE jdbc_table (
     geaflow.dsl.jdbc.table.name = 'source_table'
 );
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- |------|---------------------------------------------------|
@@ -31,7 +31,7 @@ CREATE TABLE jdbc_table (
 | geaflow.dsl.jdbc.partition.upperbound     | false    | The upperbound of JDBC partition, just used to decide the partition stride, not for filtering the rows in table.                            |
 
 
-# Example
+## Example
 
 ```sql
 set geaflow.dsl.jdbc.driver = 'org.h2.Driver';

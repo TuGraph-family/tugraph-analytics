@@ -1,3 +1,5 @@
+# Math
+
 Geaflow supports the following mathematical operations.
 
 | Operation | Description |

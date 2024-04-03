@@ -1,6 +1,6 @@
 # File Connector Introduction
 GeaFlow support read data from file and write data to file.
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE file_table (
@@ -12,7 +12,7 @@ CREATE TABLE file_table (
     geaflow.dsl.file.path = '/path/to/file'
 )
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
@@ -23,7 +23,7 @@ CREATE TABLE file_table (
 | geaflow.dsl.file.name.regex    | false    | The regular expression filter rule for file name reading is empty by default.           |
 | geaflow.dsl.file.format     | false    | The file format for reading and writing supports Parquet and TXT, with the default format being TXT. |
 
-# Example
+## Example
 
 ```sql
 CREATE TABLE file_source (

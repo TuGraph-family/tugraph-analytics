@@ -1,6 +1,6 @@
 # Hive Connector介绍
 GeaFlow 支持通过 Hive metastore 服务器读取 Hive 表中的数据。目前，我们支持 Hive 2.3.x系列版本。
-# 语法
+## 语法
 
 ```sql
 CREATE TABLE hive_table (
@@ -14,7 +14,7 @@ CREATE TABLE hive_table (
 	geaflow.dsl.hive.metastore.uris = 'thrift://localhost:9083'
 )
 ```
-# 参数
+## 参数
 
 | 参数名 | 是否必须 | 描述 |
 | -------- | ---- | -------- |
@@ -23,7 +23,7 @@ CREATE TABLE hive_table (
 | geaflow.dsl.hive.metastore.uris     | 是 | 连接Hive元数据metastore的uri列表     |
 | geaflow.dsl.hive.splits.per.partition     | 否 | 每个Hive分片的逻辑分片数量，默认为1     |
 
-# 示例
+## 示例
 
 ```sql
 CREATE TABLE hive_table (

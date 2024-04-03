@@ -1,6 +1,6 @@
 # Kafka Connector Introduction
 GeaFlow support read data from kafka and write data to kafka. Currently support kafka version is 2.4.1.
-# Syntax
+## Syntax
 
 ```sql
 CREATE TABLE kafka_table (
@@ -13,7 +13,7 @@ CREATE TABLE kafka_table (
 	geaflow.dsl.kafka.topic = 'test-topic'
 )
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
@@ -22,7 +22,7 @@ CREATE TABLE kafka_table (
 | geaflow.dsl.kafka.group.id     | false     | The kafka group id. Default value is: 'default-group-id'.|
 
 
-# Example
+## Example
 
 ```sql
 CREATE TABLE kafka_source (

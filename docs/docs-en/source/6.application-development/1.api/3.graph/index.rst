@@ -1,4 +1,4 @@
-图
+Graph
 ====
 
 .. toctree::

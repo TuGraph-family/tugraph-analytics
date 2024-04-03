@@ -1,6 +1,6 @@
 # Pulsar Connector Introduction
 GeaFlow supports reading data from Pulsar and writing data to Pulsar. The currently supported Pulsar version is 2.8.1.
-# Syntax
+## Syntax
 ```sql
 CREATE TABLE pulsar_table (
   id BIGINT,
@@ -14,7 +14,7 @@ CREATE TABLE pulsar_table (
     `geaflow.dsl.pulsar.subscriptionInitialPosition` = 'latest'
 )
 ```
-# Options
+## Options
 
 | Key | Required | Description |
 | -------- | -------- | -------- |
@@ -24,7 +24,7 @@ CREATE TABLE pulsar_table (
 | geaflow.dsl.pulsar.subscriptionInitialPosition     | No     | The initial position of consumer, default is 'latest'.|
 
 Note: Pulsar connector cannot specify a partition topic. If you want to consume messages for a certain partition, please select the sub topic name of the partition topic.
-# Example1
+## Example1
 Example 1 is from pulsar to `topic_read` data and write it to the `topic_write`.
 ```sql
 CREATE TABLE pulsar_source (
@@ -51,7 +51,7 @@ CREATE TABLE pulsar_sink (
 INSERT INTO pulsar_sink
 SELECT * FROM pulsar_source;
 ```
-# Example2
+## Example2
 Similarly, we can also perform a fourth degree loop detection.
 ```sql
 set geaflow.dsl.window.size = 1;

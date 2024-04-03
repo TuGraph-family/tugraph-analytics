@@ -1,6 +1,6 @@
 # UDAF Introduction
 The UDAF (User Defined Aggregate Function) aggregate multi-rows to a single value.
-# Interface
+## Interface
 
 ```java
 public abstract class UserDefinedFunction implements Serializable {
@@ -51,7 +51,7 @@ public abstract class UDAF<InputT, AccumT, OutputT> extends UserDefinedFunction 
 
 ```
 
-# Example
+## Example
 
 ```java
 public class AvgDouble extends UDAF<Double, Accumulator, Double> {

@@ -1,7 +1,7 @@
 # Connector基础介绍
 GeaFlow 支持从各类connector中读写数据，GeaFlow将它们都识别为外部表，并将元数据存储在Catalog中。
 
-# 语法
+## 语法
 
 ```sql
 CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table (
@@ -23,7 +23,7 @@ WITH子句用于指定Connector的配置信息，其中的type字段必须，用
 
 同时我们可以在WITH中添加表的参数，这些参数会覆盖掉外部(SQL文件中、作业参数中)的配置项，具有最高优先级。
 
-# 主要参数
+## 主要参数
 
 | 参数名                          | 是否必须 | 描述                                                                                                            |
 |------------------------------| -------- |---------------------------------------------------------------------------------------------------------------|
@@ -32,7 +32,7 @@ WITH子句用于指定Connector的配置信息，其中的type字段必须，用
 | geaflow.dsl.partitions.per.source.parallelism | 否     | 将Source的分片若干个编为一组，减少并发数关联的资源使用量。      |
 
 
-# 示例
+## 示例
 
 ```sql
 CREATE TABLE console_sink (
