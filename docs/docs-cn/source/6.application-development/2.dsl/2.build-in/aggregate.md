@@ -1,13 +1,13 @@
 # Aggregate
 
 GeaFlow支持以下聚合函数：
-* [count](#COUNT)
-* [max](#MAX)
-* [min](#MIN)
-* [sum](#SUM)
+* [count](#count)
+* [max](#max)
+* [min](#min)
+* [sum](#sum)
 * [avg](#avg)
 
-## COUNT
+## count
 **Syntax**
 
 ```sql
@@ -24,7 +24,7 @@ select count(distinct id) from user;
 select count(1) from user;
 ```
 
-## MAX
+## max
 **Syntax**
 
 ```sql
@@ -43,7 +43,7 @@ select id, max(age) from user group by id;
 select max(name) from user;
 ```
 
-## MIN
+## min
 **Syntax**
 
 ```sql
@@ -62,7 +62,7 @@ select id, min(age) from user group by id;
 select min(name) from user;
 ```
 
-## SUM
+## sum
 **Syntax**
 
 ```sql
