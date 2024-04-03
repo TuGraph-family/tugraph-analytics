@@ -6,4 +6,4 @@
    :caption: Contents:
    :glob:
 
-   *
+   install_guide.md
