@@ -1,6 +1,6 @@
 # UDAF介绍
 UDAF（User Define Aggregate Function）将多行数据聚合为单个值。
-# 接口
+## 接口
 
 ```java
 public abstract class UserDefinedFunction implements Serializable {
@@ -51,7 +51,7 @@ public abstract class UDAF<InputT, AccumT, OutputT> extends UserDefinedFunction 
 
 ```
 
-# 示例
+## 示例
 
 ```java
 public class AvgDouble extends UDAF<Double, Accumulator, Double> {

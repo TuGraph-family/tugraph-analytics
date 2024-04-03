@@ -1,6 +1,6 @@
 # UDGA介绍
 UDGA（User Define Graph Algorithm）定义了一个图算法，例如SSSP（单源最短路径）和PageRank算法。
-# 接口
+## 接口
 
 ```java
 /**
@@ -30,7 +30,7 @@ public interface AlgorithmUserFunction<K, M> extends Serializable {
 
 ```
 
-# 示例
+## 示例
 
 ```java
 public class PageRank implements AlgorithmUserFunction {
