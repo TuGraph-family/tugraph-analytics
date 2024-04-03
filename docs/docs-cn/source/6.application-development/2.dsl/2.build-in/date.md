@@ -1,8 +1,8 @@
 # Date
 
 GeaFlow支持以下日期函数：
-* [from_unixtime](##from_unixtime)
-* [from_unixtime_millis](from_unixtime_millis)
+* [from_unixtime](#from_unixtime)
+* [from_unixtime_millis](#from_unixtime_millis)
 * [unix_timestamp](#unix_timestamp)
 * [unix_timestamp_millis](#unix_timestamp_millis)
 * [isdate](#isdate)

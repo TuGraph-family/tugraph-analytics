@@ -1,11 +1,11 @@
 # Aggregate
 
 GeaFlow支持以下聚合函数：
-* [COUNT](COUNT)
-* [MAX](MAX)
-* [MIN](MIN)
-* [SUM](SUM)
-* [AVG](AVG)
+* [count](#COUNT)
+* [max](#MAX)
+* [min](#MIN)
+* [sum](#SUM)
+* [avg](#avg)
 
 ## COUNT
 **Syntax**
@@ -81,7 +81,7 @@ select sum(DISTINCT age) from user;
 select sum(1) from user;
 ```
 
-## AVG
+## avg
 **Syntax**
 
 ```sql

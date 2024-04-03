@@ -1,4 +1,4 @@
-原理
+Principle
 ====
 
 .. toctree::
