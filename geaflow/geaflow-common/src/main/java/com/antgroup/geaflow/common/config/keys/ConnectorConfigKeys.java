@@ -49,6 +49,12 @@ public class ConnectorConfigKeys implements Serializable {
         .description("Specifies the starting unix timestamp for reading the data table. Format "
             + "must be 'yyyy-MM-dd HH:mm:ss'.");
 
+    public static final ConfigKey GEAFLOW_DSL_CONNECTOR_FORMAT = ConfigKeys
+            .key("geaflow.dsl.connector.format")
+            .defaultValue("text")
+            .description("Specifies the deserialization format for reading from external source like kafka, " +
+                    "possible option currently: json/text");
+
     /*************************************************
      *  FILE Connector Parameters.
      *************************************************/
@@ -72,3 +78,5 @@ public class ConnectorConfigKeys implements Serializable {
         .defaultValue(false)
         .description("Whether skip the header for csv format.");
 }
+
+

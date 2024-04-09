@@ -19,6 +19,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.utils.DateTimeUtil;
+import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.common.util.Windows;
@@ -27,6 +28,7 @@ import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.serde.impl.JsonDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants;
 import com.antgroup.geaflow.dsl.connector.kafka.utils.KafkaConstants;
@@ -50,6 +52,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants.CONNECTOR_FORMAT_JSON;
+
 public class KafkaTableSource implements TableSource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTableSource.class);
@@ -63,6 +67,8 @@ public class KafkaTableSource implements TableSource {
     private long windowSize;
     private int startTime;
     private Properties props;
+    private String connectorFormat;
+    private TableSchema schema;
 
     private transient KafkaConsumer<String, String> consumer;
 
@@ -90,6 +96,9 @@ public class KafkaTableSource implements TableSource {
             startTime = DateTimeUtil.toUnixTime(startTimeStr, ConnectorConstants.START_TIME_FORMAT);
         }
 
+        this.connectorFormat = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT,
+                (String) ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT.getDefaultValue());
+        this.schema = tableSchema;
         this.props = new Properties();
         props.setProperty(KafkaConstants.KAFKA_BOOTSTRAP_SERVERS, servers);
         props.setProperty(KafkaConstants.KAFKA_KEY_DESERIALIZER,
@@ -99,7 +108,7 @@ public class KafkaTableSource implements TableSource {
         props.setProperty(KafkaConstants.KAFKA_MAX_POLL_RECORDS,
             String.valueOf(windowSize));
         props.setProperty(KafkaConstants.KAFKA_GROUP_ID, groupId);
-        LOGGER.info("open kafka, servers is: {}, topic is:{}, config is:{}, schema is: {}",
+        LOGGER.info("open kafka, servers is: {}, topic is:{}, config is:{}, schema is: {}, connector format is : {}",
             servers, topic, conf, tableSchema);
     }
 
@@ -121,7 +130,11 @@ public class KafkaTableSource implements TableSource {
 
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        return (TableDeserializer<IN>) new TextDeserializer();
+        if (this.connectorFormat.equals(CONNECTOR_FORMAT_JSON)) {
+            return  (TableDeserializer<IN>) new JsonDeserializer();
+        } else {
+            return (TableDeserializer<IN>) new TextDeserializer();
+        }
     }
 
     @Override
@@ -184,6 +197,7 @@ public class KafkaTableSource implements TableSource {
         }
 
         Iterator<ConsumerRecord<String, String>> recordIterator = consumer.poll(POLL_TIMEOUT).iterator();
+
         List<String> dataList = new ArrayList<>();
         long responseMaxTimestamp = -1;
         while (recordIterator.hasNext()) {
@@ -213,6 +227,7 @@ public class KafkaTableSource implements TableSource {
         }
         LOGGER.info("close");
     }
+
 
     public static class KafkaPartition implements Partition {
 
