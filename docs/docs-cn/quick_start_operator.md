@@ -1,7 +1,7 @@
 # 开始上手(Geaflow Kubernetes Operator运行)
 
 ## 准备工作
-1. 下载安装docker和minikube。参考文档：[安装minikube](source/7.deploy/install_minikube.md)
+1. 下载安装docker和minikube。参考文档：[安装minikube](deploy/install_minikube.md)
 
 
 2. 拉取GeaFlow镜像

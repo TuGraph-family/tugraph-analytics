@@ -1,0 +1,143 @@
+site_name: GeaFlow Docs
+
+theme:
+  name: cerulean
+  nav_style: dark
+
+plugins:
+  - include-markdown
+
+nav:
+  - 'index_cn.md'
+  - 中文文档:
+        - 'docs-cn/introduction.md'
+        - 'docs-cn/quick_start.md'
+        - 'docs-cn/quick_start_docker.md'
+        - 概念:
+              - 'docs-cn/concepts/glossary.md'
+              - 'docs-cn/concepts/graph_view.md'
+              - 'docs-cn/concepts/stream_graph.md'
+        - GeaFlow应用开发:
+              - API:
+                    - 'docs-cn/application-development/api/overview.md'
+                    - 'docs-cn/application-development/api/guid.md'
+                    - 图:
+                          - 'docs-cn/application-development/api/graph/compute.md'
+                          - 'docs-cn/application-development/api/graph/traversal.md'
+                    - 流:
+                          - 'docs-cn/application-development/api/stream/process.md'
+                          - 'docs-cn/application-development/api/stream/sink.md'
+                          - 'docs-cn/application-development/api/stream/source.md'
+              - DSL:
+                    - 'docs-cn/application-development/dsl/overview.md'
+                    - 内置函数:
+                          - 'docs-cn/application-development/dsl/build-in/aggregate.md'
+                          - 'docs-cn/application-development/dsl/build-in/condition.md'
+                          - 'docs-cn/application-development/dsl/build-in/date.md'
+                          - 'docs-cn/application-development/dsl/build-in/logical.md'
+                          - 'docs-cn/application-development/dsl/build-in/math.md'
+                          - 'docs-cn/application-development/dsl/build-in/string.md'
+                          - 'docs-cn/application-development/dsl/build-in/table.md'
+                    - 连接器(Connector):
+                          - 'docs-cn/application-development/dsl/connector/common.md'
+                          - 'docs-cn/application-development/dsl/connector/file.md'
+                          - 'docs-cn/application-development/dsl/connector/console.md'
+                          - 'docs-cn/application-development/dsl/connector/jdbc.md'
+                          - 'docs-cn/application-development/dsl/connector/hive.md'
+                          - 'docs-cn/application-development/dsl/connector/kafka.md'
+                          - 'docs-cn/application-development/dsl/connector/hbase.md'
+                          - 'docs-cn/application-development/dsl/connector/hudi.md'
+                          - 'docs-cn/application-development/dsl/connector/udc.md'
+                    - 语法文档:
+                          - 'docs-cn/application-development/dsl/reference/ddl.md'
+                          - 'docs-cn/application-development/dsl/reference/dml.md'
+                          - DQL:
+                                - 'docs-cn/application-development/dsl/reference/dql/match.md'
+                                - 'docs-cn/application-development/dsl/reference/dql/select.md'
+                                - 'docs-cn/application-development/dsl/reference/dql/union.md'
+                                - 'docs-cn/application-development/dsl/reference/dql/with.md'
+                          - 'docs-cn/application-development/dsl/reference/use.md'
+                    - UDF:
+                          - 'docs-cn/application-development/dsl/udf/udaf.md'
+                          - 'docs-cn/application-development/dsl/udf/udf.md'
+                          - 'docs-cn/application-development/dsl/udf/udga.md'
+                          - 'docs-cn/application-development/dsl/udf/udtf.md'
+        - 部署:
+              - 'docs-cn/deploy/install_guide.md'
+        - 原理:
+              - 'docs-cn/principle/dsl_principle.md'
+              - 'docs-cn/principle/framework_principle.md'
+              - 'docs-cn/principle/state_principle.md'
+              - 'docs-cn/principle/vs_join.md'
+        - './docs-cn/contribution.md'
+
+  - 'index.md'
+  - English Document:
+    - 'docs-en/introduction.md'
+    - 'docs-en/quick_start.md'
+    - 'docs-en/quick_start_docker.md'
+    - Concepts:
+        - 'docs-en/concepts/glossary.md'
+        - 'docs-en/concepts/graph_view.md'
+        - 'docs-en/concepts/stream_graph.md'
+    - Application-Development:
+        - API:
+            - 'docs-en/application-development/api/overview.md'
+            - 'docs-en/application-development/api/guid.md'
+            - Graph:
+                - 'docs-en/application-development/api/graph/compute.md'
+                - 'docs-en/application-development/api/graph/traversal.md'
+            - Stream:
+                - 'docs-en/application-development/api/stream/process.md'
+                - 'docs-en/application-development/api/stream/sink.md'
+                - 'docs-en/application-development/api/stream/source.md'
+        - DSL:
+            - 'docs-en/application-development/dsl/overview.md'
+            - Build-In:
+                - 'docs-en/application-development/dsl/build-in/aggregate.md'
+                - 'docs-en/application-development/dsl/build-in/condition.md'
+                - 'docs-en/application-development/dsl/build-in/date.md'
+                - 'docs-en/application-development/dsl/build-in/logical.md'
+                - 'docs-en/application-development/dsl/build-in/math.md'
+                - 'docs-en/application-development/dsl/build-in/string.md'
+                - 'docs-en/application-development/dsl/build-in/table.md'
+            - Connector:
+                - 'docs-en/application-development/dsl/connector/common.md'
+                - 'docs-en/application-development/dsl/connector/file.md'
+                - 'docs-en/application-development/dsl/connector/console.md'
+                - 'docs-en/application-development/dsl/connector/jdbc.md'
+                - 'docs-en/application-development/dsl/connector/hive.md'
+                - 'docs-en/application-development/dsl/connector/kafka.md'
+                - 'docs-en/application-development/dsl/connector/hbase.md'
+                - 'docs-en/application-development/dsl/connector/hudi.md'
+                - 'docs-en/application-development/dsl/connector/udc.md'
+            - Reference:
+                - 'docs-en/application-development/dsl/reference/ddl.md'
+                - 'docs-en/application-development/dsl/reference/dml.md'
+                - DQL:
+                  - 'docs-en/application-development/dsl/reference/dql/match.md'
+                  - 'docs-en/application-development/dsl/reference/dql/select.md'
+                  - 'docs-en/application-development/dsl/reference/dql/union.md'
+                  - 'docs-en/application-development/dsl/reference/dql/with.md'
+                - 'docs-en/application-development/dsl/reference/use.md'
+            - UDF:
+                - 'docs-en/application-development/dsl/udf/udaf.md'
+                - 'docs-en/application-development/dsl/udf/udf.md'
+                - 'docs-en/application-development/dsl/udf/udga.md'
+                - 'docs-en/application-development/dsl/udf/udtf.md'
+    - Deploy:
+        - 'docs-en/deploy/install_guide.md'
+    - Principle:
+        - 'docs-en/principle/dsl_principle.md'
+        - 'docs-en/principle/framework_principle.md'
+        - 'docs-en/principle/state_principle.md'
+        - 'docs-en/principle/vs_join.md'
+    - './docs-en/contribution.md'
+
+markdown_extensions:
+  - toc:
+      toc_depth: 4
+
+python_version: 3.8 # use Python 3.8
+jinja2:
+  version: 3.0.0 # use Jinja2 3.0.0
