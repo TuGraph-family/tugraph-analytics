@@ -23,18 +23,6 @@ extensions = ['myst_parser',
 exclude_patterns = []
 
 
-html_theme_options = {
-    # 确保此项未被设置为 False 或者类似的隐藏导航栏的设置
-    'navigation_depth': -1,
-    'globaltoc_collapse': False,
-}
-
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
-}
-
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
