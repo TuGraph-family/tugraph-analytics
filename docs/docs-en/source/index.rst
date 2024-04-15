@@ -6,7 +6,7 @@ geaflow
    :caption: Contents:
    :glob:
 
-   1.README.md
+   ../../../README.md
    2.introduction.md
    3.quick_start.md
    4.quick_start_docker.md
