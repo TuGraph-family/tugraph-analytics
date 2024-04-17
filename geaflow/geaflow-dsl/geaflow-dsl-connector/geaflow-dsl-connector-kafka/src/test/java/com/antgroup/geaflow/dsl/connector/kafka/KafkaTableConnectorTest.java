@@ -15,7 +15,11 @@
 package com.antgroup.geaflow.dsl.connector.kafka;
 
 import com.alibaba.fastjson.JSON;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.connector.api.function.OffsetStore.ConsoleOffset;
+import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.serde.impl.JsonDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.kafka.KafkaTableSource.KafkaOffset;
 import com.antgroup.geaflow.dsl.connector.kafka.KafkaTableSource.KafkaPartition;
 import java.io.IOException;
@@ -53,5 +57,21 @@ public class KafkaTableConnectorTest {
         Assert.assertEquals(kvMap.get("offset"), "11111111");
         Assert.assertEquals(kvMap.get("type"), "TIMESTAMP");
         Assert.assertTrue(Long.parseLong(kvMap.get("writeTime")) > 0L);
+    }
+
+    @Test
+    public void testJsonDeserializer() {
+        KafkaTableSource kafkaTableSource = new KafkaTableSource();
+        Configuration conf = new Configuration();
+        conf.put("geaflow.dsl.connector.format","json");
+        TableDeserializer<Object> deserializer = kafkaTableSource.getDeserializer(conf);
+        Assert.assertEquals(deserializer.getClass(), JsonDeserializer.class);
+    }
+
+    @Test
+    public void testTextDeserializer() {
+        KafkaTableSource kafkaTableSource = new KafkaTableSource();
+        TableDeserializer<Object> deserializer = kafkaTableSource.getDeserializer(new Configuration());
+        Assert.assertEquals(deserializer.getClass(), TextDeserializer.class);
     }
 }

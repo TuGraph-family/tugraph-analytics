@@ -96,8 +96,6 @@ public class KafkaTableSource implements TableSource {
             startTime = DateTimeUtil.toUnixTime(startTimeStr, ConnectorConstants.START_TIME_FORMAT);
         }
 
-        this.connectorFormat = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT,
-                (String) ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT.getDefaultValue());
         this.schema = tableSchema;
         this.props = new Properties();
         props.setProperty(KafkaConstants.KAFKA_BOOTSTRAP_SERVERS, servers);
@@ -130,6 +128,8 @@ public class KafkaTableSource implements TableSource {
 
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
+        this.connectorFormat = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT,
+                (String) ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT.getDefaultValue());
         if (this.connectorFormat.equals(CONNECTOR_FORMAT_JSON)) {
             return  (TableDeserializer<IN>) new JsonDeserializer();
         } else {

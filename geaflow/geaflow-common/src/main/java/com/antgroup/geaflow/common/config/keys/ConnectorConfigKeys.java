@@ -52,8 +52,20 @@ public class ConnectorConfigKeys implements Serializable {
     public static final ConfigKey GEAFLOW_DSL_CONNECTOR_FORMAT = ConfigKeys
             .key("geaflow.dsl.connector.format")
             .defaultValue("text")
-            .description("Specifies the deserialization format for reading from external source like kafka, " +
-                    "possible option currently: json/text");
+            .description("Specifies the deserialization format for reading from external source like kafka, "
+                    + "possible option currently: json/text");
+
+
+    public static final ConfigKey GEAFLOW_DSL_CONNECTOR_FORMAT_JSON_IGNORE_PARSE_ERROR = ConfigKeys
+            .key("geaflow.dsl.connector.format.json.ignore-parse-error")
+            .defaultValue(false)
+            .description("for json format, skip fields and rows with parse errors instead of failing. "
+                    + "Fields are set to null in case of errors.");
+
+    public static final ConfigKey GEAFLOW_DSL_CONNECTOR_FORMAT_JSON_FAIL_ON_MISSING_FIELD = ConfigKeys
+            .key("geaflow.dsl.connector.format.json.fail-on-missing-field")
+            .defaultValue(false)
+            .description("for json format, whether to fail if a field is missing or not.");
 
     /*************************************************
      *  FILE Connector Parameters.
