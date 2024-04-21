@@ -1,20 +1,17 @@
 package com.antgroup.geaflow.dsl.connector.api.serde.impl;
 
-import com.antgroup.geaflow.common.config.ConfigKeys;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
-import com.antgroup.geaflow.dsl.common.types.ObjectType;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.math.IntRange;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +60,7 @@ public class JsonDeserializer implements TableDeserializer<String> {
             }
         }
         // if json node is null
-        for(int i = 0 ; i < schema.size() ; i++) {
+        for (int i = 0 ; i < schema.size() ; i++) {
             String fieldName = schema.getFieldNames().get(i);
             JsonNode value = jsonNode.get(fieldName);
             IType<?> type = schema.getType(i);
