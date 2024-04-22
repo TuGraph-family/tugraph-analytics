@@ -11,15 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
-
 package com.antgroup.geaflow.dsl.connector.kafka;
-
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.utils.DateTimeUtil;
-import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.common.util.Windows;
@@ -52,7 +49,6 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants.CONNECTOR_FORMAT_JSON;
 
 public class KafkaTableSource implements TableSource {
 
@@ -130,7 +126,7 @@ public class KafkaTableSource implements TableSource {
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
         this.connectorFormat = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT,
                 (String) ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT.getDefaultValue());
-        if (this.connectorFormat.equals(CONNECTOR_FORMAT_JSON)) {
+        if (this.connectorFormat.equals(ConnectorConstants.CONNECTOR_FORMAT_JSON)) {
             return  (TableDeserializer<IN>) new JsonDeserializer();
         } else {
             return (TableDeserializer<IN>) new TextDeserializer();
