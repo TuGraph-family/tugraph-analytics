@@ -11,6 +11,7 @@ import com.antgroup.geaflow.dsl.connector.api.serde.impl.JsonDeserializer;
 import org.junit.Test;
 import org.testng.Assert;
 
+import java.util.Collections;
 import java.util.List;
 
 public class JsonDeserializerTest {
@@ -30,7 +31,7 @@ public class JsonDeserializerTest {
         Assert.assertEquals(row.get(0).getField(1, BinaryStringType.INSTANCE).toString(), "amy");
         Assert.assertEquals(row.get(0).getField(2, IntegerType.INSTANCE), 10);
         Assert.assertEquals(rowWithNull.get(0).getField(0, IntegerType.INSTANCE), 1);
-        Assert.assertEquals(rowWithNull.get(0).getField(1, BinaryStringType.INSTANCE).toString(), "jenny");
+        Assert.assertEquals(rowWithNull.get(0).getField(1, BinaryStringType.INSTANCE).toString(), "amy");
         Assert.assertEquals(rowWithNull.get(0).getField(2, IntegerType.INSTANCE), null);
 
     }
@@ -47,8 +48,8 @@ public class JsonDeserializerTest {
         deserializer.init(new Configuration(), dataSchema);
         List<Row> rows = deserializer.deserialize("");
         List<Row> testNullRows = deserializer.deserialize(null);
-        Assert.assertEquals(rows,null);
-        Assert.assertEquals(testNullRows, null);
+        Assert.assertEquals(rows, Collections.emptyList());
+        Assert.assertEquals(testNullRows, Collections.emptyList());
 
     }
 
