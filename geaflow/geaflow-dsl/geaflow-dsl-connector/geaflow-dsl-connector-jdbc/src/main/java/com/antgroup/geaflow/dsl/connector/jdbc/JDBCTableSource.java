@@ -25,8 +25,8 @@ import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
+import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.RowTableDeserializer;
 import com.antgroup.geaflow.dsl.connector.jdbc.util.JDBCUtils;
 import java.io.IOException;
 import java.sql.Connection;
@@ -137,7 +137,7 @@ public class JDBCTableSource implements TableSource {
 
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        return (TableDeserializer<IN>) new RowTableDeserializer();
+        return DeserializerFactory.loadRowTableDeserializer();
     }
 
     @Override

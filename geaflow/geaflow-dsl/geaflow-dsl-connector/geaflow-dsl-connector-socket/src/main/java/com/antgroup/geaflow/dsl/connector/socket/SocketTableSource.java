@@ -25,8 +25,8 @@ import com.antgroup.geaflow.dsl.connector.api.ISkipOpenAndClose;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
+import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.socket.server.NettySourceClient;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class SocketTableSource implements TableSource, ISkipOpenAndClose {
 
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        return (TableDeserializer<IN>) new TextDeserializer();
+        return DeserializerFactory.loadTextDeserializer();
     }
 
     @Override

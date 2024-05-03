@@ -11,8 +11,8 @@ import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
+import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants;
 import com.antgroup.geaflow.dsl.connector.pulsar.utils.PulsarConstants;
 
@@ -128,7 +128,7 @@ public class PulsarTableSource implements TableSource {
 
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        return (TableDeserializer<IN>) new TextDeserializer();
+        return DeserializerFactory.loadTextDeserializer();
     }
 
     @Override

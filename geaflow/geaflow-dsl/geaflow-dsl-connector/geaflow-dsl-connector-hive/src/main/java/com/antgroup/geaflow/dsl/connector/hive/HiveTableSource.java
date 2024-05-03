@@ -27,8 +27,8 @@ import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
+import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.RowTableDeserializer;
 import com.antgroup.geaflow.dsl.connector.hive.adapter.HiveVersionAdapter;
 import com.antgroup.geaflow.dsl.connector.hive.adapter.HiveVersionAdapters;
 import com.antgroup.geaflow.dsl.connector.hive.util.HiveUtils;
@@ -172,7 +172,7 @@ public class HiveTableSource implements TableSource, EnablePartitionPushDown {
     @SuppressWarnings("unchecked")
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        return (TableDeserializer<IN>) new RowTableDeserializer();
+        return DeserializerFactory.loadRowTableDeserializer();
     }
 
     @SuppressWarnings("unchecked")

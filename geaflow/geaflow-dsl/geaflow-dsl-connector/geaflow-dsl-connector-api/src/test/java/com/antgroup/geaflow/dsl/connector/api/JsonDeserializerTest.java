@@ -77,9 +77,7 @@ public class JsonDeserializerTest {
         conf.put("geaflow.dsl.connector.format.json.ignore-parse-error", "true");
         deserializer.init(conf, dataSchema);
         List<Row> rows = deserializer.deserialize("test");
-        Assert.assertEquals(rows.get(0).getField(0, IntegerType.INSTANCE), null);
-        Assert.assertEquals(rows.get(0).getField(1, BinaryStringType.INSTANCE), null);
-        Assert.assertEquals(rows.get(0).getField(2, IntegerType.INSTANCE), null);
+        Assert.assertEquals(rows, Collections.emptyList());
     }
 
     @Test(expected = GeaflowRuntimeException.class)
@@ -96,6 +94,7 @@ public class JsonDeserializerTest {
         List<Row>  rowWithMissingField = deserializer.deserialize("{\"id\":1, \"name\":\"amy\"}");
 
     }
+
 
 
 

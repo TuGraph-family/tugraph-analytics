@@ -24,9 +24,8 @@ import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
+import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.JsonDeserializer;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants;
 import com.antgroup.geaflow.dsl.connector.kafka.utils.KafkaConstants;
 import java.io.IOException;
@@ -124,13 +123,7 @@ public class KafkaTableSource implements TableSource {
 
     @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
-        this.connectorFormat = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT,
-                (String) ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT.getDefaultValue());
-        if (this.connectorFormat.equals(ConnectorConstants.CONNECTOR_FORMAT_JSON)) {
-            return  (TableDeserializer<IN>) new JsonDeserializer();
-        } else {
-            return (TableDeserializer<IN>) new TextDeserializer();
-        }
+        return DeserializerFactory.loadDeserializer(conf);
     }
 
     @Override

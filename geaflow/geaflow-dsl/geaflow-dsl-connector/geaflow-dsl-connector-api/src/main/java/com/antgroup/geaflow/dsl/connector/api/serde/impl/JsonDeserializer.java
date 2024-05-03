@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
 public class JsonDeserializer implements TableDeserializer<String> {
 
@@ -33,10 +32,8 @@ public class JsonDeserializer implements TableDeserializer<String> {
     public void init(Configuration conf, StructType schema) {
         this.schema = Objects.requireNonNull(schema);
         this.mapper = new ObjectMapper();
-        this.ignoreParseError = conf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT_JSON_IGNORE_PARSE_ERROR,
-                conf.getConfigMap());
-        this.failOnMissingField = conf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT_JSON_FAIL_ON_MISSING_FIELD,
-                conf.getConfigMap());
+        this.ignoreParseError = conf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT_JSON_IGNORE_PARSE_ERROR);
+        this.failOnMissingField = conf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_CONNECTOR_FORMAT_JSON_FAIL_ON_MISSING_FIELD);
 
     }
 
@@ -52,28 +49,29 @@ public class JsonDeserializer implements TableDeserializer<String> {
         } catch (JsonProcessingException e) {
             // handle exception according to configuration
             if (ignoreParseError) {
-                // return row with null value
-                IntStream.range(0, schema.size()).forEach(i -> values[i] = null);
-                return Collections.singletonList(ObjectRow.create(values));
+                // return empty list
+                return Collections.emptyList();
             } else {
-                throw new GeaflowRuntimeException("fail to deserialize record " + record + " due to " + e.getMessage());
+                throw new GeaflowRuntimeException("fail to deserialize record " + record , e);
             }
         }
         // if json node is null
         for (int i = 0 ; i < schema.size() ; i++) {
             String fieldName = schema.getFieldNames().get(i);
+            if (failOnMissingField) {
+                if (!jsonNode.has(fieldName)) {
+                    throw new GeaflowRuntimeException("fail to deserialize record " + record + " due to  missing field " + fieldName );
+                }
+            }
             JsonNode value = jsonNode.get(fieldName);
             IType<?> type = schema.getType(i);
-            if (value == null) {
-                if (failOnMissingField) {
-                    throw new GeaflowRuntimeException("fail to deserialize record " + record + " due to  missing field " + fieldName );
-                } else {
-                    values[i] = null;
-                }
-            } else {
-                // cast the value to the type defined in the schema.
+            // cast the value to the type defined in the schema.
+            if (value != null) {
                 values[i] = TypeCastUtil.cast(value.asText(), type);
+            } else {
+                values[i] = null;
             }
+
         }
         return  Collections.singletonList(ObjectRow.create(values));
     }
