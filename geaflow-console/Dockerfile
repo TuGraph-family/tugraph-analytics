@@ -24,7 +24,7 @@ RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel \
 
 # mysql
 RUN rpm -Uvh https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm \
-    && rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022 \
+    && rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 \
     && yum -y install mysql-community-server \
     && mysqld --initialize-insecure --user=mysql
 
