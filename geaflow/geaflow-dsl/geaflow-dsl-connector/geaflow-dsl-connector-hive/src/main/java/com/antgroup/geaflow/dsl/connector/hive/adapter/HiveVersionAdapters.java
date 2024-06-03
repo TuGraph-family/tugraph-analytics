@@ -37,6 +37,14 @@ public class HiveVersionAdapters {
 
     public static final String HIVE_239 = "2.3.9";
 
+    public static final String HIVE_300 = "3.0.0";
+
+    public static final String HIVE_310 = "3.1.0";
+
+    public static final String HIVE_311 = "3.1.1";
+
+    public static final String HIVE_312 = "3.1.2";
+
     public static HiveVersionAdapter get() {
         Package myPackage = HiveVersionAnnotation.class.getPackage();
         HiveVersionAnnotation version = myPackage.getAnnotation(HiveVersionAnnotation.class);
@@ -51,6 +59,11 @@ public class HiveVersionAdapters {
             case HIVE_237:
             case HIVE_239:
                 return new Hive23Adapter(version.version());
+            case HIVE_300:
+            case HIVE_310:
+            case HIVE_311:
+            case HIVE_312:
+                return new Hive3Adapter(version.version());
             default:
                 throw new GeaFlowDSLException("Hive version: {} is not supported.", version.version());
         }
