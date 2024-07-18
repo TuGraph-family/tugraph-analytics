@@ -15,7 +15,7 @@
 
 <!--intro-start-->
 ## Introduction
-**TuGraph Analytics** (alias: GeaFlow) is the [**fastest**](https://ldbcouncil.org/benchmarks/snb-bi/) open-source OLAP graph database developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
+**TuGraph Analytics** (alias: GeaFlow) is the [**fastest**](https://ldbcouncil.org/benchmarks/snb-bi/) distributed graph compute engine developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
 
 For more information about GeaFlow: [GeaFlow Introduction](docs/docs-en/introduction.md)
 
