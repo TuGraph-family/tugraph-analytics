@@ -17,5 +17,7 @@ package com.antgroup.geaflow.dsl.connector.api.util;
 public class ConnectorConstants {
 
     public static final String START_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String CONNECTOR_FORMAT_JSON = "json";
+    public static final String CONNECTOR_FORMAT_TEXT = "text";
 
 }
