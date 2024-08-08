@@ -43,13 +43,13 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 3. 构建镜像：`./build.sh --all`
 4. 启动容器：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
-更多详细内容请参考：[快速上手文档](docs/docs-cn/source/3.quick_start.md)。
+更多详细内容请参考：[快速上手文档](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
 
 ## 开发手册
 
 GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类SQL扩展语言SQL+ISO/GQL进行流图计算作业的开发，也可以通过GeaFlow的高阶API编程接口通过Java语言进行应用开发。
-* DSL应用开发：[DSL开发文档](docs/docs-cn/source/6.application-development/2.dsl/1.overview.md)
-* API应用开发：[API开发文档](docs/docs-cn/source/6.application-development/1.api/2.guid.md)
+* DSL应用开发：[DSL开发文档](docs/docs-cn/source/5.application-development/2.dsl/1.overview.md)
+* API应用开发：[API开发文档](docs/docs-cn/source/5.application-development/1.api/guid.md)
 
 ## 实时能力
 
