@@ -1,11 +1,14 @@
-# Union Syntax
+# Union 
+
+## Syntax
+
 ```sql
 select_statement
 UNION [ ALL ]
 select_statement
 
 ```
-# Example
+## Example
 
 ```sql
 SELECT * FROM (

@@ -1,4 +1,7 @@
-# Select Syntax
+# Select 
+
+## Syntax
+
 ```sql
 SELECT [ DISTINCT ]
 { * | expr (, expr )* }
@@ -10,8 +13,8 @@ FROM { Table | SubQuery | Match }
 [ LIMIT number ]
 ```
 
-# Example
-## Select
+## Example
+### Select
 ```sql
 SELECT id, name, age FROM user;
 
@@ -20,19 +23,19 @@ SELECT DISTINCT id, name, age FROM user;
 SELECT price * 10 FROM trade;
 ```
 
-## From
-### From Table
+### From
+#### From Table
 ```sql
 SELECT id, name, age FROM user where id > 10
 ```
-### From SubQuery
+#### From SubQuery
 ```sql
 SELECT id, name, age 
 FROM (
 	SELECT * FROM user where id > 10
 )
 ```
-### From Match
+#### From Match
 ```sql
 SELECT
 	a_id,
@@ -45,7 +48,7 @@ FROM (
 ```
 More information about match, please see the Match Syntax.
 
-## Where
+### Where
 ```sql
 SELECT id, name, age FROM user where id > 10;
 
@@ -53,23 +56,23 @@ SELECT DISTINCT id, name, age FROM user where id > 10;
 
 SELECT price * 10 FROM trade where price > 20;
 ```
-## Group By
+### Group By
 ```sql
 SELECT age, count(id) as cnt FROM user GROUP BY age;
 
 SELECT type, max(age), min(age), avg(age) FROM user GROUP BY type;
 ```
-## Having
+### Having
 ```sql
 SELECT age, count(id) as cnt FROM user GROUP BY age Having count(id) > 10;
 ```
-## Order By
+### Order By
 ```sql
 SELECT * from user order by age;
 
 SELECT age, count(id) as cnt FROM user GROUP BY age Having count(id) > 10 Order by cnt;
 ```
-## Limit
+### Limit
 ```sql
 SELECT * from user order by age limit 10;
 
