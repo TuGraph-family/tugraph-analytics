@@ -8,4 +8,4 @@
 
    1.api/index.rst
    2.dsl/index.rst
-   3.connect/index.rst
+   3.connector/index.rst
