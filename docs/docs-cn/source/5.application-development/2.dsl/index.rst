@@ -10,4 +10,3 @@ DSL开发
    2.syntax/index.rst
    3.build-in/index.rst
    4.udf/index.rst
-   5.connector/index.rst

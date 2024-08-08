@@ -55,9 +55,9 @@ GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类
 
 相比传统的流式计算引擎比如Flink、Storm这些以表为模型的实时处理系统而言，GeaFlow以图为数据模型，在处理Join关系运算，尤其是复杂多跳的关系运算如3跳以上的Join、复杂环路查找上具备极大的性能优势。
 
-[![total_time](docs/static/img/vs_join_total_time_cn.jpg)](docs/docs-cn/source/8.principle/vs_join.md)
+[![total_time](docs/static/img/vs_join_total_time_cn.jpg)](docs/docs-cn/source/reference/vs_join.md)
 
-[为什么使用图进行关联运算比表Join更具吸引力？](docs/docs-cn/source/8.principle/vs_join.md)
+[为什么使用图进行关联运算比表Join更具吸引力？](docs/docs-cn/source/reference/vs_join.md)
 
 基于GQL的关联分析Demo：
 

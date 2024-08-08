@@ -8,10 +8,11 @@ geaflow
 
    1.guide_cn.md
    2.introduction.md
-   3.quick_start/indes.rst
-   4.concepts/indes.rst
+   3.quick_start/index.rst
+   4.concepts/index.rst
    5.application-development/index.rst
    7.deploy/index.rst
    9.contribution.md
    contacts.md
    thanks.md
+   reference/index.rst

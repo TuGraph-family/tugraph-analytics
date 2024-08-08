@@ -8,5 +8,5 @@
 
    1.dcl.md
    2.ddl.md
-   3.d,l.md
+   3.dml.md
    4.dql/index.rst
