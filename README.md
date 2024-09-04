@@ -55,9 +55,9 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 
 Compared with traditional stream processing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-hops relationship operations like those involving 3 or more hops of join and complex loop searches.
 
-[![total_time](docs/static/img/vs_join_total_time_en.jpg)](docs/docs-en/source/References/vs_join.md)
+[![total_time](docs/static/img/vs_join_total_time_en.jpg)](docs/docs-en/source/reference/vs_join.md)
 
-[Why using graphs for relational operations is more appealing than table joins?](docs/docs-en/source/References/vs_join.md)
+[Why using graphs for relational operations is more appealing than table joins?](docs/docs-en/source/reference/vs_join.md)
 
 Association Analysis Demo Based on GQL:
 
