@@ -6,7 +6,7 @@ geaflow
    :caption: Contents:
    :glob:
 
-   1.guide_cn.md
+   1.guide.md
    2.introduction.md
    3.quick_start/index.rst
    4.concepts/index.rst
