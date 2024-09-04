@@ -48,8 +48,8 @@ For more details：[Quick Start](docs/docs-cn/source/3.quick_start/1.quick_start
 ## Development Manual
 
 GeaFlow supports two sets of programming interfaces: DSL and API. You can develop streaming graph computing jobs using GeaFlow's SQL extension language SQL+ISO/GQL or use GeaFlow's high-level API programming interface to develop applications in Java.
-* DSL application development: [DSL Application Development](docs/docs-en/source/6.application-development/2.dsl/1.overview.md)
-* API application development: [API Application Development](docs/docs-en/source/6.application-development/1.api/1.overview.md)
+* DSL application development: [DSL Application Development](docs/docs-en/source/5.application-development/2.dsl/1.overview.md)
+* API application development: [API Application Development](docs/docs-en/source/5.application-development/1.api/1.overview.md)
 
 ## Real-time Capabilities
 

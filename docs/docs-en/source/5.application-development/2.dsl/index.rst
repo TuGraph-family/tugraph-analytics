@@ -7,7 +7,6 @@ DSL
    :glob:
 
    1.overview.md
-   2.build-in/index.rst
-   3.connector/index.rst
-   4.reference/index.rst
-   5.udf/index.rst
+   2.syntax/index.rst
+   3.build-in/index.rst
+   4.udf/index.rst

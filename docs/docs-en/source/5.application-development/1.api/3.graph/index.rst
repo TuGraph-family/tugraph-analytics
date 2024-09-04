@@ -1,4 +1,4 @@
-UDF
+Graph
 ====
 
 .. toctree::
@@ -6,4 +6,5 @@ UDF
    :caption: Contents:
    :glob:
 
-   *
+   1.traversal.md
+   2.compute.md

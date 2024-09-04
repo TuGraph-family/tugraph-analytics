@@ -7,6 +7,5 @@ API
    :glob:
 
    1.overview.md
-   2.guid.md
+   2.stream/index.rst
    3.graph/index.rst
-   4.stream/index.rst

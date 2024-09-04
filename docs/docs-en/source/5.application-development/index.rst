@@ -8,3 +8,5 @@ Application-Development
 
    1.api/index.rst
    2.dsl/index.rst
+   3.connector/index.rst
+   4.chat_guide.md

@@ -1,4 +1,4 @@
-Stream
+Quick start
 ====
 
 .. toctree::
@@ -6,4 +6,5 @@ Stream
    :caption: Contents:
    :glob:
 
-   *
+   1.quick_start.md
+   2.quick_start_docker.md

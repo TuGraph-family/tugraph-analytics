@@ -1,4 +1,4 @@
-Reference
+Syntax
 ===========
 
 .. toctree::
@@ -6,7 +6,7 @@ Reference
    :caption: Contents:
    :glob:
 
-   1.ddl.md
-   2.dml.md
-   3.dql/index.rst
-   4.use.md
+   1.dcl.md
+   2.ddl.md
+   3.dml.md
+   4.dql/index.rst
