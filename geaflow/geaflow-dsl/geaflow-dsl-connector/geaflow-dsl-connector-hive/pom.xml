@@ -27,8 +27,8 @@
     <artifactId>geaflow-dsl-connector-hive</artifactId>
 
     <properties>
-        <hive.version>2.3.6</hive.version>
-        <hadoop.version>2.7.4</hadoop.version>
+        <hive.version>3.1.2</hive.version>
+        <hadoop.version>3.1.0</hadoop.version>
         <hiverunner.version>4.0.0</hiverunner.version>
         <reflections.version>0.9.10</reflections.version>
         <jetty.test.version>7.6.0.v20120127</jetty.test.version>
@@ -252,10 +252,6 @@
                     <artifactId>calcite-core</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.apache.calcite</groupId>
-                    <artifactId>calcite-druid</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>org.apache.calcite.avatica</groupId>
                     <artifactId>avatica</artifactId>
                 </exclusion>
@@ -365,6 +361,11 @@
                     <artifactId>log4j-web</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <artifactId>hadoop-hdfs</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <version>${hadoop.version}</version>
         </dependency>
     </dependencies>
 </project>
