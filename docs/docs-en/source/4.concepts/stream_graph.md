@@ -1,4 +1,4 @@
-#Stream graph
+#Stream Graph
 
 ## Fundamental Conception
 

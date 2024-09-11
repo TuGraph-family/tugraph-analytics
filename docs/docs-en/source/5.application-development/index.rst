@@ -1,4 +1,4 @@
-Application-Development
+Development
 ===========
 
 .. toctree::

@@ -9,7 +9,7 @@ FROM (Table | SubQuery),
 LATERAL TABLE '('TableFunctionRef')' AS Identifier '(' Identifier (,Identifier)* ')'
 ```
 
-## split
+## Split
 **Syntax**
 
 ```sql

@@ -1,4 +1,4 @@
-# condition
+# Condition
 
 GeaFlow support both **Case** And **If** condition functions.
 * [Case](#Case)

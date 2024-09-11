@@ -1,4 +1,4 @@
-deploy
+Deployment
 ====
 
 .. toctree::
