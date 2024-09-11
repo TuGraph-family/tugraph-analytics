@@ -1,4 +1,4 @@
-# TuGraph Analytics
+# Guide
 
 [![Star](https://shields.io/github/stars/tugraph-family/tugraph-analytics?logo=startrek&label=Star&color=yellow)](https://github.com/TuGraph-family/tugraph-analytics/stargazers)
 [![Fork](https://shields.io/github/forks/tugraph-family/tugraph-analytics?logo=forgejo&label=Fork&color=orange)](https://github.com/TuGraph-family/tugraph-analytics/forks)
@@ -17,7 +17,7 @@
 ## Introduction
 **TuGraph Analytics** (alias: GeaFlow) is a distributed graph compute engine developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
 
-For more information about GeaFlow: [GeaFlow Introduction](docs/docs-en/introduction.md)
+For more information about GeaFlow: [GeaFlow Introduction](docs/docs-en/source/2.introduction.md)
 
 For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
@@ -43,21 +43,21 @@ For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow Sy
 3. Build Image：`./build.sh --all`
 4. Start Container：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
-For more details：[Quick Start](docs/docs-cn/quick_start.md)。
+For more details：[Quick Start](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
 
 ## Development Manual
 
 GeaFlow supports two sets of programming interfaces: DSL and API. You can develop streaming graph computing jobs using GeaFlow's SQL extension language SQL+ISO/GQL or use GeaFlow's high-level API programming interface to develop applications in Java.
-* DSL application development: [DSL Application Development](docs/docs-en/application-development/dsl/overview.md)
-* API application development: [API Application Development](docs/docs-en/application-development/api/overview.md)
+* DSL application development: [DSL Application Development](docs/docs-en/source/5.application-development/2.dsl/1.overview.md)
+* API application development: [API Application Development](docs/docs-en/source/5.application-development/1.api/1.overview.md)
 
 ## Real-time Capabilities
 
 Compared with traditional stream processing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-hops relationship operations like those involving 3 or more hops of join and complex loop searches.
 
-[![total_time](./docs/static/img/vs_join_total_time_en.jpg)](./docs/docs-en/principle/vs_join.md)
+[![total_time](docs/static/img/vs_join_total_time_en.jpg)](docs/docs-en/source/reference/vs_join.md)
 
-[Why using graphs for relational operations is more appealing than table joins?](./docs/docs-en/principle/vs_join.md)
+[Why using graphs for relational operations is more appealing than table joins?](docs/docs-en/source/reference/vs_join.md)
 
 Association Analysis Demo Based on GQL:
 
@@ -82,7 +82,7 @@ JOIN student s ON sc.srcId = s.id
 ## Contribution
 Thank you very much for contributing to GeaFlow, whether bug reporting, documentation improvement, or major feature development, we warmly welcome all contributions. 
 
-For more information: [Contribution](docs/docs-en/contribution.md).
+For more information: [Contribution](docs/docs-en/source/9.contribution.md).
 
 ## Contact Us
 You can contact us through the following methods:
