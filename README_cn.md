@@ -1,4 +1,4 @@
-# TuGraph Analytics
+# TuGraph Analytics 文档地图
 
 [![Star](https://shields.io/github/stars/tugraph-family/tugraph-analytics?logo=startrek&label=Star&color=yellow)](https://github.com/TuGraph-family/tugraph-analytics/stargazers)
 [![Fork](https://shields.io/github/forks/tugraph-family/tugraph-analytics?logo=forgejo&label=Fork&color=orange)](https://github.com/TuGraph-family/tugraph-analytics/forks)
@@ -17,7 +17,7 @@
 ## 介绍
 **TuGraph Analytics** (别名：GeaFlow) 是蚂蚁集团开源的流图计算引擎，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
 
-关于GeaFlow更多介绍请参考：[GeaFlow介绍文档](docs/docs-cn/introduction.md)
+关于GeaFlow更多介绍请参考：[GeaFlow介绍文档](docs/docs-cn/source/2.introduction.md)
 
 GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow System](https://dl.acm.org/doi/abs/10.1145/3589771)
 
@@ -43,21 +43,21 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 3. 构建镜像：`./build.sh --all`
 4. 启动容器：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
-更多详细内容请参考：[快速上手文档](docs/docs-cn/quick_start.md)。
+更多详细内容请参考：[快速上手文档](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
 
 ## 开发手册
 
 GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类SQL扩展语言SQL+ISO/GQL进行流图计算作业的开发，也可以通过GeaFlow的高阶API编程接口通过Java语言进行应用开发。
-* DSL应用开发：[DSL开发文档](docs/docs-cn/application-development/dsl/overview.md)
-* API应用开发：[API开发文档](docs/docs-cn/application-development/api/guid.md)
+* DSL应用开发：[DSL开发文档](docs/docs-cn/source/5.application-development/2.dsl/1.overview.md)
+* API应用开发：[API开发文档](docs/docs-cn/source/5.application-development/1.api/guid.md)
 
 ## 实时能力
 
 相比传统的流式计算引擎比如Flink、Storm这些以表为模型的实时处理系统而言，GeaFlow以图为数据模型，在处理Join关系运算，尤其是复杂多跳的关系运算如3跳以上的Join、复杂环路查找上具备极大的性能优势。
 
-[![total_time](./docs/static/img/vs_join_total_time_cn.jpg)](./docs/docs-cn/principle/vs_join.md)
+[![total_time](docs/static/img/vs_join_total_time_cn.jpg)](docs/docs-cn/source/reference/vs_join.md)
 
-[为什么使用图进行关联运算比表Join更具吸引力？](./docs/docs-cn/principle/vs_join.md)
+[为什么使用图进行关联运算比表Join更具吸引力？](docs/docs-cn/source/reference/vs_join.md)
 
 基于GQL的关联分析Demo：
 
@@ -82,7 +82,7 @@ JOIN student s ON sc.srcId = s.id
 ## 参与贡献
 非常感谢您参与到GeaFlow的贡献中来，无论是Bug反馈还是文档完善，或者是大的功能点贡献，我们都表示热烈的欢迎。
 
-具体请参考：[参与贡献文档](docs/docs-cn/contribution.md)。
+具体请参考：[参与贡献文档](docs/docs-cn/source/9.contribution.md)。
 
 **如果您对GeaFlow感兴趣，欢迎给我们项目一颗[ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics)。**
 
