@@ -80,6 +80,16 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
+
+  headTags: [
+    {
+      tagName: "meta",
+      attributes: {
+        name: "algolia-site-verification",
+        content: "4AB782AC2021573E",
+      },
+    },
+  ],
 };
 
 export default config;
