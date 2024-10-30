@@ -1,0 +1,5 @@
+mkdocs
+mkdocstrings[python]
+markdown-include
+mkdocs-include-markdown-plugin
+mkdocs-bootswatch
