@@ -15,6 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@docsearch/react": "^3.6.2",
     "@docusaurus/core": "3.5.2",
     "@docusaurus/preset-classic": "3.5.2",
     "@mdx-js/react": "^3.0.0",
@@ -43,5 +44,6 @@
   },
   "engines": {
     "node": ">=18.0"
-  }
+  },
+  "repository": "https://github.com/liukaiming-alipay/tugraph-analytics.git"
 }

@@ -67,6 +67,11 @@ const config: Config = {
   ],
 
   themeConfig: {
+    algolia: {
+      apiKey: "3c4b435fb8814030c3a6672abc015ff2",
+      indexName: "tugraphAnalyticsZH",
+      appId: "HO4M21RAQI",
+    },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
