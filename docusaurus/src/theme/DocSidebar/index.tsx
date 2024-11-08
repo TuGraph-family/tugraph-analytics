@@ -94,6 +94,9 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
 
     if (type === 'TuGraph_DB') {
 
+      window.location.href = `https://liukaiming-alipay.github.io/tugraph-db/${getCurrentLanguage()}/${version}/guide`;
+      return
+
     }
 
 
