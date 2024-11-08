@@ -5,7 +5,8 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "TuGraph Analytics",
   tagline: "Dinosaurs are cool",
-  favicon: "img/favicon.ico",
+  favicon:
+    "https://mdn.alipayobjects.com/huamei_qcdryc/afts/img/A*AbamQ5lxv0IAAAAAAAAAAAAADgOBAQ/original",
 
   // Set the production url of your site here
   url: "https://liukaiming-alipay.github.io/",

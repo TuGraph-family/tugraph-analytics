@@ -93,13 +93,9 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
     }
 
     if (type === 'TuGraph_DB') {
-
       window.location.href = `https://liukaiming-alipay.github.io/tugraph-db/${getCurrentLanguage()}/${version}/guide`;
       return
-
     }
-
-
   };
 
   return (
@@ -126,7 +122,7 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
               />
             </div>
             <div className="contentArea">
-              <span className="engineDescription">{getDescByLanguage(getCurrentLanguage())}</span>
+              <span id="engineDescription">{getDescByLanguage(getCurrentLanguage())}</span>
             </div>
           </div>
         </Cascader>
