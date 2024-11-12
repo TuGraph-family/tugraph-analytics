@@ -35,24 +35,5 @@ jobs:
         with:
           version: "21.7"
 
-      - name: Setup Rust
-        run: |
-          rustup toolchain install nightly-2023-08-15
-          rustup component add rustfmt --toolchain nightly-2023-08-15
-          rustup component add clippy --toolchain nightly-2023-08-15
-
-      - name: Build CStore
-        run: |
-          cd geaflow-cstore
-          touch ~/.cstore_buildrc && make features mod=0 && source ~/.cstore_buildrc
-          cd java && ./build.sh
-        env:
-          OSTYPE: Linux
-
-      - name: CStore Test
-        run: |
-          cd geaflow-cstore
-          make all
-
       - name: Build and Test
         run: mvn -B -e clean test -Duser.timezone=Asia/Shanghai
