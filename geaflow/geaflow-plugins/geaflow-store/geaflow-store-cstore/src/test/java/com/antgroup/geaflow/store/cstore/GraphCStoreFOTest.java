@@ -29,7 +29,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.collect.Lists;
 import java.io.File;
@@ -48,7 +48,7 @@ public class GraphCStoreFOTest {
         FileUtils.deleteQuietly(new File("/tmp/CStoreFOTest"));
     }
 
-    private GraphCStore<String, String, String> build(Map<String, String> config) {
+    private StaticGraphCStore<String, String, String> build(Map<String, String> config) {
         IStoreBuilder builder = StoreBuilderFactory.build("cstore");
         config.put(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "CStoreFOTest");
         Configuration conf = new Configuration(config);
@@ -57,12 +57,12 @@ public class GraphCStoreFOTest {
             new GraphMetaType(StringType.INSTANCE,
                 ValueLabelTimeVertex.class, ValueLabelTimeVertex::new, String.class,
                 ValueLabelTimeEdge.class, ValueLabelTimeEdge::new, String.class))));
-        GraphCStore<String, String, String> store = (GraphCStore) builder.getStore(DataModel.STATIC_GRAPH, conf);
+        StaticGraphCStore<String, String, String> store = (StaticGraphCStore) builder.getStore(DataModel.STATIC_GRAPH, conf);
         store.init(context);
         return store;
     }
 
-    public void addData(GraphCStore<String, String, String> store) {
+    public void addData(StaticGraphCStore<String, String, String> store) {
         for (int i = 0; i < 100; i++) {
             ValueLabelTimeVertex<String, String> vertex = new ValueLabelTimeVertex<>("a" + i, "b" + i, "foo", i);
             store.addVertex(vertex);
@@ -73,7 +73,7 @@ public class GraphCStoreFOTest {
         store.flush();
     }
 
-    public void testData(GraphCStore<String, String, String> store) {
+    public void testData(StaticGraphCStore<String, String, String> store) {
         int count = 0;
         try (com.antgroup.geaflow.common.iterator.CloseableIterator<OneDegreeGraph<String,
             String, String>> iterator = store.getOneDegreeGraphIterator(StatePushDown.of())) {
@@ -104,7 +104,7 @@ public class GraphCStoreFOTest {
     public void testLocal() {
         Map<String, String> config = new HashMap<>();
         config.put(FileConfigKeys.PERSISTENT_TYPE.getKey(), "Local");
-        GraphCStore<String, String, String> store = build(config);
+        StaticGraphCStore<String, String, String> store = build(config);
         addData(store);
         store.archive(1);
         store.close();

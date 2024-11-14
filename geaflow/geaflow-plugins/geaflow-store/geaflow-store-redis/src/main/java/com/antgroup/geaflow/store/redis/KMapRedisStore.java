@@ -34,14 +34,14 @@ public class KMapRedisStore<K, UK, UV> extends BaseRedisStore implements IKMapSt
     @Override
     public void init(StoreContext storeContext) {
         super.init(storeContext);
-        this.kMapSerializer = (IKMapSerializer<K, UK, UV>) Preconditions.checkNotNull(storeContext.getKeySerializer(),
-            "keySerializer must be set");
+        this.kMapSerializer = (IKMapSerializer<K, UK, UV>) Preconditions.checkNotNull(
+            storeContext.getKeySerializer(), "keySerializer must be set");
     }
 
     @Override
     public void add(K key, Map<UK, UV> value) {
         Map<byte[], byte[]> newMap = new HashMap<>(value.size());
-        for (Entry<UK, UV> entry: value.entrySet()) {
+        for (Entry<UK, UV> entry : value.entrySet()) {
             byte[] ukArray = this.kMapSerializer.serializeUK(entry.getKey());
             byte[] uvArray = this.kMapSerializer.serializeUV(entry.getValue());
             newMap.put(ukArray, uvArray);
@@ -84,7 +84,7 @@ public class KMapRedisStore<K, UK, UV> extends BaseRedisStore implements IKMapSt
         }, retryTimes, retryIntervalMs);
 
         Map<UK, UV> newMap = new HashMap<>(map.size());
-        for (Entry<byte[], byte[]> entry: map.entrySet()) {
+        for (Entry<byte[], byte[]> entry : map.entrySet()) {
             newMap.put(this.kMapSerializer.deserializeUK(entry.getKey()),
                 this.kMapSerializer.deserializeUV(entry.getValue()));
         }
@@ -95,7 +95,8 @@ public class KMapRedisStore<K, UK, UV> extends BaseRedisStore implements IKMapSt
     public List<UV> get(K key, UK... uks) {
         byte[] keyArray = this.kMapSerializer.serializeKey(key);
         byte[] redisKey = getRedisKey(keyArray);
-        byte[][] ukArray = Arrays.stream(uks).map(this.kMapSerializer::serializeUK).toArray(byte[][]::new);
+        byte[][] ukArray = Arrays.stream(uks).map(this.kMapSerializer::serializeUK)
+            .toArray(byte[][]::new);
 
         List<byte[]> uvArray = RetryCommand.run(() -> {
             try (Jedis jedis = jedisPool.getResource()) {
@@ -103,7 +104,8 @@ public class KMapRedisStore<K, UK, UV> extends BaseRedisStore implements IKMapSt
             }
         }, retryTimes, retryIntervalMs);
 
-        return uvArray.stream().map(this.kMapSerializer::deserializeUV).collect(Collectors.toList());
+        return uvArray.stream().map(this.kMapSerializer::deserializeUV)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -123,7 +125,8 @@ public class KMapRedisStore<K, UK, UV> extends BaseRedisStore implements IKMapSt
     public void remove(K key, UK... uks) {
         byte[] keyArray = this.kMapSerializer.serializeKey(key);
         byte[] redisKey = getRedisKey(keyArray);
-        byte[][] ukArray = Arrays.stream(uks).map(this.kMapSerializer::serializeUK).toArray(byte[][]::new);
+        byte[][] ukArray = Arrays.stream(uks).map(this.kMapSerializer::serializeUK)
+            .toArray(byte[][]::new);
 
         RetryCommand.run(() -> {
             try (Jedis jedis = jedisPool.getResource()) {

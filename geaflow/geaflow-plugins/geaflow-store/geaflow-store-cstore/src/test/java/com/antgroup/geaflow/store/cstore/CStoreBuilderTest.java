@@ -42,7 +42,7 @@ import com.antgroup.geaflow.state.pushdown.filter.VertexTsFilter;
 import com.antgroup.geaflow.state.pushdown.filter.VertexValueDropFilter;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class CStoreBuilderTest {
 
     @Test
     public void testStaticGraph() {
-        GraphCStore store = (GraphCStore) builder.getStore(DataModel.STATIC_GRAPH, config);
+        StaticGraphCStore store = (StaticGraphCStore) builder.getStore(DataModel.STATIC_GRAPH, config);
         store.init(context);
 
         for (int i = 0; i < 100; i++) {
@@ -131,7 +131,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testPointGetWithoutPushDown(GraphCStore store) {
+    private void testPointGetWithoutPushDown(StaticGraphCStore store) {
         for (int i = 0; i < 100; i++) {
             String key = "a" + i;
             ValueLabelTimeVertex<String, String> vertex = (ValueLabelTimeVertex<String, String>) store.getVertex(key, StatePushDown.of());
@@ -168,7 +168,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testMultiPointGetWithoutPushDown(GraphCStore store) {
+    private void testMultiPointGetWithoutPushDown(StaticGraphCStore store) {
         List<String> keys = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             keys.add("a" + i);
@@ -228,7 +228,7 @@ public class CStoreBuilderTest {
         Assert.assertEquals(count, 100);
     }
 
-    private void testScanWithoutPushDown(GraphCStore store) {
+    private void testScanWithoutPushDown(StaticGraphCStore store) {
         int count = 0;
         try (com.antgroup.geaflow.common.iterator.CloseableIterator<IVertex> vertexIterator
             = store.getVertexIterator(StatePushDown.of())) {
@@ -283,7 +283,7 @@ public class CStoreBuilderTest {
         Assert.assertEquals(count, 100);
     }
 
-    private void testPointGetVertexWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testPointGetVertexWithPushDown(StaticGraphCStore store, FilterType filterType) {
         IStatePushDown pushDown = generateStatePushDown(filterType, null, true);
         for (int i = 0; i < 200; i++) {
             String key = "a" + i;
@@ -336,7 +336,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testPointGetEdgesWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testPointGetEdgesWithPushDown(StaticGraphCStore store, FilterType filterType) {
         IStatePushDown pushDown = generateStatePushDown(filterType, null, false);
         for (int i = 0; i < 200; i++) {
             String key = "a" + i;
@@ -429,7 +429,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testPointGetOneDegreeGraphWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testPointGetOneDegreeGraphWithPushDown(StaticGraphCStore store, FilterType filterType) {
         IStatePushDown pushDown = generateStatePushDown(filterType, null, true);
         for (int i = 0; i < 200; i++) {
             String key = "a" + i;
@@ -629,7 +629,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testMultiPointGetVertexWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testMultiPointGetVertexWithPushDown(StaticGraphCStore store, FilterType filterType) {
         List<String> keys = new ArrayList<>();
         for (int i = 0; i < 200; i++) {
             keys.add("a" + i);
@@ -699,7 +699,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testMultiPointGetEdgesWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testMultiPointGetEdgesWithPushDown(StaticGraphCStore store, FilterType filterType) {
         List<String> keys = new ArrayList<>();
         for (int i = 0; i < 200; i++) {
             keys.add("a" + i);
@@ -799,8 +799,8 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testMultiPointGetOneDegreeGraphWithPushDown(GraphCStore store,
-                                                          FilterType filterType) {
+    private void testMultiPointGetOneDegreeGraphWithPushDown(StaticGraphCStore store,
+                                                             FilterType filterType) {
         List<String> keys = new ArrayList<>();
         for (int i = 0; i < 200; i++) {
             keys.add("a" + i);
@@ -1064,7 +1064,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testScanVertexWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testScanVertexWithPushDown(StaticGraphCStore store, FilterType filterType) {
         IStatePushDown pushDown = generateStatePushDown(filterType, null, true);
         int count = 0;
         try (com.antgroup.geaflow.common.iterator.CloseableIterator<IVertex> vertexIterator =
@@ -1140,7 +1140,7 @@ public class CStoreBuilderTest {
 
     }
 
-    private void testScanEdgeWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testScanEdgeWithPushDown(StaticGraphCStore store, FilterType filterType) {
         IStatePushDown pushDown = generateStatePushDown(filterType, null, false);
         int count = 0;
         try (com.antgroup.geaflow.common.iterator.CloseableIterator<IEdge> edgeIterator =
@@ -1236,7 +1236,7 @@ public class CStoreBuilderTest {
         }
     }
 
-    private void testScanOneDegreeGraphWithPushDown(GraphCStore store, FilterType filterType) {
+    private void testScanOneDegreeGraphWithPushDown(StaticGraphCStore store, FilterType filterType) {
         IStatePushDown pushDown = generateStatePushDown(filterType, null, true);
         int vertexCount = 0;
         int edgeCount = 0;

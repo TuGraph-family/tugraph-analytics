@@ -32,11 +32,11 @@ public class RocksdbStoreBuilder implements IStoreBuilder {
     public IBaseStore getStore(DataModel type, Configuration config) {
         switch (type) {
             case KV:
-                return new KVRocksdbStore();
+                return new KVRocksdbStoreBase();
             case STATIC_GRAPH:
-                return new GraphRocksdbStore();
+                return new StaticGraphRocksdbStoreBase();
             case DYNAMIC_GRAPH:
-                return new GraphMultiVersionedRocksdbStore();
+                return new DynamicRocksdbGraphStoreBase();
             default:
                 throw new GeaflowRuntimeException(RuntimeErrors.INST.typeSysError("not support " + type));
         }

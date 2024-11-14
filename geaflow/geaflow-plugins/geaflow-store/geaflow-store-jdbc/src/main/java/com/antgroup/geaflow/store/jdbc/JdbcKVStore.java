@@ -24,7 +24,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcKVStore<K, V> extends BasicJdbcStore implements IKVStore<K, V> {
+public class JdbcKVStore<K, V> extends BaseJdbcStore implements IKVStore<K, V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcKVStore.class);
     private String[] columns = {"value"};
@@ -34,20 +34,15 @@ public class JdbcKVStore<K, V> extends BasicJdbcStore implements IKVStore<K, V> 
     @Override
     public void init(StoreContext storeContext) {
         super.init(storeContext);
-        this.serializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(storeContext.getKeySerializer(),
-            "keySerializer must be set");
+        this.serializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(
+            storeContext.getKeySerializer(), "keySerializer must be set");
     }
 
     private java.lang.String getFromKey(K key) {
         if (key.getClass() == byte[].class) {
-            return new String((byte[])key);
+            return new String((byte[]) key);
         }
         return key.toString();
-    }
-
-    @Override
-    public void drop() {
-
     }
 
     @Override
@@ -69,8 +64,8 @@ public class JdbcKVStore<K, V> extends BasicJdbcStore implements IKVStore<K, V> 
         byte[] valueArray = serializer.serializeValue(value);
         RetryCommand.run(() -> {
             try {
-                if (!update(getFromKey(key), columns, new Object[] {valueArray})
-                    && !insert(getFromKey(key), columns, new Object[] {valueArray})) {
+                if (!update(getFromKey(key), columns, new Object[]{valueArray}) && !insert(
+                    getFromKey(key), columns, new Object[]{valueArray})) {
                     throw new GeaflowRuntimeException("put fail");
                 }
             } catch (SQLException e) {

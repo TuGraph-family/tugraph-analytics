@@ -20,7 +20,7 @@ import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.state.serializer.DefaultKVSerializer;
 import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.io.File;
 import java.sql.Connection;
@@ -34,11 +34,8 @@ public class JdbcStoreBuilderTest {
 
     private void prepareSqlite() throws Exception {
         String createSqliteTable = "CREATE TABLE IF NOT EXISTS `store_test`(\n"
-            + "   `id` bigint UNSIGNED AUTO_INCREMENT,\n"
-            + "   `pk` VARCHAR(256) NOT NULL,\n"
-            + "   `value` LONGBLOB,\n"
-            + "   PRIMARY KEY ( `id`)\n"
-            + ")";
+            + "   `id` bigint UNSIGNED AUTO_INCREMENT,\n" + "   `pk` VARCHAR(256) NOT NULL,\n"
+            + "   `value` LONGBLOB,\n" + "   PRIMARY KEY ( `id`)\n" + ")";
 
         Class.forName("org.sqlite.JDBC");
         Connection c = DriverManager.getConnection("jdbc:sqlite:/tmp/test.db");
@@ -54,12 +51,13 @@ public class JdbcStoreBuilderTest {
         Configuration configuration = new Configuration();
         configuration.put(JdbcConfigKeys.JDBC_DRIVER_CLASS.getKey(), "org.sqlite.JDBC");
         configuration.put(JdbcConfigKeys.JDBC_URL, "jdbc:sqlite:/tmp/test.db");
-        configuration.put(JdbcConfigKeys.JDBC_INSERT_FORMAT, "INSERT INTO %s(%s,%s) VALUES (?, %s)");
+        configuration.put(JdbcConfigKeys.JDBC_INSERT_FORMAT,
+            "INSERT INTO %s(%s,%s) VALUES (?, %s)");
         configuration.put(JdbcConfigKeys.JDBC_UPDATE_FORMAT, "UPDATE %s SET %s=? WHERE %s='%s'");
 
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.JDBC.name());
-        IKVStore<String, String> kvStore =
-            (IKVStore<String, String>) builder.getStore(DataModel.KV, configuration);
+        IKVStore<String, String> kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV,
+            configuration);
         StoreContext storeContext = new StoreContext("store_test").withConfig(configuration);
         storeContext.withKeySerializer(new DefaultKVSerializer<>(String.class, String.class));
         Assert.assertEquals(kvStore.getClass().getSimpleName(), JdbcKVStore.class.getSimpleName());
@@ -68,7 +66,6 @@ public class JdbcStoreBuilderTest {
 
         innerTestKV(kvStore);
         FileUtils.deleteQuietly(new File("/tmp/test.db"));
-        kvStore.flush();
         kvStore.close();
     }
 

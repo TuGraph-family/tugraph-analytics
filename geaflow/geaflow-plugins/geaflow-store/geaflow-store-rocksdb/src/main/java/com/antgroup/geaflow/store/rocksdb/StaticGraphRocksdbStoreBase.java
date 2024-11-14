@@ -27,7 +27,7 @@ import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
 import com.antgroup.geaflow.state.graph.encoder.GraphKVEncoderFactory;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.rocksdb.proxy.IGraphRocksdbProxy;
 import com.antgroup.geaflow.store.rocksdb.proxy.ProxyBuilder;
@@ -35,7 +35,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class GraphRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore implements IGraphStore<K, VV, EV> {
+public class StaticGraphRocksdbStoreBase<K, VV, EV> extends BaseRocksdbGraphStore implements
+    IStaticGraphStore<K, VV, EV> {
 
     private IGraphRocksdbProxy<K, VV, EV> proxy;
     private EdgeAtom sortAtom;

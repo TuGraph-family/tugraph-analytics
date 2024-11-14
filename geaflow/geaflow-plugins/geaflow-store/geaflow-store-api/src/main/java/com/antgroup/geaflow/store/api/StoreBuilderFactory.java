@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.store.api.key;
+package com.antgroup.geaflow.store.api;
 
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
@@ -31,7 +31,7 @@ public class StoreBuilderFactory {
         }
 
         ServiceLoader<IStoreBuilder> serviceLoader = ServiceLoader.load(IStoreBuilder.class);
-        for (IStoreBuilder storeBuilder: serviceLoader) {
+        for (IStoreBuilder storeBuilder : serviceLoader) {
             if (storeBuilder.getStoreDesc().name().equalsIgnoreCase(storeType)) {
                 CONCURRENT_TYPE_MAP.put(storeType, storeBuilder);
                 return storeBuilder;

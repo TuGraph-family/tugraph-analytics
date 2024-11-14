@@ -31,15 +31,16 @@ public class KListRedisStore<K, V> extends BaseRedisStore implements IKListStore
     @Override
     public void init(StoreContext storeContext) {
         super.init(storeContext);
-        this.kvSerializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(storeContext.getKeySerializer(),
-            "kvSerializer must be set");
+        this.kvSerializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(
+            storeContext.getKeySerializer(), "kvSerializer must be set");
     }
 
     @Override
     public void add(K key, V... values) {
         byte[] keyArray = this.kvSerializer.serializeKey(key);
         byte[] redisKey = getRedisKey(keyArray);
-        byte[][] bValues = Arrays.stream(values).map(this.kvSerializer::serializeValue).toArray(byte[][]::new);
+        byte[][] bValues = Arrays.stream(values).map(this.kvSerializer::serializeValue)
+            .toArray(byte[][]::new);
 
         RetryCommand.run(() -> {
             try (Jedis jedis = jedisPool.getResource()) {
@@ -60,7 +61,8 @@ public class KListRedisStore<K, V> extends BaseRedisStore implements IKListStore
             }
         }, retryTimes, retryIntervalMs);
 
-        return valueArray.stream().map(this.kvSerializer::deserializeValue).collect(Collectors.toList());
+        return valueArray.stream().map(this.kvSerializer::deserializeValue)
+            .collect(Collectors.toList());
     }
 
 

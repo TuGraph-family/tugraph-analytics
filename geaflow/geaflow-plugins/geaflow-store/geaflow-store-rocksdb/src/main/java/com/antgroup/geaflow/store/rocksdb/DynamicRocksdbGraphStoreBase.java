@@ -26,7 +26,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.graph.encoder.GraphKVEncoderFactory;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
-import com.antgroup.geaflow.store.api.graph.IGraphMultiVersionedStore;
+import com.antgroup.geaflow.store.api.graph.IDynamicGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.rocksdb.proxy.IGraphMultiVersionedRocksdbProxy;
 import com.antgroup.geaflow.store.rocksdb.proxy.ProxyBuilder;
@@ -35,8 +35,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class GraphMultiVersionedRocksdbStore<K, VV, EV> extends BaseRocksdbGraphStore
-    implements IGraphMultiVersionedStore<K, VV, EV> {
+public class DynamicRocksdbGraphStoreBase<K, VV, EV> extends BaseRocksdbGraphStore
+    implements IDynamicGraphStore<K, VV, EV> {
 
     private IGraphMultiVersionedRocksdbProxy<K, VV, EV> proxy;
 

@@ -31,7 +31,8 @@ import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.inner.IFilterConverter;
 import com.antgroup.geaflow.state.pushdown.inner.PushDownPbGenerator;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.cstore.encoder.EdgeEncoder;
 import com.antgroup.geaflow.store.cstore.encoder.EncoderFactory;
@@ -42,11 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class GraphCStore<K, VV, EV> implements IGraphStore<K, VV, EV> {
+public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements
+    IStaticGraphStore<K, VV, EV> {
 
-    private IFilterConverter filterConverter = new FilterConverter();
     private Map<String, String> config;
-    private String name;
     private NativeGraphStore nativeGraphStore;
     private VertexEncoder vertexEncoder;
     private EdgeEncoder edgeEncoder;
@@ -54,9 +54,10 @@ public class GraphCStore<K, VV, EV> implements IGraphStore<K, VV, EV> {
 
     @Override
     public void init(StoreContext storeContext) {
+        super.init(storeContext);
         this.config = storeContext.getConfig().getConfigMap();
         rewriteConfig();
-        this.name = storeContext.getName();
+        String name = storeContext.getName();
         this.keyType = storeContext.getGraphSchema().getKeyType();
         this.nativeGraphStore = new NativeGraphStore(name, storeContext.getShardId(), config);
         this.vertexEncoder = EncoderFactory.getVertexEncoder(storeContext.getGraphSchema());
@@ -136,13 +137,17 @@ public class GraphCStore<K, VV, EV> implements IGraphStore<K, VV, EV> {
 
                 root = Configuration.getString(FileConfigKeys.ROOT, this.config);
                 this.config.put(CStoreConfigKeys.CSTORE_PERSISTENT_ROOT, root);
-                String bucketName = Configuration.getString(FileConfigKeys.OSS_BUCKET_NAME, persistConfig);
+                String bucketName = Configuration.getString(FileConfigKeys.OSS_BUCKET_NAME,
+                    persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_BUCKET, bucketName);
-                String endpoint = Configuration.getString(FileConfigKeys.OSS_ENDPOINT, persistConfig);
+                String endpoint = Configuration.getString(FileConfigKeys.OSS_ENDPOINT,
+                    persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_ENDPOINT, endpoint);
-                String accessKeyId = Configuration.getString(FileConfigKeys.OSS_ACCESS_ID, persistConfig);
+                String accessKeyId = Configuration.getString(FileConfigKeys.OSS_ACCESS_ID,
+                    persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_AK, accessKeyId);
-                String accessKeySecret = Configuration.getString(FileConfigKeys.OSS_SECRET_KEY, persistConfig);
+                String accessKeySecret = Configuration.getString(FileConfigKeys.OSS_SECRET_KEY,
+                    persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_SK, accessKeySecret);
                 break;
             default:

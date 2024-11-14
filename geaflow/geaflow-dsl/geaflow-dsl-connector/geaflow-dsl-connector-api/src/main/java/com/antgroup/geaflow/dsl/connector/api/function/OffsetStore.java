@@ -29,7 +29,7 @@ import com.antgroup.geaflow.state.serializer.DefaultKVSerializer;
 import com.antgroup.geaflow.state.serializer.IKVSerializer;
 import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.rocksdb.RocksdbStoreBuilder;
 import java.nio.charset.StandardCharsets;

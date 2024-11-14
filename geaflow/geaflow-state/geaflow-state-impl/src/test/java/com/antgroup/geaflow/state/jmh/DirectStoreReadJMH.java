@@ -28,8 +28,8 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +57,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @State(Scope.Benchmark)
 public class DirectStoreReadJMH extends JMHParameter {
 
-    IGraphStore<Integer, Integer, Integer> store;
+    IStaticGraphStore<Integer, Integer, Integer> store;
     IStatePushDown pushdown = StatePushDown.of();
 
     @Setup(Level.Trial)
@@ -80,7 +80,7 @@ public class DirectStoreReadJMH extends JMHParameter {
         storeContext.withConfig(configuration);
 
         store =
-            (IGraphStore<Integer, Integer, Integer>) StoreBuilderFactory.build(
+            (IStaticGraphStore<Integer, Integer, Integer>) StoreBuilderFactory.build(
                 storeType).getStore(DataModel.STATIC_GRAPH, configuration);
         store.init(storeContext);
         for (int i = 0; i < vNum; i++) {

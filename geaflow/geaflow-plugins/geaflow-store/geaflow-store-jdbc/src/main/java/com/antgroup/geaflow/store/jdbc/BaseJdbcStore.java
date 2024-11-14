@@ -18,7 +18,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.GsonUtil;
 import com.antgroup.geaflow.common.utils.RetryCommand;
-import com.antgroup.geaflow.store.AbstractBaseStore;
+import com.antgroup.geaflow.store.IBaseStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.base.Joiner;
 import com.zaxxer.hikari.HikariConfig;
@@ -33,9 +33,9 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BasicJdbcStore extends AbstractBaseStore {
+public abstract class BaseJdbcStore implements IBaseStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasicJdbcStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseJdbcStore.class);
 
     private static HikariDataSource ds;
 
@@ -72,23 +72,22 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
         conf.setMaximumPoolSize(config.getInteger(JdbcConfigKeys.JDBC_CONNECTION_POOL_SIZE));
         String jsonConfig = this.config.getString(JdbcConfigKeys.JSON_CONFIG);
         Map<String, String> map = GsonUtil.parse(jsonConfig);
-        for (Entry<String, String> entry: map.entrySet()) {
+        for (Entry<String, String> entry : map.entrySet()) {
             conf.addDataSourceProperty(entry.getKey(), entry.getValue());
         }
         ds = new HikariDataSource(conf);
     }
 
-    protected boolean insert(String key, String[] columns,
-                                   Object[] values) throws SQLException {
+    protected boolean insert(String key, String[] columns, Object[] values) throws SQLException {
         if (columns.length != values.length) {
             throw new GeaflowRuntimeException("columns' size does not match values'");
         }
 
-        String sql = String.format(insertFormat,
-            this.tableName, this.pk, Joiner.on(',').join(columns),
+        String sql = String.format(insertFormat, this.tableName, this.pk,
+            Joiner.on(',').join(columns),
             Joiner.on(',').join(Collections.nCopies(values.length, "?")));
-        try (Connection conn = ds.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
+            sql)) {
             ps.setString(1, key);
             for (int i = 0; i < values.length; i++) {
                 ps.setObject(i + 2, values[i]);
@@ -103,11 +102,11 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
             throw new GeaflowRuntimeException("columns' size does not match values'");
         }
 
-        String sql = String.format(updateFormat,
-            this.tableName, Joiner.on("=?, ").join(columns), pk, key);
+        String sql = String.format(updateFormat, this.tableName, Joiner.on("=?, ").join(columns),
+            pk, key);
 
-        try (Connection conn = ds.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
+            sql)) {
             for (int i = 0; i < values.length; i++) {
                 ps.setObject(i + 1, values[i]);
             }
@@ -118,8 +117,8 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
     protected byte[] query(String key, String[] columns) throws SQLException {
         String selectColumn = columns == null ? "*" : Joiner.on(',').join(columns);
         String sql = String.format(queryFormat, selectColumn, this.tableName, pk, key);
-        try (Connection conn = ds.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
+            sql)) {
             try (ResultSet rs = RetryCommand.run(ps::executeQuery, this.retries)) {
                 if (rs.next()) {
                     return rs.getBytes(1);
@@ -132,12 +131,18 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
 
     protected boolean delete(String key) throws SQLException {
         String sql = String.format(deleteFormat, this.tableName, pk, key);
-        try (Connection conn = ds.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
+            sql)) {
             return 0 != RetryCommand.run(ps::executeUpdate, this.retries);
         }
     }
 
+    @Override
+    public void flush() {
+        LOGGER.info("flush");
+    }
+
+    @Override
     public synchronized void close() {
         if (!ds.isClosed()) {
             ds.close();
