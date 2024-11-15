@@ -23,7 +23,7 @@ import com.antgroup.geaflow.state.descriptor.KeyValueStateDescriptor;
 import com.antgroup.geaflow.state.serializer.DefaultKMapSerializer;
 import com.antgroup.geaflow.state.serializer.DefaultKVSerializer;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Arrays;

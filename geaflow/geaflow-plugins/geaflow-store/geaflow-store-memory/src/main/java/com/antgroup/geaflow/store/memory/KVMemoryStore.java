@@ -14,13 +14,13 @@
 
 package com.antgroup.geaflow.store.memory;
 
-import com.antgroup.geaflow.store.AbstractBaseStore;
+import com.antgroup.geaflow.store.IBaseStore;
 import com.antgroup.geaflow.store.api.key.IKVStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KVMemoryStore<K, V> extends AbstractBaseStore implements IKVStore<K, V> {
+public class KVMemoryStore<K, V> implements IBaseStore, IKVStore<K, V> {
 
     private Map<K, V> memoryStore = new HashMap<>();
 
@@ -45,12 +45,12 @@ public class KVMemoryStore<K, V> extends AbstractBaseStore implements IKVStore<K
     }
 
     @Override
-    public void close() {
-        this.memoryStore.clear();
+    public void flush() {
+
     }
 
     @Override
-    public void drop() {
-        this.memoryStore = null;
+    public void close() {
+        this.memoryStore.clear();
     }
 }

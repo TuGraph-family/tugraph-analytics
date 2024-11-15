@@ -15,19 +15,19 @@
 package com.antgroup.geaflow.state.action;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.store.IBaseStore;
+import com.antgroup.geaflow.store.IStatefulStore;
 
 public class StateActionContext {
 
-    private IBaseStore baseStore;
+    private IStatefulStore baseStore;
     private Configuration config;
 
-    public StateActionContext(IBaseStore baseStore, Configuration config) {
+    public StateActionContext(IStatefulStore baseStore, Configuration config) {
         this.baseStore = baseStore;
         this.config = config;
     }
 
-    public IBaseStore getBaseStore() {
+    public IStatefulStore getBaseStore() {
         return baseStore;
     }
 

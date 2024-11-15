@@ -17,21 +17,22 @@ package com.antgroup.geaflow.store.rocksdb;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.DEFAULT_CF;
 
 import com.antgroup.geaflow.state.serializer.IKVSerializer;
-import com.antgroup.geaflow.store.api.key.IKVStore;
+import com.antgroup.geaflow.store.api.key.IKVStatefulStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.List;
 
-public class KVRocksdbStore<K, V> extends BaseRocksdbStore implements IKVStore<K, V> {
+public class KVRocksdbStoreBase<K, V> extends BaseRocksdbStore implements
+    IKVStatefulStore<K, V> {
 
     private IKVSerializer<K, V> kvSerializer;
 
     @Override
     public void init(StoreContext storeContext) {
         super.init(storeContext);
-        this.kvSerializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(storeContext.getKeySerializer(),
-            "keySerializer must be set");
+        this.kvSerializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(
+            storeContext.getKeySerializer(), "keySerializer must be set");
     }
 
     @Override

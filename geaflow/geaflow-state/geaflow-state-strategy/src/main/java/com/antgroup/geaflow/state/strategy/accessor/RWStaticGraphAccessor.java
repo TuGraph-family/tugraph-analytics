@@ -25,7 +25,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
 public class RWStaticGraphAccessor<K, VV, EV> extends BaseActionAccess implements IStaticGraphAccessor<K, VV, EV> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RWStaticGraphAccessor.class);
-    private IGraphStore<K, VV, EV> graphStore;
+    private IStaticGraphStore<K, VV, EV> graphStore;
 
     @Override
     public void init(StateContext context, IStoreBuilder storeBuilder) {
-        this.graphStore = (IGraphStore<K, VV, EV>) storeBuilder.getStore(DataModel.STATIC_GRAPH, context.getConfig());
+        this.graphStore = (IStaticGraphStore<K, VV, EV>) storeBuilder.getStore(DataModel.STATIC_GRAPH, context.getConfig());
 
         GraphStateDescriptor<K, VV, EV> desc = (GraphStateDescriptor<K, VV, EV>) context.getDescriptor();
 
@@ -56,7 +56,7 @@ public class RWStaticGraphAccessor<K, VV, EV> extends BaseActionAccess implement
     }
 
     @Override
-    public IGraphStore<K, VV, EV> getStore() {
+    public IStaticGraphStore<K, VV, EV> getStore() {
         return this.graphStore;
     }
 

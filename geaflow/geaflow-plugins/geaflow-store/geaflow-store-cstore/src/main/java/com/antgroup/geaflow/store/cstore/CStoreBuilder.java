@@ -32,7 +32,7 @@ public class CStoreBuilder implements IStoreBuilder {
     public IBaseStore getStore(DataModel type, Configuration config) {
         switch (type) {
             case STATIC_GRAPH:
-                return new GraphCStore();
+                return new StaticGraphCStore();
             default:
                 throw new GeaflowRuntimeException(
                     RuntimeErrors.INST.typeSysError("not support " + type));

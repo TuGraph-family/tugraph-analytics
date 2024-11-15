@@ -21,8 +21,8 @@ import com.antgroup.geaflow.common.config.keys.StateConfigKeys;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.file.FileConfigKeys;
-import com.antgroup.geaflow.store.IBaseStore;
-import com.antgroup.geaflow.store.ILocalStore;
+import com.antgroup.geaflow.store.IStatefulStore;
+import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,7 +30,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
+public abstract class BaseRocksdbStore extends BaseGraphStore implements IStatefulStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseRocksdbStore.class);
 
@@ -43,13 +43,12 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
 
     protected String root;
     protected String jobName;
-    protected StoreContext storeContext;
     protected int shardId;
     protected long recoveryVersion = -1;
 
     @Override
     public void init(StoreContext storeContext) {
-        this.storeContext = storeContext;
+        super.init(storeContext);
         this.config = storeContext.getConfig();
         this.shardId = storeContext.getShardId();
 
@@ -64,12 +63,11 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
         this.remotePath = getRemotePath().toString();
         this.persistClient = new RocksdbPersistClient(this.config);
         long chkRate = this.config.getLong(FrameworkConfigKeys.BATCH_NUMBER_PER_CHECKPOINT);
-        this.keepChkNum =
-            Math.max(this.config.getInteger(StateConfigKeys.STATE_ARCHIVED_VERSION_NUM), chkRate * 2);
+        this.keepChkNum = Math.max(
+            this.config.getInteger(StateConfigKeys.STATE_ARCHIVED_VERSION_NUM), chkRate * 2);
 
         this.rocksdbClient = new RocksdbClient(rocksdbPath, getCfList(), config);
-        LOGGER.info("ThreadId {}, BaseRocksdbStore initDB",
-            Thread.currentThread().getId());
+        LOGGER.info("ThreadId {}, BaseRocksdbStore initDB", Thread.currentThread().getId());
         this.rocksdbClient.initDB();
     }
 
@@ -116,8 +114,7 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
     }
 
     protected Path getRemotePath() {
-        return Paths.get(root, jobName, storeContext.getName(),
-            Integer.toString(shardId));
+        return Paths.get(root, jobName, storeContext.getName(), Integer.toString(shardId));
     }
 
     @Override
@@ -147,10 +144,5 @@ public abstract class BaseRocksdbStore implements IBaseStore, ILocalStore {
     @Override
     public void drop() {
         rocksdbClient.drop();
-    }
-
-    @Override
-    public void initShardId(int shardId) {
-        this.shardId = shardId;
     }
 }

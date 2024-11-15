@@ -27,8 +27,8 @@ import com.antgroup.geaflow.state.iterator.IteratorWithFlatFn;
 import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
-import com.antgroup.geaflow.store.BaseGraphStore;
-import com.antgroup.geaflow.store.api.graph.IGraphMultiVersionedStore;
+import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
+import com.antgroup.geaflow.store.api.graph.IDynamicGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.iterator.KeysIterator;
 import com.antgroup.geaflow.store.memory.iterator.MemoryEdgeScanPushDownIterator;
@@ -47,13 +47,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore implements
-    IGraphMultiVersionedStore<K, VV, EV> {
+public class MemoryDynamicGraphStore<K, VV, EV> extends BaseGraphStore implements
+    IDynamicGraphStore<K, VV, EV> {
 
     private Map<K, Map<Long, List<IEdge<K, EV>>>> vertexId2Edges = new ConcurrentHashMap<>();
     private Map<K, Map<Long, IVertex<K, VV>>> vertexId2Vertex = new ConcurrentHashMap<>();
 
-    public GraphMemoryMultiVersionedStore() {
+    public MemoryDynamicGraphStore() {
     }
 
     @Override
@@ -100,7 +100,7 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
 
     public Map<K, List<IEdge<K, EV>>> getVertexId2Edges(long version) {
         Map<K, List<IEdge<K, EV>>> map = new HashMap<>(vertexId2Edges.size());
-        for (Entry<K, Map<Long, List<IEdge<K, EV>>>> entry: vertexId2Edges.entrySet()) {
+        for (Entry<K, Map<Long, List<IEdge<K, EV>>>> entry : vertexId2Edges.entrySet()) {
             if (entry.getValue().containsKey(version)) {
                 map.put(entry.getKey(), entry.getValue().get(version));
             }
@@ -111,7 +111,7 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
 
     public Map<K, IVertex<K, VV>> getVertexId2Vertex(long version) {
         Map<K, IVertex<K, VV>> map = new HashMap<>(vertexId2Vertex.size());
-        for (Entry<K, Map<Long, IVertex<K, VV>>> entry: vertexId2Vertex.entrySet()) {
+        for (Entry<K, Map<Long, IVertex<K, VV>>> entry : vertexId2Vertex.entrySet()) {
             if (entry.getValue().containsKey(version)) {
                 map.put(entry.getKey(), entry.getValue().get(version));
             }
@@ -148,7 +148,7 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
         if (map != null) {
             vertex = map.get(version);
         }
-        if (vertex != null && ((IGraphFilter)pushdown.getFilter()).filterVertex(vertex)) {
+        if (vertex != null && ((IGraphFilter) pushdown.getFilter()).filterVertex(vertex)) {
             return vertex;
         }
         return null;
@@ -172,7 +172,7 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
         List<IEdge<K, EV>> edgeList = getEdges(version, sid, pushdown);
         OneDegreeGraph<K, VV, EV> oneDegreeGraph = new OneDegreeGraph<>(sid, vertex,
             IteratorWithClose.wrap(edgeList.iterator()));
-        if (((IGraphFilter)pushdown.getFilter()).filterOneDegreeGraph(oneDegreeGraph)) {
+        if (((IGraphFilter) pushdown.getFilter()).filterOneDegreeGraph(oneDegreeGraph)) {
             return oneDegreeGraph;
         } else {
             return null;
@@ -195,43 +195,52 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
     }
 
     @Override
-    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version,
+                                                               IStatePushDown pushdown) {
         return new MemoryVertexScanIterator<>(getVertexId2Vertex(version).values().iterator(),
             (IGraphFilter) pushdown.getFilter());
     }
 
     @Override
-    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys, IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(long version, List<K> keys,
+                                                               IStatePushDown pushdown) {
         BiFunction<K, IStatePushDown, IVertex<K, VV>> fetchFun = (k, p) -> getVertex(version, k, p);
         return new KeysIterator<>(keys, fetchFun, pushdown);
     }
 
     @Override
     public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, IStatePushDown pushdown) {
-        Iterator<List<IEdge<K, EV>>> it = new MemoryEdgeScanPushDownIterator<>(getVertexId2Edges(version).values().iterator(), pushdown);
+        Iterator<List<IEdge<K, EV>>> it = new MemoryEdgeScanPushDownIterator<>(
+            getVertexId2Edges(version).values().iterator(), pushdown);
         return new IteratorWithFlatFn<>(it, List::iterator);
     }
 
     @Override
-    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys, IStatePushDown pushdown) {
-        BiFunction<K, IStatePushDown, List<IEdge<K, EV>>> fetchFun = (k, p) -> getEdges(version, k, p);
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(long version, List<K> keys,
+                                                           IStatePushDown pushdown) {
+        BiFunction<K, IStatePushDown, List<IEdge<K, EV>>> fetchFun = (k, p) -> getEdges(version, k,
+            p);
         Iterator<List<IEdge<K, EV>>> it = new KeysIterator<>(keys, fetchFun, pushdown);
         return new IteratorWithFlatFn<>(it, List::iterator);
     }
 
     @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
+                                                                                  IStatePushDown pushdown) {
         BiFunction<K, IStatePushDown, OneDegreeGraph<K, VV, EV>> fetchFun =
-            (k, p) -> getOneDegreeGraph(version, k, p);
+            (k, p) -> getOneDegreeGraph(
+            version, k, p);
 
         return new KeysIterator<>(Lists.newArrayList(getKeyIterator()), fetchFun, pushdown);
     }
 
     @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version, List<K> keys,
-                                                                  IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(long version,
+                                                                                  List<K> keys,
+                                                                                  IStatePushDown pushdown) {
         BiFunction<K, IStatePushDown, OneDegreeGraph<K, VV, EV>> fetchFun =
-            (k, p) -> getOneDegreeGraph(version, k, p);
+            (k, p) -> getOneDegreeGraph(
+            version, k, p);
         return new KeysIterator<>(keys, fetchFun, pushdown);
     }
 
@@ -270,7 +279,7 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
         Map<Long, IVertex<K, VV>> map = vertexId2Vertex.get(id);
         Map<Long, IVertex<K, VV>> res = new HashMap<>(map.size());
         IGraphFilter graphFilter = (IGraphFilter) pushdown.getFilter();
-        for (Entry<Long, IVertex<K, VV>> entry: map.entrySet()) {
+        for (Entry<Long, IVertex<K, VV>> entry : map.entrySet()) {
             if (graphFilter.filterVertex(entry.getValue())) {
                 res.put(entry.getKey(), entry.getValue());
             }
@@ -287,7 +296,7 @@ public class GraphMemoryMultiVersionedStore<K, VV, EV> extends BaseGraphStore im
         Map<Long, IVertex<K, VV>> map = vertexId2Vertex.get(id);
         Map<Long, IVertex<K, VV>> res = new HashMap<>(versions.size());
         IGraphFilter graphFilter = (IGraphFilter) pushdown.getFilter();
-        for (long version: versions) {
+        for (long version : versions) {
             IVertex<K, VV> vertex = map.get(version);
             if (vertex != null && graphFilter.filterVertex(vertex)) {
                 res.put(version, vertex);

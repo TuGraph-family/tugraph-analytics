@@ -27,37 +27,12 @@ public interface IBaseStore {
     void init(StoreContext storeContext);
 
     /**
-     * archive current store data for persistence.
-     */
-    void archive(long checkpointId);
-
-    /**
-     * recovery the store data from persistent storage.
-     */
-    void recovery(long checkpointId);
-
-    /**
-     * recovery the latest store data.
-     */
-    long recoveryLatest();
-
-    /**
-     * compact the store data.
-     */
-    void compact();
-
-    /**
-     * flush the store data to disk or remote storage.
+     * flush memory data to disk.
      */
     void flush();
 
     /**
-     * close the store handler and ll other used resources.
+     * close the store handler and all other used resources.
      */
     void close();
-
-    /**
-     * delete the disk data.
-     */
-    void drop();
 }

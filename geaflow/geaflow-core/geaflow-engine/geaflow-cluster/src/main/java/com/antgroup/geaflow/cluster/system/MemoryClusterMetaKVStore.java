@@ -18,7 +18,7 @@ import com.antgroup.geaflow.state.DataModel;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 
 public class MemoryClusterMetaKVStore<V> implements IClusterMetaKVStore<String, V> {

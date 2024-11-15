@@ -91,7 +91,8 @@ public interface StaticGraphTrait<K, VV, EV> {
     /**
      * Fetch the iterator of one degree graph according to the ids and pushdown condition.
      */
-    CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown);
+    CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys,
+                                                                           IStatePushDown pushdown);
 
 
     /**
@@ -103,7 +104,8 @@ public interface StaticGraphTrait<K, VV, EV> {
     /**
      * Fetch the project result of edges according to the ids and pushdown condition.
      */
-    <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys, IStatePushDown<K, IEdge<K, EV>, R> pushdown);
+    <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
+                                                              IStatePushDown<K, IEdge<K, EV>, R> pushdown);
 
     /**
      * Fetch the aggregated results according to the pushdown condition.

@@ -20,7 +20,7 @@ import com.antgroup.geaflow.state.action.EmptyAction;
 import com.antgroup.geaflow.state.action.IAction;
 import com.antgroup.geaflow.state.action.StateActionContext;
 import com.antgroup.geaflow.state.context.StateContext;
-import com.antgroup.geaflow.store.IBaseStore;
+import com.antgroup.geaflow.store.IStatefulStore;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +34,7 @@ public abstract class BaseActionAccess {
 
     protected abstract List<ActionType> allowActionTypes();
 
-    protected void initAction(IBaseStore baseStore, StateContext stateContext) {
+    protected void initAction(IStatefulStore baseStore, StateContext stateContext) {
         List<ActionType> allowActionTypes = allowActionTypes();
         for (ActionType actionType : allowActionTypes()) {
             if (allowActionTypes.contains(actionType)) {

@@ -44,7 +44,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, EV> {
+public class StaticGraphMemoryCSRStore<K, VV, EV> extends BaseStaticGraphMemoryStore<K, VV, EV> {
+
     // inner csr store.
     private CSRStore<K, VV, EV> csrStore;
     private boolean isBuilt;
@@ -109,6 +110,26 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
     }
 
     @Override
+    public void archive(long checkpointId) {
+
+    }
+
+    @Override
+    public void recovery(long checkpointId) {
+
+    }
+
+    @Override
+    public long recoveryLatest() {
+        return 0;
+    }
+
+    @Override
+    public void compact() {
+
+    }
+
+    @Override
     public void flush() {
         this.csrStore.build(vertexList, edgesList);
         this.vertexList = null;
@@ -132,19 +153,21 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
     protected CloseableIterator<IVertex<K, VV>> getVertexIterator() {
         Preconditions.checkArgument(isBuilt, "flush first.");
 
-        return new IteratorWithFnThenFilter<>(IntStream.range(0, csrStore.getDict().size()).iterator(),
+        return new IteratorWithFnThenFilter<>(
+            IntStream.range(0, csrStore.getDict().size()).iterator(),
             p -> csrStore.getVertex(csrStore.reverse.get(p), p), Objects::nonNull);
     }
 
     @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
+        IStatePushDown pushdown) {
         Preconditions.checkArgument(isBuilt, "flush first.");
 
-        return new IteratorWithFnThenFilter<>(IntStream.range(0, csrStore.getDict().size()).iterator(),
-            p -> {
-                K k = csrStore.reverse.get(p);
-                return getOneDegreeGraph(k, p, pushdown);
-            }, Objects::nonNull);
+        return new IteratorWithFnThenFilter<>(
+            IntStream.range(0, csrStore.getDict().size()).iterator(), p -> {
+            K k = csrStore.reverse.get(p);
+            return getOneDegreeGraph(k, p, pushdown);
+        }, Objects::nonNull);
     }
 
     @Override
@@ -223,12 +246,13 @@ public class GraphMemoryCSRStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, 
                 edgesListTmp.get(dictId).add(edge);
             });
             reverse = PrimitiveArrayFactory.getCustomArray(this.keyClazz, kDict.size());
-            for (Entry<K, Integer> entry: kDict.entrySet()) {
+            for (Entry<K, Integer> entry : kDict.entrySet()) {
                 reverse.set(entry.getValue(), entry.getKey());
             }
 
             vertexArray.init(vertexList.size());
-            int edgesNum = edgesListTmp.stream().mapToInt(value -> value != null ? value.size() : 0).sum();
+            int edgesNum = edgesListTmp.stream().mapToInt(value -> value != null ? value.size() : 0)
+                .sum();
             edgeArray.init(keyClazz, edgesNum);
             for (int i = 0; i < vertexList.size(); i++) {
                 vertexArray.set(i, vertexList.get(i));

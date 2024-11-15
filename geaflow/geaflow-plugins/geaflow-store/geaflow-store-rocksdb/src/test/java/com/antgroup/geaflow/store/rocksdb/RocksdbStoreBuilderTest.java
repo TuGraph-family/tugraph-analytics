@@ -23,8 +23,8 @@ import com.antgroup.geaflow.state.DataModel;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.state.serializer.DefaultKVSerializer;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.key.IKVStatefulStore;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.io.File;
 import java.util.HashMap;
@@ -52,8 +52,8 @@ public class RocksdbStoreBuilderTest {
     public void testKV() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.ROCKSDB.name());
         Configuration configuration = new Configuration(config);
-        IKVStore<String, String> kvStore =
-            (IKVStore<String, String>) builder.getStore(DataModel.KV, configuration);
+        IKVStatefulStore<String, String> kvStore = (IKVStatefulStore<String, String>) builder.getStore(
+            DataModel.KV, configuration);
         StoreContext storeContext = new StoreContext("rocksdb_kv").withConfig(configuration);
         storeContext.withKeySerializer(new DefaultKVSerializer<>(String.class, String.class));
 
@@ -68,7 +68,7 @@ public class RocksdbStoreBuilderTest {
         kvStore.archive(1);
         kvStore.drop();
 
-        kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV, configuration);
+        kvStore = (IKVStatefulStore<String, String>) builder.getStore(DataModel.KV, configuration);
         kvStore.init(storeContext);
         kvStore.recovery(1);
 
@@ -80,8 +80,9 @@ public class RocksdbStoreBuilderTest {
     public void testFO() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.ROCKSDB.name());
         Configuration configuration = new Configuration(config);
-        IKVStore<String, String> kvStore =
-            (IKVStore<String, String>) builder.getStore(DataModel.KV, configuration);
+        KVRocksdbStoreBase<String, String> kvStore =
+            (KVRocksdbStoreBase<String, String>) builder.getStore(
+            DataModel.KV, configuration);
         StoreContext storeContext = new StoreContext("rocksdb_kv").withConfig(configuration);
         storeContext.withKeySerializer(new DefaultKVSerializer<>(String.class, String.class));
         kvStore.init(storeContext);
@@ -94,7 +95,8 @@ public class RocksdbStoreBuilderTest {
         }
         kvStore.close();
         kvStore.drop();
-        kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV, configuration);
+        kvStore = (KVRocksdbStoreBase<String, String>) builder.getStore(DataModel.KV,
+            configuration);
         kvStore.init(storeContext);
         kvStore.recoveryLatest();
         Assert.assertEquals(kvStore.get("hello"), "world" + 9);
@@ -103,7 +105,8 @@ public class RocksdbStoreBuilderTest {
         kvStore.drop();
         FileUtils.deleteQuietly(new File("/tmp/RocksdbStoreBuilderTest/RocksdbStoreBuilderTest"
             + "/rocksdb_kv/0/meta.9/_commit"));
-        kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV, configuration);
+        kvStore = (KVRocksdbStoreBase<String, String>) builder.getStore(DataModel.KV,
+            configuration);
         kvStore.init(storeContext);
         kvStore.recoveryLatest();
         Assert.assertEquals(kvStore.get("hello"), "world" + 8);

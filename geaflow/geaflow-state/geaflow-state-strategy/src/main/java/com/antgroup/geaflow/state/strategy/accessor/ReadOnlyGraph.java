@@ -29,6 +29,7 @@ import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.state.graph.StateMode;
 import com.antgroup.geaflow.state.manage.LoadOption;
 import com.antgroup.geaflow.store.IBaseStore;
+import com.antgroup.geaflow.store.IStatefulStore;
 import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
@@ -55,11 +56,11 @@ public class ReadOnlyGraph<K, VV, EV> {
     protected Throwable warmupException;
     protected AtomicBoolean initialized;
     // InUseGraphStore is the store in using.
-    protected IBaseStore inUseGraphStore;
+    protected IStatefulStore inUseGraphStore;
     // LatestGraphStore is the store referring to the latest version.
-    protected IBaseStore latestGraphStore;
+    protected IStatefulStore latestGraphStore;
     // LazyCloseGraphStore is the store in querying while current store is switching.
-    protected IBaseStore lazyCloseGraphStore;
+    protected IStatefulStore lazyCloseGraphStore;
     protected boolean enableRecoverLatestVersion;
     protected boolean enableStateBackgroundSync;
     protected int syncGapMs;
@@ -69,30 +70,33 @@ public class ReadOnlyGraph<K, VV, EV> {
         this.context = context;
         this.storeBuilder = storeBuilder;
         this.viewMetaBookKeeper = new ViewMetaBookKeeper(context.getName(), context.getConfig());
-        this.enableRecoverLatestVersion =
-            context.getConfig().getBoolean(StateConfigKeys.STATE_RECOVER_LATEST_VERSION_ENABLE);
-        this.enableStateBackgroundSync =
-            context.getConfig().getBoolean(StateConfigKeys.STATE_BACKGROUND_SYNC_ENABLE);
+        this.enableRecoverLatestVersion = context.getConfig()
+            .getBoolean(StateConfigKeys.STATE_RECOVER_LATEST_VERSION_ENABLE);
+        this.enableStateBackgroundSync = context.getConfig()
+            .getBoolean(StateConfigKeys.STATE_BACKGROUND_SYNC_ENABLE);
         this.syncGapMs = context.getConfig().getInteger(StateConfigKeys.STATE_SYNC_GAP_MS);
         this.initialized = new AtomicBoolean(false);
         if (this.enableStateBackgroundSync) {
             this.enableRecoverLatestVersion = true;
             LOGGER.info("initialize background sync service");
-            this.syncExecutor =
-                Executors.newSingleThreadScheduledExecutor(ThreadUtil.namedThreadFactory(false,
-                    Thread.currentThread().getName() + "read-only-background-sync-" + context.getShardId()));
+            this.syncExecutor = Executors.newSingleThreadScheduledExecutor(
+                ThreadUtil.namedThreadFactory(false,
+                    Thread.currentThread().getName() + "read-only-background-sync-"
+                        + context.getShardId()));
             this.startStateSyncService();
         }
     }
 
     protected List<ActionType> allowActionTypes() {
-        return Arrays.asList(ActionType.RECOVER, ActionType.LOAD, ActionType.DROP, ActionType.CLOSE);
+        return Arrays.asList(ActionType.RECOVER, ActionType.LOAD, ActionType.DROP,
+            ActionType.CLOSE);
     }
 
     public void doStoreAction(int shard, ActionType actionType, ActionRequest request) {
         if (actionType == ActionType.DROP || actionType == ActionType.CLOSE) {
             IAction action = actionType == ActionType.DROP ? new DropAction() : new CloseAction();
-            StateActionContext stateActionContext = new StateActionContext(latestGraphStore, context.getConfig());
+            StateActionContext stateActionContext = new StateActionContext(latestGraphStore,
+                context.getConfig());
             action.init(stateActionContext);
             action.apply(request);
             if (enableStateBackgroundSync) {
@@ -148,7 +152,8 @@ public class ReadOnlyGraph<K, VV, EV> {
                     createReadOnlyState(latestVersion);
                     currentVersion = latestVersion;
                 } else {
-                    LOGGER.info("don't need recover, current version {} latest version {}", currentVersion, latestVersion);
+                    LOGGER.info("don't need recover, current version {} latest version {}",
+                        currentVersion, latestVersion);
                 }
                 // Try to update in-use connection.
                 getStore();
@@ -190,15 +195,14 @@ public class ReadOnlyGraph<K, VV, EV> {
     protected void createReadOnlyState(long version) {
         LOGGER.info("create new read only state, state index {} version {} backend type {}",
             context.getShardId(), version, context.getStoreType());
-        IBaseStore graphStoreTmp =
-            storeBuilder.getStore(this.context.getDataModel(), context.getConfig());
-        GraphStateDescriptor<K, VV, EV> desc = (GraphStateDescriptor<K, VV, EV>) context.getDescriptor();
+        IStatefulStore graphStoreTmp = (IStatefulStore) storeBuilder.getStore(this.context.getDataModel(),
+            context.getConfig());
+        GraphStateDescriptor<K, VV, EV> desc =
+            (GraphStateDescriptor<K, VV, EV>) context.getDescriptor();
 
-        StoreContext storeContext = new StoreContext(context.getName())
-            .withConfig(context.getConfig())
-            .withMetricGroup(context.getMetricGroup())
-            .withDataSchema(desc.getGraphSchema())
-            .withName(context.getName())
+        StoreContext storeContext = new StoreContext(context.getName()).withConfig(
+                context.getConfig()).withMetricGroup(context.getMetricGroup())
+            .withDataSchema(desc.getGraphSchema()).withName(context.getName())
             .withShardId(context.getShardId());
         graphStoreTmp.init(storeContext);
         graphStoreTmp.recovery(version);
@@ -206,7 +210,8 @@ public class ReadOnlyGraph<K, VV, EV> {
     }
 
     protected void updateVersion(long version) {
-        LOGGER.info("update read only state, state index {} version {}", context.getShardId(), version);
+        LOGGER.info("update read only state, state index {} version {}", context.getShardId(),
+            version);
         latestGraphStore.recovery(version);
     }
 }

@@ -25,7 +25,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.descriptor.GraphStateDescriptor;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.graph.IGraphMultiVersionedStore;
+import com.antgroup.geaflow.store.api.graph.IDynamicGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.Collection;
 import java.util.List;
@@ -38,11 +38,11 @@ import org.slf4j.LoggerFactory;
 public class RWDynamicGraphAccessor<K, VV, EV> extends BaseActionAccess implements DynamicGraphAccessor<K, VV, EV> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RWDynamicGraphAccessor.class);
-    private IGraphMultiVersionedStore<K, VV, EV> graphStore;
+    private IDynamicGraphStore<K, VV, EV> graphStore;
 
     @Override
     public void init(StateContext context, IStoreBuilder storeBuilder) {
-        this.graphStore = (IGraphMultiVersionedStore<K, VV, EV>) storeBuilder.getStore(
+        this.graphStore = (IDynamicGraphStore<K, VV, EV>) storeBuilder.getStore(
             DataModel.DYNAMIC_GRAPH, context.getConfig());
 
         GraphStateDescriptor<K, VV, EV> desc = (GraphStateDescriptor<K, VV, EV>) context.getDescriptor();
@@ -58,7 +58,7 @@ public class RWDynamicGraphAccessor<K, VV, EV> extends BaseActionAccess implemen
     }
 
     @Override
-    public IGraphMultiVersionedStore<K, VV, EV> getStore() {
+    public IDynamicGraphStore<K, VV, EV> getStore() {
         return graphStore;
     }
 

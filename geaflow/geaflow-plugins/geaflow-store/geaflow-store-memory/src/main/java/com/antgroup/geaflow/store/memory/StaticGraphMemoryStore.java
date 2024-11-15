@@ -28,11 +28,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GraphMemoryStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, EV> {
+public class StaticGraphMemoryStore<K, VV, EV> extends BaseStaticGraphMemoryStore<K, VV, EV> {
 
     protected Map<K, Tuple<IVertex<K, VV>, List<IEdge<K, EV>>>> map;
 
-    public GraphMemoryStore() {
+    public StaticGraphMemoryStore() {
     }
 
     @Override
@@ -86,6 +86,31 @@ public class GraphMemoryStore<K, VV, EV> extends BaseGraphMemoryStore<K, VV, EV>
 
     @Override
     public void close() {
+
+    }
+
+    @Override
+    public void archive(long checkpointId) {
+
+    }
+
+    @Override
+    public void recovery(long checkpointId) {
+
+    }
+
+    @Override
+    public long recoveryLatest() {
+        return 0;
+    }
+
+    @Override
+    public void compact() {
+
+    }
+
+    @Override
+    public void flush() {
 
     }
 

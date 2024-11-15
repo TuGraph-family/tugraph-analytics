@@ -18,7 +18,7 @@ import com.antgroup.geaflow.state.action.ActionRequest;
 import com.antgroup.geaflow.state.action.ActionType;
 import com.antgroup.geaflow.state.context.StateContext;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import java.util.List;
 
 public class ReadOnlyStaticGraphAccessor<K, VV, EV> extends RWStaticGraphAccessor<K, VV, EV> {
@@ -37,7 +37,7 @@ public class ReadOnlyStaticGraphAccessor<K, VV, EV> extends RWStaticGraphAccesso
         this.readOnlyGraph.doStoreAction(shard, actionType, request);
     }
 
-    public IGraphStore<K, VV, EV> getStore() {
-        return (IGraphStore<K, VV, EV>) this.readOnlyGraph.getStore();
+    public IStaticGraphStore<K, VV, EV> getStore() {
+        return (IStaticGraphStore<K, VV, EV>) this.readOnlyGraph.getStore();
     }
 }
