@@ -74,6 +74,8 @@ public class BaseHiveTest {
         conf.set("hive.metastore.schema.verification", "false");
         conf.set("datanucleus.autoCreateSchema", "true");
         conf.set("datanucleus.fixedDatastore", "false");
+        conf.set("datanucleus.schema.autoCreateAll", "true");
+        conf.set("hive.stats.autogather","false");
 
         String scratchDir = FileUtil.concatPath(hiveLocation, "scratch");
         conf.set(ConfVars.SCRATCHDIR.varname, scratchDir);
