@@ -33,6 +33,7 @@ import com.antgroup.geaflow.state.pushdown.inner.IFilterConverter;
 import com.antgroup.geaflow.state.pushdown.inner.PushDownPbGenerator;
 import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
 import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
+import com.antgroup.geaflow.store.config.StoreConfigKeys;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.cstore.encoder.EdgeEncoder;
 import com.antgroup.geaflow.store.cstore.encoder.EncoderFactory;
@@ -101,6 +102,7 @@ public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements
     }
 
     private void rewriteConfig() {
+        this.config.put(StoreConfigKeys.STORE_FILTER_CODEGEN_ENABLE.getKey(), "false");
         String jobName = Configuration.getString(ExecutionConfigKeys.JOB_APP_NAME, this.config);
         String workerPath = Configuration.getString(ExecutionConfigKeys.JOB_WORK_PATH, this.config);
         this.config.put(CStoreConfigKeys.CSTORE_NAME_KEY, jobName);

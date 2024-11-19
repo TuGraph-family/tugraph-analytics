@@ -14,13 +14,13 @@
 
 package com.antgroup.geaflow.store.memory;
 
-import com.antgroup.geaflow.store.IBaseStore;
+import com.antgroup.geaflow.store.IStatefulStore;
 import com.antgroup.geaflow.store.api.key.IKVStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KVMemoryStore<K, V> implements IBaseStore, IKVStore<K, V> {
+public class KVMemoryStore<K, V> implements IStatefulStore, IKVStore<K, V> {
 
     private Map<K, V> memoryStore = new HashMap<>();
 
@@ -52,5 +52,30 @@ public class KVMemoryStore<K, V> implements IBaseStore, IKVStore<K, V> {
     @Override
     public void close() {
         this.memoryStore.clear();
+    }
+
+    @Override
+    public void archive(long checkpointId) {
+
+    }
+
+    @Override
+    public void recovery(long checkpointId) {
+
+    }
+
+    @Override
+    public long recoveryLatest() {
+        return 0;
+    }
+
+    @Override
+    public void compact() {
+
+    }
+
+    @Override
+    public void drop() {
+
     }
 }
