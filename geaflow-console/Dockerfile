@@ -55,8 +55,12 @@ COPY geaflow-console/target/config $GEAFLOW_HOME/config
 COPY geaflow-console/docker $GEAFLOW_HOME/
 
 # copy geaflow jar
+
+ENV GEAFLOW_LOCAL_VERSION_PATH=/tmp/geaflow/local/versions/defaultVersion/defaultVersion.jar
 COPY geaflow/geaflow-deploy/geaflow-assembly/target/geaflow-assembly-*[!-sources].jar \
-    $GEAFLOW_HOME/files/geaflow.jar
+   $GEAFLOW_LOCAL_VERSION_PATH
+RUN md5sum $GEAFLOW_LOCAL_VERSION_PATH |awk '{print $1}' > $GEAFLOW_LOCAL_VERSION_PATH.md5
+
 
 EXPOSE 8888 3306 6379 8086 2181
 

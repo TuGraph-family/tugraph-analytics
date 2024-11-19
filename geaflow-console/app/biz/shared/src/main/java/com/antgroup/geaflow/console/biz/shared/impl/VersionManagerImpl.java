@@ -26,7 +26,6 @@ import com.antgroup.geaflow.console.biz.shared.view.VersionView;
 import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.dal.model.VersionSearch;
 import com.antgroup.geaflow.console.common.util.FileUtil;
-import com.antgroup.geaflow.console.common.util.Fmt;
 import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.context.ContextHolder;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
@@ -37,6 +36,7 @@ import com.antgroup.geaflow.console.core.model.version.GeaflowVersion;
 import com.antgroup.geaflow.console.core.service.NameService;
 import com.antgroup.geaflow.console.core.service.RemoteFileService;
 import com.antgroup.geaflow.console.core.service.VersionService;
+import com.antgroup.geaflow.console.core.service.file.LocalFileFactory;
 import com.antgroup.geaflow.console.core.service.file.RemoteFileStorage;
 import com.google.common.base.Preconditions;
 import java.io.File;
@@ -59,11 +59,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionView, VersionSearch> implements
     VersionManager {
 
-    private static final String ENGINE_JAR_PREFIX = "geaflow-";
+    private static final String ENGINE_JAR_PREFIX = "";
 
     private static final String LANG_JAR_PREFIX = "lang-";
 
-    private static final String GEAFLOW_JAR_DEFAULT_PATH = "files/geaflow.jar";
+    private static final String GEAFLOW_DEFAULT_VERSION_NAME = "defaultVersion";
 
     @Autowired
     private VersionService versionService;
@@ -124,13 +124,14 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
         // in case of remote file config changed
         remoteFileStorage.reset();
 
-        String path = Fmt.as("{}/{}", System.getProperty("user.dir"), GEAFLOW_JAR_DEFAULT_PATH);
+        String path = LocalFileFactory.getVersionFilePath(GEAFLOW_DEFAULT_VERSION_NAME,
+            GEAFLOW_DEFAULT_VERSION_NAME + ".jar");
         if (!FileUtil.exist(path)) {
             throw new GeaflowIllegalException("No geaflow jar found in {}", path);
         }
 
         VersionView versionView = new VersionView();
-        versionView.setName("0.1");
+        versionView.setName(GEAFLOW_DEFAULT_VERSION_NAME);
         versionView.setComment(I18nUtil.getMessage("i18n.key.default.version"));
         versionView.setPublish(true);
 
@@ -189,12 +190,12 @@ public class VersionManagerImpl extends NameManagerImpl<GeaflowVersion, VersionV
 
         GeaflowRemoteFile engineJarPackage = version.getEngineJarPackage();
         if (engineJarPackage != null) {
-            remoteFileManager.deleteRefJar(engineJarPackage.getId(),null, GeaflowResourceType.ENGINE_VERSION);
+            remoteFileManager.deleteRefJar(engineJarPackage.getId(), null, GeaflowResourceType.ENGINE_VERSION);
         }
 
         GeaflowRemoteFile langJarPackage = version.getLangJarPackage();
         if (langJarPackage != null) {
-            remoteFileManager.deleteRefJar(langJarPackage.getId(),null, GeaflowResourceType.ENGINE_VERSION);
+            remoteFileManager.deleteRefJar(langJarPackage.getId(), null, GeaflowResourceType.ENGINE_VERSION);
         }
 
         return drop(version.getId());
