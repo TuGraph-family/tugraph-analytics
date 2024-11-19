@@ -55,6 +55,7 @@ import com.antgroup.geaflow.dsl.udf.table.other.EdgeSrcId;
 import com.antgroup.geaflow.dsl.udf.table.other.EdgeTargetId;
 import com.antgroup.geaflow.dsl.udf.table.other.EdgeTimestamp;
 import com.antgroup.geaflow.dsl.udf.table.other.If;
+import com.antgroup.geaflow.dsl.udf.table.other.IsDecimal;
 import com.antgroup.geaflow.dsl.udf.table.other.Label;
 import com.antgroup.geaflow.dsl.udf.table.other.VertexId;
 import com.antgroup.geaflow.dsl.udf.table.string.Ascii2String;
@@ -171,6 +172,7 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             .add(GeaFlowFunction.of(EdgeSrcId.class))
             .add(GeaFlowFunction.of(EdgeTargetId.class))
             .add(GeaFlowFunction.of(EdgeTimestamp.class))
+            .add(GeaFlowFunction.of(IsDecimal.class))
             // UDGA
             .add(GeaFlowFunction.of(SingleSourceShortestPath.class))
             .add(GeaFlowFunction.of(PageRank.class))
