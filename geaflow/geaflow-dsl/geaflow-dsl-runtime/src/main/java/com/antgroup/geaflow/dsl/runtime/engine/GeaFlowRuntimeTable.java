@@ -81,6 +81,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeaFlowRuntimeTable implements RuntimeTable {
 
@@ -285,6 +287,8 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     private static class TableFilterFunction implements FilterFunction<Row> {
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(TableFilterFunction.class);
 
         private final WhereFunction whereFunction;
 

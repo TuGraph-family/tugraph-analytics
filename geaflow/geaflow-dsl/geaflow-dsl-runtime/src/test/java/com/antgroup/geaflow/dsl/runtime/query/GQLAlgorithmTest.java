@@ -84,6 +84,15 @@ public class GQLAlgorithmTest {
     }
 
     @Test
+    public void testAlgorithm_008() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/find_loop.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testAlgorithmKHop() throws Exception {
         QueryTester
             .build()

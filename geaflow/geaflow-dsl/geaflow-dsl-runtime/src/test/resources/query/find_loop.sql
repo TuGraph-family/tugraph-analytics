@@ -19,10 +19,9 @@ CREATE GRAPH IF NOT EXISTS dy_modern (
 CREATE TABLE IF NOT EXISTS tbl_source (
   text varchar
 ) WITH (
-  type='socket',
+  type='file',
   `geaflow.dsl.column.separator` = '#',
-  `geaflow.dsl.socket.host` = 'localhost',
-  `geaflow.dsl.socket.port` = 9003
+  geaflow.dsl.file.path = 'resource:///data/loop.txt'
 );
 
 CREATE TABLE IF NOT EXISTS tbl_result (
@@ -32,10 +31,8 @@ CREATE TABLE IF NOT EXISTS tbl_result (
   d_id bigint,
   a1_id bigint
 ) WITH (
-  type='socket',
-    `geaflow.dsl.column.separator` = ',',
-    `geaflow.dsl.socket.host` = 'localhost',
-    `geaflow.dsl.socket.port` = 9003
+  type='file',
+  geaflow.dsl.file.path = '${target}'
 );
 
 USE GRAPH dy_modern;
@@ -66,7 +63,7 @@ FROM (
 );
 
 INSERT INTO tbl_result
-SELECT
+SELECT DISTINCT
   a_id,
   b_id,
   c_id,
