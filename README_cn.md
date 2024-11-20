@@ -38,8 +38,9 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 第一步 打包jar包并提交quick start任务
 1. 准备Git、JDK8、Maven、Docker环境。
 2. 下载源码：`git clone https://github.com/TuGraph-family/tugraph-analytics`
-3. 引擎构建：`./build.sh --module=gealfow --output=package`
-4. 测试任务：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql`
+3. 项目构建：`./build.sh --module=gealfow --output=package`
+4. 测试任务：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection_file_demo.sql` 
+
 第二步 启动控制台，体验白屏提交quick start任务
 5. 构建控制台jar和镜像(需启动Docker)：`./build.sh --module=gealfow-console`
 6. 启动控制台：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
