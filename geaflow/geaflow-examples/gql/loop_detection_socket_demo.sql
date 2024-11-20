@@ -66,7 +66,7 @@ FROM (
 );
 
 INSERT INTO tbl_result
-SELECT
+SELECT DISTINCT
   a_id,
   b_id,
   c_id,
@@ -76,4 +76,4 @@ FROM (
   MATCH (a:person) -[:knows]->(b:person) -[:knows]-> (c:person)
    -[:knows]-> (d:person) -> (a:person)
   RETURN a.id as a_id, b.id as b_id, c.id as c_id, d.id as d_id, a.id as a1_id
-);
+) 
