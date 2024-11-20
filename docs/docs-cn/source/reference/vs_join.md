@@ -32,7 +32,7 @@
 
 相比宽表的关系物化方式，由于图结构本身的点边聚合性，构图表现得十分节约。 下图是GeaFlow中高性能构图的表现，可见构图操作本身极为迅速，且由于图可以分片的特性，具有十分良好的可扩展性。
 
-![insert_throuput](../../../static/img/insert_throuput_cn.jpg)
+![insert_throuput](../../../static/img/console/insert_throuput_cn.jpg)
 <center>图2</center>
 
 在图一的实验中也可以发现，实质上我们用少量的插入图(青色的insert to graph部分开销)耗时，换取了图建模方式对之后关联查询的加速效果。
