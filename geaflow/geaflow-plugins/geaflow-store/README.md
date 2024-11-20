@@ -29,7 +29,7 @@ operations:
 
 - `archive()`: Archive current state
 - `recovery()`: Recover state from specified position
-- `recoveryLatest()`: Recover state from specified position
+- `recoveryLatest()`: Recover latest version state
 - `compact()`: Compress/merge historical states
 - `drop()`: Drop all data
 
