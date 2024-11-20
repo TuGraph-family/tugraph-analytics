@@ -5,7 +5,12 @@ import type { WrapperProps } from "@docusaurus/types";
 import { useLocation, useHistory } from "react-router-dom";
 import { DocSearch } from "@docsearch/react";
 import Link from "@docusaurus/Link";
-import { EN_DOC_OPTIONS, EN_TRANSLATIONS, ZH_DOC_OPTIONS, ZH_TRANSLATIONS } from "@site/src/constants";
+import {
+  EN_DOC_OPTIONS,
+  EN_TRANSLATIONS,
+  ZH_DOC_OPTIONS,
+  ZH_TRANSLATIONS,
+} from "@site/src/constants";
 import { Cascader, Tooltip } from "antd";
 
 type Props = WrapperProps<typeof DocSidebarType>;
@@ -54,14 +59,12 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
 
   const getDescByLanguage = (lang: string) => {
     if (lang === "zh") {
-      return '实时图计算引擎';
+      return "实时图计算引擎";
     }
-    return 'Streaming Graph Computing Engine';
+    return "Streaming Graph Computing Engine";
   };
 
-
   const getOptions = (lang: string) => {
-
     if (lang === "zh") {
       return ZH_DOC_OPTIONS;
     }
@@ -81,22 +84,34 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
   }, [location.pathname]);
 
   const onVersionChange = (values) => {
-    const [type, version] = values
-    if (type === 'TuGraph_Analytics') {
+    const [type, version] = values;
+    if (type === "TuGraph_Analytics") {
       // TODO 调数据中心文档
-      return
+      return;
     }
 
-    if (type === 'TuGraph_Learn') {
+    if (type === "TuGraph_Learn") {
       // TODO 图学习引擎
-      return
+      return;
     }
 
-    if (type === 'TuGraph_DB') {
+    if (type === "TuGraph_DB") {
       window.location.href = `https://liukaiming-alipay.github.io/tugraph-db/${getCurrentLanguage()}/${version}/guide`;
-      return
+      return;
     }
   };
+
+  useEffect(() => {
+    window.addEventListener("click", () => {
+      const currentPath = window.location.pathname;
+      window.parent.postMessage({ path: currentPath }, "*");
+    });
+    window.addEventListener("hashchange", () => {
+      const currentPath = window.location.pathname;
+      const hash = window.location.hash;
+      window.parent.postMessage({ path: currentPath + hash }, "*");
+    });
+  }, []);
 
   return (
     <div
@@ -107,22 +122,28 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
         flexDirection: "column",
       }}
     >
-      <div style={{ display: "flex", justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "8px",
+        }}
+      >
         <Cascader
           allowClear={false}
-          value={['TuGraph_Analytics']}
+          value={["TuGraph_Analytics"]}
           options={getOptions(getCurrentLanguage())}
           onChange={onVersionChange}
         >
           <div className="itemWrapper">
             <div className="titleBlock">
               <span className="titleText">TuGraph Analytics</span>
-              <div
-                className="downIcon"
-              />
+              <div className="downIcon" />
             </div>
             <div className="contentArea">
-              <span id="engineDescription">{getDescByLanguage(getCurrentLanguage())}</span>
+              <span id="engineDescription">
+                {getDescByLanguage(getCurrentLanguage())}
+              </span>
             </div>
           </div>
         </Cascader>
@@ -141,7 +162,7 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
                       ...item,
                       url:
                         "/tugraph-analytics" +
-                        item?.url?.split("/tugraph-analytics")[1] ?? "",
+                          item?.url?.split("/tugraph-analytics")[1] ?? "",
                     };
                   });
                 },
@@ -152,7 +173,6 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
             />
           </div>
         </Tooltip>
-
       </div>
       <DocSidebar {...props} />
     </div>
