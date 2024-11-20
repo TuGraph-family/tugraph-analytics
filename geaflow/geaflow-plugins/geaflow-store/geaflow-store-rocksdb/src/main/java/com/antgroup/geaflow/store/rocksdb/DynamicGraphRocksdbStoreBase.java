@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class DynamicRocksdbGraphStoreBase<K, VV, EV> extends BaseRocksdbGraphStore
+public class DynamicGraphRocksdbStoreBase<K, VV, EV> extends BaseRocksdbGraphStore
     implements IDynamicGraphStore<K, VV, EV> {
 
     private IGraphMultiVersionedRocksdbProxy<K, VV, EV> proxy;

@@ -36,7 +36,7 @@ public class RocksdbStoreBuilder implements IStoreBuilder {
             case STATIC_GRAPH:
                 return new StaticGraphRocksdbStoreBase();
             case DYNAMIC_GRAPH:
-                return new DynamicRocksdbGraphStoreBase();
+                return new DynamicGraphRocksdbStoreBase();
             default:
                 throw new GeaflowRuntimeException(RuntimeErrors.INST.typeSysError("not support " + type));
         }

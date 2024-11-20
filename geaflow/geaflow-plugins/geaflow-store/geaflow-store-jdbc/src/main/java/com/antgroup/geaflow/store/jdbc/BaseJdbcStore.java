@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseJdbcStore implements IBaseStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseJdbcStore.class);
+    private static final char SQL_SEPARATOR = ',';
 
     private static HikariDataSource ds;
 
@@ -72,7 +73,7 @@ public abstract class BaseJdbcStore implements IBaseStore {
         conf.setMaximumPoolSize(config.getInteger(JdbcConfigKeys.JDBC_CONNECTION_POOL_SIZE));
         String jsonConfig = this.config.getString(JdbcConfigKeys.JSON_CONFIG);
         Map<String, String> map = GsonUtil.parse(jsonConfig);
-        for (Entry<String, String> entry : map.entrySet()) {
+        for (Entry<String, String> entry: map.entrySet()) {
             conf.addDataSourceProperty(entry.getKey(), entry.getValue());
         }
         ds = new HikariDataSource(conf);
@@ -84,10 +85,10 @@ public abstract class BaseJdbcStore implements IBaseStore {
         }
 
         String sql = String.format(insertFormat, this.tableName, this.pk,
-            Joiner.on(',').join(columns),
-            Joiner.on(',').join(Collections.nCopies(values.length, "?")));
-        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
-            sql)) {
+            Joiner.on(SQL_SEPARATOR).join(columns),
+            Joiner.on(SQL_SEPARATOR).join(Collections.nCopies(values.length, "?")));
+        try (Connection conn = ds.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, key);
             for (int i = 0; i < values.length; i++) {
                 ps.setObject(i + 2, values[i]);
@@ -102,11 +103,11 @@ public abstract class BaseJdbcStore implements IBaseStore {
             throw new GeaflowRuntimeException("columns' size does not match values'");
         }
 
-        String sql = String.format(updateFormat, this.tableName, Joiner.on("=?, ").join(columns),
-            pk, key);
+        String sql = String.format(updateFormat,
+            this.tableName, Joiner.on("=?, ").join(columns), pk, key);
 
-        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
-            sql)) {
+        try (Connection conn = ds.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             for (int i = 0; i < values.length; i++) {
                 ps.setObject(i + 1, values[i]);
             }
@@ -115,10 +116,10 @@ public abstract class BaseJdbcStore implements IBaseStore {
     }
 
     protected byte[] query(String key, String[] columns) throws SQLException {
-        String selectColumn = columns == null ? "*" : Joiner.on(',').join(columns);
+        String selectColumn = columns == null ? "*" : Joiner.on(SQL_SEPARATOR).join(columns);
         String sql = String.format(queryFormat, selectColumn, this.tableName, pk, key);
-        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
-            sql)) {
+        try (Connection conn = ds.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             try (ResultSet rs = RetryCommand.run(ps::executeQuery, this.retries)) {
                 if (rs.next()) {
                     return rs.getBytes(1);

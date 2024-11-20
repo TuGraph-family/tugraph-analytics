@@ -32,7 +32,7 @@ public class MemoryStoreBuilder implements IStoreBuilder {
     public IBaseStore getStore(DataModel type, Configuration config) {
         switch (type) {
             case DYNAMIC_GRAPH:
-                return new MemoryDynamicGraphStore<>();
+                return new DynamicGraphMemoryStore<>();
             case STATIC_GRAPH:
                 boolean csrEnable = config.getBoolean(MemoryConfigKeys.CSR_MEMORY_ENABLE);
                 return csrEnable ? new StaticGraphMemoryCSRStore<>() : new StaticGraphMemoryStore<>();

@@ -47,13 +47,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class MemoryDynamicGraphStore<K, VV, EV> extends BaseGraphStore implements
-    IDynamicGraphStore<K, VV, EV> {
+public class DynamicGraphMemoryStore<K, VV, EV> extends BaseGraphStore implements IDynamicGraphStore<K, VV, EV> {
 
     private Map<K, Map<Long, List<IEdge<K, EV>>>> vertexId2Edges = new ConcurrentHashMap<>();
     private Map<K, Map<Long, IVertex<K, VV>>> vertexId2Vertex = new ConcurrentHashMap<>();
 
-    public MemoryDynamicGraphStore() {
+    public DynamicGraphMemoryStore() {
     }
 
     @Override

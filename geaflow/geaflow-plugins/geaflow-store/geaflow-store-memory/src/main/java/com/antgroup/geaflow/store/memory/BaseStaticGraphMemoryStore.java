@@ -55,8 +55,7 @@ public abstract class BaseStaticGraphMemoryStore<K, VV, EV> extends BaseGraphSto
     @Override
     public IVertex<K, VV> getVertex(K sid, IStatePushDown pushdown) {
         IVertex<K, VV> vertex = getVertex(sid);
-        return vertex != null && ((IGraphFilter) pushdown.getFilter()).filterVertex(vertex) ? vertex
-                                                                                            : null;
+        return vertex != null && ((IGraphFilter) pushdown.getFilter()).filterVertex(vertex) ? vertex : null;
     }
 
     protected abstract List<IEdge<K, EV>> getEdges(K sid);
@@ -99,54 +98,45 @@ public abstract class BaseStaticGraphMemoryStore<K, VV, EV> extends BaseGraphSto
     public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         boolean emptyFilter = pushdown.getFilter().getFilterType() == FilterType.EMPTY;
         return emptyFilter ? getVertexIterator()
-                           : new MemoryVertexScanIterator<>(getVertexIterator(),
-                               (IGraphFilter) pushdown.getFilter());
+                           : new MemoryVertexScanIterator<>(getVertexIterator(), (IGraphFilter) pushdown.getFilter());
     }
 
     @Override
-    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> list,
-                                                               IStatePushDown pushdown) {
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> list, IStatePushDown pushdown) {
         return new KeysIterator<>(list, this::getVertex, pushdown);
     }
 
     @Override
     public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
-        CloseableIterator<List<IEdge<K, EV>>> it = new MemoryEdgeScanPushDownIterator<>(
-            getEdgesIterator(), pushdown);
+        CloseableIterator<List<IEdge<K, EV>>> it = new MemoryEdgeScanPushDownIterator<>(getEdgesIterator(), pushdown);
         return new IteratorWithFlatFn<>(it, List::iterator);
     }
 
     @Override
     public CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> list, IStatePushDown pushdown) {
-        CloseableIterator<List<IEdge<K, EV>>> it = new KeysIterator<>(list, this::getEdges,
-            pushdown);
+        CloseableIterator<List<IEdge<K, EV>>> it = new KeysIterator<>(list, this::getEdges, pushdown);
         return new IteratorWithFlatFn<>(it, List::iterator);
     }
 
     @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
-        IStatePushDown pushdown) {
-        return new KeysIterator<>(Lists.newArrayList(getKeyIterator()), this::getOneDegreeGraph,
-            pushdown);
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown) {
+        return new KeysIterator<>(Lists.newArrayList(getKeyIterator()), this::getOneDegreeGraph, pushdown);
     }
 
     @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys,
-                                                                                  IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys, IStatePushDown pushdown) {
         return new KeysIterator<>(keys, this::getOneDegreeGraph, pushdown);
     }
 
     @Override
-    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
-        IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return new IteratorWithFn<>(getEdgeIterator(pushdown),
             edge -> Tuple.of(edge.getSrcId(), pushdown.getProjector().project(edge)));
     }
 
     @Override
     public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
-                                                                     IStatePushDown<K, IEdge<K,
-                                                                         EV>, R> pushdown) {
+                                                                     IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return new IteratorWithFn<>(getEdgeIterator(keys, pushdown),
             edge -> Tuple.of(edge.getSrcId(), pushdown.getProjector().project(edge)));
     }
@@ -159,7 +149,7 @@ public abstract class BaseStaticGraphMemoryStore<K, VV, EV> extends BaseGraphSto
             K key = keyIt.next();
 
             List<IEdge<K, EV>> list = getEdges(key, pushdown);
-            res.put(key, (long) list.size());
+            res.put(key, (long)list.size());
         }
         return res;
     }
@@ -172,8 +162,7 @@ public abstract class BaseStaticGraphMemoryStore<K, VV, EV> extends BaseGraphSto
         if (pushdown.getFilters() == null) {
             pushdownFun = key -> pushdown;
         } else {
-            pushdownFun = key -> StatePushDown.of()
-                .withFilter((IGraphFilter) pushdown.getFilters().get(key));
+            pushdownFun = key -> StatePushDown.of().withFilter((IGraphFilter) pushdown.getFilters().get(key));
         }
 
         for (K key : keys) {

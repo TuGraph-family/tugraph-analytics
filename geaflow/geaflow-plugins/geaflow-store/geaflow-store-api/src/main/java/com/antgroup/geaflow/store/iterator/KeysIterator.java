@@ -36,7 +36,8 @@ public class KeysIterator<K, VV, EV, R> implements CloseableIterator<R> {
         this.iterator = keys.iterator();
         if (pushdown.getFilters() != null) {
             StatePushDown simpleKeyPushDown = StatePushDown.of()
-                .withEdgeLimit(pushdown.getEdgeLimit()).withOrderFields(pushdown.getOrderFields());
+                .withEdgeLimit(pushdown.getEdgeLimit())
+                .withOrderFields(pushdown.getOrderFields());
             this.pushdownFun = k -> simpleKeyPushDown.withFilter(
                 (IFilter) pushdown.getFilters().get(k));
         } else {

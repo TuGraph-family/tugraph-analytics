@@ -44,8 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements
-    IStaticGraphStore<K, VV, EV> {
+public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements IStaticGraphStore<K, VV, EV> {
 
     private Map<String, String> config;
     private NativeGraphStore nativeGraphStore;
@@ -139,17 +138,13 @@ public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements
 
                 root = Configuration.getString(FileConfigKeys.ROOT, this.config);
                 this.config.put(CStoreConfigKeys.CSTORE_PERSISTENT_ROOT, root);
-                String bucketName = Configuration.getString(FileConfigKeys.OSS_BUCKET_NAME,
-                    persistConfig);
+                String bucketName = Configuration.getString(FileConfigKeys.OSS_BUCKET_NAME, persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_BUCKET, bucketName);
-                String endpoint = Configuration.getString(FileConfigKeys.OSS_ENDPOINT,
-                    persistConfig);
+                String endpoint = Configuration.getString(FileConfigKeys.OSS_ENDPOINT, persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_ENDPOINT, endpoint);
-                String accessKeyId = Configuration.getString(FileConfigKeys.OSS_ACCESS_ID,
-                    persistConfig);
+                String accessKeyId = Configuration.getString(FileConfigKeys.OSS_ACCESS_ID, persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_AK, accessKeyId);
-                String accessKeySecret = Configuration.getString(FileConfigKeys.OSS_SECRET_KEY,
-                    persistConfig);
+                String accessKeySecret = Configuration.getString(FileConfigKeys.OSS_SECRET_KEY, persistConfig);
                 this.config.put(CStoreConfigKeys.CSTORE_OSS_SK, accessKeySecret);
                 break;
             default:
