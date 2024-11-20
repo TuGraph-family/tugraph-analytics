@@ -33,7 +33,7 @@ Obviously, **the process of constructing a graph is essentially the extraction o
 
 Compared to the relationship materialization method of wide tables, due to the aggregation of points and edges in the graph structure itself, constructing a graph is very efficient. The figure below shows the performance of high-performance graph construction in GeaFlow, which demonstrates that the graph construction operation itself is extremely fast, and due to the sharding feature of graphs, it has excellent scalability.
 
-![insert_throuput](../../../static/img/insert_throuput_en.jpg)
+![insert_throuput](../../../static/img/console/insert_throuput_en.jpg)
 <center>Figure 2</center>
 
 In the experiment shown in Figure 1, it can also be observed that we spent a small amount of time inserting the graph (the cost of the green "insert to graph" part) in exchange for the acceleration effect of the graph modeling on subsequent join queries.
