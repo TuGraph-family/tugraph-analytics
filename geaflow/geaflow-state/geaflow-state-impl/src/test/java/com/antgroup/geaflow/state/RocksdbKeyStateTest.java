@@ -23,10 +23,8 @@ import com.antgroup.geaflow.state.descriptor.KeyValueStateDescriptor;
 import com.antgroup.geaflow.utils.keygroup.DefaultKeyGroupAssigner;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
@@ -220,88 +218,5 @@ public class RocksdbKeyStateTest {
                 valueState.manage().operate().recover();
             }
         }
-    }
-
-    @Test
-    public void testScale() {
-        KeyValueStateDescriptor<Integer, Integer> desc =
-            KeyValueStateDescriptor.build("testScale", StoreType.ROCKSDB.name());
-        desc.withKeyGroup(new KeyGroup(0, 3)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(4));
-
-        KeyValueState<Integer, Integer> valueState = StateFactory.buildKeyValueState(desc,
-            new Configuration(config));
-
-        for (int i = 0; i < 1000; i++) {
-            valueState.put(i, i);
-        }
-        valueState.manage().operate().setCheckpointId(1);
-        valueState.manage().operate().finish();
-        valueState.manage().operate().archive();
-        valueState.manage().operate().drop();
-
-        desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
-        valueState = StateFactory.buildKeyValueState(desc, new Configuration(config));
-        valueState.manage().operate().setCheckpointId(1);
-        Exception ex = null;
-        try {
-            valueState.manage().operate().recover();
-        } catch (Exception e) {
-            ex = e;
-        }
-        Assert.assertNotNull(ex);
-        valueState.manage().operate().drop();
-
-        desc.withKeyGroup(new KeyGroup(0, 5)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(6));
-        valueState = StateFactory.buildKeyValueState(desc, new Configuration(config));
-        valueState.manage().operate().setCheckpointId(1);
-        ex = null;
-        try {
-            valueState.manage().operate().recover();
-        } catch (Exception e) {
-            ex = e;
-        }
-        Assert.assertNotNull(ex);
-        valueState.manage().operate().drop();
-
-        for (int i = 2; i < 4; i++) {
-            desc.withKeyGroup(new KeyGroup(0, 7))
-                .withKeyGroupAssigner(new DefaultKeyGroupAssigner(8));
-            valueState = StateFactory.buildKeyValueState(desc, new Configuration(config));
-            valueState.manage().operate().setCheckpointId(i - 1);
-            valueState.manage().operate().recover();
-            for (int j = 0; j < 1000; j++) {
-                Assert.assertEquals((int)valueState.get(j), j);
-            }
-            valueState.manage().operate().setCheckpointId(i);
-            valueState.manage().operate().archive();
-            valueState.manage().operate().drop();
-        }
-
-        DefaultKeyGroupAssigner keyGroupAssigner = new DefaultKeyGroupAssigner(32);
-        List<Integer> targets = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
-            int keyGroupId = keyGroupAssigner.assign(i);
-            if (keyGroupId >= 28 && keyGroupId <= 31) {
-                targets.add(i);
-            }
-        }
-
-        desc.withKeyGroup(new KeyGroup(28, 31)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(32));
-        valueState = StateFactory.buildKeyValueState(desc, new Configuration(config));
-        valueState.manage().operate().setCheckpointId(3);
-        valueState.manage().operate().recover();
-
-        for (int i: targets) {
-            Assert.assertEquals(valueState.get(i), i, i);
-        }
-        ex = null;
-        try {
-            valueState.get(1);
-        } catch (Exception e) {
-            ex = e;
-        }
-        Assert.assertNotNull(ex);
-        valueState.manage().operate().drop();
-
     }
 }

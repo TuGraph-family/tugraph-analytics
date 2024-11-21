@@ -15,8 +15,9 @@
 package com.antgroup.geaflow.store.api.graph;
 
 import com.antgroup.geaflow.state.graph.DynamicGraphTrait;
-import com.antgroup.geaflow.store.IBaseStore;
+import com.antgroup.geaflow.store.IStatefulStore;
 
-public interface IGraphMultiVersionedStore<K, VV, EV> extends DynamicGraphTrait<K, VV, EV>, IBaseStore, IPushDownStore {
+public interface IDynamicGraphStore<K, VV, EV> extends DynamicGraphTrait<K, VV, EV>, IStatefulStore,
+    IPushDownStore {
 
 }

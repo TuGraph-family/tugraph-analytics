@@ -18,18 +18,15 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.state.action.ActionRequest;
 import com.antgroup.geaflow.state.action.ActionType;
-import com.antgroup.geaflow.state.action.hook.ActionHook;
-import com.antgroup.geaflow.state.action.hook.ActionHookBuilder;
 import com.antgroup.geaflow.state.context.StateContext;
 import com.antgroup.geaflow.state.manage.LoadOption;
 import com.antgroup.geaflow.state.strategy.accessor.AccessorBuilder;
 import com.antgroup.geaflow.state.strategy.accessor.IAccessor;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class BaseStateManager {
@@ -39,7 +36,6 @@ public class BaseStateManager {
     protected MetricGroup metricGroup;
     protected KeyGroup keyGroup;
     protected Map<Integer, IAccessor> accessorMap = new HashMap<>();
-    private List<ActionHook> actionHooks;
 
     public void init(StateContext context) {
         this.context = context;
@@ -48,27 +44,23 @@ public class BaseStateManager {
         this.keyGroup = context.getKeyGroup();
         IStoreBuilder storeBuilder = StoreBuilderFactory.build(context.getStoreType());
         this.context.withLocalStore(storeBuilder.getStoreDesc().isLocalStore());
-        this.actionHooks = ActionHookBuilder.buildHooks(storeBuilder.getStoreDesc());
 
-        for (int shardId = keyGroup.getStartKeyGroup(); shardId <= keyGroup.getEndKeyGroup(); shardId++) {
-            IAccessor accessor = AccessorBuilder.getAccessor(context.getDataModel(), context.getStateMode());
+        for (int shardId = keyGroup.getStartKeyGroup(); shardId <= keyGroup.getEndKeyGroup();
+            shardId++) {
+            IAccessor accessor = AccessorBuilder.getAccessor(context.getDataModel(),
+                context.getStateMode());
             StateContext newContext = context.clone().withShardId(shardId);
             accessor.init(newContext, storeBuilder);
 
             this.accessorMap.put(shardId, accessor);
         }
-        for (ActionHook hook: actionHooks) {
-            hook.init(context, this.accessorMap);
-        }
     }
 
     public void doStoreAction(ActionType actionType, ActionRequest request) {
-        for (ActionHook hook: actionHooks) {
-            hook.doStoreAction(actionType, request);
-        }
         if (actionType == ActionType.LOAD) {
-            KeyGroup loadKeyGroup = ((LoadOption)request.getRequest()).getKeyGroup();
-            Preconditions.checkArgument(loadKeyGroup == null || this.keyGroup.contains(loadKeyGroup));
+            KeyGroup loadKeyGroup = ((LoadOption) request.getRequest()).getKeyGroup();
+            Preconditions.checkArgument(
+                loadKeyGroup == null || this.keyGroup.contains(loadKeyGroup));
         }
         this.accessorMap.forEach((key, value) -> value.doStoreAction(key, actionType, request));
 

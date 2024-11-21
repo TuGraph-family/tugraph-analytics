@@ -31,7 +31,9 @@ import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.inner.IFilterConverter;
 import com.antgroup.geaflow.state.pushdown.inner.PushDownPbGenerator;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
+import com.antgroup.geaflow.store.config.StoreConfigKeys;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.cstore.encoder.EdgeEncoder;
 import com.antgroup.geaflow.store.cstore.encoder.EncoderFactory;
@@ -42,11 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class GraphCStore<K, VV, EV> implements IGraphStore<K, VV, EV> {
+public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements IStaticGraphStore<K, VV, EV> {
 
-    private IFilterConverter filterConverter = new FilterConverter();
     private Map<String, String> config;
-    private String name;
     private NativeGraphStore nativeGraphStore;
     private VertexEncoder vertexEncoder;
     private EdgeEncoder edgeEncoder;
@@ -54,9 +54,10 @@ public class GraphCStore<K, VV, EV> implements IGraphStore<K, VV, EV> {
 
     @Override
     public void init(StoreContext storeContext) {
+        super.init(storeContext);
         this.config = storeContext.getConfig().getConfigMap();
         rewriteConfig();
-        this.name = storeContext.getName();
+        String name = storeContext.getName();
         this.keyType = storeContext.getGraphSchema().getKeyType();
         this.nativeGraphStore = new NativeGraphStore(name, storeContext.getShardId(), config);
         this.vertexEncoder = EncoderFactory.getVertexEncoder(storeContext.getGraphSchema());
@@ -100,6 +101,7 @@ public class GraphCStore<K, VV, EV> implements IGraphStore<K, VV, EV> {
     }
 
     private void rewriteConfig() {
+        this.config.put(StoreConfigKeys.STORE_FILTER_CODEGEN_ENABLE.getKey(), "false");
         String jobName = Configuration.getString(ExecutionConfigKeys.JOB_APP_NAME, this.config);
         String workerPath = Configuration.getString(ExecutionConfigKeys.JOB_WORK_PATH, this.config);
         this.config.put(CStoreConfigKeys.CSTORE_NAME_KEY, jobName);

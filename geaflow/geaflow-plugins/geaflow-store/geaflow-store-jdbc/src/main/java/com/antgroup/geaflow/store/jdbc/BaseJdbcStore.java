@@ -18,7 +18,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.GsonUtil;
 import com.antgroup.geaflow.common.utils.RetryCommand;
-import com.antgroup.geaflow.store.AbstractBaseStore;
+import com.antgroup.geaflow.store.IBaseStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.base.Joiner;
 import com.zaxxer.hikari.HikariConfig;
@@ -33,9 +33,10 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BasicJdbcStore extends AbstractBaseStore {
+public abstract class BaseJdbcStore implements IBaseStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasicJdbcStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseJdbcStore.class);
+    private static final char SQL_SEPARATOR = ',';
 
     private static HikariDataSource ds;
 
@@ -78,15 +79,14 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
         ds = new HikariDataSource(conf);
     }
 
-    protected boolean insert(String key, String[] columns,
-                                   Object[] values) throws SQLException {
+    protected boolean insert(String key, String[] columns, Object[] values) throws SQLException {
         if (columns.length != values.length) {
             throw new GeaflowRuntimeException("columns' size does not match values'");
         }
 
-        String sql = String.format(insertFormat,
-            this.tableName, this.pk, Joiner.on(',').join(columns),
-            Joiner.on(',').join(Collections.nCopies(values.length, "?")));
+        String sql = String.format(insertFormat, this.tableName, this.pk,
+            Joiner.on(SQL_SEPARATOR).join(columns),
+            Joiner.on(SQL_SEPARATOR).join(Collections.nCopies(values.length, "?")));
         try (Connection conn = ds.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, key);
@@ -116,7 +116,7 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
     }
 
     protected byte[] query(String key, String[] columns) throws SQLException {
-        String selectColumn = columns == null ? "*" : Joiner.on(',').join(columns);
+        String selectColumn = columns == null ? "*" : Joiner.on(SQL_SEPARATOR).join(columns);
         String sql = String.format(queryFormat, selectColumn, this.tableName, pk, key);
         try (Connection conn = ds.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -132,12 +132,18 @@ public abstract class BasicJdbcStore extends AbstractBaseStore {
 
     protected boolean delete(String key) throws SQLException {
         String sql = String.format(deleteFormat, this.tableName, pk, key);
-        try (Connection conn = ds.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(
+            sql)) {
             return 0 != RetryCommand.run(ps::executeUpdate, this.retries);
         }
     }
 
+    @Override
+    public void flush() {
+        LOGGER.info("flush");
+    }
+
+    @Override
     public synchronized void close() {
         if (!ds.isClosed()) {
             ds.close();

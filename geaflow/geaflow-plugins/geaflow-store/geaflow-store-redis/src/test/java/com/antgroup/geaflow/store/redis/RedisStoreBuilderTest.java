@@ -24,7 +24,7 @@ import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.IKListStore;
 import com.antgroup.geaflow.store.api.key.IKMapStore;
 import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.github.fppt.jedismock.RedisServer;
 import java.io.IOException;
@@ -59,8 +59,8 @@ public class RedisStoreBuilderTest {
     @Test
     public void testMultiThread() throws ExecutionException, InterruptedException {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.REDIS.name());
-        IKVStore<String, String> kvStore =
-            (IKVStore<String, String>) builder.getStore(DataModel.KV, new Configuration());
+        IKVStore<String, String> kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV,
+            new Configuration());
         Configuration configuration = new Configuration();
         configuration.put(RedisConfigKeys.REDIS_HOST, redisServer.getHost());
         configuration.put(RedisConfigKeys.REDIS_PORT, String.valueOf(redisServer.getBindPort()));
@@ -109,8 +109,8 @@ public class RedisStoreBuilderTest {
     @Test
     public void testKV() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.REDIS.name());
-        IKVStore<String, String> kvStore =
-            (IKVStore<String, String>) builder.getStore(DataModel.KV, new Configuration());
+        IKVStore<String, String> kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV,
+            new Configuration());
 
         Configuration configuration = new Configuration();
         configuration.put(RedisConfigKeys.REDIS_HOST, redisServer.getHost());
@@ -141,7 +141,6 @@ public class RedisStoreBuilderTest {
         kvStore.init(storeContext);
         kvStore.put("hello", "world");
         kvStore.put("foo", "bar");
-        kvStore.flush();
 
         Assert.assertEquals(kvStore.get("hello"), "world");
         Assert.assertEquals(kvStore.get("foo"), "bar");
@@ -154,14 +153,15 @@ public class RedisStoreBuilderTest {
     public void testKMap() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.REDIS.name());
         IKMapStore<String, String, String> kMapStore =
-            (IKMapStore<String, String, String>) builder.getStore(DataModel.KMap, new Configuration());
+            (IKMapStore<String, String, String>) builder.getStore(
+            DataModel.KMap, new Configuration());
 
         Configuration configuration = new Configuration();
         configuration.put(RedisConfigKeys.REDIS_HOST, redisServer.getHost());
         configuration.put(RedisConfigKeys.REDIS_PORT, String.valueOf(redisServer.getBindPort()));
         StoreContext storeContext = new StoreContext("redis").withConfig(configuration);
-        storeContext.withKeySerializer(new DefaultKMapSerializer<>(String.class, String.class,
-            String.class));
+        storeContext.withKeySerializer(
+            new DefaultKMapSerializer<>(String.class, String.class, String.class));
         kMapStore.init(storeContext);
 
         Map<String, String> map = new HashMap<>();
@@ -176,8 +176,7 @@ public class RedisStoreBuilderTest {
         kMapStore.add("hw", "bar", "foo");
 
         Assert.assertEquals(kMapStore.get("hw").size(), 4);
-        Assert.assertEquals(kMapStore.get("hw", "foo", "bar"),
-            Arrays.asList("bar", "foo"));
+        Assert.assertEquals(kMapStore.get("hw", "foo", "bar"), Arrays.asList("bar", "foo"));
 
         kMapStore.remove("hw", "bar");
         Assert.assertEquals(kMapStore.get("hw").size(), 3);
@@ -189,8 +188,8 @@ public class RedisStoreBuilderTest {
     @Test
     public void testKList() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.REDIS.name());
-        IKListStore<String, String> kListStore =
-            (IKListStore<String, String>) builder.getStore(DataModel.KList, new Configuration());
+        IKListStore<String, String> kListStore = (IKListStore<String, String>) builder.getStore(
+            DataModel.KList, new Configuration());
 
         Configuration configuration = new Configuration();
         configuration.put(RedisConfigKeys.REDIS_HOST, redisServer.getHost());

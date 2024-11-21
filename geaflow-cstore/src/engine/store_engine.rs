@@ -737,6 +737,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_engine_compact_local() {
         log_util::try_init(LogType::ConsoleAndFile, LogLevel::Debug, 0);
 

@@ -12,15 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.store;
+package com.antgroup.geaflow.store.api.graph;
 
-/**
- * The local store interface is used for binding the shardId.
- */
-public interface ILocalStore {
+import com.antgroup.geaflow.state.graph.StaticGraphTrait;
+import com.antgroup.geaflow.store.IStatefulStore;
 
-    /**
-     * init the store's specific shard id.
-     */
-    void initShardId(int shardId);
+public interface IStaticGraphStore<K, VV, EV> extends StaticGraphTrait<K, VV, EV>, IStatefulStore,
+    IPushDownStore {
+
 }

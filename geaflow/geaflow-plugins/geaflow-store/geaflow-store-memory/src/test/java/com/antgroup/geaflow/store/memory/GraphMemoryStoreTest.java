@@ -48,7 +48,7 @@ import com.antgroup.geaflow.state.pushdown.filter.VertexMustContainFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.GraphFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -87,8 +87,8 @@ public class GraphMemoryStoreTest {
 
     @Test
     public void test() {
-        IGraphStore<String, byte[], byte[]> store =
-            (IGraphStore<String, byte[], byte[]>) builder.getStore(DataModel.STATIC_GRAPH, config);
+        IStaticGraphStore<String, byte[], byte[]> store =
+            (IStaticGraphStore<String, byte[], byte[]>) builder.getStore(DataModel.STATIC_GRAPH, config);
         StoreContext storeContext = new StoreContext("test")
             .withConfig(new Configuration())
             .withDataSchema(new GraphDataSchema(new GraphMeta(
@@ -113,8 +113,8 @@ public class GraphMemoryStoreTest {
 
     @Test
     public void testGetOneDegreeGraphList() {
-        IGraphStore<Integer, Integer, Integer> store =
-            (IGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH, config);
+        IStaticGraphStore<Integer, Integer, Integer> store =
+            (IStaticGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH, config);
         StoreContext storeContext =
             new StoreContext("test")
                 .withConfig(new Configuration())
@@ -148,8 +148,8 @@ public class GraphMemoryStoreTest {
 
     @Test
     public void testGetVertexList() {
-        IGraphStore<Integer, Integer, Integer> store =
-            (IGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH, config);
+        IStaticGraphStore<Integer, Integer, Integer> store =
+            (IStaticGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH, config);
         StoreContext storeContext =
             new StoreContext("test")
                 .withConfig(new Configuration())
@@ -188,8 +188,8 @@ public class GraphMemoryStoreTest {
 
     @Test
     public void testGetEdgeList() {
-        IGraphStore<Integer, Integer, Integer> store =
-            (IGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH, config);
+        IStaticGraphStore<Integer, Integer, Integer> store =
+            (IStaticGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH, config);
         StoreContext storeContext =
             new StoreContext("test")
                 .withConfig(new Configuration())
@@ -264,8 +264,8 @@ public class GraphMemoryStoreTest {
 
     @Test
     public void testDifferentType() {
-        IGraphStore<Integer, Integer, Integer> store =
-            (IGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH,
+        IStaticGraphStore<Integer, Integer, Integer> store =
+            (IStaticGraphStore<Integer, Integer, Integer>) builder.getStore(DataModel.STATIC_GRAPH,
                 config);
 
 

@@ -28,8 +28,8 @@ import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.filter.inner.GraphFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
-import com.antgroup.geaflow.store.BaseGraphStore;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.iterator.KeysIterator;
 import com.antgroup.geaflow.store.memory.iterator.MemoryEdgeScanPushDownIterator;
@@ -42,7 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore implements IGraphStore<K, VV, EV> {
+public abstract class BaseStaticGraphMemoryStore<K, VV, EV> extends BaseGraphStore implements
+    IStaticGraphStore<K, VV, EV> {
 
     @Override
     public void init(StoreContext context) {
@@ -54,7 +55,7 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
     @Override
     public IVertex<K, VV> getVertex(K sid, IStatePushDown pushdown) {
         IVertex<K, VV> vertex = getVertex(sid);
-        return vertex != null && ((IGraphFilter)pushdown.getFilter()).filterVertex(vertex) ? vertex : null;
+        return vertex != null && ((IGraphFilter) pushdown.getFilter()).filterVertex(vertex) ? vertex : null;
     }
 
     protected abstract List<IEdge<K, EV>> getEdges(K sid);
@@ -87,7 +88,7 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
         List<IEdge<K, EV>> edges = getEdges(sid, pushdown);
         OneDegreeGraph<K, VV, EV> oneDegreeGraph = new OneDegreeGraph<>(sid, vertex,
             IteratorWithClose.wrap(edges.iterator()));
-        if (((IGraphFilter)pushdown.getFilter()).filterOneDegreeGraph(oneDegreeGraph)) {
+        if (((IGraphFilter) pushdown.getFilter()).filterOneDegreeGraph(oneDegreeGraph)) {
             return oneDegreeGraph;
         }
         return null;
@@ -96,8 +97,8 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
     @Override
     public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         boolean emptyFilter = pushdown.getFilter().getFilterType() == FilterType.EMPTY;
-        return emptyFilter ? getVertexIterator() :
-               new MemoryVertexScanIterator<>(getVertexIterator(), (IGraphFilter)pushdown.getFilter());
+        return emptyFilter ? getVertexIterator()
+                           : new MemoryVertexScanIterator<>(getVertexIterator(), (IGraphFilter) pushdown.getFilter());
     }
 
     @Override
@@ -118,8 +119,7 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
     }
 
     @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
-        IStatePushDown pushdown) {
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown) {
         return new KeysIterator<>(Lists.newArrayList(getKeyIterator()), this::getOneDegreeGraph, pushdown);
     }
 
@@ -129,8 +129,7 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
     }
 
     @Override
-    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
-        IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
         return new IteratorWithFn<>(getEdgeIterator(pushdown),
             edge -> Tuple.of(edge.getSrcId(), pushdown.getProjector().project(edge)));
     }
@@ -163,11 +162,10 @@ public abstract class BaseGraphMemoryStore<K, VV, EV> extends BaseGraphStore imp
         if (pushdown.getFilters() == null) {
             pushdownFun = key -> pushdown;
         } else {
-            pushdownFun =
-                key -> StatePushDown.of().withFilter((IGraphFilter) pushdown.getFilters().get(key));
+            pushdownFun = key -> StatePushDown.of().withFilter((IGraphFilter) pushdown.getFilters().get(key));
         }
 
-        for (K key: keys) {
+        for (K key : keys) {
             List<IEdge<K, EV>> list = getEdges(key, pushdownFun.apply(key));
             res.put(key, (long) list.size());
         }

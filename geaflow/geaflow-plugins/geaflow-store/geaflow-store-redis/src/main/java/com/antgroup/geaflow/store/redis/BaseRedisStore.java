@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.store.redis;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.store.AbstractBaseStore;
 import com.antgroup.geaflow.store.IBaseStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.google.common.primitives.Bytes;
@@ -24,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
 
-public abstract class BaseRedisStore extends AbstractBaseStore implements IBaseStore {
+public abstract class BaseRedisStore implements IBaseStore {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(KVRedisStore.class);
     protected static final char REDIS_NAMESPACE_SPLITTER = ':';
@@ -49,6 +48,11 @@ public abstract class BaseRedisStore extends AbstractBaseStore implements IBaseS
         this.prefix = prefixStr.getBytes();
     }
 
+    @Override
+    public void flush() {
+
+    }
+
     protected byte[] getRedisKey(byte[] key) {
         return Bytes.concat(prefix, key);
     }
@@ -56,10 +60,5 @@ public abstract class BaseRedisStore extends AbstractBaseStore implements IBaseS
     @Override
     public void close() {
         this.jedisPool.close();
-    }
-
-    @Override
-    public void drop() {
-
     }
 }

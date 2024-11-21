@@ -24,7 +24,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcKVStore<K, V> extends BasicJdbcStore implements IKVStore<K, V> {
+public class JdbcKVStore<K, V> extends BaseJdbcStore implements IKVStore<K, V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcKVStore.class);
     private String[] columns = {"value"};
@@ -46,11 +46,6 @@ public class JdbcKVStore<K, V> extends BasicJdbcStore implements IKVStore<K, V> 
     }
 
     @Override
-    public void drop() {
-
-    }
-
-    @Override
     public V get(K key) {
         try {
             byte[] res = query(getFromKey(key), columns);
@@ -69,8 +64,8 @@ public class JdbcKVStore<K, V> extends BasicJdbcStore implements IKVStore<K, V> 
         byte[] valueArray = serializer.serializeValue(value);
         RetryCommand.run(() -> {
             try {
-                if (!update(getFromKey(key), columns, new Object[] {valueArray})
-                    && !insert(getFromKey(key), columns, new Object[] {valueArray})) {
+                if (!update(getFromKey(key), columns, new Object[]{valueArray})
+                    && !insert(getFromKey(key), columns, new Object[]{valueArray})) {
                     throw new GeaflowRuntimeException("put fail");
                 }
             } catch (SQLException e) {
