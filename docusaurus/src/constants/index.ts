@@ -133,6 +133,9 @@ const EN_DOC_OPTIONS = [
   {
     label: "TuGraph Learn Graph Learning Engine",
     value: "TuGraph_Learn",
+    children: versions
+      .slice(0, 5)
+      .map((item) => ({ value: item, label: item })),
   },
 ];
 
@@ -149,6 +152,9 @@ const ZH_DOC_OPTIONS = [
   {
     label: "TuGraph Learn 图学习引擎",
     value: "TuGraph_Learn",
+    children: versions
+      .slice(0, 5)
+      .map((item) => ({ value: item, label: item })),
   },
 ];
 

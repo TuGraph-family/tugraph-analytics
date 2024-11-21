@@ -85,32 +85,46 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
 
   const onVersionChange = (values) => {
     const [type, version] = values;
+    const lang = getCurrentLanguage();
     if (type === "TuGraph_Analytics") {
-      // TODO 调数据中心文档
       return;
     }
 
     if (type === "TuGraph_Learn") {
-      // TODO 图学习引擎
+      const learnPath = `/tugraph-db/${lang}/${version}/olap&procedure/learn/tutorial`;
+      window.location.href = "https://zhongyunwan.github.io" + learnPath;
+      // history.push(learnPath);
       return;
     }
 
     if (type === "TuGraph_DB") {
-      window.location.href = `https://liukaiming-alipay.github.io/tugraph-db/${getCurrentLanguage()}/${version}/guide`;
+      const newPath = `/tugraph-db/${lang}/${version}/guide`;
+      window.location.href = "https://zhongyunwan.github.io" + newPath;
+      // history.push(newPath);
       return;
     }
   };
-
   useEffect(() => {
-    window.addEventListener("click", () => {
-      const currentPath = window.location.pathname;
-      window.parent.postMessage({ path: currentPath }, "*");
-    });
-    window.addEventListener("hashchange", () => {
-      const currentPath = window.location.pathname;
-      const hash = window.location.hash;
-      window.parent.postMessage({ path: currentPath + hash }, "*");
-    });
+    const sendPostMsg = () => {
+      window.parent.postMessage({ path: window.location.pathname }, "*");
+    };
+
+    const sendPostHashMsg = () => {
+      window.parent.postMessage(
+        { path: window.location.pathname + window.location.hash },
+        "*"
+      );
+    };
+
+    window.addEventListener("click", sendPostMsg);
+    window.addEventListener("hashchange", sendPostHashMsg);
+
+    sendPostMsg();
+
+    return () => {
+      window.removeEventListener("click", sendPostMsg);
+      window.removeEventListener("hashchange", sendPostHashMsg);
+    };
   }, []);
 
   return (
