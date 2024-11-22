@@ -53,10 +53,6 @@
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-on-local</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-pipeline</artifactId>
         </dependency>
         <dependency>
