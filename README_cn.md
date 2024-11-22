@@ -84,7 +84,7 @@ JOIN student s ON sc.srcId = s.id
 ```
 
 ## 参与贡献
-非常感谢您参与到GeaFlow的贡献中来，无论是Bug反馈还是文档完善，或者是大的功能点贡献，我们都表示热烈的欢迎。
+非常感谢您参与到 GeaFlow 的贡献中来，无论是Bug反馈还是文档完善，或者是大的功能点贡献，我们都表示热烈的欢迎。
 
 具体请参考：[参与贡献文档](docs/docs-cn/source/9.contribution.md)。
 
@@ -96,5 +96,12 @@ JOIN student s ON sc.srcId = s.id
 ![contacts](docs/static/img/contacts.png)
 
 ## 致谢
-GeaFlow开发过程中部分模块参考了一些业界优秀的开源项目，包括Apache Flink、Apache Spark以及Apache Calcite等, 这里表示特别的感谢。
+GeaFlow 开发过程中部分模块参考了一些业界优秀的开源项目，包括 Apache Flink、Apache Spark 以及 Apache Calcite 等, 这里表示特别的感谢。也感谢对 GeaFlow 做过贡献的个人开发者，名单如下：
+
+<a href="https://github.com/TuGraph-family/tugraph-analytics/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=TuGraph-family/tugraph-analytics" />
+</a>
+
+生成 By [contrib.rocks](https://contrib.rocks).
+<!--intro-end-->
 <!--intro-end-->
