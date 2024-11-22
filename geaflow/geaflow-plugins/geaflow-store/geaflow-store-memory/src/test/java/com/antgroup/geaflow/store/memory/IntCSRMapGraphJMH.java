@@ -28,7 +28,7 @@ import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.StatePushDown;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -62,7 +62,7 @@ public class IntCSRMapGraphJMH {
     private static final Logger LOGGER = LoggerFactory.getLogger(IntCSRMapGraphJMH.class);
 
     IStatePushDown pushdown = StatePushDown.of();
-    IGraphStore<Integer, Object, Object> store;
+    IStaticGraphStore<Integer, Object, Object> store;
     StoreContext storeContext = new StoreContext("test").withDataSchema(
         new GraphDataSchema(new GraphMeta(
             new GraphMetaType(IntegerType.INSTANCE, IDVertex.class, IDVertex::new, EmptyProperty.class,
@@ -79,7 +79,7 @@ public class IntCSRMapGraphJMH {
             "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1}:%L - %m%n");
         PropertyConfigurator.configure(prop);
 
-        store = new GraphMemoryCSRStore<>();
+        store = new StaticGraphMemoryCSRStore<>();
         composeGraph();
     }
 

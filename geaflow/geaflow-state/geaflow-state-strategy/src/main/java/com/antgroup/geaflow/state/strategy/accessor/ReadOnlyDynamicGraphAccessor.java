@@ -18,7 +18,7 @@ import com.antgroup.geaflow.state.action.ActionRequest;
 import com.antgroup.geaflow.state.action.ActionType;
 import com.antgroup.geaflow.state.context.StateContext;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.graph.IGraphMultiVersionedStore;
+import com.antgroup.geaflow.store.api.graph.IDynamicGraphStore;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,7 +47,7 @@ public class ReadOnlyDynamicGraphAccessor<K, VV, EV> extends RWDynamicGraphAcces
     }
 
     @Override
-    public IGraphMultiVersionedStore<K, VV, EV> getStore() {
-        return (IGraphMultiVersionedStore<K, VV, EV>) this.readOnlyGraph.getStore();
+    public IDynamicGraphStore<K, VV, EV> getStore() {
+        return (IDynamicGraphStore<K, VV, EV>) this.readOnlyGraph.getStore();
     }
 }

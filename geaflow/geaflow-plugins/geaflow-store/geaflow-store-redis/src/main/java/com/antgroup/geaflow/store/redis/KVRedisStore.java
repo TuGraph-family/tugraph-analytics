@@ -28,8 +28,8 @@ public class KVRedisStore<K, V> extends BaseRedisStore implements IKVStore<K, V>
     @Override
     public void init(StoreContext storeContext) {
         super.init(storeContext);
-        this.kvSerializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(storeContext.getKeySerializer(),
-            "keySerializer must be set");
+        this.kvSerializer = (IKVSerializer<K, V>) Preconditions.checkNotNull(
+            storeContext.getKeySerializer(), "keySerializer must be set");
     }
 
     @Override

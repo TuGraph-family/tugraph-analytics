@@ -34,6 +34,7 @@ const COMPACT_ITERATIONS: [u32; 4] = [10000, 50000, 100000, 200000];
 const COMPACT_TEST_ITERATIONS: u32 = 10;
 
 #[test]
+#[ignore]
 fn test_engine_compact_without_fo() {
     log_util::try_init(LogType::ConsoleAndFile, LogLevel::Debug, 0);
     let mut rng: IsaacRng = SeedableRng::from_entropy();

@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.store.memory;
 
-import com.antgroup.geaflow.store.AbstractBaseStore;
+import com.antgroup.geaflow.store.IStatefulStore;
 import com.antgroup.geaflow.store.api.key.IKListStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class KListMemoryStore<K, V> extends AbstractBaseStore implements IKListStore<K, V> {
+public class KListMemoryStore<K, V> implements IStatefulStore, IKListStore<K, V> {
 
     private Map<K, List<V>> memoryStore = new HashMap<>();
 
@@ -50,12 +50,37 @@ public class KListMemoryStore<K, V> extends AbstractBaseStore implements IKListS
     }
 
     @Override
+    public void flush() {
+
+    }
+
+    @Override
     public void close() {
         this.memoryStore.clear();
     }
 
     @Override
+    public void archive(long checkpointId) {
+
+    }
+
+    @Override
+    public void recovery(long checkpointId) {
+
+    }
+
+    @Override
+    public long recoveryLatest() {
+        return 0;
+    }
+
+    @Override
+    public void compact() {
+
+    }
+
+    @Override
     public void drop() {
-        this.memoryStore = null;
+
     }
 }

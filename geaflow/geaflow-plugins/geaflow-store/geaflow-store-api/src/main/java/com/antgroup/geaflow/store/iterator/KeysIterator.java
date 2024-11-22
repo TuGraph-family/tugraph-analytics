@@ -30,9 +30,8 @@ public class KeysIterator<K, VV, EV, R> implements CloseableIterator<R> {
     private Function<K, IStatePushDown> pushdownFun;
     private R nextValue;
 
-    public KeysIterator(List<K> keys,
-        BiFunction<K, IStatePushDown, R> fetchFun,
-        IStatePushDown pushdown) {
+    public KeysIterator(List<K> keys, BiFunction<K, IStatePushDown, R> fetchFun,
+                        IStatePushDown pushdown) {
         this.fetchFun = fetchFun;
         this.iterator = keys.iterator();
         if (pushdown.getFilters() != null) {
