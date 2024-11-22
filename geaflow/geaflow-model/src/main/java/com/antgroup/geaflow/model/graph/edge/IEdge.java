@@ -21,63 +21,63 @@ public interface IEdge<K, EV> extends Serializable {
     /**
      * Get the source id of edge.
      *
-     * @return
+     * @return source id
      */
     K getSrcId();
 
     /**
      * Set the source id for the edge.
      *
-     * @param srcId
+     * @param srcId source id
      */
     void setSrcId(K srcId);
 
     /**
      * Get the target id of edge.
      *
-     * @return
+     * @return target id
      */
     K getTargetId();
 
     /**
      * Set the target id for the edge.
      *
-     * @param targetId
+     * @param targetId target id
      */
     void setTargetId(K targetId);
 
     /**
      * Get the direction of edge.
      *
-     * @return
+     * @return direction
      */
     EdgeDirection getDirect();
 
     /**
      * Set the direction for the edge.
      *
-     * @param direction
+     * @param direction direction
      */
     void setDirect(EdgeDirection direction);
 
     /**
      * Get the value of edge.
      *
-     * @return
+     * @return value
      */
     EV getValue();
 
     /**
      * Reset the value for the edge.
      *
-     * @param value
+     * @param value value
      */
     IEdge<K, EV> withValue(EV value);
 
     /**
      * Reverse the source id and target id, and return new edge.
      *
-     * @return
+     * @return edge
      */
     IEdge<K, EV> reverse();
 

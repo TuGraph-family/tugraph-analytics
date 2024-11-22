@@ -21,45 +21,45 @@ public interface IVertex<K, VV> extends Serializable, Comparable {
     /**
      * Get id of vertex.
      *
-     * @return
+     * @return id
      */
     K getId();
 
     /**
      * Set id for the vertex.
      *
-     * @param id
+     * @param id id
      */
     void setId(K id);
 
     /**
      * Get value of vertex.
      *
-     * @return
+     * @return value
      */
     VV getValue();
 
     /**
      * Reset value for the vertex.
      *
-     * @param value
-     * @return
+     * @param value value
+     * @return vertex
      */
     IVertex<K, VV> withValue(VV value);
 
     /**
      * Reset label value for the vertex.
      *
-     * @param label
-     * @return
+     * @param label label
+     * @return vertex
      */
     IVertex<K, VV> withLabel(String label);
 
     /**
      * Reset time value for the vertex.
      *
-     * @param time
-     * @return
+     * @param time time
+     * @return vertex
      */
     IVertex<K, VV> withTime(long time);
 
