@@ -96,5 +96,11 @@ You can contact us through the following methods:
 **If you are interested in GeaFlow, please give our project a [ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics).**
 
 ## Acknowledgement
-Thanks to some outstanding open-source projects in the industry, such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions.
+Thanks to some outstanding open-source projects in the industry such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions. Also, thanks to all the individual developers who have contributed to this repository, which are listed below.
+
+<a href="https://github.com/TuGraph-family/tugraph-analytics/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=TuGraph-family/tugraph-analytics" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
 <!--intro-end-->
