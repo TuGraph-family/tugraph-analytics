@@ -40,6 +40,7 @@ import com.antgroup.geaflow.pipeline.service.IServiceServer;
 import com.antgroup.geaflow.pipeline.service.PipelineService;
 import com.antgroup.geaflow.plan.PipelinePlanBuilder;
 import com.antgroup.geaflow.plan.graph.PipelineGraph;
+import com.antgroup.geaflow.runtime.core.scheduler.result.ExecutionResult;
 import com.antgroup.geaflow.runtime.core.scheduler.result.IExecutionResult;
 import com.antgroup.geaflow.runtime.pipeline.PipelineContext;
 import com.antgroup.geaflow.runtime.pipeline.service.PipelineServiceContext;
@@ -50,10 +51,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,24 +132,34 @@ public abstract class AbstractAnalyticsServiceServer implements IServiceServer {
         while (this.running) {
             try {
                 QueryInfo queryInfo = requestBlockingQueue.take();
-                String queryScript = queryInfo.getQueryScript();
-                String queryId = queryInfo.getQueryId();
-                try {
-                    if (enableCompileSchema) {
-                        CompileResult compileResult = compileQuerySchema(queryInfo.getQueryScript(), configuration);
+                final String queryScript = queryInfo.getQueryScript();
+                final String queryId = queryInfo.getQueryId();
+
+                if (enableCompileSchema) {
+                    try {
+                        CompileResult compileResult = compileQuerySchema(queryScript, configuration);
                         RelDataType relDataType = compileResult.getCurrentResultType();
                         queryInfo.setScriptSchema(relDataType);
+                    } catch (Throwable e) {
+                        // Set error code if precompile failed.
+                        LOGGER.error("precompile query: {} failed", queryInfo, e);
+                        Future<IExecutionResult> future = executorService.submit(
+                            () -> new ExecutionResult(queryId, new QueryError(ExceptionUtils.getStackTrace(e)), false));
+                        responseBlockingMap.put(queryId, future);
+                        continue;
                     }
-                    Future<IExecutionResult> future = executorService.submit(() -> executeQuery(queryScript));
-                    responseBlockingMap.put(queryId, future);
-                } catch (Throwable t) {
-                    LOGGER.error("execute query: {} failed", queryInfo, t);
-                    QueryResults queryResults = new QueryResults(queryId,
-                        new QueryError(t.getMessage()));
-                    Future<IExecutionResult> future = new FutureTask<>(
-                        () -> (IExecutionResult) queryResults);
-                    responseBlockingMap.put(queryId, future);
                 }
+
+                Future<IExecutionResult> future = executorService.submit(() -> {
+                    try {
+                        return executeQuery(queryScript);
+                    } catch (Throwable e) {
+                        LOGGER.error("execute query: {} failed", queryInfo, e);
+                        return new ExecutionResult(queryId, new QueryError(ExceptionUtils.getStackTrace(e)), false);
+                    }
+                });
+
+                responseBlockingMap.put(queryId, future);
             } catch (Throwable t) {
                 if (this.running) {
                     LOGGER.error("analytics service abnormal {}", t.getMessage(), t);
