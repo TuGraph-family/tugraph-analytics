@@ -74,10 +74,6 @@ public class CheckpointCycleScheduledWorkerManager extends AbstractScheduledWork
 
     @Override
     public void release(ExecutionNodeCycle cycle) {
-        List<WorkerInfo> workerInfos = this.workers.get(cycle.getSchedulerId()).getWorkers();
-        for (int i = 0, size = cycle.getTasks().size(); i < size; i++) {
-            workerInfos.add(cycle.getTasks().get(i).getWorkerInfo());
-        }
         LOGGER.info("current workers {}", this.workers.get(cycle.getSchedulerId()));
     }
 
