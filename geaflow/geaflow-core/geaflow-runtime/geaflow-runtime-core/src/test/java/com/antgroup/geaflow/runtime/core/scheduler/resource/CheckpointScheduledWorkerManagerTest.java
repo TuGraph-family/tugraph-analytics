@@ -22,6 +22,8 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -53,6 +55,77 @@ public class CheckpointScheduledWorkerManagerTest extends BaseScheduledWorkerMan
             workerManager.assign(cycle);
             workerManager.release(cycle);
             Assert.assertEquals(parallelism, workerManager.workers.get(cycle.getSchedulerId()).getWorkers().size());
+        }
+    }
+
+    @Test
+    public void testTaskAssigner() throws Exception {
+        List<WorkerInfo> workers = new ArrayList<>();
+        int taskSize = 3;
+        for (int i = 0; i < taskSize; i++) {
+            workers.add(new WorkerInfo("", 0, 0, 0, i, "worker-" + i));
+        }
+        List<Integer> taskIndexes = new ArrayList<>();
+        for (int i = 0; i < taskSize; i++) {
+            taskIndexes.add(i);
+        }
+        String graphName = "test1";
+        TaskAssigner taskAssigner = new TaskAssigner();
+
+        // Current worker list: [0, 1, 2].
+        // Assign: t0:[w0], t1:[w1], t2:[w2].
+        Map<Integer, WorkerInfo> match0 = taskAssigner.assignTasks2Workers(graphName, taskIndexes,
+                workers);
+
+        // Hit all cache.
+        Map<Integer, WorkerInfo> match1 = taskAssigner.assignTasks2Workers(graphName, taskIndexes,
+                workers);
+        for (Integer taskIndex : taskIndexes) {
+            Assert.assertEquals(match0.get(taskIndex).getWorkerIndex(),
+                    match1.get(taskIndex).getWorkerIndex());
+        }
+
+        // Current worker list: [0, 1, 3].
+        // Assign: t0:[w0], t1:[w1], t2:[w2, w3].
+        WorkerInfo worker2 = workers.remove(taskSize - 1);
+        workers.add(new WorkerInfo("", 0, 0, 0, taskSize, "worker-" + taskSize));
+        Map<Integer, WorkerInfo> match2 = taskAssigner.assignTasks2Workers(graphName, taskIndexes,
+                workers);
+        Integer task_index1 = 0;
+        for (Integer taskIndex : taskIndexes) {
+            if (match1.get(taskIndex).getWorkerIndex() == taskSize - 1) {
+                Assert.assertEquals(taskSize, match2.get(taskIndex).getWorkerIndex());
+            } else {
+                if (match1.get(taskIndex).getWorkerIndex() == 1) {
+                    task_index1 = taskIndex;
+                }
+                Assert.assertEquals(match1.get(taskIndex).getWorkerIndex(),
+                        match2.get(taskIndex).getWorkerIndex());
+            }
+        }
+
+        // Current worker list: [1, 2, 3].
+        // Assign: t0:[w0, w2 or w3], t1:[w1], t2:[w2, w3].
+        workers.remove(0);
+        workers.add(worker2);
+        Map<Integer, WorkerInfo> match3 = taskAssigner.assignTasks2Workers(graphName, taskIndexes,
+                workers);
+        for (Integer taskIndex : taskIndexes) {
+            if (match3.get(taskIndex).getWorkerIndex() == 1) {
+                Assert.assertEquals(taskIndex, task_index1);
+            }
+        }
+
+        // Current worker list: [2, 3, 4]
+        // Assign: t0:[w0, w2 or w3], t1:[w1, w4], t2:[w2, w3]
+        workers.remove(0);
+        workers.add(new WorkerInfo("", 0, 0, 0, taskSize + 1, "worker-" + taskSize + 1));
+        Map<Integer, WorkerInfo> match4 = taskAssigner.assignTasks2Workers(graphName, taskIndexes,
+                workers);
+        for (Integer taskIndex : taskIndexes) {
+            if (match3.get(taskIndex).getWorkerIndex() == 1) {
+                Assert.assertEquals(taskIndex, task_index1);
+            }
         }
     }
 
