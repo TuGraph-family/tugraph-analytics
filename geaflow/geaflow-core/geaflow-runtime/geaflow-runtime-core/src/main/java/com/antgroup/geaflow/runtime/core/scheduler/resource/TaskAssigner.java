@@ -14,6 +14,8 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler.resource;
 
+import static com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager.DEFAULT_GRAPH_VIEW_NAME;
+
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 
 import java.io.Serializable;
@@ -26,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-
-import static com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager.DEFAULT_GRAPH_VIEW_NAME;
 
 public class TaskAssigner implements Serializable {
 
