@@ -55,6 +55,7 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractScheduledWorkerManager.class);
     private static final String SEPARATOR = "#";
     protected static final String DEFAULT_RESOURCE_ID = "default_";
+    protected static final String DEFAULT_GRAPH_VIEW_NAME = "default_graph_view_name";
 
     protected static final int RETRY_REQUEST_RESOURCE_INTERVAL = 5;
     protected static final int REPORT_RETRY_TIMES = 50;
@@ -65,10 +66,14 @@ public abstract class AbstractScheduledWorkerManager implements IScheduledWorker
     protected transient Map<Long, List<WorkerInfo>> assigned;
     protected transient Map<Long, Boolean> isAssigned;
     private static Map<Class, AbstractScheduledWorkerManager> classToInstance = new HashMap<>();
+    protected TaskAssigner taskAssigner;
 
     public AbstractScheduledWorkerManager(Configuration config) {
         this.masterId = config.getMasterId();
         this.isAsync = PipelineUtil.isAsync(config);
+        if (this.taskAssigner == null) {
+            this.taskAssigner = new TaskAssigner();
+        }
     }
 
     public static AbstractScheduledWorkerManager getInstance(Configuration config, Class<? extends AbstractScheduledWorkerManager> clazz) {
