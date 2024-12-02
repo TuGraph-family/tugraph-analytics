@@ -172,6 +172,16 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    @Test
+    public void testIncGraphAlgorithm_004() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_004.sql")
+            .execute()
+            .compareWithOrder()
+            .checkSinkResult();
+    }
+
     private void clearGraph() throws IOException {
         File file = new File(TEST_GRAPH_PATH);
         if (file.exists()) {
