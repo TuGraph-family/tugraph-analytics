@@ -1,0 +1,8 @@
+1,2,created,0.4
+4,3,knows,0.5
+1,4,knows,1.0
+5,6,created,0.4
+5,7,created,1.0
+4,5,created,0.2
+8,5,knows,0.2
+9,10,created,0.1
