@@ -1,0 +1,57 @@
+# base image
+FROM ubuntu:20.04
+
+VOLUME /tmp
+
+ENV GEAFLOW_INSTALL_PATH=/opt
+ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
+
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update
+
+# base packages
+RUN apt-get -y install wget vim curl
+RUN apt-get -y install gcc g++
+
+# jdk
+RUN apt-get -y install  openjdk-8-jdk \
+    && echo "export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk" >> /etc/profile \
+    && echo "export JRE_HOME=\${JAVA_HOME}/jre" >> /etc/profile \
+    && echo "export CLASSPATH=.:\${JAVA_HOME}/lib:\${JRE_HOME}/lib:\$CLASSPATH" >> /etc/profile \
+    && echo "export JAVA_PATH=\${JAVA_HOME}/bin:\${JRE_HOME}/bin" >> /etc/profile \
+    && echo "export PATH=\$PATH:\${JAVA_PATH}" >> /etc/profile \
+    && . /etc/profile
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y mysql-server
+
+# redis
+RUN apt-get install -y redis
+
+RUN apt-get install -y gnupg
+# influxdb
+RUN wget -qO- https://repos.influxdata.com/influxdb.key | apt-key add -
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys D8FF8E1F7DF8B07E
+RUN echo "deb https://repos.influxdata.com/ubuntu focal stable" | tee /etc/apt/sources.list.d/influxdb.list
+RUN apt-get update
+RUN apt-get install -y influxdb2
+RUN cp /usr/bin/influx /usr/local/bin/
+
+# copy console jar
+WORKDIR $GEAFLOW_HOME/
+COPY geaflow-console/target/boot/geaflow-console-bootstrap-*-executable.jar \
+    $GEAFLOW_HOME/boot/geaflow-console-bootstrap.jar
+COPY geaflow-console/target/config $GEAFLOW_HOME/config
+COPY geaflow-console/docker $GEAFLOW_HOME/
+
+# copy geaflow jar
+ENV GEAFLOW_LOCAL_VERSION_PATH=/tmp/geaflow/local/versions/defaultVersion/defaultVersion.jar
+COPY geaflow/geaflow-deploy/geaflow-assembly/target/geaflow-assembly-*.jar \
+   $GEAFLOW_LOCAL_VERSION_PATH
+RUN md5sum $GEAFLOW_LOCAL_VERSION_PATH |awk '{print $1}' > $GEAFLOW_LOCAL_VERSION_PATH.md5
+
+EXPOSE 8888 3306 6379 8086 2181
+
+ENTRYPOINT ["bash", "/opt/geaflow/bin/start-process.sh"]
