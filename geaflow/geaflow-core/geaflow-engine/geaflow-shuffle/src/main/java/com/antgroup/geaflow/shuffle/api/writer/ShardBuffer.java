@@ -17,142 +17,187 @@ package com.antgroup.geaflow.shuffle.api.writer;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.HeapBuffer.HeapBufferBuilder;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineSlice;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
-import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
+import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
+import com.antgroup.geaflow.shuffle.message.SliceId;
+import com.antgroup.geaflow.shuffle.message.WriterId;
 import com.antgroup.geaflow.shuffle.serialize.EncoderRecordSerializer;
 import com.antgroup.geaflow.shuffle.serialize.IRecordSerializer;
 import com.antgroup.geaflow.shuffle.serialize.RecordSerializer;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public abstract class ShardBuffer<T, R> {
 
+    protected IWriterContext writerContext;
     protected ShuffleConfig shuffleConfig;
+    protected ShuffleWriteMetrics writeMetrics;
+
 
     protected long pipelineId;
+    protected String pipelineName;
     protected int edgeId;
     protected int taskIndex;
-    protected String pipelineName;
-
     protected int targetChannels;
+
     protected String taskLogTag;
-    protected List<BufferBuilder> buffers;
-    protected PipelineSlice[] resultSlices;
-    protected int[] batchCounter;
+    protected long[] recordCounter;
     protected long[] bytesCounter;
-    protected ShuffleMemoryTracker memoryTracker;
-    protected ShuffleWriteMetrics writeMetrics;
     protected long maxBufferSize;
+
+    protected BufferBuilder[] buffers;
+    protected volatile PipelineSlice[] resultSlices;
     protected IRecordSerializer<T> recordSerializer;
 
+    //////////////////////////////
+    // Init.
+    //////////////////////////////
+
     public void init(IWriterContext writerContext) {
+        this.writerContext = writerContext;
         this.shuffleConfig = ShuffleConfig.getInstance();
-        this.memoryTracker = ShuffleMemoryTracker.getInstance();
         this.writeMetrics = new ShuffleWriteMetrics();
 
-        this.targetChannels = writerContext.getTargetChannelNum();
         this.pipelineId = writerContext.getPipelineInfo().getPipelineId();
         this.pipelineName = writerContext.getPipelineInfo().getPipelineName();
         this.edgeId = writerContext.getEdgeId();
         this.taskIndex = writerContext.getTaskIndex();
+        this.targetChannels = writerContext.getTargetChannelNum();
         this.taskLogTag = writerContext.getTaskName();
-        this.recordSerializer = getRecordSerializer(writerContext);
+        this.recordCounter = new long[this.targetChannels];
+        this.bytesCounter = new long[this.targetChannels];
+        this.maxBufferSize = this.shuffleConfig.getFlushBufferSizeBytes();
 
-        this.batchCounter = new int[targetChannels];
-        this.bytesCounter = new long[targetChannels];
-        this.maxBufferSize = this.shuffleConfig.getWriteBufferSizeBytes();
-        buildBufferBuilder(targetChannels);
+        this.buffers = this.buildBufferBuilder(this.targetChannels);
+        this.resultSlices = this.buildResultSlices(this.targetChannels, writerContext.getRefCount());
+        this.recordSerializer = this.getRecordSerializer();
     }
 
-    private void buildBufferBuilder(int channels) {
-        this.buffers = new ArrayList<>(channels);
+    private BufferBuilder[] buildBufferBuilder(int channels) {
+        BufferBuilder[] buffers = new BufferBuilder[channels];
         for (int i = 0; i < channels; i++) {
             BufferBuilder bufferBuilder = new HeapBufferBuilder();
             bufferBuilder.enableMemoryTrack();
-            buffers.add(bufferBuilder);
+            buffers[i] = bufferBuilder;
         }
+        return buffers;
     }
 
-    public void emit(long batchId, T value, boolean isRetract, int[] channels)
-        throws IOException {
-        for (int channel : channels) {
-            BufferBuilder outBuffer = buffers.get(channel);
-            recordSerializer.serialize(value, isRetract, outBuffer);
-            batchCounter[channel]++;
+    protected PipelineSlice[] buildResultSlices(int channels, int refCount) {
+        PipelineSlice[] slices = new PipelineSlice[channels];
+        WriterId writerId = new WriterId(this.pipelineId, this.edgeId, this.taskIndex);
+        for (int i = 0; i < channels; i++) {
+            SliceId sliceId = new SliceId(writerId, i);
+            PipelineSlice slice = this.newSlice(this.taskLogTag, sliceId, refCount);
+            slices[i] = slice;
+            ShuffleDataManager.getInstance().register(sliceId, slice);
+        }
+        return slices;
+    }
 
-            if (outBuffer.getBufferSize() >= maxBufferSize) {
-                send(channel, outBuffer.build(), batchId);
+    protected abstract PipelineSlice newSlice(String taskLogTag, SliceId sliceId, int refCount);
+
+    @SuppressWarnings("unchecked")
+    private IRecordSerializer<T> getRecordSerializer() {
+        IEncoder<?> encoder = this.writerContext.getEncoder();
+        if (encoder == null) {
+            return new RecordSerializer<>();
+        }
+        return new EncoderRecordSerializer<>((IEncoder<T>) encoder);
+    }
+
+    //////////////////////////////
+    // Write data.
+    //////////////////////////////
+
+    public void emit(long windowId, T value, boolean isRetract, int[] channels) throws IOException {
+        for (int channel : channels) {
+            BufferBuilder outBuffer = this.buffers[channel];
+            this.recordSerializer.serialize(value, isRetract, outBuffer);
+            if (outBuffer.getBufferSize() >= this.maxBufferSize) {
+                this.sendBuffer(channel, outBuffer, windowId);
             }
         }
     }
 
-    public void emit(long batchId, List<T> data, int channel) {
-        BufferBuilder outBuffer = this.buffers.get(channel);
-        int size = data.size();
-        for (int i = 0; i < size; i++) {
-            this.recordSerializer.serialize(data.get(i), false, outBuffer);
-            this.batchCounter[channel]++;
+    public void emit(long windowId, List<T> data, int channel) throws IOException {
+        BufferBuilder outBuffer = this.buffers[channel];
+        for (T datum : data) {
+            this.recordSerializer.serialize(datum, false, outBuffer);
         }
-        if (outBuffer.getBufferSize() >= maxBufferSize) {
-            send(channel, outBuffer.build(), batchId);
+        if (outBuffer.getBufferSize() >= this.maxBufferSize) {
+            this.sendBuffer(channel, outBuffer, windowId);
         }
     }
 
-    protected void send(int selectChannel, OutBuffer outBuffer, long batchId) {
-        sendBuffer(selectChannel, outBuffer, batchId);
-        this.bytesCounter[selectChannel] += outBuffer.getBufferSize();
+    public Optional<R> finish(long windowId) throws IOException {
+        this.flushFloatingBuffers(windowId);
+        this.notify(new PipelineBarrier(windowId, this.edgeId, this.taskIndex));
+        this.flushSlices();
+        return this.doFinish(windowId);
     }
 
-    protected void sendBuffer(int sliceIndex, OutBuffer buffer, long batchId) {
-        PipelineSlice resultSlice = resultSlices[sliceIndex];
-        resultSlice.add(new PipeBuffer(buffer, batchId, true));
+    protected abstract Optional<R> doFinish(long windowId) throws IOException;
+
+    private void sendBuffer(int sliceIndex, BufferBuilder builder, long windowId) {
+        this.recordCounter[sliceIndex] += builder.getRecordCount();
+        this.bytesCounter[sliceIndex] += builder.getBufferSize();
+        PipelineSlice resultSlice = this.resultSlices[sliceIndex];
+        resultSlice.add(new PipeBuffer(builder.build(), windowId, true));
     }
 
-    public abstract Optional<R> finish(long batchId) throws IOException;
+    private void sendBarrier(int sliceIndex, long windowId, int count, boolean isFinish) {
+        PipelineSlice resultSlice = this.resultSlices[sliceIndex];
+        resultSlice.add(new PipeBuffer(windowId, count, false, isFinish));
+    }
+
+    private void flushFloatingBuffers(long windowId) {
+        for (int i = 0; i < this.targetChannels; i++) {
+            BufferBuilder bufferBuilder = this.buffers[i];
+            if (bufferBuilder.getBufferSize() > 0) {
+                this.sendBuffer(i, bufferBuilder, windowId);
+            }
+        }
+    }
+
+    protected boolean flushSlices() {
+        PipelineSlice[] pipeSlices = this.resultSlices;
+        boolean flushed = false;
+        if (pipeSlices != null) {
+            for (int i = 0; i < pipeSlices.length; i++) {
+                if (null != pipeSlices[i]) {
+                    pipeSlices[i].flush();
+                    flushed = true;
+                }
+            }
+        }
+        return flushed;
+    }
 
     public ShuffleWriteMetrics getShuffleWriteMetrics() {
         return this.writeMetrics;
     }
 
-    public void close() {
-    }
-
     protected void notify(PipelineBarrier barrier) throws IOException {
         for (int channel = 0; channel < this.targetChannels; channel++) {
-            notify(barrier, channel);
+            long windowId = barrier.getWindowId();
+            long recordCount = this.recordCounter[channel];
+            long bytesCount = this.bytesCounter[channel];
+            sendBarrier(channel, windowId, (int) recordCount, barrier.isFinish());
+
+            this.writeMetrics.increaseRecords(recordCount);
+            this.writeMetrics.increaseEncodedSize(bytesCount);
+            this.recordCounter[channel] = 0;
+            this.bytesCounter[channel] = 0;
         }
     }
 
-    protected void notify(PipelineBarrier barrier, int channel) {
-        long batchId = barrier.getWindowId();
-        int recordCount = this.batchCounter[channel];
-        sendBarrier(channel, batchId, recordCount, barrier.isFinish());
-
-        this.writeMetrics.increaseRecords(recordCount);
-        this.writeMetrics.increaseEncodedSize(this.bytesCounter[channel]);
-        this.batchCounter[channel] = 0;
-        this.bytesCounter[channel] = 0;
-    }
-
-    protected void sendBarrier(int sliceIndex, long batchId, int count, boolean isFinish) {
-        PipelineSlice resultSlice = resultSlices[sliceIndex];
-        resultSlice.add(new PipeBuffer(batchId, count, false, isFinish));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> IRecordSerializer<T> getRecordSerializer(IWriterContext writerContext) {
-        IEncoder<?> encoder = writerContext.getEncoder();
-        if (encoder == null) {
-            return new RecordSerializer<>();
-        }
-        return new EncoderRecordSerializer<>((IEncoder<T>) encoder);
+    public void close() {
     }
 
 }

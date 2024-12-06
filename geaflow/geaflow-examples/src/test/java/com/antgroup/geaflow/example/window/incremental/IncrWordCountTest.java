@@ -37,7 +37,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
@@ -52,7 +52,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test1() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "2");
@@ -70,7 +70,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test2() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -88,7 +88,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test3() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -106,7 +106,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test4() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "2");
@@ -124,7 +124,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test5() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -142,7 +142,7 @@ public class IncrWordCountTest extends BaseTest {
     @Test
     public void test6() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");

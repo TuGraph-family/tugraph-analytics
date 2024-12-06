@@ -18,16 +18,18 @@ package com.antgroup.geaflow.runtime.core.scheduler.io;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.shuffle.BatchPhase;
+import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
-import com.antgroup.geaflow.runtime.io.IInputDesc;
-import com.antgroup.geaflow.runtime.shuffle.ShardInputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
+import com.antgroup.geaflow.shuffle.desc.IInputDesc;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import java.util.ArrayList;
@@ -52,12 +54,12 @@ public class IoDescriptorBuilderTest extends TestCase {
         for (int i = 0; i < parallelism; i++) {
             slices.add(new PipelineSliceMeta(i, i, 0, 0, null));
         }
-        ShardResult shards1 = new ShardResult(edgeId, CollectType.FORWARD, slices);
+        ShardResult shards1 = new ShardResult(edgeId, OutputType.FORWARD, slices);
         resultManager.register(0, shards1);
-        ShardResult shards2 = new ShardResult(edgeId, CollectType.FORWARD, slices);
+        ShardResult shards2 = new ShardResult(edgeId, OutputType.FORWARD, slices);
         resultManager.register(0, shards2);
 
-        IInputDesc input = IoDescriptorBuilder.buildInputInfo(task, edge, cycle, resultManager);
+        IInputDesc input = IoDescriptorBuilder.buildInputDesc(task, edge, cycle, resultManager, DataExchangeMode.PIPELINE, BatchPhase.CLASSIC);
         ShardInputDesc shard = (ShardInputDesc) input;
         Assert.assertEquals(parallelism, shard.getInput().size());
         Assert.assertEquals(1, shard.getInput().get(0).getSlices().size());

@@ -14,14 +14,14 @@
 
 package com.antgroup.geaflow.shuffle;
 
+import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class OutputDescriptor implements Serializable {
 
     // The output info list is the info of downstream output dependencies.
-    private List<IOutputDesc> outputDescList;
+    private final List<IOutputDesc> outputDescList;
 
     public OutputDescriptor(List<IOutputDesc> outputDescList) {
         this.outputDescList = outputDescList;
@@ -31,12 +31,4 @@ public class OutputDescriptor implements Serializable {
         return outputDescList;
     }
 
-    public OutputDescriptor clone() {
-        List<IOutputDesc> outputDescs = null;
-        if (this.outputDescList != null) {
-            outputDescs = new ArrayList<>(this.outputDescList);
-        }
-        OutputDescriptor outputDescriptor = new OutputDescriptor(outputDescs);
-        return outputDescriptor;
-    }
 }

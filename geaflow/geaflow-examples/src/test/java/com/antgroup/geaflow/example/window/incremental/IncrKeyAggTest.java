@@ -38,7 +38,7 @@ public class IncrKeyAggTest extends BaseTest {
     @Test
     public void test() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         StreamKeyAggPipeline pipeline = new StreamKeyAggPipeline();
@@ -52,7 +52,7 @@ public class IncrKeyAggTest extends BaseTest {
     @Test
     public void test1() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         configuration.putAll(config);
 
@@ -67,7 +67,7 @@ public class IncrKeyAggTest extends BaseTest {
     @Test
     public void test2() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "3");
         configuration.putAll(config);
@@ -83,7 +83,7 @@ public class IncrKeyAggTest extends BaseTest {
     @Test
     public void test3() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "2");
         configuration.putAll(config);
@@ -99,7 +99,7 @@ public class IncrKeyAggTest extends BaseTest {
     @Test
     public void test4() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "4");
         configuration.putAll(config);

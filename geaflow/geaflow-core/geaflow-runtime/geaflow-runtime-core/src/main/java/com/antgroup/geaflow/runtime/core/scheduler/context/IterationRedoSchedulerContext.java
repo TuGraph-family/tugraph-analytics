@@ -18,11 +18,14 @@ import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IterationRedoSchedulerContext extends RedoSchedulerContext {
+public class IterationRedoSchedulerContext<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>> extends RedoSchedulerContext<C, PC, PCC> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IterationRedoSchedulerContext.class);
 
-    public IterationRedoSchedulerContext(IExecutionCycle cycle, ICycleSchedulerContext parentContext) {
+    public IterationRedoSchedulerContext(C cycle, PCC parentContext) {
         super(cycle, parentContext);
     }
 

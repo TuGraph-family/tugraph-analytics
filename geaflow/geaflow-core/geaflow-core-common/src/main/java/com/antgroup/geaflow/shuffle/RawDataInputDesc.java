@@ -12,26 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.io;
+package com.antgroup.geaflow.shuffle;
 
-import com.antgroup.geaflow.shuffle.IOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.IInputDesc;
+import com.antgroup.geaflow.shuffle.desc.InputType;
+import java.util.List;
 
-public class ResponseOutputDesc implements IOutputDesc {
+public class RawDataInputDesc<T> implements IInputDesc<T> {
 
-    private int opId;
-    private int edgeId;
-    private String edgeName;
-    private CollectType outputType;
+    private final int edgeId;
+    private final String edgeName;
+    private final List<T> rawData;
 
-    public ResponseOutputDesc(int opId, int edgeId, String edgeName, CollectType outputType) {
-        this.opId = opId;
+    public RawDataInputDesc(int edgeId, String edgeName, List<T> rawData) {
         this.edgeId = edgeId;
         this.edgeName = edgeName;
-        this.outputType = outputType;
-    }
-
-    public int getOpId() {
-        return opId;
+        this.rawData = rawData;
     }
 
     @Override
@@ -40,12 +36,17 @@ public class ResponseOutputDesc implements IOutputDesc {
     }
 
     @Override
-    public String getEdgeName() {
+    public String getName() {
         return edgeName;
     }
 
     @Override
-    public CollectType getType() {
-        return outputType;
+    public List<T> getInput() {
+        return rawData;
+    }
+
+    @Override
+    public InputType getInputType() {
+        return InputType.DATA;
     }
 }

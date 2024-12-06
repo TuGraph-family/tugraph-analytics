@@ -112,11 +112,11 @@ public class PipelineStateMachine extends AbstractStateMachine {
         if (previous == null || current == null) {
             return true;
         }
-        if (context.getCycle() instanceof ExecutionNodeCycle) {
+        /*if (context.getCycle() instanceof ExecutionNodeCycle) {
             if (((ExecutionNodeCycle) context.getCycle()).getVertexGroup().getVertexMap().size() > 1) {
                 return false;
             }
-        }
+        }*/
         // Not allow two execution state compose.
         if ((previous.getScheduleStateType() == ScheduleStateType.ITERATION_INIT || previous.getScheduleStateType() == ScheduleStateType.EXECUTE_COMPUTE)
             && current.getScheduleStateType() == ScheduleStateType.EXECUTE_COMPUTE) {

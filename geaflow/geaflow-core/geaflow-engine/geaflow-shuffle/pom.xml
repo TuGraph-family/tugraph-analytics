@@ -25,10 +25,6 @@
 
     <artifactId>geaflow-shuffle</artifactId>
 
-    <properties>
-        <remote.shuffle.version>geaflow-1.2</remote.shuffle.version>
-    </properties>
-
     <dependencies>
 
         <!-- third party dependency -->

@@ -20,7 +20,7 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
 import java.io.IOException;
 
-public class EncoderRecordSerializer<T> implements IRecordSerializer<T> {
+public class EncoderRecordSerializer<T> extends AbstractRecordSerializer<T> {
 
     private final IEncoder<T> encoder;
 
@@ -29,7 +29,7 @@ public class EncoderRecordSerializer<T> implements IRecordSerializer<T> {
     }
 
     @Override
-    public void serialize(T value, boolean isRetract, OutBuffer.BufferBuilder outBuffer) {
+    public void doSerialize(T value, boolean isRetract, OutBuffer.BufferBuilder outBuffer) {
         try {
             this.encoder.encode(value, outBuffer.getOutputStream());
         } catch (IOException e) {

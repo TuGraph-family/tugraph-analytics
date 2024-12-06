@@ -27,7 +27,6 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.env.Environment;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.function.FileSink;
 import com.antgroup.geaflow.example.function.FileSource;
 import com.antgroup.geaflow.example.util.ExampleSinkFunctionFactory;
@@ -40,12 +39,8 @@ import com.antgroup.geaflow.pipeline.task.PipelineTask;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class WindowStreamKeyAggPipeline implements Serializable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(WindowStreamKeyAggPipeline.class);
 
     public static final String RESULT_FILE_PATH = "./target/tmp/data/result/agg3";
     public static final String REF_FILE_PATH = "data/reference/agg3";
@@ -53,7 +48,7 @@ public class WindowStreamKeyAggPipeline implements Serializable {
 
     public IPipelineResult submit(Environment environment) {
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
-        Configuration envConfig = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration envConfig = environment.getEnvironmentContext().getConfig();
         envConfig.getConfigMap().put(FileSink.OUTPUT_DIR, RESULT_FILE_PATH);
         envConfig.getConfigMap().put(FrameworkConfigKeys.INC_STREAM_MATERIALIZE_DISABLE.getKey(), Boolean.TRUE.toString());
         ResultValidator.cleanResult(RESULT_FILE_PATH);

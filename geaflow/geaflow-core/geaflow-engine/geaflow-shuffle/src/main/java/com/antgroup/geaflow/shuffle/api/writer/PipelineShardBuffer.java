@@ -15,20 +15,17 @@
 package com.antgroup.geaflow.shuffle.api.writer;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineShard;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineSlice;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
-import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
+import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.message.SliceId;
-import com.antgroup.geaflow.shuffle.message.WriterId;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PipelineShardBuffer<T, R> extends ShardBuffer<T, R> {
+public class PipelineShardBuffer<T> extends ShardBuffer<T, Shard> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineWriter.class);
 
@@ -42,73 +39,54 @@ public class PipelineShardBuffer<T, R> extends ShardBuffer<T, R> {
     @Override
     public void init(IWriterContext writerContext) {
         super.init(writerContext);
-
-        initResultSlices(targetChannels);
-
-        String threadName = "OutputFlusher-" + Thread.currentThread().getName();
+        String threadName = String.format("flusher-%s", writerContext.getTaskName());
         int flushTimeout = this.shuffleConfig.getFlushBufferTimeoutMs();
         this.outputFlusher = new OutputFlusher(threadName, flushTimeout);
         this.outputFlusher.start();
     }
 
-    private void initResultSlices(int channels) {
-        PipelineSlice[] slices = new PipelineSlice[channels];
-        WriterId writerID = new WriterId(pipelineId, edgeId, taskIndex);
-        for (int i = 0; i < channels; i++) {
-            slices[i] = new PipelineSlice(taskLogTag, new SliceId(writerID, i));
-        }
-        resultSlices = slices;
-        ShuffleDataManager.getInstance().register(writerID, new PipelineShard(taskLogTag, slices));
+    @Override
+    protected PipelineSlice newSlice(String taskLogTag, SliceId sliceId, int refCount) {
+        return new PipelineSlice(taskLogTag, sliceId, refCount);
     }
 
     @Override
     public void emit(long batchId, T value, boolean isRetract, int[] channels) throws IOException {
-        checkError();
+        this.checkError();
         super.emit(batchId, value, isRetract, channels);
     }
 
     @Override
-    public Optional<R> finish(long batchId) throws IOException {
-        checkError();
-        for (int i = 0; i < buffers.size(); i++) {
-            BufferBuilder bufferBuilder = buffers.get(i);
-            if (bufferBuilder.getBufferSize() > 0) {
-                send(i, bufferBuilder.build(), batchId);
-            }
-        }
-        PipelineBarrier barrier = new PipelineBarrier(batchId, edgeId, taskIndex);
-        notify(barrier);
+    public void emit(long batchId, List<T> data, int channel) throws IOException {
+        this.checkError();
+        super.emit(batchId, data, channel);
+    }
 
+    @Override
+    public Optional<Shard> doFinish(long windowId) throws IOException {
+        this.checkError();
         return Optional.empty();
     }
 
-    public void flushAll() {
-        PipelineSlice[] pipeSlices = resultSlices;
-        boolean flushed = false;
-        if (pipeSlices != null) {
-            for (int i = 0; i < pipeSlices.length; i++) {
-                if (null != pipeSlices[i]) {
-                    pipeSlices[i].flush();
-                    flushed = true;
-                }
-            }
-        }
+    private void flushAll() {
+        boolean flushed = this.flushSlices();
         if (!flushed) {
             LOGGER.warn("terminate flusher due to slices released");
-            outputFlusher.terminate();
+            this.outputFlusher.terminate();
         }
     }
 
     @Override
     public void close() {
-        if (outputFlusher != null) {
-            outputFlusher.terminate();
+        if (this.outputFlusher != null) {
+            this.outputFlusher.terminate();
+            this.outputFlusher = null;
         }
     }
 
     private void checkError() throws IOException {
-        if (throwable.get() != null) {
-            Throwable t = throwable.get();
+        if (this.throwable.get() != null) {
+            Throwable t = this.throwable.get();
             if (t instanceof IOException) {
                 throw (IOException) t;
             } else {
@@ -132,7 +110,7 @@ public class PipelineShardBuffer<T, R> extends ShardBuffer<T, R> {
             super(name);
             setDaemon(true);
             this.timeout = timeout;
-            LOGGER.info("started {} with timeout:{}ms", name, timeout);
+            LOGGER.info("start {} with timeout {}ms", name, timeout);
         }
 
         public void terminate() {
@@ -145,13 +123,13 @@ public class PipelineShardBuffer<T, R> extends ShardBuffer<T, R> {
         @Override
         public void run() {
             try {
-                while (running) {
+                while (this.running) {
                     try {
-                        Thread.sleep(timeout);
+                        Thread.sleep(this.timeout);
                     } catch (InterruptedException e) {
                         // Propagate this if we are still running,
                         // because it should not happen in that case.
-                        if (running) {
+                        if (this.running) {
                             LOGGER.error("Interrupted", e);
                             throw e;
                         }
@@ -161,6 +139,7 @@ public class PipelineShardBuffer<T, R> extends ShardBuffer<T, R> {
                     // recognized by the writer.
                     flushAll();
                 }
+                flushAll();
             } catch (Throwable t) {
                 if (throwable.compareAndSet(null, t)) {
                     LOGGER.error("flush failed", t);

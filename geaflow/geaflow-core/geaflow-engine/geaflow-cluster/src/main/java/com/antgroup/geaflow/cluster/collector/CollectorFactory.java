@@ -16,9 +16,9 @@ package com.antgroup.geaflow.cluster.collector;
 
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.io.ResponseOutputDesc;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
-import com.antgroup.geaflow.shuffle.IOutputDesc;
+import com.antgroup.geaflow.shuffle.ResponseOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
 
 public class CollectorFactory {
 

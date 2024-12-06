@@ -15,8 +15,6 @@
 package com.antgroup.geaflow.shuffle.api.reader;
 
 import com.antgroup.geaflow.common.metric.ShuffleReadMetrics;
-import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
-import com.antgroup.geaflow.shuffle.message.FetchRequest;
 import com.antgroup.geaflow.shuffle.message.PipelineEvent;
 import java.io.Serializable;
 
@@ -32,9 +30,9 @@ public interface IShuffleReader extends Serializable {
     /**
      * Fetch upstream shards.
      *
-     * @param req description of fetched batches.
+     * @param targetWindowId target window id
      */
-    void fetch(FetchRequest req);
+    void fetch(long targetWindowId);
 
     /**
      * Returns true if the requested batches is not fetched completely.
@@ -48,13 +46,6 @@ public interface IShuffleReader extends Serializable {
      * @return batch data or event.
      */
     PipelineEvent next();
-
-    /**
-     * Get the exchange mode.
-     *
-     * @return exchange mode.
-     */
-    DataExchangeMode getExchangeMode();
 
     /**
      * Get read metrics.

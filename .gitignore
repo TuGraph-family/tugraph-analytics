@@ -135,3 +135,6 @@ geaflow-cstore/java/src/main/resources/libgeaflow_cstore*
 geaflow-console/geaflow-web/node
 geaflow-console/geaflow-web/node_modules
 geaflow-console/app/bootstrap/src/main/resources/public
+
+# vs code
+.vscode

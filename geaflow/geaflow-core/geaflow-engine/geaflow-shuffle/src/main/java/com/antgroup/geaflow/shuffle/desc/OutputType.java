@@ -12,9 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.io;
+package com.antgroup.geaflow.shuffle.desc;
 
-public enum CollectType {
+public enum OutputType {
 
     /**
      * Shuffle data forward from upstream to downstream.

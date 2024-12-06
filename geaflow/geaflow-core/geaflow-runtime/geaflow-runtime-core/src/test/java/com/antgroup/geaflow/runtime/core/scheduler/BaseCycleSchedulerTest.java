@@ -59,6 +59,8 @@ public class BaseCycleSchedulerTest {
             List<WorkerInfo> workers = new ArrayList<>();
             for (int i = 0; i < workerNum; i++) {
                 WorkerInfo workerInfo = new WorkerInfo();
+                workerInfo.setHost("host0");
+                workerInfo.setContainerName("container0");
                 workerInfo.setWorkerIndex(i);
                 workers.add(workerInfo);
             }

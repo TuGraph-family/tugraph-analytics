@@ -22,7 +22,6 @@ import static com.antgroup.geaflow.example.config.ExampleConfigKeys.SOURCE_PARAL
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.dynamic.IncrGraphCompute;
 import com.antgroup.geaflow.file.FileConfigKeys;
@@ -54,7 +53,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test1ShardWithSingleConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
 
@@ -67,7 +66,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test2ShardWithTwoSourceVCMapOneSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
 
@@ -85,7 +84,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test2ShardWithTwoSourceVCFourMapSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
 
@@ -103,7 +102,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test2ShardWithOneSourceVCMapFourSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
 
@@ -120,7 +119,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test1ShardWithOneSourceVCMapFourSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(1));
@@ -135,7 +134,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test2ShardWithTwoSourceVCOneMapTwoSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(2));
@@ -150,7 +149,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test2ShardWithOneSourceVCOneMapTwoSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(1));
@@ -165,7 +164,7 @@ public class IncGraphComputeTest extends BaseTest {
     @Test
     public void test2ShardWithOneSourceVCMapSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphCompute pipeline = new IncrGraphCompute();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(1));

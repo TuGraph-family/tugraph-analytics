@@ -60,6 +60,8 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
         this.windowId = windowId;
     }
 
+
+
     @Override
     public void execute(ITaskContext taskContext) {
         worker = taskContext.getWorker();
@@ -71,12 +73,17 @@ public abstract class AbstractExecutableCommand implements IExecutableCommand {
             context == null ? null : ((AbstractWorkerContext) context).getTaskId(), this, windowId);
     }
 
-    public int getCycleId() {
-        return cycleId;
+    public long getSchedulerId() {
+        return this.schedulerId;
     }
 
-    public long getSchedulerId() {
-        return schedulerId;
+    @Override
+    public int getWorkerId() {
+        return this.workerId;
+    }
+
+    public int getCycleId() {
+        return cycleId;
     }
 
     public long getIterationWindowId() {

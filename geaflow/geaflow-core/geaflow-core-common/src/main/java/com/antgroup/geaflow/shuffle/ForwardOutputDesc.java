@@ -15,107 +15,94 @@
 package com.antgroup.geaflow.shuffle;
 
 import com.antgroup.geaflow.common.encoder.IEncoder;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.partitioner.IPartitioner;
+import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ForwardOutputDesc implements IOutputDesc, Serializable {
-
-    // Describe the target task ids which the current output will send data to.
-    private List<Integer> targetTaskIndices;
-
-    // The current output edge id.
-    private int edgeId;
-
-    // Name of the output edge.
-    private String edgeName;
+public class ForwardOutputDesc<T> implements IOutputDesc, Serializable {
 
     // Execution vertex id.
-    private int vertexId;
-
+    private final int vertexId;
+    // The current output edge id.
+    private final int edgeId;
+    // Partition number.
+    private final int numPartitions;
+    // Data ref count, for data disposal.
+    private final int refCount;
+    // Name of the output edge.
+    private final String edgeName;
+    // Data exchange mode.
+    private final DataExchangeMode dataExchangeMode;
+    // Describe the target task ids which the current output will send data to.
+    private final List<Integer> targetTaskIndices;
     // The partitioner of the output data.
-    private IPartitioner partitioner;
-    private IEncoder<?> encoder;
-    private int numPartitions;
+    private final IPartitioner<T> partitioner;
+    // Data encoder, for serialization and deserialization.
+    private final IEncoder<T> encoder;
 
-    private ShuffleDescriptor shuffleDescriptor;
-
-    public ForwardOutputDesc(int edgeId, String edgeName, int vertexId, ShuffleDescriptor shuffleDescriptor) {
-        this.edgeId = edgeId;
-        this.edgeName = edgeName;
+    public ForwardOutputDesc(
+        int vertexId,
+        int edgeId,
+        int numPartitions,
+        int refCount,
+        String edgeName,
+        DataExchangeMode dataExchangeMode,
+        List<Integer> targetTaskIndices,
+        IPartitioner<T> partitioner,
+        IEncoder<T> encoder) {
         this.vertexId = vertexId;
-        this.shuffleDescriptor = shuffleDescriptor;
-    }
-
-    public int getEdgeId() {
-        return edgeId;
-    }
-
-    public String getEdgeName() {
-        return edgeName;
-    }
-
-    @Override
-    public CollectType getType() {
-        return CollectType.FORWARD;
+        this.edgeId = edgeId;
+        this.numPartitions = numPartitions;
+        this.refCount = refCount;
+        this.edgeName = edgeName;
+        this.dataExchangeMode = dataExchangeMode;
+        this.targetTaskIndices = targetTaskIndices;
+        this.partitioner = partitioner;
+        this.encoder = encoder;
     }
 
     public int getVertexId() {
-        return vertexId;
+        return this.vertexId;
+    }
+
+    public int getEdgeId() {
+        return this.edgeId;
+    }
+
+    public int getNumPartitions() {
+        return this.numPartitions;
+    }
+
+    public int getRefCount() {
+        return this.refCount;
+    }
+
+    public String getEdgeName() {
+        return this.edgeName;
+    }
+
+    public DataExchangeMode getDataExchangeMode() {
+        return this.dataExchangeMode;
     }
 
     public List<Integer> getTargetTaskIndices() {
-        return targetTaskIndices;
+        return this.targetTaskIndices;
     }
 
-    public void setTargetTaskIndices(List<Integer> targetTaskIndices) {
-        this.targetTaskIndices = targetTaskIndices;
-    }
-
-    public IPartitioner getPartitioner() {
-        return partitioner;
-    }
-
-    public void setPartitioner(IPartitioner partitioner) {
-        this.partitioner = partitioner;
+    public IPartitioner<T> getPartitioner() {
+        return this.partitioner;
     }
 
     public IEncoder<?> getEncoder() {
         return this.encoder;
     }
 
-    public void setEncoder(IEncoder<?> encoder) {
-        this.encoder = encoder;
+    @Override
+    public OutputType getType() {
+        return OutputType.FORWARD;
     }
 
-    public int getNumPartitions() {
-        return numPartitions;
-    }
-
-    public void setNumPartitions(int numPartitions) {
-        this.numPartitions = numPartitions;
-    }
-
-    public ShuffleDescriptor getShuffleDescriptor() {
-        return shuffleDescriptor;
-    }
-
-    public ForwardOutputDesc clone() {
-        ForwardOutputDesc outputDesc = new ForwardOutputDesc(this.edgeId,
-            this.edgeName, this.vertexId, this.shuffleDescriptor);
-        if (this.partitioner != null) {
-            outputDesc.setPartitioner(this.partitioner);
-        }
-        if (this.targetTaskIndices != null) {
-            outputDesc.setTargetTaskIndices(new ArrayList<>(this.targetTaskIndices));
-        }
-        if (this.encoder != null) {
-            outputDesc.setEncoder(this.encoder);
-        }
-        outputDesc.setNumPartitions(this.numPartitions);
-        return outputDesc;
-    }
 }

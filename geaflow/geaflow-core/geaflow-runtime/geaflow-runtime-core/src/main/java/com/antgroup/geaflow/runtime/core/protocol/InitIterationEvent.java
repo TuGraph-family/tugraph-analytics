@@ -16,26 +16,28 @@ package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 
 /**
  * An assign event provides some runtime execution information for worker to build the cycle pipeline.
  * including: execution task descriptors, shuffle descriptors
  */
-public class InitIterationEvent<T> extends AbstractInitCommand {
+public class InitIterationEvent extends AbstractInitCommand {
 
-    public InitIterationEvent(long schedulerId, int workerId, int cycleId, long iterationId, long pipelineId, String pipelineName) {
-        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName);
+    public InitIterationEvent(long schedulerId,
+                              int workerId,
+                              int cycleId,
+                              long iterationId,
+                              long pipelineId,
+                              String pipelineName,
+                              IoDescriptor ioDescriptor) {
+        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName, ioDescriptor);
     }
 
     @Override
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
         this.initFetcher();
-    }
-
-    @Override
-    public int getWorkerId() {
-        return workerId;
     }
 
     @Override

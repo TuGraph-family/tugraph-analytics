@@ -15,7 +15,6 @@
 package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
-import com.antgroup.geaflow.cluster.task.ITaskContext;
 
 /**
  * Send from scheduler to cycle head task to launch one iteration of the cycle.
@@ -33,16 +32,6 @@ public class ExecuteComputeEvent extends AbstractIterationComputeCommand {
                                boolean recoverable) {
         this(schedulerId, workerId, cycleId, windowId, fetchWindowId, fetchCount);
         this.recoverable = recoverable;
-    }
-
-    @Override
-    public void execute(ITaskContext taskContext) {
-        super.execute(taskContext);
-    }
-
-    @Override
-    public int getWorkerId() {
-        return workerId;
     }
 
     @Override

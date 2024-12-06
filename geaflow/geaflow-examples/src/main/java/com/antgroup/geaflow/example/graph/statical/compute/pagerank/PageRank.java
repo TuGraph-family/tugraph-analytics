@@ -46,12 +46,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PageRank {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PageRank.class);
 
     public static final String RESULT_FILE_PATH = "./target/tmp/data/result/pagerank";
     public static final String REF_FILE_PATH = "data/reference/pagerank";

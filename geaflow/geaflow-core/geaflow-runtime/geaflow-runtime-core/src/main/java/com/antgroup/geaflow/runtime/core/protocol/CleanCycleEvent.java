@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.collector.CloseEmitterRequest;
+import com.antgroup.geaflow.cluster.fetcher.CloseFetchRequest;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.common.metric.EventMetrics;
@@ -42,6 +43,7 @@ public class CleanCycleEvent extends AbstractCleanCommand {
         super.execute(taskContext);
         WorkerContext workerContext = (WorkerContext) this.context;
         ExecutionTask executionTask = workerContext.getExecutionTask();
+        this.fetcherRunner.add(new CloseFetchRequest(executionTask.getTaskId()));
         this.emitterRunner.add(new CloseEmitterRequest(executionTask.getTaskId(), this.windowId));
         this.worker.close();
         EventMetrics eventMetrics = ((AbstractWorkerContext) this.context).getEventMetrics();
@@ -58,17 +60,8 @@ public class CleanCycleEvent extends AbstractCleanCommand {
     }
 
     @Override
-    public int getWorkerId() {
-        return workerId;
-    }
-
-    @Override
     public EventType getEventType() {
         return EventType.CLEAN_CYCLE;
-    }
-
-    public long getIterationWindowId() {
-        return windowId;
     }
 
     @Override

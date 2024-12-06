@@ -24,7 +24,6 @@ import com.antgroup.geaflow.api.window.impl.SizeTumblingWindow;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.type.primitive.IntegerType;
 import com.antgroup.geaflow.env.Environment;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.function.FileSink;
 import com.antgroup.geaflow.example.function.RecoverableFileSource;
@@ -74,7 +73,7 @@ public class IncrGraphTraversalByStream {
 
     public static IPipelineResult submit(Environment environment) {
         final Pipeline pipeline = PipelineFactory.buildPipeline(environment);
-        Configuration envConfig = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration envConfig = environment.getEnvironmentContext().getConfig();
         envConfig.getConfigMap().put(FileSink.OUTPUT_DIR, RESULT_FILE_PATH);
         ResultValidator.cleanResult(RESULT_FILE_PATH);
 

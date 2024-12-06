@@ -14,152 +14,46 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineShard;
+import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineSlice;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
+import com.antgroup.geaflow.shuffle.api.pipeline.buffer.SpillablePipelineSlice;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
-import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.Shard;
-import com.antgroup.geaflow.shuffle.message.ShuffleId;
 import com.antgroup.geaflow.shuffle.message.SliceId;
-import com.antgroup.geaflow.shuffle.message.WriterId;
-import com.antgroup.geaflow.shuffle.network.IConnectionManager;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SpillableShardBuffer<T> extends ShardBuffer<T, Shard> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SpillableShardBuffer.class);
+    protected final ShuffleAddress shuffleAddress;
 
-    protected boolean cacheEnabled;
-    protected double cacheSpillThreshold;
-    protected WriterId writerId;
-    protected ShuffleId shuffleId;
-
-    protected IWriterContext writerContext;
-    protected IConnectionManager connectionManager;
-    protected int taskId;
-
-    public SpillableShardBuffer() {
-    }
-
-    public SpillableShardBuffer(IConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
-    public void setConnectionManager(IConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
+    public SpillableShardBuffer(ShuffleAddress shuffleAddress) {
+        this.shuffleAddress = shuffleAddress;
     }
 
     @Override
-    public void init(IWriterContext writerContext) {
-        super.init(writerContext);
-
-        this.writerContext = writerContext;
-        this.taskId = writerContext.getTaskId();
-
-        this.cacheEnabled = writerContext.getShuffleDescriptor().isCacheEnabled();
-        if (cacheEnabled) {
-            LOGGER.info("cache is enabled in {}", taskLogTag);
-        }
-
-        int channels = writerContext.getTargetChannelNum();
-
-        this.writerId = new WriterId(writerContext.getPipelineInfo().getPipelineId(), edgeId, taskIndex);
-        int refCount = cacheEnabled ? Integer.MAX_VALUE : 1;
-        initResultSlices(channels, refCount);
-
-        this.cacheSpillThreshold = this.shuffleConfig.getCacheSpillThreshold();
-    }
-
-    private void initResultSlices(int channels, int refCount) {
-        ShuffleDataManager shuffleDataManager = ShuffleDataManager.getInstance();
-        PipelineShard pipeShard = shuffleDataManager.getShard(writerId);
-        if (pipeShard == null) {
-            PipelineSlice[] slices = new PipelineSlice[channels];
-            for (int i = 0; i < channels; i++) {
-                slices[i] = new PipelineSlice(taskLogTag, new SliceId(writerId, i), refCount);
-            }
-            pipeShard = new PipelineShard(taskLogTag, slices);
-        }
-        resultSlices = pipeShard.getSlices();
+    protected PipelineSlice newSlice(String taskLogTag, SliceId sliceId, int refCount) {
+        return new SpillablePipelineSlice(taskLogTag, sliceId, refCount);
     }
 
     @Override
-    public Optional<Shard> finish(long batchId) throws IOException {
-        final long beginTime = System.currentTimeMillis();
-        flushFloatingBuffers(batchId);
-        List<ISliceMeta> slices = buildSliceMeta(batchId);
-        long maxSliceSize = 0;
-        for (int i = 0; i < slices.size(); i++) {
-            ISliceMeta sliceMeta = slices.get(i);
-            if (sliceMeta.getRecordNum() > 0) {
-                this.writeMetrics.increaseWrittenChannels();
-                if (sliceMeta.getEncodedSize() > maxSliceSize) {
-                    maxSliceSize = sliceMeta.getEncodedSize();
-                }
-            }
-            buffers.get(i).close();
-        }
-
-        this.writeMetrics.setMaxSliceKB(maxSliceSize / 1024);
-        this.writeMetrics.setNumChannels(slices.size());
-        long flushTime = System.currentTimeMillis() - beginTime;
-        this.writeMetrics.setFlushMs(flushTime);
-        LOGGER.info("taskId {} {} flush batchId:{} useTime:{}ms {}", taskId, taskLogTag, batchId,
-            flushTime, this.writeMetrics);
-
-        buffers.clear();
-        buffers = null;
-        batchCounter = null;
-        resultSlices = null;
-        bytesCounter = null;
-
-        return Optional.of(new Shard(edgeId, slices));
+    public Optional<Shard> doFinish(long windowId) {
+        List<ISliceMeta> slices = this.buildSliceMeta(windowId);
+        return Optional.of(new Shard(this.edgeId, slices));
     }
 
-    private List<ISliceMeta> buildSliceMeta(long batchId) {
+    private List<ISliceMeta> buildSliceMeta(long windowId) {
         List<ISliceMeta> slices = new ArrayList<>();
-        PipelineBarrier barrier = new PipelineBarrier(batchId, edgeId, taskIndex);
-        barrier.setFinish(true);
-        int writtenChannels = 0;
-        for (int i = 0; i < targetChannels; i++) {
-            SliceId sliceId = resultSlices[i].getSliceId();
-            PipelineSliceMeta sliceMeta = new PipelineSliceMeta(sliceId, batchId,
-                connectionManager.getShuffleAddress());
-            sliceMeta.setRecordNum(batchCounter[i]);
-            sliceMeta.setEncodedSize(bytesCounter[i]);
+        for (int i = 0; i < this.targetChannels; i++) {
+            SliceId sliceId = this.resultSlices[i].getSliceId();
+            PipelineSliceMeta sliceMeta = new PipelineSliceMeta(sliceId, windowId, this.shuffleAddress);
+            sliceMeta.setRecordNum(this.recordCounter[i]);
+            sliceMeta.setEncodedSize(this.bytesCounter[i]);
             slices.add(sliceMeta);
-            if (sliceMeta.getRecordNum() > 0) {
-                notify(barrier, i);
-                writtenChannels++;
-            }
-        }
-
-        if (writtenChannels > 0) {
-            ShuffleDataManager.getInstance().register(writerId,
-                new PipelineShard(taskLogTag, resultSlices, writtenChannels));
         }
         return slices;
-    }
-
-    @Override
-    public void close() {
-    }
-
-    protected void flushFloatingBuffers(long batchId) {
-        for (int i = 0; i < buffers.size(); i++) {
-            BufferBuilder bufferBuilder = buffers.get(i);
-            if (bufferBuilder.getBufferSize() > 0) {
-                send(i, bufferBuilder.build(), batchId);
-            }
-        }
     }
 
 }

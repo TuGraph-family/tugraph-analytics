@@ -14,29 +14,34 @@
 
 package com.antgroup.geaflow.cluster.fetcher;
 
-public class ReFetchRequest implements IFetchRequest {
+public class FetchRequest implements IFetchRequest {
 
-    private long startBatchId;
-    private long windowCount;
+    private final int taskId;
+    private final long windowId;
+    private final long windowCount;
 
-    public ReFetchRequest(long startBatchId, long windowCount) {
-        this.startBatchId = startBatchId;
+    public FetchRequest(int taskId, long windowId, long windowCount) {
+        this.taskId = taskId;
+        this.windowId = windowId;
         this.windowCount = windowCount;
     }
 
-    public long getStartBatchId() {
-        return startBatchId;
+    @Override
+    public int getTaskId() {
+        return this.taskId;
     }
 
-    public void setStartBatchId(long startBatchId) {
-        this.startBatchId = startBatchId;
+    public long getWindowId() {
+        return this.windowId;
     }
 
     public long getWindowCount() {
-        return windowCount;
+        return this.windowCount;
     }
 
-    public void setWindowCount(int windowCount) {
-        this.windowCount = windowCount;
+    @Override
+    public RequestType getRequestType() {
+        return RequestType.FETCH;
     }
+
 }

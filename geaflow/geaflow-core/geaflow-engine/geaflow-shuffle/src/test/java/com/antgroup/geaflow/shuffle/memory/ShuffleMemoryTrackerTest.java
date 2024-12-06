@@ -30,7 +30,7 @@ public class ShuffleMemoryTrackerTest {
         ShuffleMemoryTracker tracker = ShuffleMemoryTracker.getInstance(configuration);
 
         byte[] bytes1 = new byte[100];
-        HeapBuffer buffer1 = new HeapBuffer(bytes1);
+        HeapBuffer buffer1 = new HeapBuffer(bytes1, false);
         Assert.assertEquals(tracker.getUsedMemory(), 0);
 
         byte[] bytes2 = new byte[200];

@@ -19,25 +19,40 @@ import static com.antgroup.geaflow.example.config.ExampleConfigKeys.SINK_PARALLE
 import static com.antgroup.geaflow.example.config.ExampleConfigKeys.SOURCE_PARALLELISM;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
 import java.util.Comparator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 public class WindowWordCountTest extends BaseTest {
 
-    private static final Logger LOGGER =
-        LoggerFactory.getLogger(WindowWordCountTest.class);
+    public static class TestWindowWordCountFactory {
+
+        @Factory
+        public Object[] factoryMethod() {
+            return new Object[]{
+                new WindowWordCountTest(true),
+                new WindowWordCountTest(false),
+            };
+        }
+
+    }
+
+    private final boolean prefetch;
+
+    public WindowWordCountTest(boolean prefetch) {
+        this.prefetch = prefetch;
+    }
 
     @Test
     public void testSingleConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         WindowWordCountPipeline pipeline = new WindowWordCountPipeline();
         IPipelineResult result = pipeline.submit(environment);
@@ -51,7 +66,8 @@ public class WindowWordCountTest extends BaseTest {
     @Test
     public void testReduceTwoAndSinkFourConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         WindowWordCountPipeline pipeline = new WindowWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -69,7 +85,8 @@ public class WindowWordCountTest extends BaseTest {
     @Test
     public void testReduceOneAndSinkFourConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         WindowWordCountPipeline pipeline = new WindowWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -87,7 +104,8 @@ public class WindowWordCountTest extends BaseTest {
     @Test
     public void testReduceTwoAndSinkTwoConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         WindowWordCountPipeline pipeline = new WindowWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -105,7 +123,8 @@ public class WindowWordCountTest extends BaseTest {
     @Test
     public void testReduceTwoAndSinkOneConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         WindowWordCountPipeline pipeline = new WindowWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -149,4 +168,5 @@ public class WindowWordCountTest extends BaseTest {
             return false;
         }
     }
+
 }

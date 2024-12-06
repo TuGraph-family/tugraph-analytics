@@ -19,7 +19,7 @@ import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContext
 import com.antgroup.geaflow.runtime.core.scheduler.context.IterationRedoSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.RedoSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.statemachine.pipeline.PipelineStateMachine;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.state.StoreType;
@@ -46,14 +46,13 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         configuration = new Configuration(config);
         ClusterMetaStore.init(0, "driver-0", configuration);
         ShuffleManager.init(configuration);
-        ShuffleManager.getInstance().initShuffleMaster();
         StatsCollectorFactory.init(configuration);
     }
 
     @AfterMethod
     public void cleanUp() {
         ClusterMetaStore.close();
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     @Test

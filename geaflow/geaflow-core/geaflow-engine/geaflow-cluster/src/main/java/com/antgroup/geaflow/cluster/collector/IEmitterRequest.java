@@ -38,4 +38,31 @@ public interface IEmitterRequest extends Serializable {
      * @return request type.
      */
     RequestType getRequestType();
+
+    enum RequestType {
+
+        /**
+         * Init request.
+         */
+        INIT,
+        /**
+         * Close request.
+         */
+        CLOSE,
+
+        /**
+         * Stash request.
+         */
+        STASH,
+        /**
+         * Pop request, update the request when cached.
+         */
+        POP,
+        /**
+         * Clear the init emitter request in cache.
+         */
+        CLEAR
+
+    }
+
 }

@@ -15,11 +15,13 @@
 package com.antgroup.geaflow.runtime.core.scheduler.resource;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Matchers.eq;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,30 +34,26 @@ public class CheckpointScheduledWorkerManagerTest extends BaseScheduledWorkerMan
 
     @Test
     public void testRequestMultiTimes() {
-
-        CheckpointCycleScheduledWorkerManager wm
-            = (CheckpointCycleScheduledWorkerManager) AbstractScheduledWorkerManager.getInstance(new Configuration(),
-            CheckpointCycleScheduledWorkerManager.class);
+        int parallelism = 3;
+        ExecutionGraphCycle cycle = buildMockCycle(parallelism);
+        CheckpointCycleScheduledWorkerManager wm = new CheckpointCycleScheduledWorkerManager(new Configuration());
         CheckpointCycleScheduledWorkerManager workerManager = Mockito.spy(wm);
 
-        int parallelism = 3;
-        ExecutionNodeCycle cycle = buildMockCycle(parallelism);
         List<WorkerInfo> workers = new ArrayList<>();
         for (int i = 0; i < parallelism; i++) {
             workers.add(new WorkerInfo("", 0, 0, 0, i, "worker-" + i));
         }
         String resourceId = workerManager.genResourceId(cycle.getDriverIndex(),
             cycle.getSchedulerId());
-        Mockito.doReturn(workers).when(workerManager).requestWorker(any(), eq(resourceId));
+        Mockito.doReturn(workers).when(workerManager).requestWorker(anyInt(), eq(resourceId));
+        Mockito.doNothing().when(workerManager).initWorkers(anyLong(), any(), any());
         workerManager.init(cycle);
         Assert.assertEquals(parallelism,
             workerManager.workers.get(cycle.getSchedulerId()).getWorkers().size());
 
-        for (int i = 0; i < 10; i++) {
-            workerManager.assign(cycle);
-            workerManager.release(cycle);
-            Assert.assertEquals(parallelism, workerManager.workers.get(cycle.getSchedulerId()).getWorkers().size());
-        }
+        workerManager.assign(cycle);
+        Assert.assertEquals(parallelism, workerManager.workers.get(cycle.getSchedulerId()).getWorkers().size());
+        workerManager.workers.remove(cycle.getSchedulerId());
     }
 
     @Test

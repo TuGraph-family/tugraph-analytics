@@ -64,7 +64,7 @@ public class IncGraphOperatorTest extends BaseTest {
     @Test
     public void testDynamicGraphVertexCentricComputeOp() {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration config = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration config = environment.getEnvironmentContext().getConfig();
         config.put(ExecutionConfigKeys.JOB_APP_NAME.getKey(), getClass().getSimpleName());
         config.put(FileConfigKeys.ROOT.getKey(), "/tmp/");
 

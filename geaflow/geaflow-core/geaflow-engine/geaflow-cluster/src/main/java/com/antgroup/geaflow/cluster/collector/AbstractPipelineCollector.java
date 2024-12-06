@@ -26,15 +26,15 @@ import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public abstract class AbstractPipelineCollector<T> extends AbstractCollector implements
-    ICollector<T> {
+public abstract class AbstractPipelineCollector<T>
+    extends AbstractCollector implements ICollector<T> {
 
     protected transient IOutputMessageBuffer<T, ?> outputBuffer;
     protected transient ISelector recordISelector;
-    protected ForwardOutputDesc outputDesc;
+    protected ForwardOutputDesc<T> outputDesc;
     protected long windowId;
 
-    public AbstractPipelineCollector(ForwardOutputDesc outputDesc) {
+    public AbstractPipelineCollector(ForwardOutputDesc<T> outputDesc) {
         super(outputDesc.getPartitioner().getOpId());
         this.outputDesc = outputDesc;
     }
@@ -43,17 +43,12 @@ public abstract class AbstractPipelineCollector<T> extends AbstractCollector imp
     public void setUp(RuntimeContext runtimeContext) {
         super.setUp(runtimeContext);
         List<Integer> targetTaskIds = outputDesc.getTargetTaskIndices();
-        IPartitioner partitioner = outputDesc.getPartitioner();
+        IPartitioner<T> partitioner = outputDesc.getPartitioner();
         if (partitioner.getPartitionType() == IPartitioner.PartitionType.key) {
-            ((KeyPartitioner) partitioner).init(outputDesc.getNumPartitions());
+            ((KeyPartitioner<T>) partitioner).init(outputDesc.getNumPartitions());
         }
         this.recordISelector = new ChannelSelector(targetTaskIds.size(),
             partitioner);
-    }
-
-    @Override
-    public int getId() {
-        return id;
     }
 
     public void setOutputBuffer(IOutputMessageBuffer<T, ?> outputBuffer) {

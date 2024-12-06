@@ -28,10 +28,6 @@ public class HeapBuffer extends AbstractBuffer {
     private static final int INITIAL_BUFFER_SIZE = 4096;
     private byte[] bytes;
 
-    public HeapBuffer(byte[] bytes) {
-        this(bytes, false);
-    }
-
     public HeapBuffer(byte[] bytes, boolean memoryTrack) {
         super(memoryTrack);
         this.bytes = bytes;
@@ -45,31 +41,27 @@ public class HeapBuffer extends AbstractBuffer {
 
     @Override
     public int getBufferSize() {
-        return bytes == null ? 0 : bytes.length;
+        return this.bytes == null ? 0 : this.bytes.length;
     }
 
     @Override
     public void write(OutputStream outputStream) throws IOException {
-        if (bytes != null) {
-            outputStream.write(bytes);
+        if (this.bytes != null) {
+            outputStream.write(this.bytes);
         }
     }
 
     @Override
     public FileRegion toFileRegion() {
-        return new MemoryBytesFileRegion(bytes);
-    }
-
-    public byte[] getBytes() {
-        return bytes;
+        return new MemoryBytesFileRegion(this.bytes);
     }
 
     @Override
     public void release() {
-        if (bytes != null) {
-            int dataSize = bytes.length;
+        if (this.bytes != null) {
+            int dataSize = this.bytes.length;
             releaseMemory(dataSize);
-            bytes = null;
+            this.bytes = null;
         }
     }
 
@@ -90,27 +82,28 @@ public class HeapBuffer extends AbstractBuffer {
 
         @Override
         public int getBufferSize() {
-            return outputStream != null ? outputStream.size() : 0;
+            return this.outputStream != null ? outputStream.size() : 0;
         }
 
         @Override
         public OutBuffer build() {
             byte[] bytes = outputStream.toByteArray();
-            outputStream.reset();
-            batchCount = 0;
-            return new HeapBuffer(bytes, memoryTrack);
+            this.outputStream.reset();
+            this.resetRecordCount();
+            return new HeapBuffer(bytes, this.memoryTrack);
         }
 
         @Override
         public void close() {
-            if (outputStream != null) {
+            if (this.outputStream != null) {
                 try {
-                    outputStream.close();
+                    this.outputStream.close();
                 } catch (IOException e) {
                     throw new GeaflowRuntimeException(e);
                 }
-                outputStream = null;
+                this.outputStream = null;
             }
         }
     }
+
 }

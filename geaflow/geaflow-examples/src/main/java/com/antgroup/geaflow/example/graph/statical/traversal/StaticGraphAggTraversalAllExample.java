@@ -20,7 +20,6 @@ import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.window.impl.AllWindow;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.env.Environment;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.function.FileSink;
 import com.antgroup.geaflow.example.function.FileSource;
@@ -40,12 +39,8 @@ import com.antgroup.geaflow.view.IViewDesc.BackendType;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.io.IOException;
 import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class StaticGraphAggTraversalAllExample {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StaticGraphAggTraversalAllExample.class);
 
     public static final String REFERENCE_FILE_PATH = "data/reference/static_traversal_all_agg";
     public static final String RESULT_FILE_PATH = "./target/tmp/data/result/static_traversal_all_agg";
@@ -57,7 +52,7 @@ public class StaticGraphAggTraversalAllExample {
 
     public static IPipelineResult<?> submit(Environment environment) {
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
-        Configuration envConfig = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration envConfig = environment.getEnvironmentContext().getConfig();
         envConfig.put(FileSink.OUTPUT_DIR, RESULT_FILE_PATH);
         ResultValidator.cleanResult(RESULT_FILE_PATH);
 

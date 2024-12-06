@@ -19,12 +19,19 @@ import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 
 public class PipelineMessage<T> implements PipelineEvent {
 
+    private final int edgeId;
     private final RecordArgs recordArgs;
     private final IMessageIterator<T> messageIterator;
 
-    public PipelineMessage(long batchId, String streamName, IMessageIterator<T> messageIterator) {
+    public PipelineMessage(int edgeId, long batchId, String streamName, IMessageIterator<T> messageIterator) {
+        this.edgeId = edgeId;
         this.recordArgs = new RecordArgs(batchId, streamName);
         this.messageIterator = messageIterator;
+    }
+
+    @Override
+    public int getEdgeId() {
+        return this.edgeId;
     }
 
     @Override

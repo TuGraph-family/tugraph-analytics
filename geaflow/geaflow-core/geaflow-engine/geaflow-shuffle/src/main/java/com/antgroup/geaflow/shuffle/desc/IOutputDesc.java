@@ -12,34 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.runtime.io;
+package com.antgroup.geaflow.shuffle.desc;
 
-import java.util.List;
-
-public interface IInputDesc<R> {
+public interface IOutputDesc {
 
     /**
-     * Return he edge id of correlated input execution edge.
+     * Return output edge id.
      */
     int getEdgeId();
 
     /**
-     * Return the edge name of correlated input execution edge.
+     * Return output edge name.
      */
-    String getName();
+    String getEdgeName();
 
     /**
-     * Return data descriptors of current input.
+     * Return the type of data transfer on the edge.
      */
-    List<R> getInput();
+    OutputType getType();
 
-    /**
-     * Return input data type, including shuffle shard meta and raw data.
-     */
-    InputType getInputType();
-
-    enum InputType {
-        META,
-        DATA
-    }
 }

@@ -27,7 +27,7 @@ public class InitEmitterRequest extends AbstractEmitterRequest {
     private final String pipelineName;
     private final TaskArgs taskArgs;
     private final OutputDescriptor outputDescriptor;
-    protected final List<IOutputMessageBuffer<?, Shard>> outputBuffers;
+    private final List<IOutputMessageBuffer<?, Shard>> outputBuffers;
 
     public InitEmitterRequest(Configuration configuration,
                               long windowId,

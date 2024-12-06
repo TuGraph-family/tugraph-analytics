@@ -42,21 +42,8 @@ public class RollbackCycleEvent extends AbstractExecutableCommand {
     }
 
     @Override
-    public int getWorkerId() {
-        return workerId;
-    }
-
-    @Override
     public EventType getEventType() {
         return EventType.ROLLBACK;
-    }
-
-    public int getCycleId() {
-        return cycleId;
-    }
-
-    public long getIterationWindowId() {
-        return windowId;
     }
 
     @Override

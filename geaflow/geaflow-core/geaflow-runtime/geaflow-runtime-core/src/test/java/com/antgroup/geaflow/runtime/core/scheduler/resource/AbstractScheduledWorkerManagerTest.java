@@ -22,8 +22,9 @@ import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.rpc.RpcEndpointRef;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.core.graph.ExecutionTask;
+import com.antgroup.geaflow.plan.graph.AffinityLevel;
 import com.antgroup.geaflow.rpc.proto.Container;
-import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,7 +39,7 @@ public class AbstractScheduledWorkerManagerTest {
 
     @AfterMethod
     public void afterMethod() {
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     @Test
@@ -101,13 +102,8 @@ public class AbstractScheduledWorkerManagerTest {
     private AbstractScheduledWorkerManager buildMockWorkerManager() {
         return new AbstractScheduledWorkerManager(new Configuration()) {
             @Override
-            public List<WorkerInfo> assign(ExecutionNodeCycle vertex) {
+            protected WorkerInfo assignTaskWorker(WorkerInfo worker, ExecutionTask task, AffinityLevel affinityLevel) {
                 return null;
-            }
-
-            @Override
-            public void release(ExecutionNodeCycle vertex) {
-
             }
         };
     }

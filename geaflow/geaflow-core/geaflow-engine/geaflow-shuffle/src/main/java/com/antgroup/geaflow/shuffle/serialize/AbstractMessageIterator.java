@@ -35,6 +35,10 @@ public abstract class AbstractMessageIterator<T> implements IMessageIterator<T> 
         this.inputStream = inputStream;
     }
 
+    public OutBuffer getOutBuffer() {
+        return this.outBuffer;
+    }
+
     /**
      * Returns the next element in the iteration.
      *

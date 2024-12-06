@@ -73,7 +73,7 @@ public class MultiShardFetcher implements ShardFetcher, ShardFetcherListener {
 
         int currentNumberOfInputChannels = 0;
 
-        for (ShardFetcher fetcher : inputFetchers) {
+        for (OneShardFetcher fetcher : inputFetchers) {
             // The offset to use for buffer or event instances received from this input fetcher.
             inputFetcherToIndexOffsetMap.put(Preconditions.checkNotNull(fetcher), currentNumberOfInputChannels);
             inputFetchersWithRemainingData.add(fetcher);
@@ -225,15 +225,6 @@ public class MultiShardFetcher implements ShardFetcher, ShardFetcherListener {
     @Override
     public int getNumberOfInputChannels() {
         return totalNumberOfInputChannels;
-    }
-
-    @Override
-    public int getNumberOfQueuedBuffers() {
-        int totalBuffers = 0;
-        for (ShardFetcher fetcher : shardFetchers) {
-            totalBuffers += fetcher.getNumberOfQueuedBuffers();
-        }
-        return totalBuffers;
     }
 
     @VisibleForTesting

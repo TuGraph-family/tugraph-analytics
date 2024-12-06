@@ -16,8 +16,8 @@ package com.antgroup.geaflow.cluster.collector;
 
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.collector.IResultCollector;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,8 @@ public class IterationOutputCollector<T>
     }
 
     @Override
-    public CollectType getType() {
-        return CollectType.LOOP;
+    public OutputType getType() {
+        return OutputType.LOOP;
     }
+
 }

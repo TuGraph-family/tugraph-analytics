@@ -20,12 +20,12 @@ import com.antgroup.geaflow.api.graph.base.algo.GraphAggregationAlgo;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricAggregateFunction;
 import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.operator.impl.graph.algo.vc.AbstractGraphVertexCentricOp;
 import com.antgroup.geaflow.processor.impl.graph.GraphVertexCentricProcessor;
 import com.antgroup.geaflow.runtime.core.scheduler.context.AbstractCycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +64,7 @@ public class SchedulerGraphAggregateProcessor<ITERM, AGG, RESULT> {
             ((GraphAggregationAlgo) (operator.getFunction())).getAggregateFunction().getGlobalAggregation();
 
         Optional<Integer> edgeId = cycle.getVertexGroup().getEdgeMap().values().stream()
-            .filter(e -> e.getType() == CollectType.RESPONSE && e.getSrcId() == ITERATION_AGG_VERTEX_ID)
+            .filter(e -> e.getType() == OutputType.RESPONSE && e.getSrcId() == ITERATION_AGG_VERTEX_ID)
             .map(e -> e.getEdgeId()).findFirst();
         Preconditions.checkArgument(edgeId.isPresent(),
             "An edge from aggregation vertex to iteration vertex should build");
@@ -99,7 +99,7 @@ public class SchedulerGraphAggregateProcessor<ITERM, AGG, RESULT> {
 
         @Override
         public void broadcast(RESULT result) {
-            resultManager.register(edgeId, new ResponseResult(edgeId, CollectType.RESPONSE, Arrays.asList(result)));
+            resultManager.register(edgeId, new ResponseResult(edgeId, OutputType.RESPONSE, Arrays.asList(result)));
         }
 
         @Override

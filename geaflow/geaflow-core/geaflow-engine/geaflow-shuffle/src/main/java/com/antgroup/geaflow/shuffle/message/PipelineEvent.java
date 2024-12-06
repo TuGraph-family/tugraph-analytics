@@ -17,6 +17,13 @@ package com.antgroup.geaflow.shuffle.message;
 public interface PipelineEvent {
 
     /**
+     * Get the edge id of this pipeline event.
+     *
+     * @return edge id
+     */
+    int getEdgeId();
+
+    /**
      * Get the window id of this pipeline event.
      *
      * @return window id.

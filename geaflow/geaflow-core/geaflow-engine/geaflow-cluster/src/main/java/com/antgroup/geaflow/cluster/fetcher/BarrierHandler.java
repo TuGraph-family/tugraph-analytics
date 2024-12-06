@@ -15,55 +15,80 @@
 package com.antgroup.geaflow.cluster.fetcher;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.stream.Collectors;
 
 /**
  * Process the barrier event.
  */
 public class BarrierHandler implements Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BarrierHandler.class);
-
+    private final int taskId;
+    private final Map<Integer, ShardInputDesc> inputShards;
+    private final Map<Integer, Integer> edgeId2sliceNum;
     private final int inputSliceNum;
-    private final Map<Long, Set<PipelineBarrier>> barrierCache;
+    private final Map<Integer, Set<PipelineBarrier>> edgeBarrierCache;
+    private final Map<Long, Set<PipelineBarrier>> windowBarrierCache;
 
     private long finishedWindowId;
     private long totalWindowCount;
-    private int taskId;
 
-    public BarrierHandler(int taskId, int sliceNum) {
-        this.inputSliceNum = sliceNum;
-        this.barrierCache = new HashMap<>();
+    public BarrierHandler(int taskId, Map<Integer, ShardInputDesc> inputShards) {
+        this.taskId = taskId;
+        this.inputShards = inputShards;
+        this.edgeId2sliceNum = inputShards.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSliceNum()));
+        this.inputSliceNum = this.edgeId2sliceNum.values().stream().mapToInt(i -> i).sum();
+        this.edgeBarrierCache = this.inputShards.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> new HashSet<>()));
+        this.windowBarrierCache = new HashMap<>();
         this.finishedWindowId = -1;
         this.totalWindowCount = 0;
-        this.taskId = taskId;
     }
 
     public boolean checkCompleted(PipelineBarrier barrier) {
-        if (barrier.getWindowId() <= finishedWindowId) {
-            throw new GeaflowRuntimeException(String.format("illegal state: taskId %s window %s has "
-                + "finished, last finished window is: %s", taskId, barrier.getWindowId(), finishedWindowId));
+        if (barrier.getWindowId() <= this.finishedWindowId) {
+            throw new GeaflowRuntimeException(String.format(
+                "illegal state: taskId %s window %s has finished, last finished window is: %s",
+                this.taskId, barrier.getWindowId(), this.finishedWindowId));
         }
+        int edgeId = barrier.getEdgeId();
         long windowId = barrier.getWindowId();
-        Set<PipelineBarrier> inputBarriers = barrierCache.computeIfAbsent(windowId,
-            key -> new HashSet<>());
-        inputBarriers.add(barrier);
+        Set<PipelineBarrier> edgeBarriers = this.edgeBarrierCache.computeIfAbsent(edgeId, k -> new HashSet<>());
+        Set<PipelineBarrier> windowBarriers = this.windowBarrierCache.computeIfAbsent(windowId, k -> new HashSet<>());
+        edgeBarriers.add(barrier);
+        windowBarriers.add(barrier);
 
-        int barrierSize = inputBarriers.size();
-        if (barrierSize == inputSliceNum) {
-            inputBarriers = barrierCache.remove(windowId);
-            finishedWindowId = windowId;
-            totalWindowCount = inputBarriers.stream().mapToLong(PipelineBarrier::getCount).sum();
-            inputBarriers.clear();
-            return true;
+        if (this.inputShards.get(edgeId).isPrefetchWrite()) {
+            int barrierSize = edgeBarriers.size();
+            if (barrierSize == this.edgeId2sliceNum.get(edgeId)) {
+                this.edgeBarrierCache.remove(edgeId);
+                edgeBarriers.clear();
+                if (this.edgeBarrierCache.isEmpty()) {
+                    this.windowBarrierCache.remove(windowId);
+                    this.finishedWindowId = windowId;
+                    this.totalWindowCount = windowBarriers.stream().mapToLong(PipelineBarrier::getCount).sum();
+                    windowBarriers.clear();
+                }
+                return true;
+            }
+        } else {
+            int barrierSize = windowBarriers.size();
+            if (barrierSize == this.inputSliceNum) {
+                this.windowBarrierCache.remove(windowId);
+                this.finishedWindowId = windowId;
+                this.totalWindowCount = windowBarriers.stream().mapToLong(PipelineBarrier::getCount).sum();
+                windowBarriers.clear();
+                return true;
+            }
         }
+
         return false;
     }
 

@@ -16,12 +16,8 @@ package com.antgroup.geaflow.example.stream;
 
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UnBoundedStreamWordPrint {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UnBoundedStreamWordPrint.class);
 
     public static void main(String[] args) {
         Environment environment = EnvironmentFactory.onRayCommunityEnvironment();

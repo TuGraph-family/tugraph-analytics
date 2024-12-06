@@ -32,10 +32,12 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -65,7 +67,8 @@ public class DefaultResourceManager implements IResourceManager, ExecutorRegiste
     protected final ClusterMetaStore metaKeeper;
     protected int totalWorkerNum;
 
-    private final Map<WorkerInfo.WorkerId, WorkerInfo> availableWorkers = new HashMap<>();
+    private final Map<WorkerInfo.WorkerId, WorkerInfo> availableWorkers = new TreeMap<>(
+        Comparator.comparing(WorkerInfo.WorkerId::getContainerName).thenComparing(WorkerInfo.WorkerId::getWorkerIndex));
     private final Map<String, ResourceSession> sessions = new HashMap<>();
 
     public DefaultResourceManager(IClusterManager clusterManager) {

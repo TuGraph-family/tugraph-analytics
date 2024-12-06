@@ -21,10 +21,10 @@ public interface IRecordSerializer<T> {
     /**
      * Serialize data to out buffer.
      *
-     * @param record data.
-     * @param isRetract if data is retract.
-     * @param outBuffer buffer.
+     * @param record data
+     * @param isRetract if data is retract
+     * @param builder buffer
      */
-    void serialize(T record, boolean isRetract, OutBuffer.BufferBuilder outBuffer);
+    void serialize(T record, boolean isRetract, OutBuffer.BufferBuilder builder);
 
 }

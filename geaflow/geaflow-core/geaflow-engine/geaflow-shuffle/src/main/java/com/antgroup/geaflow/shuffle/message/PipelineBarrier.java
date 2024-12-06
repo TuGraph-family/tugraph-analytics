@@ -22,10 +22,10 @@ public class PipelineBarrier implements PipelineEvent {
     private final int edgeId;
 
     // Iteration id of cycle.
-    private final long batchId;
+    private final long windowId;
 
     // If of source task that send the event from.
-    private final int sourceTaskIndex;
+    private int sourceTaskIndex;
 
     // Id of target task that send the event to.
     private int targetTaskIndex;
@@ -36,22 +36,29 @@ public class PipelineBarrier implements PipelineEvent {
     // Flag that denote source task is finished after the current event.
     private boolean finish;
 
-    public PipelineBarrier(long batchId, int edgeId, int sourceTaskIndex) {
+    public PipelineBarrier(long windowId, int edgeId, int sourceTaskIndex) {
         this.edgeId = edgeId;
-        this.batchId = batchId;
+        this.windowId = windowId;
         this.sourceTaskIndex = sourceTaskIndex;
     }
 
-    public PipelineBarrier(long batchId, int edgeId, int sourceTaskIndex, int targetTaskId,
-                           long count) {
+    public PipelineBarrier(long windowId, int edgeId, long count) {
         this.edgeId = edgeId;
-        this.batchId = batchId;
+        this.windowId = windowId;
+        this.count = count;
+        this.finish = false;
+    }
+
+    public PipelineBarrier(long windowId, int edgeId, int sourceTaskIndex, int targetTaskId, long count) {
+        this.edgeId = edgeId;
+        this.windowId = windowId;
         this.sourceTaskIndex = sourceTaskIndex;
         this.targetTaskIndex = targetTaskId;
         this.count = count;
         this.finish = false;
     }
 
+    @Override
     public int getEdgeId() {
         return edgeId;
     }
@@ -66,7 +73,7 @@ public class PipelineBarrier implements PipelineEvent {
 
     @Override
     public long getWindowId() {
-        return batchId;
+        return windowId;
     }
 
     public int getSourceTaskIndex() {
@@ -90,19 +97,19 @@ public class PipelineBarrier implements PipelineEvent {
             return false;
         }
         PipelineBarrier that = (PipelineBarrier) o;
-        return edgeId == that.edgeId && batchId == that.batchId
+        return edgeId == that.edgeId && windowId == that.windowId
             && sourceTaskIndex == that.sourceTaskIndex && targetTaskIndex == that.targetTaskIndex
             && count == that.count && finish == that.finish;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(edgeId, batchId, sourceTaskIndex, targetTaskIndex, count, finish);
+        return Objects.hash(edgeId, windowId, sourceTaskIndex, targetTaskIndex, count, finish);
     }
 
     @Override
     public String toString() {
-        return "PipelineBarrier{" + "edgeId=" + edgeId + ", batchId=" + batchId
+        return "PipelineBarrier{" + "edgeId=" + edgeId + ", windowId=" + windowId
             + ", sourceTaskIndex=" + sourceTaskIndex + ", targetTaskIndex=" + targetTaskIndex
             + ", count=" + count + ", finish=" + finish + '}';
     }

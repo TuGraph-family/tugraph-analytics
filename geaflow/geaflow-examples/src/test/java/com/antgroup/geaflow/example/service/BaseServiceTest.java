@@ -26,9 +26,9 @@ import com.antgroup.geaflow.example.base.BaseQueryTest;
 import com.antgroup.geaflow.file.FileConfigKeys;
 import com.antgroup.geaflow.metaserver.MetaServer;
 import com.antgroup.geaflow.metaserver.MetaServerContext;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
 import com.antgroup.geaflow.store.redis.RedisConfigKeys;
 import com.github.fppt.jedismock.RedisServer;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
@@ -275,7 +275,7 @@ public class BaseServiceTest {
             environment = null;
         }
         ClusterMetaStore.close();
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     protected static ManagedChannel buildChannel(String host, int port, int timeoutMs) {

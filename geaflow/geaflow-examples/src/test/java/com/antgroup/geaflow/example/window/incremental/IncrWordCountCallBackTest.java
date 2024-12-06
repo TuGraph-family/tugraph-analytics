@@ -32,7 +32,7 @@ public class IncrWordCountCallBackTest extends BaseTest {
     @Test
     public void testTaskCallBack() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         StreamWordCountCallBackPipeline pipeline = new StreamWordCountCallBackPipeline();

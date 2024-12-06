@@ -58,7 +58,7 @@ public abstract class AbstractUnAlignedWorker<T, R> extends AbstractComputeWorke
     private void startTask() {
         long start = System.currentTimeMillis();
         this.executorService = Executors.getExecutorService(1, WORKER_FORMAT + context.getTaskId() + "-%d",
-            new ComponentUncaughtExceptionHandler());
+            ComponentUncaughtExceptionHandler.INSTANCE);
         executorService.execute(new WorkerTask());
         LOGGER.info("taskId {} start task cost {}ms", context != null ? context.getTaskId() : "null", System.currentTimeMillis() - start);
     }

@@ -57,7 +57,7 @@ public class UnionTest extends BaseTest {
     @Test
     public void testUnionWithAggThreeConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         configuration.putAll(config);
 
@@ -72,7 +72,7 @@ public class UnionTest extends BaseTest {
     @Test
     public void testUnionWithAggThreeAndSinkThreeConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "3");
         configuration.putAll(config);
@@ -88,7 +88,7 @@ public class UnionTest extends BaseTest {
     @Test
     public void testUnionWithAggThreeAndSinkTwoConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "2");
         configuration.putAll(config);
@@ -104,7 +104,7 @@ public class UnionTest extends BaseTest {
     @Test
     public void testUnionWithAggThreeAndSinkFourConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "4");
         configuration.putAll(config);

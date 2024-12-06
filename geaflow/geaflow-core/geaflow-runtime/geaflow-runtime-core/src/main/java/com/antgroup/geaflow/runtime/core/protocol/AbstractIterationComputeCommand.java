@@ -14,11 +14,12 @@
 
 package com.antgroup.geaflow.runtime.core.protocol;
 
-import com.antgroup.geaflow.cluster.fetcher.ReFetchRequest;
+import com.antgroup.geaflow.cluster.fetcher.FetchRequest;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
 import com.antgroup.geaflow.runtime.core.worker.AbstractWorker;
 import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
+import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +50,7 @@ public abstract class AbstractIterationComputeCommand extends AbstractExecutable
         super.execute(taskContext);
         AbstractWorker abstractWorker = (AbstractWorker) worker;
         abstractWorker.init(windowId);
-        fetcherRunner.add(new ReFetchRequest(fetchWindowId, fetchCount));
+        fetcherRunner.add(new FetchRequest(((WorkerContext) this.context).getTaskId(), fetchWindowId, fetchCount));
         abstractWorker.process(fetchCount,
             this instanceof LoadGraphProcessEvent || worker instanceof AbstractAlignedWorker);
         ((AbstractWorkerContext) this.context).getEventMetrics().addProcessCostMs(System.currentTimeMillis() - start);

@@ -14,162 +14,154 @@
 
 package com.antgroup.geaflow.cluster.fetcher;
 
-import com.antgroup.geaflow.cluster.shuffle.LogicalPipelineSliceMeta;
-import com.antgroup.geaflow.common.encoder.IEncoder;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
+import com.antgroup.geaflow.common.shuffle.BatchPhase;
+import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
+import com.antgroup.geaflow.common.tuple.Tuple;
+import com.antgroup.geaflow.ha.service.HAServiceFactory;
+import com.antgroup.geaflow.ha.service.ResourceData;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
+import com.antgroup.geaflow.shuffle.message.LogicalPipelineSliceMeta;
+import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.Shard;
+import com.antgroup.geaflow.shuffle.message.SliceId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class InitFetchRequest implements IFetchRequest {
 
     private final long pipelineId;
     private final String pipelineName;
+    private final int vertexId;
+    private final int taskId;
+    private final int taskIndex;
+    private final int taskParallelism;
+    private final String taskName;
+    private final Map<Integer, ShardInputDesc> inputShards;
+    private final Map<Integer, BatchPhase> shufflePhases;
+    private final int totalSliceNum;
+    private final Map<Integer, List<PipelineSliceMeta>> inputSlices;
+    private final List<IInputMessageBuffer<?>> fetchListeners;
 
-    private int taskId;
-    private int taskIndex;
-    private String taskName;
-    private int vertexId;
-
-    private ShuffleDescriptor descriptor;
-    private List<IInputMessageBuffer<?>> fetchListeners;
-    private Map<Integer, String> inputStreamMap;
-    private Map<Integer, List<ISliceMeta>> inputSlices;
-    private Map<Integer, IEncoder<?>> encoders;
-    private int totalSliceNum;
-
-    public InitFetchRequest(long pipelineId, String pipelineName) {
+    public InitFetchRequest(long pipelineId,
+                            String pipelineName,
+                            int vertexId,
+                            int taskId,
+                            int taskIndex,
+                            int taskParallelism,
+                            String taskName,
+                            Map<Integer, ShardInputDesc> inputShards) {
         this.pipelineId = pipelineId;
         this.pipelineName = pipelineName;
+        this.vertexId = vertexId;
+        this.taskId = taskId;
+        this.taskIndex = taskIndex;
+        this.taskParallelism = taskParallelism;
+        this.taskName = taskName;
+        this.inputShards = inputShards;
+        this.shufflePhases = this.inputShards.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getBatchPhase()));
+        Tuple<Integer, Map<Integer, List<PipelineSliceMeta>>> tuple = buildSlices(this.inputShards);
+        this.totalSliceNum = tuple.f0;
+        this.inputSlices = tuple.f1;
         this.fetchListeners = new ArrayList<>();
     }
 
+    @Override
+    public int getTaskId() {
+        return this.taskId;
+    }
+
+    @Override
+    public RequestType getRequestType() {
+        return RequestType.INIT;
+    }
+
     public long getPipelineId() {
-        return pipelineId;
+        return this.pipelineId;
     }
 
     public String getPipelineName() {
-        return pipelineName;
-    }
-
-    public int getTaskId() {
-        return taskId;
-    }
-
-    public int getTaskIndex() {
-        return taskIndex;
-    }
-
-    public String getTaskName() {
-        return taskName;
+        return this.pipelineName;
     }
 
     public int getVertexId() {
-        return vertexId;
+        return this.vertexId;
     }
 
-    public Map<Integer, String> getInputStreamMap() {
-        return inputStreamMap;
+    public int getTaskIndex() {
+        return this.taskIndex;
     }
 
-    public ShuffleDescriptor getDescriptor() {
-        return descriptor;
+    public int getTaskParallelism() {
+        return this.taskParallelism;
+    }
+
+    public String getTaskName() {
+        return this.taskName;
+    }
+
+    public Map<Integer, ShardInputDesc> getInputShards() {
+        return this.inputShards;
+    }
+
+    public Map<Integer, BatchPhase> getShufflePhases() {
+        return this.shufflePhases;
+    }
+
+    public int getSliceNum() {
+        return this.totalSliceNum;
+    }
+
+    public Map<Integer, List<PipelineSliceMeta>> getInputSlices() {
+        return this.inputSlices;
     }
 
     public List<IInputMessageBuffer<?>> getFetchListeners() {
-        return fetchListeners;
-    }
-
-    public Map<Integer, List<ISliceMeta>> getInputSlices() {
-        return inputSlices;
-    }
-
-    public int getTotalSliceNum() {
-        return totalSliceNum;
+        return this.fetchListeners;
     }
 
     public void addListener(IInputMessageBuffer<?> listener) {
-        fetchListeners.add(listener);
+        this.fetchListeners.add(listener);
     }
 
-    public InitFetchRequest setTaskId(int taskId) {
-        this.taskId = taskId;
-        return this;
-    }
+    private static Tuple<Integer, Map<Integer, List<PipelineSliceMeta>>> buildSlices(Map<Integer, ShardInputDesc> inputShards) {
+        int totalSliceNum = 0;
+        Map<Integer, List<PipelineSliceMeta>> inputSlices = new HashMap<>();
 
-    public InitFetchRequest setTaskIndex(int taskIndex) {
-        this.taskIndex = taskIndex;
-        return this;
-    }
-
-    public InitFetchRequest setTaskName(String taskName) {
-        this.taskName = taskName;
-        return this;
-    }
-
-    public InitFetchRequest setVertexId(int vertexId) {
-        this.vertexId = vertexId;
-        return this;
-    }
-
-    public InitFetchRequest setDescriptor(ShuffleDescriptor descriptor) {
-        this.descriptor = descriptor;
-        return this;
-    }
-
-    public InitFetchRequest setInputStreamMap(Map<Integer, String> inputStreamMap) {
-        this.inputStreamMap = inputStreamMap;
-        return this;
-    }
-
-    public void setInputShardMap(Map<Integer, List<Shard>> inputShardMap) {
-        if (inputShardMap != null) {
-            inputSlices = new HashMap<>();
-            for (Map.Entry<Integer, List<Shard>> entry : inputShardMap.entrySet()) {
-                List<ISliceMeta> slices = new ArrayList<>();
-                for (Shard shard : entry.getValue()) {
-                    for (ISliceMeta sliceMeta : shard.getSlices()) {
-                        if (sliceMeta instanceof LogicalPipelineSliceMeta) {
-                            // convert to physical shuffle slice meta
-                            LogicalPipelineSliceMeta logicalPipelineSliceMeta = (LogicalPipelineSliceMeta) sliceMeta;
-                            slices.add(logicalPipelineSliceMeta.toPhysicalPipelineSliceMeta());
-                        } else {
-                            slices.add(sliceMeta);
-                        }
+        for (Map.Entry<Integer, ShardInputDesc> entry : inputShards.entrySet()) {
+            Integer edgeId = entry.getKey();
+            ShardInputDesc inputDesc = entry.getValue();
+            List<Shard> shards = inputDesc.getInput();
+            List<PipelineSliceMeta> slices = new ArrayList<>();
+            for (Shard shard : shards) {
+                for (ISliceMeta slice : shard.getSlices()) {
+                    if (slice instanceof LogicalPipelineSliceMeta) {
+                        // Convert to physical shuffle slice meta.
+                        LogicalPipelineSliceMeta logicalPipelineSliceMeta = (LogicalPipelineSliceMeta) slice;
+                        slices.add(toPhysicalSliceMeta(logicalPipelineSliceMeta));
+                    } else {
+                        slices.add((PipelineSliceMeta) slice);
                     }
                 }
-                inputSlices.put(entry.getKey(), slices);
-                totalSliceNum += slices.size();
             }
-        }
-    }
-
-    public Map<Integer, IEncoder<?>> getEncoders() {
-        return this.encoders;
-    }
-
-    public InitFetchRequest setEncoders(Map<Integer, IEncoder<?>> encoders) {
-        this.encoders = encoders;
-        return this;
-    }
-
-    public static class InitRequestBuilder {
-
-        private long pipelineId;
-        private String pipelineName;
-
-        public InitRequestBuilder(long pipelineId, String pipelineName) {
-            this.pipelineId = pipelineId;
-            this.pipelineName = pipelineName;
+            inputSlices.put(edgeId, slices);
+            totalSliceNum += inputDesc.getSliceNum();
         }
 
-        public InitFetchRequest setInputShardMap(Map<Integer, List<Shard>> inputShardMap) {
-            InitFetchRequest request = new InitFetchRequest(pipelineId, pipelineName);
-            request.setInputShardMap(inputShardMap);
-            return request;
-        }
+        return Tuple.of(totalSliceNum, inputSlices);
     }
+
+    private static PipelineSliceMeta toPhysicalSliceMeta(LogicalPipelineSliceMeta sliceMeta) {
+        String containerId = sliceMeta.getContainerId();
+        SliceId sliceId = sliceMeta.getSliceId();
+        long windowId = sliceMeta.getWindowId();
+        ResourceData resourceData = HAServiceFactory.getService().resolveResource(containerId);
+        return new PipelineSliceMeta(sliceId, windowId,
+            new ShuffleAddress(resourceData.getHost(), resourceData.getShufflePort()));
+    }
+
 }

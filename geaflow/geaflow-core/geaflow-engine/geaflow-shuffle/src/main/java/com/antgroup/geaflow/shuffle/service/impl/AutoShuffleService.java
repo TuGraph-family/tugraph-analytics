@@ -20,6 +20,7 @@ import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.api.writer.PipelineWriter;
 import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.message.PipelineInfo;
+import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import com.antgroup.geaflow.shuffle.service.IShuffleService;
 import org.slf4j.Logger;
@@ -38,12 +39,12 @@ public class AutoShuffleService implements IShuffleService {
 
     @Override
     public IShuffleReader getReader() {
-        return new PipelineReader(connectionManager);
+        return new PipelineReader(this.connectionManager);
     }
 
     @Override
-    public IShuffleWriter getWriter() {
-        return new PipelineWriter(connectionManager);
+    public IShuffleWriter<?, Shard> getWriter() {
+        return new PipelineWriter<>(this.connectionManager);
     }
 
     @Override

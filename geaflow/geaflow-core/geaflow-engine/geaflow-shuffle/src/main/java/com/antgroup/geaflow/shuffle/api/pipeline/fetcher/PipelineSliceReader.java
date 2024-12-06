@@ -112,7 +112,7 @@ public class PipelineSliceReader {
     }
 
     public boolean isDisposable() {
-        return disposable;
+        return this.disposable;
     }
 
 }

@@ -30,6 +30,10 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-shuffle</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

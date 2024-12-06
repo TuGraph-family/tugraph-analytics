@@ -48,7 +48,7 @@ public class UpdateEmitterRequest extends AbstractEmitterRequest {
 
     @Override
     public RequestType getRequestType() {
-        return RequestType.UPDATE;
+        return RequestType.POP;
     }
 
 }

@@ -26,7 +26,7 @@ import com.antgroup.geaflow.dsl.runtime.engine.GQLPipeLine.GQLPipelineHook;
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.file.FileConfigKeys;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -119,7 +119,7 @@ public class BaseQueryTest implements Serializable {
         } finally {
             environment.shutdown();
             ClusterMetaStore.close();
-            AbstractScheduledWorkerManager.closeInstance();
+            ScheduledWorkerManagerFactory.clear();
         }
         return this;
     }

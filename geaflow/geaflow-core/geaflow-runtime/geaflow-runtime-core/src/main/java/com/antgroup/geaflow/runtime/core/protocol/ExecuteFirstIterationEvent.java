@@ -15,29 +15,14 @@
 package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
-import com.antgroup.geaflow.cluster.task.ITaskContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Send from scheduler to cycle head task to launch the first iteration of the cycle.
  */
 public class ExecuteFirstIterationEvent extends AbstractExecutableCommand {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExecuteFirstIterationEvent.class);
-
     public ExecuteFirstIterationEvent(long schedulerId, int workerId, int cycleId, long windowId) {
         super(schedulerId, workerId, cycleId, windowId);
-    }
-
-    @Override
-    public void execute(ITaskContext taskContext) {
-        super.execute(taskContext);
-    }
-
-    @Override
-    public int getWorkerId() {
-        return workerId;
     }
 
     @Override

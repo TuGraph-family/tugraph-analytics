@@ -20,6 +20,8 @@ import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExecutionNodeCycle extends AbstractExecutionCycle {
 
@@ -33,7 +35,9 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
     private List<ExecutionTask> tasks;
     private List<ExecutionTask> cycleHeads;
     private List<ExecutionTask> cycleTails;
+    private Set<Integer> cycleHeadTaskIds;
     private Map<Integer, List<ExecutionTask>> vertexIdToTasks;
+    private boolean iterative;
     private boolean isPipelineDataLoop;
     private boolean isCollectResult;
     private transient boolean workerAssigned;
@@ -51,6 +55,7 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
             } else {
                 this.type = ExecutionCycleType.ITERATION;
             }
+            this.iterative = true;
         } else {
             this.type = ExecutionCycleType.PIPELINE;
         }
@@ -90,6 +95,7 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
 
     public void setCycleHeads(List<ExecutionTask> cycleHeads) {
         this.cycleHeads = cycleHeads;
+        this.cycleHeadTaskIds = cycleHeads.stream().map(ExecutionTask::getTaskId).collect(Collectors.toSet());
     }
 
     public List<ExecutionTask> getCycleTails() {
@@ -128,6 +134,10 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
         return highAvailableLevel;
     }
 
+    public boolean isIterative() {
+        return this.iterative;
+    }
+
     public boolean isPipelineDataLoop() {
         return isPipelineDataLoop;
     }
@@ -146,6 +156,10 @@ public class ExecutionNodeCycle extends AbstractExecutionCycle {
 
     public void setWorkerAssigned(boolean workerAssigned) {
         this.workerAssigned = workerAssigned;
+    }
+
+    public boolean isHeadTask(int taskId) {
+        return this.cycleHeadTaskIds.contains(taskId);
     }
 
 }

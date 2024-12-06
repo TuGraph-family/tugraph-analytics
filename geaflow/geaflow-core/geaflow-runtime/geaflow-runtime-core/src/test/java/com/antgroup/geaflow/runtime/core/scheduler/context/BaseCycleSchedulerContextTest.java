@@ -21,7 +21,7 @@ import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.file.FileConfigKeys;
-import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.IScheduledWorkerManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
@@ -69,19 +69,19 @@ public class BaseCycleSchedulerContextTest {
     }
 
     protected static class MockScheduledWorkerManager
-        implements IScheduledWorkerManager<IExecutionCycle, ExecutionNodeCycle> {
+        implements IScheduledWorkerManager<ExecutionGraphCycle> {
 
         @Override
-        public void init(IExecutionCycle graph) {
+        public void init(ExecutionGraphCycle graph) {
         }
 
         @Override
-        public List<WorkerInfo> assign(ExecutionNodeCycle vertex) {
+        public List<WorkerInfo> assign(ExecutionGraphCycle vertex) {
             return null;
         }
 
         @Override
-        public void release(ExecutionNodeCycle vertex) {
+        public void release(ExecutionGraphCycle vertex) {
         }
 
         @Override

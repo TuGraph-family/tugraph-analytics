@@ -19,7 +19,6 @@ import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeFetcherBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineShard;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipelineSlice;
 import com.antgroup.geaflow.shuffle.api.pipeline.channel.AbstractInputChannel;
 import com.antgroup.geaflow.shuffle.api.pipeline.channel.LocalInputChannel;
@@ -31,6 +30,7 @@ import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import com.antgroup.geaflow.shuffle.network.netty.ConnectionManager;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,8 +53,8 @@ public class OneShardFetcherTest {
         Configuration configuration = new Configuration();
         configuration.put(ExecutionConfigKeys.JOB_APP_NAME, "default");
         configuration.put(ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB, String.valueOf(1024));
-        ShuffleConfig config = ShuffleConfig.getInstance(configuration);
-        connectionManager = new ConnectionManager(config);
+        ShuffleManager.init(configuration);
+        connectionManager = new ConnectionManager(ShuffleConfig.getInstance());
     }
 
     @AfterTest
@@ -118,9 +118,8 @@ public class OneShardFetcherTest {
         slice.add(pipeBuffer4);
         Assert.assertEquals(slice.getNumberOfBuffers(), 4);
 
-        PipelineShard pipeShard = new PipelineShard(new PipelineSlice[]{slice});
         ShuffleDataManager shuffleDataManager = ShuffleDataManager.getInstance();
-        shuffleDataManager.register(sliceId.getWriterId(), pipeShard);
+        shuffleDataManager.register(sliceId, slice);
 
         List<Long> batchList = Arrays.asList(1L, 2L);
         List<String> result = new ArrayList<>();

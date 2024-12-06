@@ -45,11 +45,11 @@ public class ExecutionResult<R, E> implements IExecutionResult<R, E> {
         return isSuccess;
     }
 
-    public static <R> ExecutionResult buildSuccessResult(R result) {
-        return new ExecutionResult<R, Void>(result, null, true);
+    public static <R, E> ExecutionResult<R, E> buildSuccessResult(R result) {
+        return new ExecutionResult<>(result, null, true);
     }
 
-    public static <E> ExecutionResult buildFailedResult(E error) {
-        return new ExecutionResult<Void, E>(null, error, false);
+    public static <R, E> ExecutionResult<R, E> buildFailedResult(E error) {
+        return new ExecutionResult<>(null, error, false);
     }
 }

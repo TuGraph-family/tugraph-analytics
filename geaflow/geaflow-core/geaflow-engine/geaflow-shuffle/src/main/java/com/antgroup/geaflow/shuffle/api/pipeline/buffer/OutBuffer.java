@@ -38,7 +38,7 @@ public interface OutBuffer {
     /**
      * Get the buffer size of this buffer.
      *
-     * @return buffer size.
+     * @return buffer size in bytes.
      */
     int getBufferSize();
 
@@ -78,6 +78,11 @@ public interface OutBuffer {
 
     interface BufferBuilder {
 
+        /**
+         * Get the OutputStream.
+         *
+         * @return output stream
+         */
         OutputStream getOutputStream();
 
         /**
@@ -90,9 +95,21 @@ public interface OutBuffer {
         /**
          * Get the buffer size.
          *
-         * @return buffer size.
+         * @return buffer size
          */
         int getBufferSize();
+
+        /**
+         * Get record count in the buffer.
+         *
+         * @return record count
+         */
+        long getRecordCount();
+
+        /**
+         * Increase the record count.
+         */
+        void increaseRecordCount();
 
         /**
          * Set memory track.
