@@ -18,15 +18,15 @@ import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.collector.AbstractCollector;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.collector.IResultCollector;
-import com.antgroup.geaflow.io.CollectType;
-import com.antgroup.geaflow.io.ResponseOutputDesc;
+import com.antgroup.geaflow.shuffle.ResponseOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CollectResponseCollector<T> extends AbstractCollector
     implements IResultCollector<ResponseResult>, ICollector<T> {
     private int edgeId;
-    private CollectType collectorType;
+    private OutputType collectorType;
     private String edgeName;
     private final List<T> buffer;
     private final List<T> result;
@@ -59,7 +59,7 @@ public class CollectResponseCollector<T> extends AbstractCollector
     }
 
     @Override
-    public CollectType getType() {
+    public OutputType getType() {
         return collectorType;
     }
 

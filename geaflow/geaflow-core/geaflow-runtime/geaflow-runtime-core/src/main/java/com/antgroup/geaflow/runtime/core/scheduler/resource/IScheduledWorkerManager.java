@@ -18,7 +18,7 @@ import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import java.util.List;
 
-public interface IScheduledWorkerManager<G, V> {
+public interface IScheduledWorkerManager<G> {
 
     /**
      * Init the worker manager by input graph.
@@ -27,15 +27,15 @@ public interface IScheduledWorkerManager<G, V> {
     void init(G graph);
 
     /**
-     * Assign workers for execution task of input vertex.
+     * Assign workers for execution task of input graph.
      * @return Workers if assign worker succeed, otherwise empty.
      */
-    List<WorkerInfo> assign(V vertex);
+    List<WorkerInfo> assign(G graph);
 
     /**
-     * Release all worker resource for the input vertex.
+     * Release all worker resource for the input graph.
      */
-    void release(V vertex);
+    void release(G graph);
 
     /**
      * Clean worker runtime context for used workers by specified clean function.

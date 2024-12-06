@@ -21,7 +21,7 @@ public class BaseSliceMeta implements ISliceMeta {
     protected long recordNum;
     protected long encodedSize;
     protected int edgeId;
-    protected long batchId;
+    protected long windowId;
 
     public BaseSliceMeta() {
     }
@@ -71,12 +71,12 @@ public class BaseSliceMeta implements ISliceMeta {
         this.edgeId = edgeId;
     }
 
-    public long getBatchId() {
-        return batchId;
+    public long getWindowId() {
+        return windowId;
     }
 
-    public void setBatchId(long batchId) {
-        this.batchId = batchId;
+    public void setWindowId(long windowId) {
+        this.windowId = windowId;
     }
 
 }

@@ -24,22 +24,18 @@ public class PipelineSliceMeta extends BaseSliceMeta {
     public PipelineSliceMeta(int sourceIndex, int targetIndex, long pipelineId, int edgeId,
                              ShuffleAddress address) {
         super(sourceIndex, targetIndex);
-        this.batchId = -1;
+        this.windowId = -1;
         this.sliceId = new SliceId(pipelineId, edgeId, sourceIndex, targetIndex);
         this.shuffleAddress = address;
         setEdgeId(edgeId);
     }
 
-    public PipelineSliceMeta(SliceId sliceId, long batchId, ShuffleAddress address) {
+    public PipelineSliceMeta(SliceId sliceId, long windowId, ShuffleAddress address) {
         super(sliceId.getShardIndex(), sliceId.getSliceIndex());
-        this.batchId = batchId;
+        this.windowId = windowId;
         this.sliceId = sliceId;
         this.shuffleAddress = address;
         setEdgeId(sliceId.getEdgeId());
-    }
-
-    public long getBatchId() {
-        return batchId;
     }
 
     public SliceId getSliceId() {

@@ -33,7 +33,6 @@ import com.antgroup.geaflow.pipeline.Pipeline;
 import com.antgroup.geaflow.pipeline.callback.TaskCallBack;
 import com.antgroup.geaflow.pipeline.service.PipelineService;
 import com.antgroup.geaflow.pipeline.task.PipelineTask;
-import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.baidu.brpc.server.RpcServerOptions;
 import java.util.HashMap;
 import java.util.List;
@@ -75,11 +74,10 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
         this.eventDispatcher = new DriverEventDispatcher();
         this.executorService = Executors.newFixedThreadPool(
             1,
-            ThreadUtil.namedThreadFactory(true, DRIVER_EXECUTOR, new ComponentUncaughtExceptionHandler()));
+            ThreadUtil.namedThreadFactory(true, DRIVER_EXECUTOR, ComponentUncaughtExceptionHandler.INSTANCE));
         this.pipelineExecutorMap = new HashMap<>();
 
         ExecutionIdGenerator.init(id);
-        ShuffleManager.getInstance().initShuffleMaster();
         if (driverContext.getPipeline() != null) {
             LOGGER.info("driver {} execute pipeline from recovered context", name);
             executorService.execute(() -> executePipelineInternal(driverContext.getPipeline()));

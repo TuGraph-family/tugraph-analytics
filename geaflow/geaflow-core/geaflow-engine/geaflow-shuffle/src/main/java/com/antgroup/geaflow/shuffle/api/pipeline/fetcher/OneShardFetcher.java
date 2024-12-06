@@ -84,9 +84,14 @@ public class OneShardFetcher implements ShardFetcher {
     protected final IConnectionManager connectionManager;
     protected final String inputStream;
 
-    public OneShardFetcher(int stageId, String taskName, int fetcherIndex, int connectionId,
-                           String inputStream, List<? extends ISliceMeta> inputSlices,
-                           long startBatchId, IConnectionManager connectionManager) {
+    public OneShardFetcher(int stageId,
+                           String taskName,
+                           int fetcherIndex,
+                           int connectionId,
+                           String inputStream,
+                           List<? extends ISliceMeta> inputSlices,
+                           long startBatchId,
+                           IConnectionManager connectionManager) {
 
         this.stageId = stageId;
         this.inputStream = inputStream;
@@ -106,17 +111,12 @@ public class OneShardFetcher implements ShardFetcher {
         buildInputChannels(connectionId, inputSlices, initialBackoff, maxBackoff, startBatchId);
     }
 
-    public OneShardFetcher(int stageId, String taskName, int fetcherIndex, String inputStream,
-                           List<? extends ISliceMeta> inputSlices, long startBatchId,
-                           IConnectionManager connectionManager) {
-
-        this(stageId, taskName, fetcherIndex, DEFAULT_CONNECTION_ID, inputStream,
-            inputSlices, startBatchId, connectionManager);
-    }
-
     @VisibleForTesting
-    public OneShardFetcher(int stageId, String taskName, int fetcherIndex,
-                           List<? extends ISliceMeta> inputSlices, long startBatchId,
+    public OneShardFetcher(int stageId,
+                           String taskName,
+                           int fetcherIndex,
+                           List<? extends ISliceMeta> inputSlices,
+                           long startBatchId,
                            IConnectionManager connectionManager) {
 
         this(stageId, taskName, fetcherIndex, DEFAULT_CONNECTION_ID, DEFAULT_STREAM_NAME,
@@ -210,7 +210,7 @@ public class OneShardFetcher implements ShardFetcher {
                     if (retriggerLocalRequestTimer == null) {
                         retriggerLocalRequestTimer = new Timer(true);
                     }
-                    ich.retriggerSliceRequest(retriggerLocalRequestTimer);
+                    ich.reTriggerSliceRequest(retriggerLocalRequestTimer);
                 }
             }
         }
@@ -397,26 +397,6 @@ public class OneShardFetcher implements ShardFetcher {
 
     public int getStageId() {
         return stageId;
-    }
-
-    public int getNumberOfQueuedBuffers() {
-        // Re-try 3 times, if fails, return 0 for "unknown".
-        for (int retry = 0; retry < 3; retry++) {
-            try {
-                int totalBuffers = 0;
-
-                for (AbstractInputChannel channel : inputChannels.values()) {
-                    if (channel instanceof RemoteInputChannel) {
-                        totalBuffers += ((RemoteInputChannel) channel).getNumberOfQueuedBuffers();
-                    }
-                }
-                return totalBuffers;
-            } catch (Exception ignored) {
-                // Ignore.
-            }
-        }
-
-        return 0;
     }
 
     @Override

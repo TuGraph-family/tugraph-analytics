@@ -14,17 +14,17 @@
 
 package com.antgroup.geaflow.cluster.response;
 
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.io.Serializable;
 import java.util.List;
 
 public class ResponseResult implements IResult<Object>, Serializable {
 
     private int collectId;
-    private CollectType outputType;
+    private OutputType outputType;
     private List<Object> responses;
 
-    public ResponseResult(int collectId, CollectType outputType, List<Object> responses) {
+    public ResponseResult(int collectId, OutputType outputType, List<Object> responses) {
         this.collectId = collectId;
         this.outputType = outputType;
         this.responses = responses;
@@ -41,8 +41,9 @@ public class ResponseResult implements IResult<Object>, Serializable {
     }
 
     @Override
-    public CollectType getType() {
+    public OutputType getType() {
         return outputType;
     }
+
 }
 

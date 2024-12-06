@@ -42,17 +42,8 @@ public class CleanEnvEvent extends AbstractCleanCommand {
     }
 
     @Override
-    public int getWorkerId() {
-        return workerId;
-    }
-
-    @Override
     public EventType getEventType() {
         return EventType.CLEAN_ENV;
-    }
-
-    public int getCycleId() {
-        return cycleId;
     }
 
     public void setIterationId(int iterationId) {

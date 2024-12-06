@@ -18,12 +18,8 @@ import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
 
 public abstract class AbstractBuffer implements OutBuffer {
 
+    private final boolean memoryTrack;
     protected int refCount;
-    protected boolean memoryTrack;
-
-    public AbstractBuffer() {
-        this.memoryTrack = false;
-    }
 
     public AbstractBuffer(boolean memoryTrack) {
         this.memoryTrack = memoryTrack;
@@ -36,34 +32,50 @@ public abstract class AbstractBuffer implements OutBuffer {
 
     @Override
     public boolean isDisposable() {
-        return refCount <= 0;
+        return this.refCount <= 0;
     }
 
     @Override
     public boolean isMemoryTracking() {
-        return memoryTrack;
+        return this.memoryTrack;
     }
 
     protected void requireMemory(long dataSize) {
-        if (memoryTrack) {
+        if (this.memoryTrack) {
             ShuffleMemoryTracker.getInstance().requireMemory(dataSize);
         }
     }
 
     protected void releaseMemory(long dataSize) {
-        if (memoryTrack) {
+        if (this.memoryTrack) {
             ShuffleMemoryTracker.getInstance().releaseMemory(dataSize);
         }
     }
 
     protected abstract static class AbstractBufferBuilder implements BufferBuilder {
 
-        protected int batchCount;
+        private long recordCount;
         protected boolean memoryTrack;
 
+        @Override
+        public long getRecordCount() {
+            return this.recordCount;
+        }
+
+        @Override
+        public void increaseRecordCount() {
+            this.recordCount++;
+        }
+
+        protected void resetRecordCount() {
+            this.recordCount = 0;
+        }
+
+        @Override
         public void enableMemoryTrack() {
             this.memoryTrack = true;
         }
+
     }
 
 }

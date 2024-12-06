@@ -33,7 +33,7 @@ public class EmitterRunner extends AbstractTaskRunner<IEmitterRequest> {
             case INIT:
                 this.outputEmitter.init((InitEmitterRequest) request);
                 break;
-            case UPDATE:
+            case POP:
                 this.outputEmitter.update((UpdateEmitterRequest) request);
                 break;
             case CLOSE:

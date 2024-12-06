@@ -27,7 +27,6 @@ import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.context.AbstractPipelineContext;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
@@ -50,6 +49,7 @@ import com.antgroup.geaflow.plan.optimizer.PipelineGraphOptimizer;
 import com.antgroup.geaflow.plan.optimizer.UnionOptimizer;
 import com.antgroup.geaflow.plan.util.DAGValidator;
 import com.antgroup.geaflow.plan.visualization.PlanGraphVisualization;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -435,7 +435,7 @@ public class PipelinePlanBuilder implements Serializable {
 
     private PipelineEdge buildIterationEdge(int vid, IEncoder<?> encoder) {
         PipelineEdge iterationEdge = new PipelineEdge(this.edgeIdGenerator++, vid, vid,
-            new KeyPartitioner<>(vid), encoder, CollectType.LOOP);
+            new KeyPartitioner<>(vid), encoder, OutputType.LOOP);
         iterationEdge.setEdgeName(GraphRecordNames.Message.name());
         return iterationEdge;
     }
@@ -449,13 +449,13 @@ public class PipelinePlanBuilder implements Serializable {
 
             PipelineEdge inputEdge = new PipelineEdge(this.edgeIdGenerator++,
                 iterationVertex.getVertexId(), ITERATION_AGG_VERTEX_ID,
-                new KeyPartitioner<>(iterationVertex.getVertexId()), null, CollectType.RESPONSE);
+                new KeyPartitioner<>(iterationVertex.getVertexId()), null, OutputType.RESPONSE);
             inputEdge.setEdgeName(GraphRecordNames.Aggregate.name());
             this.pipelineGraph.addEdge(inputEdge);
 
             PipelineEdge outputEdge = new PipelineEdge(this.edgeIdGenerator++,
                 ITERATION_AGG_VERTEX_ID, iterationVertex.getVertexId(),
-                new KeyPartitioner<>(ITERATION_AGG_VERTEX_ID), null, CollectType.RESPONSE);
+                new KeyPartitioner<>(ITERATION_AGG_VERTEX_ID), null, OutputType.RESPONSE);
             outputEdge.setEdgeName(GraphRecordNames.Aggregate.name());
             this.pipelineGraph.addEdge(outputEdge);
         }

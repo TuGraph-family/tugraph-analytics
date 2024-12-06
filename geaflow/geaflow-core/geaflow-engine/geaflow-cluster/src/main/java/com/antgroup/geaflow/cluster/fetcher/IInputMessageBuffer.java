@@ -16,12 +16,13 @@ package com.antgroup.geaflow.cluster.fetcher;
 
 import com.antgroup.geaflow.cluster.protocol.InputMessage;
 import com.antgroup.geaflow.io.IMessageBuffer;
+import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 
 public interface IInputMessageBuffer<T> extends IMessageBuffer<InputMessage<T>> {
 
     void onMessage(PipelineMessage<T> message);
 
-    void onBarrier(long windowId, long windowCount);
+    void onBarrier(PipelineBarrier barrier);
 
 }

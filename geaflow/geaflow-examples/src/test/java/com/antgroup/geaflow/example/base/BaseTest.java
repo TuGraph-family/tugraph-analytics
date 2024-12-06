@@ -19,7 +19,7 @@ import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.util.ExampleSinkFunctionFactory.SinkType;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class BaseTest {
             environment.shutdown();
         }
         ClusterMetaStore.close();
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     public Map<String, String> getConfig() {

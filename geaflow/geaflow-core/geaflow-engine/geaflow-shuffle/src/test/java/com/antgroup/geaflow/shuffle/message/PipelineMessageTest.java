@@ -22,7 +22,7 @@ public class PipelineMessageTest {
 
     @Test
     public void test() {
-        PipelineMessage message = new PipelineMessage(3, "stream", null);
+        PipelineMessage message = new PipelineMessage(1, 3, "stream", null);
         byte[] bytes = SerializerFactory.getKryoSerializer().serialize(message);
         PipelineMessage result = (PipelineMessage) SerializerFactory.getKryoSerializer().deserialize(bytes);
         Assert.assertEquals(3, result.getWindowId(), "windowId should be ignored");

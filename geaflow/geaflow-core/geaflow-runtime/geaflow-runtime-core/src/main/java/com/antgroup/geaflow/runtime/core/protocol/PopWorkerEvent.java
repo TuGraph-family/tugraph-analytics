@@ -19,6 +19,7 @@ import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.cluster.worker.IAffinityWorker;
 import com.antgroup.geaflow.runtime.core.worker.context.AbstractWorkerContext;
 import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +32,15 @@ public class PopWorkerEvent extends AbstractInitCommand {
 
     private final int taskId;
 
-    public PopWorkerEvent(long schedulerId, int workerId, int cycleId, long windowId,
-                          long pipelineId, String pipelineName, int taskId) {
-        super(schedulerId, workerId, cycleId, windowId, pipelineId, pipelineName);
+    public PopWorkerEvent(long schedulerId,
+                          int workerId,
+                          int cycleId,
+                          long windowId,
+                          long pipelineId,
+                          String pipelineName,
+                          IoDescriptor ioDescriptor,
+                          int taskId) {
+        super(schedulerId, workerId, cycleId, windowId, pipelineId, pipelineName, ioDescriptor);
         this.taskId = taskId;
     }
 
@@ -52,12 +59,7 @@ public class PopWorkerEvent extends AbstractInitCommand {
         context = worker.getWorkerContext();
 
         this.initFetcher();
-        this.updateEmitter();
-    }
-
-    @Override
-    public int getWorkerId() {
-        return workerId;
+        this.popEmitter();
     }
 
     @Override

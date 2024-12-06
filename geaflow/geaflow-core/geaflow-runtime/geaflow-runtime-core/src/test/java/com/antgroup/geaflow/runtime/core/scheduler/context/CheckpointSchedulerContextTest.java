@@ -33,7 +33,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         cycle.setName(testName);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
 
-        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
+        CheckpointSchedulerContext<ExecutionNodeCycle, ?, ?> context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
 
         Assert.assertEquals(1, context.getCurrentIterationId());
         Assert.assertEquals(finishIterationId, context.getFinishIterationId());
@@ -47,13 +47,13 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         ExecutionNodeCycle cycle = buildMockCycle(false);
         cycle.setName(testName);
         cycle.getVertexGroup().getCycleGroupMeta().setIterationCount(finishIterationId);
-        CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
+        CheckpointSchedulerContext<ExecutionNodeCycle, ?, ?> context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(cycle, null);
 
         ClusterMetaStore.close();
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test1");
         ClusterMetaStore.init(0, "driver-0", configuration);
 
-        CheckpointSchedulerContext loaded =
+        CheckpointSchedulerContext<ExecutionNodeCycle, ?, ?> loaded =
             (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), () -> context);
         Assert.assertEquals(1, loaded.getCurrentIterationId());
 
@@ -66,7 +66,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         configuration.put(ExecutionConfigKeys.CLUSTER_ID, "test2");
         ClusterMetaStore.init(0, "driver-0", configuration);
 
-        CheckpointSchedulerContext loaded2 =
+        CheckpointSchedulerContext<ExecutionNodeCycle, ?, ?> loaded2 =
             (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), () ->
             CycleSchedulerContextFactory.create(cycle, null));
         Assert.assertEquals(checkpointId + 1, loaded2.getCurrentIterationId());
@@ -88,7 +88,7 @@ public class CheckpointSchedulerContextTest extends BaseCycleSchedulerContextTes
         ClusterMetaStore.close();
         ClusterMetaStore.init(0, "driver-0", configuration);
 
-        CheckpointSchedulerContext loaded =
+        CheckpointSchedulerContext<ExecutionNodeCycle, ?, ?> loaded =
             (CheckpointSchedulerContext) CheckpointSchedulerContext.build(context.getCycle().getPipelineTaskId(), () -> context);
 
         Assert.assertEquals(checkpointId + 1, loaded.getCurrentIterationId());

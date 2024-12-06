@@ -18,7 +18,6 @@ import com.antgroup.geaflow.cluster.response.IResult;
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
-import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +26,7 @@ import java.util.Map;
 
 public class DataExchanger {
 
-    private static ThreadLocal<Map<Integer, Map<Integer, List<Shard>>>> taskInputEdgeShards = ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<Map<Integer, Map<Integer, List<Shard>>>> taskInputEdgeShards = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Build task input for execution vertex.
@@ -64,29 +63,6 @@ public class DataExchanger {
         }
         taskInputEdgeShards.get().put(inputEdge.getEdgeId(), result);
         return result;
-    }
-
-    private static boolean needRepartition(ExecutionVertex vertex,
-                                           ExecutionVertexGroup group) {
-
-        List<Integer> parentIds = vertex.getParentVertexIds();
-        if (parentIds != null && !parentIds.isEmpty()) {
-            if (parentIds.size() > 1) {
-                return true;
-            }
-
-            Integer parentId = parentIds.get(0);
-            ExecutionVertex parentVertex = group.getVertexMap().get(parentId);
-            if (parentVertex.isRepartition()) {
-                return true;
-            }
-
-            // TODO Only parent vertex partition number greater than current vertex parallelism.
-            if (parentVertex.getNumPartitions() != vertex.getParallelism()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static void clear() {

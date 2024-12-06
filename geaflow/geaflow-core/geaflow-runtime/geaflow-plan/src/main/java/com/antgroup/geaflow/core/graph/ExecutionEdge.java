@@ -15,8 +15,8 @@
 package com.antgroup.geaflow.core.graph;
 
 import com.antgroup.geaflow.common.encoder.IEncoder;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.partitioner.IPartitioner;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.io.Serializable;
 
 public class ExecutionEdge implements Serializable {
@@ -27,7 +27,7 @@ public class ExecutionEdge implements Serializable {
     private int srcId;
     private int targetId;
     private IEncoder<?> encoder;
-    private CollectType type;
+    private OutputType type;
 
     public ExecutionEdge(IPartitioner partitioner,
                          int edgeId,
@@ -35,7 +35,7 @@ public class ExecutionEdge implements Serializable {
                          int srcId,
                          int targetId,
                          IEncoder<?> encoder) {
-        this(partitioner, edgeId, edgeName, srcId, targetId, CollectType.FORWARD, encoder);
+        this(partitioner, edgeId, edgeName, srcId, targetId, OutputType.FORWARD, encoder);
     }
 
     public ExecutionEdge(IPartitioner partitioner,
@@ -43,7 +43,7 @@ public class ExecutionEdge implements Serializable {
                          String edgeName,
                          int srcId,
                          int targetId,
-                         CollectType type,
+                         OutputType type,
                          IEncoder<?> encoder) {
         this.partitioner = partitioner;
         this.edgeId = edgeId;
@@ -102,11 +102,11 @@ public class ExecutionEdge implements Serializable {
         this.encoder = encoder;
     }
 
-    public CollectType getType() {
+    public OutputType getType() {
         return type;
     }
 
-    public void setType(CollectType type) {
+    public void setType(OutputType type) {
         this.type = type;
     }
 

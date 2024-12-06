@@ -29,7 +29,6 @@ import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroupEdge;
 import com.antgroup.geaflow.core.graph.IteratorExecutionVertex;
 import com.antgroup.geaflow.core.graph.plan.visualization.ExecutionGraphVisualization;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
@@ -46,6 +45,7 @@ import com.antgroup.geaflow.processor.builder.IProcessorBuilder;
 import com.antgroup.geaflow.processor.builder.ProcessorBuilder;
 import com.antgroup.geaflow.processor.impl.AbstractProcessor;
 import com.antgroup.geaflow.processor.impl.window.TwoInputProcessor;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.antgroup.geaflow.utils.math.MathUtil;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
@@ -725,9 +725,9 @@ public class ExecutionGraphBuilder implements Serializable {
     }
 
     private ExecutionEdge buildEdge(PipelineEdge pipelineEdge) {
-        CollectType dataTransferType = pipelineEdge.getType();
+        OutputType dataTransferType = pipelineEdge.getType();
         if (dataTransferType == null) {
-            dataTransferType = CollectType.FORWARD;
+            dataTransferType = OutputType.FORWARD;
         }
         return new ExecutionEdge(
             pipelineEdge.getPartition(),

@@ -14,22 +14,20 @@
 
 package com.antgroup.geaflow.shuffle;
 
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.desc.IInputDesc;
+import java.io.Serializable;
+import java.util.Map;
 
-public interface IOutputDesc {
+public class InputDescriptor implements Serializable {
 
-    /**
-     * Return output edge id.
-     */
-    int getEdgeId();
+    private final Map<Integer, IInputDesc<?>> inputDescMap;
 
-    /**
-     * Return output edge name.
-     */
-    String getEdgeName();
+    public InputDescriptor(Map<Integer, IInputDesc<?>> inputDescMap) {
+        this.inputDescMap = inputDescMap;
+    }
 
-    /**
-     * Return the type of data transfer on the edge.
-     */
-    CollectType getType();
+    public Map<Integer, IInputDesc<?>> getInputDescMap() {
+        return inputDescMap;
+    }
+
 }

@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.cluster.collector;
 
+import com.antgroup.geaflow.cluster.exception.ComponentUncaughtExceptionHandler;
 import com.antgroup.geaflow.cluster.protocol.OutputMessage;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
@@ -23,14 +24,14 @@ import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import com.antgroup.geaflow.common.task.TaskArgs;
 import com.antgroup.geaflow.common.thread.Executors;
 import com.antgroup.geaflow.io.AbstractMessageBuffer;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.model.record.RecordArgs;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
-import com.antgroup.geaflow.shuffle.IOutputDesc;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.api.writer.IWriterContext;
 import com.antgroup.geaflow.shuffle.api.writer.WriterContext;
+import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public class PipelineOutputEmitter {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineOutputEmitter.class);
 
     private static final ExecutorService EMIT_EXECUTOR = Executors.getUnboundedExecutorService(
-        PipelineOutputEmitter.class.getSimpleName(), 60, TimeUnit.SECONDS, null, null);
+        PipelineOutputEmitter.class.getSimpleName(), 60, TimeUnit.SECONDS, null, ComponentUncaughtExceptionHandler.INSTANCE);
 
     private static final int DEFAULT_TIMEOUT_MS = 100;
 
@@ -88,7 +89,7 @@ public class PipelineOutputEmitter {
         AtomicBoolean[] flags = new AtomicBoolean[outputNum];
         for (int i = 0; i < outputNum; i++) {
             IOutputDesc outputDesc = outputDescList.get(i);
-            if (outputDesc.getType() == CollectType.RESPONSE) {
+            if (outputDesc.getType() == OutputType.RESPONSE) {
                 continue;
             }
             ForwardOutputDesc forwardOutputDesc = (ForwardOutputDesc) outputDesc;
@@ -101,15 +102,16 @@ public class PipelineOutputEmitter {
             IWriterContext writerContext = WriterContext.newBuilder()
                 .setPipelineId(request.getPipelineId())
                 .setPipelineName(request.getPipelineName())
+                .setConfig(initEmitterRequest.getConfiguration())
                 .setVertexId(forwardOutputDesc.getPartitioner().getOpId())
                 .setEdgeId(forwardOutputDesc.getEdgeId())
                 .setTaskId(taskArgs.getTaskId())
                 .setTaskIndex(taskArgs.getTaskIndex())
                 .setTaskName(taskArgs.getTaskName())
                 .setChannelNum(forwardOutputDesc.getTargetTaskIndices().size())
-                .setConfig(this.configuration)
-                .setShuffleDescriptor(forwardOutputDesc.getShuffleDescriptor())
-                .setEncoder(encoder);
+                .setEncoder(encoder)
+                .setDataExchangeMode(forwardOutputDesc.getDataExchangeMode())
+                .setRefCount(forwardOutputDesc.getRefCount());
             pipeRecordWriter.init(writerContext);
 
             AtomicBoolean flag = new AtomicBoolean(true);
@@ -194,6 +196,7 @@ public class PipelineOutputEmitter {
             } catch (Throwable t) {
                 this.pipe.error(t);
                 LOGGER.error("emitter task err in window id {} {}", this.windowId, this.emitterId, t);
+                throw new GeaflowRuntimeException(t);
             }
             LOGGER.info("emitter task finish window id {} {}", this.windowId, this.emitterId);
         }

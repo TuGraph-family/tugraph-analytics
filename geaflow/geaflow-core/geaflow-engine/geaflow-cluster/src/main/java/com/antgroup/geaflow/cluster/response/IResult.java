@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.cluster.response;
 
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.util.List;
 
 public interface IResult<R> {
@@ -32,6 +32,6 @@ public interface IResult<R> {
     /**
      * Returns the response type.
      */
-    CollectType getType();
+    OutputType getType();
 
 }

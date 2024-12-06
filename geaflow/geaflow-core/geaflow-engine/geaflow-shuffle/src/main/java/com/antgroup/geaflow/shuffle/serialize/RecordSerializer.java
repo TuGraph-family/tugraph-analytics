@@ -19,22 +19,24 @@ import com.antgroup.geaflow.common.serialize.impl.KryoSerializer;
 import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.esotericsoftware.kryo.io.Output;
 
-public class RecordSerializer<T> implements IRecordSerializer<T> {
+public class RecordSerializer<T> extends AbstractRecordSerializer<T> {
+
+    private static final int DEFAULT_BUFFER_SIZE = 4096;
 
     private final Output output;
     private final KryoSerializer kryoSerializer;
 
     public RecordSerializer() {
-        output = new Output(4096);
-        kryoSerializer = ((KryoSerializer) SerializerFactory.getKryoSerializer());
+        this.output = new Output(DEFAULT_BUFFER_SIZE);
+        this.kryoSerializer = ((KryoSerializer) SerializerFactory.getKryoSerializer());
     }
 
     @Override
-    public void serialize(T value, boolean isRetract, BufferBuilder outBuffer) {
+    public void doSerialize(T value, boolean isRetract, BufferBuilder outBuffer) {
         Output output = this.output;
         output.setOutputStream(outBuffer.getOutputStream());
         try {
-            kryoSerializer.getThreadKryo().writeClassAndObject(output, value);
+            this.kryoSerializer.getThreadKryo().writeClassAndObject(output, value);
             output.flush();
         } finally {
             output.clear();

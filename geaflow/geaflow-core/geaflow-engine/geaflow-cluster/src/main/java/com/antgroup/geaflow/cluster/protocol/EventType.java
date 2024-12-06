@@ -32,6 +32,11 @@ public enum EventType implements Serializable {
     INIT_ITERATION,
 
     /**
+     * A basic cycle execution command to prefetch data.
+     */
+    PREFETCH,
+
+    /**
      * A basic cycle execution command to load graph vertex and edge..
      */
     PRE_GRAPH_PROCESS,

@@ -26,17 +26,21 @@ import com.antgroup.geaflow.runtime.core.scheduler.statemachine.IStateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R, E> {
+public abstract class AbstractCycleScheduler<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>,
+    R, E> implements ICycleScheduler<C, PC, PCC, R, E> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCycleScheduler.class);
 
-    protected IExecutionCycle cycle;
-    protected ICycleSchedulerContext context;
+    protected C cycle;
+    protected ICycleSchedulerContext<C, PC, PCC> context;
     protected SchedulerEventDispatcher dispatcher;
     protected IStateMachine stateMachine;
 
     @Override
-    public void init(ICycleSchedulerContext context) {
+    public void init(ICycleSchedulerContext<C, PC, PCC> context) {
         this.cycle = context.getCycle();
         this.context = context;
     }
@@ -67,7 +71,7 @@ public abstract class AbstractCycleScheduler<R, E> implements ICycleScheduler<R,
             return ExecutionResult.buildSuccessResult(result);
         } catch (Throwable e) {
             LOGGER.error(String.format("%s occur exception", cycleLogTag), e);
-            return ExecutionResult.buildFailedResult(e);
+            return (ExecutionResult<R, E>) ExecutionResult.buildFailedResult(e);
         }
     }
 

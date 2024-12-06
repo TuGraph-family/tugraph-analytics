@@ -53,34 +53,29 @@ public class LocalInputChannel extends AbstractInputChannel implements PipelineS
     @Override
     public void requestSlice(long batchId) throws IOException {
         boolean retriggerRequest = false;
-        boolean notifyAvailable = false;
 
         // The lock is required to request only once in the presence of retriggered requests.
         synchronized (requestLock) {
             Preconditions.checkState(!isReleased, "LocalInputChannel has been released already");
-            if (sliceReader == null) {
-                LOGGER.info("Requesting Local slice {}", inputSliceId);
+            if (this.sliceReader == null) {
+                LOGGER.info("Requesting Local slice {}", this.inputSliceId);
                 try {
-                    sliceReader = ShuffleDataManager.getInstance().createSliceReader(inputSliceId
-                        , initialBatchId, this);
-                    notifyAvailable = true;
+                    this.sliceReader = ShuffleDataManager.getInstance()
+                        .createSliceReader(this.inputSliceId, this.initialBatchId, this);
                 } catch (SliceNotFoundException notFound) {
                     if (increaseBackoff()) {
                         retriggerRequest = true;
                     } else {
-                        LOGGER.warn("not found slice:{}", inputSliceId);
+                        LOGGER.warn("not found slice:{}", this.inputSliceId);
                         throw notFound;
                     }
                 }
             } else {
-                sliceReader.updateRequestedBatchId(batchId);
-                if (sliceReader.hasNext()) {
-                    notifyDataAvailable();
-                }
+                this.sliceReader.updateRequestedBatchId(batchId);
             }
         }
 
-        if (notifyAvailable) {
+        if (this.sliceReader != null && this.sliceReader.hasNext()) {
             notifyDataAvailable();
         }
         // Do this outside of the lock scope as this might lead to a
@@ -91,7 +86,7 @@ public class LocalInputChannel extends AbstractInputChannel implements PipelineS
         }
     }
 
-    public void retriggerSliceRequest(Timer timer) {
+    public void reTriggerSliceRequest(Timer timer) {
         synchronized (requestLock) {
             Preconditions.checkState(sliceReader == null, "already requested slice");
             timer.schedule(new TimerTask() {

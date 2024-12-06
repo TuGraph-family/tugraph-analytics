@@ -54,7 +54,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test1ShardWithSingleConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
 
@@ -67,7 +67,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test2ShardWithTwoSourceVCMapOneSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
 
@@ -84,7 +84,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test2ShardWithTwoSourceVCFourMapSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
 
@@ -103,7 +103,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test2ShardWithOneSourceVCMapFourSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
 
@@ -120,7 +120,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test1ShardWithOneSourceVCMapFourSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(1));
@@ -135,7 +135,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test2ShardWithTwoSourceVCOneMapTwoSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(2));
@@ -150,7 +150,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test2ShardWithOneSourceVCOneMapTwoSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(1));
@@ -165,7 +165,7 @@ public class IncGraphTraversalByStreamTest extends BaseTest {
     @Test
     public void test2ShardWithOneSourceVCMapSinkConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         IncrGraphTraversalByStream pipeline = new IncrGraphTraversalByStream();
         config.put(SOURCE_PARALLELISM.getKey(), String.valueOf(1));

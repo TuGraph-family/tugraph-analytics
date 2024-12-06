@@ -40,7 +40,7 @@ import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerCo
 import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
@@ -59,7 +59,6 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionGraphCycleSchedulerTest.class);
 
-    private static CheckpointSchedulerContext mockPersistContext;
     private Configuration configuration;
 
     @BeforeMethod
@@ -72,14 +71,13 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
         configuration = new Configuration(config);
         ExecutionIdGenerator.init(0);
         ShuffleManager.init(configuration);
-        ShuffleManager.getInstance().initShuffleMaster();
         StatsCollectorFactory.init(configuration);
     }
 
     @AfterMethod
     public void cleanUp() {
         ClusterMetaStore.close();
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     @Test
@@ -89,7 +87,6 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
         processor.register(scheduler);
 
         CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockGraphCycle(), null);
-        mockPersistContext = context;
         scheduler.init(context);
         scheduler.execute();
         scheduler.close();

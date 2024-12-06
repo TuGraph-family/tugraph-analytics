@@ -20,10 +20,10 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFL
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
 import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
 import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.io.IOException;
 import java.util.Optional;
 import org.mockito.Mockito;
@@ -38,14 +38,16 @@ public class SpillableShardBufferTest {
         Mockito.when(connectionManager.getShuffleAddress()).thenReturn(new ShuffleAddress(
             "localhost", 1));
 
-        SpillableShardBuffer shardBuffer = new SpillableShardBuffer(connectionManager);
-        WriterContext writerContext = new WriterContext(1, "name");
         Configuration config = new Configuration();
         config.put(SHUFFLE_SPILL_RECORDS, "50");
         config.put(CONTAINER_HEAP_SIZE_MB, "1");
+        ShuffleManager.init(config);
+
+        SpillableShardBuffer shardBuffer = new SpillableShardBuffer(connectionManager.getShuffleAddress());
+        WriterContext writerContext = new WriterContext(1, "name");
+
         writerContext.setConfig(config);
         writerContext.setChannelNum(1);
-        writerContext.setShuffleDescriptor(new ShuffleDescriptor());
         shardBuffer.init(writerContext);
         ShuffleMemoryTracker.getInstance(config);
         int[] channels = new int[]{0};

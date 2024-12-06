@@ -30,7 +30,7 @@ public class WindowStreamWordCountTest extends BaseTest {
     @Test
     public void testSingleConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         WindowStreamWordCountPipeline pipeline = new WindowStreamWordCountPipeline();
         configuration.putAll(config);
@@ -45,7 +45,7 @@ public class WindowStreamWordCountTest extends BaseTest {
     @Test
     public void testReduceTwoAndSinkFourConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         WindowStreamWordCountPipeline pipeline = new WindowStreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -63,7 +63,7 @@ public class WindowStreamWordCountTest extends BaseTest {
     @Test
     public void testReduceOneAndSinkFourConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         WindowStreamWordCountPipeline pipeline = new WindowStreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -81,7 +81,7 @@ public class WindowStreamWordCountTest extends BaseTest {
     @Test
     public void testReduceTwoAndSinkTwoConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         WindowStreamWordCountPipeline pipeline = new WindowStreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -99,7 +99,7 @@ public class WindowStreamWordCountTest extends BaseTest {
     @Test
     public void testReduceTwoAndSinkOneConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         WindowStreamWordCountPipeline pipeline = new WindowStreamWordCountPipeline();
         config.put(SOURCE_PARALLELISM.getKey(), "1");

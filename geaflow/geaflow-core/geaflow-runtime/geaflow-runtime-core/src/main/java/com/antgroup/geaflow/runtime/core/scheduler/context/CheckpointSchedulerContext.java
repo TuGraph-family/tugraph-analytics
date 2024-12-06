@@ -28,21 +28,24 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext implements IReliableContext {
+public class CheckpointSchedulerContext<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>> extends AbstractCycleSchedulerContext<C, PC, PCC> implements IReliableContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckpointSchedulerContext.class);
 
-    private long checkpointDuration;
+    private final long checkpointDuration;
     private boolean isNeedFullCheckpoint = true;
     private transient long currentCheckpointId;
     private transient boolean isRecovered = false;
 
-    public CheckpointSchedulerContext(IExecutionCycle cycle, ICycleSchedulerContext parentContext) {
+    public CheckpointSchedulerContext(C cycle, PCC parentContext) {
         super(cycle, parentContext);
         this.checkpointDuration = getConfig().getLong(BATCH_NUMBER_PER_CHECKPOINT);
         if (parentContext != null) {
-            this.callbackFunction = ((AbstractCycleSchedulerContext) parentContext).callbackFunction;
-            ((AbstractCycleSchedulerContext) parentContext).setCallbackFunction(null);
+            this.callbackFunction = ((AbstractCycleSchedulerContext<?, ?, ?>) parentContext).callbackFunction;
+            ((AbstractCycleSchedulerContext<?, ?, ?>) parentContext).setCallbackFunction(null);
         }
     }
 
@@ -106,7 +109,7 @@ public class CheckpointSchedulerContext extends AbstractCycleSchedulerContext im
         return windowId;
     }
 
-    private static CheckpointSchedulerContext loadCycle(long pipelineTaskId) {
+    private static CheckpointSchedulerContext<?, ?, ?> loadCycle(long pipelineTaskId) {
         CheckpointSchedulerContext context = (CheckpointSchedulerContext) ClusterMetaStore.getInstance().getCycle(pipelineTaskId);
         if (context == null) {
             LOGGER.info("not found recoverable cycle");

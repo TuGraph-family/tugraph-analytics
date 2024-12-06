@@ -21,18 +21,33 @@ import static com.antgroup.geaflow.example.config.ExampleConfigKeys.SINK_PARALLE
 import static com.antgroup.geaflow.example.config.ExampleConfigKeys.SOURCE_PARALLELISM;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.statical.compute.pagerank.PageRank;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 public class PageRankTest extends BaseTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PageRank.class);
+    public static class TestPageRankFactory {
+
+        @Factory
+        public Object[] factoryMethod() {
+            return new Object[]{
+                new PageRankTest(true),
+                new PageRankTest(false),
+            };
+        }
+
+    }
+
+    private final boolean prefetch;
+
+    public PageRankTest(boolean prefetch) {
+        this.prefetch = prefetch;
+    }
 
     @Test
     public void testMainInvoke() {
@@ -43,8 +58,10 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
+        configuration.put(ExecutionConfigKeys.CONTAINER_WORKER_NUM, String.valueOf(1));
 
         PageRank pipeline = new PageRank();
         IPipelineResult result = pipeline.submit(environment);
@@ -57,7 +74,8 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test1() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         PageRank pipeline = new PageRank();
         config.put(SOURCE_PARALLELISM.getKey(), "2");
@@ -74,7 +92,8 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test2() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         PageRank pipeline = new PageRank();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -91,7 +110,8 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test3() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         PageRank pipeline = new PageRank();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -108,7 +128,8 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test4() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         PageRank pipeline = new PageRank();
         config.put(SOURCE_PARALLELISM.getKey(), "2");
@@ -125,7 +146,8 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test5() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         PageRank pipeline = new PageRank();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -142,7 +164,8 @@ public class PageRankTest extends BaseTest {
     @Test
     public void test6() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(this.prefetch));
 
         PageRank pipeline = new PageRank();
         config.put(SOURCE_PARALLELISM.getKey(), "1");

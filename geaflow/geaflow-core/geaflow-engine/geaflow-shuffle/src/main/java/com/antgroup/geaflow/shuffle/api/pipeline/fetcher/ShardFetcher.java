@@ -59,13 +59,6 @@ public interface ShardFetcher {
     int getNumberOfInputChannels();
 
     /**
-     * Get the number of queued buffers.
-     *
-     * @return buffer number.
-     */
-    int getNumberOfQueuedBuffers();
-
-    /**
      * Register fetcher listeners. Notify when fetcher has data.
      */
     void registerListener(ShardFetcherListener listener);

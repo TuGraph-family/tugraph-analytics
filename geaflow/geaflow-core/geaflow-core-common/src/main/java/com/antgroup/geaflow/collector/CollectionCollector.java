@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.collector;
 
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.util.List;
 
 public class CollectionCollector<T> extends AbstractCollector implements ICollector<T> {
@@ -40,8 +40,8 @@ public class CollectionCollector<T> extends AbstractCollector implements ICollec
     }
 
     @Override
-    public CollectType getType() {
-        return CollectType.FORWARD;
+    public OutputType getType() {
+        return OutputType.FORWARD;
     }
 
     @Override

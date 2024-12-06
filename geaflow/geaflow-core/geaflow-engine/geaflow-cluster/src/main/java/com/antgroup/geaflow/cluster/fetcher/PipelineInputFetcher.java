@@ -14,19 +14,25 @@
 
 package com.antgroup.geaflow.cluster.fetcher;
 
+import com.antgroup.geaflow.cluster.exception.ComponentUncaughtExceptionHandler;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.metric.EventMetrics;
 import com.antgroup.geaflow.common.metric.ShuffleReadMetrics;
+import com.antgroup.geaflow.common.thread.Executors;
 import com.antgroup.geaflow.io.AbstractMessageBuffer;
-import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
-import com.antgroup.geaflow.shuffle.message.FetchRequest;
+import com.antgroup.geaflow.shuffle.api.reader.PipelineReader;
+import com.antgroup.geaflow.shuffle.api.reader.ReaderContext;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineEvent;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,15 +40,11 @@ public class PipelineInputFetcher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineInputFetcher.class);
 
-    private Configuration config;
-    private IShuffleReader shuffleReader;
-    private InitFetchRequest initRequest;
+    private static final ExecutorService FETCH_EXECUTOR = Executors.getUnboundedExecutorService(
+        PipelineInputFetcher.class.getSimpleName(), 60, TimeUnit.SECONDS, null, ComponentUncaughtExceptionHandler.INSTANCE);
 
-    private List<IInputMessageBuffer<?>> fetchListeners;
-    private BarrierHandler barrierHandler;
-
-    private long pipelineId;
-    private String pipelineName;
+    private final Map<Integer, FetcherTask> taskId2fetchTask = new HashMap<>();
+    private final Configuration config;
 
     public PipelineInputFetcher(Configuration config) {
         this.config = config;
@@ -51,36 +53,47 @@ public class PipelineInputFetcher {
     /**
      * Init input fetcher reader.
      *
-     * @param request
+     * @param request init fetch request
      */
     public void init(InitFetchRequest request) {
-        // Close the previous reader.
-        if (this.shuffleReader != null) {
-            this.shuffleReader.close();
-            this.shuffleReader = null;
+        int taskId = request.getTaskId();
+        if (this.taskId2fetchTask.containsKey(taskId)) {
+            throw new GeaflowRuntimeException("task already exists: " + taskId);
         }
-        // Load shuffle reader according to shuffle type.
-        this.shuffleReader = ShuffleManager.getInstance().loadShuffleReader(config);
-        this.pipelineId = request.getPipelineId();
-        this.pipelineName = request.getPipelineName();
-        this.fetchListeners = request.getFetchListeners();
-        this.barrierHandler = new BarrierHandler(request.getTaskId(), request.getTotalSliceNum());
-        this.initRequest = request;
-        for (IEncoder<?> encoder : this.initRequest.getEncoders().values()) {
+        for (ShardInputDesc inputDesc : request.getInputShards().values()) {
+            IEncoder<?> encoder = inputDesc.getEncoder();
             if (encoder != null) {
                 encoder.init(this.config);
             }
         }
+        this.taskId2fetchTask.put(taskId, new FetcherTask(this.config, request));
+        LOGGER.info("init fetcher task {} {}", request.getTaskName(), request.getShufflePhases());
     }
 
     /**
-     * Fetch batch data and trigger process.
+     * Fetch data according to fetch request and process by worker.
+     *
+     * @param request fetch request
      */
-    public void fetch(long startWindowId, long windowCount) {
-        LOGGER.info("task {} start fetch windowId:{} count:{}", initRequest.getTaskId(),
-            startWindowId, windowCount);
-        long targetWindowId = startWindowId + windowCount - 1;
-        fetch(buildFetchRequest(targetWindowId));
+    protected void fetch(FetchRequest request) {
+        FetcherTask fetcherTask = this.taskId2fetchTask.get(request.getTaskId());
+        if (fetcherTask != null) {
+            long targetWindowId = request.getWindowId() + request.getWindowCount() - 1;
+            fetcherTask.updateWindowId(targetWindowId);
+            if (!fetcherTask.isRunning()) {
+                fetcherTask.start();
+                FETCH_EXECUTOR.execute(fetcherTask);
+            }
+        }
+    }
+
+    public void close(CloseFetchRequest request) {
+        int taskId = request.getTaskId();
+        FetcherTask task = this.taskId2fetchTask.remove(taskId);
+        if (task != null) {
+            task.close();
+            LOGGER.info("close fetcher task {} {}", task.initFetchRequest.getTaskName(), task.initFetchRequest.getShufflePhases());
+        }
     }
 
     public void cancel() {
@@ -89,82 +102,129 @@ public class PipelineInputFetcher {
     }
 
     /**
-     * Close the shuffle reader if need.
+     * Close the shuffle reader.
      */
     public void close() {
-        try {
-            if (shuffleReader != null) {
-                shuffleReader.close();
-            }
-        } catch (Throwable t) {
-            LOGGER.error(t.getMessage(), t);
-            throw new GeaflowRuntimeException(t);
+        for (FetcherTask task : this.taskId2fetchTask.values()) {
+            task.close();
         }
+        this.taskId2fetchTask.clear();
     }
 
-    /**
-     * Build the fetch request.
-     * @return
-     */
-    protected FetchRequest buildFetchRequest(long targetBatchId) {
-        FetchRequest request = new FetchRequest();
-        request.setPipelineId(pipelineId);
-        request.setPipelineName(pipelineName);
-        request.setTaskId(initRequest.getTaskId());
-        request.setTaskIndex(initRequest.getTaskIndex());
-        request.setTaskName(initRequest.getTaskName());
-        request.setVertexId(initRequest.getVertexId());
-        request.setTargetBatchId(targetBatchId);
-        request.setInputStreamMap(initRequest.getInputStreamMap());
-        request.setDescriptor(initRequest.getDescriptor());
-        request.setInputSlices(initRequest.getInputSlices());
-        request.setEncoders(initRequest.getEncoders());
-        return request;
-    }
+    private static class FetcherTask implements Runnable {
 
-    /**
-     * Fetch data according to fetch request and process by worker.
-     *
-     * @param request
-     */
-    protected void fetch(FetchRequest request) {
-        shuffleReader.fetch(request);
-        try {
-            while (shuffleReader.hasNext()) {
-                PipelineEvent event = shuffleReader.next();
+        private static final String READER_NAME_PATTERN = "shuffle-reader-%d[%d/%d]";
+        private static final int WAIT_TIME_OUT_MS = 100;
+
+        private final Configuration config;
+        private final InitFetchRequest initFetchRequest;
+        private final PipelineReader shuffleReader;
+        private final IInputMessageBuffer<?>[] fetchListeners;
+        private final BarrierHandler barrierHandler;
+        private final String name;
+
+        private volatile boolean running;
+        private volatile long targetWindowId;
+
+        private FetcherTask(Configuration config, InitFetchRequest request) {
+            this.config = config;
+            this.initFetchRequest = request;
+            this.shuffleReader = (PipelineReader) ShuffleManager.getInstance().loadShuffleReader();
+            this.shuffleReader.init(this.buildReaderContext());
+            this.fetchListeners = request.getFetchListeners().toArray(new IInputMessageBuffer<?>[]{});
+            this.barrierHandler = new BarrierHandler(request.getTaskId(), request.getInputShards());
+            this.name = String.format(READER_NAME_PATTERN, request.getTaskId(), request.getTaskIndex(), request.getTaskParallelism());
+        }
+
+        public void start() {
+            this.running = true;
+        }
+
+        public boolean isRunning() {
+            return this.running;
+        }
+
+        public void updateWindowId(long windowId) {
+            if (this.targetWindowId < windowId) {
+                this.targetWindowId = windowId;
+                synchronized (this) {
+                    this.notifyAll();
+                }
+            }
+        }
+
+        @Override
+        public void run() {
+            Thread.currentThread().setName(this.name);
+            try {
+                this.fetch();
+            } catch (Throwable e) {
+                LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId, this.name, e);
+                throw new GeaflowRuntimeException(e);
+            }
+        }
+
+        public void fetch() throws InterruptedException {
+            while (this.running) {
+                this.shuffleReader.fetch(this.targetWindowId);
+                if (!this.shuffleReader.hasNext()) {
+                    synchronized (this) {
+                        this.wait(WAIT_TIME_OUT_MS);
+                    }
+                    continue;
+                }
+                PipelineEvent event = this.shuffleReader.next();
                 if (event != null) {
                     if (event instanceof PipelineMessage) {
                         PipelineMessage message = (PipelineMessage) event;
-                        for (IInputMessageBuffer<?> listener : fetchListeners) {
+                        for (IInputMessageBuffer<?> listener : this.fetchListeners) {
                             listener.onMessage(message);
                         }
                     } else {
                         PipelineBarrier barrier = (PipelineBarrier) event;
-                        if (barrierHandler.checkCompleted(barrier)) {
-                            long windowId = barrier.getWindowId();
-                            long windowCount = barrierHandler.getTotalWindowCount();
+                        if (this.barrierHandler.checkCompleted(barrier)) {
+                            long windowCount = this.barrierHandler.getTotalWindowCount();
                             this.handleMetrics();
-                            for (IInputMessageBuffer<?> listener : fetchListeners) {
-                                listener.onBarrier(windowId, windowCount);
+                            PipelineBarrier windowBarrier = new PipelineBarrier(
+                                barrier.getWindowId(), barrier.getEdgeId(), windowCount);
+                            for (IInputMessageBuffer<?> listener : this.fetchListeners) {
+                                listener.onBarrier(windowBarrier);
                             }
                         }
                     }
                 }
             }
-            LOGGER.info("task {} worker reader finish fetch windowId {}",
-                    request.getTaskId(), request.getTargetBatchId());
-        } catch (Throwable e) {
-            LOGGER.error("fetcher encounters unexpected exception: {}", e.getMessage(), e);
-            throw new GeaflowRuntimeException(e);
+            LOGGER.info("fetcher task finish window id {} {}", this.targetWindowId, this.name);
         }
-    }
 
-    private void handleMetrics() {
-        ShuffleReadMetrics shuffleReadMetrics = this.shuffleReader.getShuffleReadMetrics();
-        for (IInputMessageBuffer<?> listener : this.fetchListeners) {
-            EventMetrics eventMetrics = ((AbstractMessageBuffer<?>) listener).getEventMetrics();
-            eventMetrics.addShuffleReadBytes(shuffleReadMetrics.getDecodeBytes());
+        private ReaderContext buildReaderContext() {
+            ReaderContext context = new ReaderContext();
+            context.setConfig(this.config);
+            context.setVertexId(this.initFetchRequest.getVertexId());
+            context.setTaskName(this.initFetchRequest.getTaskName());
+            context.setInputShardMap(this.initFetchRequest.getInputShards());
+            context.setInputSlices(this.initFetchRequest.getInputSlices());
+            context.setSliceNum(this.initFetchRequest.getSliceNum());
+            return context;
         }
+
+        private void handleMetrics() {
+            ShuffleReadMetrics shuffleReadMetrics = this.shuffleReader.getShuffleReadMetrics();
+            for (IInputMessageBuffer<?> listener : this.fetchListeners) {
+                if (listener instanceof AbstractMessageBuffer<?>) {
+                    EventMetrics eventMetrics = ((AbstractMessageBuffer<?>) listener).getEventMetrics();
+                    eventMetrics.addShuffleReadBytes(shuffleReadMetrics.getDecodeBytes());
+                }
+            }
+        }
+
+        public void close() {
+            this.running = false;
+            if (this.shuffleReader != null) {
+                this.shuffleReader.close();
+            }
+        }
+
     }
 
 }

@@ -16,10 +16,11 @@ package com.antgroup.geaflow.shuffle.service;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
-import com.antgroup.geaflow.shuffle.api.reader.ReaderContext;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
+import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
+import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.netty.ConnectionManager;
 import com.antgroup.geaflow.shuffle.service.impl.AutoShuffleService;
 import java.io.IOException;
@@ -34,7 +35,6 @@ public class ShuffleManager {
     private final IShuffleService shuffleService;
     private final ConnectionManager connectionManager;
     private final Configuration configuration;
-    private IShuffleMaster shuffleMaster;
 
     public ShuffleManager(Configuration config) {
         this.shuffleService = new AutoShuffleService();
@@ -47,6 +47,7 @@ public class ShuffleManager {
         if (INSTANCE == null) {
             INSTANCE = new ShuffleManager(config);
             ShuffleMemoryTracker.getInstance(config);
+            ShuffleDataManager.init();
         }
         return INSTANCE;
     }
@@ -55,33 +56,20 @@ public class ShuffleManager {
         return INSTANCE;
     }
 
-    public synchronized void initShuffleMaster() {
-        if (shuffleMaster == null) {
-            this.shuffleMaster = ShuffleMasterFactory.getShuffleMaster(this.configuration);
-        }
-    }
-
     public int getShufflePort() {
         return connectionManager.getShuffleAddress().port();
     }
 
-    public IShuffleReader loadShuffleReader(Configuration config) {
-        IShuffleReader reader = shuffleService.getReader();
-        reader.init(new ReaderContext(config));
-        return reader;
+    public IShuffleReader loadShuffleReader() {
+        return shuffleService.getReader();
     }
 
-    public IShuffleWriter loadShuffleWriter() {
+    public IShuffleWriter<?, Shard> loadShuffleWriter() {
         return shuffleService.getWriter();
-    }
-
-    public synchronized IShuffleMaster getShuffleMaster() {
-        return shuffleMaster;
     }
 
     public void close() {
         LOGGER.info("closing shuffle manager");
-        shuffleMaster.close();
         try {
             connectionManager.close();
         } catch (IOException e) {

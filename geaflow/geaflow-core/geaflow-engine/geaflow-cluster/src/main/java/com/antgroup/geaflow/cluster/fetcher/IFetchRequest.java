@@ -18,4 +18,35 @@ import java.io.Serializable;
 
 public interface IFetchRequest extends Serializable {
 
+    /**
+     * Get the task id of this request.
+     *
+     * @return task id
+     */
+    int getTaskId();
+
+    /**
+     * Get the request type.
+     *
+     * @return request type
+     */
+    RequestType getRequestType();
+
+    enum RequestType {
+
+        /**
+         * Init fetch request, setup fetch context and input slice meta.
+         */
+        INIT,
+        /**
+         * Fetch data of a window id.
+         */
+        FETCH,
+        /**
+         * Close the fetch task when data finish.
+         */
+        CLOSE
+
+    }
+
 }

@@ -12,33 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.cluster.collector;
+package com.antgroup.geaflow.common.shuffle;
 
-public enum RequestType {
-
-    /**
-     * Init request.
-     */
-    INIT,
+public enum BatchPhase {
 
     /**
-     * Update request.
+     * Execute the shuffle process in pull mode.
      */
-    UPDATE,
-
+    CLASSIC,
     /**
-     * Close request.
+     * Read the pre-fetched shuffle data.
      */
-    CLOSE,
-
+    PREFETCH_READ,
     /**
-     * Stash request.
+     * Pre-fetch the data to the reduce side.
      */
-    STASH,
-
-    /**
-     * Clear the init emitter request in cache.
-     */
-    CLEAR
+    PREFETCH_WRITE
 
 }

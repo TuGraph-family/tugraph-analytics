@@ -26,13 +26,9 @@ import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.statical.compute.sssp.SSSP;
 import com.antgroup.geaflow.pipeline.IPipelineResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 public class SSSPTest extends BaseTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SSSPTest.class);
 
     @Test
     public void testMainInvoke() {
@@ -43,7 +39,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         SSSP pipeline = new SSSP();
@@ -57,7 +53,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test1() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         SSSP pipeline = new SSSP();
         config.put(SOURCE_PARALLELISM.getKey(), "2");
@@ -74,7 +70,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test2() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         SSSP pipeline = new SSSP();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -91,7 +87,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test3() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         SSSP pipeline = new SSSP();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -108,7 +104,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test4() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         SSSP pipeline = new SSSP();
         config.put(SOURCE_PARALLELISM.getKey(), "2");
@@ -125,7 +121,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test5() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         SSSP pipeline = new SSSP();
         config.put(SOURCE_PARALLELISM.getKey(), "1");
@@ -142,7 +138,7 @@ public class SSSPTest extends BaseTest {
     @Test
     public void test6() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         SSSP pipeline = new SSSP();
         config.put(SOURCE_PARALLELISM.getKey(), "1");

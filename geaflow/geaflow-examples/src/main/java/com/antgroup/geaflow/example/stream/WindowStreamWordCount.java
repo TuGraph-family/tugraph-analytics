@@ -29,13 +29,8 @@ import com.antgroup.geaflow.pipeline.task.IPipelineTaskContext;
 import com.antgroup.geaflow.pipeline.task.PipelineTask;
 import com.google.common.collect.Lists;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class WindowStreamWordCount {
-
-    private static final Logger LOGGER =
-        LoggerFactory.getLogger(WindowStreamWordCount.class);
 
     public static void main(String[] args) {
         Environment environment = EnvironmentFactory.onRayCommunityEnvironment(args);

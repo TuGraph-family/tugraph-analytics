@@ -32,7 +32,7 @@ public class WordPrintTest extends BaseTest {
     @Test
     public void test() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         StreamWordPrintPipeline pipeline = new StreamWordPrintPipeline();

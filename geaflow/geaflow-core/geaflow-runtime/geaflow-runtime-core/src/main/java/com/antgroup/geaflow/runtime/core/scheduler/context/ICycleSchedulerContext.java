@@ -22,12 +22,17 @@ import com.antgroup.geaflow.runtime.core.scheduler.resource.IScheduledWorkerMana
 import java.io.Serializable;
 import java.util.List;
 
-public interface ICycleSchedulerContext extends Serializable {
+public interface ICycleSchedulerContext<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>> extends Serializable {
 
     /**
      * Returns execution cycle.
      */
-    IExecutionCycle getCycle();
+    C getCycle();
+
+    PCC getParentContext();
 
     /**
      * Returns execution config.
@@ -92,12 +97,12 @@ public interface ICycleSchedulerContext extends Serializable {
     /**
      * Assign workers for cycle.
      */
-    List<WorkerInfo> assign(IExecutionCycle cycle);
+    List<WorkerInfo> assign(C cycle);
 
     /**
      * Release worker for cycle.
      */
-    void release(IExecutionCycle cycle);
+    void release(C cycle);
 
     /**
      * Finish the windowId iteration.
@@ -117,7 +122,7 @@ public interface ICycleSchedulerContext extends Serializable {
     /**
      * Returns scheduler worker manager.
      */
-    IScheduledWorkerManager getSchedulerWorkerManager();
+    IScheduledWorkerManager<C> getSchedulerWorkerManager();
 
     enum SchedulerState {
         /**

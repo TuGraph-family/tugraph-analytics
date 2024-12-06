@@ -17,7 +17,6 @@ package com.antgroup.geaflow.shuffle.api.pipeline.buffer;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.shuffle.api.pipeline.fetcher.PipelineSliceListener;
 import com.antgroup.geaflow.shuffle.api.pipeline.fetcher.PipelineSliceReader;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -37,7 +36,7 @@ public class PipelineSlice {
     // Reference count of the slice.
     private int refCount;
     // Flag indicating whether the slice has been released.
-    private volatile boolean isReleased;
+    protected volatile boolean isReleased;
     // Flag indicating whether flush is requested.
     private boolean flushRequested;
 
@@ -201,8 +200,6 @@ public class PipelineSlice {
         if (reader != null) {
             reader.release();
         }
-
-        ShuffleDataManager.getInstance().release(sliceId);
     }
 
 }

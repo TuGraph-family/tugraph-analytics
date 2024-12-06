@@ -16,10 +16,10 @@ package com.antgroup.geaflow.collector.chain;
 
 import com.antgroup.geaflow.collector.AbstractCollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.operator.base.window.OneInputOperator;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 
 public class OpChainCollector<T> extends AbstractCollector implements IChainCollector<T> {
 
@@ -46,7 +46,8 @@ public class OpChainCollector<T> extends AbstractCollector implements IChainColl
     }
 
     @Override
-    public CollectType getType() {
-        return CollectType.FORWARD;
+    public OutputType getType() {
+        return OutputType.FORWARD;
     }
+
 }

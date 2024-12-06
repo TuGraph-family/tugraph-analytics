@@ -17,7 +17,7 @@ package com.antgroup.geaflow.shuffle.config;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CLIENT_THREADS_NUM;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CONNECT_INITIAL_BACKOFF_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CONNECT_MAX_BACKOFF_MS;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CONNECT_MAX_RETRIES;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CONNECT_MAX_RETRY_TIMES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CONNECT_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_CUSTOM_FRAME_DECODER_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_PREFER_DIRECT_BUFFER;
@@ -28,22 +28,19 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_SERVER_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_SERVER_THREADS_NUM;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_THREAD_CACHE_ENABLE;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_CACHE_SPILL_THRESHOLD;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_COMPRESSION_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_EMIT_BUFFER_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_EMIT_QUEUE_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_QUEUE_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_TIMEOUT_MS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_SIZE_BYTES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FORCE_DISK_ENABLE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FORCE_MEMORY_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_SLICE_MAX_SPILL_SIZE;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_STORAGE_TYPE;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_WRITE_BUFFER_SIZE_BYTES;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.shuffle.StorageLevel;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,58 +48,56 @@ public class ShuffleConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShuffleConfig.class);
 
-    private final int serverPort;
+    private final Configuration configuration;
+
+    //////////////////////////////
+    // Netty
+    //////////////////////////////
+
     private final String serverAddress;
-    private final boolean threadCacheEnabled;
+    private final int serverPort;
     // Connect timeout in milliseconds. Default 120 secs.
     private final int connectTimeoutMs;
     // fetch timeout in milliseconds. Default is 600 secs.
-    private final int fetchTimeoutMs;
     private final int serverBacklog;
     private final int serverThreads;
     private final int clientThreads;
-    private final long maxSpillSizePerSlice;
+    private final int receiveBufferSize;
+    private final int sendBufferSize;
+    private final int connectMaxRetryTimes;
+    private final int connectInitBackoffMs;
+    private final int connectMaxBackoffMs;
+    private final boolean threadCacheEnabled;
+    private final boolean preferDirectBuffer;
+    private final boolean customFrameDecoderEnable;
+
+    //////////////////////////////
+    // Read & Write
+    //////////////////////////////
 
     private final boolean memoryPoolEnable;
+    private final boolean compressionEnabled;
+
+    //////////////////////////////
+    // Read
+    //////////////////////////////
+
+    private final int fetchTimeoutMs;
     private final int fetchQueueSize;
+
+    //////////////////////////////
+    // Write
+    //////////////////////////////
+
     private final int emitQueueSize;
     private final int emitBufferSize;
-    private final int writeBufferSizeBytes;
+    private final int flushBufferSizeBytes;
     private final int flushBufferTimeoutMs;
-    private final double cacheSpillThreshold;
+    private final boolean forceMemory;
+    private final boolean forceDisk;
 
-    private final Configuration configuration;
-
-    private boolean compressionEnabled;
 
     private static ShuffleConfig INSTANCE;
-
-    private ShuffleConfig(Configuration config) {
-        this.serverAddress = config.getString(NETTY_SERVER_HOST);
-        this.serverPort = config.getInteger(NETTY_SERVER_PORT);
-        this.threadCacheEnabled = config.getBoolean(NETTY_THREAD_CACHE_ENABLE);
-
-        this.connectTimeoutMs = config.getInteger(NETTY_CONNECT_TIMEOUT_MS);
-        this.fetchTimeoutMs = config.getInteger(SHUFFLE_FETCH_TIMEOUT_MS);
-        this.maxSpillSizePerSlice = config.getLong(SHUFFLE_SLICE_MAX_SPILL_SIZE);
-
-        this.serverBacklog = config.getInteger(NETTY_SERVER_BACKLOG);
-        this.serverThreads = config.getInteger(NETTY_SERVER_THREADS_NUM);
-        this.clientThreads = config.getInteger(NETTY_CLIENT_THREADS_NUM);
-
-        this.memoryPoolEnable = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
-        this.fetchQueueSize = config.getInteger(SHUFFLE_FETCH_QUEUE_SIZE);
-        this.emitQueueSize = config.getInteger(SHUFFLE_EMIT_QUEUE_SIZE);
-        this.emitBufferSize = config.getInteger(SHUFFLE_EMIT_BUFFER_SIZE);
-        this.writeBufferSizeBytes = config.getInteger(SHUFFLE_WRITE_BUFFER_SIZE_BYTES);
-        this.flushBufferTimeoutMs = config.getInteger(SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS);
-        this.cacheSpillThreshold = config.getDouble(SHUFFLE_CACHE_SPILL_THRESHOLD);
-
-        this.compressionEnabled = config.getBoolean(SHUFFLE_COMPRESSION_ENABLE);
-
-        this.configuration = config;
-        LOGGER.info("init shuffle config: {}", config);
-    }
 
     public static synchronized ShuffleConfig getInstance(Configuration config) {
         if (INSTANCE == null) {
@@ -120,20 +115,58 @@ public class ShuffleConfig {
         return INSTANCE;
     }
 
+    private ShuffleConfig(Configuration config) {
+        this.configuration = config;
+
+        // netty
+        this.serverAddress = config.getString(NETTY_SERVER_HOST);
+        this.serverPort = config.getInteger(NETTY_SERVER_PORT);
+        this.connectTimeoutMs = config.getInteger(NETTY_CONNECT_TIMEOUT_MS);
+        this.serverBacklog = config.getInteger(NETTY_SERVER_BACKLOG);
+        this.serverThreads = config.getInteger(NETTY_SERVER_THREADS_NUM);
+        this.clientThreads = config.getInteger(NETTY_CLIENT_THREADS_NUM);
+        this.receiveBufferSize = config.getInteger(NETTY_RECEIVE_BUFFER_SIZE);
+        this.sendBufferSize = config.getInteger(NETTY_SEND_BUFFER_SIZE);
+        this.connectMaxRetryTimes = config.getInteger(NETTY_CONNECT_MAX_RETRY_TIMES);
+        this.connectInitBackoffMs = config.getInteger(NETTY_CONNECT_INITIAL_BACKOFF_MS);
+        this.connectMaxBackoffMs = config.getInteger(NETTY_CONNECT_MAX_BACKOFF_MS);
+        this.threadCacheEnabled = config.getBoolean(NETTY_THREAD_CACHE_ENABLE);
+        this.preferDirectBuffer = config.getBoolean(NETTY_PREFER_DIRECT_BUFFER);
+        this.customFrameDecoderEnable = config.getBoolean(NETTY_CUSTOM_FRAME_DECODER_ENABLE);
+
+        // read & write
+        this.memoryPoolEnable = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
+        this.compressionEnabled = config.getBoolean(SHUFFLE_COMPRESSION_ENABLE);
+
+        // read
+        this.fetchTimeoutMs = config.getInteger(SHUFFLE_FETCH_TIMEOUT_MS);
+        this.fetchQueueSize = config.getInteger(SHUFFLE_FETCH_QUEUE_SIZE);
+
+        // write
+        this.emitQueueSize = config.getInteger(SHUFFLE_EMIT_QUEUE_SIZE);
+        this.emitBufferSize = config.getInteger(SHUFFLE_EMIT_BUFFER_SIZE);
+        this.flushBufferSizeBytes = config.getInteger(SHUFFLE_FLUSH_BUFFER_SIZE_BYTES);
+        this.flushBufferTimeoutMs = config.getInteger(SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS);
+        this.forceMemory = config.getBoolean(SHUFFLE_FORCE_MEMORY_ENABLE);
+        this.forceDisk = config.getBoolean(SHUFFLE_FORCE_DISK_ENABLE);
+
+        LOGGER.info("init shuffle config: {}", config);
+    }
+
+    public Configuration getConfig() {
+        return this.configuration;
+    }
+
     public String getServerAddress() {
-        return serverAddress;
+        return this.serverAddress;
     }
 
     public int getServerPort() {
-        return serverPort;
-    }
-
-    public boolean isThreadCacheEnabled() {
-        return threadCacheEnabled;
+        return this.serverPort;
     }
 
     public int getConnectTimeoutMs() {
-        return connectTimeoutMs;
+        return this.connectTimeoutMs;
     }
 
     /**
@@ -142,17 +175,17 @@ public class ShuffleConfig {
      * @return server back log.
      */
     public int getServerConnectBacklog() {
-        return serverBacklog;
+        return this.serverBacklog;
     }
 
     /** Number of threads used in the server thread pool. Default to 4, and 0 means 2x#cores. */
     public int getServerThreadsNum() {
-        return serverThreads;
+        return this.serverThreads;
     }
 
     /** Number of threads used in the client thread pool. Default to 4, and 0 means 2x#cores. */
     public int getClientNumThreads() {
-        return clientThreads;
+        return this.clientThreads;
     }
 
     /**
@@ -163,35 +196,47 @@ public class ShuffleConfig {
      * buffer size should be ~ 1.25MB
      */
     public int getReceiveBufferSize() {
-        return configuration.getInteger(NETTY_RECEIVE_BUFFER_SIZE);
+        return this.receiveBufferSize;
     }
 
     public int getSendBufferSize() {
-        return configuration.getInteger(NETTY_SEND_BUFFER_SIZE);
-    }
-
-    public boolean preferDirectBuffer() {
-        return configuration.getBoolean(NETTY_PREFER_DIRECT_BUFFER);
-    }
-
-    public boolean enableCustomFrameDecoder() {
-        return configuration.getBoolean(NETTY_CUSTOM_FRAME_DECODER_ENABLE);
+        return this.sendBufferSize;
     }
 
     public int getConnectMaxRetries() {
-        return configuration.getInteger(NETTY_CONNECT_MAX_RETRIES);
+        return this.connectMaxRetryTimes;
     }
 
     public int getConnectInitialBackoffMs() {
-        return configuration.getInteger(NETTY_CONNECT_INITIAL_BACKOFF_MS);
+        return this.connectInitBackoffMs;
     }
 
     public int getConnectMaxBackoffMs() {
-        return configuration.getInteger(NETTY_CONNECT_MAX_BACKOFF_MS);
+        return this.connectMaxBackoffMs;
+    }
+
+    public boolean isThreadCacheEnabled() {
+        return this.threadCacheEnabled;
+    }
+
+    public boolean preferDirectBuffer() {
+        return this.preferDirectBuffer;
+    }
+
+    public boolean enableCustomFrameDecoder() {
+        return this.customFrameDecoderEnable;
     }
 
     public boolean isMemoryPoolEnable() {
         return this.memoryPoolEnable;
+    }
+
+    public boolean isCompressionEnabled() {
+        return this.compressionEnabled;
+    }
+
+    public int getFetchTimeoutMs() {
+        return this.fetchTimeoutMs;
     }
 
     public int getFetchQueueSize() {
@@ -206,36 +251,20 @@ public class ShuffleConfig {
         return this.emitBufferSize;
     }
 
-    public int getWriteBufferSizeBytes() {
-        return this.writeBufferSizeBytes;
+    public int getFlushBufferSizeBytes() {
+        return this.flushBufferSizeBytes;
     }
 
     public int getFlushBufferTimeoutMs() {
         return this.flushBufferTimeoutMs;
     }
 
-    public double getCacheSpillThreshold() {
-        return this.cacheSpillThreshold;
+    public boolean isForceMemory() {
+        return this.forceMemory;
     }
 
-    public Configuration getConfig() {
-        return configuration;
-    }
-
-    public static StorageLevel getShuffleStorageType(Configuration configuration) {
-        Object confVal = configuration.getString(SHUFFLE_STORAGE_TYPE);
-        if (confVal != null) {
-            return StorageLevel.valueOf(String.valueOf(confVal).toLowerCase());
-        }
-        return StorageLevel.disk;
-    }
-
-    @Override
-    public String toString() {
-        return "ShuffleConfig{" + ", connectTimeoutMs=" + connectTimeoutMs + ", fetchTimeoutMs="
-            + fetchTimeoutMs + ", serverBacklog=" + serverBacklog + ", serverThreads="
-            + serverThreads + ", clientThreads=" + clientThreads + ", maxSpillSizePerSliceMB="
-            + maxSpillSizePerSlice / FileUtils.ONE_MB + '}';
+    public boolean isForceDisk() {
+        return this.forceDisk;
     }
 
 }

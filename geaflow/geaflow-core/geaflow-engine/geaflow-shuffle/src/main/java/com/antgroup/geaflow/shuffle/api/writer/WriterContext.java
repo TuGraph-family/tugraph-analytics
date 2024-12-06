@@ -16,7 +16,7 @@ package com.antgroup.geaflow.shuffle.api.writer;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
+import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
 import com.antgroup.geaflow.shuffle.message.PipelineInfo;
 
 public class WriterContext implements IWriterContext {
@@ -27,9 +27,9 @@ public class WriterContext implements IWriterContext {
     private int taskIndex;
     private int taskId;
     private String taskName;
+    private DataExchangeMode dataExchangeMode;
     private int targetChannels;
     private Configuration config;
-    private ShuffleDescriptor descriptor;
     private int refCount;
     private IEncoder<?> encoder;
 
@@ -62,6 +62,11 @@ public class WriterContext implements IWriterContext {
         return this;
     }
 
+    public WriterContext setDataExchangeMode(DataExchangeMode dataExchangeMode) {
+        this.dataExchangeMode = dataExchangeMode;
+        return this;
+    }
+
     public WriterContext setChannelNum(int targetChannels) {
         this.targetChannels = targetChannels;
         return this;
@@ -72,13 +77,13 @@ public class WriterContext implements IWriterContext {
         return this;
     }
 
-    public WriterContext setShuffleDescriptor(ShuffleDescriptor descriptor) {
-        this.descriptor = descriptor;
+    public WriterContext setEncoder(IEncoder<?> encoder) {
+        this.encoder = encoder;
         return this;
     }
 
-    public WriterContext setEncoder(IEncoder<?> encoder) {
-        this.encoder = encoder;
+    public WriterContext setRefCount(int refCount) {
+        this.refCount = refCount;
         return this;
     }
 
@@ -123,13 +128,18 @@ public class WriterContext implements IWriterContext {
     }
 
     @Override
-    public ShuffleDescriptor getShuffleDescriptor() {
-        return descriptor;
+    public IEncoder<?> getEncoder() {
+        return this.encoder;
     }
 
     @Override
-    public IEncoder<?> getEncoder() {
-        return this.encoder;
+    public DataExchangeMode getDataExchangeMode() {
+        return this.dataExchangeMode;
+    }
+
+    @Override
+    public int getRefCount() {
+        return this.refCount;
     }
 
     public static WriterContextBuilder newBuilder() {
