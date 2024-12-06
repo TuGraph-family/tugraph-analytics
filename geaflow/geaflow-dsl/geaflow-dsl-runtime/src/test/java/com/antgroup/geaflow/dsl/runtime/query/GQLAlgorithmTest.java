@@ -182,6 +182,15 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    @Test
+    public void testIncGraphAlgorithm_assp() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_assp.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
     private void clearGraph() throws IOException {
         File file = new File(TEST_GRAPH_PATH);
         if (file.exists()) {
