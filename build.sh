@@ -29,14 +29,43 @@ function checkMaven() {
   which mvn &> /dev/null || { echo -e "\033[31mmaven is not installed\033[0m"; return 1; }
 }
 
+USE_UBUNTU="true"
+# parse args
+for arg in $*
+do
+  if [[ "$arg" = "--all" ]]; then
+    ALL="true"
+  elif [[ "$arg" =~ --module=(.*) ]]; then
+    MODULE=${BASH_REMATCH[1]}
+  elif [[ "$arg" =~ --output=(.*) ]]; then
+    OUTPUT=${BASH_REMATCH[1]}
+  elif [[ "$arg" = "--help" ]]; then
+    HELP="true"
+  elif [[ "$arg" = "--centos" ]]; then
+    USE_UBUNTU="false"
+  elif [[ "$arg" = "--ubuntu" ]]; then
+    USE_UBUNTU="true"
+  else
+    ERROR="$arg"
+  fi
+done
+
 # prepare base images
 ARCH=$(uname -m)
 if [[ "$ARCH" = "x86_64" ]]; then
-  DOCKER_FILE="Dockerfile"
+  if [[ "$USE_UBUNTU" = "true" ]]; then
+    DOCKER_FILE="Dockerfile-ubuntu"
+  else
+    DOCKER_FILE="Dockerfile-centos"
+  fi
   GEAFLOW_IMAGE_NAME="geaflow"
   CONSOLE_IMAGE_NAME="geaflow-console"
 elif [[ "$ARCH" = "arm64" ]]; then
-  DOCKER_FILE="Dockerfile-arm64"
+  if [[ "$USE_UBUNTU" = "true" ]]; then
+    DOCKER_FILE="Dockerfile-arm64-ubuntu"
+  else
+    DOCKER_FILE="Dockerfile-arm64-centos"
+  fi
   GEAFLOW_IMAGE_NAME="geaflow-arm"
   CONSOLE_IMAGE_NAME="geaflow-console-arm"
 else
@@ -52,22 +81,6 @@ GEAFLOW_CONSOLE_DIR=$BASE_DIR/geaflow-console
 GEAFLOW_CONSOLE_DOCKER_DIR=$GEAFLOW_CONSOLE_DIR
 GEAFLOW_CONSOLE_PACKAGE_DIR=$GEAFLOW_CONSOLE_DIR/target
 
-# parse args
-for arg in $*
-do
-  if [[ "$arg" = "--all" ]]; then
-    ALL="true"
-  elif [[ "$arg" =~ --module=(.*) ]]; then
-    MODULE=${BASH_REMATCH[1]}
-  elif [[ "$arg" =~ --output=(.*) ]]; then
-    OUTPUT=${BASH_REMATCH[1]}
-  elif [[ "$arg" = "--help" ]]; then
-    HELP="true"
-  else
-    ERROR="$arg"
-  fi
-done
-
 # print help message
 if [[ -n "$ERROR" ]]; then
   echo -e "\033[31millegal argument found: $ERROR\033[0m"
@@ -79,6 +92,8 @@ Options:
     --module=<name>             Build given module name, default all. values: geaflow|geaflow-console
     --output=<type>             Build given output type, default all. values: package|image
     --help                      Show this help message.
+    --centos                    Build Centos docker.
+    --ubuntu                    build ubuntu docker.
 '
   exit 1
 fi
