@@ -66,8 +66,8 @@ public class OssIO implements IPersistentIO {
 
 
     @Override
-    public List<String> listFile(Path path) throws IOException {
-        FileInfo[] infos = listStatus(path);
+    public List<String> listFileName(Path path) throws IOException {
+        FileInfo[] infos = listFileInfo(path);
         return Arrays.stream(infos).map(c -> c.getPath().getName()).collect(Collectors.toList());
     }
 
@@ -82,8 +82,10 @@ public class OssIO implements IPersistentIO {
     }
 
     @Override
-    public void delete(Path path, boolean recursive) throws IOException {
+    public boolean delete(Path path, boolean recursive) throws IOException {
         String key = pathToKey(path);
+        boolean delete_flag = false;
+
         if (recursive) {
             String nextMarker = null;
             ObjectListing objectListing;
@@ -101,15 +103,18 @@ public class OssIO implements IPersistentIO {
                 nextMarker = objectListing.getNextMarker();
                 if (!files.isEmpty()) {
                     ossClient.deleteObjects(new DeleteObjectsRequest(bucketName).withKeys(files));
+                    delete_flag = true;
                 }
             }  while (objectListing.isTruncated());
         } else {
             ossClient.deleteObject(bucketName, key);
         }
+
+        return delete_flag;
     }
 
     @Override
-    public boolean rename(Path from, Path to) throws IOException {
+    public boolean renameFile(Path from, Path to) throws IOException {
         String fromKey = pathToKey(from);
         String toKey = pathToKey(to);
         String nextMarker = null;
@@ -160,7 +165,7 @@ public class OssIO implements IPersistentIO {
     }
 
     @Override
-    public long getRemoteFileSize(Path path) throws IOException {
+    public long getFileSize(Path path) throws IOException {
         OSSObject ossObject = ossClient.getObject(bucketName, pathToKey(path));
         return ossObject.getObjectMetadata().getContentLength();
     }
@@ -192,13 +197,13 @@ public class OssIO implements IPersistentIO {
     }
 
     @Override
-    public FileInfo[] listStatus(Path path, PathFilter filter) throws IOException {
-        List<FileInfo> res = Arrays.asList(listStatus(path));
+    public FileInfo[] listFileInfo(Path path, PathFilter filter) throws IOException {
+        List<FileInfo> res = Arrays.asList(listFileInfo(path));
         return res.stream().filter(c -> filter.accept(c.getPath())).toArray(FileInfo[]::new);
     }
 
     @Override
-    public FileInfo[] listStatus(Path path) throws IOException {
+    public FileInfo[] listFileInfo(Path path) throws IOException {
         Set<FileInfo> res = new HashSet<>();
         String nextMarker = null;
         ObjectListing objectListing;

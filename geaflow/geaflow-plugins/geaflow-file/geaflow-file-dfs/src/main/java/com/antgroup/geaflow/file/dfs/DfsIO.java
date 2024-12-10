@@ -70,7 +70,7 @@ public class DfsIO implements IPersistentIO {
     }
 
     @Override
-    public List<String> listFile(Path path) throws IOException {
+    public List<String> listFileName(Path path) throws IOException {
         List<String> fileNames = new ArrayList<>();
         for (FileStatus status : fileSystem.listStatus(path)) {
             fileNames.add(status.getPath().getName());
@@ -84,14 +84,16 @@ public class DfsIO implements IPersistentIO {
     }
 
     @Override
-    public void delete(Path path, boolean recursive) throws IOException {
+    public boolean delete(Path path, boolean recursive) throws IOException {
         if (exists(path)) {
-            this.fileSystem.delete(path, recursive);
+            return this.fileSystem.delete(path, recursive);
         }
+
+        return false;
     }
 
     @Override
-    public boolean rename(Path from, Path to) throws IOException {
+    public boolean renameFile(Path from, Path to) throws IOException {
         if (exists(to)) {
             this.fileSystem.delete(to, false);
         }
@@ -117,7 +119,7 @@ public class DfsIO implements IPersistentIO {
     }
 
     @Override
-    public long getRemoteFileSize(Path path) throws IOException {
+    public long getFileSize(Path path) throws IOException {
         FileStatus status = fileSystem.getFileStatus(path);
         return status.getLen();
     }
@@ -135,7 +137,7 @@ public class DfsIO implements IPersistentIO {
     }
 
     @Override
-    public FileInfo[] listStatus(Path path, PathFilter filter) throws IOException {
+    public FileInfo[] listFileInfo(Path path, PathFilter filter) throws IOException {
         FileStatus[] fileStatuses = fileSystem.listStatus(path, filter);
         FileInfo[] fileInfos = new FileInfo[fileStatuses.length];
         for (int i = 0; i < fileStatuses.length; i++) {
@@ -145,7 +147,7 @@ public class DfsIO implements IPersistentIO {
     }
 
     @Override
-    public FileInfo[] listStatus(Path path) throws IOException {
+    public FileInfo[] listFileInfo(Path path) throws IOException {
         FileStatus[] fileStatuses = fileSystem.listStatus(path);
         FileInfo[] fileInfos = new FileInfo[fileStatuses.length];
         for (int i = 0; i < fileStatuses.length; i++) {
