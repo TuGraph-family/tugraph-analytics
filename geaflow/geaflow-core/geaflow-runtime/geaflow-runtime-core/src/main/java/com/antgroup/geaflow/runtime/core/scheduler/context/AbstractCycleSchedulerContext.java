@@ -16,13 +16,17 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.pipeline.callback.ICallbackFunction;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.ExecutableEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.IScheduledWorkerManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -51,6 +55,8 @@ public abstract class AbstractCycleSchedulerContext<
     protected transient CycleResultManager cycleResultManager;
     protected ICallbackFunction callbackFunction;
     protected static ThreadLocal<Boolean> rollback = ThreadLocal.withInitial(() -> false);
+    protected transient Map<Integer, ExecutableEvent> prefetchEvents;
+    protected transient boolean prefetch;
 
     public AbstractCycleSchedulerContext(C cycle, PCC parentContext) {
         this.cycle = cycle;
@@ -94,6 +100,8 @@ public abstract class AbstractCycleSchedulerContext<
         } else {
             this.cycleResultManager = new CycleResultManager();
         }
+        prefetch = cycle.getConfig().getBoolean(ExecutionConfigKeys.SHUFFLE_PREFETCH);
+        prefetchEvents = new HashMap<>();
 
         LOGGER.info("{} init cycle context onTheFlyThreshold {}, currentIterationId {}, "
                 + "iterationCount {}, finishIterationId {}, initialIterationId {}",
@@ -127,12 +135,19 @@ public abstract class AbstractCycleSchedulerContext<
         this.currentIterationId = iterationId;
     }
 
+    @Override
     public boolean isRecovered() {
         return false;
     }
 
+    @Override
     public boolean isRollback() {
         return rollback.get();
+    }
+
+    @Override
+    public boolean isPrefetch() {
+        return prefetch;
     }
 
     public void setRollback(boolean bool) {
@@ -198,6 +213,10 @@ public abstract class AbstractCycleSchedulerContext<
 
     public void setCallbackFunction(ICallbackFunction callbackFunction) {
         this.callbackFunction = callbackFunction;
+    }
+
+    public Map<Integer, ExecutableEvent> getPrefetchEvents() {
+        return this.prefetchEvents;
     }
 
     @Override

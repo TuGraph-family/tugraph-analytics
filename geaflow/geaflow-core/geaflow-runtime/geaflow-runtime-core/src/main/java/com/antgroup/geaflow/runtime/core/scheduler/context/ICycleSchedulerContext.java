@@ -16,11 +16,13 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.ExecutableEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.IScheduledWorkerManager;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 public interface ICycleSchedulerContext<
     C extends IExecutionCycle,
@@ -53,6 +55,11 @@ public interface ICycleSchedulerContext<
      * Returns whether cycle need rollback.
      */
     boolean isRollback();
+
+    /**
+     * Returns whether enable prefetch.
+     */
+    boolean isPrefetch();
 
     /**
      * Returns current iteration id.
@@ -123,6 +130,11 @@ public interface ICycleSchedulerContext<
      * Returns scheduler worker manager.
      */
     IScheduledWorkerManager<C> getSchedulerWorkerManager();
+
+    /**
+     * Returns prefetch events needed to be finished.
+     */
+    Map<Integer, ExecutableEvent> getPrefetchEvents();
 
     enum SchedulerState {
         /**
