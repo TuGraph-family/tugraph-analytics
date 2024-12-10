@@ -48,15 +48,15 @@ public class OssIOTest {
         persistentIO.copyFromLocalFile(new Path("/tmp/README"), new Path(
             "/geaflow/chk/" + myName + "/1/README"));
 
-        persistentIO.rename(new Path("/geaflow/chk/" + myName + "/"), new Path(
+        persistentIO.renameFile(new Path("/geaflow/chk/" + myName + "/"), new Path(
             "/geaflow/chk/" + myName + "2"));
-        List<String> list = persistentIO.listFile(new Path("/geaflow/chk/" + myName + "2"));
+        List<String> list = persistentIO.listFileName(new Path("/geaflow/chk/" + myName + "2"));
         Assert.assertEquals(list.size(), 3);
 
-        FileInfo[] res = persistentIO.listStatus(new Path("/geaflow/chk/" + myName + "2/datas"));
+        FileInfo[] res = persistentIO.listFileInfo(new Path("/geaflow/chk/" + myName + "2/datas"));
         Assert.assertEquals(res.length, 101);
 
-        persistentIO.rename(new Path("/geaflow/chk/" + myName + "2/datas/README46"),
+        persistentIO.renameFile(new Path("/geaflow/chk/" + myName + "2/datas/README46"),
             new Path("/geaflow/chk/" + myName + "2/datas/MYREADME46"));
         Assert.assertTrue(persistentIO.exists(new Path(
             "/geaflow/chk/" + myName + "2/datas/MYREADME46")));
