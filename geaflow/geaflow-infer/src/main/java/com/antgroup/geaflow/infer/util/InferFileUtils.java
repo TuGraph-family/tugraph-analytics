@@ -160,10 +160,10 @@ public class InferFileUtils {
             FileUtils.copyFile(resourceFile, targetFile);
         } catch (Exception e) {
             throw new GeaflowRuntimeException(
-                String.format("prepare python file [%s] and renameFile [%s] failed, %s",
+                String.format("prepare python file [%s] and rename [%s] failed, %s",
                     resourceFile.getName(), reName, e.getMessage()));
         }
-        LOGGER.info("prepare python file [{}] and renameFile [{}] finish", resourceFile.getName(),
+        LOGGER.info("prepare python file [{}] and rename [{}] finish", resourceFile.getName(),
             reName);
         Preconditions.checkState(targetFile.exists());
         return targetFile.getAbsolutePath();
