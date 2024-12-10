@@ -20,14 +20,14 @@ import java.util.List;
 @ProxyClass("com.antgroup.geaflow.file.IPersistentIO")
 public interface IPersistentIO {
 
-    List<String> listFile(FsPath path);
+    List<String> listFileName(FsPath path);
 
     long getFileCount(FsPath path);
 
     boolean exists(FsPath path);
 
-    boolean rename(FsPath from, FsPath to);
+    boolean renameFile(FsPath from, FsPath to);
 
-    void delete(FsPath path, boolean recursive);
+    boolean delete(FsPath path, boolean recursive);
 
 }

@@ -89,8 +89,8 @@ public class ViewMeta {
         // fo, keep history
         if (persistIO.exists(new Path(filePath))) {
             persistIO.delete(new Path(filePath + BACKUP_SUFFIX), false);
-            boolean res = persistIO.rename(new Path(filePath), new Path(filePath + BACKUP_SUFFIX));
-            Preconditions.checkArgument(res, "rename fail " + filePath);
+            boolean res = persistIO.renameFile(new Path(filePath), new Path(filePath + BACKUP_SUFFIX));
+            Preconditions.checkArgument(res, "renameFile fail " + filePath);
         }
         // fo, protect filePath.
         final java.nio.file.Path path = Files.createTempFile("tmp", TMP_SUFFIX);
@@ -99,8 +99,8 @@ public class ViewMeta {
         Files.deleteIfExists(path);
 
         // clean.
-        boolean res = persistIO.rename(new Path(filePath + TMP_SUFFIX), new Path(filePath));
-        Preconditions.checkArgument(res, "rename fail " + filePath + TMP_SUFFIX);
+        boolean res = persistIO.renameFile(new Path(filePath + TMP_SUFFIX), new Path(filePath));
+        Preconditions.checkArgument(res, "renameFile fail " + filePath + TMP_SUFFIX);
         if (persistIO.exists(new Path(filePath + BACKUP_SUFFIX))) {
             persistIO.delete(new Path(filePath + BACKUP_SUFFIX), false);
         }

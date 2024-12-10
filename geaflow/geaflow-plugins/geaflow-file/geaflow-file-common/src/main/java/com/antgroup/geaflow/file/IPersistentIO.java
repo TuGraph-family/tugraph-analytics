@@ -25,13 +25,13 @@ public interface IPersistentIO {
 
     void init(Configuration userConfig);
 
-    List<String> listFile(Path path) throws IOException;
+    List<String> listFileName(Path path) throws IOException;
 
     boolean exists(Path path) throws IOException;
 
-    void delete(Path path, boolean recursive) throws IOException;
+    boolean delete(Path path, boolean recursive) throws IOException;
 
-    boolean rename(Path from, Path to) throws IOException;
+    boolean renameFile(Path from, Path to) throws IOException;
 
     boolean createNewFile(Path path) throws IOException;
 
@@ -39,15 +39,15 @@ public interface IPersistentIO {
 
     void copyToLocalFile(Path remote, Path local) throws IOException;
 
-    long getRemoteFileSize(Path path) throws IOException;
+    long getFileSize(Path path) throws IOException;
 
     long getFileCount(Path path) throws IOException;
 
     FileInfo getFileInfo(Path path) throws IOException;
 
-    FileInfo[] listStatus(Path path, PathFilter filter) throws IOException;
+    FileInfo[] listFileInfo(Path path) throws IOException;
 
-    FileInfo[] listStatus(Path path) throws IOException;
+    FileInfo[] listFileInfo(Path path, PathFilter filter) throws IOException;
 
     InputStream open(Path path) throws IOException;
 
