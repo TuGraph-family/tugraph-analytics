@@ -14,13 +14,13 @@
 
 package com.antgroup.geaflow.shuffle.network.netty;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeChannelBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.channel.ChannelId;
-import com.antgroup.geaflow.shuffle.api.pipeline.fetcher.SequenceSliceReader;
 import com.antgroup.geaflow.shuffle.network.protocol.ErrorResponse;
 import com.antgroup.geaflow.shuffle.network.protocol.SliceResponse;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeChannelBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.channel.ChannelId;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SequenceSliceReader;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;

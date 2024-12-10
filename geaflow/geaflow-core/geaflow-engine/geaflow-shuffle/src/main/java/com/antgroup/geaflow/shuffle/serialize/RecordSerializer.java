@@ -16,7 +16,7 @@ package com.antgroup.geaflow.shuffle.serialize;
 
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.serialize.impl.KryoSerializer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.esotericsoftware.kryo.io.Output;
 
 public class RecordSerializer<T> extends AbstractRecordSerializer<T> {

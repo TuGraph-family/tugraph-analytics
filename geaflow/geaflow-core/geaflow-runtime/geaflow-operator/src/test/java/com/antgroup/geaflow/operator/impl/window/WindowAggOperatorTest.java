@@ -29,7 +29,7 @@ import com.antgroup.geaflow.metrics.common.MetricGroupRegistry;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
-
+import com.google.common.collect.Lists;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +37,6 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
 
 public class WindowAggOperatorTest {
 

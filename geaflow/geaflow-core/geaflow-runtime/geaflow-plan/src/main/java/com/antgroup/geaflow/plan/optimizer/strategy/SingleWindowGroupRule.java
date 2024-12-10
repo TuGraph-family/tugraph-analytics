@@ -18,9 +18,9 @@ import com.antgroup.geaflow.operator.OpArgs;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.plan.graph.PipelineGraph;
 import com.antgroup.geaflow.plan.graph.PipelineVertex;
+
 import java.io.Serializable;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

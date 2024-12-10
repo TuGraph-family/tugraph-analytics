@@ -18,10 +18,10 @@ import com.antgroup.geaflow.partitioner.IPartitioner;
 import com.antgroup.geaflow.plan.graph.AffinityLevel;
 import com.antgroup.geaflow.plan.graph.VertexType;
 import com.antgroup.geaflow.processor.Processor;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

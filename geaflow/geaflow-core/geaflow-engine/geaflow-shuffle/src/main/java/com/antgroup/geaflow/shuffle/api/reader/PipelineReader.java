@@ -17,20 +17,20 @@ package com.antgroup.geaflow.shuffle.api.reader;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.metric.ShuffleReadMetrics;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeFetcherBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.SpillablePipelineSlice;
-import com.antgroup.geaflow.shuffle.api.pipeline.fetcher.MultiShardFetcher;
-import com.antgroup.geaflow.shuffle.api.pipeline.fetcher.OneShardFetcher;
-import com.antgroup.geaflow.shuffle.api.pipeline.fetcher.ShardFetcher;
 import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineEvent;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeFetcherBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.fetcher.MultiShardFetcher;
+import com.antgroup.geaflow.shuffle.pipeline.fetcher.OneShardFetcher;
+import com.antgroup.geaflow.shuffle.pipeline.fetcher.ShardFetcher;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SpillablePipelineSlice;
 import com.antgroup.geaflow.shuffle.serialize.EncoderMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.MessageIterator;
@@ -198,7 +198,7 @@ public class PipelineReader implements IShuffleReader {
         PipelineSliceMeta slice = slices.get(0);
         SliceId tmp = slice.getSliceId();
         SliceId sliceId = new SliceId(tmp.getPipelineId(), tmp.getEdgeId(), -1, tmp.getSliceIndex());
-        SpillablePipelineSlice resultSlice = (SpillablePipelineSlice) ShuffleDataManager.getInstance().getSlice(sliceId);
+        SpillablePipelineSlice resultSlice = (SpillablePipelineSlice) SliceManager.getInstance().getSlice(sliceId);
         if (resultSlice == null || !resultSlice.isReady2read() || resultSlice.isReleased()) {
             throw new GeaflowRuntimeException("illegal slice: " + sliceId);
         }
