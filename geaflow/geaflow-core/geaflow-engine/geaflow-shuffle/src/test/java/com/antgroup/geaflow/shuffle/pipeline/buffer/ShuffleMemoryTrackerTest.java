@@ -18,14 +18,18 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
 public class ShuffleMemoryTrackerTest {
 
     @Test
     public void testRequireAndRelease() {
         Configuration configuration = new Configuration();
         configuration.put(ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB, String.valueOf(1024));
-        ShuffleMemoryTracker.getInstance(configuration).release();
         ShuffleMemoryTracker tracker = ShuffleMemoryTracker.getInstance(configuration);
+        if (tracker != null) {
+            tracker.release();
+        }
+        tracker = ShuffleMemoryTracker.getInstance(configuration);
 
         byte[] bytes1 = new byte[100];
         HeapBuffer buffer1 = new HeapBuffer(bytes1, false);

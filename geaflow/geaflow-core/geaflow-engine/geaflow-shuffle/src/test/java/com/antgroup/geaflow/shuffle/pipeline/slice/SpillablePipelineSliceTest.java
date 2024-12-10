@@ -82,7 +82,6 @@ public class SpillablePipelineSliceTest {
         Assert.assertEquals(bufferCount, consumedBufferCount);
         Assert.assertTrue(slice.canRelease());
         slice.release();
-        ShuffleMemoryTracker.getInstance().release();
     }
 
     class MockPipelineSliceListener implements PipelineSliceListener {
