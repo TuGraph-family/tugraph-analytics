@@ -84,7 +84,7 @@ public class OssIO implements IPersistentIO {
     @Override
     public boolean delete(Path path, boolean recursive) throws IOException {
         String key = pathToKey(path);
-        boolean delete_flag = false;
+        boolean deleteFlag = false;
 
         if (recursive) {
             String nextMarker = null;
@@ -103,14 +103,14 @@ public class OssIO implements IPersistentIO {
                 nextMarker = objectListing.getNextMarker();
                 if (!files.isEmpty()) {
                     ossClient.deleteObjects(new DeleteObjectsRequest(bucketName).withKeys(files));
-                    delete_flag = true;
+                    deleteFlag = true;
                 }
             }  while (objectListing.isTruncated());
         } else {
             ossClient.deleteObject(bucketName, key);
         }
 
-        return delete_flag;
+        return deleteFlag;
     }
 
     @Override
