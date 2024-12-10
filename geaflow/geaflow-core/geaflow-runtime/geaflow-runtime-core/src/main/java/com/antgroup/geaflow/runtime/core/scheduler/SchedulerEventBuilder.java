@@ -18,7 +18,6 @@ import static com.antgroup.geaflow.runtime.core.scheduler.context.AbstractCycleS
 
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.protocol.ScheduleStateType;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.util.ExecutionTaskUtils;
@@ -28,6 +27,7 @@ import com.antgroup.geaflow.runtime.core.protocol.ComposeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.ExecuteComputeEvent;
 import com.antgroup.geaflow.runtime.core.protocol.ExecuteFirstIterationEvent;
 import com.antgroup.geaflow.runtime.core.protocol.FinishIterationEvent;
+import com.antgroup.geaflow.runtime.core.protocol.FinishPrefetchEvent;
 import com.antgroup.geaflow.runtime.core.protocol.InitCollectCycleEvent;
 import com.antgroup.geaflow.runtime.core.protocol.InitCycleEvent;
 import com.antgroup.geaflow.runtime.core.protocol.InitIterationEvent;
@@ -39,6 +39,7 @@ import com.antgroup.geaflow.runtime.core.protocol.PopWorkerEvent;
 import com.antgroup.geaflow.runtime.core.protocol.PrefetchEvent;
 import com.antgroup.geaflow.runtime.core.protocol.RollbackCycleEvent;
 import com.antgroup.geaflow.runtime.core.protocol.StashWorkerEvent;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.ExecutableEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.CollectExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionCycleType;
@@ -51,7 +52,10 @@ import com.antgroup.geaflow.shuffle.IoDescriptor;
 import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class SchedulerEventBuilder {
@@ -63,7 +67,6 @@ public class SchedulerEventBuilder {
     private final CycleResultManager resultManager;
     private final boolean enableAffinity;
     private final boolean isIteration;
-    private final boolean prefetch;
     private final long schedulerId;
 
     public SchedulerEventBuilder(ICycleSchedulerContext<ExecutionNodeCycle, ExecutionGraphCycle, ?> context,
@@ -75,12 +78,13 @@ public class SchedulerEventBuilder {
         this.enableAffinity = context.getParentContext() != null
             && context.getParentContext().getCycle().getIterationCount() > 1;
         this.isIteration = cycle.getVertexGroup().getCycleGroupMeta().isIterative();
-        this.prefetch = context.getConfig().getBoolean(ExecutionConfigKeys.SHUFFLE_PREFETCH);
         this.schedulerId = schedulerId;
     }
 
     public ExecutableEventIterator build(ScheduleStateType state, long iterationId) {
         switch (state) {
+            case PREFETCH:
+                return this.buildPrefetch();
             case INIT:
                 return this.buildInitPipeline();
             case ITERATION_INIT:
@@ -89,6 +93,8 @@ public class SchedulerEventBuilder {
                 return buildExecute(iterationId);
             case ITERATION_FINISH:
                 return this.finishIteration();
+            case FINISH_PREFETCH:
+                return this.buildFinishPrefetch();
             case CLEAN_CYCLE:
                 return this.finishPipeline();
             case ROLLBACK:
@@ -99,15 +105,44 @@ public class SchedulerEventBuilder {
 
     }
 
+    private ExecutableEventIterator buildPrefetch() {
+        ExecutableEventIterator iterator = this.buildChildrenPrefetchEvent();
+        return iterator;
+    }
+
+    private ExecutableEventIterator buildFinishPrefetch() {
+        ExecutableEventIterator events = new ExecutableEventIterator();
+        Map<Integer, ExecutableEvent> needFinishedPrefetchEvents =
+            this.context.getPrefetchEvents();
+        Iterator<Entry<Integer, ExecutableEvent>> iterator = needFinishedPrefetchEvents.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, ExecutableEvent> entry = iterator.next();
+            ExecutableEvent executableEvent = entry.getValue();
+            IEvent event = executableEvent.getEvent();
+            PrefetchEvent prefetchEvent = (PrefetchEvent) event;
+            FinishPrefetchEvent finishPrefetchEvent = new FinishPrefetchEvent(
+                prefetchEvent.getSchedulerId(),
+                prefetchEvent.getWorkerId(),
+                prefetchEvent.getCycleId(),
+                prefetchEvent.getIterationWindowId(),
+                executableEvent.getTask().getTaskId(),
+                executableEvent.getTask().getIndex(),
+                prefetchEvent.getPipelineId(),
+                prefetchEvent.getEdgeIds());
+            ExecutableEvent finishExecutableEvent = ExecutableEvent.build(
+                executableEvent.getWorker(), executableEvent.getTask(), finishPrefetchEvent);
+            events.addEvent(finishExecutableEvent);
+            iterator.remove();
+        }
+        return events;
+    }
+
     private ExecutableEventIterator buildInitPipeline() {
         ExecutableEventIterator iterator = new ExecutableEventIterator();
-        if (this.prefetch && !this.cycle.isIterative()) {
-            ExecutableEventIterator prefetchEvents = this.buildChildrenPrefetchEvent();
-            iterator.merge(prefetchEvents);
-        }
         for (ExecutionTask task : this.cycle.getTasks()) {
             IoDescriptor ioDescriptor =
-                IoDescriptorBuilder.buildPipelineIoDescriptor(task, this.cycle, this.resultManager, this.prefetch);
+                IoDescriptorBuilder.buildPipelineIoDescriptor(task, this.cycle,
+                    this.resultManager, this.context.isPrefetch());
             iterator.addEvent(task.getWorkerInfo(), task, buildInitOrPopEvent(task, ioDescriptor));
         }
         return iterator;
@@ -122,9 +157,14 @@ public class SchedulerEventBuilder {
             if (childCycle instanceof ExecutionNodeCycle) {
                 ExecutionNodeCycle childNodeCycle = (ExecutionNodeCycle) childCycle;
                 List<ExecutionTask> childHeadTasks = childNodeCycle.getCycleHeads();
+                Map<Integer, ExecutableEvent> needFinishedPrefetchEvents =
+                    this.context.getPrefetchEvents();
                 for (ExecutionTask childHeadTask : childHeadTasks) {
                     PrefetchEvent prefetchEvent = this.buildPrefetchEvent(childNodeCycle, childHeadTask);
-                    iterator.addEvent(childHeadTask.getWorkerInfo(), childHeadTask, prefetchEvent);
+                    ExecutableEvent executableEvent = ExecutableEvent.build(childHeadTask.getWorkerInfo(),
+                        childHeadTask, prefetchEvent);
+                    iterator.addEvent(executableEvent);
+                    needFinishedPrefetchEvents.put(childHeadTask.getTaskId(), executableEvent);
                 }
             }
         }
@@ -286,10 +326,6 @@ public class SchedulerEventBuilder {
 
     private ExecutableEventIterator finishIteration() {
         ExecutableEventIterator iterator = new ExecutableEventIterator();
-        if (this.prefetch) {
-            ExecutableEventIterator prefetchEvents = this.buildChildrenPrefetchEvent();
-            iterator.merge(prefetchEvents);
-        }
         for (ExecutionTask task : this.cycle.getTasks()) {
             int workerId = task.getWorkerInfo().getWorkerIndex();
             // Finish iteration
