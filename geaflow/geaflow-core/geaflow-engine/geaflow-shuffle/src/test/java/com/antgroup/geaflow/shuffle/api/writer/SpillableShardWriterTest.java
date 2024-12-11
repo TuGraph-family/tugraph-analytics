@@ -19,7 +19,6 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFL
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
-import com.antgroup.geaflow.shuffle.pipeline.buffer.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
@@ -49,7 +48,6 @@ public class SpillableShardWriterTest {
         writerContext.setConfig(config);
         writerContext.setChannelNum(1);
         shardWriter.init(writerContext);
-        ShuffleMemoryTracker.getInstance(config);
         int[] channels = new int[]{0};
 
         for (int i = 0; i < 10000; i++) {
@@ -60,7 +58,6 @@ public class SpillableShardWriterTest {
         Assert.assertNotNull(shard);
         Assert.assertEquals(shard.getSlices().size(), 1);
 
-        ShuffleMemoryTracker.getInstance().release();
         SliceManager.getInstance().release(2);
     }
 
