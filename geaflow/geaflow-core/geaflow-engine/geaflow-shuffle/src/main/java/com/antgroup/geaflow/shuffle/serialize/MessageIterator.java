@@ -16,7 +16,7 @@ package com.antgroup.geaflow.shuffle.serialize;
 
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
 import com.antgroup.geaflow.common.serialize.impl.KryoSerializer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 import java.io.InputStream;

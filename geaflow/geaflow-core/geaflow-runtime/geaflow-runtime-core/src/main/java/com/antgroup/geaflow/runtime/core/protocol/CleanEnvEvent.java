@@ -19,7 +19,7 @@ import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
 import com.antgroup.geaflow.runtime.core.worker.context.WorkerContextManager;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 
 public class CleanEnvEvent extends AbstractCleanCommand {
 
@@ -35,7 +35,7 @@ public class CleanEnvEvent extends AbstractCleanCommand {
     @Override
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
-        ShuffleDataManager.getInstance().release(pipelineId);
+        SliceManager.getInstance().release(pipelineId);
         WorkerContextManager.clear();
         this.emitterRunner.add(ClearEmitterRequest.INSTANCE);
         this.sendDoneEvent(this.driverId, EventType.CLEAN_ENV, null, false);

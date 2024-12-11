@@ -32,6 +32,7 @@ import com.antgroup.geaflow.operator.Operator;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.operator.impl.window.incremental.IncrAggregateOperator;
 import com.antgroup.geaflow.state.StoreType;
+import com.google.common.collect.Lists;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +40,6 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
 
 public class IncrAggregateOperatorTest {
 

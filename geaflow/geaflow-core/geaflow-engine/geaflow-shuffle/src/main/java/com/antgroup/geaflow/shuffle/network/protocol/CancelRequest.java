@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.network.protocol;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.channel.ChannelId;
+import com.antgroup.geaflow.shuffle.pipeline.channel.ChannelId;
 import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;

@@ -25,7 +25,7 @@ import java.util.Optional;
 public class PipelineWriter<T> implements IShuffleWriter<T, Shard> {
 
     private final IConnectionManager connectionManager;
-    private ShardBuffer<T, Shard> shardBuffer;
+    private ShardWriter<T, Shard> shardWriter;
 
     public PipelineWriter(IConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
@@ -33,36 +33,36 @@ public class PipelineWriter<T> implements IShuffleWriter<T, Shard> {
 
     @Override
     public void init(IWriterContext writerContext) {
-        this.shardBuffer = writerContext.getDataExchangeMode() == DataExchangeMode.BATCH
-            ? new SpillableShardBuffer<>(this.connectionManager.getShuffleAddress())
-            : new PipelineShardBuffer<>();
-        this.shardBuffer.init(writerContext);
+        this.shardWriter = writerContext.getDataExchangeMode() == DataExchangeMode.BATCH
+            ? new SpillableShardWriter<>(this.connectionManager.getShuffleAddress())
+            : new PipelineShardWriter<>();
+        this.shardWriter.init(writerContext);
     }
 
     @Override
     public void emit(long batchId, T value, boolean isRetract, int[] channels) throws IOException {
-        this.shardBuffer.emit(batchId, value, isRetract, channels);
+        this.shardWriter.emit(batchId, value, isRetract, channels);
     }
 
     @Override
     public void emit(long batchId, List<T> data, boolean isRetract, int channel) throws IOException {
-        this.shardBuffer.emit(batchId, data, channel);
+        this.shardWriter.emit(batchId, data, channel);
     }
 
     @Override
     public Optional<Shard> flush(long batchId) throws IOException {
-        return this.shardBuffer.finish(batchId);
+        return this.shardWriter.finish(batchId);
     }
 
     @Override
     public ShuffleWriteMetrics getShuffleWriteMetrics() {
-        return this.shardBuffer.getShuffleWriteMetrics();
+        return this.shardWriter.getShuffleWriteMetrics();
     }
 
     @Override
     public void close() {
-        if (this.shardBuffer != null) {
-            this.shardBuffer.close();
+        if (this.shardWriter != null) {
+            this.shardWriter.close();
         }
     }
 

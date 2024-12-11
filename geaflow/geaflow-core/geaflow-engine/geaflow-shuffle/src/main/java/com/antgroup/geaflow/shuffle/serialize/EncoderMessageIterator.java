@@ -17,7 +17,7 @@ package com.antgroup.geaflow.shuffle.serialize;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
 import java.io.IOException;
 import java.io.InputStream;
 import org.slf4j.Logger;

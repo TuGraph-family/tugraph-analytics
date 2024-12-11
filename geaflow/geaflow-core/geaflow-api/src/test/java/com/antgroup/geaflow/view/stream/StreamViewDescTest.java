@@ -17,7 +17,6 @@ package com.antgroup.geaflow.view.stream;
 import com.antgroup.geaflow.api.partition.kv.KeyByPartition;
 import com.antgroup.geaflow.view.IViewDesc;
 import java.util.HashMap;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

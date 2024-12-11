@@ -43,7 +43,7 @@ import com.antgroup.geaflow.runtime.core.scheduler.statemachine.ScheduleState;
 import com.antgroup.geaflow.runtime.core.scheduler.statemachine.graph.GraphStateMachine;
 import com.antgroup.geaflow.runtime.core.scheduler.strategy.IScheduleStrategy;
 import com.antgroup.geaflow.runtime.core.scheduler.strategy.TopologicalOrderScheduleStrategy;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -216,7 +216,7 @@ public class ExecutionGraphCycleScheduler<PC extends IExecutionCycle, PCC extend
         } catch (InterruptedException e) {
             throw new GeaflowRuntimeException("exception when wait all clean event finish", e);
         } finally {
-            ShuffleDataManager.getInstance().release(pipelineId);
+            SliceManager.getInstance().release(pipelineId);
         }
     }
 

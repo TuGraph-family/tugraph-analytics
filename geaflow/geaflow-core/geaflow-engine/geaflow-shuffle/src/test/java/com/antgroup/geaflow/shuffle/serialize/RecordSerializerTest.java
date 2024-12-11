@@ -15,9 +15,9 @@
 package com.antgroup.geaflow.shuffle.serialize;
 
 import com.antgroup.geaflow.model.record.impl.Record;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.HeapBuffer.HeapBufferBuilder;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer.BufferBuilder;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.HeapBuffer.HeapBufferBuilder;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer.BufferBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import org.testng.Assert;
