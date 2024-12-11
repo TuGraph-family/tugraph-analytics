@@ -16,13 +16,13 @@ package com.antgroup.geaflow.cluster.fetcher;
 
 import com.antgroup.geaflow.cluster.protocol.InputMessage;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.SpillablePipelineSlice;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import com.antgroup.geaflow.shuffle.message.SliceId;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SpillablePipelineSlice;
 import com.antgroup.geaflow.shuffle.serialize.AbstractMessageIterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +39,7 @@ public class PrefetchMessageBuffer<T> implements IInputMessageBuffer<T> {
     public PrefetchMessageBuffer(String logTag, SliceId sliceId) {
         this.slice = new SpillablePipelineSlice(logTag, sliceId, 1);
         this.edgeId = sliceId.getEdgeId();
-        ShuffleDataManager.getInstance().register(sliceId, this.slice);
+        SliceManager.getInstance().register(sliceId, this.slice);
     }
 
     @Override

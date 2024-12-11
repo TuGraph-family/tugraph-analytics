@@ -189,5 +189,4 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
     public long getPipelineId() {
         return this.pipelineId;
     }
-
 }

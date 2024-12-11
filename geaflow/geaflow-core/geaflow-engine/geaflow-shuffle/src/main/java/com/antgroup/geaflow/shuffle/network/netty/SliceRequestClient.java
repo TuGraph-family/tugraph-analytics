@@ -14,12 +14,12 @@
 
 package com.antgroup.geaflow.shuffle.network.netty;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.channel.RemoteInputChannel;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.ConnectionId;
 import com.antgroup.geaflow.shuffle.network.protocol.BatchRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.CloseRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.SliceRequest;
+import com.antgroup.geaflow.shuffle.pipeline.channel.RemoteInputChannel;
 import com.antgroup.geaflow.shuffle.util.AtomicReferenceCounter;
 import com.antgroup.geaflow.shuffle.util.TransportException;
 import com.google.common.base.Preconditions;

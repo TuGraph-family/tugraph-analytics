@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.serialize;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
 
 public interface IRecordSerializer<T> {
 

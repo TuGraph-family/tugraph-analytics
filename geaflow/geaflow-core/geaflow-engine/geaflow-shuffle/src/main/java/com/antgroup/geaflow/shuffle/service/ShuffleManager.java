@@ -18,11 +18,10 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
-import com.antgroup.geaflow.shuffle.memory.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.netty.ConnectionManager;
-import com.antgroup.geaflow.shuffle.service.impl.AutoShuffleService;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.ShuffleMemoryTracker;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ public class ShuffleManager {
     private final Configuration configuration;
 
     public ShuffleManager(Configuration config) {
-        this.shuffleService = new AutoShuffleService();
+        this.shuffleService = new NettyShuffleService();
         this.connectionManager = new ConnectionManager(ShuffleConfig.getInstance(config));
         this.shuffleService.init(connectionManager);
         this.configuration = config;
@@ -47,7 +46,7 @@ public class ShuffleManager {
         if (INSTANCE == null) {
             INSTANCE = new ShuffleManager(config);
             ShuffleMemoryTracker.getInstance(config);
-            ShuffleDataManager.init();
+            SliceManager.init();
         }
         return INSTANCE;
     }

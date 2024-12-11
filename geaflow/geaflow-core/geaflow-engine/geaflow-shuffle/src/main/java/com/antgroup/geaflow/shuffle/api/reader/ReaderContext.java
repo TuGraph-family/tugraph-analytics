@@ -17,7 +17,6 @@ package com.antgroup.geaflow.shuffle.api.reader;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
-
 import java.util.List;
 import java.util.Map;
 
