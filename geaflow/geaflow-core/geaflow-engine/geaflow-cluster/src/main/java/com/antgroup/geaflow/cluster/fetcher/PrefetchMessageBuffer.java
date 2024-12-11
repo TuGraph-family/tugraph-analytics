@@ -37,7 +37,7 @@ public class PrefetchMessageBuffer<T> implements IInputMessageBuffer<T> {
     private final int edgeId;
 
     public PrefetchMessageBuffer(String logTag, SliceId sliceId) {
-        this.slice = new SpillablePipelineSlice(logTag, sliceId, 1);
+        this.slice = new SpillablePipelineSlice(logTag, sliceId);
         this.edgeId = sliceId.getEdgeId();
         SliceManager.getInstance().register(sliceId, this.slice);
     }

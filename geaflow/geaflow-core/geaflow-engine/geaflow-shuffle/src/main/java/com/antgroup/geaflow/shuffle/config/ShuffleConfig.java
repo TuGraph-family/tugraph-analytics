@@ -35,11 +35,11 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFL
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_SIZE_BYTES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FORCE_DISK_ENABLE;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FORCE_MEMORY_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_STORAGE_TYPE;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.shuffle.StorageLevel;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,9 +93,7 @@ public class ShuffleConfig {
     private final int emitBufferSize;
     private final int flushBufferSizeBytes;
     private final int flushBufferTimeoutMs;
-    private final boolean forceMemory;
-    private final boolean forceDisk;
-
+    private final StorageLevel storageLevel;
 
     private static ShuffleConfig INSTANCE;
 
@@ -147,8 +145,7 @@ public class ShuffleConfig {
         this.emitBufferSize = config.getInteger(SHUFFLE_EMIT_BUFFER_SIZE);
         this.flushBufferSizeBytes = config.getInteger(SHUFFLE_FLUSH_BUFFER_SIZE_BYTES);
         this.flushBufferTimeoutMs = config.getInteger(SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS);
-        this.forceMemory = config.getBoolean(SHUFFLE_FORCE_MEMORY_ENABLE);
-        this.forceDisk = config.getBoolean(SHUFFLE_FORCE_DISK_ENABLE);
+        this.storageLevel = StorageLevel.valueOf(config.getString(SHUFFLE_STORAGE_TYPE));
 
         LOGGER.info("init shuffle config: {}", config);
     }
@@ -259,12 +256,7 @@ public class ShuffleConfig {
         return this.flushBufferTimeoutMs;
     }
 
-    public boolean isForceMemory() {
-        return this.forceMemory;
+    public StorageLevel getStorageLevel() {
+        return this.storageLevel;
     }
-
-    public boolean isForceDisk() {
-        return this.forceDisk;
-    }
-
 }

@@ -15,13 +15,24 @@
 package com.antgroup.geaflow.common.shuffle;
 
 /**
- * shuffle/cache data storage level.
+ * Shuffle data storage level.
  */
 public enum StorageLevel {
 
-    /** data stored on local disk. */
-    disk,
+    /**
+     * Shuffle data is stored in memory.
+     */
+    MEMORY,
 
-    /** data stored on pangu. */
-    pangu
+    /**
+     * Shuffle data are stored on local disks.
+     */
+    DISK,
+
+    /**
+     * Shuffle data is written to memory first, and if there is insufficient memory, it is then
+     * written to disk.
+     */
+    MEMORY_AND_DISK
+
 }
