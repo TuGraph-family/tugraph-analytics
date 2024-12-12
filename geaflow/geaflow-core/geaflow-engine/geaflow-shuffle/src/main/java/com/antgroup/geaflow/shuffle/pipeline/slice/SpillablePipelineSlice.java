@@ -17,20 +17,19 @@ package com.antgroup.geaflow.shuffle.pipeline.slice;
 import com.antgroup.geaflow.common.encoder.Encoders;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.iterator.CloseableIterator;
+import com.antgroup.geaflow.common.shuffle.StorageLevel;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.ShuffleMemoryTracker;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import com.antgroup.geaflow.shuffle.storage.ShuffleStore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,29 +38,32 @@ public class SpillablePipelineSlice extends AbstractSlice {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpillablePipelineSlice.class);
 
-    private static final int BUFFER_SIZE = 64 * 1024;
-
     private final String fileName;
+    private final StorageLevel storageLevel;
+    private final ShuffleStore store;
+
     private OutputStream outputStream;
     private CloseableIterator<PipeBuffer> streamBufferIterator;
     private PipeBuffer value;
     private volatile boolean ready2read = false;
 
-    // Whether force write data to memory;
-    private final boolean forceMemory;
-    // Whether force write data to disk;
-    private final boolean forceDisk;
     // Bytes count in memory.
     private long memoryBytes = 0;
     // Bytes count on disk.
     private long diskBytes = 0;
 
+    public SpillablePipelineSlice(String taskLogTag, SliceId sliceId) {
+        this(taskLogTag, sliceId, 0);
+    }
+
     public SpillablePipelineSlice(String taskLogTag, SliceId sliceId, int refCount) {
         super(taskLogTag, sliceId, refCount);
-        this.fileName = String.format("shuffle-%d-%d-%d",
+
+        this.store = ShuffleStore.getShuffleStore(ShuffleConfig.getInstance().getStorageLevel());
+        String fileName = String.format("shuffle-%d-%d-%d",
             sliceId.getPipelineId(), sliceId.getEdgeId(), sliceId.getSliceIndex());
-        this.forceMemory = ShuffleConfig.getInstance().isForceMemory();
-        this.forceDisk = ShuffleConfig.getInstance().isForceDisk();
+        this.fileName = store.getFilePath(fileName);
+        this.storageLevel = ShuffleConfig.getInstance().getStorageLevel();
     }
 
     public String getFileName() {
@@ -79,18 +81,19 @@ public class SpillablePipelineSlice extends AbstractSlice {
         }
         totalBufferCount++;
 
-        if (this.forceMemory) {
+        if (this.storageLevel == StorageLevel.MEMORY) {
             this.writeMemory(buffer);
             return true;
         }
-        if (this.forceDisk) {
-            this.writeDisk(buffer);
+
+        if (this.storageLevel == StorageLevel.DISK) {
+            this.writeStore(buffer);
             return true;
         }
 
         this.writeMemory(buffer);
         if (!ShuffleMemoryTracker.getInstance().checkMemoryEnough()) {
-            this.spillDisk();
+            this.spillWrite();
         }
         return true;
     }
@@ -100,10 +103,10 @@ public class SpillablePipelineSlice extends AbstractSlice {
         this.memoryBytes += buffer.getBufferSize();
     }
 
-    private void writeDisk(PipeBuffer buffer) {
+    private void writeStore(PipeBuffer buffer) {
         try {
             if (this.outputStream == null) {
-                this.outputStream = this.createTmpFile();
+                this.outputStream = store.getOutputStream(fileName);
             }
             this.write2Stream(buffer);
         } catch (IOException e) {
@@ -111,10 +114,10 @@ public class SpillablePipelineSlice extends AbstractSlice {
         }
     }
 
-    private void spillDisk() {
+    private void spillWrite() {
         try {
             if (this.outputStream == null) {
-                this.outputStream = this.createTmpFile();
+                this.outputStream = store.getOutputStream(fileName);
             }
             while (!buffers.isEmpty()) {
                 PipeBuffer buffer = buffers.poll();
@@ -140,31 +143,11 @@ public class SpillablePipelineSlice extends AbstractSlice {
         }
     }
 
-    private OutputStream createTmpFile() {
-        try {
-            Path path = Paths.get(this.fileName);
-            Files.deleteIfExists(path);
-            Files.createFile(path);
-            return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.WRITE), BUFFER_SIZE);
-        } catch (IOException e) {
-            throw new GeaflowRuntimeException(e);
-        }
-    }
-
-    private InputStream readFromTmpFile() {
-        try {
-            Path path = Paths.get(this.fileName);
-            return new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ), BUFFER_SIZE);
-        } catch (IOException e) {
-            throw new GeaflowRuntimeException(e);
-        }
-    }
-
     @Override
     public void flush() {
         if (this.outputStream != null) {
             try {
-                spillDisk();
+                spillWrite();
                 this.outputStream.flush();
                 this.outputStream.close();
                 this.outputStream = null;
@@ -250,7 +233,7 @@ public class SpillablePipelineSlice extends AbstractSlice {
         private PipeBuffer next;
 
         FileStreamIterator() {
-            this.inputStream = readFromTmpFile();
+            this.inputStream = store.getInputStream(fileName);
         }
 
         @Override
