@@ -90,13 +90,6 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
       return;
     }
 
-    if (type === "TuGraph_Learn") {
-      const learnPath = `/tugraph-db/${lang}/${version}/olap&procedure/learn/tutorial`;
-      window.location.href = "https://zhongyunwan.github.io" + learnPath;
-      // history.push(learnPath);
-      return;
-    }
-
     if (type === "TuGraph_DB") {
       const newPath = `/tugraph-db/${lang}/${version}/guide`;
       window.location.href = "https://zhongyunwan.github.io" + newPath;
