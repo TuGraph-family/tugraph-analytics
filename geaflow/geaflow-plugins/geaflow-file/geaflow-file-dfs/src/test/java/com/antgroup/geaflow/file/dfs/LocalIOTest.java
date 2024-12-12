@@ -44,14 +44,14 @@ public class LocalIOTest {
         persistentIO.copyFromLocalFile(new Path("/tmp/README"), new Path("/tmp/geaflow/chk/myName/0/README"));
         persistentIO.copyFromLocalFile(new Path("/tmp/README"), new Path("/tmp/geaflow/chk/myName/1/README"));
 
-        persistentIO.rename(new Path("/tmp/geaflow/chk/myName/"), new Path("/tmp/geaflow/chk/myName2"));
-        List<String> list = persistentIO.listFile(new Path("/tmp/geaflow/chk/myName2"));
+        persistentIO.renameFile(new Path("/tmp/geaflow/chk/myName/"), new Path("/tmp/geaflow/chk/myName2"));
+        List<String> list = persistentIO.listFileName(new Path("/tmp/geaflow/chk/myName2"));
         Assert.assertEquals(list.size(), 3);
 
-        FileInfo[] res = persistentIO.listStatus(new Path("/tmp/geaflow/chk/myName2/datas"));
+        FileInfo[] res = persistentIO.listFileInfo(new Path("/tmp/geaflow/chk/myName2/datas"));
         Assert.assertEquals(res.length, 101);
 
-        persistentIO.rename(new Path("/tmp/geaflow/chk/myName2/datas/README46"),
+        persistentIO.renameFile(new Path("/tmp/geaflow/chk/myName2/datas/README46"),
             new Path("/tmp/geaflow/chk/myName2/datas/MYREADME46"));
         Assert.assertTrue(persistentIO.exists(new Path("/tmp/geaflow/chk/myName2/datas/MYREADME46")));
         Assert.assertFalse(persistentIO.exists(new Path("/tmp/geaflow/chk/myName2/datas/README46")));
