@@ -8,13 +8,13 @@ SqlCall GQLMatchStatement() :
         (
           statement = SqlLetStatement(statement) (<COMMA> statement = SqlLetStatement(statement))*
           [
-            <MATCH>
+            [ <NEXT> ] <MATCH>
             statement = SqlMatchPattern(statement)
           ]
         )
         |
         (
-           <MATCH>
+           [ <NEXT> ] <MATCH>
            statement = SqlMatchPattern(statement)
         )
       )*
@@ -157,12 +157,37 @@ SqlReturnStatement SqlReturn(SqlNode from) :
     }
 }
 
+SqlNodeList SqlMatchNodePropertySpecification() :
+{
+    List<SqlNode> propertySpecificationList = null;
+    SqlIdentifier variable = null;
+    SqlNode expr = null;
+    Span s = Span.of();
+}
+{
+      {
+          propertySpecificationList = new ArrayList<SqlNode>();
+      }
+      variable = SimpleIdentifier() { propertySpecificationList.add(variable);  }
+      <COLON>
+      expr = Expression(ExprContext.ACCEPT_NON_QUERY) { propertySpecificationList.add(expr);}
+      (
+          <COMMA>
+          variable = SimpleIdentifier() { propertySpecificationList.add(variable);  }
+          <COLON>
+          expr = Expression(ExprContext.ACCEPT_NON_QUERY) { propertySpecificationList.add(expr);}
+      )*
+      {
+          return new SqlNodeList(propertySpecificationList, s.addAll(propertySpecificationList).pos());
+      }
+}
 
 SqlCall SqlMatchNode() :
 {
     SqlIdentifier variable = null;
     SqlNodeList labels = null;
     SqlIdentifier label = null;
+    SqlNodeList propertySpecification = null;
     SqlNode condition = null;
     Span s = Span.of();
 }
@@ -182,16 +207,23 @@ SqlCall SqlMatchNode() :
             labels = new SqlNodeList(labelList, s.addAll(labelList).pos());
         }
     ]
-
     [
-        <WHERE>
-        condition = Expression(ExprContext.ACCEPT_SUB_QUERY)
+        (
+          <LBRACE>
+          propertySpecification = SqlMatchNodePropertySpecification()
+          <RBRACE>
+        )
+      |
+        (
+          <WHERE>
+          condition = Expression(ExprContext.ACCEPT_NON_QUERY)
+        )
     ]
 
     <RPAREN>
 
     {
-        return new SqlMatchNode(s.end(this), variable, labels, condition);
+        return new SqlMatchNode(s.end(this), variable, labels, propertySpecification, condition);
     }
 
 }
@@ -201,6 +233,7 @@ SqlCall SqlMatchEdge() :
     SqlIdentifier variable = null;
     SqlNodeList labels = null;
     SqlIdentifier label = null;
+    SqlNodeList propertySpecification = null;
     SqlNode condition = null;
     Span s = Span.of();
     EdgeDirection direction = null;
@@ -229,10 +262,17 @@ SqlCall SqlMatchEdge() :
                     labels = new SqlNodeList(labelList, s.addAll(labelList).pos());
                 }
             ]
-
             [
-                <WHERE>
-                condition = Expression(ExprContext.ACCEPT_NON_QUERY)
+                (
+                  <LBRACE>
+                  propertySpecification = SqlMatchNodePropertySpecification()
+                  <RBRACE>
+                )
+              |
+                (
+                  <WHERE>
+                  condition = Expression(ExprContext.ACCEPT_NON_QUERY)
+                )
             ]
         <RBRACKET>
         <MINUS>
@@ -242,12 +282,17 @@ SqlCall SqlMatchEdge() :
     ]
     [
       <LBRACE> { minHop = -1; maxHop = -1; }
-        <UNSIGNED_INTEGER_LITERAL> { minHop = Integer.parseInt(token.image); }
-        <COMMA> [ <UNSIGNED_INTEGER_LITERAL> { maxHop = Integer.parseInt(token.image); } ]
+        <UNSIGNED_INTEGER_LITERAL> { minHop = Integer.parseInt(token.image); maxHop = minHop;}
+        [
+          (<COMMA> <UNSIGNED_INTEGER_LITERAL>) { maxHop = Integer.parseInt(token.image); }
+          |
+          (<COMMA>) { maxHop = -1; }
+        ]
       <RBRACE>
     ]
     {
-        return new SqlMatchEdge(s.end(this), variable, labels, condition, direction, minHop, maxHop);
+        return new SqlMatchEdge(s.end(this), variable, labels, propertySpecification, condition,
+        direction, minHop, maxHop);
     }
 }
 

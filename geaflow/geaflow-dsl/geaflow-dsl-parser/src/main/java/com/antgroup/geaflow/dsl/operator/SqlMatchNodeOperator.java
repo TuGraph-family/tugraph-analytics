@@ -40,7 +40,8 @@ public class SqlMatchNodeOperator extends SqlOperator {
         SqlLiteral functionQualifier,
         SqlParserPos pos,
         SqlNode... operands) {
-        return new SqlMatchNode(pos, (SqlIdentifier) operands[0], (SqlNodeList) operands[1], operands[2]);
+        return new SqlMatchNode(pos, (SqlIdentifier) operands[0], (SqlNodeList) operands[1],
+            (SqlNodeList) operands[2], operands[3]);
     }
 
     @Override
