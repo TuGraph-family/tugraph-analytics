@@ -34,10 +34,10 @@ public class SqlMatchEdge extends SqlMatchNode {
     private final int maxHop;
 
     public SqlMatchEdge(SqlParserPos pos, SqlIdentifier name,
-                        SqlNodeList labels, SqlNode where,
+                        SqlNodeList labels, SqlNodeList propertySpecification, SqlNode where,
                         EdgeDirection direction,
                         int minHop, int maxHop) {
-        super(pos, name, labels, where);
+        super(pos, name, labels, propertySpecification, where);
         this.direction = direction;
         this.minHop = minHop;
         this.maxHop = maxHop;

@@ -142,9 +142,14 @@ public class QueryTester implements Serializable {
     }
 
     public void checkSinkResult() throws Exception {
+        checkSinkResult(null);
+    }
+
+    public void checkSinkResult(String dict) throws Exception {
         String[] paths = queryPath.split("/");
         String lastPath = paths[paths.length - 1];
-        String exceptPath = "/expect/" + lastPath.split("\\.")[0] + ".txt";
+        String exceptPath = dict != null ? "/expect/" + dict + "/" + lastPath.split("\\.")[0] + ".txt"
+                                              : "/expect/" + lastPath.split("\\.")[0] + ".txt";
         String targetPath = getTargetPath(queryPath);
         String expectResult = IOUtils.resourceToString(exceptPath, Charset.defaultCharset()).trim();
         String actualResult = readFile(targetPath);
