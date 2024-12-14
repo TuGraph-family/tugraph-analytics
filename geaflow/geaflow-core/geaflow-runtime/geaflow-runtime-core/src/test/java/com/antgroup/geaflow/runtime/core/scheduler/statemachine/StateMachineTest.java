@@ -544,6 +544,7 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
     private ExecutionNodeCycle buildMockCycle(boolean isIterative, long finishIterationId) {
         return buildMockCycle(isIterative, finishIterationId, true);
     }
+
     private ExecutionNodeCycle buildMockCycle(boolean isIterative) {
         return buildMockCycle(isIterative, 5);
     }
