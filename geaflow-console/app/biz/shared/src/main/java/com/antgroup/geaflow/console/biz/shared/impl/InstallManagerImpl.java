@@ -17,18 +17,23 @@ package com.antgroup.geaflow.console.biz.shared.impl;
 import com.antgroup.geaflow.console.biz.shared.InstallManager;
 import com.antgroup.geaflow.console.biz.shared.VersionManager;
 import com.antgroup.geaflow.console.biz.shared.convert.InstallViewConverter;
+import com.antgroup.geaflow.console.biz.shared.demo.DemoJob;
 import com.antgroup.geaflow.console.biz.shared.view.InstallView;
 import com.antgroup.geaflow.console.common.util.Fmt;
 import com.antgroup.geaflow.console.common.util.I18nUtil;
 import com.antgroup.geaflow.console.common.util.NetworkUtil;
 import com.antgroup.geaflow.console.common.util.ProcessUtil;
+import com.antgroup.geaflow.console.common.util.context.ContextHolder;
+import com.antgroup.geaflow.console.common.util.context.GeaflowContext;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginCategory;
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.core.model.cluster.GeaflowCluster;
 import com.antgroup.geaflow.console.core.model.config.GeaflowSystemConfig;
 import com.antgroup.geaflow.console.core.model.config.SystemConfigKeys;
+import com.antgroup.geaflow.console.core.model.data.GeaflowInstance;
 import com.antgroup.geaflow.console.core.model.install.GeaflowInstall;
+import com.antgroup.geaflow.console.core.model.job.GeaflowJob;
 import com.antgroup.geaflow.console.core.model.plugin.config.ContainerPluginConfigClass;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.model.plugin.config.InfluxdbPluginConfigClass;
@@ -37,10 +42,16 @@ import com.antgroup.geaflow.console.core.model.plugin.config.K8sPluginConfigClas
 import com.antgroup.geaflow.console.core.model.plugin.config.LocalPluginConfigClass;
 import com.antgroup.geaflow.console.core.model.plugin.config.PluginConfigClass;
 import com.antgroup.geaflow.console.core.model.plugin.config.RedisPluginConfigClass;
+import com.antgroup.geaflow.console.core.model.security.GeaflowTenant;
+import com.antgroup.geaflow.console.core.model.security.GeaflowUser;
 import com.antgroup.geaflow.console.core.service.ClusterService;
 import com.antgroup.geaflow.console.core.service.DatasourceService;
+import com.antgroup.geaflow.console.core.service.InstanceService;
+import com.antgroup.geaflow.console.core.service.JobService;
 import com.antgroup.geaflow.console.core.service.PluginConfigService;
 import com.antgroup.geaflow.console.core.service.SystemConfigService;
+import com.antgroup.geaflow.console.core.service.TenantService;
+import com.antgroup.geaflow.console.core.service.UserService;
 import com.antgroup.geaflow.console.core.service.config.DatasourceConfig;
 import com.antgroup.geaflow.console.core.service.config.DeployConfig;
 import com.antgroup.geaflow.console.core.service.security.TokenGenerator;
@@ -82,6 +93,26 @@ public class InstallManagerImpl implements InstallManager {
 
     @Autowired
     private TokenGenerator tokenGenerator;
+
+    @Autowired
+    private JobService jobService;
+
+    @Autowired
+    private InstanceService instanceService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    private final List<DemoJob> demoJobs;
+
+    @Autowired
+    public InstallManagerImpl(List<DemoJob> demoJobs) {
+        this.demoJobs = demoJobs;
+    }
+
 
     private interface ConfigBuilder {
 
@@ -242,8 +273,40 @@ public class InstallManagerImpl implements InstallManager {
 
         // set install status
         systemConfigService.setValue(SystemConfigKeys.GEAFLOW_INITIALIZED, true);
+
+        createDemoJobs();
         return true;
     }
+
+    private void createDemoJobs() {
+        GeaflowContext context = ContextHolder.get();
+        try {
+            GeaflowUser user = userService.get(context.getUserId());
+            GeaflowTenant tenant = tenantService.getByName(tenantService.getDefaultTenantName(user.getName()));
+            GeaflowInstance instance = instanceService.getByName(
+                instanceService.getDefaultInstanceName(user.getName()));
+            context.setTenantId(tenant.getId());
+            context.setSystemSession(false);
+
+            List<GeaflowJob> jobs = new ArrayList<>();
+            for (DemoJob demoJob : demoJobs) {
+                GeaflowJob job = demoJob.build();
+                job.setInstanceId(instance.getId());
+                jobs.add(job);
+            }
+
+            jobService.create(jobs);
+            log.info("create demo jobs success");
+        } catch (Exception e) {
+            log.error("create demo job failed", e);
+            throw e;
+        } finally {
+            context.setTenantId(null);
+            context.setSystemSession(true);
+        }
+
+    }
+
 
     private class DefaultConfigBuilder implements ConfigBuilder {
 

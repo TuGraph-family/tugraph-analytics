@@ -330,6 +330,16 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(5)
         .description("cluster client exit wait time in seconds");
 
+    public static final ConfigKey SERVICE_DISCOVERY_TYPE = ConfigKeys
+        .key("geaflow.service.discovery.type")
+        .defaultValue("redis")
+        .description("service discovery type, e.g.[zookeeper, redis]");
+
+    public static final ConfigKey JOB_MODE = ConfigKeys
+        .key("geaflow.job.mode")
+        .defaultValue("compute")
+        .description("job mode, e.g.[compute, olap service]");
+
     // ------------------------------------------------------------------------
     // supervisor
     // ------------------------------------------------------------------------
@@ -363,22 +373,12 @@ public class ExecutionConfigKeys implements Serializable {
     // shuffle
     // ------------------------------------------------------------------------
 
-    /** shuffle common config. */
+    /** Shuffle common config. */
 
-    public static final ConfigKey SHUFFLE_IO_MAX_RETRIES = ConfigKeys
-        .key("geaflow.shuffle.io.max.retries")
-        .defaultValue(5)
-        .description("shuffle io max retry times");
-
-    public static final ConfigKey SHUFFLE_IO_RETRY_WAIT = ConfigKeys
-        .key("geaflow.shuffle.io.retry.wait.ms")
-        .defaultValue(500)
-        .description("time to wait in each shuffle io retry");
-
-    public static final ConfigKey SHUFFLE_MAX_BYTES_IN_FLIGHT = ConfigKeys
-        .key("geaflow.shuffle.max.bytes.inflight")
-        .defaultValue(128 * 1024 * 1024L)
-        .description("max number of bytes in flight");
+    public static final ConfigKey SHUFFLE_PREFETCH = ConfigKeys
+        .key("geaflow.shuffle.prefetch.enable")
+        .defaultValue(true)
+        .description("if enable shuffle prefetch");
 
     public static final ConfigKey SHUFFLE_MEMORY_POOL_ENABLE = ConfigKeys
         .key("geaflow.shuffle.memory.pool.enable")
@@ -387,7 +387,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey SHUFFLE_COMPRESSION_ENABLE = ConfigKeys
         .key("geaflow.shuffle.compression.enable")
-        .defaultValue(true)
+        .defaultValue(false)
         .description("whether to enable shuffle compression");
 
     public static final ConfigKey SHUFFLE_COMPRESSION_CODEC = ConfigKeys
@@ -395,7 +395,7 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue("snappy")
         .description("codec of shuffle compression");
 
-    /** shffle network config. */
+    /** Shuffle network config. */
 
     public static final ConfigKey NETTY_SERVER_HOST = ConfigKeys
         .key("geaflow.netty.server.host")
@@ -427,8 +427,8 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(180000)
         .description("netty connection timeout in milliseconds");
 
-    public static final ConfigKey NETTY_CONNECT_MAX_RETRIES = ConfigKeys
-        .key("geaflow.netty.connect.retries")
+    public static final ConfigKey NETTY_CONNECT_MAX_RETRY_TIMES = ConfigKeys
+        .key("geaflow.netty.connect.retry.times")
         .defaultValue(100)
         .description("max retry times of netty connection");
 
@@ -479,7 +479,7 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(1)
         .description("size of shuffle fetch queue");
 
-    /** shuffle write config. */
+    /** Shuffle write config. */
 
     public static final ConfigKey SHUFFLE_SPILL_RECORDS = ConfigKeys
         .key("geaflow.shuffle.spill.records")
@@ -491,8 +491,8 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(1610612736L) // 1.5G
         .description("max size of each spill per slice in Bytes");
 
-    public static final ConfigKey SHUFFLE_WRITE_BUFFER_SIZE_BYTES = ConfigKeys
-        .key("geaflow.shuffle.write.buffer.size.bytes")
+    public static final ConfigKey SHUFFLE_FLUSH_BUFFER_SIZE_BYTES = ConfigKeys
+        .key("geaflow.shuffle.flush.buffer.size.bytes")
         .defaultValue(128 * 1024)
         .description("size of shuffle write buffer");
 
@@ -511,22 +511,12 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(100)
         .description("shuffle flush buffer timeout ms");
 
-    public static final ConfigKey SHUFFLE_CACHE_SPILL_THRESHOLD = ConfigKeys
-        .key("geaflow.shuffle.cache.spill.threshold")
-        .defaultValue(0.1)
-        .description("threshold of shuffle cache spill");
-
-    /** shuffle storage. */
+    /** Shuffle storage. */
 
     public static final ConfigKey SHUFFLE_STORAGE_TYPE = ConfigKeys
         .key("geaflow.shuffle.storage.type")
-        .defaultValue(StorageLevel.disk)
+        .defaultValue(StorageLevel.MEMORY_AND_DISK)
         .description("type of shuffle storage");
-
-    public static final ConfigKey SHUFFLE_OFFHEAP_MEMORY_FRACTION = ConfigKeys
-        .key("geaflow.shuffle.offheap.fraction")
-        .defaultValue(0.2)
-        .description("fraction of shuffle offheap memory");
 
     public static final ConfigKey SHUFFLE_HEAP_MEMORY_FRACTION = ConfigKeys
         .key("geaflow.shuffle.heap.memory.fraction")
@@ -538,22 +528,6 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(0.9)
         .description("fraction of shuffle memory to ensure safety");
 
-    /** remote shuffle. */
-
-    public static final ConfigKey SHUFFLE_SIZE_PER_HANDLER = ConfigKeys
-        .key("geaflow.shuffle.size.per.handler")
-        .defaultValue(32 * 1024 * 1024)
-        .description("shuffle size per handler");
-
-    public static final ConfigKey SHUFFLE_MAX_BLOCK_TO_MEM = ConfigKeys
-        .key("geaflow.shuffle.max.block.to.mem")
-        .defaultValue(32 * 1024 * 1024L)
-        .description("max size of block to shuffle memory");
-
-    public static final ConfigKey SHUFFLE_STORE_DATA_ROOT = ConfigKeys
-        .key("geaflow.shuffle.store.data.root")
-        .defaultValue("/remote-shuffle")
-        .description("shuffle store data root");
 
     // ------------------------------------------------------------------------
     // metrics
@@ -618,20 +592,5 @@ public class ExecutionConfigKeys implements Serializable {
         .key("geaflow.metric.detail.enable")
         .defaultValue(false)
         .description("if enable detail job metric");
-
-    public static final ConfigKey SERVICE_DISCOVERY_TYPE = ConfigKeys
-        .key("geaflow.service.discovery.type")
-        .defaultValue("redis")
-        .description("service discovery type");
-
-    public static final ConfigKey JOB_MODE = ConfigKeys
-        .key("geaflow.job.mode")
-        .defaultValue("compute")
-        .description("job mode, e.g.[compute, olap service, state service]");
-
-    public static final ConfigKey META_SERVER_RETRY_TIMES = ConfigKeys
-        .key("geaflow.meta.server.retry.times")
-        .defaultValue(3)
-        .description("meta server connect retry times");
 
 }

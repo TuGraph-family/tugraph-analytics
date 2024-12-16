@@ -39,7 +39,7 @@ public abstract class AbstractTaskService<TASK, R extends ITaskRunner<TASK>> imp
         this.tasks = buildTaskRunner();
         Preconditions.checkArgument(tasks != null && tasks.length != 0, "must specify at least one task");
         this.executorService = Executors.getExecutorService(tasks.length, threadFormat,
-            new ComponentUncaughtExceptionHandler());
+            ComponentUncaughtExceptionHandler.INSTANCE);
         for (int i = 0; i < tasks.length; i++) {
             executorService.execute(tasks[i]);
         }

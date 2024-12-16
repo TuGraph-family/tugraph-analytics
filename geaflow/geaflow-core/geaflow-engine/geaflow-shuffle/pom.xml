@@ -25,10 +25,6 @@
 
     <artifactId>geaflow-shuffle</artifactId>
 
-    <properties>
-        <remote.shuffle.version>geaflow-1.2</remote.shuffle.version>
-    </properties>
-
     <dependencies>
 
         <!-- third party dependency -->
@@ -61,6 +57,12 @@
         <dependency>
             <artifactId>netty-all</artifactId>
             <groupId>io.netty</groupId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

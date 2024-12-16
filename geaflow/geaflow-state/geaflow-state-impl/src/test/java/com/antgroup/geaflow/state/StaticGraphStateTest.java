@@ -63,7 +63,7 @@ public class StaticGraphStateTest {
     private final StoreType storeType;
 
     @AfterMethod
-    public void tearDown() throws IOException {
+    public void tearDown() {
         FileUtils.deleteQuietly(new File("/tmp/StaticGraphStateTest"));
     }
 
@@ -76,24 +76,27 @@ public class StaticGraphStateTest {
 
         @Factory
         public Object[] factoryMethod() {
-            return new Object[]{
-                new StaticGraphStateTest(StoreType.MEMORY, new HashMap<>()),
-                new StaticGraphStateTest(StoreType.MEMORY, ImmutableMap.of(MemoryConfigKeys.CSR_MEMORY_ENABLE.getKey(), "true")),
-                new StaticGraphStateTest(StoreType.ROCKSDB, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
-                new StaticGraphStateTest(StoreType.CSTORE, ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(), "StaticGraphStateTest")),
-            };
+            return new Object[]{new StaticGraphStateTest(StoreType.MEMORY, new HashMap<>()),
+                new StaticGraphStateTest(StoreType.MEMORY,
+                    ImmutableMap.of(MemoryConfigKeys.CSR_MEMORY_ENABLE.getKey(), "true")),
+                new StaticGraphStateTest(StoreType.ROCKSDB,
+                    ImmutableMap.of(ExecutionConfigKeys.JOB_APP_NAME.getKey(),
+                        "StaticGraphStateTest"))};
         }
     }
 
     @Test
     public void testNormalGet() {
-        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("test1", storeType.name());
+        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("test1",
+            storeType.name());
         desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
-        desc.withGraphMeta(new GraphMeta(new GraphMetaType<>(Types.STRING, ValueVertex.class,
-            String.class, ValueEdge.class, String.class)));
+        desc.withGraphMeta(new GraphMeta(
+            new GraphMetaType<>(Types.STRING, ValueVertex.class, String.class, ValueEdge.class,
+                String.class)));
         Map<String, String> config = new HashMap<>(additionalConfig);
 
-        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc, new Configuration(config));
+        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc,
+            new Configuration(config));
 
         graphState.manage().operate().setCheckpointId(1);
 
@@ -118,8 +121,8 @@ public class StaticGraphStateTest {
         iterator = graphState.staticGraph().V().query(new KeyGroup(0, 0)).iterator();
         Assert.assertEquals(Iterators.size(iterator), 1);
 
-        Iterator<String> idIterator =
-            graphState.staticGraph().V().query(new KeyGroup(0, 0)).idIterator();
+        Iterator<String> idIterator = graphState.staticGraph().V().query(new KeyGroup(0, 0))
+            .idIterator();
         Assert.assertEquals(Iterators.size(idIterator), 1);
 
         list = graphState.staticGraph().E().query(new KeyGroup(0, 0)).asList();
@@ -131,13 +134,16 @@ public class StaticGraphStateTest {
 
     @Test
     public void testFilter() {
-        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("testFilter", storeType.name());
+        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("testFilter",
+            storeType.name());
         desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
-        desc.withGraphMeta(new GraphMeta(new GraphMetaType<>(Types.STRING, ValueVertex.class,
-            String.class, ValueLabelTimeEdge.class, String.class)));
+        desc.withGraphMeta(new GraphMeta(
+            new GraphMetaType<>(Types.STRING, ValueVertex.class, String.class,
+                ValueLabelTimeEdge.class, String.class)));
         Map<String, String> config = new HashMap<>(additionalConfig);
 
-        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc, new Configuration(config));
+        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc,
+            new Configuration(config));
 
         graphState.manage().operate().setCheckpointId(1);
 
@@ -150,17 +156,17 @@ public class StaticGraphStateTest {
 
         graphState.manage().operate().finish();
 
-        List<IEdge<String, String>> list  = graphState.staticGraph().E().query("1", "2").by(
-            new EdgeTsFilter<>(TimeRange.of(0, 500))).asList();
+        List<IEdge<String, String>> list = graphState.staticGraph().E().query("1", "2")
+            .by(new EdgeTsFilter<>(TimeRange.of(0, 500))).asList();
         Assert.assertEquals(list.size(), 2);
 
-        list = graphState.staticGraph().E().query("1", "2").by(
-            new EdgeTsFilter<>(TimeRange.of(0, 500)).or(new EdgeTsFilter<>(TimeRange.of(800,
-                1100)))).asList();
+        list = graphState.staticGraph().E().query("1", "2")
+            .by(new EdgeTsFilter<>(TimeRange.of(0, 500)).or(
+                new EdgeTsFilter<>(TimeRange.of(800, 1100)))).asList();
         Assert.assertEquals(list.size(), 4);
 
-        list = graphState.staticGraph().E().query("1", "2").by(
-            new IFilter[]{new EdgeTsFilter<>(TimeRange.of(0, 500)),
+        list = graphState.staticGraph().E().query("1", "2")
+            .by(new IFilter[]{new EdgeTsFilter<>(TimeRange.of(0, 500)),
                 new EdgeTsFilter<>(TimeRange.of(800, 1100))}).asList();
         Assert.assertEquals(list.size(), 2);
 
@@ -170,15 +176,18 @@ public class StaticGraphStateTest {
 
     @Test
     public void testLimitAndSort() {
-        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("testLimitAndSort", storeType.name());
+        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build(
+            "testLimitAndSort", storeType.name());
         desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
-        desc.withGraphMeta(new GraphMeta(new GraphMetaType<>(Types.STRING, ValueVertex.class,
-            String.class, ValueTimeEdge.class, String.class)));
+        desc.withGraphMeta(new GraphMeta(
+            new GraphMetaType<>(Types.STRING, ValueVertex.class, String.class, ValueTimeEdge.class,
+                String.class)));
         Map<String, String> config = new HashMap<>(additionalConfig);
         config.put(StateConfigKeys.STATE_KV_ENCODER_EDGE_ORDER.getKey(),
             "SRC_ID, DESC_TIME, DIRECTION, DST_ID");
 
-        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc, new Configuration(config));
+        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc,
+            new Configuration(config));
 
         graphState.manage().operate().setCheckpointId(1);
 
@@ -194,53 +203,44 @@ public class StaticGraphStateTest {
         graphState.manage().operate().finish();
 
         // key limit
-        List<IEdge<String, String>> list =
-            graphState.staticGraph().E().query("1", "2", "3")
-                .limit(1L, 1L).asList();
+        List<IEdge<String, String>> list = graphState.staticGraph().E().query("1", "2", "3")
+            .limit(1L, 1L).asList();
         Assert.assertEquals(list.size(), 6);
 
-        list =
-            graphState.staticGraph().E().query("1", "2", "3")
-                .by(InEdgeFilter.instance()).limit(1L, 1L).asList();
+        list = graphState.staticGraph().E().query("1", "2", "3").by(InEdgeFilter.instance())
+            .limit(1L, 1L).asList();
         Assert.assertEquals(list.size(), 3);
 
-        list =
-            graphState.staticGraph().E().query("1")
-                .limit(1L, 1L).asList();
+        list = graphState.staticGraph().E().query("1").limit(1L, 1L).asList();
         Assert.assertEquals(list.size(), 2);
 
-        list =
-            graphState.staticGraph().E().query("11", "12", "13")
-                .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60)).singleLimit())
-                .limit(2L, 1L).asList();
+        list = graphState.staticGraph().E().query("11", "12", "13")
+            .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60)).singleLimit())
+            .limit(2L, 1L).asList();
         Assert.assertEquals(list.size(), 18);
 
-        list =
-            graphState.staticGraph().E().query("11", "12", "13")
-                .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60)))
-                .limit(2L, 1L).asList();
+        list = graphState.staticGraph().E().query("11", "12", "13")
+            .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60))).limit(2L, 1L)
+            .asList();
         Assert.assertEquals(list.size(), 9);
 
         // full limit
-        list =
-            graphState.staticGraph().E().query().by(InEdgeFilter.instance())
-            .limit(1L, 1L).asList();
+        list = graphState.staticGraph().E().query().by(InEdgeFilter.instance()).limit(1L, 1L)
+            .asList();
         Assert.assertEquals(list.size(), 100);
 
-        list = graphState.staticGraph().E().query().by(InEdgeFilter.instance())
-            .limit(1L, 2L).asList();
+        list = graphState.staticGraph().E().query().by(InEdgeFilter.instance()).limit(1L, 2L)
+            .asList();
         Assert.assertEquals(list.size(), 200);
 
-        list =
-            graphState.staticGraph().E().query()
-                .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60)).singleLimit())
-                .limit(2L, 1L).asList();
+        list = graphState.staticGraph().E().query()
+            .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60)).singleLimit())
+            .limit(2L, 1L).asList();
         Assert.assertEquals(list.size(), 540);
 
-        list =
-            graphState.staticGraph().E().query()
-                .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60)))
-                .limit(2L, 1L).asList();
+        list = graphState.staticGraph().E().query()
+            .by(EdgeTsFilter.instance(10, 20).or(EdgeTsFilter.instance(50, 60))).limit(2L, 1L)
+            .asList();
         Assert.assertEquals(list.size(), 270);
 
         if (storeType == StoreType.CSTORE) {
@@ -251,16 +251,16 @@ public class StaticGraphStateTest {
         }
 
         // sort keys
-        long[] times = Longs.toArray(graphState.staticGraph().E().query("1", "2", "3")
-            .limit(3L, 3L).orderBy(EdgeAtom.DESC_TIME).select(new TimeProjector<>()).asList());
+        long[] times = Longs.toArray(graphState.staticGraph().E().query("1", "2", "3").limit(3L, 3L)
+            .orderBy(EdgeAtom.DESC_TIME).select(new TimeProjector<>()).asList());
         Assert.assertEquals(times.length, 18);
         Assert.assertEquals(Longs.max(times), 4 * 100 + 99L);
         Assert.assertEquals(Longs.min(times), 294L);
 
         // sort all
-        times =
-            Longs.toArray(graphState.staticGraph().E().query()
-                .limit(0L, 1L).orderBy(EdgeAtom.DESC_TIME).select(new TimeProjector<>()).asList());
+        times = Longs.toArray(
+            graphState.staticGraph().E().query().limit(0L, 1L).orderBy(EdgeAtom.DESC_TIME)
+                .select(new TimeProjector<>()).asList());
         Assert.assertEquals(times.length, 100);
         Assert.assertEquals(Longs.max(times), 10 * 100 + 98L);
         Assert.assertEquals(Longs.min(times), 98L);
@@ -276,13 +276,16 @@ public class StaticGraphStateTest {
             return;
         }
 
-        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build("testProjectAndAgg", storeType.name());
+        GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build(
+            "testProjectAndAgg", storeType.name());
         desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));
-        desc.withGraphMeta(new GraphMeta(new GraphMetaType<>(Types.STRING, ValueVertex.class,
-            String.class, ValueLabelEdge.class, String.class)));
+        desc.withGraphMeta(new GraphMeta(
+            new GraphMetaType<>(Types.STRING, ValueVertex.class, String.class, ValueLabelEdge.class,
+                String.class)));
         Map<String, String> config = new HashMap<>(additionalConfig);
 
-        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc, new Configuration(config));
+        GraphState<String, String, String> graphState = StateFactory.buildGraphState(desc,
+            new Configuration(config));
 
         graphState.manage().operate().setCheckpointId(1);
         String[] labels = new String[]{"teacher", "student", "president"};
@@ -299,42 +302,37 @@ public class StaticGraphStateTest {
         graphState.manage().operate().finish();
 
         // project test
-        List<String> targetIds =
-            graphState.staticGraph().E().query().by(InEdgeFilter.instance())
-                .select(new DstIdProjector<>()).limit(1L, 2L).asList();
+        List<String> targetIds = graphState.staticGraph().E().query().by(InEdgeFilter.instance())
+            .select(new DstIdProjector<>()).limit(1L, 2L).asList();
 
         Assert.assertEquals(targetIds.size(), 20);
 
-        targetIds =
-            graphState.staticGraph().E().query().by(InEdgeFilter.instance().or(OutEdgeFilter.instance()).singleLimit())
-                .select(new DstIdProjector<>()).limit(1L, 2L).asList();
+        targetIds = graphState.staticGraph().E().query()
+            .by(InEdgeFilter.instance().or(OutEdgeFilter.instance()).singleLimit())
+            .select(new DstIdProjector<>()).limit(1L, 2L).asList();
         Assert.assertEquals(targetIds.size(), 30);
 
         // full agg test
         Map<String, Long> res = graphState.staticGraph().E().query()
-            .by(InEdgeFilter.instance().and(new EdgeLabelFilter("teacher")))
-            .aggregate();
+            .by(InEdgeFilter.instance().and(new EdgeLabelFilter("teacher"))).aggregate();
         Assert.assertEquals(res.size(), 10);
         Assert.assertTrue(res.get("2") == 1L);
 
         res = graphState.staticGraph().E().query()
-            .by(OutEdgeFilter.instance().and(new EdgeLabelFilter("student")))
-            .aggregate();
+            .by(OutEdgeFilter.instance().and(new EdgeLabelFilter("student"))).aggregate();
         Assert.assertEquals(res.size(), 10);
         Assert.assertTrue(res.get("2") == 2L);
 
         // key agg test
-        res = graphState.staticGraph().E().query( "2", "5")
-            .by(InEdgeFilter.instance().and(new EdgeLabelFilter("teacher")))
-            .aggregate();
+        res = graphState.staticGraph().E().query("2", "5")
+            .by(InEdgeFilter.instance().and(new EdgeLabelFilter("teacher"))).aggregate();
 
         Assert.assertEquals(res.size(), 2);
         Assert.assertTrue(res.get("2") == 1L);
 
-        res = graphState.staticGraph().E().query( "2", "5")
+        res = graphState.staticGraph().E().query("2", "5")
             .by(InEdgeFilter.instance().and(new EdgeLabelFilter("teacher")),
-                OutEdgeFilter.instance().and(new EdgeLabelFilter("student")))
-            .aggregate();
+                OutEdgeFilter.instance().and(new EdgeLabelFilter("student"))).aggregate();
         Assert.assertEquals(res.size(), 2);
         Assert.assertTrue(res.get("2") == 1L);
         Assert.assertTrue(res.get("5") == 2L);

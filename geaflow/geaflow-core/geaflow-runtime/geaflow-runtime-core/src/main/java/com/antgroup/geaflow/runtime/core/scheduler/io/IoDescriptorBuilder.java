@@ -16,29 +16,32 @@ package com.antgroup.geaflow.runtime.core.scheduler.io;
 
 import com.antgroup.geaflow.cluster.response.IResult;
 import com.antgroup.geaflow.cluster.response.ResponseResult;
-import com.antgroup.geaflow.cluster.shuffle.LogicalPipelineSliceMeta;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
+import com.antgroup.geaflow.common.shuffle.BatchPhase;
+import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
+import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
+import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
-import com.antgroup.geaflow.io.CollectType;
-import com.antgroup.geaflow.io.ResponseOutputDesc;
 import com.antgroup.geaflow.operator.base.AbstractOperator;
 import com.antgroup.geaflow.processor.impl.AbstractProcessor;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.CollectExecutionNodeCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
-import com.antgroup.geaflow.runtime.io.IInputDesc;
-import com.antgroup.geaflow.runtime.io.RawDataInputDesc;
-import com.antgroup.geaflow.runtime.shuffle.InputDescriptor;
-import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
-import com.antgroup.geaflow.runtime.shuffle.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
-import com.antgroup.geaflow.shuffle.IOutputDesc;
+import com.antgroup.geaflow.shuffle.InputDescriptor;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
+import com.antgroup.geaflow.shuffle.RawDataInputDesc;
+import com.antgroup.geaflow.shuffle.ResponseOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.IInputDesc;
+import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
+import com.antgroup.geaflow.shuffle.message.LogicalPipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,16 +51,47 @@ public class IoDescriptorBuilder {
 
     public static int COLLECT_DATA_EDGE_ID = 0;
 
+    public static IoDescriptor buildPrefetchIoDescriptor(ExecutionNodeCycle cycle, ExecutionNodeCycle childCycle, ExecutionTask childTask) {
+        InputDescriptor inputDescriptor = buildPrefetchInputDescriptor(cycle, childCycle, childTask);
+        return new IoDescriptor(inputDescriptor, null);
+    }
+
+    private static InputDescriptor buildPrefetchInputDescriptor(ExecutionNodeCycle cycle,
+                                                                ExecutionNodeCycle childCycle,
+                                                                ExecutionTask childTask) {
+        ExecutionVertexGroup childVertexGroup = childCycle.getVertexGroup();
+        List<Integer> inputEdgeIds = childVertexGroup.getVertexId2InEdgeIds().get(childTask.getVertexId());
+        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
+        Map<Integer, IInputDesc<?>> inputInfoList = new HashMap<>();
+        for (Integer edgeId : inputEdgeIds) {
+            ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
+            if (edge == null) {
+                continue;
+            }
+            if (edge.getType() != OutputType.FORWARD) {
+                continue;
+            }
+            if (edge.getSrcId() == edge.getTargetId()) {
+                continue;
+            }
+            IInputDesc<?> inputInfo = buildInputDesc(childTask, edge, childCycle, null, DataExchangeMode.BATCH, BatchPhase.PREFETCH_WRITE);
+            if (inputInfo != null) {
+                inputInfoList.put(edgeId, inputInfo);
+            }
+        }
+        return new InputDescriptor(inputInfoList);
+    }
+
     /**
      * Build pipeline io descriptor for input task.
      */
     public static IoDescriptor buildPipelineIoDescriptor(ExecutionTask task,
                                                          ExecutionNodeCycle cycle,
-                                                         CycleResultManager resultManager) {
-        InputDescriptor inputDescriptor = buildPipelineInputDescriptor(task, cycle, resultManager);
-        OutputDescriptor outputDescriptor = buildPipelineOutputDescriptor(task, cycle);
-        IoDescriptor ioDescriptor = new IoDescriptor(inputDescriptor, outputDescriptor);
-        return ioDescriptor;
+                                                         CycleResultManager resultManager,
+                                                         boolean prefetch) {
+        InputDescriptor inputDescriptor = buildPipelineInputDescriptor(task, cycle, resultManager, prefetch);
+        OutputDescriptor outputDescriptor = buildPipelineOutputDescriptor(task, cycle, prefetch);
+        return new IoDescriptor(inputDescriptor, outputDescriptor);
     }
 
     /**
@@ -65,85 +99,76 @@ public class IoDescriptorBuilder {
      */
     private static InputDescriptor buildPipelineInputDescriptor(ExecutionTask task,
                                                                 ExecutionNodeCycle cycle,
-                                                                CycleResultManager resultManager) {
+                                                                CycleResultManager resultManager,
+                                                                boolean prefetch) {
         ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
         List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(task.getVertexId());
-
-        Map<Integer, IInputDesc> inputInfos = new HashMap<>();
+        Map<Integer, IInputDesc<?>> inputInfoList = new HashMap<>();
         for (Integer edgeId : inputEdgeIds) {
             ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
             // Only build forward for pipeline.
-            if (edge.getType() != CollectType.FORWARD) {
+            if (edge.getType() != OutputType.FORWARD) {
                 continue;
             }
             if (edge.getSrcId() == edge.getTargetId()) {
                 continue;
             }
-            IInputDesc inputInfo = buildInputInfo(task, edge, cycle, resultManager);
+
+            Tuple<DataExchangeMode, BatchPhase> tuple = getInputDataExchangeMode(cycle, task, edge.getSrcId(), prefetch);
+            IInputDesc<?> inputInfo = buildInputDesc(task, edge, cycle, resultManager, tuple.f0, tuple.f1);
             if (inputInfo != null) {
-                inputInfos.put(edgeId, inputInfo);
+                inputInfoList.put(edgeId, inputInfo);
             }
         }
-        return new InputDescriptor(inputInfos);
+        if (inputInfoList.isEmpty()) {
+            return null;
+        }
+        return new InputDescriptor(inputInfoList);
     }
 
     /**
      * Build pipeline output descriptor.
      */
     private static OutputDescriptor buildPipelineOutputDescriptor(ExecutionTask task,
-                                                                  ExecutionNodeCycle cycle) {
+                                                                  ExecutionNodeCycle cycle,
+                                                                  boolean prefetch) {
         int vertexId = task.getVertexId();
         if (cycle instanceof CollectExecutionNodeCycle) {
-            return new OutputDescriptor(Arrays.asList(buildCollectOutputDesc(task)));
+            return new OutputDescriptor(Collections.singletonList(buildCollectOutputDesc(task)));
         }
         ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
         List<Integer> outEdgeIds = vertexGroup.getVertexId2OutEdgeIds().get(vertexId);
-        List<IOutputDesc> outputDescs = new ArrayList<>();
+        List<IOutputDesc> outputDescList = new ArrayList<>();
         for (Integer edgeId : outEdgeIds) {
             ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            IOutputDesc outputDesc = buildOutputDesc(task, edge, cycle);
-            outputDescs.add(outputDesc);
+            IOutputDesc outputDesc = buildOutputDesc(task, edge, cycle, prefetch);
+            outputDescList.add(outputDesc);
         }
-        OutputDescriptor outputDescriptor = new OutputDescriptor(outputDescs);
-        return outputDescriptor;
+        if (outputDescList.isEmpty()) {
+            return null;
+        }
+        return new OutputDescriptor(outputDescList);
     }
 
-    /**
-     * Build input descriptor for iteration when do init will build iteration loop input descriptor.
-     */
-    public static InputDescriptor buildIterationInitInputDescriptor(ExecutionTask task,
-                                                                    ExecutionNodeCycle cycle,
-                                                                    CycleResultManager resultManager) {
-        ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-        List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(task.getVertexId());
-
-        Map<Integer, IInputDesc> inputInfos = new HashMap<>();
-        for (Integer edgeId : inputEdgeIds) {
-            ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            // Only build self loop.
-            if (edge.getType() == CollectType.LOOP) {
-                IInputDesc inputInfo = buildInputInfo(task, edge, cycle, resultManager);
-                if (inputInfo != null) {
-                    inputInfos.put(edgeId, inputInfo);
-                }
-            }
-        }
-        return new InputDescriptor(inputInfos);
+    public static IoDescriptor buildIterationIoDescriptor(ExecutionTask task,
+                                                          ExecutionNodeCycle cycle,
+                                                          CycleResultManager resultManager,
+                                                          OutputType outputType) {
+        InputDescriptor inputDescriptor = buildIterationInputDescriptor(task, cycle, resultManager, outputType);
+        return new IoDescriptor(inputDescriptor, null);
     }
 
-    /**
-     * Build iteration input descriptor when execute with RAW_FORWARD input edge.
-     */
-    public static InputDescriptor buildIterationExecuteInputDescriptor(ExecutionTask task,
-                                                                       ExecutionNodeCycle cycle,
-                                                                       CycleResultManager resultManager) {
+    private static InputDescriptor buildIterationInputDescriptor(ExecutionTask task,
+                                                                 ExecutionNodeCycle cycle,
+                                                                 CycleResultManager resultManager,
+                                                                 OutputType outputType) {
         ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
         List<Integer> inputEdgeIds = vertexGroup.getVertexId2InEdgeIds().get(task.getVertexId());
-        Map<Integer, IInputDesc> inputInfos = new HashMap<>();
+        Map<Integer, IInputDesc<?>> inputInfos = new HashMap<>();
         for (Integer edgeId : inputEdgeIds) {
             ExecutionEdge edge = vertexGroup.getEdgeMap().get(edgeId);
-            if (edge.getType() == CollectType.RESPONSE) {
-                IInputDesc inputInfo = buildInputInfo(task, edge, cycle, resultManager);
+            if (edge.getType() == outputType) {
+                IInputDesc<?> inputInfo = buildInputDesc(task, edge, cycle, resultManager, DataExchangeMode.PIPELINE, BatchPhase.CLASSIC);
                 if (inputInfo != null) {
                     inputInfos.put(edgeId, inputInfo);
                 }
@@ -155,37 +180,45 @@ public class IoDescriptorBuilder {
     /**
      * Build input info for input task and edge.
      */
-    protected static IInputDesc buildInputInfo(ExecutionTask task,
-                                             ExecutionEdge inputEdge,
-                                             ExecutionNodeCycle cycle,
-                                             CycleResultManager resultManager) {
+    protected static IInputDesc<Shard> buildInputDesc(ExecutionTask task,
+                                                      ExecutionEdge inputEdge,
+                                                      ExecutionNodeCycle cycle,
+                                                      CycleResultManager resultManager,
+                                                      DataExchangeMode dataExchangeMode,
+                                                      BatchPhase batchPhase) {
         List<ExecutionTask> inputTasks = cycle.getVertexIdToTasks().get(inputEdge.getSrcId());
         int edgeId = inputEdge.getEdgeId();
+        OutputType outputType = inputEdge.getType();
 
-        switch (inputEdge.getType()) {
+        switch (outputType) {
             case LOOP:
             case FORWARD:
                 int vertexId = task.getVertexId();
                 ExecutionVertexGroup vertexGroup = cycle.getVertexGroup();
-                ShuffleDescriptor shuffleDescriptor;
                 List<Shard> inputs = new ArrayList<>(inputTasks.size());
-                if (isBatchDataExchange(vertexGroup, inputEdge.getSrcId())) {
-                    shuffleDescriptor = ShuffleDescriptor.BATCH;
+                if (dataExchangeMode == DataExchangeMode.BATCH && batchPhase == BatchPhase.CLASSIC) {
                     Map<Integer, List<Shard>> taskInputs =
                         DataExchanger.buildInput(vertexGroup.getVertexMap().get(vertexId), inputEdge, resultManager);
                     inputs = taskInputs.get(task.getIndex());
                 } else {
-                    shuffleDescriptor = ShuffleDescriptor.PIPELINE;
-                    // TODO forward partitioner not read all input tasks.
                     for (ExecutionTask inputTask : inputTasks) {
-                        Shard shard = new Shard(edgeId,
-                            Arrays.asList(new LogicalPipelineSliceMeta(inputTask.getIndex(), task.getIndex(),
-                                cycle.getPipelineId(), edgeId, inputTask.getWorkerInfo().getContainerName())));
+                        LogicalPipelineSliceMeta logicalSlice = new LogicalPipelineSliceMeta(
+                            inputTask.getIndex(),
+                            task.getIndex(),
+                            cycle.getPipelineId(),
+                            edgeId,
+                            inputTask.getWorkerInfo().getContainerName());
+                        Shard shard = new Shard(edgeId, Collections.singletonList(logicalSlice));
                         inputs.add(shard);
                     }
                 }
-                return new ShardInputDesc(edgeId, inputEdge.getEdgeName(), inputs,
-                    inputEdge.getEncoder(), shuffleDescriptor);
+                return new ShardInputDesc(
+                    edgeId,
+                    inputEdge.getEdgeName(),
+                    inputs,
+                    inputEdge.getEncoder(),
+                    dataExchangeMode,
+                    batchPhase);
             case RESPONSE:
                 List<IResult> results = resultManager.get(inputEdge.getEdgeId());
                 if (results == null) {
@@ -193,7 +226,7 @@ public class IoDescriptorBuilder {
                 }
                 List<Object> dataInput = new ArrayList<>();
                 for (IResult result : results) {
-                    if (result.getType() != CollectType.RESPONSE) {
+                    if (result.getType() != OutputType.RESPONSE) {
                         throw new GeaflowRuntimeException(String.format("edge %s type %s not support handle result %s",
                             inputEdge.getEdgeId(), inputEdge.getType(), result.getType()));
                     }
@@ -209,7 +242,7 @@ public class IoDescriptorBuilder {
     private static IOutputDesc buildCollectOutputDesc(ExecutionTask task) {
         int opId = getCollectOpId((AbstractOperator) ((AbstractProcessor) task.getProcessor()).getOperator());
         ResponseOutputDesc outputDesc = new ResponseOutputDesc(opId,
-            COLLECT_DATA_EDGE_ID, CollectType.RESPONSE.name(), CollectType.RESPONSE);
+            COLLECT_DATA_EDGE_ID, OutputType.RESPONSE.name());
         return outputDesc;
 
     }
@@ -226,38 +259,35 @@ public class IoDescriptorBuilder {
 
     protected static IOutputDesc buildOutputDesc(ExecutionTask task,
                                                  ExecutionEdge outEdge,
-                                                 ExecutionNodeCycle cycle) {
+                                                 ExecutionNodeCycle cycle,
+                                                 boolean prefetch) {
 
         int vertexId = task.getVertexId();
         switch (outEdge.getType()) {
             case LOOP:
             case FORWARD:
                 List<ExecutionTask> tasks = cycle.getVertexIdToTasks().get(outEdge.getTargetId());
-                List<Integer> taskIds = tasks.stream().map(e -> e.getTaskId()).collect(Collectors.toList());
-                ShuffleDescriptor shuffleDescriptor;
-                if (isBatchDataExchange(cycle.getVertexGroup(), outEdge.getTargetId())) {
-                    shuffleDescriptor = ShuffleDescriptor.BATCH;
-                } else {
-                    shuffleDescriptor = ShuffleDescriptor.PIPELINE;
-                }
-                ForwardOutputDesc shuffleOutputDesc = new ForwardOutputDesc(outEdge.getEdgeId(),
-                    outEdge.getEdgeName(), vertexId,
-                    shuffleDescriptor);
+                List<Integer> taskIds = tasks.stream().map(ExecutionTask::getTaskId).collect(Collectors.toList());
                 // TODO forward partitioner not write to all output tasks.
-                shuffleOutputDesc.setTargetTaskIndices(taskIds);
-                shuffleOutputDesc.setPartitioner(outEdge.getPartitioner());
-                shuffleOutputDesc.setEncoder(outEdge.getEncoder());
-                if (isIteration(outEdge)) {
-                    shuffleOutputDesc.setNumPartitions(task.getMaxParallelism());
-                } else {
-                    shuffleOutputDesc.setNumPartitions(task.getNumPartitions());
-                }
-                return shuffleOutputDesc;
+                int numPartitions = outEdge.getSrcId() == outEdge.getTargetId()
+                    ? task.getMaxParallelism()
+                    : task.getNumPartitions();
+                DataExchangeMode dataExchangeMode = getOutputDataExchangeMode(cycle, outEdge.getTargetId(), prefetch);
+                return new ForwardOutputDesc<>(
+                    vertexId,
+                    outEdge.getEdgeId(),
+                    numPartitions,
+                    1,
+                    outEdge.getEdgeName(),
+                    dataExchangeMode,
+                    taskIds,
+                    outEdge.getPartitioner(),
+                    outEdge.getEncoder());
             case RESPONSE:
-                ResponseOutputDesc outputDesc = new ResponseOutputDesc(outEdge.getPartitioner().getOpId(),
-                    outEdge.getEdgeId(), outEdge.getEdgeName(),
-                    outEdge.getType());
-                return outputDesc;
+                return new ResponseOutputDesc(
+                    outEdge.getPartitioner().getOpId(),
+                    outEdge.getEdgeId(),
+                    outEdge.getEdgeName());
             default:
                 throw new GeaflowRuntimeException(String.format("not support build output for edge %s type %s",
                     outEdge.getEdgeId(), outEdge.getType()));
@@ -265,23 +295,26 @@ public class IoDescriptorBuilder {
         }
     }
 
-    private static boolean isIteration(ExecutionEdge edge) {
-        if (edge.getSrcId() == edge.getTargetId()) {
-            return true;
+    private static Tuple<DataExchangeMode, BatchPhase> getInputDataExchangeMode(ExecutionNodeCycle cycle,
+                                                                                ExecutionTask task,
+                                                                                int vertexId,
+                                                                                boolean prefetch) {
+        Map<Integer, ExecutionVertex> vertexMap = cycle.getVertexGroup().getVertexMap();
+        DataExchangeMode dataExchangeMode = DataExchangeMode.BATCH;
+        BatchPhase batchPhase = BatchPhase.CLASSIC;
+        if (vertexMap.containsKey(vertexId)) {
+            dataExchangeMode = DataExchangeMode.PIPELINE;
+        } else if (prefetch && cycle.isHeadTask(task.getTaskId())) {
+            batchPhase = BatchPhase.PREFETCH_READ;
         }
-        return false;
+        return Tuple.of(dataExchangeMode, batchPhase);
     }
 
-    /**
-     * Check whether the input edge is batch exchange mode.
-     * If the vertex not in current vertex group, then set the current edge exchange mode to batch.
-     */
-    private static boolean isBatchDataExchange(ExecutionVertexGroup vertexGroup,
-                                               int vertexId) {
-        if (!vertexGroup.getVertexMap().containsKey(vertexId)) {
-            return true;
-        } else {
-            return false;
-        }
+    private static DataExchangeMode getOutputDataExchangeMode(ExecutionNodeCycle cycle,
+                                                              int vertexId,
+                                                              boolean prefetch) {
+        Map<Integer, ExecutionVertex> vertexMap = cycle.getVertexGroup().getVertexMap();
+        return vertexMap.containsKey(vertexId) || prefetch ? DataExchangeMode.PIPELINE : DataExchangeMode.BATCH;
     }
+
 }

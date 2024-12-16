@@ -43,18 +43,6 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
         this.haLevel = HighAvailableLevel.REDO;
     }
 
-    public int getCycleId() {
-        return cycleId;
-    }
-
-    public int getFlyingCount() {
-        return flyingCount;
-    }
-
-    public long getIterationCount() {
-        return iterationCount;
-    }
-
     @Override
     public ExecutionCycleType getType() {
         return ExecutionCycleType.GRAPH;
@@ -77,7 +65,7 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
 
     public void addCycle(IExecutionCycle cycle) {
         if (cycleMap.containsKey(cycle.getCycleId())) {
-            throw new GeaflowRuntimeException(String.format("cycle {} already added", cycle.getCycleId()));
+            throw new GeaflowRuntimeException(String.format("cycle %d already added", cycle.getCycleId()));
         }
         cycleMap.put(cycle.getCycleId(), cycle);
         cycleParents.put(cycle.getCycleId(), new ArrayList<>());

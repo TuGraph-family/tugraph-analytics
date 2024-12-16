@@ -15,16 +15,17 @@
 package com.antgroup.geaflow.shuffle.api.writer;
 
 import com.antgroup.geaflow.common.metric.ShuffleWriteMetrics;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
+import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
+import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public class PipelineWriter<T, R> implements IShuffleWriter<T, R> {
+public class PipelineWriter<T> implements IShuffleWriter<T, Shard> {
 
-    private ShardBuffer shardBuffer;
     private final IConnectionManager connectionManager;
+    private ShardWriter<T, Shard> shardWriter;
 
     public PipelineWriter(IConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
@@ -32,36 +33,36 @@ public class PipelineWriter<T, R> implements IShuffleWriter<T, R> {
 
     @Override
     public void init(IWriterContext writerContext) {
-        ShuffleDescriptor descriptor = writerContext.getShuffleDescriptor();
-        shardBuffer = ShardBufferFactory
-            .getShardBuffer(descriptor.getExchangeMode(), connectionManager);
-        shardBuffer.init(writerContext);
+        this.shardWriter = writerContext.getDataExchangeMode() == DataExchangeMode.BATCH
+            ? new SpillableShardWriter<>(this.connectionManager.getShuffleAddress())
+            : new PipelineShardWriter<>();
+        this.shardWriter.init(writerContext);
     }
 
     @Override
     public void emit(long batchId, T value, boolean isRetract, int[] channels) throws IOException {
-        shardBuffer.emit(batchId, value, isRetract, channels);
+        this.shardWriter.emit(batchId, value, isRetract, channels);
     }
 
     @Override
     public void emit(long batchId, List<T> data, boolean isRetract, int channel) throws IOException {
-        this.shardBuffer.emit(batchId, data, channel);
+        this.shardWriter.emit(batchId, data, channel);
     }
 
     @Override
-    public Optional<R> flush(long batchId) throws IOException {
-        return shardBuffer.finish(batchId);
+    public Optional<Shard> flush(long batchId) throws IOException {
+        return this.shardWriter.finish(batchId);
     }
 
     @Override
     public ShuffleWriteMetrics getShuffleWriteMetrics() {
-        return this.shardBuffer.getShuffleWriteMetrics();
+        return this.shardWriter.getShuffleWriteMetrics();
     }
 
     @Override
     public void close() {
-        if (shardBuffer != null) {
-            shardBuffer.close();
+        if (this.shardWriter != null) {
+            this.shardWriter.close();
         }
     }
 

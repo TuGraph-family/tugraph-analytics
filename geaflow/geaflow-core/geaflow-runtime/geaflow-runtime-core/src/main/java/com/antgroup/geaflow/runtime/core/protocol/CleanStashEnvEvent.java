@@ -17,7 +17,7 @@ package com.antgroup.geaflow.runtime.core.protocol;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.rpc.RpcClient;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
-import com.antgroup.geaflow.shuffle.memory.ShuffleDataManager;
+import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 
 public class CleanStashEnvEvent extends AbstractCleanCommand {
 
@@ -34,22 +34,13 @@ public class CleanStashEnvEvent extends AbstractCleanCommand {
     @Override
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
-        ShuffleDataManager.getInstance().release(pipelineId);
+        SliceManager.getInstance().release(pipelineId);
         this.sendDoneEvent(this.driverId, EventType.CLEAN_ENV, null, false);
-    }
-
-    @Override
-    public int getWorkerId() {
-        return workerId;
     }
 
     @Override
     public EventType getEventType() {
         return EventType.CLEAN_ENV;
-    }
-
-    public int getCycleId() {
-        return cycleId;
     }
 
     public void setIterationId(int iterationId) {

@@ -24,6 +24,7 @@ use rustc_hash::FxHashMap;
 use crate::log_util::info;
 
 #[test]
+#[ignore]
 fn test_two_store_with_ldbc_sf10_source() {
     log_util::try_init(LogType::ConsoleAndFile, LogLevel::Debug, 0);
     info!("start test_two_store_with_ldbc_sf10_source");

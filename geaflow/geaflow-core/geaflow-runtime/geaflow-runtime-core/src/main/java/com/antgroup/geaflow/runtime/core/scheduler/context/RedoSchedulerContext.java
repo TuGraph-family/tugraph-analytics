@@ -17,9 +17,12 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 
-public class RedoSchedulerContext extends AbstractCycleSchedulerContext {
+public class RedoSchedulerContext<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>> extends AbstractCycleSchedulerContext<C, PC, PCC> {
 
-    public RedoSchedulerContext(IExecutionCycle cycle, ICycleSchedulerContext parentContext) {
+    public RedoSchedulerContext(C cycle, PCC parentContext) {
         super(cycle, parentContext);
     }
 

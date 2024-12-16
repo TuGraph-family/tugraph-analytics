@@ -59,15 +59,15 @@ public class LocalFileFactory {
         return downloadFileWithMd5(path, filePath, release.getMd5());
     }
 
-    private String getVersionFilePath(String versionName, String fileName) {
+    public static String getVersionFilePath(String versionName, String fileName) {
         return Fmt.as("{}/{}/{}", LOCAL_VERSION_FILE_DIRECTORY, versionName, fileName);
     }
 
-    private String getTaskFilePath(String runtimeTaskId, String fileName) {
+    public static String getTaskFilePath(String runtimeTaskId, String fileName) {
         return Fmt.as("{}/{}/{}", LOCAL_TASK_FILE_DIRECTORY, runtimeTaskId, fileName);
     }
 
-    private String getUserFilePath(String userId, String fileName) {
+    public static String getUserFilePath(String userId, String fileName) {
         return Fmt.as("{}/{}/{}", LOCAL_USER_FILE_DIRECTORY, userId, fileName);
     }
 

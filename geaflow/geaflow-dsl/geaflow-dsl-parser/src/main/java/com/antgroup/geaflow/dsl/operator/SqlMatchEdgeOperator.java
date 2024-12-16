@@ -43,7 +43,8 @@ public class SqlMatchEdgeOperator extends SqlOperator {
         SqlNode... operands) {
         String directionName = operands[3].toString();
 
-        return new SqlMatchEdge(pos, (SqlIdentifier) operands[0], (SqlNodeList) operands[1], operands[2],
+        return new SqlMatchEdge(pos, (SqlIdentifier) operands[0], (SqlNodeList) operands[1],
+            (SqlNodeList) operands[2], operands[3],
             EdgeDirection.of(directionName), 1, 1);
     }
 

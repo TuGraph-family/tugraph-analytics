@@ -220,6 +220,10 @@ public abstract class AbstractGraphVertexCentricOp<K, VV, EV, M,
         }
     }
 
+    public String getGraphViewName() {
+        return graphViewDesc.getName();
+    }
+
     protected void load() {
         LOGGER.info("opName: {} will do load, windowId: {}", this.opArgs.getOpName(), this.windowId);
         long lastCheckPointId = getLatestViewVersion();

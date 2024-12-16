@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.example.graph.statical;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.graph.statical.compute.personalrank.PersonalRank;
@@ -31,7 +32,7 @@ public class PersonalRankRankTest extends BaseTest {
 
         IPipelineResult result = PersonalRank.submit(environment);
         if (!result.isSuccess()) {
-            throw new Exception("execute failed");
+            throw new GeaflowRuntimeException("execute failed");
         }
         PersonalRank.validateResult();
     }

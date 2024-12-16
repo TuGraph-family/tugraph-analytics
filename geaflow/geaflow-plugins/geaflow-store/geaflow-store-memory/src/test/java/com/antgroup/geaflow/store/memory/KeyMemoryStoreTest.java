@@ -21,7 +21,7 @@ import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.IKListStore;
 import com.antgroup.geaflow.store.api.key.IKMapStore;
 import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,15 +34,14 @@ public class KeyMemoryStoreTest {
     @Test
     public void testKV() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.MEMORY.name());
-        IKVStore<String, String> kvStore =
-            (IKVStore<String, String>) builder.getStore(DataModel.KV, new Configuration());
+        IKVStore<String, String> kvStore = (IKVStore<String, String>) builder.getStore(DataModel.KV,
+            new Configuration());
 
         Configuration configuration = new Configuration();
         StoreContext storeContext = new StoreContext("mem").withConfig(configuration);
         kvStore.init(storeContext);
         kvStore.put("hello", "world");
         kvStore.put("foo", "bar");
-        kvStore.flush();
 
         Assert.assertEquals(kvStore.get("hello"), "world");
         Assert.assertEquals(kvStore.get("foo"), "bar");
@@ -55,7 +54,8 @@ public class KeyMemoryStoreTest {
     public void testKMap() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.MEMORY.name());
         IKMapStore<String, String, String> kMapStore =
-            (IKMapStore<String, String, String>) builder.getStore(DataModel.KMap, new Configuration());
+            (IKMapStore<String, String, String>) builder.getStore(
+            DataModel.KMap, new Configuration());
 
         Configuration configuration = new Configuration();
         StoreContext storeContext = new StoreContext("mem").withConfig(configuration);
@@ -73,8 +73,7 @@ public class KeyMemoryStoreTest {
         kMapStore.add("hw", "bar", "foo");
 
         Assert.assertEquals(kMapStore.get("hw").size(), 4);
-        Assert.assertEquals(kMapStore.get("hw", "foo", "bar"),
-            Arrays.asList("bar", "foo"));
+        Assert.assertEquals(kMapStore.get("hw", "foo", "bar"), Arrays.asList("bar", "foo"));
 
         kMapStore.remove("hw", "bar");
         Assert.assertEquals(kMapStore.get("hw").size(), 3);
@@ -86,8 +85,8 @@ public class KeyMemoryStoreTest {
     @Test
     public void testKList() {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.MEMORY.name());
-        IKListStore<String, String> kListStore =
-            (IKListStore<String, String>) builder.getStore(DataModel.KList, new Configuration());
+        IKListStore<String, String> kListStore = (IKListStore<String, String>) builder.getStore(
+            DataModel.KList, new Configuration());
 
         Configuration configuration = new Configuration();
         StoreContext storeContext = new StoreContext("mem").withConfig(configuration);

@@ -17,7 +17,7 @@ package com.antgroup.geaflow.runtime.core.context;
 import com.antgroup.geaflow.cluster.protocol.IEventContext;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.processor.Processor;
-import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 
 public class EventContext implements IEventContext {
 

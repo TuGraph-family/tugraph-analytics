@@ -31,7 +31,7 @@ public class CallBackTest extends BaseTest {
     @Test
     public void testWindowCallBack() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         WindowCallBackPipeline pipeline = new WindowCallBackPipeline();

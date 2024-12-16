@@ -17,8 +17,8 @@ package com.antgroup.geaflow.cluster.system;
 import com.antgroup.geaflow.state.DataModel;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.store.IStoreBuilder;
-import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.key.IKVStatefulStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class RocksdbClusterMetaKVStore<K, V> implements IClusterMetaKVStore<K, V
 
     private static final Integer DEFAULT_VERSION = 1;
 
-    private IKVStore<K, Object> kvStore;
+    private IKVStatefulStore<K, Object> kvStore;
     private transient long version;
     private String name;
 
@@ -37,7 +37,8 @@ public class RocksdbClusterMetaKVStore<K, V> implements IClusterMetaKVStore<K, V
     public void init(StoreContext storeContext) {
         IStoreBuilder builder = StoreBuilderFactory.build(StoreType.ROCKSDB.name());
         this.name = storeContext.getName();
-        kvStore = (IKVStore<K, Object>) builder.getStore(DataModel.KV, storeContext.getConfig());
+        kvStore = (IKVStatefulStore<K, Object>) builder.getStore(DataModel.KV,
+            storeContext.getConfig());
         kvStore.init(storeContext);
 
         // recovery

@@ -74,10 +74,14 @@ public class TenantService extends NameService<GeaflowTenant, TenantEntity, Tena
         return tenantDao.search(userId, search).transform(this::parse);
     }
 
+    public String getDefaultTenantName(String userName) {
+        return "tenant_" + userName;
+    }
+
     public String createDefaultTenant(GeaflowUser user) {
         String userName = user.getName();
         String userComment = user.getComment();
-        String tenantName = "tenant_" + userName;
+        String tenantName = getDefaultTenantName(userName);
         String userDisplayName = StringUtils.isBlank(userComment) ? userName : userComment;
         String tenantComment = Fmt.as(I18nUtil.getMessage("i18n.key.default.tenant.comment.format"), userDisplayName);
 

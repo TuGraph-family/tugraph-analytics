@@ -20,7 +20,7 @@ import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.state.serializer.DefaultKVSerializer;
 import com.antgroup.geaflow.store.IStoreBuilder;
 import com.antgroup.geaflow.store.api.key.IKVStore;
-import com.antgroup.geaflow.store.api.key.StoreBuilderFactory;
+import com.antgroup.geaflow.store.api.StoreBuilderFactory;
 import com.antgroup.geaflow.store.context.StoreContext;
 import java.io.File;
 import java.sql.Connection;
@@ -68,7 +68,6 @@ public class JdbcStoreBuilderTest {
 
         innerTestKV(kvStore);
         FileUtils.deleteQuietly(new File("/tmp/test.db"));
-        kvStore.flush();
         kvStore.close();
     }
 

@@ -16,18 +16,25 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.ExecutableEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.IScheduledWorkerManager;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
-public interface ICycleSchedulerContext extends Serializable {
+public interface ICycleSchedulerContext<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>> extends Serializable {
 
     /**
      * Returns execution cycle.
      */
-    IExecutionCycle getCycle();
+    C getCycle();
+
+    PCC getParentContext();
 
     /**
      * Returns execution config.
@@ -48,6 +55,11 @@ public interface ICycleSchedulerContext extends Serializable {
      * Returns whether cycle need rollback.
      */
     boolean isRollback();
+
+    /**
+     * Returns whether enable prefetch.
+     */
+    boolean isPrefetch();
 
     /**
      * Returns current iteration id.
@@ -92,12 +104,12 @@ public interface ICycleSchedulerContext extends Serializable {
     /**
      * Assign workers for cycle.
      */
-    List<WorkerInfo> assign(IExecutionCycle cycle);
+    List<WorkerInfo> assign(C cycle);
 
     /**
      * Release worker for cycle.
      */
-    void release(IExecutionCycle cycle);
+    void release(C cycle);
 
     /**
      * Finish the windowId iteration.
@@ -117,7 +129,12 @@ public interface ICycleSchedulerContext extends Serializable {
     /**
      * Returns scheduler worker manager.
      */
-    IScheduledWorkerManager getSchedulerWorkerManager();
+    IScheduledWorkerManager<C> getSchedulerWorkerManager();
+
+    /**
+     * Returns prefetch events needed to be finished.
+     */
+    Map<Integer, ExecutableEvent> getPrefetchEvents();
 
     enum SchedulerState {
         /**

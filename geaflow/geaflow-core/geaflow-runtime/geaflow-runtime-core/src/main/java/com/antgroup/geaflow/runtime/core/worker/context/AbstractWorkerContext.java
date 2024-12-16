@@ -26,11 +26,12 @@ import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import com.antgroup.geaflow.processor.Processor;
 import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
 import com.antgroup.geaflow.runtime.core.context.EventContext;
-import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 import java.util.List;
 
 public abstract class AbstractWorkerContext implements IWorkerContext {
 
+    protected EventContext eventContext;
     protected long currentWindowId;
     protected int taskId;
     protected Processor processor;
@@ -59,21 +60,25 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
 
     @Override
     public void init(IEventContext eventContext) {
-        EventContext context = (EventContext) eventContext;
-        this.currentWindowId = context.getCurrentWindowId();
-        this.cycleId = context.getCycleId();
-        this.pipelineId = context.getPipelineId();
-        this.schedulerId = context.getSchedulerId();
-        this.pipelineName = context.getPipelineName();
-        this.driverId = context.getDriverId();
-        this.ioDescriptor = context.getIoDescriptor();
-        this.executionTask = context.getExecutionTask();
-        this.processor = executionTask.getProcessor();
-        this.taskId = executionTask.getTaskId();
-        this.windowId = context.getWindowId();
+        this.eventContext = (EventContext) eventContext;
+        this.currentWindowId = this.eventContext.getCurrentWindowId();
+        this.cycleId = this.eventContext.getCycleId();
+        this.pipelineId = this.eventContext.getPipelineId();
+        this.schedulerId = this.eventContext.getSchedulerId();
+        this.pipelineName = this.eventContext.getPipelineName();
+        this.driverId = this.eventContext.getDriverId();
+        this.ioDescriptor = this.eventContext.getIoDescriptor();
+        this.executionTask = this.eventContext.getExecutionTask();
+        this.processor = this.executionTask.getProcessor();
+        this.taskId = this.executionTask.getTaskId();
+        this.windowId = this.eventContext.getWindowId();
         this.runtimeContext = createRuntimeContext();
         this.isFinished = false;
         this.initEventMetrics();
+    }
+
+    public EventContext getEventContext() {
+        return this.eventContext;
     }
 
     /**
@@ -137,16 +142,16 @@ public abstract class AbstractWorkerContext implements IWorkerContext {
         return pipelineId;
     }
 
-    public void setSchedulerId(long schedulerId) {
-        this.schedulerId = schedulerId;
-    }
-
     public String getPipelineName() {
         return pipelineName;
     }
 
     public void setPipelineId(long pipelineId) {
         this.pipelineId = pipelineId;
+    }
+
+    public void setSchedulerId(long schedulerId) {
+        this.schedulerId = schedulerId;
     }
 
     public long getSchedulerId() {

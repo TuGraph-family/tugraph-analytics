@@ -35,13 +35,17 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 * 云原生部署
 
 ## 快速上手
+第一步 打包jar包并提交quick start任务
 
 1. 准备Git、JDK8、Maven、Docker环境。
 2. 下载源码：`git clone https://github.com/TuGraph-family/tugraph-analytics`
-3. 项目构建：`mvn clean install -DskipTests`
-4. 测试任务：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql`
-3. 构建镜像：`./build.sh --all`
-4. 启动容器：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
+3. 项目构建：`./build.sh --module=gealfow --output=package`
+4. 测试任务：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection_file_demo.sql` 
+
+第二步 启动控制台，体验白屏提交quick start任务
+
+5. 构建控制台jar和镜像(需启动Docker)：`./build.sh --module=gealfow-console`
+6. 启动控制台：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
 更多详细内容请参考：[快速上手文档](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
 
@@ -80,7 +84,7 @@ JOIN student s ON sc.srcId = s.id
 ```
 
 ## 参与贡献
-非常感谢您参与到GeaFlow的贡献中来，无论是Bug反馈还是文档完善，或者是大的功能点贡献，我们都表示热烈的欢迎。
+非常感谢您参与到 GeaFlow 的贡献中来，无论是Bug反馈还是文档完善，或者是大的功能点贡献，我们都表示热烈的欢迎。
 
 具体请参考：[参与贡献文档](docs/docs-cn/source/9.contribution.md)。
 
@@ -92,5 +96,12 @@ JOIN student s ON sc.srcId = s.id
 ![contacts](docs/static/img/contacts.png)
 
 ## 致谢
-GeaFlow开发过程中部分模块参考了一些业界优秀的开源项目，包括Apache Flink、Apache Spark以及Apache Calcite等, 这里表示特别的感谢。
+GeaFlow 开发过程中部分模块参考了一些业界优秀的开源项目，包括 Apache Flink、Apache Spark 以及 Apache Calcite 等, 这里表示特别的感谢。也感谢对 GeaFlow 做过贡献的个人开发者，名单如下：
+
+<a href="https://github.com/TuGraph-family/tugraph-analytics/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=TuGraph-family/tugraph-analytics" />
+</a>
+
+生成 By [contrib.rocks](https://contrib.rocks).
+<!--intro-end-->
 <!--intro-end-->

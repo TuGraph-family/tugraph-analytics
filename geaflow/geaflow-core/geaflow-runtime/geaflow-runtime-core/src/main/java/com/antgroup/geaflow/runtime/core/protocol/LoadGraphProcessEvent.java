@@ -14,8 +14,10 @@
 
 package com.antgroup.geaflow.runtime.core.protocol;
 
+import com.antgroup.geaflow.cluster.fetcher.CloseFetchRequest;
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
+import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
 
 public class LoadGraphProcessEvent extends AbstractIterationComputeCommand {
 
@@ -26,23 +28,7 @@ public class LoadGraphProcessEvent extends AbstractIterationComputeCommand {
     @Override
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
-    }
-
-    @Override
-    public int getWorkerId() {
-        return workerId;
-    }
-
-    public int getCycleId() {
-        return cycleId;
-    }
-
-    public long getIterationWindowId() {
-        return windowId;
-    }
-
-    public long getFetchWindowId() {
-        return fetchWindowId;
+        this.fetcherRunner.add(new CloseFetchRequest(((WorkerContext) this.context).getTaskId()));
     }
 
     @Override

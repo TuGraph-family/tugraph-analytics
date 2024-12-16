@@ -18,6 +18,7 @@ import com.antgroup.geaflow.dsl.operator.SqlMatchNodeOperator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -25,6 +26,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
@@ -38,11 +40,18 @@ public class SqlMatchNode extends SqlCall {
 
     private SqlNode where;
 
-    public SqlMatchNode(SqlParserPos pos, SqlIdentifier name, SqlNodeList labels, SqlNode where) {
+    private SqlNode combineWhere;
+
+    private SqlNodeList propertySpecification;
+
+    public SqlMatchNode(SqlParserPos pos, SqlIdentifier name, SqlNodeList labels,
+                        SqlNodeList propertySpecification, SqlNode where) {
         super(pos);
         this.name = name;
         this.labels = labels;
+        this.propertySpecification = propertySpecification;
         this.where  = where;
+        this.combineWhere = getInnerWhere(propertySpecification, where);
     }
 
     @Override
@@ -57,7 +66,7 @@ public class SqlMatchNode extends SqlCall {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(name, labels, where);
+        return ImmutableNullableList.of(name, labels, propertySpecification, where);
     }
 
     @Override
@@ -70,6 +79,9 @@ public class SqlMatchNode extends SqlCall {
                 this.labels = (SqlNodeList) operand;
                 break;
             case 2:
+                this.propertySpecification = (SqlNodeList) operand;
+                break;
+            case 3:
                 this.where = operand;
                 break;
             default:
@@ -102,6 +114,20 @@ public class SqlMatchNode extends SqlCall {
         if (where != null) {
             writer.keyword("where");
             where.unparse(writer, 0, 0);
+        }
+        if (propertySpecification != null && propertySpecification.size() > 0) {
+            writer.keyword("{");
+            int idx = 0;
+            for (SqlNode node : propertySpecification.getList()) {
+                if (idx % 2 != 0) {
+                    writer.keyword(":");
+                } else if (idx > 0) {
+                    writer.keyword(",");
+                }
+                node.unparse(writer, 0, 0);
+                idx++;
+            }
+            writer.keyword("}");
         }
     }
 
@@ -139,11 +165,45 @@ public class SqlMatchNode extends SqlCall {
     }
 
     public SqlNode getWhere() {
+        return combineWhere;
+    }
+
+    public static SqlNode getInnerWhere(SqlNodeList propertySpecification, SqlNode where) {
+        //If where is null but property specification is not null,
+        // construct where SqlNode use the property specification.
+        if (propertySpecification != null && propertySpecification.size() >= 2) {
+            List<SqlNode> propertyEqualsConditions = new ArrayList<>();
+
+            for (int idx = 0; idx < propertySpecification.size(); idx += 2) {
+                SqlNode left = propertySpecification.get(idx);
+                SqlNode right = propertySpecification.get(idx + 1);
+                SqlNode equalsCondition = makeEqualsSqlNode(left, right);
+                propertyEqualsConditions.add(equalsCondition);
+            }
+            if (where != null) {
+                propertyEqualsConditions.add(where);
+            }
+            return makeAndSqlNode(propertyEqualsConditions);
+        }
         return where;
     }
 
+    private static SqlNode makeEqualsSqlNode(SqlNode leftNode, SqlNode rightNode) {
+        return new SqlBasicCall(SqlStdOperatorTable.EQUALS, new SqlNode[]{leftNode, rightNode},
+            leftNode.getParserPosition());
+    }
+
+    private static SqlNode makeAndSqlNode(List<SqlNode> conditions) {
+        if (conditions.size() == 1) {
+            return conditions.get(0);  // 只有一个条件时直接返回
+        } else {
+            return new SqlBasicCall(SqlStdOperatorTable.AND, conditions.toArray(new SqlNode[0]),
+                conditions.get(0).getParserPosition());
+        }
+    }
+
     public void setWhere(SqlNode where) {
-        this.where = where;
+        this.combineWhere = where;
     }
 
     @Override

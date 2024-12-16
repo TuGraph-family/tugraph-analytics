@@ -1,0 +1,10 @@
+1,person,marko,29
+2,person,vadas,27
+3,software,lop,java
+4,person,josh,32
+5,software,ripple,java
+6,person,peter,35
+7,person,harry,24
+8,software,lep,python
+9,person,rose,22
+10,person,jack,21

@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.antgroup.geaflow.api.function.internal.CollectionSource;
+import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.api.pdata.PStreamSource;
 import com.antgroup.geaflow.api.pdata.stream.PStream;
-import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.pdata.stream.window.PWindowStream;
 import com.antgroup.geaflow.api.window.WindowFactory;

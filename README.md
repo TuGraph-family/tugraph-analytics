@@ -35,13 +35,17 @@ For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow Sy
 * Cloud-native deployment
 
 ## Quick start
+Step 1: Package the JAR and submit the Quick Start task
 
 1. Prepare Git、JDK8、Maven、Docker environment。
 2. Download Code：`git clone https://github.com/TuGraph-family/tugraph-analytics`
-3. Build Project：`mvn clean install -DskipTests`
-4. Test Job：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection.sql`
-3. Build Image：`./build.sh --all`
-4. Start Container：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
+3. Build Project：`./build.sh --module=gealfow --output=package`
+4. Test Job：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection_file_demo.sql`
+
+Step 2: Launch the console and experience submitting the Quick Start task through the console
+
+5. Build console JAR and image (requires starting Docker)：`./build.sh --module=gealfow-console`
+6. Start Console：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
 For more details：[Quick Start](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
 
@@ -92,5 +96,11 @@ You can contact us through the following methods:
 **If you are interested in GeaFlow, please give our project a [ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics).**
 
 ## Acknowledgement
-Thanks to some outstanding open-source projects in the industry, such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions.
+Thanks to some outstanding open-source projects in the industry such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions. Also, thanks to all the individual developers who have contributed to this repository, which are listed below.
+
+<a href="https://github.com/TuGraph-family/tugraph-analytics/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=TuGraph-family/tugraph-analytics" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
 <!--intro-end-->

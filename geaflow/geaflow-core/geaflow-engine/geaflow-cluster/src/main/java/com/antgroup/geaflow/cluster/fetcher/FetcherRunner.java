@@ -16,6 +16,8 @@ package com.antgroup.geaflow.cluster.fetcher;
 
 import com.antgroup.geaflow.cluster.task.runner.AbstractTaskRunner;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,11 +33,20 @@ public class FetcherRunner extends AbstractTaskRunner<IFetchRequest> {
 
     @Override
     protected void process(IFetchRequest task) {
-        if (task instanceof InitFetchRequest) {
-            fetcher.init((InitFetchRequest) task);
-        } else {
-            ReFetchRequest request = (ReFetchRequest) task;
-            fetcher.fetch(request.getStartBatchId(), request.getWindowCount());
+        IFetchRequest.RequestType requestType = task.getRequestType();
+        switch (requestType) {
+            case INIT:
+                this.fetcher.init((InitFetchRequest) task);
+                break;
+            case FETCH:
+                this.fetcher.fetch((FetchRequest) task);
+                break;
+            case CLOSE:
+                this.fetcher.close((CloseFetchRequest) task);
+                break;
+            default:
+                throw new GeaflowRuntimeException(
+                    RuntimeErrors.INST.requestTypeNotSupportError(requestType.name()));
         }
     }
 

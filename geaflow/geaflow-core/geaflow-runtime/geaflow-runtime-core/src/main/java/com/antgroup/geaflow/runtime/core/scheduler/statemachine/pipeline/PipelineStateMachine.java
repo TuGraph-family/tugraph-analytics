@@ -15,6 +15,8 @@
 package com.antgroup.geaflow.runtime.core.scheduler.statemachine.pipeline;
 
 import com.antgroup.geaflow.cluster.protocol.ScheduleStateType;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.ExecutableEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.AbstractCycleSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
@@ -27,6 +29,7 @@ import com.antgroup.geaflow.runtime.core.scheduler.statemachine.ITransitionCondi
 import com.antgroup.geaflow.runtime.core.scheduler.statemachine.ScheduleState;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Holds all state and transitions of the schedule state machine.
@@ -34,6 +37,9 @@ import java.util.List;
 public class PipelineStateMachine extends AbstractStateMachine {
 
     private static final ScheduleState INIT = ScheduleState.of(ScheduleStateType.INIT);
+    private static final ScheduleState PREFETCH = ScheduleState.of(ScheduleStateType.PREFETCH);
+    private static final ScheduleState FINISH_PREFETCH =
+        ScheduleState.of(ScheduleStateType.FINISH_PREFETCH);
     private static final ScheduleState ITERATION_INIT = ScheduleState.of(ScheduleStateType.ITERATION_INIT);
     private static final ScheduleState EXECUTE_COMPUTE = ScheduleState.of(ScheduleStateType.EXECUTE_COMPUTE);
     private static final ScheduleState ROLLBACK = ScheduleState.of(ScheduleStateType.ROLLBACK);
@@ -45,9 +51,14 @@ public class PipelineStateMachine extends AbstractStateMachine {
         super.init(context);
 
         // Build state machine.
-        // START -> INIT ｜ ROLLBACK.
+        // START -> ROLLBACK | PREFETCH | INIT.
         this.stateMachineManager.addTransition(START, ROLLBACK, new Start2RollbackTransitionCondition());
+        this.stateMachineManager.addTransition(START, PREFETCH, new Start2PrefetchTransitionCondition());
         this.stateMachineManager.addTransition(START, INIT);
+
+        // PREFETCH -> ITERATION_FINISH | INIT.
+        this.stateMachineManager.addTransition(PREFETCH, ITERATION_FINISH, new FinishTransitionCondition());
+        this.stateMachineManager.addTransition(PREFETCH, INIT);
 
         // INIT -> ROLLBACK | ITERATION_INIT | EXECUTE_COMPUTE.
         this.stateMachineManager.addTransition(INIT, ROLLBACK, new Init2RollbackTransitionCondition());
@@ -58,17 +69,26 @@ public class PipelineStateMachine extends AbstractStateMachine {
         this.stateMachineManager.addTransition(ROLLBACK, ITERATION_INIT, new InitIterationTransitionCondition());
         this.stateMachineManager.addTransition(ROLLBACK, EXECUTE_COMPUTE);
 
-        // ITERATION_INIT -> EXECUTE_COMPUTE | ITERATION_FINISH.
+        // ITERATION_INIT -> EXECUTE_COMPUTE ｜ PREFETCH | ITERATION_FINISH.
         this.stateMachineManager.addTransition(ITERATION_INIT, EXECUTE_COMPUTE, new ComputeTransitionCondition());
+        this.stateMachineManager.addTransition(ITERATION_INIT, PREFETCH, new Compute2PrefetchTransitionCondition());
         this.stateMachineManager.addTransition(ITERATION_INIT, ITERATION_FINISH, new FinishTransitionCondition());
 
-        // EXECUTE_COMPUTE -> EXECUTE_COMPUTE | ITERATION_FINISH | CLEAN_CYCLE.
+        // EXECUTE_COMPUTE -> EXECUTE_COMPUTE | ITERATION_FINISH | FINISH_PREFETCH | CLEAN_CYCLE.
         this.stateMachineManager.addTransition(EXECUTE_COMPUTE, EXECUTE_COMPUTE, new ComputeTransitionCondition());
+        this.stateMachineManager.addTransition(EXECUTE_COMPUTE, PREFETCH, new Compute2PrefetchTransitionCondition());
         this.stateMachineManager.addTransition(EXECUTE_COMPUTE, ITERATION_FINISH, new FinishTransitionCondition());
+        this.stateMachineManager.addTransition(EXECUTE_COMPUTE, FINISH_PREFETCH,
+            new Compute2FinishPrefetchTransitionCondition());
         this.stateMachineManager.addTransition(EXECUTE_COMPUTE, CLEAN_CYCLE, new CleanTransitionCondition());
 
-        // ITERATION_FINISH -> CLEAN_CYCLE.
+        // ITERATION_FINISH -> FINISH_PREFETCH | CLEAN_CYCLE.
+        this.stateMachineManager.addTransition(ITERATION_FINISH, FINISH_PREFETCH,
+            new FinishPrefetchTransitionCondition());
         this.stateMachineManager.addTransition(ITERATION_FINISH, CLEAN_CYCLE);
+
+        // FINISH_PREFETCH -> CLEAN_CYCLE.
+        this.stateMachineManager.addTransition(FINISH_PREFETCH, CLEAN_CYCLE);
 
         // CLEAN_CYCLE -> END.
         this.stateMachineManager.addTransition(CLEAN_CYCLE, END);
@@ -104,6 +124,9 @@ public class PipelineStateMachine extends AbstractStateMachine {
 
             currentState = ScheduleState.of(target.getScheduleStateType());
             results.add(currentState);
+            if (target.getScheduleStateType() == ScheduleStateType.ITERATION_FINISH && source.getScheduleStateType() == ScheduleStateType.PREFETCH) {
+                return;
+            }
             transition(currentState, results);
         }
     }
@@ -112,11 +135,11 @@ public class PipelineStateMachine extends AbstractStateMachine {
         if (previous == null || current == null) {
             return true;
         }
-        if (context.getCycle() instanceof ExecutionNodeCycle) {
+        /*if (context.getCycle() instanceof ExecutionNodeCycle) {
             if (((ExecutionNodeCycle) context.getCycle()).getVertexGroup().getVertexMap().size() > 1) {
                 return false;
             }
-        }
+        }*/
         // Not allow two execution state compose.
         if ((previous.getScheduleStateType() == ScheduleStateType.ITERATION_INIT || previous.getScheduleStateType() == ScheduleStateType.EXECUTE_COMPUTE)
             && current.getScheduleStateType() == ScheduleStateType.EXECUTE_COMPUTE) {
@@ -134,6 +157,26 @@ public class PipelineStateMachine extends AbstractStateMachine {
                 return context.isRecovered();
             }
             return false;
+        }
+    }
+
+    public static class Start2PrefetchTransitionCondition
+        implements ITransitionCondition<ScheduleState, ICycleSchedulerContext> {
+
+        @Override
+        public boolean predicate(ScheduleState state, ICycleSchedulerContext context) {
+            return context.isPrefetch() && !((ExecutionNodeCycle) context.getCycle()).isIterative();
+        }
+    }
+
+    public static class Compute2PrefetchTransitionCondition
+        implements ITransitionCondition<ScheduleState, ICycleSchedulerContext> {
+
+        @Override
+        public boolean predicate(ScheduleState state, ICycleSchedulerContext context) {
+            // When the iteration is finished and prefetch is enable, we need to prefetch for next iteration.
+            return context.isCycleFinished() && (context.getCycle().getType() == ExecutionCycleType.ITERATION
+                    || context.getCycle().getType() == ExecutionCycleType.ITERATION_WITH_AGG) && context.isPrefetch();
         }
     }
 
@@ -169,6 +212,19 @@ public class PipelineStateMachine extends AbstractStateMachine {
         }
     }
 
+    public static class FinishPrefetchTransitionCondition
+        implements ITransitionCondition<ScheduleState, ICycleSchedulerContext> {
+
+        @Override
+        public boolean predicate(ScheduleState state, ICycleSchedulerContext context) {
+            if (context.getConfig().getBoolean(ExecutionConfigKeys.SHUFFLE_PREFETCH)) {
+                Map<Integer, ExecutableEvent> needFinishedPrefetchEvents = context.getPrefetchEvents();
+                return needFinishedPrefetchEvents != null && needFinishedPrefetchEvents.size() > 0;
+            }
+            return false;
+        }
+    }
+
     public static class CleanTransitionCondition
         implements ITransitionCondition<ScheduleState, ICycleSchedulerContext> {
 
@@ -176,6 +232,20 @@ public class PipelineStateMachine extends AbstractStateMachine {
         public boolean predicate(ScheduleState state, ICycleSchedulerContext context) {
             return context.isCycleFinished() && !(context.getCycle().getType() == ExecutionCycleType.ITERATION
                 || context.getCycle().getType() == ExecutionCycleType.ITERATION_WITH_AGG);
+        }
+    }
+
+    public static class Compute2FinishPrefetchTransitionCondition
+        implements ITransitionCondition<ScheduleState, ICycleSchedulerContext> {
+
+        @Override
+        public boolean predicate(ScheduleState state, ICycleSchedulerContext context) {
+            if (context.isCycleFinished() && !(context.getCycle().getType() == ExecutionCycleType.ITERATION
+                || context.getCycle().getType() == ExecutionCycleType.ITERATION_WITH_AGG) && context.isPrefetch()) {
+                Map<Integer, ExecutableEvent> needFinishedPrefetchEvents = context.getPrefetchEvents();
+                return needFinishedPrefetchEvents != null && needFinishedPrefetchEvents.size() > 0;
+            }
+            return false;
         }
     }
 

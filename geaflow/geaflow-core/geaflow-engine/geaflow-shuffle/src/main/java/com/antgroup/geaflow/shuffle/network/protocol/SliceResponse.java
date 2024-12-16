@@ -14,8 +14,8 @@
 
 package com.antgroup.geaflow.shuffle.network.protocol;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.PipeBuffer;
-import com.antgroup.geaflow.shuffle.api.pipeline.channel.ChannelId;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.channel.ChannelId;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.FileRegion;

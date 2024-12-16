@@ -89,13 +89,18 @@ public class InstanceService extends NameService<GeaflowInstance, InstanceEntity
         return instanceDao.getResourceCount(instanceId, names);
     }
 
+    public String getDefaultInstanceName(String userName) {
+        return "instance_" + userName;
+    }
+
     @Transactional
     public String createDefaultInstance(String tenantId, GeaflowUser user) {
         String userName = user.getName();
         String userComment = user.getComment();
-        String instanceName = "instance_" + userName;
+        String instanceName = getDefaultInstanceName(userName);
         String userDisplayName = StringUtils.isBlank(userComment) ? userName : userComment;
-        String instanceComment = Fmt.as(I18nUtil.getMessage("i18n.key.default.instance.comment.format"), userDisplayName);
+        String instanceComment = Fmt.as(I18nUtil.getMessage("i18n.key.default.instance.comment.format"),
+            userDisplayName);
 
         // Need to set tenantId, using dao directly
         InstanceEntity entity = new InstanceEntity();

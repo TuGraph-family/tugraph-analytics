@@ -16,10 +16,11 @@ package com.antgroup.geaflow.runtime.core.protocol;
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.task.ITaskContext;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.model.record.RecordArgs;
 import com.antgroup.geaflow.runtime.core.worker.AbstractAlignedWorker;
-import com.antgroup.geaflow.runtime.io.IInputDesc;
-import com.antgroup.geaflow.runtime.shuffle.InputDescriptor;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
+import com.antgroup.geaflow.shuffle.desc.IInputDesc;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 import java.util.ArrayList;
@@ -31,13 +32,17 @@ import java.util.List;
  */
 public class IterationExecutionComputeWithAggEvent extends AbstractIterationComputeCommand {
 
-    private final InputDescriptor inputDescriptor;
+    private final IoDescriptor ioDescriptor;
 
-    public IterationExecutionComputeWithAggEvent(long schedulerId, int workerId, int cycleId, long windowId,
-                                                 long fetchWindowId, long fetchCount,
-                                                 InputDescriptor inputDescriptor) {
+    public IterationExecutionComputeWithAggEvent(long schedulerId,
+                                                 int workerId,
+                                                 int cycleId,
+                                                 long windowId,
+                                                 long fetchWindowId,
+                                                 long fetchCount,
+                                                 IoDescriptor ioDescriptor) {
         super(schedulerId, workerId, cycleId, windowId, fetchWindowId, fetchCount);
-        this.inputDescriptor = inputDescriptor;
+        this.ioDescriptor = ioDescriptor;
     }
 
     @Override
@@ -47,21 +52,20 @@ public class IterationExecutionComputeWithAggEvent extends AbstractIterationComp
     }
 
     @Override
-    public int getWorkerId() {
-        return workerId;
-    }
-
-    @Override
     public EventType getEventType() {
         return EventType.ITERATIVE_COMPUTE_WITH_AGGREGATE;
     }
 
     private PipelineMessage<?> fetchAggResult() {
         List<?> aggRecords = new ArrayList<>();
-        for (IInputDesc inputDesc : inputDescriptor.getInputDescMap().values()) {
-            aggRecords.addAll(inputDesc.getInput());
+        List<IInputDesc<?>> inputDesc = new ArrayList<>(this.ioDescriptor.getInputDescriptor().getInputDescMap().values());
+        if (inputDesc.size() != 1) {
+            throw new GeaflowRuntimeException("agg result should only have 1 input, but found " + inputDesc.size());
         }
-        return new PipelineMessage<>(this.fetchWindowId,
+        IInputDesc aggDesc = inputDesc.get(0);
+        int edgeId = aggDesc.getEdgeId();
+        aggRecords.addAll(aggDesc.getInput());
+        return new PipelineMessage<>(edgeId, this.fetchWindowId,
             RecordArgs.GraphRecordNames.Aggregate.name(),
             new DataMessageIterator<>(aggRecords));
     }

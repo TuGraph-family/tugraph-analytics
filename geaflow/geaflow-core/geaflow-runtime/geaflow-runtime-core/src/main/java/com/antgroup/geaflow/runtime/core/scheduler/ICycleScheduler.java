@@ -15,15 +15,20 @@
 package com.antgroup.geaflow.runtime.core.scheduler;
 
 import com.antgroup.geaflow.runtime.core.scheduler.context.ICycleSchedulerContext;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.result.IExecutionResult;
 
-public interface ICycleScheduler<R, E> {
+public interface ICycleScheduler<
+    C extends IExecutionCycle,
+    PC extends IExecutionCycle,
+    PCC extends ICycleSchedulerContext<PC, ?, ?>,
+    R, E> {
 
     /**
      * Initialize cycle scheduler by input context.
      * May include assign resource and initialize worker, and set up cycle schedule env.
      */
-    void init(ICycleSchedulerContext context);
+    void init(ICycleSchedulerContext<C, PC, PCC> context);
 
     /**
      * Execution all cycles.

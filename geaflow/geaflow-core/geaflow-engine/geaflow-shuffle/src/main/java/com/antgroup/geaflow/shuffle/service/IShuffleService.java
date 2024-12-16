@@ -17,6 +17,7 @@ package com.antgroup.geaflow.shuffle.service;
 import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.message.PipelineInfo;
+import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import java.io.Serializable;
 
@@ -41,7 +42,7 @@ public interface IShuffleService extends Serializable {
      *
      * @return shuffle writer.
      */
-    IShuffleWriter getWriter();
+    IShuffleWriter<?, Shard> getWriter();
 
     /**
      * Release the local resources of this job id.

@@ -19,7 +19,7 @@ import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.core.graph.ExecutionEdge;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.antgroup.geaflow.shuffle.message.ISliceMeta;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.Shard;
@@ -42,9 +42,9 @@ public class DataExchangerTest extends TestCase {
         vertex.setInputEdges(Arrays.asList(edge));
 
         CycleResultManager resultManager = new CycleResultManager();
-        ShardResult shards1 = new ShardResult(edgeId, CollectType.FORWARD, buildSlices(parallelism));
+        ShardResult shards1 = new ShardResult(edgeId, OutputType.FORWARD, buildSlices(parallelism));
         resultManager.register(0, shards1);
-        ShardResult shards2 = new ShardResult(edgeId, CollectType.FORWARD, buildSlices(parallelism));
+        ShardResult shards2 = new ShardResult(edgeId, OutputType.FORWARD, buildSlices(parallelism));
         resultManager.register(0, shards2);
 
         Map<Integer, List<Shard>> result = DataExchanger.buildInput(vertex, edge, resultManager);
@@ -69,16 +69,16 @@ public class DataExchangerTest extends TestCase {
         ExecutionEdge edge = new ExecutionEdge(null, edgeId, null, 0, 1, null);
 
         CycleResultManager resultManager = new CycleResultManager();
-        ShardResult shards1 = new ShardResult(edgeId, CollectType.FORWARD, buildSlices(parallelism));
+        ShardResult shards1 = new ShardResult(edgeId, OutputType.FORWARD, buildSlices(parallelism));
         resultManager.register(0, shards1);
 
-        ShardResult shards2 = new ShardResult(edgeId, CollectType.FORWARD, buildSlices(parallelism));
+        ShardResult shards2 = new ShardResult(edgeId, OutputType.FORWARD, buildSlices(parallelism));
         resultManager.register(0, shards2);
 
-        ResponseResult response1 = new ResponseResult(edgeId, CollectType.RESPONSE, buildResponse());
+        ResponseResult response1 = new ResponseResult(edgeId, OutputType.RESPONSE, buildResponse());
         resultManager.register(1, response1);
 
-        ResponseResult response2 = new ResponseResult(edgeId, CollectType.RESPONSE, buildResponse());
+        ResponseResult response2 = new ResponseResult(edgeId, OutputType.RESPONSE, buildResponse());
         resultManager.register(1, response2);
 
         // build input not include response.

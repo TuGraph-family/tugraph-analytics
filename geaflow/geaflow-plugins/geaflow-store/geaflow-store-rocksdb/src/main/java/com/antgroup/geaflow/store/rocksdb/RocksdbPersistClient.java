@@ -180,7 +180,7 @@ public class RocksdbPersistClient {
             if (!persistIO.exists(new Path(remotePathStr))) {
                 return -1;
             }
-            List<String> files = persistIO.listFile(new Path(remotePathStr));
+            List<String> files = persistIO.listFileName(new Path(remotePathStr));
             List<Long> chkIds = files.stream().filter(f -> f.startsWith(META)).map(this::getMetaFileId)
                 .filter(f -> f > 0).sorted(Collections.reverseOrder()).collect(Collectors.toList());
             LOGGER.info("find available chk {}", chkIds);
@@ -264,7 +264,7 @@ public class RocksdbPersistClient {
                 Path path = new Path(remotePath);
                 PathFilter filter = path1 -> path1.getName().startsWith(META);
                 if (persistIO.exists(path)) {
-                    FileInfo[] metaFileStatuses = persistIO.listStatus(path, filter);
+                    FileInfo[] metaFileStatuses = persistIO.listFileInfo(path, filter);
                     Path lastMetaPath = getLastMetaFile(chkId, metaFileStatuses);
                     if (lastMetaPath != null) {
                         commitFileInfo = new CheckPointFileInfo(chkId);
@@ -321,14 +321,14 @@ public class RocksdbPersistClient {
         FileInfo[] sstFileStatuses = new FileInfo[]{};
         try {
             //if there is no data, the directory will not exist.
-            sstFileStatuses = persistIO.listStatus(new Path(remotePath, DATAS));
+            sstFileStatuses = persistIO.listFileInfo(new Path(remotePath, DATAS));
         } catch (Exception e) {
             LOGGER.warn("{} do not have data, just ignore", remotePath);
         }
 
         Path path = new Path(remotePath);
         PathFilter filter = path1 -> path1.getName().startsWith(META);
-        FileInfo[] metaFileStatuses = persistIO.listStatus(path, filter);
+        FileInfo[] metaFileStatuses = persistIO.listFileInfo(path, filter);
         Path delMetaPath = getLastMetaFile(chkId, metaFileStatuses);
         if (delMetaPath == null) {
             return;
@@ -425,7 +425,7 @@ public class RocksdbPersistClient {
 
     private Tuple<Boolean, Long> checkSizeSame(final Path dfsPath, final Path localPath)
         throws IOException {
-        long len = persistIO.getRemoteFileSize(dfsPath);
+        long len = persistIO.getFileSize(dfsPath);
         File localFile = new File(localPath.toString());
         return Tuple.of(len == localFile.length(), len);
     }
@@ -521,7 +521,7 @@ public class RocksdbPersistClient {
                 copyToLocal(new Path(Paths.get(remotePath.toString(), DATAS, sstName).toString()),
                     new Path(localChkFile.getAbsolutePath(), sstName)));
         }
-        List<String> metaList = persistIO.listFile(new Path(remoteMeta));
+        List<String> metaList = persistIO.listFileName(new Path(remoteMeta));
         for (String metaName : metaList) {
             callers.add(
                 copyToLocal(new Path(remoteMeta, metaName), new Path(localChkFile.getAbsolutePath(), metaName)));

@@ -84,6 +84,15 @@ public class GQLAlgorithmTest {
     }
 
     @Test
+    public void testAlgorithm_008() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/find_loop.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testAlgorithmKHop() throws Exception {
         QueryTester
             .build()
@@ -159,6 +168,25 @@ public class GQLAlgorithmTest {
         QueryTester
             .build()
             .withQueryPath("/query/gql_algorithm_inc_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_004() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_004.sql")
+            .execute()
+            .compareWithOrder()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_assp() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_algorithm_inc_assp.sql")
             .execute()
             .checkSinkResult();
     }

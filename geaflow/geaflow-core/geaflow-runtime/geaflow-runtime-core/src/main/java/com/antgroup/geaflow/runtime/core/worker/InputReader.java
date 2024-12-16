@@ -18,6 +18,7 @@ import com.antgroup.geaflow.cluster.fetcher.IInputMessageBuffer;
 import com.antgroup.geaflow.cluster.protocol.InputMessage;
 import com.antgroup.geaflow.io.AbstractMessageBuffer;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
+import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
 
 public class InputReader<T> extends AbstractMessageBuffer<InputMessage<T>> implements IInputMessageBuffer<T> {
@@ -32,8 +33,8 @@ public class InputReader<T> extends AbstractMessageBuffer<InputMessage<T>> imple
     }
 
     @Override
-    public void onBarrier(long windowId, long windowCount) {
-        this.offer(new InputMessage<>(windowId, windowCount));
+    public void onBarrier(PipelineBarrier barrier) {
+        this.offer(new InputMessage<>(barrier.getWindowId(), barrier.getCount()));
     }
 
 }

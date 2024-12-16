@@ -23,6 +23,7 @@ import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
+import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionGraphCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
 import com.antgroup.geaflow.state.StoreType;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import org.testng.annotations.AfterMethod;
 
 public abstract class BaseScheduledWorkerManagerTest {
 
-    protected ExecutionNodeCycle buildMockCycle(int parallelism) {
+    protected ExecutionGraphCycle buildMockCycle(int parallelism) {
         Configuration configuration = new Configuration();
         configuration.put(JOB_UNIQUE_ID, "test-scheduler-context");
         configuration.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
@@ -54,12 +55,13 @@ public abstract class BaseScheduledWorkerManagerTest {
         ExecutionNodeCycle cycle =  new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup,
             configuration, "driver_id", 0);
         cycle.setTasks(tasks);
-        return cycle;
+
+        return new ExecutionGraphCycle(0, 0, 0, "test", 0, 1, 1, configuration, "driverId", 0);
     }
 
     @AfterMethod
     public void afterMethod() {
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
 }

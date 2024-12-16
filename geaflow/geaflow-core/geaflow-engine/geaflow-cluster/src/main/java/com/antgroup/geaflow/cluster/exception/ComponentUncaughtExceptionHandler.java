@@ -20,11 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ComponentUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ComponentUncaughtExceptionHandler.class);
+
+    public static final ComponentUncaughtExceptionHandler INSTANCE = new ComponentUncaughtExceptionHandler();
 
     @Override
     public void uncaughtException(Thread thread, Throwable cause) {
-        LOGGER.error("FATAL exception in thread:{}", thread.getName(), cause);
+        LOGGER.error("FATAL exception in thread: {}", thread.getName(), cause);
         StatsCollectorFactory collectorFactory = StatsCollectorFactory.getInstance();
         if (collectorFactory != null) {
             collectorFactory.getExceptionCollector().reportException(ExceptionLevel.FATAL, cause);

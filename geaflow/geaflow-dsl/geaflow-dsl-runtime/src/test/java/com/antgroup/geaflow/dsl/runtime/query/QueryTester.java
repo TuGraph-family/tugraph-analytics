@@ -26,7 +26,7 @@ import com.antgroup.geaflow.dsl.runtime.engine.GQLPipeLine.GQLPipelineHook;
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.file.FileConfigKeys;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -119,7 +119,7 @@ public class QueryTester implements Serializable {
         } finally {
             environment.shutdown();
             ClusterMetaStore.close();
-            AbstractScheduledWorkerManager.closeInstance();
+            ScheduledWorkerManagerFactory.clear();
         }
         return this;
     }
@@ -142,9 +142,14 @@ public class QueryTester implements Serializable {
     }
 
     public void checkSinkResult() throws Exception {
+        checkSinkResult(null);
+    }
+
+    public void checkSinkResult(String dict) throws Exception {
         String[] paths = queryPath.split("/");
         String lastPath = paths[paths.length - 1];
-        String exceptPath = "/expect/" + lastPath.split("\\.")[0] + ".txt";
+        String exceptPath = dict != null ? "/expect/" + dict + "/" + lastPath.split("\\.")[0] + ".txt"
+                                              : "/expect/" + lastPath.split("\\.")[0] + ".txt";
         String targetPath = getTargetPath(queryPath);
         String expectResult = IOUtils.resourceToString(exceptPath, Charset.defaultCharset()).trim();
         String actualResult = readFile(targetPath);

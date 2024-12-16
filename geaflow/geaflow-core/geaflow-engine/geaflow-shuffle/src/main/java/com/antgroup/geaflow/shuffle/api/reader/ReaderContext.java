@@ -15,17 +15,67 @@
 package com.antgroup.geaflow.shuffle.api.reader;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
+import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
+import java.util.List;
+import java.util.Map;
 
 public class ReaderContext implements IReaderContext {
 
-    private final Configuration config;
-
-    public ReaderContext(Configuration config) {
-        this.config = config;
-    }
+    private Configuration config;
+    private int vertexId;
+    private String taskName;
+    private Map<Integer, ShardInputDesc> inputShardMap;
+    private Map<Integer, List<PipelineSliceMeta>> inputSlices;
+    private int sliceNum;
 
     @Override
     public Configuration getConfig() {
-        return config;
+        return this.config;
     }
+
+    public int getVertexId() {
+        return this.vertexId;
+    }
+
+    public String getTaskName() {
+        return this.taskName;
+    }
+
+    public Map<Integer, ShardInputDesc> getInputShardMap() {
+        return this.inputShardMap;
+    }
+
+    public Map<Integer, List<PipelineSliceMeta>> getInputSlices() {
+        return this.inputSlices;
+    }
+
+    public int getSliceNum() {
+        return this.sliceNum;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setVertexId(int vertexId) {
+        this.vertexId = vertexId;
+    }
+
+    public void setTaskName(String taskName) {
+        this.taskName = taskName;
+    }
+
+    public void setInputShardMap(Map<Integer, ShardInputDesc> inputShardMap) {
+        this.inputShardMap = inputShardMap;
+    }
+
+    public void setInputSlices(Map<Integer, List<PipelineSliceMeta>> inputSlices) {
+        this.inputSlices = inputSlices;
+    }
+
+    public void setSliceNum(int sliceNum) {
+        this.sliceNum = sliceNum;
+    }
+
 }

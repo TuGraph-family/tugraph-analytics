@@ -18,8 +18,8 @@ import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.cluster.response.ShardResult;
 import com.antgroup.geaflow.collector.IResultCollector;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ public abstract class AbstractPipelineOutputCollector<T>
     private int edgeId;
     private String edgeName;
     private Shard shard;
-    private CollectType collectType;
+    private OutputType collectType;
 
     public AbstractPipelineOutputCollector(ForwardOutputDesc outputDesc) {
         super(outputDesc);

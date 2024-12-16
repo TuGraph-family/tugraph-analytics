@@ -72,8 +72,11 @@ CLASSPATH=$CLASSPATH:/tmp/geaflow/gql/
 echo "CLASSPATH:$CLASSPATH"
 echo -e "\033[32mView dashboard via http://localhost:8090.
 See logs via url http://localhost:8090/#/components/master/logs or at local path ${GEAFLOW_LOG_PATH}\033[32m"
+
 $JAVACMD -cp "$CLASSPATH" \
   -DclusterType=LOCAL \
   -Dlog.file=${GEAFLOW_LOG_PATH} \
   -Dlog4j.configuration=${LOG4j_PROPERTIES_FILE_NAME} \
   com.antgroup.geaflow.dsl.runtime.engine.GeaFlowGqlClient "${JOB_ARGS}" > ${GEAFLOW_LOG_PATH} 2>&1
+
+echo "Finished"

@@ -23,7 +23,6 @@ import com.antgroup.geaflow.api.pdata.stream.window.PWindowSource;
 import com.antgroup.geaflow.api.window.impl.AllWindow;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.env.Environment;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
 import com.antgroup.geaflow.example.function.AbstractVcFunc;
 import com.antgroup.geaflow.example.function.FileSink;
@@ -75,7 +74,7 @@ public class PersonalRank {
 
     public static IPipelineResult submit(Environment environment) {
         ResultValidator.cleanResult(RESULT_FILE_DIR);
-        Configuration envConfig = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration envConfig = environment.getEnvironmentContext().getConfig();
         envConfig.put(FileSink.OUTPUT_DIR, RESULT_FILE_DIR);
 
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);

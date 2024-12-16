@@ -16,7 +16,7 @@ package com.antgroup.geaflow.analytics.service.query;
 
 import com.antgroup.geaflow.cluster.response.ResponseResult;
 import com.antgroup.geaflow.common.serialize.SerializerFactory;
-import com.antgroup.geaflow.io.CollectType;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class QueryResultTest {
         String queryId = "1";
         List<List<ResponseResult>> result = new ArrayList<>();
         ArrayList<ResponseResult> responseResults = new ArrayList<>();
-        responseResults.add(new ResponseResult(1, CollectType.RESPONSE,
+        responseResults.add(new ResponseResult(1, OutputType.RESPONSE,
             Collections.singletonList("result")));
         result.add(responseResults);
         QueryResults queryResults = new QueryResults(queryId, new QueryError(ERROR_MSG));
@@ -80,7 +80,7 @@ public class QueryResultTest {
         String queryId = "1";
         List<List<ResponseResult>> result = new ArrayList<>();
         ArrayList<ResponseResult> responseResults = new ArrayList<>();
-        responseResults.add(new ResponseResult(1, CollectType.RESPONSE,
+        responseResults.add(new ResponseResult(1, OutputType.RESPONSE,
             Collections.singletonList("result")));
         result.add(responseResults);
         QueryResults queryResults = new QueryResults(queryId, result);
@@ -123,7 +123,7 @@ public class QueryResultTest {
         String queryId = "1";
         List<List<ResponseResult>> result = new ArrayList<>();
         ArrayList<ResponseResult> responseResults = new ArrayList<>();
-        responseResults.add(new ResponseResult(1, CollectType.RESPONSE,
+        responseResults.add(new ResponseResult(1, OutputType.RESPONSE,
             Collections.singletonList("result")));
         result.add(responseResults);
         QueryResults queryResults = new QueryResults(queryId, result);

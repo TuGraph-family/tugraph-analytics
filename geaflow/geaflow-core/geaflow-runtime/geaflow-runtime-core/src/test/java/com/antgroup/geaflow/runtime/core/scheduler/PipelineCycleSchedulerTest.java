@@ -21,8 +21,10 @@ import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM
 
 import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
+import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.core.graph.ExecutionTaskType;
@@ -34,7 +36,7 @@ import com.antgroup.geaflow.runtime.core.protocol.RollbackCycleEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.state.StoreType;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
@@ -63,53 +65,48 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         config.put(RUN_LOCAL_MODE.getKey(), "true");
         config.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
         config.put(CONTAINER_HEAP_SIZE_MB.getKey(), String.valueOf(1024));
+        config.put(ExecutionConfigKeys.SHUFFLE_PREFETCH.getKey(), String.valueOf(false));
         configuration = new Configuration(config);
         ClusterMetaStore.init(0, "driver-0", configuration);
+        ShuffleManager.init(configuration);
     }
 
     @AfterMethod
     public void cleanUp() {
         ClusterMetaStore.close();
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     @Test(priority = 0)
     public void testSimplePipeline() {
         PipelineCycleScheduler scheduler = new PipelineCycleScheduler();
         processor.register(scheduler);
-        ShuffleManager.init(configuration);
-        ShuffleManager.getInstance().initShuffleMaster();
         StatsCollectorFactory.init(configuration);
-
         CheckpointSchedulerContext context = (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(configuration), null);
         mockPersistContext = context;
         scheduler.init(context);
         scheduler.execute();
         scheduler.close();
 
-
         List<IEvent> events = processor.getProcessed();
         LOGGER.info("processed events {}", events.size());
         for (IEvent event : events) {
             LOGGER.info("{}", event);
         }
-        Assert.assertEquals(7, events.size());
+        Assert.assertEquals(6, events.size());
+
         Assert.assertEquals(EventType.COMPOSE, events.get(0).getEventType());
-        Assert.assertEquals(EventType.CREATE_TASK, ((ComposeEvent) events.get(0)).getEventList().get(0).getEventType());
-        Assert.assertEquals(EventType.CREATE_WORKER, ((ComposeEvent) events.get(0)).getEventList().get(1).getEventType());
+        Assert.assertEquals(EventType.INIT_CYCLE, ((ComposeEvent) events.get(0)).getEventList().get(0).getEventType());
+        Assert.assertEquals(EventType.LAUNCH_SOURCE, ((ComposeEvent) events.get(0)).getEventList().get(1).getEventType());
+        Assert.assertEquals(1, ((LaunchSourceEvent) ((ComposeEvent) events.get(0)).getEventList().get(1)).getIterationWindowId());
 
-        Assert.assertEquals(EventType.COMPOSE, events.get(1).getEventType());
-        Assert.assertEquals(EventType.INIT_CYCLE, ((ComposeEvent) events.get(1)).getEventList().get(0).getEventType());
-        Assert.assertEquals(EventType.LAUNCH_SOURCE, ((ComposeEvent) events.get(1)).getEventList().get(1).getEventType());
-        Assert.assertEquals(1, ((LaunchSourceEvent) ((ComposeEvent) events.get(1)).getEventList().get(1)).getIterationWindowId());
+        Assert.assertEquals(EventType.LAUNCH_SOURCE, events.get(1).getEventType());
+        Assert.assertEquals(2, ((LaunchSourceEvent) events.get(1)).getIterationWindowId());
 
-        Assert.assertEquals(EventType.LAUNCH_SOURCE, events.get(2).getEventType());
-        Assert.assertEquals(2, ((LaunchSourceEvent) events.get(2)).getIterationWindowId());
+        Assert.assertEquals(EventType.LAUNCH_SOURCE, events.get(4).getEventType());
+        Assert.assertEquals(5, ((LaunchSourceEvent) events.get(4)).getIterationWindowId());
 
-        Assert.assertEquals(EventType.LAUNCH_SOURCE, events.get(5).getEventType());
-        Assert.assertEquals(5, ((LaunchSourceEvent) events.get(5)).getIterationWindowId());
-
-        Assert.assertEquals(EventType.CLEAN_CYCLE, events.get(6).getEventType());
+        Assert.assertEquals(EventType.CLEAN_CYCLE, events.get(5).getEventType());
 
     }
 
@@ -204,6 +201,7 @@ public class PipelineCycleSchedulerTest extends BaseCycleSchedulerTest {
         List<ExecutionTask> tailTasks = new ArrayList<>();
         for (int i = 0; i < vertex.getParallelism(); i++) {
             ExecutionTask task = new ExecutionTask(i, i, vertex.getParallelism(), vertex.getParallelism(), vertex.getParallelism(), vertex.getVertexId());
+            task.setWorkerInfo(new WorkerInfo("host0", 0, 0, 1, -1, 1, "container0"));
             task.setExecutionTaskType(ExecutionTaskType.head);
             tailTasks.add(task);
             headTasks.add(task);

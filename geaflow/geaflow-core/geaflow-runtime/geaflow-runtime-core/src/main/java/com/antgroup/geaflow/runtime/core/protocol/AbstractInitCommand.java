@@ -22,25 +22,25 @@ import com.antgroup.geaflow.cluster.collector.InitEmitterRequest;
 import com.antgroup.geaflow.cluster.collector.UpdateEmitterRequest;
 import com.antgroup.geaflow.cluster.fetcher.InitFetchRequest;
 import com.antgroup.geaflow.collector.ICollector;
-import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
-import com.antgroup.geaflow.common.shuffle.ShuffleDescriptor;
+import com.antgroup.geaflow.common.metric.EventMetrics;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
-import com.antgroup.geaflow.core.graph.util.ExecutionTaskUtils;
-import com.antgroup.geaflow.io.CollectType;
 import com.antgroup.geaflow.runtime.core.worker.AbstractWorker;
 import com.antgroup.geaflow.runtime.core.worker.InputReader;
 import com.antgroup.geaflow.runtime.core.worker.OutputWriter;
 import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
-import com.antgroup.geaflow.runtime.io.IInputDesc;
-import com.antgroup.geaflow.runtime.shuffle.InputDescriptor;
-import com.antgroup.geaflow.runtime.shuffle.IoDescriptor;
-import com.antgroup.geaflow.runtime.shuffle.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.ForwardOutputDesc;
-import com.antgroup.geaflow.shuffle.IOutputDesc;
+import com.antgroup.geaflow.shuffle.InputDescriptor;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
+import com.antgroup.geaflow.shuffle.desc.IInputDesc;
+import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
+import com.antgroup.geaflow.shuffle.desc.InputType;
+import com.antgroup.geaflow.shuffle.desc.OutputType;
+import com.antgroup.geaflow.shuffle.desc.ShardInputDesc;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,82 +49,68 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
 
     protected final long pipelineId;
     protected final String pipelineName;
-    protected IoDescriptor ioDescriptor;
+    protected final IoDescriptor ioDescriptor;
 
-    public AbstractInitCommand(long schedulerId, int workerId, int cycleId, long windowId, long pipelineId, String pipelineName) {
+    public AbstractInitCommand(long schedulerId,
+                               int workerId,
+                               int cycleId,
+                               long windowId,
+                               long pipelineId,
+                               String pipelineName,
+                               IoDescriptor ioDescriptor) {
         super(schedulerId, workerId, cycleId, windowId);
         this.pipelineId = pipelineId;
         this.pipelineName = pipelineName;
-    }
-
-    public void setIoDescriptor(IoDescriptor ioDescriptor) {
         this.ioDescriptor = ioDescriptor;
     }
 
     protected void initFetcher() {
-        WorkerContext workerContext = (WorkerContext) this.context;
-        if (!(ExecutionTaskUtils.isCycleHead(workerContext.getExecutionTask())
-            && this.ioDescriptor.getInputTaskNum() == 0)) {
-            InitFetchRequest request = this.buildInitFetchRequest(workerContext.getExecutionTask());
-            InputReader<?> inputReader = ((AbstractWorker<?, ?>) this.worker).getInputReader();
-            inputReader.setEventMetrics(workerContext.getEventMetrics());
-            request.addListener(inputReader);
-            this.fetcherRunner.add(request);
+        InputDescriptor inputDescriptor = this.ioDescriptor.getInputDescriptor();
+        if (inputDescriptor == null || inputDescriptor.getInputDescMap().isEmpty()) {
+            return;
         }
+        WorkerContext workerContext = (WorkerContext) this.context;
+        InitFetchRequest request = this.buildInitFetchRequest(
+            inputDescriptor, workerContext.getExecutionTask(), workerContext.getEventMetrics());
+        this.fetcherRunner.add(request);
     }
 
-    private InitFetchRequest buildInitFetchRequest(ExecutionTask executionTask) {
-        InputDescriptor inputDescriptor = this.ioDescriptor.getInputDescriptor();
-        Map<Integer, List<Shard>> inputShardMap = new HashMap<>();
-        Map<Integer, String> streamId2NameMap = new HashMap<>();
-        Map<Integer, IEncoder<?>> edgeId2EncoderMap = new HashMap<>();
-        ShuffleDescriptor shuffleDescriptor = null;
-        for (IInputDesc<Shard> inputDesc : inputDescriptor.getInputDescMap().values()) {
-            if (inputDesc.getInputType() == IInputDesc.InputType.META) {
-                inputShardMap.put(inputDesc.getEdgeId(), inputDesc.getInput());
-                edgeId2EncoderMap.put(inputDesc.getEdgeId(), ((ShardInputDesc) inputDesc).getEncoder());
-                streamId2NameMap.put(inputDesc.getEdgeId(), inputDesc.getName());
-                shuffleDescriptor = ((ShardInputDesc) inputDesc).getShuffleDescriptor();
+    protected InitFetchRequest buildInitFetchRequest(InputDescriptor inputDescriptor,
+                                                     ExecutionTask task,
+                                                     EventMetrics eventMetrics) {
+        Map<Integer, ShardInputDesc> inputDescMap = new HashMap<>();
+        for (Map.Entry<Integer, IInputDesc<?>> entry : inputDescriptor.getInputDescMap().entrySet()) {
+            IInputDesc<?> inputDesc = entry.getValue();
+            if (inputDesc.getInputType() == InputType.META) {
+                inputDescMap.put(entry.getKey(), (ShardInputDesc) entry.getValue());
             }
         }
-        return new InitFetchRequest.InitRequestBuilder(this.pipelineId, this.pipelineName)
-            .setInputShardMap(inputShardMap)
-            .setInputStreamMap(streamId2NameMap)
-            .setEncoders(edgeId2EncoderMap)
-            .setDescriptor(shuffleDescriptor)
-            .setTaskId(executionTask.getTaskId())
-            .setTaskIndex(executionTask.getIndex())
-            .setTaskName(executionTask.getTaskName())
-            .setVertexId(executionTask.getVertexId());
+
+        InitFetchRequest initFetchRequest = new InitFetchRequest(
+            this.pipelineId,
+            this.pipelineName,
+            task.getVertexId(),
+            task.getTaskId(),
+            task.getIndex(),
+            task.getParallelism(),
+            task.getTaskName(),
+            inputDescMap);
+        InputReader<?> inputReader = ((AbstractWorker<?, ?>) this.worker).getInputReader();
+        inputReader.setEventMetrics(eventMetrics);
+        initFetchRequest.addListener(inputReader);
+        return initFetchRequest;
     }
 
     protected void initEmitter() {
         OutputDescriptor outputDescriptor = this.ioDescriptor.getOutputDescriptor();
-        if (outputDescriptor == null) {
+        if (outputDescriptor == null || outputDescriptor.getOutputDescList().isEmpty()) {
+            ((WorkerContext) this.context).setCollectors(Collections.emptyList());
             return;
         }
         InitEmitterRequest request = this.buildInitEmitterRequest(outputDescriptor);
         this.emitterRunner.add(request);
-
         List<ICollector<?>> collectors = this.buildCollectors(outputDescriptor, request);
         ((WorkerContext) this.context).setCollectors(collectors);
-    }
-
-    protected List<ICollector<?>> buildCollectors(OutputDescriptor outputDescriptor, InitEmitterRequest request) {
-        List<IOutputDesc> outputDescList = outputDescriptor.getOutputDescList();
-        int outputNum = outputDescList.size();
-        List<ICollector<?>> collectors = new ArrayList<>(outputNum);
-        List<IOutputMessageBuffer<?, Shard>> outputBuffers = request.getOutputBuffers();
-        for (int i = 0; i < outputNum; i++) {
-            IOutputDesc outputDesc = outputDescList.get(i);
-            IOutputMessageBuffer<?, Shard> outputBuffer = outputBuffers.get(i);
-            ICollector<?> collector = CollectorFactory.create(outputDesc);
-            if (outputDesc.getType() != CollectType.RESPONSE) {
-                ((AbstractPipelineCollector) collector).setOutputBuffer(outputBuffer);
-            }
-            collectors.add(collector);
-        }
-        return collectors;
     }
 
     private InitEmitterRequest buildInitEmitterRequest(OutputDescriptor outputDescriptor) {
@@ -140,7 +126,24 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
             outputBuffers);
     }
 
-    protected void updateEmitter() {
+    protected List<ICollector<?>> buildCollectors(OutputDescriptor outputDescriptor, InitEmitterRequest request) {
+        List<IOutputDesc> outputDescList = outputDescriptor.getOutputDescList();
+        int outputNum = outputDescList.size();
+        List<ICollector<?>> collectors = new ArrayList<>(outputNum);
+        List<IOutputMessageBuffer<?, Shard>> outputBuffers = request.getOutputBuffers();
+        for (int i = 0; i < outputNum; i++) {
+            IOutputDesc outputDesc = outputDescList.get(i);
+            IOutputMessageBuffer<?, Shard> outputBuffer = outputBuffers.get(i);
+            ICollector<?> collector = CollectorFactory.create(outputDesc);
+            if (outputDesc.getType() != OutputType.RESPONSE) {
+                ((AbstractPipelineCollector) collector).setOutputBuffer(outputBuffer);
+            }
+            collectors.add(collector);
+        }
+        return collectors;
+    }
+
+    protected void popEmitter() {
         OutputDescriptor outputDescriptor = ioDescriptor.getOutputDescriptor();
         if (outputDescriptor == null) {
             return;
@@ -173,7 +176,7 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
         List<IOutputMessageBuffer<?, Shard>> outputBuffers = new ArrayList<>(outputNum);
         for (IOutputDesc outputDesc : outputDescList) {
             OutputWriter<?> outputBuffer = null;
-            if (outputDesc.getType() != CollectType.RESPONSE) {
+            if (outputDesc.getType() != OutputType.RESPONSE) {
                 int bucketNum = ((ForwardOutputDesc) outputDesc).getTargetTaskIndices().size();
                 outputBuffer = new OutputWriter<>(outputDesc.getEdgeId(), bucketNum);
                 outputBuffer.setEventMetrics(((WorkerContext) this.context).getEventMetrics());
@@ -183,4 +186,7 @@ public abstract class AbstractInitCommand extends AbstractExecutableCommand {
         return outputBuffers;
     }
 
+    public long getPipelineId() {
+        return this.pipelineId;
+    }
 }

@@ -14,7 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.serialize;
 
-import com.antgroup.geaflow.shuffle.api.pipeline.buffer.OutBuffer;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
 import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 
@@ -33,6 +33,10 @@ public abstract class AbstractMessageIterator<T> implements IMessageIterator<T> 
 
     public AbstractMessageIterator(InputStream inputStream) {
         this.inputStream = inputStream;
+    }
+
+    public OutBuffer getOutBuffer() {
+        return this.outBuffer;
     }
 
     /**

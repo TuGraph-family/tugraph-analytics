@@ -64,19 +64,6 @@ public class LaunchSourceEvent extends AbstractExecutableCommand {
     }
 
     @Override
-    public int getWorkerId() {
-        return workerId;
-    }
-
-    public int getCycleId() {
-        return cycleId;
-    }
-
-    public long getIterationWindowId() {
-        return windowId;
-    }
-
-    @Override
     public EventType getEventType() {
         return EventType.LAUNCH_SOURCE;
     }

@@ -1,0 +1,64 @@
+# base image
+FROM ubuntu:20.04
+
+# base package
+RUN apt-get update && apt-get install -y wget procps vim curl gcc g++
+
+RUN apt-get install -y python2
+
+RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+
+RUN python2 get-pip.py
+
+RUN pip install supervisor==3.4.0
+
+# java
+RUN apt-get install -y openjdk-8-jdk \
+    && echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64" >> /etc/profile \
+    && echo "export JRE_HOME=\${JAVA_HOME}/jre" >> /etc/profile \
+    && . /etc/profile
+
+# environment variables
+ENV GEAFLOW_INSTALL_PATH=/opt
+ENV GEAFLOW_HOME=$GEAFLOW_INSTALL_PATH/geaflow
+ENV GEAFLOW_LIB_DIR=$GEAFLOW_HOME/lib \
+    GEAFLOW_CONF_DIR=$GEAFLOW_HOME/conf/ LANG="en_US.UTF-8" \
+    PATH=$PATH:$GEAFLOW_HOME/bin JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+ENV PATH=$JAVA_HOME/bin:${PATH}
+
+ARG ASYNC_PROFILER_DIR_NAME=async-profiler-2.8.1-linux-x64
+ARG ASYNC_PROFILER_TAR_NAME=${ASYNC_PROFILER_DIR_NAME}.tar.gz
+RUN wget https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.8.1/${ASYNC_PROFILER_TAR_NAME} \
+    && tar zxvf ${ASYNC_PROFILER_TAR_NAME} -C ${GEAFLOW_INSTALL_PATH} \
+    && rm ${ASYNC_PROFILER_TAR_NAME} \
+    && mv ${GEAFLOW_INSTALL_PATH}/${ASYNC_PROFILER_DIR_NAME} ${GEAFLOW_INSTALL_PATH}/async-profiler
+ENV ASYNC_PROFILER_SHELL_PATH=${GEAFLOW_INSTALL_PATH}/async-profiler/profiler.sh
+
+ARG TMP_ENGINE_TAR_PATH=${GEAFLOW_INSTALL_PATH}/engine_tar
+RUN mkdir -p ${TMP_ENGINE_TAR_PATH}
+# geaflow-engine-tar is the *.tar.gz file built by maven
+ARG geaflow_engine_tar=NOT_SET
+# Copy engine tar to tmp dir
+ADD $geaflow_engine_tar $TMP_ENGINE_TAR_PATH
+# Copy the extracted engine dir into geaflow dir.
+RUN dirname=`ls ${TMP_ENGINE_TAR_PATH}` \
+    && mv -f ${TMP_ENGINE_TAR_PATH}/$dirname ${GEAFLOW_HOME} \
+    && rm -rf ${TMP_ENGINE_TAR_PATH}
+
+ARG GEAFLOW_DEPLOY_LOG_DIR=/home/admin/logs/geaflow
+RUN mkdir -p ${GEAFLOW_DEPLOY_LOG_DIR}
+
+WORKDIR ${GEAFLOW_DEPLOY_LOG_DIR}
+
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY config.sh $GEAFLOW_HOME/bin/
+COPY start-process.sh $GEAFLOW_HOME/bin/
+COPY udf-downloader.py $GEAFLOW_HOME/bin/
+COPY init-docker.sh /tmp/
+ADD geaflow-service.conf /etc/supervisor/conf.d/geaflow.conf
+
+RUN /bin/bash /tmp/init-docker.sh
+
+EXPOSE 8090 6123
+
+ENTRYPOINT ["/usr/bin/supervisord" , "-c" , "/etc/supervisor/supervisord.conf"]

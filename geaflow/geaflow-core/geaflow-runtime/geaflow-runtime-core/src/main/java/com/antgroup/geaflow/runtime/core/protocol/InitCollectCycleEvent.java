@@ -19,8 +19,9 @@ import com.antgroup.geaflow.cluster.collector.InitEmitterRequest;
 import com.antgroup.geaflow.collector.ICollector;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
-import com.antgroup.geaflow.io.ResponseOutputDesc;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 import com.antgroup.geaflow.shuffle.OutputDescriptor;
+import com.antgroup.geaflow.shuffle.ResponseOutputDesc;
 import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
@@ -33,10 +34,17 @@ public class InitCollectCycleEvent extends InitCycleEvent {
 
     private static final int COLLECT_BUCKET_NUM = 1;
 
-    public InitCollectCycleEvent(long schedulerId, int workerId, int cycleId, long iterationId,
-                                 long pipelineId, String pipelineName,
-                                 ExecutionTask task, HighAvailableLevel haLevel, long nestedWindowId) {
-        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName, task, haLevel, nestedWindowId);
+    public InitCollectCycleEvent(long schedulerId,
+                                 int workerId,
+                                 int cycleId,
+                                 long iterationId,
+                                 long pipelineId,
+                                 String pipelineName,
+                                 IoDescriptor ioDescriptor,
+                                 ExecutionTask task,
+                                 String driverId,
+                                 HighAvailableLevel haLevel) {
+        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName, ioDescriptor, task, driverId, haLevel);
     }
 
     @Override

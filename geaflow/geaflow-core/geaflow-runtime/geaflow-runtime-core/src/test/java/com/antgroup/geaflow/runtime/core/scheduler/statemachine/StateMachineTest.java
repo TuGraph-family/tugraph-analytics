@@ -5,21 +5,24 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CONTAI
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_UNIQUE_ID;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.RUN_LOCAL_MODE;
 import static com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys.SYSTEM_STATE_BACKEND_TYPE;
+import static com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.*;
 
 import com.antgroup.geaflow.cluster.protocol.ScheduleStateType;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.core.graph.CycleGroupType;
 import com.antgroup.geaflow.core.graph.ExecutionVertex;
 import com.antgroup.geaflow.core.graph.ExecutionVertexGroup;
 import com.antgroup.geaflow.runtime.core.scheduler.BaseCycleSchedulerTest;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator;
 import com.antgroup.geaflow.runtime.core.scheduler.PipelineCycleScheduler;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CheckpointSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.CycleSchedulerContextFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.context.IterationRedoSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.context.RedoSchedulerContext;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.ExecutionNodeCycle;
-import com.antgroup.geaflow.runtime.core.scheduler.resource.AbstractScheduledWorkerManager;
+import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
 import com.antgroup.geaflow.runtime.core.scheduler.statemachine.pipeline.PipelineStateMachine;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.state.StoreType;
@@ -46,14 +49,13 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         configuration = new Configuration(config);
         ClusterMetaStore.init(0, "driver-0", configuration);
         ShuffleManager.init(configuration);
-        ShuffleManager.getInstance().initShuffleMaster();
         StatsCollectorFactory.init(configuration);
     }
 
     @AfterMethod
     public void cleanUp() {
         ClusterMetaStore.close();
-        AbstractScheduledWorkerManager.closeInstance();
+        ScheduledWorkerManagerFactory.clear();
     }
 
     @Test
@@ -71,7 +73,54 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         // START -> INIT.
         IScheduleState state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
-        Assert.assertEquals(ScheduleStateType.INIT, ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.INIT,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE,
+            ((ComposeState) state).getStates().get(2).getScheduleStateType());
+        context.getNextIterationId();
+
+        Map<Integer, ExecutableEvent> prefetchEvents = context.getPrefetchEvents();
+        ExecutableEvent executableEvent = ExecutableEvent.build(null, null, null);
+        prefetchEvents.put(0, executableEvent);
+
+        state = stateMachine.transition();
+        Assert.assertEquals(null, state);
+        while (context.hasNextToFinish()) {
+            context.getNextFinishIterationId();
+        }
+
+        // EXECUTE_COMPUTE -> FINISH_PREFETCH | CLEAN_CYCLE.
+        state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.FINISH_PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        // CLEAN_CYCLE -> END.
+        Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
+    }
+
+    @Test
+    public void testBatchDisablePrefetch() {
+        ClusterMetaStore.init(0, "driver-0", configuration);
+        PipelineCycleScheduler scheduler = new PipelineCycleScheduler();
+        processor.register(scheduler);
+
+        RedoSchedulerContext context =
+            (RedoSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(false, 1,
+                false), null);
+        context.setRollback(false);
+        PipelineStateMachine stateMachine = new PipelineStateMachine();
+        stateMachine.init(context);
+
+        // START -> INIT.
+        IScheduleState state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.INIT,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
         Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE,
             ((ComposeState) state).getStates().get(1).getScheduleStateType());
         context.getNextIterationId();
@@ -86,7 +135,7 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE, state.getScheduleStateType());
 
-        // ITERATION_FINISH -> END.
+        // CLEAN_CYCLE -> END.
         Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
     }
 
@@ -105,7 +154,59 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         // START -> INIT.
         IScheduleState state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
-        Assert.assertEquals(ScheduleStateType.INIT, ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.INIT,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE,
+            ((ComposeState) state).getStates().get(2).getScheduleStateType());
+
+        Map<Integer, ExecutableEvent> prefetchEvents = context.getPrefetchEvents();
+        ExecutableEvent executableEvent = ExecutableEvent.build(null, null, null);
+        prefetchEvents.put(0, executableEvent);
+
+        // INIT -> loop (EXECUTE_COMPUTE).
+        for (int i = 1; i <= 5; i++) {
+            state = stateMachine.transition();
+            context.getNextIterationId();
+            Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE, state.getScheduleStateType());
+            state = stateMachine.transition();
+            Assert.assertEquals(null, state);
+            while (context.hasNextToFinish()) {
+                context.getNextFinishIterationId();
+            }
+        }
+
+        // EXECUTE_COMPUTE -> FINISH_PREFETCH | CLEAN_CYCLE.
+        state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.FINISH_PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        // CLEAN_CYCLE -> END.
+        Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
+    }
+
+    @Test
+    public void testStreamDisablePrefetch() {
+        configuration.put(CLUSTER_ID, "restart");
+        ClusterMetaStore.init(0, "driver-0", configuration);
+        PipelineCycleScheduler scheduler = new PipelineCycleScheduler();
+        processor.register(scheduler);
+
+        CheckpointSchedulerContext context =
+            (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(false
+                , 5, false), null);
+        PipelineStateMachine stateMachine = new PipelineStateMachine();
+        stateMachine.init(context);
+
+        // START -> INIT.
+        IScheduleState state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.INIT,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
         Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE,
             ((ComposeState) state).getStates().get(1).getScheduleStateType());
 
@@ -121,11 +222,11 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
             }
         }
 
-        // EXECUTE_COMPUTE -> CLEAN_CYCLE.
+        // EXECUTE_COMPUTE ->  CLEAN_CYCLE.
         state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE, state.getScheduleStateType());
 
-        // ITERATION_FINISH -> END.
+        // CLEAN_CYCLE -> END.
         Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
     }
 
@@ -140,6 +241,7 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
 
         IterationRedoSchedulerContext context =
             (IterationRedoSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(true), parentContext);
+        context.setRollback(false);
         PipelineStateMachine stateMachine = new PipelineStateMachine();
         stateMachine.init(context);
 
@@ -165,7 +267,65 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         // EXECUTE_COMPUTE -> ITERATION_FINISH.
         state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
-        Assert.assertEquals(ScheduleStateType.ITERATION_FINISH, ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.ITERATION_FINISH,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        Map<Integer, ExecutableEvent> prefetchEvents = context.getPrefetchEvents();
+        ExecutableEvent executableEvent = ExecutableEvent.build(null, null, null);
+        prefetchEvents.put(0, executableEvent);
+
+        state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.FINISH_PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        // ITERATION_FINISH -> END.
+        Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
+    }
+
+    @Test
+    public void testIterationDisablePrefetch() {
+        ClusterMetaStore.init(0, "driver-0", configuration);
+        PipelineCycleScheduler scheduler = new PipelineCycleScheduler();
+        processor.register(scheduler);
+
+        RedoSchedulerContext parentContext = new RedoSchedulerContext(buildMockCycle(false, 5,
+            false), null);
+        parentContext.init(1);
+
+        IterationRedoSchedulerContext context =
+            (IterationRedoSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(true, 5, false), parentContext);
+        PipelineStateMachine stateMachine = new PipelineStateMachine();
+        stateMachine.init(context);
+
+        // START -> INIT.
+        IScheduleState state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.INIT, ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.ITERATION_INIT,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        // ITERATION_INIT -> loop (EXECUTE_COMPUTE).
+        for (int i = 1; i <= 5; i++) {
+            state = stateMachine.transition();
+            context.getNextIterationId();
+            Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE, state.getScheduleStateType());
+            state = stateMachine.transition();
+            Assert.assertEquals(null, state);
+            while (context.hasNextToFinish()) {
+                context.getNextFinishIterationId();
+            }
+        }
+
+        // EXECUTE_COMPUTE -> ITERATION_FINISH.
+        state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.ITERATION_FINISH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
         Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE,
             ((ComposeState) state).getStates().get(1).getScheduleStateType());
 
@@ -232,6 +392,103 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         // START -> INIT.
         IScheduleState state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.INIT,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.ROLLBACK,
+            ((ComposeState) state).getStates().get(2).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE,
+            ((ComposeState) state).getStates().get(3).getScheduleStateType());
+
+        Map<Integer, ExecutableEvent> prefetchEvents = context.getPrefetchEvents();
+        ExecutableEvent executableEvent = ExecutableEvent.build(null, null, null);
+        prefetchEvents.put(0, executableEvent);
+
+        // ROLLBACK -> loop (EXECUTE_COMPUTE).
+        for (int i = 1; i <= 3; i++) {
+            state = stateMachine.transition();
+            context.getNextIterationId();
+            Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE, state.getScheduleStateType());
+            state = stateMachine.transition();
+            Assert.assertEquals(null, state);
+            while (context.hasNextToFinish()) {
+                context.getNextFinishIterationId();
+            }
+        }
+
+        // EXECUTE_COMPUTE -> FINISH_PREFETCH | CLEAN_CYCLE.
+        state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.FINISH_PREFETCH,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        // CLEAN_CYCLE -> END.
+        Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
+        context.setRollback(false);
+    }
+
+    @Test
+    public void testRollback003() {
+        ClusterMetaStore.init(0, "driver-0", configuration);
+        PipelineCycleScheduler scheduler = new PipelineCycleScheduler();
+        processor.register(scheduler);
+
+        CheckpointSchedulerContext context =
+            (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(false, 5, true), null);
+        PipelineStateMachine stateMachine = new PipelineStateMachine();
+
+        context.init(2);
+        context.setRecovered(true);
+        stateMachine.init(context);
+
+        // START -> ROLLBACK.
+        IScheduleState state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.ROLLBACK,
+            ((ComposeState) state).getStates().get(0).getScheduleStateType());
+        Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE,
+            ((ComposeState) state).getStates().get(1).getScheduleStateType());
+
+        // ROLLBACK -> loop (EXECUTE_COMPUTE).
+        for (int i = 1; i <= 4; i++) {
+            state = stateMachine.transition();
+            context.getNextIterationId();
+            Assert.assertEquals(ScheduleStateType.EXECUTE_COMPUTE, state.getScheduleStateType());
+            state = stateMachine.transition();
+            Assert.assertEquals(null, state);
+            while (context.hasNextToFinish()) {
+                context.getNextFinishIterationId();
+            }
+        }
+
+        // EXECUTE_COMPUTE -> ITERATION_FINISH.
+        state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE, state.getScheduleStateType());
+
+        // ITERATION_FINISH -> END.
+        Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
+    }
+
+    @Test
+    public void testRollback004() {
+        ClusterMetaStore.init(0, "driver-0", configuration);
+        PipelineCycleScheduler scheduler = new PipelineCycleScheduler();
+        processor.register(scheduler);
+
+        CheckpointSchedulerContext context =
+            (CheckpointSchedulerContext) CycleSchedulerContextFactory.create(buildMockCycle(false, 5, false), null);
+        PipelineStateMachine stateMachine = new PipelineStateMachine();
+
+        context.init(3);
+        context.setRollback(true);
+        stateMachine.init(context);
+
+        // START -> INIT.
+        IScheduleState state = stateMachine.transition();
+        Assert.assertEquals(ScheduleStateType.COMPOSE, state.getScheduleStateType());
         Assert.assertEquals(ScheduleStateType.INIT,
             ((ComposeState) state).getStates().get(0).getScheduleStateType());
         Assert.assertEquals(ScheduleStateType.ROLLBACK,
@@ -255,15 +512,18 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         state = stateMachine.transition();
         Assert.assertEquals(ScheduleStateType.CLEAN_CYCLE, state.getScheduleStateType());
 
-        // ITERATION_FINISH -> END.
+
+        // CLEAN_CYCLE -> END.
         Assert.assertEquals(ScheduleStateType.END, stateMachine.getCurrentState().getScheduleStateType());
         context.setRollback(false);
     }
 
-    private ExecutionNodeCycle buildMockCycle(boolean isIterative, long finishIterationId) {
+    private ExecutionNodeCycle buildMockCycle(boolean isIterative, long finishIterationId,
+                                              boolean prefetch) {
         Configuration configuration = new Configuration();
         configuration.put(JOB_UNIQUE_ID, "test-scheduler-context");
         configuration.put(SYSTEM_STATE_BACKEND_TYPE.getKey(), StoreType.MEMORY.name());
+        configuration.put(ExecutionConfigKeys.SHUFFLE_PREFETCH, String.valueOf(prefetch));
         ClusterMetaStore.init(0, "driver-0", configuration);
 
         ExecutionVertexGroup vertexGroup = new ExecutionVertexGroup(1);
@@ -279,6 +539,10 @@ public class StateMachineTest extends BaseCycleSchedulerTest {
         vertexGroup.getVertexMap().put(0, vertex);
 
         return new ExecutionNodeCycle(0, 0, 0, "test", vertexGroup, configuration, "driver_id", 0);
+    }
+
+    private ExecutionNodeCycle buildMockCycle(boolean isIterative, long finishIterationId) {
+        return buildMockCycle(isIterative, finishIterationId, true);
     }
 
     private ExecutionNodeCycle buildMockCycle(boolean isIterative) {

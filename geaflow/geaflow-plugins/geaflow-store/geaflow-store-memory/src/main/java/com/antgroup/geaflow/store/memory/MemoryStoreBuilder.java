@@ -32,10 +32,10 @@ public class MemoryStoreBuilder implements IStoreBuilder {
     public IBaseStore getStore(DataModel type, Configuration config) {
         switch (type) {
             case DYNAMIC_GRAPH:
-                return new GraphMemoryMultiVersionedStore<>();
+                return new DynamicGraphMemoryStore<>();
             case STATIC_GRAPH:
                 boolean csrEnable = config.getBoolean(MemoryConfigKeys.CSR_MEMORY_ENABLE);
-                return csrEnable ? new GraphMemoryCSRStore<>() : new GraphMemoryStore<>();
+                return csrEnable ? new StaticGraphMemoryCSRStore<>() : new StaticGraphMemoryStore<>();
             case KV:
                 return new KVMemoryStore<>();
             case KList:

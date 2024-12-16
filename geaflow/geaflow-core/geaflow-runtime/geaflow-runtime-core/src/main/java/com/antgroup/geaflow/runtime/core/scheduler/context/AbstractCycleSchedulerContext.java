@@ -16,26 +16,32 @@ package com.antgroup.geaflow.runtime.core.scheduler.context;
 
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.pipeline.callback.ICallbackFunction;
+import com.antgroup.geaflow.runtime.core.scheduler.ExecutableEventIterator.ExecutableEvent;
 import com.antgroup.geaflow.runtime.core.scheduler.cycle.IExecutionCycle;
 import com.antgroup.geaflow.runtime.core.scheduler.io.CycleResultManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.IScheduledWorkerManager;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerContext {
+public abstract class AbstractCycleSchedulerContext<
+    C extends IExecutionCycle, PC extends IExecutionCycle, PCC extends ICycleSchedulerContext<PC, ?, ?>>
+    implements ICycleSchedulerContext<C, PC, PCC> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCycleSchedulerContext.class);
 
     public static final long DEFAULT_INITIAL_ITERATION_ID = 1;
 
-    protected IExecutionCycle cycle;
+    protected final C cycle;
     protected transient AtomicLong iterationIdGenerator;
     protected transient Queue<Long> flyingIterations;
     protected transient long currentIterationId;
@@ -44,24 +50,29 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
     protected transient long lastCheckpointId;
     protected transient long terminateIterationId;
 
-    protected transient ICycleSchedulerContext parentContext;
-    protected IScheduledWorkerManager workerManager;
+    protected transient PCC parentContext;
+    protected IScheduledWorkerManager<C> workerManager;
     protected transient CycleResultManager cycleResultManager;
     protected ICallbackFunction callbackFunction;
     protected static ThreadLocal<Boolean> rollback = ThreadLocal.withInitial(() -> false);
+    protected transient Map<Integer, ExecutableEvent> prefetchEvents;
+    protected transient boolean prefetch;
 
-    public AbstractCycleSchedulerContext(IExecutionCycle cycle, ICycleSchedulerContext parentContext) {
+    public AbstractCycleSchedulerContext(C cycle, PCC parentContext) {
         this.cycle = cycle;
         this.parentContext = parentContext;
 
         if (parentContext != null) {
             // Get worker manager from parent context, no need to init.
-            this.workerManager = parentContext.getSchedulerWorkerManager();
+            this.workerManager = (IScheduledWorkerManager<C>) parentContext.getSchedulerWorkerManager();
             this.finishIterationId = cycle.getIterationCount() == Long.MAX_VALUE
                 ? cycle.getIterationCount() : cycle.getIterationCount() + parentContext.getCurrentIterationId() - 1;
         } else {
-            this.workerManager = ScheduledWorkerManagerFactory.createScheduledWorkerManager(cycle.getConfig(),
-                ScheduledWorkerManagerFactory.getWorkerManagerHALevel(cycle));
+            this.workerManager = (IScheduledWorkerManager<C>)
+                ScheduledWorkerManagerFactory.createScheduledWorkerManager(
+                    cycle.getConfig(),
+                    ScheduledWorkerManagerFactory.getWorkerManagerHALevel(cycle)
+                );
             this.finishIterationId = cycle.getIterationCount() == Long.MAX_VALUE
                 ? cycle.getIterationCount() : cycle.getIterationCount() + DEFAULT_INITIAL_ITERATION_ID - 1;
         }
@@ -89,8 +100,8 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         } else {
             this.cycleResultManager = new CycleResultManager();
         }
-
-        this.workerManager.init(cycle);
+        prefetch = cycle.getConfig().getBoolean(ExecutionConfigKeys.SHUFFLE_PREFETCH);
+        prefetchEvents = new HashMap<>();
 
         LOGGER.info("{} init cycle context onTheFlyThreshold {}, currentIterationId {}, "
                 + "iterationCount {}, finishIterationId {}, initialIterationId {}",
@@ -100,7 +111,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
     }
 
     @Override
-    public IExecutionCycle getCycle() {
+    public C getCycle() {
         return this.cycle;
     }
 
@@ -124,16 +135,23 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         this.currentIterationId = iterationId;
     }
 
+    @Override
     public boolean isRecovered() {
         return false;
     }
 
+    @Override
     public boolean isRollback() {
         return rollback.get();
     }
 
-    public void setRollback(boolean rollback) {
-        this.rollback.set(rollback);
+    @Override
+    public boolean isPrefetch() {
+        return prefetch;
+    }
+
+    public void setRollback(boolean bool) {
+        rollback.set(bool);
     }
 
     @Override
@@ -175,7 +193,7 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
     }
 
     @Override
-    public IScheduledWorkerManager getSchedulerWorkerManager() {
+    public IScheduledWorkerManager<C> getSchedulerWorkerManager() {
         return workerManager;
     }
 
@@ -184,8 +202,9 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
         return cycleResultManager;
     }
 
-    public ICycleSchedulerContext getParentContext() {
-        return parentContext;
+    @Override
+    public PCC getParentContext() {
+        return (PCC) this.parentContext;
     }
 
     public void setTerminateIterationId(long iterationId) {
@@ -194,6 +213,10 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
 
     public void setCallbackFunction(ICallbackFunction callbackFunction) {
         this.callbackFunction = callbackFunction;
+    }
+
+    public Map<Integer, ExecutableEvent> getPrefetchEvents() {
+        return this.prefetchEvents;
     }
 
     @Override
@@ -212,12 +235,12 @@ public abstract class AbstractCycleSchedulerContext implements ICycleSchedulerCo
     }
 
     @Override
-    public List<WorkerInfo> assign(IExecutionCycle cycle) {
+    public List<WorkerInfo> assign(C cycle) {
         return workerManager.assign(cycle);
     }
 
     @Override
-    public void release(IExecutionCycle cycle) {
+    public void release(C cycle) {
         workerManager.release(cycle);
     }
 

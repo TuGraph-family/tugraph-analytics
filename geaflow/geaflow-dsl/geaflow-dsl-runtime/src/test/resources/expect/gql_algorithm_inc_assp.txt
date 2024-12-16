@@ -1,0 +1,13 @@
+{"vertex":1,"paths":{}}
+{"vertex":2,"paths":{1:[1,2]}}
+{"vertex":3,"paths":{1:[1,3]}}
+{"vertex":1,"paths":{}}
+{"vertex":2,"paths":{1:[1,2]}}
+{"vertex":3,"paths":{1:[1,3],4:[4,3]}}
+{"vertex":4,"paths":{1:[1,4]}}
+{"vertex":5,"paths":{}}
+{"vertex":6,"paths":{}}
+{"vertex":3,"paths":{1:[1,3],4:[4,3],6:[6,3]}}
+{"vertex":4,"paths":{1:[1,4]}}
+{"vertex":5,"paths":{1:[1,4,5],4:[4,5]}}
+{"vertex":6,"paths":{}}

@@ -16,12 +16,8 @@ package com.antgroup.geaflow.example.stream;
 
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.example.util.EnvironmentUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UnBoundedStreamWordCount {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UnBoundedStreamWordCount.class);
 
     public static void main(String[] args) {
         Environment environment = EnvironmentUtil.loadEnvironment(args);

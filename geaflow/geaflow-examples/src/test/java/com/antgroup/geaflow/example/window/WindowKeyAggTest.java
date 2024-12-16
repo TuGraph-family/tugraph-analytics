@@ -42,7 +42,7 @@ public class WindowKeyAggTest extends BaseTest {
     @Test
     public void testAllSingleConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         configuration.putAll(config);
 
         WindowStreamKeyAggPipeline pipeline = new WindowStreamKeyAggPipeline();
@@ -56,7 +56,7 @@ public class WindowKeyAggTest extends BaseTest {
     @Test
     public void testAggThreeConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         configuration.putAll(config);
 
@@ -71,7 +71,7 @@ public class WindowKeyAggTest extends BaseTest {
     @Test
     public void testAggAndSinkThreeConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "3");
         configuration.putAll(config);
@@ -87,7 +87,7 @@ public class WindowKeyAggTest extends BaseTest {
     @Test
     public void testAggThreeAndSinkTwoConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "2");
         configuration.putAll(config);
@@ -103,7 +103,7 @@ public class WindowKeyAggTest extends BaseTest {
     @Test
     public void testAggThreeAndSinkFourConcurrency() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
         config.put(ExampleConfigKeys.AGG_PARALLELISM.getKey(), "3");
         config.put(ExampleConfigKeys.SINK_PARALLELISM.getKey(), "4");
         configuration.putAll(config);

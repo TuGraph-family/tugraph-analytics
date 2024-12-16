@@ -19,7 +19,6 @@ import com.antgroup.geaflow.common.utils.GsonUtil;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
-import com.antgroup.geaflow.env.ctx.EnvironmentContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +32,7 @@ public class UnBoundedStreamFoTest {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, TimeoutException {
         Environment environment = EnvironmentFactory.onRayCommunityEnvironment(args);
-        Configuration configuration = ((EnvironmentContext) environment.getEnvironmentContext()).getConfig();
+        Configuration configuration = environment.getEnvironmentContext().getConfig();
 
         StreamWordCountPipeline pipeline = new StreamWordCountPipeline();
         Map<String, String> hbaseConfig = new HashMap<>();

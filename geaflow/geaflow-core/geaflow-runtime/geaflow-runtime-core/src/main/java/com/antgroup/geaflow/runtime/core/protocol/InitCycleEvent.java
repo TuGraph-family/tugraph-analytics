@@ -22,6 +22,7 @@ import com.antgroup.geaflow.core.graph.ExecutionTask;
 import com.antgroup.geaflow.ha.runtime.HighAvailableLevel;
 import com.antgroup.geaflow.runtime.core.context.EventContext;
 import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
+import com.antgroup.geaflow.shuffle.IoDescriptor;
 
 /**
  * An assign event provides some runtime execution information for worker to build the cycle pipeline.
@@ -29,49 +30,51 @@ import com.antgroup.geaflow.runtime.core.worker.context.WorkerContext;
  */
 public class InitCycleEvent extends AbstractInitCommand implements IHighAvailableEvent {
 
-    private ExecutionTask task;
-    private String driverId;
-    private HighAvailableLevel haLevel;
-    private long iterationWindowId;
+    private final ExecutionTask task;
+    private final String driverId;
+    private final HighAvailableLevel haLevel;
 
-    public InitCycleEvent(long schedulerId, int workerId, int cycleId, long iterationId,
-                          long pipelineId, String pipelineName,
-                          ExecutionTask task, HighAvailableLevel haLevel,
-                          long windowId) {
-        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName);
+    public InitCycleEvent(long schedulerId,
+                          int workerId,
+                          int cycleId,
+                          long iterationId,
+                          long pipelineId,
+                          String pipelineName,
+                          IoDescriptor ioDescriptor,
+                          ExecutionTask task,
+                          String driverId,
+                          HighAvailableLevel haLevel) {
+        super(schedulerId, workerId, cycleId, iterationId, pipelineId, pipelineName, ioDescriptor);
         this.task = task;
+        this.driverId = driverId;
         this.haLevel = haLevel;
-        this.iterationWindowId = windowId;
     }
 
     @Override
     public void execute(ITaskContext taskContext) {
         super.execute(taskContext);
-        WorkerContext workerContext = new WorkerContext(taskContext);
-        context = workerContext;
         this.task.buildTaskName(this.pipelineName, this.cycleId, this.windowId);
-        IEventContext eventContext = EventContext.builder()
-            .withExecutionTask(task)
-            .withDriverId(driverId)
-            .withCycleId(cycleId)
-            .withIoDescriptor(ioDescriptor)
-            .withPipelineId(pipelineId)
-            .withCurrentWindowId(windowId)
-            .withPipelineName(pipelineName)
-            .withWindowId(iterationWindowId)
-            .withSchedulerId(schedulerId)
-            .build();
-        workerContext.init(eventContext);
-
+        this.context = this.initContext(taskContext);
         this.initFetcher();
         this.initEmitter();
-        worker.open(context);
-
+        this.worker.open(this.context);
     }
 
-    @Override
-    public int getWorkerId() {
-        return workerId;
+    private WorkerContext initContext(ITaskContext taskContext) {
+        WorkerContext workerContext = new WorkerContext(taskContext);
+        IEventContext eventContext = EventContext.builder()
+            .withExecutionTask(this.task)
+            .withDriverId(this.driverId)
+            .withCycleId(this.cycleId)
+            .withIoDescriptor(this.ioDescriptor)
+            .withPipelineId(this.pipelineId)
+            .withCurrentWindowId(this.windowId)
+            .withPipelineName(this.pipelineName)
+            .withWindowId(this.windowId)
+            .withSchedulerId(this.schedulerId)
+            .build();
+        workerContext.init(eventContext);
+        return workerContext;
     }
 
     @Override
@@ -84,20 +87,8 @@ public class InitCycleEvent extends AbstractInitCommand implements IHighAvailabl
         return haLevel;
     }
 
-    public long getIterationWindowId() {
-        return this.iterationWindowId;
-    }
-
-    public long getPipelineId() {
-        return pipelineId;
-    }
-
     public ExecutionTask getTask() {
         return task;
-    }
-
-    public void setDriverId(String driverId) {
-        this.driverId = driverId;
     }
 
     @Override

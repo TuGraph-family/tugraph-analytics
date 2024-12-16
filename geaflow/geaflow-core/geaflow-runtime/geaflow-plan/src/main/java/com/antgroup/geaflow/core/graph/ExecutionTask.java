@@ -30,7 +30,7 @@ public class ExecutionTask implements Serializable {
     private int maxParallelism;
     private int numPartitions;
     private WorkerInfo workerInfo;
-    private Processor processor;
+    private Processor<?, ?> processor;
     private ExecutionTaskType executionTaskType;
     private boolean iterative;
 
@@ -113,11 +113,11 @@ public class ExecutionTask implements Serializable {
         this.duration = duration;
     }
 
-    public Processor getProcessor() {
+    public Processor<?, ?> getProcessor() {
         return processor;
     }
 
-    public void setProcessor(Processor processor) {
+    public void setProcessor(Processor<?, ?> processor) {
         this.processor = processor;
     }
 

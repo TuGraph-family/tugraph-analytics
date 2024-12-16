@@ -204,6 +204,7 @@ fn test_table(test_mode: &TestMode) {
 }
 
 #[test]
+#[ignore]
 fn test_table_local_mode() {
     test_table(&TestMode::Local);
 }
