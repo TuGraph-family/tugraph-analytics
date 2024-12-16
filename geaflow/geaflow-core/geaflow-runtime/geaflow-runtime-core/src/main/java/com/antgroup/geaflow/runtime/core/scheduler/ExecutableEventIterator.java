@@ -14,14 +14,11 @@
 
 package com.antgroup.geaflow.runtime.core.scheduler;
 
-import com.antgroup.geaflow.cluster.protocol.EventType;
 import com.antgroup.geaflow.cluster.protocol.IEvent;
 import com.antgroup.geaflow.cluster.resourcemanager.WorkerInfo;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.core.graph.ExecutionTask;
-import com.antgroup.geaflow.runtime.core.protocol.FinishPrefetchEvent;
-import com.antgroup.geaflow.runtime.core.protocol.PrefetchEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,29 +37,6 @@ public class ExecutableEventIterator {
     }
 
     public void markReady() {
-        for (Map.Entry<WorkerInfo, List<ExecutableEvent>> entry : this.worker2events.entrySet()) {
-            List<ExecutableEvent> events = entry.getValue();
-            List<ExecutableEvent> finishPrefetchEvents = new ArrayList<>();
-            for (ExecutableEvent executableEvent : events) {
-                IEvent event = executableEvent.getEvent();
-                if (event.getEventType() == EventType.PREFETCH) {
-                    PrefetchEvent prefetchEvent = (PrefetchEvent) event;
-                    FinishPrefetchEvent finishPrefetchEvent = new FinishPrefetchEvent(
-                        prefetchEvent.getSchedulerId(),
-                        prefetchEvent.getWorkerId(),
-                        prefetchEvent.getCycleId(),
-                        prefetchEvent.getIterationWindowId(),
-                        executableEvent.getTask().getTaskId(),
-                        executableEvent.getTask().getIndex(),
-                        prefetchEvent.getPipelineId(),
-                        prefetchEvent.getEdgeIds());
-                    ExecutableEvent finishExecutableEvent = ExecutableEvent.build(
-                        executableEvent.getWorker(), executableEvent.getTask(), finishPrefetchEvent);
-                    finishPrefetchEvents.add(finishExecutableEvent);
-                }
-            }
-            events.addAll(finishPrefetchEvents);
-        }
         this.workerIterator = this.worker2events.entrySet().iterator();
         this.ready = true;
     }

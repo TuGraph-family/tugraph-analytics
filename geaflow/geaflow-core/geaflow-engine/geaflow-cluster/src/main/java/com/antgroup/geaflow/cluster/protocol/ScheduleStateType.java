@@ -24,6 +24,16 @@ public enum ScheduleStateType implements Serializable {
     START,
 
     /**
+     * Shuffle prefetch state.
+     */
+    PREFETCH,
+
+    /**
+     * Shuffle finish prefetch state.
+     */
+    FINISH_PREFETCH,
+
+    /**
      * Init state.
      */
     INIT,
