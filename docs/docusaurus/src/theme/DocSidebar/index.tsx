@@ -27,7 +27,6 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
   };
 
   const Hit: React.FC = ({ hit, children }) => {
-    console.log(hit, "hit");
     return <Link to={hit.url}>{children}</Link>;
   };
 
