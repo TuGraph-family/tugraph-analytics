@@ -92,8 +92,7 @@ export default function DocSidebarWrapper(props: Props): JSX.Element {
 
     if (type === "TuGraph_DB") {
       const newPath = `/tugraph-db/${lang}/${version}/guide`;
-      window.location.href = "https://zhongyunwan.github.io" + newPath;
-      // history.push(newPath);
+      window.location.href = "https://tugraph-family.github.io" + newPath;
       return;
     }
   };
