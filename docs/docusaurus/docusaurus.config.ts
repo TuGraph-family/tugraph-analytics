@@ -26,7 +26,7 @@ const config: Config = {
     format: "md",
     mermaid: true,
     preprocessor: ({ filePath, fileContent }) => {
-      if (filePath.includes("application-development/api/overview")) {
+      if (filePath.includes("application-development/1.api/1.overview")) {
         const regex = /<([A-Z\s,]+)>/g;
         const newContent = fileContent
           ?.replace(regex, "")
