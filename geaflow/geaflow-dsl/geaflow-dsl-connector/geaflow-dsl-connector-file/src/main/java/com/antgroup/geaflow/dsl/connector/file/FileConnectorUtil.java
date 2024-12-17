@@ -53,7 +53,7 @@ public class FileConnectorUtil {
     public static org.apache.hadoop.conf.Configuration toHadoopConf(Configuration conf) {
         org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration();
         String hadoopConfPath = System.getenv(HADOOP_HOME);
-        if (!StringUtils.isEmpty(hadoopConfPath)) {
+        if (false && !StringUtils.isEmpty(hadoopConfPath)) {
             LOGGER.info("find hadoop home at: {}", hadoopConfPath);
             hadoopConf.addResource(new Path(hadoopConfPath + "/etc/hadoop/core-site.xml"));
             hadoopConf.addResource(new Path(hadoopConfPath + "/etc/hadoop/hdfs-site.xml"));

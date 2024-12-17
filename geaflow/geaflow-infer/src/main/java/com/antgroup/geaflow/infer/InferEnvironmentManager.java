@@ -22,7 +22,9 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.infer.util.InferFileUtils;
 import com.antgroup.geaflow.infer.util.ShellExecUtils;
 import com.google.common.base.Joiner;
+
 import java.io.File;
+import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -30,9 +32,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +46,15 @@ public class InferEnvironmentManager implements AutoCloseable {
 
     private static final String LOCK_FILE = "_lock";
 
-    private static final String SHELL_START = "/bin/sh";
+    private static final String SHELL_START = "/bin/bash";
+
+    private static final long TIMEOUT_SECOND = 10;
+
+    private static final String SCRIPT_SEPARATOR = " ";
+
+    private static final String CHMOD_CMD = "chmod";
+
+    private static final String CHMOD_PERMISSION = "755";
 
     private static final String FINISH_FILE = "_finish";
 
@@ -170,6 +182,29 @@ public class InferEnvironmentManager implements AutoCloseable {
         String cmd = Joiner.on(" ").join(shellCommand);
         LOGGER.info("create infer virtual env {}", cmd);
         int installEnvTimeOut = configuration.getInteger(FrameworkConfigKeys.INFER_ENV_INIT_TIMEOUT_SEC);
+
+        // Run "chmod 755 $shellPath"
+        List<String> runCommands = new ArrayList<>();
+        runCommands.add(CHMOD_CMD);
+        runCommands.add(CHMOD_PERMISSION);
+        runCommands.add(shellPath);
+        String inferScript = Joiner.on(SCRIPT_SEPARATOR).join(runCommands);
+        LOGGER.info("change {} permission run command is {}", shellPath, inferScript);
+        ProcessBuilder inferTaskBuilder = new ProcessBuilder(runCommands);
+        Process inferTask;
+        try {
+            inferTask = inferTaskBuilder.start();
+            if (inferTask.waitFor(TIMEOUT_SECOND, TimeUnit.SECONDS)) {
+                if (inferTask.exitValue() != 0) {
+                    LOGGER.info("change {} permission run command {} failed", shellPath, inferScript);
+                    return false;
+                }
+            }
+        } catch (IOException | InterruptedException e) {
+            LOGGER.info("change {} permission run command {} failed: {}", shellPath, inferScript, e.getMessage());
+            return false;
+        }
+
         return ShellExecUtils.run(cmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error, workingDir);
     }
 
