@@ -15,52 +15,76 @@
 const sidebars_zh = {
   // By default, Docusaurus generates a sidebar from the docs folder structure
   tutorialSidebar: [
+    "guide",
     "introduction",
-    "quick_start",
-    "quick_start_docker",
     {
       type: "category",
-      label: "概念",
+      label: "快速开始",
+      items: ["quick_start/quick_start", "quick_start/quick_start_docker"],
+    },
+    {
+      type: "category",
+      label: "技术原理",
       items: [
         "concepts/glossary",
-        "concepts/graph_view",
-        "concepts/stream_graph",
+        "concepts/dsl_principle",
+        "concepts/framework_principle",
+        "concepts/state_principle",
+        "concepts/console_principle",
       ],
     },
     {
       type: "category",
-      label: "GeaFlow应用开发",
+      label: "开发指南",
       items: [
         {
           type: "category",
-          label: "API",
+          label: "API开发",
           items: [
             "application-development/api/overview",
-            "application-development/api/guid",
             {
               type: "category",
-              label: "图",
+              label: "流API",
               items: [
-                "application-development/api/graph/compute",
-                "application-development/api/graph/traversal",
+                "application-development/api/stream/source",
+                "application-development/api/stream/process",
+                "application-development/api/stream/sink",
               ],
             },
             {
               type: "category",
-              label: "流",
+              label: "图API",
               items: [
-                "application-development/api/stream/process",
-                "application-development/api/stream/sink",
-                "application-development/api/stream/source",
+                "application-development/api/graph/traversal",
+                "application-development/api/graph/compute",
               ],
             },
           ],
         },
         {
           type: "category",
-          label: "DSL",
+          label: "DSL开发",
           items: [
             "application-development/dsl/overview",
+            {
+              type: "category",
+              label: "语法文档",
+              items: [
+                "application-development/dsl/syntax/dcl",
+                "application-development/dsl/syntax/ddl",
+                "application-development/dsl/syntax/dml",
+                {
+                  type: "category",
+                  label: "DQL",
+                  items: [
+                    "application-development/dsl/syntax/dql/match",
+                    "application-development/dsl/syntax/dql/select",
+                    "application-development/dsl/syntax/dql/union",
+                    "application-development/dsl/syntax/dql/with",
+                  ],
+                },
+              ],
+            },
             {
               type: "category",
               label: "内置函数",
@@ -76,68 +100,59 @@ const sidebars_zh = {
             },
             {
               type: "category",
-              label: "连接器(Connector)",
+              label: "自定义函数",
               items: [
-                "application-development/dsl/connector/common",
-                "application-development/dsl/connector/file",
-                "application-development/dsl/connector/console",
-                "application-development/dsl/connector/jdbc",
-                "application-development/dsl/connector/hive",
-                "application-development/dsl/connector/kafka",
-                "application-development/dsl/connector/hbase",
-                "application-development/dsl/connector/hudi",
-                "application-development/dsl/connector/udc",
-              ],
-            },
-            {
-              type: "category",
-              label: "语法文档",
-              items: [
-                "application-development/dsl/reference/ddl",
-                "application-development/dsl/reference/dml",
-                {
-                  type: "category",
-                  label: "DQL",
-                  items: [
-                    "application-development/dsl/reference/dql/match",
-                    "application-development/dsl/reference/dql/select",
-                    "application-development/dsl/reference/dql/union",
-                    "application-development/dsl/reference/dql/with",
-                  ],
-                },
-                "application-development/dsl/reference/use",
-              ],
-            },
-            {
-              type: "category",
-              label: "UDF",
-              items: [
-                "application-development/dsl/udf/udaf",
                 "application-development/dsl/udf/udf",
-                "application-development/dsl/udf/udga",
+                "application-development/dsl/udf/udaf",
                 "application-development/dsl/udf/udtf",
+                "application-development/dsl/udf/udga",
               ],
             },
           ],
         },
+        {
+          type: "category",
+          label: "连接器(Connector)",
+          items: [
+            "application-development/connector/common",
+            "application-development/connector/file",
+            "application-development/connector/console",
+            "application-development/connector/jdbc",
+            "application-development/connector/hive",
+            "application-development/connector/kafka",
+            "application-development/connector/hbase",
+            "application-development/connector/hudi",
+            "application-development/connector/pulsar",
+            "application-development/connector/udc",
+          ],
+        },
+        "application-development/chat_guide",
       ],
     },
     {
       type: "category",
       label: "部署",
-      items: ["deploy/install_guide"],
-    },
-    {
-      type: "category",
-      label: "原理",
       items: [
-        "principle/dsl_principle",
-        "principle/framework_principle",
-        "principle/state_principle",
-        "principle/vs_join",
+        "deploy/install_guide",
+        "deploy/quick_start_operator",
+        "deploy/dashboard",
+        {
+          type: "doc",
+          label: "🌈 G6VP 图可视化",
+          id: "deploy/collaborate_with_g6vp",
+        },
+        "deploy/install_llm",
+        "deploy/install_minikube",
       ],
     },
     "contribution",
+    "contacts",
+    "thanks",
+    {
+      type: "category",
+      label: "参考资料",
+      items: ["reference/vs_join"],
+    },
   ],
 
   // But you can create a sidebar manually

@@ -14,7 +14,7 @@ export default function HomeBreadcrumbItem(): JSX.Element {
 
       // 截取前三个路径段
       const basePathSegments = pathSegments.slice(0, 2);
-      const basePath = `/${basePathSegments.join("/")}/introduction`;
+      const basePath = `/${basePathSegments.join("/")}/guide`;
       return basePath;
     } catch (error) {
       console.error("Invalid URL:", error);

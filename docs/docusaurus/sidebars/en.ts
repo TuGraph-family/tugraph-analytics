@@ -15,43 +15,48 @@
 const sidebars_en = {
   // By default, Docusaurus generates a sidebar from the docs folder structure
   tutorialSidebar: [
+    "guide",
     "introduction",
-    "quick_start",
-    "quick_start_docker",
+    {
+      type: "category",
+      label: "Quick Start",
+      items: ["quick_start/quick_start", "quick_start/quick_start_docker"],
+    },
     {
       type: "category",
       label: "Concepts",
       items: [
         "concepts/glossary",
-        "concepts/graph_view",
-        "concepts/stream_graph",
+        "concepts/dsl_principle",
+        "concepts/framework_principle",
+        "concepts/state_principle",
+        "concepts/console_principle",
       ],
     },
     {
       type: "category",
-      label: "Application-Development",
+      label: "Development",
       items: [
         {
           type: "category",
           label: "API",
           items: [
             "application-development/api/overview",
-            "application-development/api/guid",
-            {
-              type: "category",
-              label: "Graph",
-              items: [
-                "application-development/api/graph/compute",
-                "application-development/api/graph/traversal",
-              ],
-            },
             {
               type: "category",
               label: "Stream",
               items: [
+                "application-development/api/stream/source",
                 "application-development/api/stream/process",
                 "application-development/api/stream/sink",
-                "application-development/api/stream/source",
+              ],
+            },
+            {
+              type: "category",
+              label: "Graph",
+              items: [
+                "application-development/api/graph/traversal",
+                "application-development/api/graph/compute",
               ],
             },
           ],
@@ -61,6 +66,25 @@ const sidebars_en = {
           label: "DSL",
           items: [
             "application-development/dsl/overview",
+            {
+              type: "category",
+              label: "Syntax",
+              items: [
+                "application-development/dsl/syntax/dcl",
+                "application-development/dsl/syntax/ddl",
+                "application-development/dsl/syntax/dml",
+                {
+                  type: "category",
+                  label: "DQL",
+                  items: [
+                    "application-development/dsl/syntax/dql/match",
+                    "application-development/dsl/syntax/dql/select",
+                    "application-development/dsl/syntax/dql/union",
+                    "application-development/dsl/syntax/dql/with",
+                  ],
+                },
+              ],
+            },
             {
               type: "category",
               label: "Build-In",
@@ -76,82 +100,60 @@ const sidebars_en = {
             },
             {
               type: "category",
-              label: "Connector",
-              items: [
-                "application-development/dsl/connector/common",
-                "application-development/dsl/connector/file",
-                "application-development/dsl/connector/console",
-                "application-development/dsl/connector/jdbc",
-                "application-development/dsl/connector/hive",
-                "application-development/dsl/connector/kafka",
-                "application-development/dsl/connector/hbase",
-                "application-development/dsl/connector/hudi",
-                "application-development/dsl/connector/udc",
-              ],
-            },
-            {
-              type: "category",
-              label: "Reference",
-              items: [
-                "application-development/dsl/reference/ddl",
-                "application-development/dsl/reference/dml",
-                {
-                  type: "category",
-                  label: "DQL",
-                  items: [
-                    "application-development/dsl/reference/dql/match",
-                    "application-development/dsl/reference/dql/select",
-                    "application-development/dsl/reference/dql/union",
-                    "application-development/dsl/reference/dql/with",
-                  ],
-                },
-                "application-development/dsl/reference/use",
-              ],
-            },
-            {
-              type: "category",
               label: "UDF",
               items: [
-                "application-development/dsl/udf/udaf",
                 "application-development/dsl/udf/udf",
-                "application-development/dsl/udf/udga",
+                "application-development/dsl/udf/udaf",
                 "application-development/dsl/udf/udtf",
+                "application-development/dsl/udf/udga",
               ],
             },
           ],
         },
+        {
+          type: "category",
+          label: "Connector",
+          items: [
+            "application-development/connector/common",
+            "application-development/connector/file",
+            "application-development/connector/console",
+            "application-development/connector/jdbc",
+            "application-development/connector/hive",
+            "application-development/connector/kafka",
+            "application-development/connector/hbase",
+            "application-development/connector/hudi",
+            "application-development/connector/pulsar",
+            "application-development/connector/udc",
+          ],
+        },
+        "application-development/chat_guide",
       ],
     },
     {
       type: "category",
-      label: "Deploy",
-      items: ["deploy/install_guide"],
-    },
-    {
-      type: "category",
-      label: "Principle",
+      label: "Deployment",
       items: [
-        "principle/dsl_principle",
-        "principle/framework_principle",
-        "principle/state_principle",
-        "principle/vs_join",
+        "deploy/install_guide",
+        "deploy/quick_start_operator",
+        "deploy/dashboard",
+        {
+          type: "doc",
+          label: "🌈 G6VP Graph Visualization",
+          id: "deploy/collaborate_with_g6vp",
+        },
+        "deploy/install_llm",
+        "deploy/install_minikube",
       ],
     },
     "contribution",
+    "contacts",
+    "thanks",
+    {
+      type: "category",
+      label: "Reference",
+      items: ["reference/vs_join"],
+    },
   ],
-
-  // But you can create a sidebar manually
-  /*
-    tutorialSidebar: [
-      'intro',
-      'hello',
-      {
-        type: 'category',
-        label: 'Tutorial',
-        items: ['tutorial-basics/create-a-document'],
-      },
-    ],
-     */
 };
 
 module.exports = sidebars_en;

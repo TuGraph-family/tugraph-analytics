@@ -44,7 +44,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars/zh.ts",
-          path: "./docs/docs-cn",
+          path: "./docs/docs-cn/source",
           routeBasePath: "zh",
         },
         theme: {
@@ -60,7 +60,7 @@ const config: Config = {
       {
         id: "en",
         sidebarPath: "./sidebars/en.ts",
-        path: "./docs/docs-en",
+        path: "./docs/docs-en/source",
         routeBasePath: "en",
         editCurrentVersion: false,
       },
