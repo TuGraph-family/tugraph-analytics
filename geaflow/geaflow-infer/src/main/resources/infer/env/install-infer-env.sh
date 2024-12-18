@@ -61,9 +61,6 @@ function install_requirements() {
         max_retry_times=3
         retry_times=0
         source $CURRENT_DIR/conda/bin/activate
-        echo "installing pytorch"
-        conda run -p $CURRENT_DIR/conda $PYTHON_EXEC -m pip install --ignore-installed torch numpy >/dev/null 2>&1
-        echo "install pytorch [SUCCESS]"
         install_command="conda run -p $CURRENT_DIR/conda $PYTHON_EXEC -m pip install --ignore-installed -r ${REQUIREMENTS_PATH}"
         ${install_command} >/dev/null 2>&1
         status=$?

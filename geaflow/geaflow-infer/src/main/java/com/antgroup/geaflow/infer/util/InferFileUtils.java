@@ -66,10 +66,6 @@ public class InferFileUtils {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024;
 
-    public static final String MODEL_FILE_EXTENSION = ".pt";
-
-    public static final String MODEL_NAME = "model.pt";
-
     public static final String REQUIREMENTS_TXT = "requirements.txt";
 
     public static void releaseLock(FileLock fileLock) {

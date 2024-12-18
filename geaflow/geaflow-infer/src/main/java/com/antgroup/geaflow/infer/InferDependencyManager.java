@@ -14,21 +14,15 @@
 
 package com.antgroup.geaflow.infer;
 
-import static com.antgroup.geaflow.infer.util.InferFileUtils.MODEL_FILE_EXTENSION;
-import static com.antgroup.geaflow.infer.util.InferFileUtils.MODEL_NAME;
-import static com.antgroup.geaflow.infer.util.InferFileUtils.PY_FILE_EXTENSION;
 import static com.antgroup.geaflow.infer.util.InferFileUtils.REQUIREMENTS_TXT;
-import static com.antgroup.geaflow.infer.util.InferFileUtils.getPythonFilesByCondition;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.infer.util.InferFileUtils;
-import com.google.common.base.Preconditions;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,37 +85,5 @@ public class InferDependencyManager {
             throw new GeaflowRuntimeException("get infer runtime files failed", e);
         }
         return runtimeFiles;
-    }
-
-    private void prepareInferFiles(InferEnvironmentContext environmentContext) {
-        String pythonFilesDirectory = environmentContext.getInferFilesDirectory();
-        List<File> modelFile = getPythonFilesByCondition(pathname -> {
-            String fileName = pathname.getName();
-            String fileExtension = FilenameUtils.getExtension(fileName);
-            return pathname.isFile() && MODEL_FILE_EXTENSION.equals(fileExtension);
-        });
-
-        Preconditions.checkState(!modelFile.isEmpty(), "model(.pt) file is not exist, please upload model.pt file");
-        Preconditions.checkState(modelFile.size() == 1, "upload model.pt num more than 1");
-        InferFileUtils.copyPythonFile(pythonFilesDirectory, modelFile.get(0), MODEL_NAME);
-
-        List<File> requirementsFile = getPythonFilesByCondition(pathname -> {
-            String fileName = pathname.getName();
-            return pathname.isFile() && fileName.equals(REQUIREMENTS_TXT);
-        });
-
-        Preconditions.checkState(!requirementsFile.isEmpty(), "please upload requirements.txt "
-            + "(build infer env) file");
-        Preconditions.checkState(requirementsFile.size() == 1, "upload requirements.txt num more than 1");
-        InferFileUtils.copyPythonFile(environmentContext.getVirtualEnvDirectory(), requirementsFile.get(0));
-
-        List<File> pythonFiles = getPythonFilesByCondition(pathname -> {
-            String fileName = pathname.getName();
-            String fileExtension = FilenameUtils.getExtension(fileName);
-            return pathname.isFile() && PY_FILE_EXTENSION.equals(fileExtension);
-        });
-        Preconditions.checkState(!pythonFiles.isEmpty(), "infer files is empty, please upload "
-            + "infer files");
-        pythonFiles.forEach(f -> InferFileUtils.copyPythonFile(pythonFilesDirectory, f));
     }
 }
