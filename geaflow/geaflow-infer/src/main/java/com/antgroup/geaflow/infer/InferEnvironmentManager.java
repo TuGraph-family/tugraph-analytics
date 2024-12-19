@@ -179,7 +179,6 @@ public class InferEnvironmentManager implements AutoCloseable {
         shellCommand.addAll(execParams);
         String cmd = Joiner.on(" ").join(shellCommand);
         LOGGER.info("create infer virtual env {}", cmd);
-        int installEnvTimeOut = configuration.getInteger(FrameworkConfigKeys.INFER_ENV_INIT_TIMEOUT_SEC);
 
         // Run "chmod 755 $shellPath"
         List<String> runCommands = new ArrayList<>();
@@ -188,6 +187,7 @@ public class InferEnvironmentManager implements AutoCloseable {
         runCommands.add(shellPath);
         String chmodCmd = Joiner.on(SCRIPT_SEPARATOR).join(runCommands);
         LOGGER.info("change {} permission run command is {}", shellPath, chmodCmd);
+        int installEnvTimeOut = configuration.getInteger(FrameworkConfigKeys.INFER_ENV_INIT_TIMEOUT_SEC);
         if (!ShellExecUtils.run(chmodCmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error)) {
             return false;
         }
