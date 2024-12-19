@@ -188,20 +188,9 @@ public class InferEnvironmentManager implements AutoCloseable {
         runCommands.add(CHMOD_CMD);
         runCommands.add(CHMOD_PERMISSION);
         runCommands.add(shellPath);
-        String inferScript = Joiner.on(SCRIPT_SEPARATOR).join(runCommands);
-        LOGGER.info("change {} permission run command is {}", shellPath, inferScript);
-        ProcessBuilder inferTaskBuilder = new ProcessBuilder(runCommands);
-        Process inferTask;
-        try {
-            inferTask = inferTaskBuilder.start();
-            if (inferTask.waitFor(TIMEOUT_SECOND, TimeUnit.SECONDS)) {
-                if (inferTask.exitValue() != 0) {
-                    LOGGER.info("change {} permission run command {} failed", shellPath, inferScript);
-                    return false;
-                }
-            }
-        } catch (IOException | InterruptedException e) {
-            LOGGER.info("change {} permission run command {} failed: {}", shellPath, inferScript, e.getMessage());
+        String chmodCmd = Joiner.on(SCRIPT_SEPARATOR).join(runCommands);
+        LOGGER.info("change {} permission run command is {}", shellPath, chmodCmd);
+        if (!ShellExecUtils.run(chmodCmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error)) {
             return false;
         }
 
