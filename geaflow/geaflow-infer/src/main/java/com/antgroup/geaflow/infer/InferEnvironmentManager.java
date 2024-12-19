@@ -24,7 +24,6 @@ import com.antgroup.geaflow.infer.util.ShellExecUtils;
 import com.google.common.base.Joiner;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -193,7 +191,6 @@ public class InferEnvironmentManager implements AutoCloseable {
         if (!ShellExecUtils.run(chmodCmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error)) {
             return false;
         }
-
         return ShellExecUtils.run(cmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error, workingDir);
     }
 
