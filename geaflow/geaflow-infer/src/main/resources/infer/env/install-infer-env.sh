@@ -61,7 +61,7 @@ function install_requirements() {
         max_retry_times=3
         retry_times=0
         source $CURRENT_DIR/conda/bin/activate
-        install_command="$PYTHON_EXEC -m pip install --ignore-installed -r ${REQUIREMENTS_PATH}"
+        install_command="conda run -p $CURRENT_DIR/conda $PYTHON_EXEC -m pip install --ignore-installed -r ${REQUIREMENTS_PATH}"
         ${install_command} >/dev/null 2>&1
         status=$?
         while [[ ${status} -ne 0 ]] && [[ ${retry_times} -lt ${max_retry_times} ]]; do
@@ -105,10 +105,10 @@ function print_function() {
 function download() {
     local DOWNLOAD_STATUS=
     if hash "wget" 2>/dev/null; then
-        wget "$1" -O "$2" -q -T20 -t3
+        wget "$1" -O "$2" -q -T1200 -t3
         DOWNLOAD_STATUS="$?"
     else
-        curl "$1" -o "$2" --progress-bar --connect-timeout 20 --retry 3
+        curl "$1" -o "$2" --progress-bar --connect-timeout 1200 --retry 3
         DOWNLOAD_STATUS="$?"
     fi
     if [ $DOWNLOAD_STATUS -ne 0 ]; then

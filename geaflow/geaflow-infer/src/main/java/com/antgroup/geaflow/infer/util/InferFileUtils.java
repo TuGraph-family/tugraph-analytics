@@ -66,10 +66,6 @@ public class InferFileUtils {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024;
 
-    public static final String MODEL_FILE_EXTENSION = ".pt";
-
-    public static final String MODEL_NAME = "model.pt";
-
     public static final String REQUIREMENTS_TXT = "requirements.txt";
 
     public static void releaseLock(FileLock fileLock) {
@@ -239,8 +235,6 @@ public class InferFileUtils {
     public static void prepareInferFilesFromJars(String targetDirectory) {
         File userJobJarFile = getUserJobJarFile();
         Preconditions.checkNotNull(userJobJarFile);
-        int modelFileNum = 0;
-        int requirementsFileNum = 0;
         try {
             JarFile jarFile = new JarFile(userJobJarFile);
             Enumeration<JarEntry> entries = jarFile.entries();
@@ -248,23 +242,14 @@ public class InferFileUtils {
                 JarEntry entry = entries.nextElement();
                 String entryName = entry.getName();
                 if (!entry.isDirectory()) {
-                    if (entryName.endsWith(PY_FILE_EXTENSION)) {
-                        String inferPythonFile = extractFile(targetDirectory, entryName, entry, jarFile);
-                        LOGGER.info("cp infer python file {} to {} from jar file {}", entryName, inferPythonFile, userJobJarFile.getName());
-                    } else if (entryName.endsWith(MODEL_FILE_EXTENSION)) {
-                        modelFileNum++;
-                        Preconditions.checkState(modelFileNum == 1, "upload infer "
-                            + "model file num more than 1");
-                        String modelFilePath = extractFile(targetDirectory, MODEL_NAME, entry, jarFile);
-                        LOGGER.info("cp infer model file {} to {} from jar file {}", entryName, modelFilePath, userJobJarFile.getName());
-                    } else if (REQUIREMENTS_TXT.equals(entryName)) {
-                        requirementsFileNum++;
-                        Preconditions.checkState(requirementsFileNum == 1, "upload env "
-                            + "requirements file num more than 1");
-                        String requirementsFilePath = extractFile(targetDirectory, entryName, entry, jarFile);
-                        LOGGER.info("cp end requirements file {} to {} from jar file "
-                            + "{}", entryName, requirementsFilePath, userJobJarFile.getName());
+                    String inferFile = extractFile(targetDirectory, entryName, entry, jarFile);
+                    LOGGER.info("cp infer file {} to {} from jar file {}", entryName, inferFile, userJobJarFile.getName());
+                } else {
+                    File entryDestination = new File(targetDirectory, entry.getName());
+                    if (!entryDestination.exists()) {
+                        entryDestination.mkdirs();
                     }
+                    LOGGER.info("create infer directory is {}", entryDestination);
                 }
             }
             jarFile.close();

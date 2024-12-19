@@ -22,6 +22,7 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.infer.util.InferFileUtils;
 import com.antgroup.geaflow.infer.util.ShellExecUtils;
 import com.google.common.base.Joiner;
+
 import java.io.File;
 import java.nio.channels.FileLock;
 import java.time.Duration;
@@ -33,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,15 @@ public class InferEnvironmentManager implements AutoCloseable {
 
     private static final String LOCK_FILE = "_lock";
 
-    private static final String SHELL_START = "/bin/sh";
+    private static final String SHELL_START = "/bin/bash";
+
+    private static final long TIMEOUT_SECOND = 10;
+
+    private static final String SCRIPT_SEPARATOR = " ";
+
+    private static final String CHMOD_CMD = "chmod";
+
+    private static final String CHMOD_PERMISSION = "755";
 
     private static final String FINISH_FILE = "_finish";
 
@@ -169,7 +179,18 @@ public class InferEnvironmentManager implements AutoCloseable {
         shellCommand.addAll(execParams);
         String cmd = Joiner.on(" ").join(shellCommand);
         LOGGER.info("create infer virtual env {}", cmd);
+
+        // Run "chmod 755 $shellPath"
+        List<String> runCommands = new ArrayList<>();
+        runCommands.add(CHMOD_CMD);
+        runCommands.add(CHMOD_PERMISSION);
+        runCommands.add(shellPath);
+        String chmodCmd = Joiner.on(SCRIPT_SEPARATOR).join(runCommands);
+        LOGGER.info("change {} permission run command is {}", shellPath, chmodCmd);
         int installEnvTimeOut = configuration.getInteger(FrameworkConfigKeys.INFER_ENV_INIT_TIMEOUT_SEC);
+        if (!ShellExecUtils.run(chmodCmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error)) {
+            return false;
+        }
         return ShellExecUtils.run(cmd, Duration.ofSeconds(installEnvTimeOut), LOGGER::info, LOGGER::error, workingDir);
     }
 
