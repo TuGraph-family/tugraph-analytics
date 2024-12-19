@@ -24,6 +24,10 @@ public enum PersistentType {
      */
     DFS,
     /**
+     * s3 file schema.
+     */
+    S3,
+    /**
      * local file schema, for testing.
      */
     LOCAL

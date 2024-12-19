@@ -79,6 +79,10 @@
         <brpc.version>3.0.5</brpc.version>
         <jctools.version>2.1.2</jctools.version>
         <prometheus.version>0.16.0</prometheus.version>
+        <s3.version>2.21.30</s3.version>
+        <s3-transfer-manager.version>2.21.30</s3-transfer-manager.version>
+        <aws-crt.version>0.28.10</aws-crt.version>
+        <org.jetbrains.annotations>13.0</org.jetbrains.annotations>
     </properties>
 
     <modules>
@@ -740,6 +744,29 @@
                 <groupId>com.baidu</groupId>
                 <artifactId>brpc-java</artifactId>
                 <version>${brpc.version}</version>
+            </dependency>
+
+            <!-- s3 -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>s3</artifactId>
+                <version>${s3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>s3-transfer-manager</artifactId>
+                <version>${s3-transfer-manager.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk.crt</groupId>
+                <artifactId>aws-crt</artifactId>
+                <version>${aws-crt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>${org.jetbrains.annotations}</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
