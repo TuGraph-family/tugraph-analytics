@@ -30,6 +30,7 @@
         <module>geaflow-file-common</module>
         <module>geaflow-file-oss</module>
         <module>geaflow-file-dfs</module>
+        <module>geaflow-file-s3</module>
     </modules>
 
 </project>

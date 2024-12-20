@@ -67,4 +67,41 @@ public class FileConfigKeys {
         .key("geaflow.file.oss.secret.key")
         .defaultValue(null)
         .description("oss secret key");
+
+
+    public static final ConfigKey S3_BUCKET_NAME = ConfigKeys
+        .key("geaflow.file.s3.bucket.name")
+        .defaultValue(null)
+        .description("s3 bucket name");
+
+    public static final ConfigKey S3_ENDPOINT = ConfigKeys
+        .key("geaflow.file.s3.endpoint")
+        .defaultValue(null)
+        .description("s3 endpoint");
+
+    public static final ConfigKey S3_ACCESS_KEY_ID = ConfigKeys
+        .key("geaflow.file.s3.access.key.id")
+        .defaultValue(null)
+        .description("s3 access key id");
+
+    public static final ConfigKey S3_ACCESS_KEY = ConfigKeys
+        .key("geaflow.file.s3.access.key")
+        .defaultValue(null)
+        .description("s3 access key");
+
+    public static final ConfigKey S3_MIN_PART_SIZE = ConfigKeys
+        .key("geaflow.file.s3.min.part.size")
+        .defaultValue(5242880L)
+        .description("s3 input minimum part size in bytes");
+
+    public static final ConfigKey S3_INPUT_STREAM_CHUNK_SIZE = ConfigKeys
+        .key("geaflow.file.s3.input.stream.chunk.size")
+        .defaultValue(1048576)
+        .description("s3 input stream chunk size in bytes");
+
+
+    public static final ConfigKey S3_REGION = ConfigKeys
+        .key("geaflow.file.s3.region")
+        .defaultValue("CN_NORTH_1")
+        .description("s3 region");
 }
