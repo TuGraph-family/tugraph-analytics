@@ -191,6 +191,17 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+
+    @Test
+    public void testAlgorithmCommonNeighbors() throws Exception {
+        QueryTester
+            .build()
+            .withGraphDefine("/query/modern_graph.sql")
+            .withQueryPath("/query/gql_algorithm_common_neighbors.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
     private void clearGraph() throws IOException {
         File file = new File(TEST_GRAPH_PATH);
         if (file.exists()) {
