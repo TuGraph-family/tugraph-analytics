@@ -22,6 +22,7 @@ import com.antgroup.geaflow.console.core.model.config.GeaflowConfigKey;
 import com.antgroup.geaflow.console.core.model.config.GeaflowConfigValue;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.model.plugin.config.JdbcPluginConfigClass;
+import com.antgroup.geaflow.console.core.model.plugin.config.MemoryPluginConfigClass;
 import com.antgroup.geaflow.console.core.model.plugin.config.PluginConfigClass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -59,6 +60,9 @@ public class RuntimeMetaArgsClass extends GeaflowConfigClass {
         switch (type) {
             case JDBC:
                 configClass = JdbcPluginConfigClass.class;
+                break;
+            case MEMORY:
+                configClass = MemoryPluginConfigClass.class;
                 break;
             default:
                 throw new GeaflowIllegalException("Runtime meta config type {} not supported", pluginConfig.getType());

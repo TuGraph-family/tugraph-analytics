@@ -188,6 +188,9 @@ public class TaskService extends IdService<GeaflowTask, TaskEntity, TaskSearch> 
     }
 
     public boolean updateStatus(String taskId, GeaflowTaskStatus oldStatus, GeaflowTaskStatus newStatus) {
+        if (oldStatus == newStatus) {
+            return true;
+        }
         return taskDao.updateStatus(taskId, oldStatus, newStatus);
     }
 

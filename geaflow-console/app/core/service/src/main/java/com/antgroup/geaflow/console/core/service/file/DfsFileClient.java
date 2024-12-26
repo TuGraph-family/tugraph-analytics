@@ -101,6 +101,12 @@ public class DfsFileClient implements RemoteFileClient {
         return String.format("%s%s", dfsConfig.getDefaultFs(), getFullPath(path));
     }
 
+    @Override
+    public boolean checkFileExists(String path) {
+        //TODO
+        return false;
+    }
+
     public String getFullPath(String path) {
         String root = dfsConfig.getRoot();
         if (!StringUtils.startsWith(root, "/")) {

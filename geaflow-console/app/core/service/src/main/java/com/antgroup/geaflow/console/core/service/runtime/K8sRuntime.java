@@ -16,9 +16,8 @@ package com.antgroup.geaflow.console.core.service.runtime;
 
 import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.common.service.integration.engine.K8sJobClient;
-import com.antgroup.geaflow.console.common.util.ThreadUtil;
+import com.antgroup.geaflow.console.common.util.RetryUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowLogException;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.core.model.data.GeaflowInstance;
 import com.antgroup.geaflow.console.core.model.job.config.GeaflowArgsClass;
@@ -63,8 +62,10 @@ public class K8sRuntime implements GeaflowRuntime {
     @Override
     public GeaflowTaskStatus queryStatus(GeaflowTask task) {
         try {
-            return queryStatusWithRetry(task, taskParams.buildClientStopArgs(task), 5);
-
+            return RetryUtil.exec(() -> {
+                boolean existMasterService = existMasterService(task, taskParams.buildClientStopArgs(task));
+                return existMasterService ? GeaflowTaskStatus.RUNNING : GeaflowTaskStatus.FAILED;
+            }, 5, 500);
         } catch (Exception e) {
             log.error("Query task {} status failed, handle={}", task.getId(), JSON.toJSONString(task.getHandle()), e);
             return GeaflowTaskStatus.FAILED;
@@ -85,10 +86,7 @@ public class K8sRuntime implements GeaflowRuntime {
             K8sJobClient jobClient = loader.newInstance(K8sJobClient.class, params, masterUrl);
             jobClient.submitJob();
 
-            K8sTaskHandle taskHandle = new K8sTaskHandle();
-            taskHandle.setAppId(runtimeTaskId);
-            taskHandle.setClusterType(GeaflowPluginType.K8S);
-
+            K8sTaskHandle taskHandle = new K8sTaskHandle(runtimeTaskId);
             log.info("Start task {} success, handle={}", task.getId(), JSON.toJSONString(taskHandle));
             return taskHandle;
 
@@ -108,30 +106,10 @@ public class K8sRuntime implements GeaflowRuntime {
             K8sJobClient jobClient = loader.newInstance(K8sJobClient.class, params, masterUrl);
 
             jobClient.stopJob();
-            log.info("Stop task {} success, handle={}", task.getId(), JSON.toJSONString(task.getHandle()));
 
         } catch (Exception e) {
             throw new GeaflowLogException("Stop task {} failed", task.getId(), e);
         }
-    }
-
-    private GeaflowTaskStatus queryStatusWithRetry(GeaflowTask task, K8sClientStopArgsClass k8sClientStopArgs,
-                                                   int retryTimes) {
-        while (retryTimes > 0) {
-            try {
-                boolean existMasterService = existMasterService(task, k8sClientStopArgs);
-                return existMasterService ? GeaflowTaskStatus.RUNNING : GeaflowTaskStatus.FAILED;
-
-            } catch (Exception e) {
-                if (--retryTimes == 0) {
-                    throw e;
-                }
-
-                ThreadUtil.sleepMilliSeconds(500);
-            }
-        }
-
-        return task.getStatus();
     }
 
     private boolean existMasterService(GeaflowTask task, K8sClientStopArgsClass k8sClientStopArgs) {

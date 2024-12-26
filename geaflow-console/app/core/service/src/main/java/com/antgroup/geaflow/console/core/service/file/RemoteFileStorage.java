@@ -41,6 +41,8 @@ public class RemoteFileStorage {
 
     private static final String GEAFLOW_PACKAGE_PATH_FORMAT = "geaflow/packages/%s/release-%s.zip";
 
+    private static final String TASKS_FILE_PATH_FORMAT = "geaflow/packages/%s/udfs/%s";
+
     @Autowired
     private PluginService pluginService;
 
@@ -68,11 +70,20 @@ public class RemoteFileStorage {
         return String.format(GEAFLOW_PACKAGE_PATH_FORMAT, jobId, releaseVersion);
     }
 
+    public static String getTaskFilePath(String jobId, String fileName) {
+        return String.format(TASKS_FILE_PATH_FORMAT, jobId, fileName);
+    }
+
+
     public String upload(String path, InputStream stream) {
         checkRemoteFileClient();
-        String url = remoteFileClient.getUrl(path);
+        return upload(path, stream, remoteFileClient);
+    }
+
+    public String upload(String path, InputStream stream, RemoteFileClient client) {
+        String url = client.getUrl(path);
         log.info("Start upload file, url={}", url);
-        remoteFileClient.upload(path, stream);
+        client.upload(path, stream);
         log.info("Upload success, url={}", url);
         return url;
     }
@@ -100,6 +111,11 @@ public class RemoteFileStorage {
                 remoteFileClient = null;
             }
         }
+    }
+
+    public boolean checkFileExists(String path) {
+        checkRemoteFileClient();
+        return remoteFileClient.checkFileExists(path);
     }
 
     private void checkRemoteFileClient() {

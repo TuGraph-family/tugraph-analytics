@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.model.task;
 
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,4 +22,8 @@ import lombok.Setter;
 @Getter
 public class RayTaskHandle extends GeaflowTaskHandle {
 
+    public RayTaskHandle( String submissionId) {
+        super(GeaflowPluginType.RAY, submissionId);
+
+    }
 }

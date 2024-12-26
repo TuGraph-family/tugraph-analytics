@@ -38,6 +38,9 @@ public class RuntimeFactory {
             case K8S:
                 runtimeClass = K8sRuntime.class;
                 break;
+            case RAY:
+                runtimeClass = RayRuntime.class;
+                break;
             default:
                 throw new GeaflowException("Unsupported runtime type {}", type);
         }

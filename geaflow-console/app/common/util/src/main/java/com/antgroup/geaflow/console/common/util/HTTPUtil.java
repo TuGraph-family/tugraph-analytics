@@ -14,99 +14,96 @@
 
 package com.antgroup.geaflow.console.common.util;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
-import java.net.URISyntaxException;
+import java.util.Map;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HTTPUtil {
 
-    public static <T> T getResultData(String result, Type type) {
-        return JSON.parseObject(result, type);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HTTPUtil.class);
+    private static final MediaType MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
+
+    public static JSONObject post(String url, String json) {
+        return post(url, json, JSONObject.class);
     }
 
-    public static <T> T getResultData(String result, TypeReference<T> typeReference) {
-        return JSON.parseObject(result, typeReference);
+    public static JSONObject post(String url, String json, Map<String, String> headers) {
+        return post(url, json, headers, JSONObject.class);
     }
 
-    public static Request get(URIBuilder uri) throws URISyntaxException {
-        return Request.Get(uri.build()).addHeader("Accept", "application/json");
+    public static <T> T post(String url, String json, Class<T> resultClass) {
+        return post(url, json, null, resultClass);
     }
 
-    public static Request get(URIBuilder uri, Integer timeout) throws URISyntaxException {
-        Request request = get(uri);
-        if (timeout != null) {
-            request.connectTimeout(timeout).socketTimeout(timeout);
+    public static <T> T post(String url, String body, Map<String, String> headers, Class<T> resultClass) {
+        LOGGER.info("post url: {} body: {}", url, body);
+        RequestBody requestBody = RequestBody.create(body, MEDIA_TYPE);
+        Builder builder = getRequestBuilder(url, headers);
+        Request request = builder.post(requestBody).build();
+
+        OkHttpClient client = new OkHttpClient();
+        try (Response response = client.newCall(request).execute()) {
+            ResponseBody responseBody = response.body();
+            String msg = (responseBody != null) ? responseBody.string() : "{}";
+            if (!response.isSuccessful()) {
+                throw new RuntimeException(msg);
+            }
+
+            return JSONObject.toJavaObject(JSONObject.parseObject(msg), resultClass);
+        } catch (IOException e) {
+            LOGGER.info("execute post failed: {}", e.getCause(), e);
+            throw new RuntimeException(e);
         }
-        return request;
     }
 
-    public static Request get(String url) throws URISyntaxException {
-        return Request.Get(url).addHeader("Accept", "application/json");
+
+    public static JSONObject get(String url) {
+        return get(url, null, JSONObject.class);
     }
 
-    public static Request get(String url, Integer timeout) throws URISyntaxException {
-        Request request = get(url);
-        if (timeout != null) {
-            request.connectTimeout(timeout).socketTimeout(timeout);
+
+    public static <T> T get(String url, Map<String, String> headers, Class<T> resultClass) {
+        LOGGER.info("get url: {}", url);
+        Builder builder = getRequestBuilder(url, headers);
+        Request request = builder.get().build();
+
+
+        OkHttpClient client = new OkHttpClient();
+        try (Response response = client.newCall(request).execute()) {
+            ResponseBody responseBody = response.body();
+            String msg = (responseBody != null) ? responseBody.string() : "{}";
+            if (!response.isSuccessful()) {
+                throw new RuntimeException(msg);
+            }
+
+            return JSONObject.toJavaObject(JSONObject.parseObject(msg), resultClass);
+        } catch (IOException e) {
+            LOGGER.info("execute get failed: {}", e.getCause(), e);
+            throw new RuntimeException(e);
         }
-        return request;
     }
 
-    public static Request post(String url) {
-        return Request.Post(url).addHeader("Accept", "application/json");
-    }
-
-    public static Request post(String url, Integer timeout) {
-        Request request = post(url);
-        if (timeout != null) {
-            request.connectTimeout(timeout).socketTimeout(timeout);
+    private static Builder getRequestBuilder(String url, Map<String, String> headers) {
+        Builder requestBuilder = new Request.Builder().url(url);
+        if (headers != null) {
+            Headers requestHeaders = Headers.of(headers);
+            requestBuilder.headers(requestHeaders);
         }
-        return request;
-    }
-
-    public static Request put(String url) {
-        return Request.Put(url).addHeader("Accept", "application/json");
-    }
-
-    public static Request put(String url, Integer timeout) {
-        Request request = put(url);
-        if (timeout != null) {
-            request.connectTimeout(timeout).socketTimeout(timeout);
-        }
-        return request;
-    }
-
-    public static Request put(URIBuilder uri) throws URISyntaxException {
-        return Request.Put(uri.build()).addHeader("Accept", "application/json");
-    }
-
-    public static Request put(URIBuilder uri, Integer timeout) throws URISyntaxException {
-        Request request = put(uri);
-        if (timeout != null) {
-            request.connectTimeout(timeout).socketTimeout(timeout);
-        }
-        return request;
-    }
-
-    public static Request delete(URIBuilder uri) throws URISyntaxException {
-        return Request.Delete(uri.build()).addHeader("Accept", "application/json");
-    }
-
-    public static Request delete(URIBuilder uri, Integer timeout) throws URISyntaxException {
-        Request request = delete(uri);
-        if (timeout != null) {
-            request.connectTimeout(timeout).socketTimeout(timeout);
-        }
-        return request;
+        return requestBuilder;
     }
 
     public static void download(HttpServletResponse response, InputStream inputStream, String fileName)

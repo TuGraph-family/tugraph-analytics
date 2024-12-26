@@ -24,8 +24,10 @@ import com.antgroup.geaflow.console.core.model.plugin.GeaflowPlugin;
 import com.antgroup.geaflow.console.core.model.plugin.config.GeaflowPluginConfig;
 import com.antgroup.geaflow.console.core.model.plugin.config.OssPluginConfigClass;
 import java.io.InputStream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+@Slf4j
 public class OssFileClient implements RemoteFileClient {
 
     private OssPluginConfigClass ossConfig;
@@ -59,6 +61,17 @@ public class OssFileClient implements RemoteFileClient {
     public String getUrl(String path) {
         return String.format("http://%s.%s/%s", ossConfig.getBucket(), NetworkUtil.getHost(ossConfig.getEndpoint()),
             getFullPath(path));
+    }
+
+    @Override
+    public boolean checkFileExists(String path) {
+        try {
+            return ossClient.doesObjectExist(ossConfig.getBucket(), getFullPath(path));
+        } catch (Exception e) {
+            log.warn("check oss file failed", e);
+            return false;
+        }
+
     }
 
     public String getFullPath(String path) {

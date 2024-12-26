@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.model.task;
 
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,4 +25,8 @@ public class ContainerTaskHandle extends GeaflowTaskHandle {
     // local process pid
     private int pid;
 
+    public ContainerTaskHandle(String appId, int pid) {
+        super(GeaflowPluginType.CONTAINER, appId);
+        this.pid = pid;
+    }
 }

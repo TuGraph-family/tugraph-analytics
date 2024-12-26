@@ -43,6 +43,8 @@ public class GeaflowTaskSubmitter {
     private static final ExecutorService EXECUTOR_SERVICE = new ThreadPoolExecutor(50, 500, 30, TimeUnit.SECONDS,
         new LinkedBlockingQueue<>(1000));
 
+    private static final int JOB_SUBMIT_TIMEOUT_MINUTE = 4;
+
     @Autowired
     private TaskService taskService;
 
@@ -78,7 +80,8 @@ public class GeaflowTaskSubmitter {
                         boolean updateStatus = taskService.updateStatus(task.getId(), GeaflowTaskStatus.WAITING,
                             GeaflowTaskStatus.STARTING);
                         if (!updateStatus) {
-                            throw new GeaflowException("task status has been changed, need {} status", GeaflowTaskStatus.WAITING);
+                            throw new GeaflowException("task status has been changed, need {} status",
+                                GeaflowTaskStatus.WAITING);
                         }
                         taskOperator.start(task);
 
@@ -95,8 +98,8 @@ public class GeaflowTaskSubmitter {
 
             if (!futureList.isEmpty()) {
                 try {
-                    CompletableFuture.allOf(futureList.toArray(new CompletableFuture[futureList.size()])).get(1,
-                        TimeUnit.MINUTES);
+                    CompletableFuture.allOf(futureList.toArray(new CompletableFuture[futureList.size()]))
+                                     .get(JOB_SUBMIT_TIMEOUT_MINUTE, TimeUnit.MINUTES);
                 } catch (Exception e) {
                     log.error("Task {} Submit Waiting Timeout", JSON.toJSONString(submitMap.keySet()), e);
                 }

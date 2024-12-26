@@ -18,17 +18,18 @@ import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.commons.io.FileUtils;
 
 public class ZipUtil {
@@ -37,6 +38,10 @@ public class ZipUtil {
         try (InputStream zipInputStream = buildZipInputStream(entries)) {
             FileUtils.copyInputStreamToFile(zipInputStream, new File(fileName));
         }
+    }
+
+    public static InputStream buildZipInputStream(GeaflowZipEntry entry) throws IOException {
+        return buildZipInputStream(Collections.singletonList(entry));
     }
 
     public static InputStream buildZipInputStream(List<GeaflowZipEntry> entries) throws IOException {
@@ -50,8 +55,8 @@ public class ZipUtil {
     private static void writeZipStream(OutputStream bos, List<GeaflowZipEntry> entries) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(bos)) {
             for (GeaflowZipEntry entry : entries) {
-                try (ByteArrayInputStream inputStream = new ByteArrayInputStream(entry.getContent().getBytes())) {
-                    zipOutputStream.putNextEntry(new ZipEntry(entry.getFileName()));
+                try (InputStream inputStream = entry.getInputStream()) {
+                    zipOutputStream.putNextEntry(new ZipEntry(entry.getEntryName()));
                     byte[] buff = new byte[1024];
                     int len = 0;
                     while ((len = inputStream.read(buff)) > -1) {
@@ -92,16 +97,56 @@ public class ZipUtil {
         }
     }
 
-    @Setter
-    @Getter
-    public static class GeaflowZipEntry {
+    public interface GeaflowZipEntry {
 
-        private String fileName;
+        String getEntryName();
+
+        InputStream getInputStream();
+    }
+
+    public static class MemoryZipEntry implements GeaflowZipEntry {
+
+        private String entryName;
         private String content;
 
-        public GeaflowZipEntry(String fileName, String content) {
-            this.fileName = fileName;
+        public MemoryZipEntry(String entryName, String content) {
+            this.entryName = entryName;
             this.content = content;
+        }
+
+        @Override
+        public String getEntryName() {
+            return entryName;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(content.getBytes());
+        }
+    }
+
+    public static class FileZipEntry implements GeaflowZipEntry {
+
+        private String entryName;
+        private File file;
+
+        public FileZipEntry(String entryName, File file) {
+            this.entryName = entryName;
+            this.file = file;
+        }
+
+        @Override
+        public String getEntryName() {
+            return entryName;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            try {
+                return new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

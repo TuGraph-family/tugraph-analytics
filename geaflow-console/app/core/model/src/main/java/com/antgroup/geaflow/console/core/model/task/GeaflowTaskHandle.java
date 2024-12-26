@@ -26,14 +26,16 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 public abstract class GeaflowTaskHandle {
 
+    public GeaflowTaskHandle(GeaflowPluginType clusterType, String appId) {
+        this.clusterType = clusterType;
+        this.appId = appId;
+    }
+
     // cluster type
     protected GeaflowPluginType clusterType;
 
     // app id
     protected String appId;
-
-    // startup notify
-    protected StartupNotifyInfo startupNotifyInfo;
 
 
     public static GeaflowTaskHandle parse(String text) {
@@ -54,17 +56,5 @@ public abstract class GeaflowTaskHandle {
                 throw new GeaflowException("Unsupported cluster type {}", clusterType);
         }
     }
-
-    @Setter
-    @Getter
-    public static class StartupNotifyInfo {
-
-        private String masterAddress;
-
-        private String driverAddress;
-
-        private String clientAddress;
-
-    }
-
+    
 }

@@ -78,6 +78,7 @@ public class ConfigManagerImpl implements ConfigManager {
                     types.add(GeaflowPluginType.CONTAINER.name());
                 }
                 types.add(GeaflowPluginType.K8S.name());
+                types.add(GeaflowPluginType.RAY.name());
                 break;
             case RUNTIME_META:
                 types.add(GeaflowPluginType.JDBC.name());
