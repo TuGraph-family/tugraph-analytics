@@ -15,6 +15,8 @@
 package com.antgroup.geaflow.console.core.model.plugin.config;
 
 import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
+import com.antgroup.geaflow.console.core.model.config.GeaflowConfigKey;
+import com.antgroup.geaflow.console.core.model.config.GeaflowConfigValue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,4 +30,20 @@ public class RayPluginConfigClass extends PluginConfigClass {
         super(GeaflowPluginType.RAY);
     }
 
+    @GeaflowConfigKey(value = "ray.dashboard.address", comment = "ray.dashboard.address")
+    @GeaflowConfigValue(required = true, defaultValue = "http://127.0.0.1:8090")
+    private String dashboardAddress;
+
+    @GeaflowConfigKey(value = "ray.redis.address", comment = "ray.redis.address")
+    @GeaflowConfigValue(required = true, defaultValue = "127.0.0.1:6379")
+    private String redisAddress;
+
+
+    @GeaflowConfigKey(value = "ray.dist.jar.path", comment = "ray.dist.jar.path")
+    @GeaflowConfigValue(required = true)
+    private String distJarPath;
+
+    @GeaflowConfigKey(value = "ray.session.resource.jar.path", comment = "ray.session.resource.jar.path")
+    @GeaflowConfigValue(required = true)
+    private String sessionResourceJarPath;
 }

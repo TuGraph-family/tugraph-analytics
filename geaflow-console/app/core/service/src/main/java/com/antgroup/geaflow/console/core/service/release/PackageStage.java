@@ -18,6 +18,7 @@ import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.common.util.Md5Util;
 import com.antgroup.geaflow.console.common.util.ZipUtil;
 import com.antgroup.geaflow.console.common.util.ZipUtil.GeaflowZipEntry;
+import com.antgroup.geaflow.console.common.util.ZipUtil.MemoryZipEntry;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
 import com.antgroup.geaflow.console.core.model.release.GeaflowRelease;
 import com.antgroup.geaflow.console.core.model.release.JobPlanBuilder;
@@ -45,14 +46,14 @@ public class PackageStage extends GeaflowBuildStage {
         try {
             List<GeaflowZipEntry> zipEntries;
             if (release.getJob().isApiJob()) {
-                GeaflowZipEntry entry = new GeaflowZipEntry("empty.txt", "");
+                MemoryZipEntry entry = new MemoryZipEntry("empty.txt", "");
                 zipEntries = Collections.singletonList(entry);
 
             } else {
                 String code = release.getJob().getUserCode().getText();
                 Map<String, Integer> parallelismMap = JobPlanBuilder.getParallelismMap(release.getJobPlan());
-                GeaflowZipEntry codeEntry = new GeaflowZipEntry(GQL_FILE_NAME, code);
-                GeaflowZipEntry confEntry = new GeaflowZipEntry(CONF_FILE_NAME, JSON.toJSONString(parallelismMap));
+                MemoryZipEntry codeEntry = new MemoryZipEntry(GQL_FILE_NAME, code);
+                MemoryZipEntry confEntry = new MemoryZipEntry(CONF_FILE_NAME, JSON.toJSONString(parallelismMap));
                 zipEntries = Arrays.asList(codeEntry, confEntry);
             }
             // url and md5

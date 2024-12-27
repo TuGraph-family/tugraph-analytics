@@ -12,20 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.console.common.util;
+package com.antgroup.geaflow.console.test;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.antgroup.geaflow.console.common.util.Fmt;
+import com.antgroup.geaflow.console.common.util.ZipUtil;
+import com.antgroup.geaflow.console.common.util.ZipUtil.FileZipEntry;
 import com.antgroup.geaflow.console.common.util.ZipUtil.GeaflowZipEntry;
+import com.antgroup.geaflow.console.common.util.ZipUtil.MemoryZipEntry;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,8 +57,8 @@ public class ZipTest {
             map.put("aa", 1);
             map.put("b", 3);
             map.put("c", 4);
-            GeaflowZipEntry userGql = new GeaflowZipEntry("user.gql", code);
-            GeaflowZipEntry conf = new GeaflowZipEntry("user.conf", JSON.toJSONString(map));
+            GeaflowZipEntry userGql = new MemoryZipEntry("user.gql", code);
+            GeaflowZipEntry conf = new MemoryZipEntry("user.conf", JSON.toJSONString(map));
 
             InputStream inputStream = ZipUtil.buildZipInputStream(Arrays.asList(userGql, conf));
             FileUtils.copyInputStreamToFile(inputStream, new File(zipPath));
@@ -78,8 +86,8 @@ public class ZipTest {
             map.put("aa", 1);
             map.put("b", 3);
             map.put("c", 4);
-            GeaflowZipEntry userGql = new GeaflowZipEntry("user.gql", code);
-            GeaflowZipEntry conf = new GeaflowZipEntry("user.conf", JSON.toJSONString(map));
+            GeaflowZipEntry userGql = new MemoryZipEntry("user.gql", code);
+            GeaflowZipEntry conf = new MemoryZipEntry("user.conf", JSON.toJSONString(map));
 
             InputStream inputStream = ZipUtil.buildZipInputStream(Arrays.asList(userGql, conf));
             FileUtils.copyInputStreamToFile(inputStream, new File(path));
@@ -114,6 +122,31 @@ public class ZipTest {
             File file = new File(path);
             file.delete();
         }
+    }
+
+    @Test
+    public void testMultiFiles() throws IOException, URISyntaxException {
+        String path = Fmt.as("/tmp/ziptest/test-zip-{}.zip", System.currentTimeMillis());
+        try {
+            URL src1 = getClass().getClassLoader().getResource("zip_test.txt");
+
+            String entry1 = "dir/zip_test.txt";
+
+            URL src2 = getClass().getClassLoader().getResource("zip_test2.txt");
+            String entry2 = "dir/zip_test2.txt";
+
+
+            List<GeaflowZipEntry> entries = new ArrayList<>();
+            entries.add(new FileZipEntry(entry1, new File(src1.toURI())));
+            entries.add(new FileZipEntry(entry2, new File(src2.toURI())));
+            InputStream stream = ZipUtil.buildZipInputStream(entries);
+
+            FileUtils.copyInputStreamToFile(stream, new File(path));
+        }finally {
+            File file = new File(path);
+            file.delete();
+        }
+
     }
 
     String code = "CREATE GRAPH modern (\n" + "\tVertex person (\n" + "\t  id bigint ID,\n" + "\t  name varchar,\n"

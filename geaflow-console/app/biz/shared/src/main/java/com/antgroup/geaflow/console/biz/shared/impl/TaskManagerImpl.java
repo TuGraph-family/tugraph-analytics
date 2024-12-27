@@ -53,7 +53,8 @@ import com.antgroup.geaflow.console.core.model.runtime.GeaflowOffset;
 import com.antgroup.geaflow.console.core.model.runtime.GeaflowPipeline;
 import com.antgroup.geaflow.console.core.model.task.GeaflowHeartbeatInfo;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
-import com.antgroup.geaflow.console.core.model.task.GeaflowTaskHandle.StartupNotifyInfo;
+import com.antgroup.geaflow.console.core.model.task.K8sTaskHandle;
+import com.antgroup.geaflow.console.core.model.task.K8sTaskHandle.StartupNotifyInfo;
 import com.antgroup.geaflow.console.core.model.task.TaskFile;
 import com.antgroup.geaflow.console.core.service.AuditService;
 import com.antgroup.geaflow.console.core.service.IdService;
@@ -223,6 +224,10 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
         StartupNotifyInfo startupNotifyInfo;
         GeaflowTaskStatus newStatus;
         GeaflowTask task = taskService.get(taskId);
+        if (task.getHandle().getClusterType() != GeaflowPluginType.K8S) {
+            return;
+        }
+
         if (startupNotifyView.isSuccess()) {
             startupNotifyInfo = startupNotifyView.getData();
             newStatus = RUNNING;
@@ -230,7 +235,7 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
             startupNotifyInfo = new StartupNotifyInfo();
             newStatus = FAILED;
         }
-        task.getHandle().setStartupNotifyInfo(startupNotifyInfo);
+        ((K8sTaskHandle) task.getHandle()).setStartupNotifyInfo(startupNotifyInfo);
         taskService.update(task);
         taskService.updateStatus(task.getId(), task.getStatus(), newStatus);
         log.info("Task {} get startup notify '{}' from cluster", task.getId(), JSON.toJSONString(startupNotifyView));

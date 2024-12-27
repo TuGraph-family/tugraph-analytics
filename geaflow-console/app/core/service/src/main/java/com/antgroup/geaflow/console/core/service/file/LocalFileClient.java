@@ -59,6 +59,12 @@ public class LocalFileClient implements RemoteFileClient {
         return GeaflowTask.getTaskFileUrlFormatter(gatewayUrl, getFullPath(path));
     }
 
+    @Override
+    public boolean checkFileExists(String path) {
+        //TODO
+        return false;
+    }
+
     public String getFullPath(String path) {
         String root = localConfig.getRoot();
         if (!StringUtils.startsWith(root, "/")) {

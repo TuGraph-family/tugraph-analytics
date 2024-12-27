@@ -17,10 +17,9 @@ package com.antgroup.geaflow.console.core.service.runtime;
 import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.common.util.FileUtil;
 import com.antgroup.geaflow.console.common.util.ProcessUtil;
-import com.antgroup.geaflow.console.common.util.ThreadUtil;
+import com.antgroup.geaflow.console.common.util.RetryUtil;
 import com.antgroup.geaflow.console.common.util.ZipUtil;
 import com.antgroup.geaflow.console.common.util.exception.GeaflowLogException;
-import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.core.model.data.GeaflowInstance;
 import com.antgroup.geaflow.console.core.model.job.config.GeaflowArgsClass;
@@ -81,8 +80,6 @@ public class ContainerRuntime implements GeaflowRuntime {
                 ProcessUtil.killPid(pid);
             }
 
-            log.info("Stop task {} success, handle={}", task.getId(), JSON.toJSONString(task.getHandle()));
-
         } catch (Exception e) {
             throw new GeaflowLogException("Stop task {} failed", task.getId(), e);
         }
@@ -91,7 +88,18 @@ public class ContainerRuntime implements GeaflowRuntime {
     @Override
     public GeaflowTaskStatus queryStatus(GeaflowTask task) {
         try {
-            return queryStatusWithRetry(task, 5);
+            return RetryUtil.exec(() -> {
+                int pid = ((ContainerTaskHandle) task.getHandle()).getPid();
+                if (ProcessUtil.existPid(pid)) {
+                    return GeaflowTaskStatus.RUNNING;
+                }
+
+                if (FileUtil.exist(getFinishFilePath(task.getId()))) {
+                    return GeaflowTaskStatus.FINISHED;
+                }
+
+                return GeaflowTaskStatus.FAILED;
+            }, 5, 500);
 
         } catch (Exception e) {
             log.error("Query task {} status failed, handle={}", task.getId(), JSON.toJSONString(task.getHandle()), e);
@@ -126,8 +134,8 @@ public class ContainerRuntime implements GeaflowRuntime {
                 .forEach(jar -> classPaths.add(localFileFactory.getVersionFile(versionName, jar).getAbsolutePath()));
 
             // add user jar
-            task.getUserJars().forEach(
-                jar -> classPaths.add(localFileFactory.getTaskUserFile(runtimeTaskId, jar).getAbsolutePath()));
+            task.getUserJars()
+                .forEach(jar -> classPaths.add(localFileFactory.getTaskUserFile(runtimeTaskId, jar).getAbsolutePath()));
 
             // add release zip
             File releaseFile = localFileFactory.getTaskReleaseFile(runtimeTaskId, release.getJob().getId(), release);
@@ -150,43 +158,13 @@ public class ContainerRuntime implements GeaflowRuntime {
             int pid = ProcessUtil.execAsyncCommand(cmd, 1000, logFilePath, finishFile);
 
             // save handle
-            ContainerTaskHandle taskHandle = new ContainerTaskHandle();
-            taskHandle.setAppId(runtimeTaskId);
-            taskHandle.setClusterType(GeaflowPluginType.CONTAINER);
-            taskHandle.setPid(pid);
-
+            ContainerTaskHandle taskHandle = new ContainerTaskHandle(runtimeTaskId, pid);
             log.info("Start task {} success, handle={}", task.getId(), JSON.toJSONString(taskHandle));
             return taskHandle;
 
         } catch (Exception e) {
             throw new GeaflowLogException("Start task {} failed", task.getId(), e);
         }
-    }
-
-    private GeaflowTaskStatus queryStatusWithRetry(GeaflowTask task, int retryTimes) {
-        while (retryTimes > 0) {
-            try {
-                int pid = ((ContainerTaskHandle) task.getHandle()).getPid();
-                if (ProcessUtil.existPid(pid)) {
-                    return GeaflowTaskStatus.RUNNING;
-                }
-
-                if (FileUtil.exist(getFinishFilePath(task.getId()))) {
-                    return GeaflowTaskStatus.FINISHED;
-                }
-
-                return GeaflowTaskStatus.FAILED;
-
-            } catch (Exception e) {
-                if (--retryTimes == 0) {
-                    throw e;
-                }
-
-                ThreadUtil.sleepMilliSeconds(500);
-            }
-        }
-
-        return task.getStatus();
     }
 
 }

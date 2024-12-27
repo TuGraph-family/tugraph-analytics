@@ -30,4 +30,5 @@ public interface RemoteFileClient {
 
     String getUrl(String path);
 
+    boolean checkFileExists(String path);
 }

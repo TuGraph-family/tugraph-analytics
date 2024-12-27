@@ -221,11 +221,14 @@ public class JobManagerImpl extends IdManagerImpl<GeaflowJob, JobView, JobSearch
 
             // try to delete old file
             GeaflowJob job = jobService.get(jobId);
-            String oldJarId = job.getJarPackage().getId();
-            try {
-                remoteFileManager.deleteRefJar(oldJarId, jobId, GeaflowResourceType.JOB);
-            } catch (Exception e) {
-                log.info("delete job jar fail, jobName: {}, jarId: {}", job.getName(), oldJarId);
+            GeaflowRemoteFile oldJar = job.getJarPackage();
+            if (oldJar != null) {
+                String oldJarId = job.getJarPackage().getId();
+                try {
+                    remoteFileManager.deleteRefJar(oldJarId, jobId, GeaflowResourceType.JOB);
+                } catch (Exception e) {
+                    log.info("delete job jar fail, jobName: {}, jarId: {}", job.getName(), oldJarId);
+                }
             }
 
         } else if (fileId != null) {

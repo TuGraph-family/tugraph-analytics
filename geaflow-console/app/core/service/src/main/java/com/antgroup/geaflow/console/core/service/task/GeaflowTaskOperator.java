@@ -18,10 +18,12 @@ import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.FA
 import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.RUNNING;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.STARTING;
 
+import com.alibaba.fastjson.JSON;
 import com.antgroup.geaflow.console.common.dal.model.PageList;
 import com.antgroup.geaflow.console.common.util.DateTimeUtil;
 import com.antgroup.geaflow.console.common.util.Fmt;
 import com.antgroup.geaflow.console.common.util.type.GeaflowOperationType;
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus;
 import com.antgroup.geaflow.console.core.model.metric.GeaflowMetric;
 import com.antgroup.geaflow.console.core.model.metric.GeaflowMetricMeta;
@@ -36,6 +38,7 @@ import com.antgroup.geaflow.console.core.model.task.GeaflowHeartbeatInfo;
 import com.antgroup.geaflow.console.core.model.task.GeaflowHeartbeatInfo.ContainerInfo;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTask;
 import com.antgroup.geaflow.console.core.model.task.GeaflowTaskHandle;
+import com.antgroup.geaflow.console.core.model.task.K8sTaskHandle;
 import com.antgroup.geaflow.console.core.service.AuditService;
 import com.antgroup.geaflow.console.core.service.TaskService;
 import com.antgroup.geaflow.console.core.service.runtime.GeaflowRuntime;
@@ -59,11 +62,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class GeaflowTaskOperator {
 
-    private static final int MASTER_API_PORT = 8090;
-
-    private static final String COLON = ":";
-
-    private static final int TASK_STARTUP_TIMEOUT = 10 * 60;
+    private static final int TASK_STARTUP_TIMEOUT = 8 * 60;
 
     @Autowired
     private TaskService taskService;
@@ -115,6 +114,7 @@ public class GeaflowTaskOperator {
 
     public void stop(GeaflowTask task) {
         runtimeFactory.getRuntime(task).stop(task);
+        log.info("Stop task {} success, handle={}", task.getId(), JSON.toJSONString(task.getHandle()));
     }
 
     public GeaflowTaskStatus refreshStatus(GeaflowTask task) {
@@ -126,9 +126,10 @@ public class GeaflowTaskOperator {
         }
 
         GeaflowTaskStatus newStatus = runtimeFactory.getRuntime(task).queryStatus(task);
-        if (newStatus == FAILED) {
+        if (newStatus == FAILED && task.getRelease().getCluster().getType() == GeaflowPluginType.K8S) {
             // task has not been started completely
-            if (!Optional.ofNullable(task.getHandle()).map(GeaflowTaskHandle::getStartupNotifyInfo).isPresent()) {
+            if (!Optional.ofNullable(((K8sTaskHandle) task.getHandle())).map(K8sTaskHandle::getStartupNotifyInfo)
+                .isPresent()) {
                 if (DateTimeUtil.isExpired(task.getStartTime(), TASK_STARTUP_TIMEOUT)) {
                     // release task resource
                     this.stop(task);
@@ -218,7 +219,7 @@ public class GeaflowTaskOperator {
             for (ContainerInfo container : heartbeatInfo.getContainers()) {
                 if (container.getLastTimestamp() != null && container.getLastTimestamp() > expiredTime) {
                     container.setActive(true);
-                    activeNum ++;
+                    activeNum++;
                 }
             }
             heartbeatInfo.setActiveNum(activeNum);

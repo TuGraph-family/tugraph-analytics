@@ -14,7 +14,8 @@
 
 package com.antgroup.geaflow.console.biz.shared.view;
 
-import com.antgroup.geaflow.console.core.model.task.GeaflowTaskHandle.StartupNotifyInfo;
+
+import com.antgroup.geaflow.console.core.model.task.K8sTaskHandle.StartupNotifyInfo;
 import lombok.Getter;
 import lombok.Setter;
 

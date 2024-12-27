@@ -26,7 +26,7 @@ import lombok.Setter;
 public class OssPluginConfigClass extends PersistentPluginConfigClass {
 
     @GeaflowConfigKey(value = "geaflow.file.oss.endpoint", comment = "i18n.key.endpoint")
-    @GeaflowConfigValue(required = true)
+    @GeaflowConfigValue(required = true,defaultValue = "cn-hangzhou.alipay.aliyun-inc.com")
     private String endpoint;
 
     @GeaflowConfigKey(value = "geaflow.file.oss.access.id", comment = "i18n.key.access.id")

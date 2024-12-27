@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.console.core.model.task;
 
+import com.antgroup.geaflow.console.common.util.type.GeaflowPluginType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,4 +22,24 @@ import lombok.Setter;
 @Getter
 public class K8sTaskHandle extends GeaflowTaskHandle {
 
+
+    // startup notify
+    protected StartupNotifyInfo startupNotifyInfo;
+
+    @Setter
+    @Getter
+    public static class StartupNotifyInfo {
+
+        private String masterAddress;
+
+        private String driverAddress;
+
+        private String clientAddress;
+
+    }
+
+
+    public K8sTaskHandle(String appId) {
+        super(GeaflowPluginType.K8S, appId);
+    }
 }

@@ -246,35 +246,40 @@ public class InstallManagerImpl implements InstallManager {
             datasourceService.executeResource(jdbcConfig, "runtimemeta.init.sql");
         }
 
-        // init version
-        versionManager.createDefaultVersion();
-
-        // init cluster
-        clusterService.create(new GeaflowCluster(install.getRuntimeClusterConfig()));
-
         // setup influxdb
         if (deployConfig.isLocalMode()) {
             GeaflowPluginConfig metricConfig = install.getMetricConfig();
             if (GeaflowPluginType.INFLUXDB.name().equals(metricConfig.getType())) {
                 InfluxdbPluginConfigClass influxdbConfig = metricConfig.getConfig()
-                    .parse(InfluxdbPluginConfigClass.class);
+                                                                       .parse(InfluxdbPluginConfigClass.class);
                 if (influxdbConfig.getUrl().contains(deployConfig.getHost())) {
-                    String org = influxdbConfig.getOrg();
-                    String bucket = influxdbConfig.getBucket();
-                    String token = influxdbConfig.getToken();
-                    String setupCommand = Fmt.as("/usr/local/bin/influx setup --org '{}' --bucket '{}' "
-                        + "--username geaflow --password geaflow123456 --token '{}' --force", org, bucket, token);
+                    try {
+                        String org = influxdbConfig.getOrg();
+                        String bucket = influxdbConfig.getBucket();
+                        String token = influxdbConfig.getToken();
+                        String setupCommand = Fmt.as("/usr/local/bin/influx setup --org '{}' --bucket '{}' "
+                            + "--username geaflow --password geaflow123456 --token '{}' --force", org, bucket, token);
 
-                    log.info("Setup influxdb with command {}", setupCommand);
-                    ProcessUtil.execute(setupCommand);
+                        log.info("Setup influxdb with command {}", setupCommand);
+                        ProcessUtil.execute(setupCommand);
+                    } catch (Exception e) {
+                        log.error("Set up influx db failed", e);
+                    }
+
                 }
             }
         }
 
-        // set install status
-        systemConfigService.setValue(SystemConfigKeys.GEAFLOW_INITIALIZED, true);
+        // init cluster
+        clusterService.create(new GeaflowCluster(install.getRuntimeClusterConfig()));
+
+        // init version
+        versionManager.createDefaultVersion();
 
         createDemoJobs();
+
+        // set install status
+        systemConfigService.setValue(SystemConfigKeys.GEAFLOW_INITIALIZED, true);
         return true;
     }
 
