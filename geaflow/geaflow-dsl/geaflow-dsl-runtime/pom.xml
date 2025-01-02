@@ -19,7 +19,7 @@
     <parent>
         <artifactId>geaflow-dsl</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
-        <version>0.5.0-SNAPSHOT</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -78,6 +78,11 @@
 
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dsl-connector-odps</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-api</artifactId>
         </dependency>
 
@@ -102,6 +107,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+        </dependency>
+
+        <dependency>
             <!-- include kafka server for tests  -->
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.binary.version}</artifactId>
@@ -114,15 +124,6 @@
             </exclusions>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <!-- include h2 database for tests  -->
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-view-meta</artifactId>

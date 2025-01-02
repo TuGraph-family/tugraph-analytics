@@ -64,9 +64,15 @@ public class JdbcKVStore<K, V> extends BaseJdbcStore implements IKVStore<K, V> {
         byte[] valueArray = serializer.serializeValue(value);
         RetryCommand.run(() -> {
             try {
-                if (!update(getFromKey(key), columns, new Object[]{valueArray})
-                    && !insert(getFromKey(key), columns, new Object[]{valueArray})) {
-                    throw new GeaflowRuntimeException("put fail");
+                String fromKey = getFromKey(key);
+                if (!update(fromKey, columns, new Object[] {valueArray})) {
+                    LOGGER.info("key: {}, insert fail, try insert", key);
+                    try {
+                        insert(fromKey, columns, new Object[] {valueArray});
+                    } catch (Exception e) {
+                        LOGGER.info("key: {}, insert fail", key);
+                        throw new GeaflowRuntimeException("put fail");
+                    }
                 }
             } catch (SQLException e) {
                 throw new GeaflowRuntimeException("put fail", e);

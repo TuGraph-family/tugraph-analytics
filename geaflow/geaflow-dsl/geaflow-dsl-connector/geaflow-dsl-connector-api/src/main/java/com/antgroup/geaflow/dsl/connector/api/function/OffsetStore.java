@@ -142,7 +142,7 @@ public class OffsetStore {
             }
             sb.append(strings[i]);
         }
-        return sb.toString();
+        return sb.toString().replaceAll("'", "");
     }
 
     public static class ConsoleOffset {
