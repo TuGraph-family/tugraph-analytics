@@ -20,6 +20,7 @@ import com.antgroup.geaflow.common.type.IType;
 import com.google.common.collect.ImmutableMap;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
@@ -69,6 +70,7 @@ public class TypeCastUtil {
             .put(Tuple.of(BigDecimal.class, Long.class), new Decimal2Long())
             .put(Tuple.of(BigDecimal.class, String.class), new Decimal2String())
             .put(Tuple.of(BigDecimal.class, BinaryString.class), new Decimal2BinaryString())
+            .put(Tuple.of(byte[].class, BinaryString.class), new Bytes2BinaryString())
         .build();
 
     private static final ITypeCast identityCast = new IdentityCast();
@@ -615,6 +617,16 @@ public class TypeCastUtil {
                 return null;
             }
             return BinaryString.fromString(o.toString());
+        }
+    }
+
+    private static class  Bytes2BinaryString implements ITypeCast<byte[], BinaryString> {
+        @Override
+        public BinaryString castTo(byte[] o) {
+            if (o == null) {
+                return null;
+            }
+            return BinaryString.fromString(new String(o, StandardCharsets.UTF_8));
         }
     }
 }

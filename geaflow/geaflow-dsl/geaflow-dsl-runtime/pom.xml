@@ -78,6 +78,11 @@
 
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-dsl-connector-odps</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-api</artifactId>
         </dependency>
 
@@ -99,6 +104,11 @@
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-pipeline</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
         </dependency>
 
         <dependency>

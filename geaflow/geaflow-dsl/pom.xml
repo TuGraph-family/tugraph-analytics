@@ -138,6 +138,12 @@
 
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-dsl-connector-odps</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-dsl-connector-hive</artifactId>
                 <version>${project.version}</version>
                 <exclusions>
