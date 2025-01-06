@@ -29,7 +29,6 @@ import com.antgroup.geaflow.state.iterator.IteratorWithFn;
 import com.antgroup.geaflow.state.iterator.StandardIterator;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
-import com.antgroup.geaflow.state.pushdown.inner.IFilterConverter;
 import com.antgroup.geaflow.state.pushdown.inner.PushDownPbGenerator;
 import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
 import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
@@ -44,6 +43,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * A static graph store implementation using CStore as the underlying storage engine.
+ * This class provides functionality for storing and retrieving vertices and edges in a graph,
+ * supporting various operations like adding vertices/edges, querying graph components,
+ * and iterating over graph elements.
+ *
+ * @param <K> The type of the vertex/edge ID
+ * @param <VV> The type of the vertex value
+ * @param <EV> The type of the edge value
+ */
 public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements IStaticGraphStore<K, VV, EV> {
 
     private Map<String, String> config;
@@ -52,6 +61,12 @@ public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements ISta
     private EdgeEncoder edgeEncoder;
     private IType keyType;
 
+    /**
+     * Initializes the graph store with the given store context.
+     * Sets up necessary encoders and configurations for the underlying native store.
+     *
+     * @param storeContext The context containing configuration and schema information
+     */
     @Override
     public void init(StoreContext storeContext) {
         super.init(storeContext);
@@ -64,42 +79,286 @@ public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements ISta
         this.edgeEncoder = EncoderFactory.getEdgeEncoder(storeContext.getGraphSchema());
     }
 
+    /**
+     * Archives the graph store to a checkpoint.
+     *
+     * @param checkpointId The ID of the checkpoint
+     */
     @Override
     public void archive(long checkpointId) {
         this.nativeGraphStore.archive(checkpointId);
     }
 
+    /**
+     * Recovers the graph store from a checkpoint.
+     *
+     * @param checkpointId The ID of the checkpoint
+     */
     @Override
     public void recovery(long checkpointId) {
         this.nativeGraphStore.recover(checkpointId);
     }
 
+    /**
+     * Recovers the graph store to the latest checkpoint.
+     *
+     * @return The ID of the latest checkpoint
+     */
     @Override
     public long recoveryLatest() {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Compacts the graph store to reduce storage usage.
+     */
     @Override
     public void compact() {
         this.nativeGraphStore.compact();
     }
 
+    /**
+     * Flushes the graph store to ensure data persistence.
+     */
     @Override
     public void flush() {
         this.nativeGraphStore.flush();
     }
 
+    /**
+     * Closes the graph store and releases resources.
+     */
     @Override
     public void close() {
         this.nativeGraphStore.close();
     }
 
+    /**
+     * Drops the graph store and releases resources.
+     */
     @Override
     public void drop() {
         this.nativeGraphStore.close();
-        // TODO: drop
     }
 
+    /**
+     * Adds an edge to the graph store.
+     * The edge is encoded before being stored in the native graph store.
+     *
+     * @param edge The edge to be added
+     */
+    @Override
+    public void addEdge(IEdge<K, EV> edge) {
+        this.nativeGraphStore.addEdge(this.edgeEncoder.encode(edge));
+    }
+
+    /**
+     * Adds a vertex to the graph store.
+     * The vertex is encoded before being stored in the native graph store.
+     *
+     * @param vertex The vertex to be added
+     */
+    @Override
+    public void addVertex(IVertex<K, VV> vertex) {
+        this.nativeGraphStore.addVertex(this.vertexEncoder.encode(vertex));
+    }
+
+    /**
+     * Retrieves a vertex by its ID with optional push down filters.
+     *
+     * @param sid The ID of the vertex to retrieve
+     * @param pushdown Optional filters to apply during retrieval
+     * @return The vertex if found, null otherwise
+     */
+    @Override
+    public IVertex<K, VV> getVertex(K sid, IStatePushDown pushdown) {
+        CStoreVertexIterator iterator =
+            pushdown.getFilter() == null || pushdown.getFilter().getFilterType() == FilterType.EMPTY
+            ? this.nativeGraphStore.getVertex(serializeKey(sid))
+            : this.nativeGraphStore.getVertex(serializeKey(sid), getPushDownFilter(pushdown));
+        return getVertexFromIterator(iterator);
+    }
+
+    /**
+     * Retrieves all edges connected to a vertex with optional push down filters.
+     *
+     * @param sid The ID of the vertex whose edges to retrieve
+     * @param pushdown Optional filters to apply during retrieval
+     * @return List of edges connected to the vertex
+     */
+    @Override
+    public List<IEdge<K, EV>> getEdges(K sid, IStatePushDown pushdown) {
+        List<IEdge<K, EV>> edges = new ArrayList<>();
+        try (CStoreEdgeIterator iterator = this.nativeGraphStore.getEdges(serializeKey(sid),
+            getPushDownFilter(pushdown))) {
+            while (iterator.hasNext()) {
+                edges.add(this.edgeEncoder.decode(iterator.next()));
+            }
+        }
+        return edges;
+    }
+
+    /**
+     * Retrieves a one-degree graph (vertex and its connected edges) for a given vertex ID.
+     *
+     * @param sid The ID of the vertex
+     * @param pushdown Optional filters to apply during retrieval
+     * @return OneDegreeGraph containing the vertex and its edges
+     */
+    @Override
+    public OneDegreeGraph<K, VV, EV> getOneDegreeGraph(K sid, IStatePushDown pushdown) {
+        VertexAndEdge vertexAndEdge = this.nativeGraphStore.getVertexAndEdge(serializeKey(sid),
+            getPushDownFilter(pushdown));
+        return new OneDegreeGraph<>(sid, getVertexFromIterator(vertexAndEdge.vertexIter),
+            convertIterator(vertexAndEdge.edgeIter));
+    }
+
+    /**
+     * Returns an iterator over vertex IDs in the graph store.
+     *
+     * @return CloseableIterator over vertex IDs
+     */
+    @Override
+    public CloseableIterator<K> vertexIDIterator() {
+        return new IteratorWithFn<>(convertIterator(this.nativeGraphStore.scanVertex()), IVertex::getId);
+    }
+
+    /**
+     * Returns an iterator over vertex IDs in the graph store with optional push down filters.
+     *
+     * @param pushDown Optional filters to apply during iteration
+     * @return CloseableIterator over vertex IDs
+     */
+    @Override
+    public CloseableIterator<K> vertexIDIterator(IStatePushDown pushDown) {
+        return new IteratorWithFn<>(getVertexIterator(pushDown), IVertex::getId);
+    }
+
+    /**
+     * Returns an iterator over vertices in the graph store with optional push down filters.
+     *
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over vertices
+     */
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
+        CStoreVertexIterator iterator = pushdown.isEmpty() ? this.nativeGraphStore.scanVertex()
+                                                           : this.nativeGraphStore.scanVertex(
+                                                               getPushDownFilter(pushdown));
+        return convertIterator(iterator);
+    }
+
+    /**
+     * Returns an iterator over vertices in the graph store for a list of vertex IDs with optional push down filters.
+     *
+     * @param keys List of vertex IDs
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over vertices
+     */
+    @Override
+    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> keys, IStatePushDown pushdown) {
+        return convertIterator(this.nativeGraphStore.scanVertex(serializeKeys(keys), getPushDownFilter(pushdown)));
+    }
+
+    /**
+     * Returns an iterator over edges in the graph store with optional push down filters.
+     *
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over edges
+     */
+    @Override
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
+        return convertIterator(this.nativeGraphStore.scanEdges(getPushDownFilter(pushdown)));
+    }
+
+    /**
+     * Returns an iterator over edges in the graph store for a list of vertex IDs with optional push down filters.
+     *
+     * @param keys List of vertex IDs
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over edges
+     */
+    @Override
+    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
+        return convertIterator(this.nativeGraphStore.scanEdges(serializeKeys(keys), getPushDownFilter(pushdown)));
+    }
+
+    /**
+     * Returns an iterator over one-degree graphs (vertex and its connected edges) in the graph store with optional push down filters.
+     *
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over one-degree graphs
+     */
+    @Override
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(IStatePushDown pushdown) {
+        return convertIterator(this.nativeGraphStore.scanVertexAndEdge(getPushDownFilter(pushdown)));
+    }
+
+    /**
+     * Returns an iterator over one-degree graphs (vertex and its connected edges) in the graph store for a list of vertex IDs with optional push down filters.
+     *
+     * @param keys List of vertex IDs
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over one-degree graphs
+     */
+    @Override
+    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys,
+                                                                                  IStatePushDown pushdown) {
+        return convertIterator(
+            this.nativeGraphStore.scanVertexAndEdge(serializeKeys(keys), getPushDownFilter(pushdown)));
+    }
+
+    /**
+     * Returns an iterator over projected edges in the graph store with optional push down filters.
+     *
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over projected edges
+     */
+    @Override
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns an iterator over projected edges in the graph store for a list of vertex IDs with optional push down filters.
+     *
+     * @param keys List of vertex IDs
+     * @param pushdown Optional filters to apply during iteration
+     * @return CloseableIterator over projected edges
+     */
+    @Override
+    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
+                                                                     IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the aggregated result of a push down operation on the graph store.
+     *
+     * @param pushdown Optional filters to apply during aggregation
+     * @return Map of aggregated results
+     */
+    @Override
+    public Map<K, Long> getAggResult(IStatePushDown pushdown) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the aggregated result of a push down operation on the graph store for a list of vertex IDs.
+     *
+     * @param keys List of vertex IDs
+     * @param pushdown Optional filters to apply during aggregation
+     * @return Map of aggregated results
+     */
+    @Override
+    public Map<K, Long> getAggResult(List<K> keys, IStatePushDown pushdown) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Rewrites the configuration for different persistent storage types (LOCAL, DFS, OSS).
+     * Sets up necessary configuration parameters based on the storage type.
+     */
     private void rewriteConfig() {
         this.config.put(StoreConfigKeys.STORE_FILTER_CODEGEN_ENABLE.getKey(), "false");
         String jobName = Configuration.getString(ExecutionConfigKeys.JOB_APP_NAME, this.config);
@@ -132,8 +391,7 @@ public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements ISta
                 this.config.put(CStoreConfigKeys.CSTORE_DFS_CLUSTER, fsUrl);
                 break;
             case OSS:
-                jsonConfig = Preconditions.checkNotNull(
-                    Configuration.getString(FileConfigKeys.JSON_CONFIG, config));
+                jsonConfig = Preconditions.checkNotNull(Configuration.getString(FileConfigKeys.JSON_CONFIG, config));
                 persistConfig = GsonUtil.parse(jsonConfig);
 
                 root = Configuration.getString(FileConfigKeys.ROOT, this.config);
@@ -152,182 +410,84 @@ public class StaticGraphCStore<K, VV, EV> extends BaseGraphStore implements ISta
         }
     }
 
-    @Override
-    public IFilterConverter getFilterConverter() {
-        return filterConverter;
+    /**
+     * Serializes a key using the configured key type.
+     *
+     * @param key The key to serialize
+     * @return Serialized byte array representation of the key
+     */
+    private byte[] serializeKey(K key) {
+        return this.keyType.serialize(key);
     }
 
-    @Override
-    public void addEdge(IEdge<K, EV> edge) {
-        EdgeContainer container = this.edgeEncoder.encode(edge);
-        this.nativeGraphStore.addEdge(container);
-    }
-
-    @Override
-    public void addVertex(IVertex<K, VV> vertex) {
-        VertexContainer container = this.vertexEncoder.encode(vertex);
-        this.nativeGraphStore.addVertex(container);
-    }
-
-    @Override
-    public IVertex<K, VV> getVertex(K sid, IStatePushDown pushdown) {
-        CStoreVertexIterator iterator;
-        if (pushdown.getFilter() == null
-            || pushdown.getFilter().getFilterType() == FilterType.EMPTY) {
-            iterator = this.nativeGraphStore.getVertex(this.keyType.serialize(sid));
-        } else {
-            iterator = this.nativeGraphStore.getVertex(this.keyType.serialize(sid),
-                PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown));
-        }
-        return getVertexFromIterator(iterator);
-    }
-
-    @Override
-    public List<IEdge<K, EV>> getEdges(K sid, IStatePushDown pushdown) {
-
-        byte[] key = this.keyType.serialize(sid);
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-
-        List<IEdge<K, EV>> list = new ArrayList<>();
-        try (CStoreEdgeIterator iterator = this.nativeGraphStore.getEdges(key, filter)) {
-            while (iterator.hasNext()) {
-                list.add(this.edgeEncoder.decode(iterator.next()));
-            }
-        }
-        return list;
-    }
-
-    @Override
-    public OneDegreeGraph<K, VV, EV> getOneDegreeGraph(K sid, IStatePushDown pushdown) {
-        byte[] key = this.keyType.serialize(sid);
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-
-        VertexAndEdge vertexAndEdge = this.nativeGraphStore.getVertexAndEdge(key, filter);
-        return new OneDegreeGraph<>(sid, getVertexFromIterator(vertexAndEdge.vertexIter),
-            convertIterator(vertexAndEdge.edgeIter));
-    }
-
-    @Override
-    public CloseableIterator<K> vertexIDIterator() {
-        CStoreVertexIterator iterator = this.nativeGraphStore.scanVertex();
-        return new IteratorWithFn<>(convertIterator(iterator), IVertex::getId);
-    }
-
-    @Override
-    public CloseableIterator<K> vertexIDIterator(IStatePushDown pushDown) {
-        return new IteratorWithFn<>(getVertexIterator(pushDown), IVertex::getId);
-    }
-
-    @Override
-    public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
-        CStoreVertexIterator iterator;
-        if (pushdown.isEmpty()) {
-            iterator = this.nativeGraphStore.scanVertex();
-        } else {
-            byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-            iterator = this.nativeGraphStore.scanVertex(filter);
-        }
-        return convertIterator(iterator);
-    }
-
-    @Override
-    public CloseableIterator<IVertex<K, VV>> getVertexIterator(List<K> keys,
-                                                               IStatePushDown pushdown) {
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-        byte[][] scanKeys = new byte[keys.size()][];
+    /**
+     * Serializes a list of keys using the configured key type.
+     *
+     * @param keys List of keys to serialize
+     * @return Serialized byte array representation of the keys
+     */
+    private byte[][] serializeKeys(List<K> keys) {
+        byte[][] serializedKeys = new byte[keys.size()][];
         for (int i = 0; i < keys.size(); i++) {
-            scanKeys[i] = this.keyType.serialize(keys.get(i));
+            serializedKeys[i] = serializeKey(keys.get(i));
         }
-        CStoreVertexIterator iterator = this.nativeGraphStore.scanVertex(scanKeys, filter);
-        return convertIterator(iterator);
+        return serializedKeys;
     }
 
-    @Override
-    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-        CStoreEdgeIterator iterator = this.nativeGraphStore.scanEdges(filter);
-        return convertIterator(iterator);
+    /**
+     * Returns the push down filter bytes for a given push down operation.
+     *
+     * @param pushdown The push down operation
+     * @return Push down filter bytes
+     */
+    private byte[] getPushDownFilter(IStatePushDown pushdown) {
+        return PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
     }
 
-    @Override
-    public CloseableIterator<IEdge<K, EV>> getEdgeIterator(List<K> keys, IStatePushDown pushdown) {
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-        byte[][] scanKeys = new byte[keys.size()][];
-        for (int i = 0; i < keys.size(); i++) {
-            scanKeys[i] = this.keyType.serialize(keys.get(i));
-        }
-        CStoreEdgeIterator iterator = this.nativeGraphStore.scanEdges(scanKeys, filter);
-        return convertIterator(iterator);
-    }
-
-    @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(
-        IStatePushDown pushdown) {
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-        CStoreVertexAndEdgeIterator iterator = this.nativeGraphStore.scanVertexAndEdge(filter);
-        return convertIterator(iterator);
-    }
-
-    @Override
-    public CloseableIterator<OneDegreeGraph<K, VV, EV>> getOneDegreeGraphIterator(List<K> keys,
-                                                                                  IStatePushDown pushdown) {
-        byte[] filter = PushDownPbGenerator.getPushDownPbBytes(this.keyType, pushdown);
-        byte[][] scanKeys = new byte[keys.size()][];
-        for (int i = 0; i < keys.size(); i++) {
-            scanKeys[i] = this.keyType.serialize(keys.get(i));
-        }
-        CStoreVertexAndEdgeIterator iterator = this.nativeGraphStore.scanVertexAndEdge(scanKeys,
-            filter);
-        return convertIterator(iterator);
-    }
-
-    @Override
-    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(
-        IStatePushDown<K, IEdge<K, EV>, R> pushdown) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <R> CloseableIterator<Tuple<K, R>> getEdgeProjectIterator(List<K> keys,
-                                                                     IStatePushDown<K, IEdge<K,
-                                                                         EV>, R> pushdown) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Map<K, Long> getAggResult(IStatePushDown pushdown) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Map<K, Long> getAggResult(List<K> keys, IStatePushDown pushdown) {
-        throw new UnsupportedOperationException();
-    }
-
+    /**
+     * Returns a vertex from a vertex iterator.
+     *
+     * @param vertexIterator The vertex iterator
+     * @return The vertex if found, null otherwise
+     */
     private IVertex<K, VV> getVertexFromIterator(CStoreVertexIterator vertexIterator) {
         VertexContainer container = vertexIterator.hasNext() ? vertexIterator.next() : null;
         vertexIterator.close();
         return container == null ? null : this.vertexEncoder.decode(container);
     }
 
+    /**
+     * Converts a CStore edge iterator to a CloseableIterator over edges.
+     *
+     * @param edgeIterator The CStore edge iterator
+     * @return CloseableIterator over edges
+     */
     private CloseableIterator<IEdge<K, EV>> convertIterator(CStoreEdgeIterator edgeIterator) {
         return new StandardIterator<>(new IteratorWithFn<>(edgeIterator,
             (Function<EdgeContainer, IEdge<K, EV>>) container -> edgeEncoder.decode(container)));
     }
 
+    /**
+     * Converts a CStore vertex iterator to a CloseableIterator over vertices.
+     *
+     * @param vertexIterator The CStore vertex iterator
+     * @return CloseableIterator over vertices
+     */
     private CloseableIterator<IVertex<K, VV>> convertIterator(CStoreVertexIterator vertexIterator) {
         return new StandardIterator<>(new IteratorWithFn<>(vertexIterator,
-            (Function<VertexContainer, IVertex<K, VV>>) container -> vertexEncoder.decode(
-                container)));
+            (Function<VertexContainer, IVertex<K, VV>>) container -> vertexEncoder.decode(container)));
     }
 
-    private CloseableIterator<OneDegreeGraph<K, VV, EV>> convertIterator(
-        CStoreVertexAndEdgeIterator iterator) {
+    /**
+     * Converts a CStore vertex and edge iterator to a CloseableIterator over one-degree graphs.
+     *
+     * @param iterator The CStore vertex and edge iterator
+     * @return CloseableIterator over one-degree graphs
+     */
+    private CloseableIterator<OneDegreeGraph<K, VV, EV>> convertIterator(CStoreVertexAndEdgeIterator iterator) {
         return new IteratorWithFn<>(iterator, container -> {
-            IVertex<K, VV> vertex = getVertexFromIterator(
-                new CStoreVertexIterator(container.vertexIt));
-            CloseableIterator<IEdge<K, EV>> edgeIter = convertIterator(
-                new CStoreEdgeIterator(container.edgeIt));
+            IVertex<K, VV> vertex = getVertexFromIterator(new CStoreVertexIterator(container.vertexIt));
+            CloseableIterator<IEdge<K, EV>> edgeIter = convertIterator(new CStoreEdgeIterator(container.edgeIt));
             K key = (K) keyType.deserialize(container.sid);
             return new OneDegreeGraph<>(key, vertex, edgeIter);
         });
