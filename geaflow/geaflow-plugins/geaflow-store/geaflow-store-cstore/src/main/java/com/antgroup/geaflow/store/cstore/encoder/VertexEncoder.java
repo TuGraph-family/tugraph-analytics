@@ -13,40 +13,42 @@
  */
 package com.antgroup.geaflow.store.cstore.encoder;
 
-import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.schema.GraphDataSchema;
 import com.antgroup.geaflow.store.cstore.VertexContainer;
+import com.antgroup.geaflow.store.encoder.BaseEncoder;
 import java.util.function.Function;
 
-public class VertexEncoder {
-
-    protected final GraphDataSchema dataSchema;
-    protected final IType keyType;
-    protected final Function<Object, byte[]> valueSerializer;
-    protected final Function<byte[], Object> valueDeserializer;
-    protected final boolean emptyProperty;
+public class VertexEncoder extends BaseEncoder {
 
     public VertexEncoder(GraphDataSchema dataSchema) {
-        this.dataSchema = dataSchema;
-        this.keyType = dataSchema.getKeyType();
-        this.valueSerializer = dataSchema.getVertexPropertySerFun();
-        this.valueDeserializer = dataSchema.getVertexPropertyDeFun();
-        this.emptyProperty = this.dataSchema.isEmptyVertexProperty();
+        super(dataSchema);
+    }
+
+    @Override
+    protected Function<Object, byte[]> initValueSerializer(GraphDataSchema dataSchema) {
+        return dataSchema.getVertexPropertySerFun();
+    }
+
+    @Override
+    protected Function<byte[], Object> initValueDeserializer(GraphDataSchema dataSchema) {
+        return dataSchema.getVertexPropertyDeFun();
+    }
+
+    @Override
+    protected boolean initEmptyProperty(GraphDataSchema dataSchema) {
+        return dataSchema.isEmptyVertexProperty();
     }
 
     public VertexContainer encode(IVertex vertex) {
-        return new VertexContainer(
-            keyType.serialize(vertex.getId()),
-            0,
-            "",
-            emptyProperty ? null : valueSerializer.apply(vertex.getValue()));
+        return new VertexContainer(keyType.serialize(vertex.getId()), 0, "",
+            isEmptyProperty() ? null : getValueSerializer().apply(vertex.getValue()));
     }
 
     public IVertex decode(VertexContainer vertexContainer) {
-        IVertex vertex = dataSchema.getVertexConsFun().get();
+        IVertex vertex = getDataSchema().getVertexConsFun().get();
         vertex.setId(this.keyType.deserialize(vertexContainer.id));
-        return emptyProperty || vertexContainer.property.length == 0 ? vertex : vertex.withValue(
-            valueDeserializer.apply(vertexContainer.property));
+        return isEmptyProperty() || vertexContainer.property.length == 0 ? vertex : vertex.withValue(
+            getValueDeserializer().apply(vertexContainer.property));
     }
 }
