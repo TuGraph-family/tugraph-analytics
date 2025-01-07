@@ -103,6 +103,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
     @Override
     public Map<String, ConnectAddress> startDrivers() {
         int driverNum = clusterConfig.getDriverNum();
+        LOGGER.info("start driver number: {}", driverNum);
         if (!clusterContext.isRecover()) {
             Map<Integer, String> driverIds = new HashMap<>();
             for (int driverIndex = 0; driverIndex < driverNum; driverIndex++) {

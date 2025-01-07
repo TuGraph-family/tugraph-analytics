@@ -25,7 +25,7 @@ public class RayEnvironment extends AbstractEnvironment {
 
     public RayEnvironment() {
         context.getConfig().put(LOG_DIR, RAY_LOG_DIR);
-        context.getConfig().put(SUPERVISOR_ENABLE, Boolean.TRUE.toString());
+        context.getConfig().put(SUPERVISOR_ENABLE, Boolean.FALSE.toString());
     }
 
     @Override
@@ -35,6 +35,6 @@ public class RayEnvironment extends AbstractEnvironment {
 
     @Override
     public EnvType getEnvType() {
-        return EnvType.RAY_COMMUNITY;
+        return EnvType.RAY;
     }
 }

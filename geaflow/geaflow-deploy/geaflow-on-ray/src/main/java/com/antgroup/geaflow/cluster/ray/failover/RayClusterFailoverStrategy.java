@@ -16,13 +16,13 @@ package com.antgroup.geaflow.cluster.ray.failover;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.ray.config.RayConfig;
-import com.antgroup.geaflow.cluster.runner.failover.DisableFailoverStrategy;
+import com.antgroup.geaflow.cluster.runner.failover.ClusterFailoverStrategy;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
 
-public class RayDisableFailoverStrategy extends DisableFailoverStrategy {
+public class RayClusterFailoverStrategy extends ClusterFailoverStrategy {
 
-    public RayDisableFailoverStrategy() {
-        super(EnvType.RAY_COMMUNITY);
+    public RayClusterFailoverStrategy() {
+        super(EnvType.RAY);
     }
 
     @Override

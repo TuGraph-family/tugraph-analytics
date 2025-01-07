@@ -22,7 +22,7 @@ public class FoStrategyFactoryTest {
 
     @Test(expectedExceptions = GeaflowRuntimeException.class)
     public void testLoad() {
-        FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY_COMMUNITY, "");
+        FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY, "");
     }
 
 }

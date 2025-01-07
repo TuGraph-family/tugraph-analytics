@@ -509,7 +509,7 @@
             </dependency>
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
-                <artifactId>geaflow-on-ray-community</artifactId>
+                <artifactId>geaflow-on-ray</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

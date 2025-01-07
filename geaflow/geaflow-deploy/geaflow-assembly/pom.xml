@@ -75,7 +75,7 @@
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-on-ray-community</artifactId>
+            <artifactId>geaflow-on-ray</artifactId>
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>

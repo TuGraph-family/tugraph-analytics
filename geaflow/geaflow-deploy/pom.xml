@@ -29,7 +29,7 @@
 
     <modules>
         <module>geaflow-cluster-runner</module>
-        <module>geaflow-on-ray-community</module>
+        <module>geaflow-on-ray</module>
         <module>geaflow-on-k8s</module>
         <module>geaflow-on-local</module>
         <module>geaflow-assembly</module>

@@ -33,7 +33,7 @@ import java.util.List;
 public class WindowStreamWordCount {
 
     public static void main(String[] args) {
-        Environment environment = EnvironmentFactory.onRayCommunityEnvironment(args);
+        Environment environment = EnvironmentFactory.onRayEnvironment(args);
         Pipeline pipeline = PipelineFactory.buildPipeline(environment);
         pipeline.submit(new PipelineTask() {
             @Override
