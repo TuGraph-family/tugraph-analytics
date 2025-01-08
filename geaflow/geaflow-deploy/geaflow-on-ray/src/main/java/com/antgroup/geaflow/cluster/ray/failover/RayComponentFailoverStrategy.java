@@ -22,7 +22,7 @@ import com.antgroup.geaflow.env.IEnvironment.EnvType;
 public class RayComponentFailoverStrategy extends ComponentFailoverStrategy {
 
     public RayComponentFailoverStrategy() {
-        super(EnvType.RAY_COMMUNITY);
+        super(EnvType.RAY);
     }
 
     @Override

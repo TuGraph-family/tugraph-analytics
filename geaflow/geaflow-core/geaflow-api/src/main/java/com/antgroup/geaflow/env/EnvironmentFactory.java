@@ -60,12 +60,12 @@ public class EnvironmentFactory {
         return environment;
     }
 
-    public static Environment onRayCommunityEnvironment() {
-        return (Environment) loadEnvironment(EnvType.RAY_COMMUNITY);
+    public static Environment onRayEnvironment() {
+        return (Environment) loadEnvironment(EnvType.RAY);
     }
 
-    public static Environment onRayCommunityEnvironment(String[] args) {
-        Environment environment = (Environment) loadEnvironment(EnvType.RAY_COMMUNITY);
+    public static Environment onRayEnvironment(String[] args) {
+        Environment environment = (Environment) loadEnvironment(EnvType.RAY);
         IEnvironmentArgsParser argsParser = loadEnvironmentArgsParser();
         environment.getEnvironmentContext().withConfig(argsParser.parse(args));
         return environment;

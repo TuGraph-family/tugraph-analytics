@@ -32,8 +32,8 @@ public class EnvironmentUtil {
         switch (clusterType) {
             case K8S:
                 return EnvironmentFactory.onK8SEnvironment(args);
-            case RAY_COMMUNITY:
-                return EnvironmentFactory.onRayCommunityEnvironment(args);
+            case RAY:
+                return EnvironmentFactory.onRayEnvironment(args);
             default:
                 return EnvironmentFactory.onLocalEnvironment(args);
         }

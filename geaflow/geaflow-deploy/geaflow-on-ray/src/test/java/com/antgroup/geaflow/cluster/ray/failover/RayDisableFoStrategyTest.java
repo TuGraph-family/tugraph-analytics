@@ -23,22 +23,18 @@ import com.antgroup.geaflow.env.IEnvironment.EnvType;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 
-public class RayClusterFoStrategyTest {
+public class RayDisableFoStrategyTest {
 
     @Test
     public void testLoad() {
         Configuration configuration = new Configuration();
-        IFailoverStrategy foStrategy = FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY_COMMUNITY, configuration.getString(FO_STRATEGY));
+        IFailoverStrategy foStrategy = FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY, configuration.getString(FO_STRATEGY));
         Assert.assertNotNull(foStrategy);
         Assert.assertEquals(foStrategy.getType().name(), configuration.getString(FO_STRATEGY));
 
-        IFailoverStrategy rayFoStrategy = FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY_COMMUNITY, "cluster_fo");
-        Assert.assertNotNull(rayFoStrategy);
-        Assert.assertEquals(rayFoStrategy.getClass(), RayClusterFailoverStrategy.class);
-
-        rayFoStrategy = FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY_COMMUNITY, "component_fo");
-        Assert.assertNotNull(rayFoStrategy);
-        Assert.assertEquals(rayFoStrategy.getClass(), RayComponentFailoverStrategy.class);
+        IFailoverStrategy rayDisableFoStrategy = FailoverStrategyFactory.loadFailoverStrategy(EnvType.RAY, "disable_fo");
+        Assert.assertNotNull(rayDisableFoStrategy);
+        Assert.assertEquals(rayDisableFoStrategy.getClass(), RayDisableFailoverStrategy.class);
     }
 
 }

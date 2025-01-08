@@ -20,7 +20,7 @@ import com.antgroup.geaflow.env.EnvironmentFactory;
 public class UnBoundedStreamWordPrint {
 
     public static void main(String[] args) {
-        Environment environment = EnvironmentFactory.onRayCommunityEnvironment();
+        Environment environment = EnvironmentFactory.onRayEnvironment();
 
         StreamWordPrintPipeline pipeline = new StreamWordPrintPipeline();
         pipeline.submit(environment);

@@ -54,7 +54,7 @@ public class RayClusterManager extends GeaFlowClusterManager {
     private String currentJobId;
 
     public RayClusterManager() {
-        super(EnvType.RAY_COMMUNITY);
+        super(EnvType.RAY);
     }
 
     @Override
@@ -98,6 +98,7 @@ public class RayClusterManager extends GeaFlowClusterManager {
 
     @Override
     public void createNewDriver(int driverId, int driverIndex) {
+        LOGGER.info("create driver start, enable supervisor:{}", enableSupervisor);
         if (enableSupervisor) {
             String logFile = String.format("driver-%s-%s.log", currentJobId, driverId);
             String command = getDriverShellCommand(driverId, driverIndex, classpath, logFile);
