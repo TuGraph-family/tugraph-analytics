@@ -59,7 +59,7 @@ const LogTable: React.FC<{ componentName: string, agentUrl: string | undefined }
             dataIndex: 'size',
             sorter: (a, b) => sortTable(a.size, b.size),
             render: (dom, entity) => {
-              return (formatFileSize(entity.size));
+              return (formatFileSize(entity?.size));
             },
           }
         ]

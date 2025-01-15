@@ -92,7 +92,7 @@ export async function cycleList(pipelineName?: string) {
 
 export async function logList(agentUrl: string) {
   return request<{
-    data: API.FileInfo[],
+    data?: API.FileInfo[],
     success?: boolean,
     message?: string
   }>('/proxy/' + agentUrl + "/rest/logs", {
@@ -117,7 +117,7 @@ export async function getLogContent(agentUrl: string, logPath: string, pageNo: n
 
 export async function flameGraphList(agentUrl: string) {
   return request<{
-    data: API.FileInfo[],
+    data?: API.FileInfo[],
     success?: boolean,
     message?: string
   }>('/proxy/' + agentUrl + "/rest/flame-graphs", {

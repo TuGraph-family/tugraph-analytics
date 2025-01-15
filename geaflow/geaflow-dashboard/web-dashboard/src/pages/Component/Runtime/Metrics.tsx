@@ -37,12 +37,12 @@ const MetricsChart: React.FC<{metrics: API.ProcessMetrics}> = ({metrics}) => {
           <ProgressDiv
             title='JVM Heap Memory'
             percent={metrics?.heapUsedRatio}
-            description={metrics?.heapUsedMB + " / " + metrics.heapCommittedMB + " MB"}
+            description={metrics?.heapUsedMB + " / " + metrics?.heapCommittedMB + " MB"}
           />
           <ProgressDiv
             title='CPU Cores'
             percent={metrics?.processCpu}
-            description={metrics?.usedCores + " / " + metrics.availCores + " Cores"}
+            description={metrics?.usedCores + " / " + metrics?.availCores + " Cores"}
           />
         </div>
       </ProCard>
@@ -61,21 +61,21 @@ const MetricsChart: React.FC<{metrics: API.ProcessMetrics}> = ({metrics}) => {
               title: <FormattedMessage id="pages.processMetrics.totalMemoryMB" defaultMessage="Total" />,
               dataIndex: 'totalMemoryMB',
               render: (_, entity) => {
-                return entity.totalMemoryMB + " MB";
+                return entity?.totalMemoryMB + " MB";
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.heapCommittedMB" defaultMessage="Heap Committed" />,
               dataIndex: 'heapCommittedMB',
               render: (_, entity) => {
-                return entity.heapCommittedMB + " MB";
+                return entity?.heapCommittedMB + " MB";
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.heapUsedMB" defaultMessage="Heap Used" />,
               dataIndex: 'heapUsedMB',
               render: (_, entity) => {
-                return entity.heapUsedMB + " MB";
+                return entity?.heapUsedMB + " MB";
               },
             }
           ]
@@ -96,21 +96,21 @@ const MetricsChart: React.FC<{metrics: API.ProcessMetrics}> = ({metrics}) => {
               title: <FormattedMessage id="pages.processMetrics.availCores" defaultMessage="availCores" />,
               dataIndex: 'availCores',
               render: (_, entity) => {
-                return entity.availCores;
+                return entity?.availCores;
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.usedCores" defaultMessage="usedCores" />,
               dataIndex: 'usedCores',
               render: (_, entity) => {
-                return entity.usedCores;
+                return entity?.usedCores;
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.activeThreads" defaultMessage="activeThreads" />,
               dataIndex: 'activeThreads',
               render: (_, entity) => {
-                return entity.activeThreads;
+                return entity?.activeThreads;
               },
             }
           ]
@@ -131,28 +131,28 @@ const MetricsChart: React.FC<{metrics: API.ProcessMetrics}> = ({metrics}) => {
               title: <FormattedMessage id="pages.processMetrics.fgcCount" defaultMessage="fgcCount" />,
               dataIndex: 'fgcCount',
               render: (_, entity) => {
-                return entity.fgcCount;
+                return entity?.fgcCount;
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.fgcTime" defaultMessage="fgcTime" />,
               dataIndex: 'fgcTime',
               render: (_, entity) => {
-                return entity.fgcTime;
+                return entity?.fgcTime;
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.gcCount" defaultMessage="gcCount" />,
               dataIndex: 'gcCount',
               render: (_, entity) => {
-                return entity.gcCount;
+                return entity?.gcCount;
               },
             },
             {
               title: <FormattedMessage id="pages.processMetrics.gcTime" defaultMessage="gcTime" />,
               dataIndex: 'gcTime',
               render: (_, entity) => {
-                return entity.gcTime;
+                return entity?.gcTime;
               },
             },
           ]

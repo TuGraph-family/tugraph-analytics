@@ -38,6 +38,7 @@ export const errorConfig: RequestConfig = {
     },
     // 错误接收及处理
     errorHandler: (error: any, opts: any) => {
+      console.log(error);
       if (opts?.skipErrorHandler) throw error;
       // 我们的 errorThrower 抛出的错误。
       if (error.name === 'BizError') {
@@ -49,7 +50,13 @@ export const errorConfig: RequestConfig = {
       } else if (error.response) {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-        antdMessage.error(`Response status:${error.response.status}`);
+        let message: string;
+        if (typeof error.response.data == 'string') {
+          message = error.response.data;
+        } else {
+          message = error.response.data.message ?? error.response.data.data;
+        }
+        antdMessage.error(`Response status:${error.response.status}, message:${message}`);
       } else if (error.request) {
         // 请求已经成功发起，但没有收到响应
         // \`error.request\` 在浏览器中是 XMLHttpRequest 的实例，
