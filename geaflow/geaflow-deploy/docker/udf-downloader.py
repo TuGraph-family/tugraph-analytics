@@ -9,7 +9,7 @@ import hashlib
 import time
 
 def main(logFilePath, jarPath, jarUrlEnvName):
-    logging.basicConfig(filename=logFilePath, filemode="a", format="%(asctime)s %(name)s:%(levelname)s:%(message)s", datefmt="%Y-%M-%d %H:%M:%S", level=logging.DEBUG)
+    logging.basicConfig(filename=logFilePath, filemode="a", format="%(asctime)s %(name)s:%(levelname)s:%(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG)
     jarUrls = os.getenv(jarUrlEnvName)
     if not jarUrls or not jarUrls.strip():
         return
