@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This strategy is to restart the whole cluster by the master once an anomaly is detected.
+ */
 public class ClusterFailoverStrategy extends AbstractFailoverStrategy {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterFailoverStrategy.class);
 
@@ -39,28 +42,32 @@ public class ClusterFailoverStrategy extends AbstractFailoverStrategy {
     @Override
     public void init(ClusterContext context) {
         super.init(context);
+        // Set true if in recovering and reset to false after recovering finished.
         this.doKilling = new AtomicBoolean(context.isRecover());
+        // Disable worker process auto-restart because master will do that.
         context.getConfig().put(PROCESS_AUTO_RESTART, Boolean.FALSE.toString());
+        LOGGER.info("init with recovering: {}", context.isRecover());
     }
 
     @Override
     public void doFailover(int componentId, Throwable cause) {
-        boolean isMasterRestarts = componentId == DEFAULT_MASTER_ID;
+        boolean isMasterRestarts = (componentId == DEFAULT_MASTER_ID);
         if (isMasterRestarts) {
+            // Master restart itself when the process is started in recover mode.
             final long startTime = System.currentTimeMillis();
             clusterManager.restartAllDrivers();
             clusterManager.restartAllContainers();
             doKilling.set(false);
-            String finishMessage = String.format("Completed cluster failover in %s ms.",
+            String finishMessage = String.format("Completed failover in %s ms.",
                 System.currentTimeMillis() - startTime);
             LOGGER.info(finishMessage);
             reportFailoverEvent(ExceptionLevel.INFO, EventLabel.FAILOVER_FINISH, finishMessage);
         } else if (doKilling.compareAndSet(false, true)) {
             String reason = cause == null ? null : cause.getMessage();
-            String startMessage = String.format("Start master cluster failover triggered by "
-                    + "component #%s: %s.", componentId, reason);
+            String startMessage = String.format("Start failover due to %s", reason);
             LOGGER.info(startMessage);
-            reportFailoverEvent(ExceptionLevel.ERROR, EventLabel.FAILOVER_START, startMessage);
+            reportFailoverEvent(ExceptionLevel.INFO, EventLabel.FAILOVER_START, startMessage);
+            // Trigger process restart.
             System.exit(EXIT_CODE);
         }
     }

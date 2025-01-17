@@ -22,7 +22,11 @@ public class GeaflowHeartbeatException extends RuntimeException {
         super(MESSAGE);
     }
 
-    public GeaflowHeartbeatException(Throwable cause) {
+    public GeaflowHeartbeatException(String message) {
+        super(message);
+    }
+
+    public GeaflowHeartbeatException(String message, Throwable cause) {
         super(MESSAGE, cause);
     }
 }

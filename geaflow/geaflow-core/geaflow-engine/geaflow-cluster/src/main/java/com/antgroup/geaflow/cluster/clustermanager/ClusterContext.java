@@ -102,19 +102,21 @@ public class ClusterContext extends ReliableContainerContext {
         ClusterMetaStore metaStore = ClusterMetaStore.getInstance(id, name, config);
         Map<Integer, String> drivers = metaStore.getDriverIds();
         Map<Integer, String> containerIds = metaStore.getContainerIds();
-        if (drivers != null && !drivers.isEmpty() && containerIds != null && !containerIds
-            .isEmpty()) {
+        int driverNum = drivers == null ? 0 : drivers.size();
+        int containerNum = containerIds == null ? 0 : containerIds.size();
+        if (driverNum != 0 && containerNum != 0) {
             this.isRecover = true;
             this.driverIds = drivers;
             this.containerIds = containerIds;
             this.maxComponentId = metaStore.getMaxContainerId();
-            LOGGER.info("recover {} containers and {} drivers maxComponentId {} from metaStore",
-                containerIds.size(), drivers.size(), maxComponentId);
+            LOGGER.info("recover {} containers and {} drivers maxComponentId: {}",
+                containerNum, driverNum, maxComponentId);
         } else {
             this.isRecover = false;
             this.driverIds = new ConcurrentHashMap<>();
             this.containerIds = new ConcurrentHashMap<>();
             this.maxComponentId = 0;
+            LOGGER.info("init with maxComponentId: {}", maxComponentId);
         }
     }
 

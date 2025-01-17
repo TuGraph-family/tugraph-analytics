@@ -42,7 +42,7 @@ public class ClusterMetaStore {
     private final String clusterId;
     private final Configuration configuration;
     private final IClusterMetaKVStore<String, Object> componentBackend;
-    private final Map<String, IClusterMetaKVStore<String, Object>> backends;
+    private Map<String, IClusterMetaKVStore<String, Object>> backends;
 
     private ClusterMetaStore(int id, String name, Configuration configuration) {
         this.componentId = id;
@@ -79,7 +79,9 @@ public class ClusterMetaStore {
     public static synchronized void close() {
         LOGGER.info("close ClusterMetaStore");
         if (INSTANCE != null) {
-            for (IClusterMetaKVStore<String, Object> backend : INSTANCE.backends.values()) {
+            Map<String, IClusterMetaKVStore<String, Object>> backends = INSTANCE.backends;
+            INSTANCE.backends = null;
+            for (IClusterMetaKVStore<String, Object> backend : backends.values()) {
                 backend.close();
             }
             INSTANCE = null;
@@ -219,6 +221,10 @@ public class ClusterMetaStore {
                 break;
             default:
                 return componentBackend;
+        }
+        // Cluster meta store is closed.
+        if (backends == null) {
+            return null;
         }
         if (!backends.containsKey(namespace)) {
             synchronized (ClusterMetaStore.class) {

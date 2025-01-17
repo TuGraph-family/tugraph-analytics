@@ -19,8 +19,14 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCES
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * This strategy is to restart the process by supervisor but not master.
+ */
 public class ComponentFailoverStrategy extends AbstractFailoverStrategy {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ComponentFailoverStrategy.class);
 
     public ComponentFailoverStrategy(EnvType envType) {
         super(envType);
@@ -30,6 +36,7 @@ public class ComponentFailoverStrategy extends AbstractFailoverStrategy {
     public void init(ClusterContext context) {
         super.init(context);
         context.getConfig().put(PROCESS_AUTO_RESTART, AutoRestartPolicy.UNEXPECTED.getValue());
+        LOGGER.info("init with foRestarts: {}", context.getClusterConfig().getMaxRestarts());
     }
 
     @Override

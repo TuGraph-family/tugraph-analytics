@@ -33,7 +33,9 @@ import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,23 +106,29 @@ public class Supervisor implements Serializable {
         return false;
     }
 
+    public void stopWorker() {
+        stopWorker(mainRunner.getProcessId());
+    }
+
     public void stopWorker(int pid) {
         Preconditions.checkArgument(pid > 0, "pid should be larger than 0");
-        LOGGER.info("Kill process: {}", pid);
-        ProcessUtil.killProcess(pid);
+        LOGGER.info("Stop old process if exists");
+
+        List<Integer> pids = new ArrayList<>();
+        pids.add(pid);
 
         Process process = mainRunner.getProcess();
         if (process.isAlive()) {
-            int ppid = ProcessUtil.getProcessPid(process);
-            if (ppid <= 0) {
-                LOGGER.warn("NOT found live process {}", process);
+            int curPid = mainRunner.getProcessId();
+            if (curPid <= 0) {
+                LOGGER.warn("Process is alive but pid not found: {}", process);
                 return;
             }
-            if (pid != ppid) {
-                LOGGER.info("Kill parent process: {}", ppid);
-                process.destroy();
+            if (pid != curPid) {
+                pids.add(curPid);
             }
         }
+        ProcessUtil.killProcesses(pids);
     }
 
     public void startAgent() {
@@ -136,6 +144,12 @@ public class Supervisor implements Serializable {
     public void waitForTermination() {
         if (rpcService != null) {
             rpcService.waitTermination();
+        }
+    }
+
+    public void stop() {
+        if (rpcService != null) {
+            rpcService.stopService();
         }
     }
 
