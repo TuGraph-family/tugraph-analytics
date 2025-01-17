@@ -39,10 +39,12 @@ public class SpillablePipelineSliceTest {
 
         long id = UUID.randomUUID().getLeastSignificantBits();
         SliceId sliceId = new SliceId(id, 0, 0, 0);
+
         ShuffleConfig shuffleConfig = new ShuffleConfig(config);
         ShuffleMemoryTracker memoryTracker = new ShuffleMemoryTracker(config);
-        SpillablePipelineSlice slice = new SpillablePipelineSlice("test", sliceId, 2, shuffleConfig,
+        SpillablePipelineSlice slice = new SpillablePipelineSlice("test", sliceId, shuffleConfig,
             memoryTracker);
+
         byte[] bytes1 = new byte[100];
 
         int bufferCount = 10000;
@@ -62,18 +64,7 @@ public class SpillablePipelineSliceTest {
                 consumedBufferCount++;
             }
         }
-        Assert.assertEquals(bufferCount, consumedBufferCount);
-        Assert.assertFalse(slice.canRelease());
 
-        // Check disposable reader.
-        consumedBufferCount = 0;
-        reader = slice.createSliceReader(1, () -> {});
-        while (reader.hasNext()) {
-            PipeChannelBuffer buffer = reader.next();
-            if (buffer != null) {
-                consumedBufferCount++;
-            }
-        }
         Assert.assertEquals(bufferCount, consumedBufferCount);
         Assert.assertTrue(slice.canRelease());
         slice.release();

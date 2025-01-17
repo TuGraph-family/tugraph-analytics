@@ -46,8 +46,8 @@ public class PipelineShardWriter<T> extends ShardWriter<T, Shard> {
     }
 
     @Override
-    protected PipelineSlice newSlice(String taskLogTag, SliceId sliceId, int refCount) {
-        return new PipelineSlice(taskLogTag, sliceId, refCount);
+    protected PipelineSlice newSlice(String taskLogTag, SliceId sliceId) {
+        return new PipelineSlice(taskLogTag, sliceId);
     }
 
     @Override

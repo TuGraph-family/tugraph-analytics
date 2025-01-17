@@ -277,7 +277,6 @@ public class IoDescriptorBuilder {
                     vertexId,
                     outEdge.getEdgeId(),
                     numPartitions,
-                    1,
                     outEdge.getEdgeName(),
                     dataExchangeMode,
                     taskIds,

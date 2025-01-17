@@ -17,7 +17,6 @@ package com.antgroup.geaflow.shuffle.pipeline.slice;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.google.common.base.Preconditions;
-import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +27,7 @@ public class PipelineSlice extends AbstractSlice {
     private boolean flushRequested;
 
     public PipelineSlice(String taskLogTag, SliceId sliceId) {
-        super(taskLogTag, sliceId, 1);
-    }
-
-    public PipelineSlice(String taskLogTag, SliceId sliceId, int refCount) {
-        super(taskLogTag, sliceId, refCount);
+        super(taskLogTag, sliceId);
     }
 
     // ------------------------------------------------------------------------
@@ -87,12 +82,6 @@ public class PipelineSlice extends AbstractSlice {
         }
     }
 
-    public void setRefCount(int refCount) {
-        synchronized (buffers) {
-            this.refCount = refCount;
-        }
-    }
-
     // ------------------------------------------------------------------------
     // Consume
     // ------------------------------------------------------------------------
@@ -131,11 +120,6 @@ public class PipelineSlice extends AbstractSlice {
     private void updateFlushRequested(boolean flushRequested) {
         Preconditions.checkArgument(Thread.holdsLock(buffers), "fail to get lock of buffers");
         this.flushRequested = flushRequested;
-    }
-
-    @Override
-    public Iterator<PipeBuffer> getBufferIterator() {
-        return buffers.iterator();
     }
 
     @Override

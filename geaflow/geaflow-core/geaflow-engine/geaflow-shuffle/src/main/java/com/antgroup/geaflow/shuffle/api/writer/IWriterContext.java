@@ -87,6 +87,4 @@ public interface IWriterContext extends Serializable {
 
     DataExchangeMode getDataExchangeMode();
 
-    int getRefCount();
-
 }

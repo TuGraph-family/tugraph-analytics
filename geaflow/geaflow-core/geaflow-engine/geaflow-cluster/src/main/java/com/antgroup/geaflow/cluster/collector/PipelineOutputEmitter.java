@@ -112,8 +112,7 @@ public class PipelineOutputEmitter {
                 .setTaskName(taskArgs.getTaskName())
                 .setChannelNum(forwardOutputDesc.getTargetTaskIndices().size())
                 .setEncoder(encoder)
-                .setDataExchangeMode(forwardOutputDesc.getDataExchangeMode())
-                .setRefCount(forwardOutputDesc.getRefCount());
+                .setDataExchangeMode(forwardOutputDesc.getDataExchangeMode());
             pipeRecordWriter.init(writerContext);
 
             AtomicBoolean flag = new AtomicBoolean(true);

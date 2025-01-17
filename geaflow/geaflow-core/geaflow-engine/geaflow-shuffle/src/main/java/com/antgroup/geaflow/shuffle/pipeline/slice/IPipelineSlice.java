@@ -16,7 +16,6 @@ package com.antgroup.geaflow.shuffle.pipeline.slice;
 
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
-import java.util.Iterator;
 
 public interface IPipelineSlice {
 
@@ -59,10 +58,5 @@ public interface IPipelineSlice {
      * @return
      */
     PipeBuffer next();
-
-    /**
-     * Get slice buffer iterator.
-     */
-    Iterator<PipeBuffer> getBufferIterator();
 
 }
