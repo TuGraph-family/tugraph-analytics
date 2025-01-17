@@ -105,7 +105,7 @@ public class KafkaTestEnv {
         props.put("offsets.topic.replication.factor", "1");
         props.put("zookeeper.connection.timeout.ms", "10000");
         props.put("retries", "5");
-        server = new KafkaServer(new KafkaConfig(props), Time.SYSTEM, Option.empty(), new ArraySeq<>(0));
+        server = new KafkaServer(new KafkaConfig(props), Time.SYSTEM, Option.<String>empty(), new ArraySeq<>(0));
         LOGGER.info("valid kafka server config.");
         server.startup();
         SleepUtils.sleepMilliSecond(1000);

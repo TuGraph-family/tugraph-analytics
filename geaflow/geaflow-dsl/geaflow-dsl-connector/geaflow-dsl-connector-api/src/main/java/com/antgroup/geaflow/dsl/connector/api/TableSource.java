@@ -19,6 +19,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
@@ -51,10 +52,9 @@ public interface TableSource extends Serializable {
     <IN> TableDeserializer<IN> getDeserializer(Configuration conf);
 
     /**
-     * Fetch data for the partition from start offset. if the windowSize is -1, it represents an
-     * all-window which will read all the data from the source, else return window size for data.
+     * Fetch data for the partition from start offset.
      */
-    <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset, long windowSize) throws IOException;
+    <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset, FetchWindow windowInfo) throws IOException;
 
     /**
      * The close callback for the job finish the execution.

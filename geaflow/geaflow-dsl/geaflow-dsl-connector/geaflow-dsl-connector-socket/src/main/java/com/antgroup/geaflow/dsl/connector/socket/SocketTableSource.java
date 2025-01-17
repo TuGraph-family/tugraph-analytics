@@ -15,11 +15,11 @@
 package com.antgroup.geaflow.dsl.connector.socket;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.window.WindowType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.ISkipOpenAndClose;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
@@ -27,6 +27,7 @@ import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.socket.server.NettySourceClient;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -80,15 +81,14 @@ public class SocketTableSource implements TableSource, ISkipOpenAndClose {
 
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long windowSize) throws IOException {
+                                  FetchWindow windowInfo) throws IOException {
+        if (windowInfo.getType() != WindowType.SIZE_TUMBLING_WINDOW) {
+            throw new GeaFlowDSLException("Not support window type:{}", windowInfo.getType());
+        }
         try {
             List<String> fetchData = new ArrayList<>();
-            if (windowSize == Windows.SIZE_OF_ALL_WINDOW) {
-                throw new GeaFlowDSLException("Socket doesn't support ALL_WINDOW mode");
-            } else {
-                for (int i = 0; i < windowSize; i++) {
-                    fetchData.add(dataQueue.take());
-                }
+            for (int i = 0; i < windowInfo.windowSize(); i++) {
+                fetchData.add(dataQueue.take());
             }
             return (FetchData<T>) FetchData.createStreamFetch(fetchData, new SocketOffset(), false);
         } catch (InterruptedException e) {

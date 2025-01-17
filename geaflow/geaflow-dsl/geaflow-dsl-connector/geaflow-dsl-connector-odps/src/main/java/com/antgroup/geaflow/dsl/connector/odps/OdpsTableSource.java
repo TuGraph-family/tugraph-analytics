@@ -25,6 +25,7 @@ import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.window.WindowType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
@@ -35,12 +36,12 @@ import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.odps.utils.OdpsBatchIterator;
 import com.antgroup.geaflow.dsl.connector.odps.utils.OdpsConnectorUtils;
 import com.antgroup.geaflow.dsl.connector.odps.utils.OdpsRecordDeserializer;
@@ -195,12 +196,17 @@ public class OdpsTableSource implements TableSource, EnablePartitionPushDown {
 
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long windowSize) throws IOException {
-        if (windowSize <= 0 && windowSize != Windows.SIZE_OF_ALL_WINDOW) {
-            throw new GeaFlowDSLException("Invalid window size: {}", windowSize);
-        }
-        if (windowSize > Integer.MAX_VALUE) {
-            throw new GeaFlowDSLException("Window size is too large: {}", windowSize);
+                                  FetchWindow windowInfo) throws IOException {
+        long desireWindowSize = -1;
+        switch (windowInfo.getType()) {
+            case ALL_WINDOW:
+                desireWindowSize = Long.MAX_VALUE;
+                break;
+            case SIZE_TUMBLING_WINDOW:
+                desireWindowSize = windowInfo.windowSize();
+                break;
+            default:
+                throw new GeaFlowDSLException("Not support window type:{}", windowInfo.getType());
         }
         assert partition instanceof OdpsShardPartition;
         OdpsShardPartition odpsPartition = (OdpsShardPartition)partition;
@@ -219,7 +225,7 @@ public class OdpsTableSource implements TableSource, EnablePartitionPushDown {
         }
         long sessionRecordCount = downloadSession.getRecordCount();
         long remainingCount = sessionRecordCount - start < 0 ? 0 : sessionRecordCount - start;
-        long count = windowSize == Windows.SIZE_OF_ALL_WINDOW ? remainingCount : Math.min(windowSize, remainingCount);
+        long count = Math.min(desireWindowSize, remainingCount);
         RecordReader reader;
         try {
             reader = downloadSession.openRecordReader(start, count);
@@ -228,19 +234,18 @@ public class OdpsTableSource implements TableSource, EnablePartitionPushDown {
         }
 
         OdpsOffset nextOffset = new OdpsOffset(start + count);
-        PartitionSpec singlePartitionSpec = odpsPartition.getSinglePartitionSpec();
-        if (windowSize == Windows.SIZE_OF_ALL_WINDOW) {
+        if (windowInfo.getType() == WindowType.ALL_WINDOW) {
             return (FetchData<T>) FetchData.createBatchFetch(
                 new OdpsBatchIterator(reader, count, odpsPartition.getSinglePartitionSpec()), nextOffset);
         } else {
             List<Object> dataList = new ArrayList<>();
             for (int i = 0; i < count; i++) {
                 Record record = reader.read();
-                OdpsRecordWithPartitionSpec recordWithPartitionSpec = new OdpsRecordWithPartitionSpec(record, singlePartitionSpec);
+                OdpsRecordWithPartitionSpec recordWithPartitionSpec = new OdpsRecordWithPartitionSpec(record, odpsPartition.getSinglePartitionSpec());
                 dataList.add(recordWithPartitionSpec);
             }
             reader.close();
-            boolean isFinish = windowSize >= remainingCount;
+            boolean isFinish = desireWindowSize >= remainingCount;
             return (FetchData<T>) FetchData.createStreamFetch(dataList, nextOffset, isFinish);
         }
     }

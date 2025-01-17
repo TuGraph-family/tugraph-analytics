@@ -18,7 +18,6 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
@@ -49,7 +48,7 @@ public abstract class AbstractFileReadHandler implements FileReadHandler {
     @Override
     public <T> FetchData<T> readPartition(FileSplit split, FileOffset offset, int windowSize) throws IOException {
         FileFormat<T> format = getFileFormat(split, offset);
-        if (windowSize == Windows.SIZE_OF_ALL_WINDOW) { // read all data from file
+        if (windowSize == Integer.MAX_VALUE) { // read all data from file
             Iterator<T> iterator = format.batchRead();
             return FetchData.createBatchFetch(iterator, new FileOffset(-1));
         } else {

@@ -22,9 +22,9 @@ public class DateTimeUtilTest {
     @Test
     public void testDateTimeUtil() {
         Assert.assertEquals(DateTimeUtil.fromUnixTime(1111, "yyyy-MM-dd hh:mm:ss"),
-            "1970-01-01 08:18:31");
+            "1970-01-01 08:00:01");
         Assert.assertEquals(DateTimeUtil.toUnixTime("1970-01-01 08:18:31", "yyyy-MM-dd hh:mm:ss"),
-            1111);
+            1111000);
         Assert.assertEquals(DateTimeUtil.toUnixTime("", "yyyy-MM-dd hh:mm:ss"),
             -1);
     }

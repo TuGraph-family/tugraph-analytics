@@ -15,17 +15,18 @@
 package com.antgroup.geaflow.dsl.connector.hudi;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.window.WindowType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
@@ -85,9 +86,9 @@ public class HoodieTableSource implements TableSource {
     }
 
     @Override
-    public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset, long windowSize)
+    public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset, FetchWindow windowInfo)
         throws IOException {
-        if (windowSize == Windows.SIZE_OF_ALL_WINDOW) {
+        if (windowInfo.getType() == WindowType.ALL_WINDOW) {
             FileSplit split = (FileSplit) partition;
             ParquetFormat format = new ParquetFormat();
             format.init(tableConf, tableSchema, split);
@@ -95,8 +96,9 @@ public class HoodieTableSource implements TableSource {
             Offset nextOffset = new FileOffset(-1L);
             format.close();
             return (FetchData<T>) FetchData.createBatchFetch(iterator, nextOffset);
+        } else {
+            throw new GeaFlowDSLException("Hudi table source not support window:{}", windowInfo.getType());
         }
-        throw new GeaFlowDSLException("Stream read for hudi is no support currently");
     }
 
     @Override

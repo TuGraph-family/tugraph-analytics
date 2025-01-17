@@ -16,23 +16,25 @@ import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.common.utils.DateTimeUtil;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.common.util.Windows;
+import com.antgroup.geaflow.dsl.connector.api.AbstractTableSource;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
-import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants;
+import com.antgroup.geaflow.dsl.connector.api.window.SizeFetchWindow;
+import com.antgroup.geaflow.dsl.connector.api.window.TimeFetchWindow;
 import com.antgroup.geaflow.dsl.connector.kafka.utils.KafkaConstants;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
@@ -49,21 +52,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class KafkaTableSource implements TableSource {
+public class KafkaTableSource extends AbstractTableSource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTableSource.class);
 
     private static final Duration OPERATION_TIMEOUT =
         Duration.ofSeconds(KafkaConstants.KAFKA_OPERATION_TIMEOUT_SECONDS);
-    private static final Duration POLL_TIMEOUT =
-        Duration.ofSeconds(KafkaConstants.KAFKA_DATA_TIMEOUT_SECONDS);
 
     private String topic;
-    private long windowSize;
-    private int startTime;
+    private long startTimeMs;
     private Properties props;
     private String connectorFormat;
     private TableSchema schema;
+    private Duration pollTimeout;
 
     private transient KafkaConsumer<String, String> consumer;
 
@@ -73,24 +74,25 @@ public class KafkaTableSource implements TableSource {
         final String servers =
             conf.getString(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_SERVERS);
         topic = conf.getString(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_TOPIC);
+        pollTimeout = Duration.ofSeconds(conf.getInteger(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_DATA_OPERATION_TIMEOUT));
         final String groupId = conf.getString(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_GROUP_ID);
         final String valueDeserializerClassString = KafkaConstants.KAFKA_VALUE_DESERIALIZER_CLASS;
-        this.windowSize = conf.getLong(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE);
-        if (this.windowSize == Windows.SIZE_OF_ALL_WINDOW) {
-            throw new GeaFlowDSLException("Kafka cannot support all window");
-        } else if (windowSize <= 0) {
-            throw new GeaFlowDSLException("Invalid window size: {}", windowSize);
-        }
         final String startTimeStr = conf.getString(ConnectorConfigKeys.GEAFLOW_DSL_START_TIME,
             (String) ConnectorConfigKeys.GEAFLOW_DSL_START_TIME.getDefaultValue());
         if (startTimeStr.equalsIgnoreCase(KafkaConstants.KAFKA_BEGIN)) {
-            startTime = 0;
+            startTimeMs = 0;
         } else if (startTimeStr.equalsIgnoreCase(KafkaConstants.KAFKA_LATEST)) {
-            startTime = Integer.MAX_VALUE;
+            startTimeMs = Long.MAX_VALUE;
         } else {
-            startTime = DateTimeUtil.toUnixTime(startTimeStr, ConnectorConstants.START_TIME_FORMAT);
+            startTimeMs = DateTimeUtil.toUnixTime(startTimeStr, ConnectorConstants.START_TIME_FORMAT);
         }
-
+        if (conf.contains(DSLConfigKeys.GEAFLOW_DSL_TIME_WINDOW_SIZE)) {
+            Preconditions.checkState(startTimeMs > 0, "Time window need unified start time! Please set config:%s", ConnectorConfigKeys.GEAFLOW_DSL_START_TIME.getKey());
+        }
+        int pullSize = conf.getInteger(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_PULL_BATCH_SIZE);
+        if (pullSize <= 0) {
+            throw new GeaFlowDSLException("Config {} is illegal:{}", KafkaConfigKeys.GEAFLOW_DSL_KAFKA_PULL_BATCH_SIZE, pullSize);
+        }
         this.schema = tableSchema;
         this.props = new Properties();
         props.setProperty(KafkaConstants.KAFKA_BOOTSTRAP_SERVERS, servers);
@@ -99,7 +101,7 @@ public class KafkaTableSource implements TableSource {
         props.setProperty(KafkaConstants.KAFKA_VALUE_DESERIALIZER,
             valueDeserializerClassString);
         props.setProperty(KafkaConstants.KAFKA_MAX_POLL_RECORDS,
-            String.valueOf(windowSize));
+            String.valueOf(pullSize));
         props.setProperty(KafkaConstants.KAFKA_GROUP_ID, groupId);
         LOGGER.info("open kafka, servers is: {}, topic is:{}, config is:{}, schema is: {}, connector format is : {}",
             servers, topic, conf, tableSchema);
@@ -126,17 +128,8 @@ public class KafkaTableSource implements TableSource {
         return DeserializerFactory.loadDeserializer(conf);
     }
 
-    @Override
-    public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long newWindowSize) throws IOException {
+    private Tuple<TopicPartition, Long> fetchPrepare(Partition partition, Optional<Offset> startOffset) {
         KafkaPartition kafkaPartition = (KafkaPartition) partition;
-        if (newWindowSize == Windows.SIZE_OF_ALL_WINDOW) {
-            throw new GeaFlowDSLException("Kafka cannot support all window");
-        } else if (newWindowSize <= 0) {
-            throw new GeaFlowDSLException("Invalid window size: {}", newWindowSize);
-        }
-        this.windowSize = newWindowSize;
-
         TopicPartition topicPartition = new TopicPartition(kafkaPartition.getTopic(),
             kafkaPartition.getPartition());
         Set<TopicPartition> singletonPartition = Collections.singleton(topicPartition);
@@ -150,51 +143,64 @@ public class KafkaTableSource implements TableSource {
         if (startOffset.isPresent()) {
             reqKafkaOffset = (KafkaOffset) startOffset.get();
             consumer.seek(topicPartition, reqKafkaOffset.getKafkaOffset());
+            return Tuple.of(topicPartition, reqKafkaOffset.getKafkaOffset());
         } else {
-            if (startTime == 0) {
+            if (startTimeMs == 0) {
                 Map<TopicPartition, Long> partition2Offset =
                     consumer.beginningOffsets(singletonPartition, OPERATION_TIMEOUT);
                 Long beginningOffset = partition2Offset.get(topicPartition);
                 if (beginningOffset == null) {
                     throw new GeaFlowDSLException("Cannot get beginning offset for partition: {}, "
-                        + "startTime: {}.", topicPartition, startTime);
+                        + "startTime: {}.", topicPartition, startTimeMs);
                 } else {
                     consumer.seek(topicPartition, beginningOffset);
                 }
-            } else if (startTime == Integer.MAX_VALUE) {
+                return Tuple.of(topicPartition, beginningOffset);
+            } else if (startTimeMs == Long.MAX_VALUE) {
                 Map<TopicPartition, Long> endOffsets =
                     consumer.endOffsets(Collections.singletonList(topicPartition), OPERATION_TIMEOUT);
                 Long beginningOffset = endOffsets.get(topicPartition);
                 if (beginningOffset == null) {
                     throw new GeaFlowDSLException("Cannot get beginning offset for partition: {}, "
-                        + "startTime: {}.", topicPartition, startTime);
+                        + "startTime: {}.", topicPartition, startTimeMs);
                 } else {
                     consumer.seek(topicPartition, beginningOffset);
                 }
+                return Tuple.of(topicPartition, beginningOffset);
             } else {
                 Map<TopicPartition, OffsetAndTimestamp> partitionOffset =
                     consumer.offsetsForTimes(Collections.singletonMap(topicPartition,
-                        (long)startTime), OPERATION_TIMEOUT);
+                        startTimeMs / 1000), OPERATION_TIMEOUT);
                 OffsetAndTimestamp offset = partitionOffset.get(topicPartition);
                 if (offset == null) {
                     throw new GeaFlowDSLException("Cannot get offset for partition: {}, "
-                        + "startTime: {}.", topicPartition, startTime);
+                        + "startTime: {}.", topicPartition, startTimeMs);
                 } else {
                     consumer.seek(topicPartition, offset.offset());
                 }
+                return Tuple.of(topicPartition, offset.offset());
             }
         }
+    }
 
-        Iterator<ConsumerRecord<String, String>> recordIterator = consumer.poll(POLL_TIMEOUT).iterator();
+    @Override
+    public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
+                                  SizeFetchWindow windowInfo) throws IOException {
+        TopicPartition topicPartition = fetchPrepare(partition, startOffset).f0;
 
         List<String> dataList = new ArrayList<>();
         long responseMaxTimestamp = -1;
-        while (recordIterator.hasNext()) {
-            ConsumerRecord<String, String> record = recordIterator.next();
-            assert record.topic().equals(this.topic) : "Illegal topic";
-            dataList.add(record.value());
-            if (record.timestamp() > responseMaxTimestamp) {
-                responseMaxTimestamp = record.timestamp();
+        while (dataList.size() < windowInfo.windowSize()) {
+            ConsumerRecords<String, String> records = consumer.poll(pollTimeout);
+            if (records.isEmpty()) {
+                break;
+            }
+            for (ConsumerRecord<String, String> record : records) {
+                assert record.topic().equals(this.topic) : "Illegal topic";
+                dataList.add(record.value());
+                if (record.timestamp() > responseMaxTimestamp) {
+                    responseMaxTimestamp = record.timestamp();
+                }
             }
         }
         //reload cursor
@@ -206,6 +212,50 @@ public class KafkaTableSource implements TableSource {
             nextKafkaOffset = new KafkaOffset(nextOffset, System.currentTimeMillis());
         }
         return (FetchData<T>) FetchData.createStreamFetch(dataList, nextKafkaOffset, false);
+    }
+
+    @Override
+    public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset, TimeFetchWindow windowInfo) throws IOException {
+        Tuple<TopicPartition, Long> partitionWithOffset = fetchPrepare(partition, startOffset);
+        long windowStartTimeMs = windowInfo.getStartWindowTime(startTimeMs);
+        long windowEndTimeMs = windowInfo.getEndWindowTime(startTimeMs);
+        OffsetAndTimestamp windowStartOffset = queryTimesOffset(partitionWithOffset.f0, windowStartTimeMs);
+        if (windowStartOffset == null || windowStartOffset.timestamp() >= windowEndTimeMs) {
+            // no data in current window, skip!
+            KafkaOffset offset = new KafkaOffset(partitionWithOffset.f1, windowEndTimeMs);
+            return (FetchData<T>) FetchData.createStreamFetch(Collections.EMPTY_LIST, offset, false);
+        }
+        List<String> dataList = new ArrayList<>();
+        long responseMaxTimestamp = -1;
+        while (responseMaxTimestamp < windowEndTimeMs && responseMaxTimestamp < System.currentTimeMillis()) {
+            ConsumerRecords<String, String> records = consumer.poll(pollTimeout);
+            if (!records.isEmpty()) {
+                for (ConsumerRecord<String, String> record : records) {
+                    dataList.add(record.value());
+                    if (record.timestamp() > responseMaxTimestamp) {
+                        responseMaxTimestamp = record.timestamp();
+                    }
+                }
+            } else if (windowEndTimeMs > System.currentTimeMillis()) {
+                // no new msg, break;
+                break;
+            }
+        }
+        //reload cursor
+        long nextOffset = consumer.position(partitionWithOffset.f0, OPERATION_TIMEOUT);
+        KafkaOffset nextKafkaOffset;
+        if (responseMaxTimestamp >= 0) {
+            nextKafkaOffset = new KafkaOffset(nextOffset, responseMaxTimestamp);
+        } else {
+            nextKafkaOffset = new KafkaOffset(nextOffset, System.currentTimeMillis());
+        }
+        return (FetchData<T>) FetchData.createStreamFetch(dataList, nextKafkaOffset, false);
+    }
+
+    private OffsetAndTimestamp queryTimesOffset(TopicPartition topicPartition, long timestampInMs) {
+        Map<TopicPartition, OffsetAndTimestamp> partitionOffset = consumer.offsetsForTimes(
+            Collections.singletonMap(topicPartition, timestampInMs / 1000), OPERATION_TIMEOUT);
+        return partitionOffset.get(topicPartition);
     }
 
     @Override

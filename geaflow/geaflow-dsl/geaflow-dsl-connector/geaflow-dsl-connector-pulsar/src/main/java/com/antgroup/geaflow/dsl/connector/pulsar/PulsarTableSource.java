@@ -1,6 +1,7 @@
 package com.antgroup.geaflow.dsl.connector.pulsar;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.window.WindowType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.common.utils.DateTimeUtil;
@@ -14,6 +15,7 @@ import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.pulsar.utils.PulsarConstants;
 
 import java.io.IOException;
@@ -133,14 +135,15 @@ public class PulsarTableSource implements TableSource {
 
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long newWindowSize) throws IOException {
+                                  FetchWindow windowInfo) throws IOException {
 
-        if (newWindowSize == Windows.SIZE_OF_ALL_WINDOW) {
-            throw new GeaFlowDSLException("Pulsar cannot support all window");
-        } else if (newWindowSize <= 0) {
-            throw new GeaFlowDSLException("Invalid window size: {}", newWindowSize);
+        if (windowInfo.getType() != WindowType.SIZE_TUMBLING_WINDOW) {
+            throw new GeaFlowDSLException("Pulsar cannot support window type:{}", windowInfo.getType());
         }
-        windowSize = newWindowSize;
+        if (windowInfo.windowSize() <= 0) {
+            throw new GeaFlowDSLException("Invalid window size: {}", windowInfo.windowSize());
+        }
+        windowSize = windowInfo.windowSize();
         String partitionName = partition.getName();
         Consumer<String> consumer = consumers.get(partitionName);
         if (consumer == null) {

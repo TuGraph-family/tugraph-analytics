@@ -15,10 +15,11 @@
 package com.antgroup.geaflow.api.window.impl;
 
 import com.antgroup.geaflow.api.window.ITumblingWindow;
+import com.antgroup.geaflow.api.window.WindowType;
 
 public class SizeTumblingWindow<T> implements ITumblingWindow<T> {
 
-    private long size;
+    private final long size;
     private long count;
     private long windowId;
 
@@ -53,5 +54,10 @@ public class SizeTumblingWindow<T> implements ITumblingWindow<T> {
         } else {
             return windowId + 1;
         }
+    }
+
+    @Override
+    public WindowType getType() {
+        return WindowType.SIZE_TUMBLING_WINDOW;
     }
 }

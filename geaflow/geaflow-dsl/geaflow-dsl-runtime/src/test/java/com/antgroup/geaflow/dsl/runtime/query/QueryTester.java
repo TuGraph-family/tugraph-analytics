@@ -27,6 +27,7 @@ import com.antgroup.geaflow.env.Environment;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.file.FileConfigKeys;
 import com.antgroup.geaflow.runtime.core.scheduler.resource.ScheduledWorkerManagerFactory;
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -35,6 +36,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +55,8 @@ public class QueryTester implements Serializable {
     private boolean compareWithOrder = false;
 
     private String graphDefinePath;
+
+    private boolean hasCustomWindowConfig = false;
 
     private final Map<String, String> config = new HashMap<>();
 
@@ -93,12 +98,19 @@ public class QueryTester implements Serializable {
         return this;
     }
 
+    public QueryTester withCustomWindow() {
+        hasCustomWindowConfig = true;
+        return this;
+    }
+
     public QueryTester execute() throws Exception {
         if (queryPath == null) {
             throw new IllegalArgumentException("You should call withQueryPath() before execute().");
         }
         Map<String, String> config = new HashMap<>();
-        config.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), String.valueOf(-1L));
+        if (!hasCustomWindowConfig) {
+            config.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), String.valueOf(-1L));
+        }
         config.put(FileConfigKeys.ROOT.getKey(), DSL_STATE_REMOTE_PATH);
         config.put(DSLConfigKeys.GEAFLOW_DSL_QUERY_PATH.getKey(), FileConstants.PREFIX_JAVA_RESOURCE + queryPath);
         config.putAll(this.config);
@@ -226,7 +238,22 @@ public class QueryTester implements Serializable {
 
         @Override
         public String rewriteScript(String script, Configuration configuration) {
-            return script.replace("${target}", getTargetPath(queryPath));
+            String result = script;
+            String regex = "\\$\\{[^}]+}";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(result);
+            while (matcher.find()) {
+                String matchedField = matcher.group();
+                String replaceKey = matchedField.substring(2, matchedField.length() - 1);
+                if (replaceKey.equals("target")) {
+                    result = result.replace(matchedField, getTargetPath(queryPath));
+                } else {
+                    String replaceData = configuration.getString(replaceKey);
+                    Preconditions.checkState(replaceData != null, "Not found replace key:{}", replaceKey);
+                    result = result.replace(matchedField, replaceData);
+                }
+            }
+            return result;
         }
 
         @Override

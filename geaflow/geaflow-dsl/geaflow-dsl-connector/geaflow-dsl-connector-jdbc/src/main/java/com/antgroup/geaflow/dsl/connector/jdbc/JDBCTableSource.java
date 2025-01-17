@@ -15,18 +15,19 @@
 package com.antgroup.geaflow.dsl.connector.jdbc;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.window.WindowType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.jdbc.util.JDBCUtils;
 import java.io.IOException;
 import java.sql.Connection;
@@ -142,7 +143,10 @@ public class JDBCTableSource implements TableSource {
 
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long windowSize) throws IOException {
+                                  FetchWindow windowInfo) throws IOException {
+        if (windowInfo.getType() != WindowType.FIXED_TIME_TUMBLING_WINDOW) {
+            throw new GeaFlowDSLException("Not support window type:{}", windowInfo.getType());
+        }
         JDBCPartition jdbcPartition = (JDBCPartition) partition;
         if (!jdbcPartition.getTableName().equals(this.tableName)) {
             throw new GeaFlowDSLException("wrong partition");
@@ -166,12 +170,12 @@ public class JDBCTableSource implements TableSource {
         List<Row> dataList;
         try {
             dataList = JDBCUtils.selectRowsFromTable(statement, this.tableName,
-                jdbcPartition.getWhereClause(), this.schema.size(), offset, windowSize);
+                jdbcPartition.getWhereClause(), this.schema.size(), offset, windowInfo.windowSize());
         } catch (SQLException e) {
             throw new GeaFlowDSLException("select rows form table failed.", e);
         }
         JDBCOffset nextOffset = new JDBCOffset(offset + dataList.size());
-        boolean isFinish = windowSize == Windows.SIZE_OF_ALL_WINDOW || dataList.size() < windowSize;
+        boolean isFinish = windowInfo.getType() == WindowType.ALL_WINDOW || dataList.size() < windowInfo.windowSize();
         return (FetchData<T>) FetchData.createStreamFetch(dataList, nextOffset, isFinish);
     }
 

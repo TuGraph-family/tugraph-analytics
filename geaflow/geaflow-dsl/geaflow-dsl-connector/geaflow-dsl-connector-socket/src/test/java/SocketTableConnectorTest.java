@@ -23,6 +23,7 @@ import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSink;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.AllFetchWindow;
 import com.antgroup.geaflow.dsl.connector.socket.SocketConfigKeys;
 import com.antgroup.geaflow.dsl.connector.socket.SocketTableConnector;
 import com.antgroup.geaflow.dsl.connector.socket.SocketTableSource.SocketOffset;
@@ -72,7 +73,7 @@ public class SocketTableConnectorTest {
         tableSink.close();
 
         try {
-            tableSource.fetch(partition, Optional.empty(), -1);
+            tableSource.fetch(partition, Optional.empty(), new AllFetchWindow(1));
         } catch (Exception e) {
             Assert.assertEquals(e.getClass(), GeaFlowDSLException.class);
         }

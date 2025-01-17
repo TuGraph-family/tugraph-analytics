@@ -35,6 +35,11 @@ public class DSLConfigKeys implements Serializable {
         .defaultValue(1L)
         .description("Window size, -1 represent the all window.");
 
+    public static final ConfigKey GEAFLOW_DSL_TIME_WINDOW_SIZE = ConfigKeys
+        .key("geaflow.dsl.time.window.size")
+        .defaultValue(-1L)
+        .description("Specifies source time window size in second unites");
+
     public static final ConfigKey GEAFLOW_DSL_TABLE_TYPE = ConfigKeys
         .key("geaflow.dsl.table.type")
         .noDefaultValue()
