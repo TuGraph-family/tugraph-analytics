@@ -16,6 +16,7 @@ package com.antgroup.geaflow.shuffle.storage;
 
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.shuffle.StorageLevel;
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -42,9 +43,10 @@ public interface ShuffleStore {
      */
     OutputStream getOutputStream(String path);
 
-    static ShuffleStore getShuffleStore(StorageLevel storageLevel) {
+    static ShuffleStore getShuffleStore(ShuffleConfig shuffleConfig) {
+        StorageLevel storageLevel = shuffleConfig.getStorageLevel();
         if (storageLevel == StorageLevel.DISK || storageLevel == StorageLevel.MEMORY_AND_DISK) {
-            return new LocalShuffleStore();
+            return new LocalShuffleStore(shuffleConfig);
         } else {
             throw new GeaflowRuntimeException("unsupported shuffle level: " + storageLevel);
         }

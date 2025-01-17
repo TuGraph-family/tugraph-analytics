@@ -14,13 +14,20 @@
 
 package com.antgroup.geaflow.shuffle.pipeline.buffer;
 
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
+
 public abstract class AbstractBuffer implements OutBuffer {
 
-    private final boolean memoryTrack;
+    private final ShuffleMemoryTracker memoryTracker;
     protected int refCount;
 
-    public AbstractBuffer(boolean memoryTrack) {
-        this.memoryTrack = memoryTrack;
+    public AbstractBuffer(boolean enableMemoryTrack) {
+        this.memoryTracker = enableMemoryTrack
+                             ? ShuffleManager.getInstance().getShuffleMemoryTracker() : null;
+    }
+
+    public AbstractBuffer(ShuffleMemoryTracker memoryTracker) {
+        this.memoryTracker = memoryTracker;
     }
 
     @Override
@@ -33,20 +40,15 @@ public abstract class AbstractBuffer implements OutBuffer {
         return this.refCount <= 0;
     }
 
-    @Override
-    public boolean isMemoryTracking() {
-        return this.memoryTrack;
-    }
-
     protected void requireMemory(long dataSize) {
-        if (this.memoryTrack) {
-            ShuffleMemoryTracker.getInstance().requireMemory(dataSize);
+        if (this.memoryTracker != null) {
+            memoryTracker.requireMemory(dataSize);
         }
     }
 
     protected void releaseMemory(long dataSize) {
-        if (this.memoryTrack) {
-            ShuffleMemoryTracker.getInstance().releaseMemory(dataSize);
+        if (this.memoryTracker != null) {
+            memoryTracker.releaseMemory(dataSize);
         }
     }
 

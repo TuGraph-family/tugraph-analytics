@@ -45,7 +45,6 @@ import com.antgroup.geaflow.runtime.core.scheduler.statemachine.ComposeState;
 import com.antgroup.geaflow.runtime.core.scheduler.statemachine.IScheduleState;
 import com.antgroup.geaflow.runtime.core.scheduler.statemachine.pipeline.PipelineStateMachine;
 import com.antgroup.geaflow.shuffle.desc.OutputType;
-import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import java.util.ArrayList;
@@ -136,7 +135,7 @@ public class PipelineCycleScheduler<P extends ICycleSchedulerContext<ExecutionGr
         iterationIdToFinishedTasks.clear();
         responseEventPool.clear();
         if (context.getParentContext() == null) {
-            SliceManager.getInstance().release(pipelineId);
+            ShuffleManager.getInstance().release(pipelineId);
             ShuffleManager.getInstance().close();
         }
         if (context.getParentContext() == null) {

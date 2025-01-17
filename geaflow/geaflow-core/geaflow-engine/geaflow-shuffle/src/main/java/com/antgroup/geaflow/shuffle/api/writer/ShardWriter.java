@@ -28,6 +28,7 @@ import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import com.antgroup.geaflow.shuffle.serialize.EncoderRecordSerializer;
 import com.antgroup.geaflow.shuffle.serialize.IRecordSerializer;
 import com.antgroup.geaflow.shuffle.serialize.RecordSerializer;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +61,7 @@ public abstract class ShardWriter<T, R> {
 
     public void init(IWriterContext writerContext) {
         this.writerContext = writerContext;
-        this.shuffleConfig = ShuffleConfig.getInstance();
+        this.shuffleConfig = writerContext.getConfig();
         this.writeMetrics = new ShuffleWriteMetrics();
 
         this.pipelineId = writerContext.getPipelineInfo().getPipelineId();
@@ -91,11 +92,12 @@ public abstract class ShardWriter<T, R> {
     protected IPipelineSlice[] buildResultSlices(int channels, int refCount) {
         IPipelineSlice[] slices = new IPipelineSlice[channels];
         WriterId writerId = new WriterId(this.pipelineId, this.edgeId, this.taskIndex);
+        SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
         for (int i = 0; i < channels; i++) {
             SliceId sliceId = new SliceId(writerId, i);
             IPipelineSlice slice = this.newSlice(this.taskLogTag, sliceId, refCount);
             slices[i] = slice;
-            SliceManager.getInstance().register(sliceId, slice);
+            sliceManager.register(sliceId, slice);
         }
         return slices;
     }

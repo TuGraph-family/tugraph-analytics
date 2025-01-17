@@ -14,9 +14,9 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.PipelineInfo;
 
 public class WriterContext implements IWriterContext {
@@ -29,7 +29,7 @@ public class WriterContext implements IWriterContext {
     private String taskName;
     private DataExchangeMode dataExchangeMode;
     private int targetChannels;
-    private Configuration config;
+    private ShuffleConfig config;
     private int refCount;
     private IEncoder<?> encoder;
 
@@ -72,7 +72,7 @@ public class WriterContext implements IWriterContext {
         return this;
     }
 
-    public WriterContext setConfig(Configuration config) {
+    public WriterContext setConfig(ShuffleConfig config) {
         this.config = config;
         return this;
     }
@@ -118,7 +118,7 @@ public class WriterContext implements IWriterContext {
     }
 
     @Override
-    public Configuration getConfig() {
+    public ShuffleConfig getConfig() {
         return config;
     }
 

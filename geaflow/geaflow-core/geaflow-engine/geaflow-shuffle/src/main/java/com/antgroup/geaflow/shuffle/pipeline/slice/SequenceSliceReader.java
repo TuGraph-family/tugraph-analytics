@@ -18,6 +18,7 @@ import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.netty.SliceOutputChannelHandler;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeChannelBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.channel.ChannelId;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.io.IOException;
 
 public class SequenceSliceReader implements PipelineSliceListener {
@@ -39,7 +40,8 @@ public class SequenceSliceReader implements PipelineSliceListener {
 
     public void createSliceReader(SliceId sliceId, long startBatchId) throws IOException {
         this.sliceId = sliceId;
-        this.sliceReader = SliceManager.getInstance().createSliceReader(sliceId,
+        ShuffleManager shuffleManager = ShuffleManager.getInstance();
+        this.sliceReader = shuffleManager.getSliceManager().createSliceReader(sliceId,
             startBatchId, this);
         notifyDataAvailable();
     }

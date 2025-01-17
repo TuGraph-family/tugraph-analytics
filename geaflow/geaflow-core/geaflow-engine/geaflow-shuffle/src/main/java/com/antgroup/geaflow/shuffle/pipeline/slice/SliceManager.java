@@ -29,20 +29,8 @@ import org.slf4j.LoggerFactory;
 public class SliceManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SliceManager.class);
-    private static SliceManager INSTANCE;
-
     private final Map<Long, Set<SliceId>> pipeline2slices = new HashMap<>();
     private final Map<SliceId, IPipelineSlice> slices = new ConcurrentHashMap<>();
-
-    public static synchronized void init() {
-        if (INSTANCE == null) {
-            INSTANCE = new SliceManager();
-        }
-    }
-
-    public static SliceManager getInstance() {
-        return INSTANCE;
-    }
 
     public void register(SliceId sliceId, IPipelineSlice slice) {
         if (this.slices.containsKey(sliceId)) {

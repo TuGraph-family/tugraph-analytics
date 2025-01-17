@@ -21,7 +21,6 @@ import com.antgroup.geaflow.shuffle.api.writer.PipelineWriter;
 import com.antgroup.geaflow.shuffle.message.PipelineInfo;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
-import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +48,6 @@ public class NettyShuffleService implements IShuffleService {
     @Override
     public void clean(PipelineInfo jobInfo) {
         LOGGER.info("release shuffle data of job {}", jobInfo);
-        SliceManager.getInstance().release(jobInfo.getPipelineId());
+        ShuffleManager.getInstance().release(jobInfo.getPipelineId());
     }
 }

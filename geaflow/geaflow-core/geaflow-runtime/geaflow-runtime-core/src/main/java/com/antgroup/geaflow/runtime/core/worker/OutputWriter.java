@@ -18,9 +18,8 @@ import com.antgroup.geaflow.cluster.collector.IOutputMessageBuffer;
 import com.antgroup.geaflow.cluster.protocol.OutputMessage;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.io.AbstractMessageBuffer;
-import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.Shard;
-
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,9 +36,9 @@ public class OutputWriter<T> extends AbstractMessageBuffer<OutputMessage<T>>
     private final AtomicReference<Throwable> err;
 
     public OutputWriter(int edgeId, int bucketNum) {
-        super(ShuffleConfig.getInstance().getEmitQueueSize());
+        super(ShuffleManager.getInstance().getShuffleConfig().getEmitQueueSize());
         this.edgeId = edgeId;
-        this.bufferSize = ShuffleConfig.getInstance().getEmitBufferSize();
+        this.bufferSize = ShuffleManager.getInstance().getShuffleConfig().getEmitBufferSize();
         this.buffers = new ArrayList[bucketNum];
         this.err = new AtomicReference<>();
         for (int i = 0; i < bucketNum; i++) {

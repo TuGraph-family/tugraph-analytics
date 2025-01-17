@@ -20,7 +20,6 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFL
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_SAFETY_FRACTION;
 
 import com.antgroup.geaflow.common.config.Configuration;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -33,9 +32,7 @@ public class ShuffleMemoryTracker {
     private final long maxShuffleSize;
     private final AtomicLong usedMemory;
 
-    private static volatile ShuffleMemoryTracker INSTANCE;
-
-    private ShuffleMemoryTracker(Configuration config) {
+    public ShuffleMemoryTracker(Configuration config) {
         boolean memoryPool = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
 
         // Set offHeap 0 or not enable memory pool.
@@ -48,17 +45,6 @@ public class ShuffleMemoryTracker {
         usedMemory = new AtomicLong(0);
         LOGGER.info("memoryPool:{} maxMemory:{}mb shuffleMax:{}mb", memoryPool,
             maxMemorySize / FileUtils.ONE_MB, maxShuffleSize / FileUtils.ONE_MB);
-    }
-
-    public static synchronized ShuffleMemoryTracker getInstance(Configuration config) {
-        if (INSTANCE == null) {
-            INSTANCE = new ShuffleMemoryTracker(config);
-        }
-        return INSTANCE;
-    }
-
-    public static ShuffleMemoryTracker getInstance() {
-        return INSTANCE;
     }
 
     public boolean requireMemory(long requiredBytes) {
@@ -90,9 +76,7 @@ public class ShuffleMemoryTracker {
         return usedMemory.get() * 1.0 / maxShuffleSize;
     }
 
-    @VisibleForTesting
     public void release() {
-        INSTANCE = null;
     }
 
 }

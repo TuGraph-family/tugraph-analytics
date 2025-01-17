@@ -14,9 +14,9 @@
 
 package com.antgroup.geaflow.shuffle.api.writer;
 
-import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.encoder.IEncoder;
 import com.antgroup.geaflow.common.shuffle.DataExchangeMode;
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.PipelineInfo;
 import java.io.Serializable;
 
@@ -76,7 +76,7 @@ public interface IWriterContext extends Serializable {
      *
      * @return configuration.
      */
-    Configuration getConfig();
+    ShuffleConfig getConfig();
 
     /**
      * Get the encoder for serialize and deserialize data.

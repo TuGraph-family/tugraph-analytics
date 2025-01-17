@@ -17,14 +17,14 @@ package com.antgroup.geaflow.runtime.core.worker;
 import com.antgroup.geaflow.cluster.fetcher.IInputMessageBuffer;
 import com.antgroup.geaflow.cluster.protocol.InputMessage;
 import com.antgroup.geaflow.io.AbstractMessageBuffer;
-import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.PipelineMessage;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 
 public class InputReader<T> extends AbstractMessageBuffer<InputMessage<T>> implements IInputMessageBuffer<T> {
 
     public InputReader() {
-        super(ShuffleConfig.getInstance().getFetchQueueSize());
+        super(ShuffleManager.getInstance().getShuffleConfig().getFetchQueueSize());
     }
 
     @Override

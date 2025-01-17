@@ -24,6 +24,7 @@ import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SpillablePipelineSlice;
 import com.antgroup.geaflow.shuffle.serialize.AbstractMessageIterator;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +40,8 @@ public class PrefetchMessageBuffer<T> implements IInputMessageBuffer<T> {
     public PrefetchMessageBuffer(String logTag, SliceId sliceId) {
         this.slice = new SpillablePipelineSlice(logTag, sliceId);
         this.edgeId = sliceId.getEdgeId();
-        SliceManager.getInstance().register(sliceId, this.slice);
+        SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
+        sliceManager.register(sliceId, this.slice);
     }
 
     @Override
