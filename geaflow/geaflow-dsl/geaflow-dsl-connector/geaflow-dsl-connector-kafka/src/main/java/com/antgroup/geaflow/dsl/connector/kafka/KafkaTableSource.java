@@ -62,8 +62,6 @@ public class KafkaTableSource extends AbstractTableSource {
     private String topic;
     private long startTimeMs;
     private Properties props;
-    private String connectorFormat;
-    private TableSchema schema;
     private Duration pollTimeout;
 
     private transient KafkaConsumer<String, String> consumer;
@@ -93,7 +91,6 @@ public class KafkaTableSource extends AbstractTableSource {
         if (pullSize <= 0) {
             throw new GeaFlowDSLException("Config {} is illegal:{}", KafkaConfigKeys.GEAFLOW_DSL_KAFKA_PULL_BATCH_SIZE, pullSize);
         }
-        this.schema = tableSchema;
         this.props = new Properties();
         props.setProperty(KafkaConstants.KAFKA_BOOTSTRAP_SERVERS, servers);
         props.setProperty(KafkaConstants.KAFKA_KEY_DESERIALIZER,
@@ -103,7 +100,7 @@ public class KafkaTableSource extends AbstractTableSource {
         props.setProperty(KafkaConstants.KAFKA_MAX_POLL_RECORDS,
             String.valueOf(pullSize));
         props.setProperty(KafkaConstants.KAFKA_GROUP_ID, groupId);
-        LOGGER.info("open kafka, servers is: {}, topic is:{}, config is:{}, schema is: {}, connector format is : {}",
+        LOGGER.info("open kafka, servers is: {}, topic is:{}, config is:{}, schema is: {}",
             servers, topic, conf, tableSchema);
     }
 
