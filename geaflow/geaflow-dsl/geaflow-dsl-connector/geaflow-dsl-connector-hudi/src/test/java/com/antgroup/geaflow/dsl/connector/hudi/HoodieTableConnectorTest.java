@@ -27,6 +27,7 @@ import com.antgroup.geaflow.dsl.connector.api.TableConnector;
 import com.antgroup.geaflow.dsl.connector.api.TableReadableConnector;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.util.ConnectorFactory;
+import com.antgroup.geaflow.dsl.connector.api.window.AllFetchWindow;
 import com.antgroup.geaflow.dsl.connector.file.source.format.ParquetFormat;
 import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
 import com.google.common.collect.Lists;
@@ -106,7 +107,7 @@ public class HoodieTableConnectorTest {
 
         List<Row> readRows = new ArrayList<>();
         for (Partition partition : partitions) {
-            FetchData<Row> rows = tableSource.fetch(partition, Optional.empty(), -1L);
+            FetchData<Row> rows = tableSource.fetch(partition, Optional.empty(), new AllFetchWindow(-1));
             readRows.addAll(Lists.newArrayList(rows.getDataIterator()));
         }
         Assert.assertEquals(StringUtils.join(readRows, "\n"),

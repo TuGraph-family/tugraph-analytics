@@ -1,6 +1,3 @@
-set geaflow.dsl.window.size = -1;
-set geaflow.dsl.custom.sink.`function` = 'com.antgroup.geaflow.dsl.runtime.testenv.FoGeaFlowTableSinkFunction';
-
 CREATE TABLE kafka_source (
 	id bigint,
 	name varchar,
@@ -8,7 +5,10 @@ CREATE TABLE kafka_source (
 ) WITH (
 	type='kafka',
 	geaflow.dsl.kafka.servers = 'localhost:9092',
-	geaflow.dsl.kafka.topic = 'fo-test'
+	geaflow.dsl.kafka.topic = 'scan_002',
+	geaflow.dsl.kafka.data.operation.timeout.seconds = 5,
+	geaflow.dsl.time.window.size=10,
+	geaflow.dsl.start.time='${startTime}'
 );
 
 CREATE TABLE tbl_result (

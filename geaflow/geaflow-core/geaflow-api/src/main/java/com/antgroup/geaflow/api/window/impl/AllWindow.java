@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.api.window.impl;
 
 import com.antgroup.geaflow.api.window.IWindow;
+import com.antgroup.geaflow.api.window.WindowType;
 
 public class AllWindow<T> implements IWindow<T> {
 
@@ -39,5 +40,10 @@ public class AllWindow<T> implements IWindow<T> {
 
     public static synchronized <T> AllWindow<T> getInstance() {
         return new AllWindow<>();
+    }
+
+    @Override
+    public WindowType getType() {
+        return WindowType.ALL_WINDOW;
     }
 }

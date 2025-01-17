@@ -46,6 +46,7 @@ public class KafkaTableSink implements TableSink {
     private String valueSerializerClass;
     private String topic;
     private Properties props;
+    private int writeTimeout;
 
     private transient KafkaProducer<String, String> producer;
 
@@ -67,6 +68,8 @@ public class KafkaTableSink implements TableSink {
         props.setProperty(KafkaConstants.KAFKA_BOOTSTRAP_SERVERS, servers);
         props.setProperty(KafkaConstants.KAFKA_KEY_SERIALIZER, valueSerializerClass);
         props.setProperty(KafkaConstants.KAFKA_VALUE_SERIALIZER, valueSerializerClass);
+        writeTimeout = context.getConfiguration()
+            .getInteger(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_DATA_OPERATION_TIMEOUT);
 
         producer = new KafkaProducer<>(props);
 
@@ -96,7 +99,7 @@ public class KafkaTableSink implements TableSink {
         }
         ProducerRecord<String, String> record = createRecord(values);
         try {
-            producer.send(record).get(KafkaConstants.KAFKA_DATA_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            producer.send(record).get(writeTimeout, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new IOException("When write kafka.", e);
         }

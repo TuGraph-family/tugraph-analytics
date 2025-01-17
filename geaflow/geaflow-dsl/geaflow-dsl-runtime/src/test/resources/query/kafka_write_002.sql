@@ -1,5 +1,4 @@
 set geaflow.dsl.window.size = -1;
-set geaflow.dsl.custom.sink.`function` = 'com.antgroup.geaflow.dsl.runtime.testenv.FoGeaFlowTableSinkFunction';
 
 CREATE TABLE users (
 	id bigint,
@@ -17,7 +16,7 @@ CREATE TABLE tbl_result (
 ) WITH (
 	type='kafka',
 	geaflow.dsl.kafka.servers = 'localhost:9092',
-	geaflow.dsl.kafka.topic = 'fo-test'
+	geaflow.dsl.kafka.topic = 'scan_002'
 );
 
 INSERT INTO tbl_result

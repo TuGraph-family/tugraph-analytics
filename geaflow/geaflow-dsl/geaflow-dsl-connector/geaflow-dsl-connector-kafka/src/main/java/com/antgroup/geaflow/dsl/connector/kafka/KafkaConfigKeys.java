@@ -33,4 +33,14 @@ public class KafkaConfigKeys {
         .key("geaflow.dsl.kafka.group.id")
         .defaultValue("default-group-id")
         .description("The kafka group id, default is 'default-group-id'.");
+
+    public static final ConfigKey GEAFLOW_DSL_KAFKA_PULL_BATCH_SIZE = ConfigKeys
+        .key("geaflow.dsl.kafka.pull.batch.size")
+        .defaultValue(100)
+        .description("The kafka pull batch size");
+
+    public static final ConfigKey GEAFLOW_DSL_KAFKA_DATA_OPERATION_TIMEOUT = ConfigKeys
+        .key("geaflow.dsl.kafka.data.operation.timeout.seconds")
+        .defaultValue(30)
+        .description("The kafka pool/write data timeout");
 }

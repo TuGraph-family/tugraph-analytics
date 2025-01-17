@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.connector.file.source;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
+import com.antgroup.geaflow.api.window.WindowType;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
@@ -24,6 +25,7 @@ import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,9 +99,20 @@ public class FileTableSource implements TableSource {
     @SuppressWarnings("unchecked")
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long windowSize) throws IOException {
+                                  FetchWindow windowInfo) throws IOException {
+        int windowSize;
+        if (windowInfo.getType() == WindowType.ALL_WINDOW) {
+            windowSize = Integer.MAX_VALUE;
+        } else if (windowInfo.getType() == WindowType.SIZE_TUMBLING_WINDOW) {
+            if (windowInfo.windowSize() > Integer.MAX_VALUE) {
+                throw new GeaFlowDSLException("File table source window size is overflow:{}", windowInfo.windowSize());
+            }
+            windowSize = (int) windowInfo.windowSize();
+        } else {
+            throw new GeaFlowDSLException("File table source not support window:{}", windowInfo.getType());
+        }
         FileOffset offset = startOffset.map(value -> (FileOffset) value).orElseGet(() -> new FileOffset(0L));
-        return fileReadHandler.readPartition((FileSplit) partition, offset, (int) windowSize);
+        return fileReadHandler.readPartition((FileSplit) partition, offset, windowSize);
     }
 
     @Override

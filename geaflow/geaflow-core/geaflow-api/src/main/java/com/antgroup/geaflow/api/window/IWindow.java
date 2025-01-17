@@ -34,4 +34,9 @@ public interface IWindow<T> extends Function, Serializable {
      */
     long assignWindow(T value);
 
+    /**
+     * Return window type.
+     */
+    WindowType getType();
+
 }

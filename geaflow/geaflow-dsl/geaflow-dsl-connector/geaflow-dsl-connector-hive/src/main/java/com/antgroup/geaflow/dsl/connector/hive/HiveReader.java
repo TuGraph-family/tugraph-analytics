@@ -20,7 +20,6 @@ import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.common.types.TableField;
-import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.hive.HiveTableSource.HiveOffset;
 import java.io.IOException;
@@ -65,7 +64,7 @@ public class HiveReader {
     }
 
     public FetchData<Row> read(long windowSize, String[] partitionValues) {
-        if (windowSize == Windows.SIZE_OF_ALL_WINDOW) {
+        if (windowSize == Long.MAX_VALUE) {
             Iterator<Row> hiveIterator = new HiveIterator(recordReader, deserializer, partitionValues, readSchema);
             return FetchData.createBatchFetch(hiveIterator, new HiveOffset(-1L));
         } else {

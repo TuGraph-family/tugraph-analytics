@@ -19,18 +19,13 @@ import org.joda.time.format.DateTimeFormatter;
 
 public class DateTimeUtil {
 
-    public static int toUnixTime(String dateStr, String format) {
+    public static long toUnixTime(String dateStr, String format) {
         if (dateStr == null || dateStr.isEmpty()) {
             return -1;
         } else {
             DateTimeFormatter dateTimeFormat = DateTimeFormat.forPattern(format);
-            return (int) (dateTimeFormat.parseMillis(dateStr) / 1000);
+            return dateTimeFormat.parseMillis(dateStr);
         }
-    }
-
-    public static String fromUnixTime(int unixTime, String format) {
-        long millsTs = ((long) unixTime) * 1000L;
-        return DateTimeFormat.forPattern(format).print(millsTs);
     }
 
     public static String fromUnixTime(long unixTime, String format) {

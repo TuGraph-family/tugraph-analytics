@@ -19,7 +19,6 @@ import com.antgroup.geaflow.api.function.RichFunction;
 import com.antgroup.geaflow.api.function.io.SourceFunction;
 import com.antgroup.geaflow.api.window.IWindow;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
@@ -28,6 +27,8 @@ import com.antgroup.geaflow.dsl.connector.api.Offset;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindowFactory;
 import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
@@ -68,8 +69,6 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
     private List<Partition> partitions;
 
     private OffsetStore offsetStore;
-
-    private long windowSize;
 
     private TableDeserializer<?> deserializer;
 
@@ -117,9 +116,7 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
 
     @Override
     public void init(int parallel, int index) {
-        Configuration conf = table.getConfigWithGlobal(runtimeContext.getConfiguration());
 
-        windowSize = conf.getLong(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE);
         tableSource.open(runtimeContext);
 
         List<Partition> allPartitions = tableSource.listPartitions();
@@ -129,14 +126,15 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
         partitions = assignPartition(allPartitions,
             runtimeContext.getTaskArgs().getMaxParallelism(), parallel, index);
 
+        Configuration conf = table.getConfigWithGlobal(runtimeContext.getConfiguration());
         deserializer = tableSource.getDeserializer(conf);
         if (deserializer != null) {
             StructType schema = (StructType) SqlTypeUtil.convertType(
                 table.getRowType(GQLJavaTypeFactory.create()));
             deserializer.init(conf, schema);
         }
-        LOGGER.info("open source table: {}, taskIndex:{}, parallel: {}, windowSize:{}, assigned "
-            + "partitions:{}", table.getName(), index, parallel, windowSize, partitions);
+        LOGGER.info("open source table: {}, taskIndex:{}, parallel: {}, assigned "
+            + "partitions:{}", table.getName(), index, parallel, partitions);
     }
 
     @SuppressWarnings("unchecked")
@@ -148,12 +146,13 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
         if (partitions.isEmpty()) {
             return false;
         }
+        FetchWindow fetchWindow = FetchWindowFactory.createFetchWindow(window);
         long batchId = window.windowId();
         boolean isFinish = true;
         for (Partition partition : partitions) {
             Offset offset = offsetStore.readOffset(partition.getName(), batchId);
             FetchData<Object> fetchData = tableSource.fetch(partition, Optional.ofNullable(offset),
-                windowSize);
+                fetchWindow);
             Iterator<Object> dataIterator = fetchData.getDataIterator();
             while (dataIterator.hasNext()) {
                 Object record = dataIterator.next();

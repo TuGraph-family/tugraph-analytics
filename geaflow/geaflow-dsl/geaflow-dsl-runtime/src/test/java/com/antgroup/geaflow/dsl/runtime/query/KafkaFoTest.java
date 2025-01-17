@@ -15,7 +15,8 @@
 package com.antgroup.geaflow.dsl.runtime.query;
 
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
-import com.antgroup.geaflow.dsl.connector.kafka.KafkaConfigKeys;
+import com.antgroup.geaflow.common.utils.DateTimeUtil;
+import com.antgroup.geaflow.dsl.connector.api.util.ConnectorConstants;
 import com.antgroup.geaflow.dsl.runtime.testenv.KafkaTestEnv;
 import com.antgroup.geaflow.dsl.runtime.testenv.SourceFunctionNoPartitionCheck;
 import java.io.IOException;
@@ -63,6 +64,34 @@ public class KafkaFoTest {
         QueryTester tester = QueryTester
             .build()
             .withQueryPath("/query/kafka_scan_001.sql")
+            .withConfig(config)
+            .withTestTimeWaitSeconds(60);
+        try {
+            tester.execute();
+        } catch (Exception e) {
+            LOGGER.info("Kafka unbounded stream finish with timeout.");
+        }
+        tester.checkSinkResult();
+    }
+
+    @Test
+    public void testKafka_002() throws Exception {
+        Map<String, String> config  = new HashMap<>();
+        config.put(DSLConfigKeys.GEAFLOW_DSL_CUSTOM_SOURCE_FUNCTION.getKey(),
+            SourceFunctionNoPartitionCheck.class.getName());
+        String startTime = DateTimeUtil.fromUnixTime(System.currentTimeMillis() - 120 * 1000, ConnectorConstants.START_TIME_FORMAT);
+        config.put("startTime", startTime);
+        KafkaTestEnv.get().createTopic("scan_002");
+        QueryTester
+            .build()
+            .withQueryPath("/query/kafka_write_002.sql")
+            .withConfig(config)
+            .withTestTimeWaitSeconds(60)
+            .execute();
+        QueryTester tester = QueryTester
+            .build()
+            .withQueryPath("/query/kafka_scan_002.sql")
+            .withCustomWindow()
             .withConfig(config)
             .withTestTimeWaitSeconds(60);
         try {

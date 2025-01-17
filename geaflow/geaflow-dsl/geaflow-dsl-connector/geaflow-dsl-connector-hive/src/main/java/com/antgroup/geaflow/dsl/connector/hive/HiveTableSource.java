@@ -29,6 +29,7 @@ import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.TableSource;
 import com.antgroup.geaflow.dsl.connector.api.serde.DeserializerFactory;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
 import com.antgroup.geaflow.dsl.connector.hive.adapter.HiveVersionAdapter;
 import com.antgroup.geaflow.dsl.connector.hive.adapter.HiveVersionAdapters;
 import com.antgroup.geaflow.dsl.connector.hive.util.HiveUtils;
@@ -178,7 +179,18 @@ public class HiveTableSource implements TableSource, EnablePartitionPushDown {
     @SuppressWarnings("unchecked")
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
-                                  long windowSize) throws IOException {
+                                  FetchWindow windowInfo) throws IOException {
+        long desireWindowSize = -1;
+        switch (windowInfo.getType()) {
+            case ALL_WINDOW:
+                desireWindowSize = Long.MAX_VALUE;
+                break;
+            case SIZE_TUMBLING_WINDOW:
+                desireWindowSize = windowInfo.windowSize();
+                break;
+            default:
+                throw new GeaFlowDSLException("Not support window type:{}", windowInfo.getType());
+        }
         HivePartition hivePartition = (HivePartition) partition;
         HiveReader reader = partitionReaders.get(partition.getName());
         if (reader == null) {
@@ -193,7 +205,7 @@ public class HiveTableSource implements TableSource, EnablePartitionPushDown {
             partitionReaders.put(partition.getName(), reader);
         }
         try {
-            return (FetchData<T>) reader.read(windowSize, hivePartition.getPartitionValues());
+            return (FetchData<T>) reader.read(desireWindowSize, hivePartition.getPartitionValues());
         } catch (Exception e) {
             throw new GeaFlowDSLException(e);
         }

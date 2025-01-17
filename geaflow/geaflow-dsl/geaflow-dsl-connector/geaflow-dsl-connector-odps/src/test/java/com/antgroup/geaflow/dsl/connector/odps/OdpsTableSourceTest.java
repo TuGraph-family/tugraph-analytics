@@ -34,6 +34,8 @@ import com.antgroup.geaflow.dsl.common.types.VoidType;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.FetchWindow;
+import com.antgroup.geaflow.dsl.connector.api.window.SizeFetchWindow;
 import com.antgroup.geaflow.dsl.connector.odps.OdpsTableSource.OdpsShardPartition;
 import com.antgroup.geaflow.dsl.connector.odps.utils.OdpsConnectorUtils;
 import com.antgroup.geaflow.dsl.connector.odps.utils.OdpsRecordWithPartitionSpec;
@@ -73,9 +75,9 @@ public class OdpsTableSourceTest {
             Assert.assertEquals(e.getMessage(), "Cannot list partitions from ODPS, endPoint: http://test.odps.com/api");
         }
         Partition firstPartition = new OdpsShardPartition("prefix-", new PartitionSpec("dt='20000000'"));
-        long windowSize = 100L;
+        FetchWindow window = new SizeFetchWindow(1, 100L);
         try {
-            FetchData data = source.fetch(firstPartition, Optional.empty(), windowSize);
+            FetchData data = source.fetch(firstPartition, Optional.empty(), window);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), "Cannot get Odps session.");
         }
@@ -112,9 +114,9 @@ public class OdpsTableSourceTest {
             Assert.assertEquals(e.getMessage(), "Cannot list partitions from ODPS, endPoint: http://test.odps.com/api");
         }
         Partition firstPartition = new OdpsShardPartition("prefix-", new PartitionSpec("dt='20000000'"));
-        long windowSize = 100L;
+        FetchWindow window = new SizeFetchWindow(1, 100L);
         try {
-            FetchData data = source.fetch(firstPartition, Optional.empty(), windowSize);
+            FetchData data = source.fetch(firstPartition, Optional.empty(), window);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), "Cannot get Odps session.");
         }

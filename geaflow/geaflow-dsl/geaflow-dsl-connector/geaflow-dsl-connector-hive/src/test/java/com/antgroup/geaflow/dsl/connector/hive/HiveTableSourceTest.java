@@ -25,6 +25,7 @@ import com.antgroup.geaflow.dsl.connector.api.FetchData;
 import com.antgroup.geaflow.dsl.connector.api.Partition;
 import com.antgroup.geaflow.dsl.common.util.Windows;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
+import com.antgroup.geaflow.dsl.connector.api.window.AllFetchWindow;
 import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -197,7 +198,7 @@ public class HiveTableSourceTest extends BaseHiveTest {
         for (Partition partition : partitions) {
             LOGGER.info("partition: {}", partition.getName());
             FetchData<Row> fetchData = hiveTableSource.fetch(partition, Optional.empty(),
-                Windows.SIZE_OF_ALL_WINDOW);
+                new AllFetchWindow(1));
             Iterator<Row> rowIterator = fetchData.getDataIterator();
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
