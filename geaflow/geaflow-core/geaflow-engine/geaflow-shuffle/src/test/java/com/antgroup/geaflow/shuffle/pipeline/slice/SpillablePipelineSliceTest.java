@@ -17,6 +17,7 @@ package com.antgroup.geaflow.shuffle.pipeline.slice;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_SPILL_RECORDS;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.HeapBuffer;
@@ -25,8 +26,6 @@ import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeChannelBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.ShuffleMemoryTracker;
 import java.io.IOException;
 import java.util.UUID;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -36,22 +35,19 @@ public class SpillablePipelineSliceTest {
     public void testAdd() throws IOException {
         Configuration config = new Configuration();
         config.put(SHUFFLE_SPILL_RECORDS, "50");
-        ShuffleConfig.getInstance(config);
-
-        ShuffleMemoryTracker tracker = Mockito.mock(ShuffleMemoryTracker.class);
-        MockedStatic<ShuffleMemoryTracker> stracker =
-            Mockito.mockStatic(ShuffleMemoryTracker.class);
-        stracker.when(() -> ShuffleMemoryTracker.getInstance()).then(invocation -> tracker);
-        Mockito.when(tracker.checkMemoryEnough()).thenReturn(false);
+        config.put(ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB, String.valueOf(1024));
 
         long id = UUID.randomUUID().getLeastSignificantBits();
         SliceId sliceId = new SliceId(id, 0, 0, 0);
-        SpillablePipelineSlice slice = new SpillablePipelineSlice("test", sliceId, 2);
+        ShuffleConfig shuffleConfig = new ShuffleConfig(config);
+        ShuffleMemoryTracker memoryTracker = new ShuffleMemoryTracker(config);
+        SpillablePipelineSlice slice = new SpillablePipelineSlice("test", sliceId, 2, shuffleConfig,
+            memoryTracker);
         byte[] bytes1 = new byte[100];
 
         int bufferCount = 10000;
         for (int i = 0; i < bufferCount; i++) {
-            HeapBuffer outBuffer = new HeapBuffer(bytes1);
+            HeapBuffer outBuffer = new HeapBuffer(bytes1, memoryTracker);
             PipeBuffer buffer = new PipeBuffer(outBuffer, 1, true);
             slice.add(buffer);
         }
@@ -59,8 +55,7 @@ public class SpillablePipelineSliceTest {
 
         // Check repeatable reader.
         int consumedBufferCount = 0;
-        PipelineSliceListener listener = new MockPipelineSliceListener();
-        PipelineSliceReader reader = slice.createSliceReader(1, listener);
+        PipelineSliceReader reader = slice.createSliceReader(1, () -> {});
         while (reader.hasNext()) {
             PipeChannelBuffer buffer = reader.next();
             if (buffer != null) {
@@ -72,7 +67,7 @@ public class SpillablePipelineSliceTest {
 
         // Check disposable reader.
         consumedBufferCount = 0;
-        reader = slice.createSliceReader(1, listener);
+        reader = slice.createSliceReader(1, () -> {});
         while (reader.hasNext()) {
             PipeChannelBuffer buffer = reader.next();
             if (buffer != null) {
@@ -84,11 +79,4 @@ public class SpillablePipelineSliceTest {
         slice.release();
     }
 
-    class MockPipelineSliceListener implements PipelineSliceListener {
-
-        @Override
-        public void notifyDataAvailable() {
-
-        }
-    }
 }

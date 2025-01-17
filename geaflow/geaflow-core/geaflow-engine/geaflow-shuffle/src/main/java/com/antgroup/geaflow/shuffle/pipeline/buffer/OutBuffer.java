@@ -65,13 +65,6 @@ public interface OutBuffer {
     boolean isDisposable();
 
     /**
-     * Check if this buffer support memory track.
-     *
-     * @return if support memory track.
-     */
-    boolean isMemoryTracking();
-
-    /**
      * Release this buffer.
      */
     void release();

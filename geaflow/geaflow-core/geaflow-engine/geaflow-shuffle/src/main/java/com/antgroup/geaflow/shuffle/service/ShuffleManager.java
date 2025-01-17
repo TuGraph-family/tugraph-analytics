@@ -19,6 +19,7 @@ import com.antgroup.geaflow.shuffle.api.reader.IShuffleReader;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.Shard;
+import com.antgroup.geaflow.shuffle.network.IConnectionManager;
 import com.antgroup.geaflow.shuffle.network.netty.ConnectionManager;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.ShuffleMemoryTracker;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
@@ -33,26 +34,44 @@ public class ShuffleManager {
     private static ShuffleManager INSTANCE;
     private final IShuffleService shuffleService;
     private final ConnectionManager connectionManager;
-    private final Configuration configuration;
+    private final SliceManager sliceManager;
+    private final ShuffleConfig shuffleConfig;
+    private final ShuffleMemoryTracker shuffleMemoryTracker;
 
     public ShuffleManager(Configuration config) {
+        this.shuffleConfig = new ShuffleConfig(config);
+        this.connectionManager = new ConnectionManager(shuffleConfig);
         this.shuffleService = new NettyShuffleService();
-        this.connectionManager = new ConnectionManager(ShuffleConfig.getInstance(config));
         this.shuffleService.init(connectionManager);
-        this.configuration = config;
+        this.sliceManager = new SliceManager();
+        this.shuffleMemoryTracker = new ShuffleMemoryTracker(config);
     }
 
     public static synchronized ShuffleManager init(Configuration config) {
         if (INSTANCE == null) {
             INSTANCE = new ShuffleManager(config);
-            ShuffleMemoryTracker.getInstance(config);
-            SliceManager.init();
         }
         return INSTANCE;
     }
 
     public static ShuffleManager getInstance() {
         return INSTANCE;
+    }
+
+    public IConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public SliceManager getSliceManager() {
+        return sliceManager;
+    }
+
+    public ShuffleConfig getShuffleConfig() {
+        return shuffleConfig;
+    }
+
+    public ShuffleMemoryTracker getShuffleMemoryTracker() {
+        return shuffleMemoryTracker;
     }
 
     public int getShufflePort() {
@@ -67,10 +86,16 @@ public class ShuffleManager {
         return shuffleService.getWriter();
     }
 
+    public void release(long pipelineId) {
+        sliceManager.release(pipelineId);
+    }
+
     public void close() {
         LOGGER.info("closing shuffle manager");
         try {
             connectionManager.close();
+            shuffleMemoryTracker.release();
+            INSTANCE = null;
         } catch (IOException e) {
             LOGGER.warn("close connectManager failed:{}", e.getCause(), e);
         }

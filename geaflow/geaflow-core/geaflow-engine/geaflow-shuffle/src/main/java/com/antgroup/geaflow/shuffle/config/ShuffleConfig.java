@@ -40,7 +40,6 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFL
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.shuffle.StorageLevel;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,25 +94,7 @@ public class ShuffleConfig {
     private final int flushBufferTimeoutMs;
     private final StorageLevel storageLevel;
 
-    private static ShuffleConfig INSTANCE;
-
-    public static synchronized ShuffleConfig getInstance(Configuration config) {
-        if (INSTANCE == null) {
-            INSTANCE = new ShuffleConfig(config);
-        }
-        return INSTANCE;
-    }
-
-    @VisibleForTesting
-    public static synchronized void reset(Configuration config) {
-        INSTANCE = new ShuffleConfig(config);
-    }
-
-    public static ShuffleConfig getInstance() {
-        return INSTANCE;
-    }
-
-    private ShuffleConfig(Configuration config) {
+    public ShuffleConfig(Configuration config) {
         this.configuration = config;
 
         // netty

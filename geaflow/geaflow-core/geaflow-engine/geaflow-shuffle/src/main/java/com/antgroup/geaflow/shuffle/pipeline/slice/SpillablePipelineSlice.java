@@ -23,6 +23,7 @@ import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.ShuffleMemoryTracker;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.shuffle.storage.ShuffleStore;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,19 +52,27 @@ public class SpillablePipelineSlice extends AbstractSlice {
     private long memoryBytes = 0;
     // Bytes count on disk.
     private long diskBytes = 0;
+    private ShuffleMemoryTracker memoryTracker;
 
     public SpillablePipelineSlice(String taskLogTag, SliceId sliceId) {
         this(taskLogTag, sliceId, 0);
     }
 
     public SpillablePipelineSlice(String taskLogTag, SliceId sliceId, int refCount) {
-        super(taskLogTag, sliceId, refCount);
+        this(taskLogTag, sliceId, refCount, ShuffleManager.getInstance().getShuffleConfig(),
+            ShuffleManager.getInstance()
+            .getShuffleMemoryTracker());
+    }
 
-        this.store = ShuffleStore.getShuffleStore(ShuffleConfig.getInstance().getStorageLevel());
+    public SpillablePipelineSlice(String taskLogTag, SliceId sliceId, int refCount,
+                                  ShuffleConfig shuffleConfig, ShuffleMemoryTracker memoryTracker) {
+        super(taskLogTag, sliceId, refCount);
+        this.storageLevel = shuffleConfig.getStorageLevel();
+        this.store = ShuffleStore.getShuffleStore(shuffleConfig);
         String fileName = String.format("shuffle-%d-%d-%d",
             sliceId.getPipelineId(), sliceId.getEdgeId(), sliceId.getSliceIndex());
         this.fileName = store.getFilePath(fileName);
-        this.storageLevel = ShuffleConfig.getInstance().getStorageLevel();
+        this.memoryTracker = memoryTracker;
     }
 
     public String getFileName() {
@@ -92,7 +101,7 @@ public class SpillablePipelineSlice extends AbstractSlice {
         }
 
         this.writeMemory(buffer);
-        if (!ShuffleMemoryTracker.getInstance().checkMemoryEnough()) {
+        if (!memoryTracker.checkMemoryEnough()) {
             this.spillWrite();
         }
         return true;

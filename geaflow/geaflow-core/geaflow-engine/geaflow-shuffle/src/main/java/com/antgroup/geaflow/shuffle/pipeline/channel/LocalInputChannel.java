@@ -20,6 +20,7 @@ import com.antgroup.geaflow.shuffle.pipeline.fetcher.OneShardFetcher;
 import com.antgroup.geaflow.shuffle.pipeline.slice.PipelineSliceListener;
 import com.antgroup.geaflow.shuffle.pipeline.slice.PipelineSliceReader;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
+import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import com.antgroup.geaflow.shuffle.util.SliceNotFoundException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -60,7 +61,8 @@ public class LocalInputChannel extends AbstractInputChannel implements PipelineS
             if (this.sliceReader == null) {
                 LOGGER.info("Requesting Local slice {}", this.inputSliceId);
                 try {
-                    this.sliceReader = SliceManager.getInstance()
+                    SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
+                    this.sliceReader = sliceManager
                         .createSliceReader(this.inputSliceId, this.initialBatchId, this);
                 } catch (SliceNotFoundException notFound) {
                     if (increaseBackoff()) {

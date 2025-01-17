@@ -30,6 +30,7 @@ import com.antgroup.geaflow.shuffle.OutputDescriptor;
 import com.antgroup.geaflow.shuffle.api.writer.IShuffleWriter;
 import com.antgroup.geaflow.shuffle.api.writer.IWriterContext;
 import com.antgroup.geaflow.shuffle.api.writer.WriterContext;
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.desc.IOutputDesc;
 import com.antgroup.geaflow.shuffle.desc.OutputType;
 import com.antgroup.geaflow.shuffle.message.Shard;
@@ -87,6 +88,7 @@ public class PipelineOutputEmitter {
 
         int outputNum = outputDescList.size();
         AtomicBoolean[] flags = new AtomicBoolean[outputNum];
+        ShuffleConfig shuffleConfig = ShuffleManager.getInstance().getShuffleConfig();
         for (int i = 0; i < outputNum; i++) {
             IOutputDesc outputDesc = outputDescList.get(i);
             if (outputDesc.getType() == OutputType.RESPONSE) {
@@ -102,7 +104,7 @@ public class PipelineOutputEmitter {
             IWriterContext writerContext = WriterContext.newBuilder()
                 .setPipelineId(request.getPipelineId())
                 .setPipelineName(request.getPipelineName())
-                .setConfig(initEmitterRequest.getConfiguration())
+                .setConfig(shuffleConfig)
                 .setVertexId(forwardOutputDesc.getPartitioner().getOpId())
                 .setEdgeId(forwardOutputDesc.getEdgeId())
                 .setTaskId(taskArgs.getTaskId())

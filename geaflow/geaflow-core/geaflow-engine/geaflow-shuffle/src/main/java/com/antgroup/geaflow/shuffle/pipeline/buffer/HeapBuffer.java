@@ -32,6 +32,12 @@ public class HeapBuffer extends AbstractBuffer {
         this(bytes, true);
     }
 
+    public HeapBuffer(byte[] bytes, ShuffleMemoryTracker memoryTracker) {
+        super(memoryTracker);
+        this.bytes = bytes;
+        this.requireMemory(bytes.length);
+    }
+
     public HeapBuffer(byte[] bytes, boolean memoryTrack) {
         super(memoryTrack);
         this.bytes = bytes;

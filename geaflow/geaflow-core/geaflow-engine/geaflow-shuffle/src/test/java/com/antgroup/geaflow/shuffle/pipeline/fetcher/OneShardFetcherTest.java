@@ -17,11 +17,9 @@ package com.antgroup.geaflow.shuffle.pipeline.fetcher;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
-import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
-import com.antgroup.geaflow.shuffle.network.netty.ConnectionManager;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeFetcherBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.channel.AbstractInputChannel;
@@ -52,8 +50,8 @@ public class OneShardFetcherTest {
         Configuration configuration = new Configuration();
         configuration.put(ExecutionConfigKeys.JOB_APP_NAME, "default");
         configuration.put(ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB, String.valueOf(1024));
-        ShuffleManager.init(configuration);
-        connectionManager = new ConnectionManager(ShuffleConfig.getInstance());
+        ShuffleManager shuffleManager = ShuffleManager.init(configuration);
+        connectionManager = shuffleManager.getConnectionManager();
     }
 
     @AfterTest
@@ -97,7 +95,8 @@ public class OneShardFetcherTest {
     public void testRemoteFetch() throws IOException, InterruptedException {
         List<PipelineSliceMeta> inputSlices = new ArrayList<>();
         ShuffleAddress address = connectionManager.getShuffleAddress();
-        SliceId sliceId = new SliceId(1, 0, 0, 0);
+        long pipelineId = 1;
+        SliceId sliceId = new SliceId(pipelineId, 0, 0, 0);
         PipelineSliceMeta slice1 = new PipelineSliceMeta(sliceId, 1, address);
         inputSlices.add(slice1);
 
@@ -115,7 +114,7 @@ public class OneShardFetcherTest {
         slice.add(pipeBuffer4);
         Assert.assertEquals(slice.getTotalBufferCount(), 4);
 
-        SliceManager shuffleDataManager = SliceManager.getInstance();
+        SliceManager shuffleDataManager = ShuffleManager.getInstance().getSliceManager();
         shuffleDataManager.register(sliceId, slice);
 
         List<Long> batchList = Arrays.asList(1L, 2L);
@@ -145,7 +144,8 @@ public class OneShardFetcherTest {
                 Assert.assertTrue(remoteChannel.getSliceRequestClient().disposeIfNotUsed());
             }
         }
-
+        ShuffleManager.getInstance().release(pipelineId);
+        ShuffleManager.getInstance().close();
     }
 
 }

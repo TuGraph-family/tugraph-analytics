@@ -16,6 +16,7 @@ package com.antgroup.geaflow.shuffle.storage;
 
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WORK_PATH;
 
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import java.io.BufferedInputStream;
@@ -34,8 +35,9 @@ public class LocalShuffleStore implements ShuffleStore {
 
     private final String shufflePath;
 
-    public LocalShuffleStore() {
-        String workPath = ShuffleConfig.getInstance().getConfig().getString(JOB_WORK_PATH);
+    public LocalShuffleStore(ShuffleConfig shuffleConfig) {
+        Configuration configuration = shuffleConfig.getConfig();
+        String workPath = configuration.getString(JOB_WORK_PATH);
         Path path = Paths.get(workPath, DEFAULT_LOCAL_ROOT);
         if (!Files.exists(path)) {
             try {

@@ -34,7 +34,7 @@ public class MultiShardFetcherTest {
     @Test
     public void testCreate() throws IOException {
         List<PipelineSliceMeta> inputSlices1 = new ArrayList<>();
-        ShuffleConfig config = ShuffleConfig.getInstance(new Configuration());
+        ShuffleConfig config = new ShuffleConfig(new Configuration());
         IConnectionManager connectionManager = new ConnectionManager(config);
         ShuffleAddress address = connectionManager.getShuffleAddress();
         PipelineSliceMeta slice1 = new PipelineSliceMeta(0, 0, -1, 0, address);
