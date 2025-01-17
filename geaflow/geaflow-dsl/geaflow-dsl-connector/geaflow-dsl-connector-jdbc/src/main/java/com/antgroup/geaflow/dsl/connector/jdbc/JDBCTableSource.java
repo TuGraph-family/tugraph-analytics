@@ -144,7 +144,8 @@ public class JDBCTableSource implements TableSource {
     @Override
     public <T> FetchData<T> fetch(Partition partition, Optional<Offset> startOffset,
                                   FetchWindow windowInfo) throws IOException {
-        if (windowInfo.getType() != WindowType.FIXED_TIME_TUMBLING_WINDOW) {
+        if (!(windowInfo.getType() == WindowType.SIZE_TUMBLING_WINDOW
+            || windowInfo.getType() == WindowType.ALL_WINDOW)) {
             throw new GeaFlowDSLException("Not support window type:{}", windowInfo.getType());
         }
         JDBCPartition jdbcPartition = (JDBCPartition) partition;
