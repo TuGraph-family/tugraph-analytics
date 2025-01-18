@@ -31,7 +31,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +41,7 @@ public class SpillablePipelineSlice extends AbstractSlice {
     private final String fileName;
     private final StorageLevel storageLevel;
     private final ShuffleStore store;
+    private final ShuffleMemoryTracker memoryTracker;
 
     private OutputStream outputStream;
     private CloseableIterator<PipeBuffer> streamBufferIterator;
@@ -52,21 +52,16 @@ public class SpillablePipelineSlice extends AbstractSlice {
     private long memoryBytes = 0;
     // Bytes count on disk.
     private long diskBytes = 0;
-    private ShuffleMemoryTracker memoryTracker;
 
     public SpillablePipelineSlice(String taskLogTag, SliceId sliceId) {
-        this(taskLogTag, sliceId, 0);
-    }
-
-    public SpillablePipelineSlice(String taskLogTag, SliceId sliceId, int refCount) {
-        this(taskLogTag, sliceId, refCount, ShuffleManager.getInstance().getShuffleConfig(),
+        this(taskLogTag, sliceId, ShuffleManager.getInstance().getShuffleConfig(),
             ShuffleManager.getInstance()
-            .getShuffleMemoryTracker());
+                .getShuffleMemoryTracker());
     }
 
-    public SpillablePipelineSlice(String taskLogTag, SliceId sliceId, int refCount,
+    public SpillablePipelineSlice(String taskLogTag, SliceId sliceId,
                                   ShuffleConfig shuffleConfig, ShuffleMemoryTracker memoryTracker) {
-        super(taskLogTag, sliceId, refCount);
+        super(taskLogTag, sliceId);
         this.storageLevel = shuffleConfig.getStorageLevel();
         this.store = ShuffleStore.getShuffleStore(shuffleConfig);
         String fileName = String.format("shuffle-%d-%d-%d",
@@ -172,15 +167,6 @@ public class SpillablePipelineSlice extends AbstractSlice {
     //////////////////////////////
     // Consume data.
     //////////////////////////////
-
-    @Override
-    public Iterator<PipeBuffer> getBufferIterator() {
-        if (diskBytes > 0) {
-            return new FileStreamIterator();
-        } else {
-            return buffers.iterator();
-        }
-    }
 
     @Override
     public boolean hasNext() {

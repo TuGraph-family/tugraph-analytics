@@ -27,16 +27,14 @@ public abstract class AbstractSlice implements IPipelineSlice {
 
     protected final SliceId sliceId;
     protected final String taskLogTag;
-    protected int refCount;
     protected int totalBufferCount;
     protected ArrayDeque<PipeBuffer> buffers;
     protected PipelineSliceReader sliceReader;
     protected volatile boolean isReleased;
 
-    public AbstractSlice(String taskLogTag, SliceId sliceId, int refCount) {
+    public AbstractSlice(String taskLogTag, SliceId sliceId) {
         this.sliceId = sliceId;
         this.taskLogTag = taskLogTag;
-        this.refCount = refCount;
         this.totalBufferCount = 0;
         this.buffers = new ArrayDeque<>();
     }
@@ -61,23 +59,17 @@ public abstract class AbstractSlice implements IPipelineSlice {
                 throw new GeaflowRuntimeException("slice is already created:" + sliceId);
             }
 
-            refCount--;
-            LOGGER.info("creating reader for {} {} with startBatch:{} refCount:{}",
-                taskLogTag, sliceId, startBatchId, refCount);
+            LOGGER.info("creating reader for {} {} with startBatch:{}",
+                taskLogTag, sliceId, startBatchId);
 
-            // multiple repeatable readers can exist at the same time.
-            if (refCount >= 1) {
-                sliceReader = new RepeatableSliceReader(this, startBatchId, listener);
-            } else {
-                sliceReader = new DisposableSliceReader(this, startBatchId, listener);
-            }
+            sliceReader = new DisposableSliceReader(this, startBatchId, listener);
             return sliceReader;
         }
     }
 
     @Override
     public boolean canRelease() {
-        return refCount == 0 && !hasNext();
+        return !hasNext();
     }
 
     @Override

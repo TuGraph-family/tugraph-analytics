@@ -75,7 +75,7 @@ public abstract class ShardWriter<T, R> {
         this.maxBufferSize = this.shuffleConfig.getFlushBufferSizeBytes();
 
         this.buffers = this.buildBufferBuilder(this.targetChannels);
-        this.resultSlices = this.buildResultSlices(this.targetChannels, writerContext.getRefCount());
+        this.resultSlices = this.buildResultSlices(this.targetChannels);
         this.recordSerializer = this.getRecordSerializer();
     }
 
@@ -89,20 +89,20 @@ public abstract class ShardWriter<T, R> {
         return buffers;
     }
 
-    protected IPipelineSlice[] buildResultSlices(int channels, int refCount) {
+    protected IPipelineSlice[] buildResultSlices(int channels) {
         IPipelineSlice[] slices = new IPipelineSlice[channels];
         WriterId writerId = new WriterId(this.pipelineId, this.edgeId, this.taskIndex);
         SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
         for (int i = 0; i < channels; i++) {
             SliceId sliceId = new SliceId(writerId, i);
-            IPipelineSlice slice = this.newSlice(this.taskLogTag, sliceId, refCount);
+            IPipelineSlice slice = this.newSlice(this.taskLogTag, sliceId);
             slices[i] = slice;
             sliceManager.register(sliceId, slice);
         }
         return slices;
     }
 
-    protected abstract IPipelineSlice newSlice(String taskLogTag, SliceId sliceId, int refCount);
+    protected abstract IPipelineSlice newSlice(String taskLogTag, SliceId sliceId);
 
     @SuppressWarnings("unchecked")
     private IRecordSerializer<T> getRecordSerializer() {

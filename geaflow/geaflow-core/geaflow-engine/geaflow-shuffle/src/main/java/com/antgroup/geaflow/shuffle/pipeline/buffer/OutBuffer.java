@@ -51,20 +51,6 @@ public interface OutBuffer {
     void write(OutputStream outputStream) throws IOException;
 
     /**
-     * Set ref count, the number of consumer which handle this buffer.
-     *
-     * @param refCount ref count.
-     */
-    void setRefCount(int refCount);
-
-    /**
-     * Check if this buffer disposable.
-     *
-     * @return if disposable.
-     */
-    boolean isDisposable();
-
-    /**
      * Release this buffer.
      */
     void release();

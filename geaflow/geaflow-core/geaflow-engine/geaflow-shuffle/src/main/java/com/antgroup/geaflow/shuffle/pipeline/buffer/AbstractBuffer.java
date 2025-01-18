@@ -19,7 +19,6 @@ import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 public abstract class AbstractBuffer implements OutBuffer {
 
     private final ShuffleMemoryTracker memoryTracker;
-    protected int refCount;
 
     public AbstractBuffer(boolean enableMemoryTrack) {
         this.memoryTracker = enableMemoryTrack
@@ -28,16 +27,6 @@ public abstract class AbstractBuffer implements OutBuffer {
 
     public AbstractBuffer(ShuffleMemoryTracker memoryTracker) {
         this.memoryTracker = memoryTracker;
-    }
-
-    @Override
-    public void setRefCount(int refCount) {
-        this.refCount = refCount;
-    }
-
-    @Override
-    public boolean isDisposable() {
-        return this.refCount <= 0;
     }
 
     protected void requireMemory(long dataSize) {

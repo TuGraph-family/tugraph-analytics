@@ -254,7 +254,7 @@ public class SliceOutputChannelHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void operationComplete(ChannelFuture future) throws Exception {
             try {
-                if (buffer != null && buffer.isDisposable()) {
+                if (buffer != null) {
                     buffer.release();
                 }
                 if (future.isSuccess()) {

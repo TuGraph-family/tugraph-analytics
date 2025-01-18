@@ -30,7 +30,6 @@ public class WriterContext implements IWriterContext {
     private DataExchangeMode dataExchangeMode;
     private int targetChannels;
     private ShuffleConfig config;
-    private int refCount;
     private IEncoder<?> encoder;
 
     public WriterContext(long pipelineId, String pipelineName) {
@@ -82,11 +81,6 @@ public class WriterContext implements IWriterContext {
         return this;
     }
 
-    public WriterContext setRefCount(int refCount) {
-        this.refCount = refCount;
-        return this;
-    }
-
     @Override
     public PipelineInfo getPipelineInfo() {
         return pipelineInfo;
@@ -135,11 +129,6 @@ public class WriterContext implements IWriterContext {
     @Override
     public DataExchangeMode getDataExchangeMode() {
         return this.dataExchangeMode;
-    }
-
-    @Override
-    public int getRefCount() {
-        return this.refCount;
     }
 
     public static WriterContextBuilder newBuilder() {

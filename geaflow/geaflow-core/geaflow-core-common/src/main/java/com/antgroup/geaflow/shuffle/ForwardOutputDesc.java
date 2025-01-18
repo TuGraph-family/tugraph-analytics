@@ -30,8 +30,6 @@ public class ForwardOutputDesc<T> implements IOutputDesc, Serializable {
     private final int edgeId;
     // Partition number.
     private final int numPartitions;
-    // Data ref count, for data disposal.
-    private final int refCount;
     // Name of the output edge.
     private final String edgeName;
     // Data exchange mode.
@@ -47,7 +45,6 @@ public class ForwardOutputDesc<T> implements IOutputDesc, Serializable {
         int vertexId,
         int edgeId,
         int numPartitions,
-        int refCount,
         String edgeName,
         DataExchangeMode dataExchangeMode,
         List<Integer> targetTaskIndices,
@@ -56,7 +53,6 @@ public class ForwardOutputDesc<T> implements IOutputDesc, Serializable {
         this.vertexId = vertexId;
         this.edgeId = edgeId;
         this.numPartitions = numPartitions;
-        this.refCount = refCount;
         this.edgeName = edgeName;
         this.dataExchangeMode = dataExchangeMode;
         this.targetTaskIndices = targetTaskIndices;
@@ -74,10 +70,6 @@ public class ForwardOutputDesc<T> implements IOutputDesc, Serializable {
 
     public int getNumPartitions() {
         return this.numPartitions;
-    }
-
-    public int getRefCount() {
-        return this.refCount;
     }
 
     public String getEdgeName() {

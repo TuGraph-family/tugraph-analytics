@@ -34,8 +34,8 @@ public class SpillableShardWriter<T> extends ShardWriter<T, Shard> {
     }
 
     @Override
-    protected IPipelineSlice newSlice(String taskLogTag, SliceId sliceId, int refCount) {
-        return new SpillablePipelineSlice(taskLogTag, sliceId, refCount);
+    protected IPipelineSlice newSlice(String taskLogTag, SliceId sliceId) {
+        return new SpillablePipelineSlice(taskLogTag, sliceId);
     }
 
     @Override
