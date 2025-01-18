@@ -258,7 +258,7 @@ public class SpillablePipelineSlice extends AbstractSlice {
                     }
                 }
             } catch (IOException e) {
-                throw new GeaflowRuntimeException(e);
+                throw new GeaflowRuntimeException(e.getMessage(), e);
             }
 
             return false;

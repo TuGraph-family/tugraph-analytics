@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.operator.impl.graph.compute.dynamic;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.ENABLE_DETAIL_METRIC;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +40,7 @@ import com.antgroup.geaflow.view.GraphViewBuilder;
 import com.antgroup.geaflow.view.IViewDesc;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
@@ -55,7 +57,8 @@ public class DynamicGraphVertexCentricComputeOpTest {
                 Integer.class, ValueEdge.class, IntegerType.class))
             .build();
 
-        DynamicGraphVertexCentricComputeOp operator = new DynamicGraphVertexCentricComputeOp(graphViewDesc, new IncVertexCentricCompute(5) {
+        DynamicGraphVertexCentricComputeOp operator = new DynamicGraphVertexCentricComputeOp(
+            graphViewDesc, new IncVertexCentricCompute(5) {
             @Override
             public IncVertexCentricComputeFunction getIncComputeFunction() {
                 return mock(IncVertexCentricComputeFunction.class);
@@ -66,7 +69,11 @@ public class DynamicGraphVertexCentricComputeOpTest {
                 return null;
             }
         });
-        ((AbstractOperator)operator).getOpArgs().setOpName("test");
+        ((AbstractOperator) operator).getOpArgs().setOpName("test");
+        ((AbstractOperator) operator).getOpArgs()
+            .setConfig(new HashMap<String, String>() {{
+                put(ENABLE_DETAIL_METRIC.getKey(), "false");
+            }});
 
         List<ICollector> collectors = new ArrayList<>();
         ICollector collector = mock(ICollector.class);
@@ -76,7 +83,8 @@ public class DynamicGraphVertexCentricComputeOpTest {
         collectors.add(collector);
         collectors.add(collector);
         long startWindowId = 0;
-        Operator.OpContext context = new AbstractOperator.DefaultOpContext(collectors, new TestRuntimeContext());
+        Operator.OpContext context = new AbstractOperator.DefaultOpContext(collectors,
+            new TestRuntimeContext());
         operator.open(context);
 
         Assert.assertEquals(startWindowId, ReflectionUtil.getField(operator, "windowId"));
@@ -98,6 +106,10 @@ public class DynamicGraphVertexCentricComputeOpTest {
             super(new Configuration());
         }
 
+        public TestRuntimeContext(Map<String, String> opConfig) {
+            super(new Configuration(opConfig));
+        }
+
         @Override
         public long getPipelineId() {
             return 0;
@@ -115,12 +127,12 @@ public class DynamicGraphVertexCentricComputeOpTest {
 
         @Override
         public Configuration getConfiguration() {
-            return new Configuration();
+            return jobConfig;
         }
 
         @Override
         public RuntimeContext clone(Map<String, String> opConfig) {
-            return new TestRuntimeContext();
+            return new TestRuntimeContext(opConfig);
         }
 
         @Override

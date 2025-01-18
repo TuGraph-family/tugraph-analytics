@@ -29,25 +29,22 @@ import com.antgroup.geaflow.cluster.driver.DriverContext;
 import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.cluster.runner.util.RunnerRuntimeHook;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.utils.ProcessUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DriverRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(DriverRunner.class);
-    private final int driverId;
-    private final int driverIndex;
-    private final Configuration config;
+
+    private final DriverContext driverContext;
     private Driver driver;
 
-    public DriverRunner(int driverId, int driverIndex, Configuration config) {
-        this.driverId = driverId;
-        this.driverIndex = driverIndex;
-        this.config = config;
+    public DriverRunner(DriverContext driverContext) {
+        this.driverContext = driverContext;
     }
 
     public void run() {
-        DriverContext driverContext = new DriverContext(driverId, driverIndex, config);
-        int rpcPort = config.getInteger(DRIVER_RPC_PORT);
+        int rpcPort = driverContext.getConfig().getInteger(DRIVER_RPC_PORT);
         driver = new Driver(rpcPort);
         driverContext.load();
         driver.init(driverContext);
@@ -69,7 +66,6 @@ public class DriverRunner {
 
             Configuration config = ClusterUtils.loadConfiguration();
             config.setMasterId(masterId);
-
             String supervisorPort = ClusterUtils.getEnvValue(System.getenv(), ENV_SUPERVISOR_PORT);
             config.put(SUPERVISOR_RPC_PORT, supervisorPort);
             String agentPort = ClusterUtils.getEnvValue(System.getenv(), ENV_AGENT_PORT);
@@ -79,13 +75,14 @@ public class DriverRunner {
             new RunnerRuntimeHook(DriverRunner.class.getSimpleName(),
                 Integer.parseInt(supervisorPort)).start();
 
-            DriverRunner driverRunner = new DriverRunner(Integer.parseInt(id),
+            DriverContext context = new DriverContext(Integer.parseInt(id),
                 Integer.parseInt(index), config);
+            DriverRunner driverRunner = new DriverRunner(context);
             driverRunner.run();
             LOGGER.info("Completed driver init in {} ms", System.currentTimeMillis() - startTime);
             driverRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FATAL: process exits", e);
+            LOGGER.error("FATAL: process {} exits", ProcessUtil.getProcessId(), e);
             System.exit(EXIT_CODE);
         }
     }

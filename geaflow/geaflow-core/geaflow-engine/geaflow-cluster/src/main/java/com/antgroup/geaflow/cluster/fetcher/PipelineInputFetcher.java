@@ -158,9 +158,12 @@ public class PipelineInputFetcher {
             Thread.currentThread().setName(this.name);
             try {
                 this.fetch();
+            } catch (GeaflowRuntimeException e) {
+                LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId, this.name, e);
+                throw e;
             } catch (Throwable e) {
                 LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId, this.name, e);
-                throw new GeaflowRuntimeException(e);
+                throw new GeaflowRuntimeException(e.getMessage(), e);
             }
         }
 

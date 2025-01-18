@@ -20,7 +20,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,14 +114,23 @@ public class ProcessUtil {
         return pid;
     }
 
-    public static synchronized void killProcess(int pid) {
-        LOGGER.info("Kill -9 {}", pid);
+    public static void killProcess(int pid) {
+        execute("kill -9 " + pid);
+    }
+
+    public static void killProcesses(List<Integer> pidList) {
+        String pids = StringUtils.join(pidList, " ");
+        execute("kill -9 " + pids);
+    }
+
+    public static void execute(String cmd) {
+        LOGGER.info(cmd);
         try {
-            Process process = Runtime.getRuntime().exec("kill -9 " + pid);
+            Process process = Runtime.getRuntime().exec(cmd);
             process.waitFor();
         } catch (InterruptedException | IOException e) {
-            LOGGER.error("Kill {} failed: {}", pid, e.getMessage());
-            throw new GeaflowRuntimeException(e);
+            LOGGER.error(" {} failed: {}", cmd, e);
+            throw new GeaflowRuntimeException(e.getMessage(), e);
         }
     }
 

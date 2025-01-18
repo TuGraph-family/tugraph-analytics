@@ -17,7 +17,6 @@ package com.antgroup.geaflow.cluster.runner.entrypoint;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.ENV_AGENT_PORT;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.ENV_SUPERVISOR_PORT;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.EXIT_CODE;
-import static com.antgroup.geaflow.cluster.constants.ClusterConstants.IS_RECOVER;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.MASTER_ID;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.AGENT_HTTP_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SUPERVISOR_RPC_PORT;
@@ -30,6 +29,7 @@ import com.antgroup.geaflow.cluster.container.IContainer;
 import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.cluster.runner.util.RunnerRuntimeHook;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.utils.ProcessUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,14 +59,10 @@ public class ContainerRunner {
 
             String id = ClusterUtils.getProperty(ClusterConstants.CONTAINER_ID);
             String masterId = ClusterUtils.getProperty(MASTER_ID);
-            boolean isRecover = Boolean.parseBoolean(
-                ClusterUtils.getProperty(IS_RECOVER));
-            LOGGER.info("ResourceID assigned for this container:{} masterId:{}, isRecover:{}", id,
-                masterId, isRecover);
+            LOGGER.info("ResourceID assigned for this container:{} masterId:{}", id, masterId);
 
             Configuration config = ClusterUtils.loadConfiguration();
             config.setMasterId(masterId);
-
             String supervisorPort = ClusterUtils.getEnvValue(System.getenv(), ENV_SUPERVISOR_PORT);
             config.put(SUPERVISOR_RPC_PORT, supervisorPort);
             String agentPort = ClusterUtils.getEnvValue(System.getenv(), ENV_AGENT_PORT);
@@ -76,14 +72,13 @@ public class ContainerRunner {
             new RunnerRuntimeHook(ContainerRunner.class.getSimpleName(),
                 Integer.parseInt(supervisorPort)).start();
 
-            ContainerContext context = new ContainerContext(Integer.parseInt(id), config,
-                isRecover);
+            ContainerContext context = new ContainerContext(Integer.parseInt(id), config);
             ContainerRunner containerRunner = new ContainerRunner(context);
             containerRunner.run();
             LOGGER.info("Completed container init in {}ms", System.currentTimeMillis() - startTime);
             containerRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FATAL: process exits", e);
+            LOGGER.error("FATAL: process {} exits", ProcessUtil.getProcessId(), e);
             System.exit(EXIT_CODE);
         }
     }

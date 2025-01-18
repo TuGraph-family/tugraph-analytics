@@ -30,8 +30,10 @@ import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
+import com.antgroup.geaflow.env.args.EnvironmentArgumentParser;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,13 +52,22 @@ public class KubernetesClientRunner {
         ClusterStartedCallback callback = ClusterCallbackFactory.createClusterStartCallback(config);
         try {
             System.setProperty(CLUSTER_TYPE, EnvType.K8S.name());
+
             userClass = config.getString(USER_MAIN_CLASS);
+            LOGGER.info("execute mainClass {} to k8s, args: {}", userClass, classArgs);
+
+            EnvironmentArgumentParser parser = new EnvironmentArgumentParser();
+            Map<String, String> newConfig = parser.parse(new String[]{classArgs});
+            config.putAll(newConfig);
+
+            callback = ClusterCallbackFactory.createClusterStartCallback(config);
+            LOGGER.info("client callback: {}", callback.getClass().getCanonicalName());
+
             Class<?> mainClazz = Thread.currentThread().getContextClassLoader().loadClass(userClass);
             Method mainMethod = mainClazz.getMethod("main", String[].class);
-            LOGGER.info("execute mainClass {} to k8s, params: {}", userClass, classArgs);
             mainMethod.invoke(mainClazz, (Object) new String[] {classArgs});
         } catch (Throwable e) {
-            LOGGER.error("execute mainClass {} failed: {}", userClass, e.getMessage());
+            LOGGER.error("execute mainClass {} failed", userClass, e);
             callback.onFailure(e);
             throw new GeaflowRuntimeException(e);
         } finally {

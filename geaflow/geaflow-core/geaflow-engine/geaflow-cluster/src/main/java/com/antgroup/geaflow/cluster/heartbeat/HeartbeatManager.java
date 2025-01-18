@@ -63,9 +63,8 @@ public class HeartbeatManager implements Serializable {
     private final ScheduledFuture<?> reportFuture;
     private final ScheduledExecutorService checkTimeoutService;
     private final ScheduledExecutorService heartbeatReportService;
-    private final GeaflowHeartbeatException timeoutException;
     private ScheduledFuture<?> checkFuture;
-    private IStatsWriter statsWriter;
+    private final IStatsWriter statsWriter;
 
     public HeartbeatManager(Configuration config, IClusterManager clusterManager) {
         this.senderMap = new ConcurrentHashMap<>();
@@ -86,6 +85,7 @@ public class HeartbeatManager implements Serializable {
             this.checkFuture = checkTimeoutService.scheduleAtFixedRate(this::checkSupervisorHealth,
                 heartbeatCheckMs, heartbeatCheckMs, TimeUnit.MILLISECONDS);
         }
+
         this.heartbeatReportService = new ScheduledThreadPoolExecutor(1,
             ThreadUtil.namedThreadFactory(true, "heartbeat-report"));
         this.reportFuture = heartbeatReportService
@@ -93,7 +93,6 @@ public class HeartbeatManager implements Serializable {
                 TimeUnit.MILLISECONDS);
 
         this.clusterManager = (AbstractClusterManager) clusterManager;
-        this.timeoutException = new GeaflowHeartbeatException();
         this.statsWriter = StatsCollectorFactory.init(config).getStatsWriter();
     }
 
@@ -107,7 +106,7 @@ public class HeartbeatManager implements Serializable {
         this.statsWriter.addMetric(masterInfo.getName(), masterInfo);
     }
 
-    private void checkHeartBeat() {
+    void checkHeartBeat() {
         try {
             long checkTime = System.currentTimeMillis();
             checkTimeout(clusterManager.getContainerIds(), checkTime);
@@ -128,8 +127,9 @@ public class HeartbeatManager implements Serializable {
                     LOGGER.warn("{} is not registered", entry.getValue());
                 }
             } else if (checkTime > heartbeat.getTimestamp() + heartbeatTimeoutMs) {
-                LOGGER.error("{} heartbeat is missing", entry.getValue());
-                clusterManager.doFailover(componentId, timeoutException);
+                String message = String.format("%s heartbeat is lost", entry.getValue());
+                LOGGER.error(message);
+                doFailover(componentId, new GeaflowHeartbeatException(message));
             }
         }
     }
@@ -147,7 +147,7 @@ public class HeartbeatManager implements Serializable {
             checkSupervisorHealth(clusterManager.getContainerIds());
             checkSupervisorHealth(clusterManager.getDriverIds());
         } catch (Throwable e) {
-            LOGGER.warn("Check container healthy error", e);
+            LOGGER.warn("Check container healthy error: {}", e.getMessage(), e);
         }
     }
 
@@ -157,15 +157,21 @@ public class HeartbeatManager implements Serializable {
             try {
                 StatusResponse response = RpcClient.getInstance().querySupervisorStatus(name);
                 if (!response.getIsAlive()) {
-                    LOGGER.info("Found {} is not alive and do failover", name);
-                    clusterManager.doFailover(entry.getKey(), timeoutException);
+                    String message = String.format("supervisor of %s is not alive", name);
+                    LOGGER.error(message);
+                    doFailover(entry.getKey(), new GeaflowHeartbeatException(message));
                 }
             } catch (Throwable e) {
-                LOGGER.error("Try to do failover due to exception from {}: {}", name,
-                    e.getMessage());
-                clusterManager.doFailover(entry.getKey(), e);
+                String message = String.format("%s %s", name, e.getMessage());
+                LOGGER.error(message, e);
+                doFailover(entry.getKey(), new GeaflowHeartbeatException(message, e));
             }
         }
+    }
+
+    void doFailover(int componentId, Throwable e) {
+        StatsCollectorFactory.getInstance().getExceptionCollector().reportException(e);
+        clusterManager.doFailover(componentId, e);
     }
 
     protected boolean isRegistered(int componentId) {

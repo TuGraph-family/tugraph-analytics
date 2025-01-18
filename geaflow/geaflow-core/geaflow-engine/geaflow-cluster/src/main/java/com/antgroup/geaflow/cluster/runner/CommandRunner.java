@@ -66,22 +66,28 @@ public class CommandRunner {
                 int code = childProcess.waitFor();
                 LOGGER.warn("Child process {} exits with code: {} and alive: {}", pid, code,
                     childProcess.isAlive());
-                if (code == 0) {
-                    break;
+                // 0: success, 137: killed by SIGKILL, 143: killed by SIGTERM
+                if (code == 0 || code == 137 || code == 143) {
+                    return;
                 }
                 if (restarts == 0) {
-                    String errMsg = String.format("Latest process %s exits with code: %s: "
-                            + "Exhausted after retrying startup %s times. ", pid, code, maxRestarts + 1);
+                    String errMsg;
+                    if (maxRestarts == 0) {
+                        errMsg = String.format("process exits code: %s", code);
+                    } else {
+                        errMsg = String.format("process exits code: %s, exhausted %s restarts",
+                            code, maxRestarts);
+                    }
                     throw new GeaflowRuntimeException(errMsg);
                 }
                 restarts--;
             } while (true);
-        } catch (Exception e) {
+        } catch (GeaflowRuntimeException e) {
             LOGGER.error("FATAL: start command failed: {}", command, e);
-            if (e instanceof GeaflowRuntimeException) {
-                throw (GeaflowRuntimeException) e;
-            }
-            throw new GeaflowRuntimeException(e);
+            throw e;
+        } catch (Throwable e) {
+            LOGGER.error("FATAL: start command failed: {}", command, e);
+            throw new GeaflowRuntimeException(e.getMessage(), e);
         }
     }
 
