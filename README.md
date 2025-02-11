@@ -39,12 +39,12 @@ Step 1: Package the JAR and submit the Quick Start task
 
 1. Prepare Git、JDK8、Maven、Docker environment。
 2. Download Code：`git clone https://github.com/TuGraph-family/tugraph-analytics`
-3. Build Project：`./build.sh --module=gealfow --output=package`
+3. Build Project：`./build.sh --module=geaflow --output=package`
 4. Test Job：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection_file_demo.sql`
 
 Step 2: Launch the console and experience submitting the Quick Start task through the console
 
-5. Build console JAR and image (requires starting Docker)：`./build.sh --module=gealfow-console`
+5. Build console JAR and image (requires starting Docker)：`./build.sh --module=geaflow-console`
 6. Start Console：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
 For more details：[Quick Start](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
