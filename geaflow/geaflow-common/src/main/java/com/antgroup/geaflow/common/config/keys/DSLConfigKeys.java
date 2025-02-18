@@ -101,4 +101,8 @@ public class DSLConfigKeys implements Serializable {
         .defaultValue(true)
         .description("Whether enable compile query physical plan. ");
 
+    public static final ConfigKey GEAFLOW_DSL_SOURCE_PARALLELISM = ConfigKeys
+        .key("geaflow.dsl.source.parallelism")
+        .noDefaultValue()
+        .description("Set source parallelism");
 }

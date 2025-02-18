@@ -111,10 +111,15 @@ public class GeaFlowQueryEngine implements QueryEngine {
         int partitionsPerParallelism = conf.getInteger(
             ConnectorConfigKeys.GEAFLOW_DSL_PARTITIONS_PER_SOURCE_PARALLELISM);
         int sourceParallelism;
-        if (numPartitions % partitionsPerParallelism > 0) {
-            sourceParallelism = numPartitions / partitionsPerParallelism + 1;
+        // If user has set source parallelism, use it.
+        if (conf.contains(DSLConfigKeys.GEAFLOW_DSL_SOURCE_PARALLELISM)) {
+            sourceParallelism = conf.getInteger(DSLConfigKeys.GEAFLOW_DSL_SOURCE_PARALLELISM);
         } else {
-            sourceParallelism = numPartitions / partitionsPerParallelism;
+            if (numPartitions % partitionsPerParallelism > 0) {
+                sourceParallelism = numPartitions / partitionsPerParallelism + 1;
+            } else {
+                sourceParallelism = numPartitions / partitionsPerParallelism;
+            }
         }
         if (!(tableSource instanceof ISkipOpenAndClose)) {
             tableSource.close();
