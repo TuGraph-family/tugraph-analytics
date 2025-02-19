@@ -191,6 +191,15 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    @Test
+    public void testIncWccVsSpark() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_test_demo_case_vs_spark.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
 
     @Test
     public void testAlgorithmCommonNeighbors() throws Exception {
