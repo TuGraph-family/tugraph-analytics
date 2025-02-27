@@ -369,6 +369,11 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue("unexpected")
         .description("whether to restart process automatically");
 
+    public static final ConfigKey PROCESS_EXIT_WAIT_SECONDS = ConfigKeys
+        .key("geaflow.process.exit.wait.secs")
+        .defaultValue(3)
+        .description("process exit max wait seconds");
+
     // ------------------------------------------------------------------------
     // shuffle
     // ------------------------------------------------------------------------

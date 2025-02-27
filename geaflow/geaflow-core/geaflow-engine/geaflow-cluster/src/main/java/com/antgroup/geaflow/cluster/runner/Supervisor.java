@@ -26,21 +26,16 @@ import com.antgroup.geaflow.cluster.web.agent.AgentWebServer;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.rpc.ConfigurableServerOption;
 import com.antgroup.geaflow.common.utils.PortUtil;
-import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.common.utils.RetryCommand;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import com.antgroup.geaflow.stats.model.ExceptionLevel;
 import com.baidu.brpc.server.RpcServerOptions;
-import com.google.common.base.Preconditions;
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Supervisor implements Serializable {
+public class Supervisor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Supervisor.class);
     private static final int DEFAULT_RETRIES = 3;
@@ -107,28 +102,11 @@ public class Supervisor implements Serializable {
     }
 
     public void stopWorker() {
-        stopWorker(mainRunner.getProcessId());
+        mainRunner.stop();
     }
 
     public void stopWorker(int pid) {
-        Preconditions.checkArgument(pid > 0, "pid should be larger than 0");
-        LOGGER.info("Stop old process if exists");
-
-        List<Integer> pids = new ArrayList<>();
-        pids.add(pid);
-
-        Process process = mainRunner.getProcess();
-        if (process.isAlive()) {
-            int curPid = mainRunner.getProcessId();
-            if (curPid <= 0) {
-                LOGGER.warn("Process is alive but pid not found: {}", process);
-                return;
-            }
-            if (pid != curPid) {
-                pids.add(curPid);
-            }
-        }
-        ProcessUtil.killProcesses(pids);
+        mainRunner.stop(pid);
     }
 
     public void startAgent() {

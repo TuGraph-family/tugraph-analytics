@@ -20,6 +20,7 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCES
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
 import com.antgroup.geaflow.cluster.failover.FailoverStrategyType;
+import com.antgroup.geaflow.cluster.heartbeat.HeartbeatManager;
 import com.antgroup.geaflow.env.IEnvironment.EnvType;
 import com.antgroup.geaflow.stats.model.EventLabel;
 import com.antgroup.geaflow.stats.model.ExceptionLevel;
@@ -34,6 +35,7 @@ public class ClusterFailoverStrategy extends AbstractFailoverStrategy {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterFailoverStrategy.class);
 
     protected AtomicBoolean doKilling;
+    protected HeartbeatManager heartbeatManager;
 
     public ClusterFailoverStrategy(EnvType envType) {
         super(envType);
@@ -42,6 +44,7 @@ public class ClusterFailoverStrategy extends AbstractFailoverStrategy {
     @Override
     public void init(ClusterContext context) {
         super.init(context);
+        this.heartbeatManager = context.getHeartbeatManager();
         // Set true if in recovering and reset to false after recovering finished.
         this.doKilling = new AtomicBoolean(context.isRecover());
         // Disable worker process auto-restart because master will do that.
@@ -67,6 +70,8 @@ public class ClusterFailoverStrategy extends AbstractFailoverStrategy {
             String startMessage = String.format("Start failover due to %s", reason);
             LOGGER.info(startMessage);
             reportFailoverEvent(ExceptionLevel.INFO, EventLabel.FAILOVER_START, startMessage);
+            // Close heartbeat check service.
+            heartbeatManager.close();
             // Trigger process restart.
             System.exit(EXIT_CODE);
         }

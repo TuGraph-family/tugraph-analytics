@@ -14,10 +14,17 @@
 
 package com.antgroup.geaflow.cluster.runner.util;
 
+import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CONFIG_FILE_LOG4J_NAME;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertTrue;
+
+import com.antgroup.geaflow.cluster.config.ClusterJvmOptions;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.utils.JsonUtils;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,6 +37,42 @@ public class ClusterUtilsTest {
         String s = JsonUtils.toJsonString(map);
         Configuration configuration = ClusterUtils.convertStringToConfig(s);
         Assert.assertNotNull(configuration);
+    }
+
+    @Test
+    public void getStartCommand_WithValidInputs_ShouldReturnCorrectCommand() {
+        ClusterJvmOptions jvmOptions = Mockito.mock(ClusterJvmOptions.class);
+        Configuration configuration = new Configuration();
+
+        // 准备
+        when(jvmOptions.getXmsMB()).thenReturn(1024);
+        when(jvmOptions.getMaxHeapMB()).thenReturn(2048);
+        when(jvmOptions.getXmnMB()).thenReturn(512);
+        when(jvmOptions.getMaxDirectMB()).thenReturn(1024);
+        when(jvmOptions.getExtraOptions()).thenReturn(new ArrayList<>());
+
+        Map<String, String> extraOpts = new HashMap<>();
+        extraOpts.put("key1", "value1");
+        extraOpts.put("key2", "value2");
+
+        String classpath = "/path/to/classes";
+        String logFilename = "log.txt";
+        Class<?> mainClass = ClusterUtilsTest.class;
+
+        String command = ClusterUtils.getStartCommand(jvmOptions, mainClass, logFilename,
+            configuration, extraOpts, classpath, true);
+
+        // 验证
+        assertTrue(command.contains("-Xms1024m"));
+        assertTrue(command.contains("-Xmx2048m"));
+        assertTrue(command.contains("-Xmn512m"));
+        assertTrue(command.contains("-XX:MaxDirectMemorySize=1024m"));
+        assertTrue(command.contains("-Dkey1=\"value1\""));
+        assertTrue(command.contains("-Dkey2=\"value2\""));
+        assertTrue(command.contains("-Dlog.file=log.txt"));
+        assertTrue(command.contains(
+            "-Dlog4j.configuration=file:/etc/geaflow/conf/" + CONFIG_FILE_LOG4J_NAME));
+        assertTrue(command.contains(">> log.txt 2>&1"));
     }
 
 }

@@ -177,7 +177,7 @@ public class RpcClient implements Serializable {
             new DefaultRpcCallbackImpl<>(callback, id, haService)), id, METRIC);
     }
 
-    public Future restartSupervisorContainer(String id, boolean fastFailure) {
+    public Future restartWorkerBySupervisor(String id, boolean fastFailure) {
         int retries = fastFailure ? 1 : retryTimes;
         try {
             return doRpcWithRetry(() -> {
@@ -192,7 +192,7 @@ public class RpcClient implements Serializable {
         }
     }
 
-    public StatusResponse querySupervisorStatus(String id) {
+    public StatusResponse queryWorkerStatusBySupervisor(String id) {
         return connectSupervisor(id).status();
     }
 

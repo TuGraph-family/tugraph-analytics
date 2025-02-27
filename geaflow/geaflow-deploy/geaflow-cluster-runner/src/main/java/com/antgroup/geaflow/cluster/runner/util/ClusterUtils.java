@@ -24,7 +24,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.utils.JsonUtils;
 import com.google.common.base.Preconditions;
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +68,8 @@ public class ClusterUtils {
     public static String getStartCommand(ClusterJvmOptions jvmOpts, Class<?> mainClass,
                                          String logFilename, Configuration configuration,
                                          String classpath) {
-        return getStartCommand(jvmOpts, mainClass, logFilename, configuration, null, classpath);
+        return getStartCommand(jvmOpts, mainClass, logFilename, configuration, null, classpath,
+            true);
     }
 
     /**
@@ -77,13 +78,11 @@ public class ClusterUtils {
      */
     public static String getStartCommand(ClusterJvmOptions jvmOpts, Class<?> mainClass,
                                          String logFilename, Configuration configuration,
-                                         Map<String, String> extraOpts, String classpath) {
-        String confDir = configuration.getString(CONF_DIR);
-
+                                         Map<String, String> extraOpts, String classpath,
+                                         boolean needRedirect) {
         final Map<String, String> startCommandValues = new HashMap<>();
-        startCommandValues.put("java", "$JAVA_HOME/bin/java");
-        startCommandValues.put("classpath",
-            "-classpath " + confDir + File.pathSeparator + classpath);
+        startCommandValues.put("java", "java");
+        startCommandValues.put("classpath", "-classpath " + classpath);
         startCommandValues.put("class", mainClass.getName());
 
         ArrayList<String> params = new ArrayList<>();
@@ -105,12 +104,14 @@ public class ClusterUtils {
         }
         startCommandValues.put("jvmopts", StringUtils.join(opts, ' '));
 
+        String confDir = configuration.getString(CONF_DIR);
+        String log4jPath = Paths.get(confDir, CONFIG_FILE_LOG4J_NAME).toString();
         StringBuilder logging = new StringBuilder();
-        logging.append("-Dlog.file=\"").append(logFilename).append("\"");
-        logging.append(" -Dlog4j.configuration=" + CONFIG_FILE_LOG4J_NAME);
-
+        logging.append("-Dlog.file=").append(logFilename);
+        logging.append(" -Dlog4j.configuration=file:").append(log4jPath);
         startCommandValues.put("logging", logging.toString());
-        String redirects = ">> " + logFilename + " 2>&1";
+
+        String redirects = needRedirect ? ">> " + logFilename + " 2>&1" : "";
         startCommandValues.put("redirects", redirects);
 
         return getStartCommand(CONTAINER_START_COMMAND_TEMPLATE, startCommandValues);

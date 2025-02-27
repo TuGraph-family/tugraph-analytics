@@ -37,7 +37,6 @@ import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import com.antgroup.geaflow.rpc.proto.Supervisor.StatusResponse;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import com.antgroup.geaflow.stats.sink.IStatsWriter;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HeartbeatManager implements Serializable {
+public class HeartbeatManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatManager.class);
 
@@ -63,8 +62,9 @@ public class HeartbeatManager implements Serializable {
     private final ScheduledFuture<?> reportFuture;
     private final ScheduledExecutorService checkTimeoutService;
     private final ScheduledExecutorService heartbeatReportService;
-    private ScheduledFuture<?> checkFuture;
     private final IStatsWriter statsWriter;
+    private ScheduledFuture<?> checkFuture;
+    private volatile boolean isRunning = true;
 
     public HeartbeatManager(Configuration config, IClusterManager clusterManager) {
         this.senderMap = new ConcurrentHashMap<>();
@@ -82,7 +82,7 @@ public class HeartbeatManager implements Serializable {
             initDelayMs, heartbeatTimeoutMs, TimeUnit.MILLISECONDS);
         if (supervisorEnable) {
             long heartbeatCheckMs = config.getInteger(HEARTBEAT_INTERVAL_MS);
-            this.checkFuture = checkTimeoutService.scheduleAtFixedRate(this::checkSupervisorHealth,
+            this.checkFuture = checkTimeoutService.scheduleAtFixedRate(this::checkWorkerHealth,
                 heartbeatCheckMs, heartbeatCheckMs, TimeUnit.MILLISECONDS);
         }
 
@@ -142,27 +142,28 @@ public class HeartbeatManager implements Serializable {
         }
     }
 
-    private void checkSupervisorHealth() {
+    void checkWorkerHealth() {
         try {
-            checkSupervisorHealth(clusterManager.getContainerIds());
-            checkSupervisorHealth(clusterManager.getDriverIds());
+            checkWorkerHealth(clusterManager.getContainerIds());
+            checkWorkerHealth(clusterManager.getDriverIds());
         } catch (Throwable e) {
             LOGGER.warn("Check container healthy error: {}", e.getMessage(), e);
         }
     }
 
-    private void checkSupervisorHealth(Map<Integer, String> map) {
+    private void checkWorkerHealth(Map<Integer, String> map) {
         for (Map.Entry<Integer, String> entry : map.entrySet()) {
             String name = entry.getValue();
             try {
-                StatusResponse response = RpcClient.getInstance().querySupervisorStatus(name);
+                StatusResponse response = RpcClient.getInstance().queryWorkerStatusBySupervisor(name);
                 if (!response.getIsAlive()) {
-                    String message = String.format("supervisor of %s is not alive", name);
+                    String message = String.format("worker %s is not alive", name);
                     LOGGER.error(message);
                     doFailover(entry.getKey(), new GeaflowHeartbeatException(message));
                 }
             } catch (Throwable e) {
-                String message = String.format("%s %s", name, e.getMessage());
+                String message = String.format("connect to supervisor of %s failed: %s", name,
+                    e.getMessage());
                 LOGGER.error(message, e);
                 doFailover(entry.getKey(), new GeaflowHeartbeatException(message, e));
             }
@@ -170,7 +171,6 @@ public class HeartbeatManager implements Serializable {
     }
 
     void doFailover(int componentId, Throwable e) {
-        StatsCollectorFactory.getInstance().getExceptionCollector().reportException(e);
         clusterManager.doFailover(componentId, e);
     }
 
@@ -238,6 +238,10 @@ public class HeartbeatManager implements Serializable {
     }
 
     public void close() {
+        if (!isRunning) {
+            return;
+        }
+        isRunning = false;
         if (timeoutFuture != null) {
             timeoutFuture.cancel(true);
         }
@@ -253,5 +257,6 @@ public class HeartbeatManager implements Serializable {
         if (heartbeatReportService != null) {
             ExecutorUtil.shutdown(heartbeatReportService);
         }
+        LOGGER.info("HeartbeatManager is closed");
     }
 }
