@@ -21,8 +21,8 @@ import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_U
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.DRIVER_RPC_PORT;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
+import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesDriverRunner;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.runner.entrypoint.DriverRunner;
 import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
@@ -64,7 +64,7 @@ public class KubernetesDriverParam extends AbstractKubernetesParam {
     public String getContainerShellCommand() {
         String logFileName = getLogDir() + File.separator + DRIVER_LOG_SUFFIX;
         return ClusterUtils.getStartCommand(clusterConfig.getDriverJvmOptions(),
-            DriverRunner.class, logFileName, config, JOB_CLASSPATH);
+            KubernetesDriverRunner.class, logFileName, config, JOB_CLASSPATH);
     }
 
     @Override

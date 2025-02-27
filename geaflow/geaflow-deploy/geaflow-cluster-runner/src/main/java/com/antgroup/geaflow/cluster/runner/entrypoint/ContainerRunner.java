@@ -53,7 +53,14 @@ public class ContainerRunner {
         ((AbstractContainer) container).waitTermination();
     }
 
+    public void close() {
+        if (container != null) {
+            container.close();
+        }
+    }
+
     public static void main(String[] args) throws Exception {
+        ContainerRunner containerRunner = null;
         try {
             final long startTime = System.currentTimeMillis();
 
@@ -73,12 +80,15 @@ public class ContainerRunner {
                 Integer.parseInt(supervisorPort)).start();
 
             ContainerContext context = new ContainerContext(Integer.parseInt(id), config);
-            ContainerRunner containerRunner = new ContainerRunner(context);
+            containerRunner = new ContainerRunner(context);
             containerRunner.run();
             LOGGER.info("Completed container init in {}ms", System.currentTimeMillis() - startTime);
             containerRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FATAL: process {} exits", ProcessUtil.getProcessId(), e);
+            LOGGER.error("FATAL: container {} exits", ProcessUtil.getProcessId(), e);
+            if (containerRunner != null) {
+                containerRunner.close();
+            }
             System.exit(EXIT_CODE);
         }
     }

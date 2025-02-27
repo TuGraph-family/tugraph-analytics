@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 public abstract class GeaFlowClusterManager extends AbstractClusterManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GeaFlowClusterManager.class);
+    protected final String classpath;
     protected boolean enableSupervisor;
     protected EnvType envType;
     protected String configValue;
@@ -57,6 +58,7 @@ public abstract class GeaFlowClusterManager extends AbstractClusterManager {
 
     public GeaFlowClusterManager(EnvType envType) {
         this.envType = envType;
+        this.classpath = System.getProperty("java.class.path");
     }
 
     @Override
@@ -110,7 +112,7 @@ public abstract class GeaFlowClusterManager extends AbstractClusterManager {
         List<Future> futures = new ArrayList<>();
         for (Map.Entry<Integer, String> entry : containerIds.entrySet()) {
             futures.add(
-                RpcClient.getInstance().restartSupervisorContainer(entry.getValue(), failFast));
+                RpcClient.getInstance().restartWorkerBySupervisor(entry.getValue(), failFast));
         }
         Iterator<Entry<Integer, String>> iterator = containerIds.entrySet().iterator();
         List<Integer> lostWorkers = new ArrayList<>();
@@ -137,24 +139,25 @@ public abstract class GeaFlowClusterManager extends AbstractClusterManager {
         }
     }
 
-    public String getDriverShellCommand(int driverId, int driverIndex, String classpath,
+    public String getDriverShellCommand(int driverId, int driverIndex,
                                         String logFile) {
         Map<String, String> extraOptions = buildExtraOptions(driverId);
         extraOptions.put(CONTAINER_INDEX, String.valueOf(driverIndex));
 
         String logFilename = logDir + File.separator + logFile;
         return ClusterUtils.getStartCommand(clusterConfig.getDriverJvmOptions(), DriverRunner.class,
-            logFilename, clusterConfig.getConfig(), extraOptions, classpath);
+            logFilename, clusterConfig.getConfig(), extraOptions, classpath, false);
     }
 
-    public String getContainerShellCommand(int containerId, boolean isRecover, String classpath,
+    public String getContainerShellCommand(int containerId, boolean isRecover,
                                            String logFile) {
         Map<String, String> extraOptions = buildExtraOptions(containerId);
         extraOptions.put(IS_RECOVER, String.valueOf(isRecover));
 
         String logFilename = logDir + File.separator + logFile;
         return ClusterUtils.getStartCommand(clusterConfig.getContainerJvmOptions(),
-            ContainerRunner.class, logFilename, clusterConfig.getConfig(), extraOptions, classpath);
+            ContainerRunner.class, logFilename, clusterConfig.getConfig(), extraOptions,
+            classpath, false);
     }
 
     protected Map<String, String> buildExtraOptions(int containerId) {

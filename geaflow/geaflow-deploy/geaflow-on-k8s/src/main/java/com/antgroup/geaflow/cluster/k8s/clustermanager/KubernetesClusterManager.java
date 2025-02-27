@@ -19,7 +19,6 @@ import static com.antgroup.geaflow.cluster.constants.ClusterConstants.CONTAINER_
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DEFAULT_MASTER_ID;
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.DRIVER_LOG_SUFFIX;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.ENV_IS_RECOVER;
-import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH;
 import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.MASTER_ADDRESS;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.LOG_DIR;
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.NAME_SPACE;
@@ -229,7 +228,7 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
         try {
             // Create container.
             String containerStartCommand = getContainerShellCommand(containerId, isRecover,
-                JOB_CLASSPATH, CONTAINER_LOG_SUFFIX);
+                CONTAINER_LOG_SUFFIX);
             Map<String, String> additionalEnvs = containerParam.getAdditionEnvs();
             additionalEnvs.put(ENV_IS_RECOVER, String.valueOf(isRecover));
             additionalEnvs.put(CONTAINER_START_COMMAND, containerStartCommand);
@@ -261,8 +260,7 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
         }
 
         // 1. Create container.
-        String driverStartCommand = getDriverShellCommand(driverId, driverIndex, JOB_CLASSPATH,
-            DRIVER_LOG_SUFFIX);
+        String driverStartCommand = getDriverShellCommand(driverId, driverIndex, DRIVER_LOG_SUFFIX);
         Map<String, String> additionalEnvs = driverParam.getAdditionEnvs();
         additionalEnvs.put(K8SConstants.ENV_CONTAINER_INDEX, String.valueOf(driverIndex));
         additionalEnvs.put(CONTAINER_START_COMMAND, driverStartCommand);
@@ -313,7 +311,7 @@ public class KubernetesClusterManager extends GeaFlowClusterManager {
     private String buildSupervisorStartCommand(String fileName) {
         String logFile = config.getString(LOG_DIR) + File.separator + fileName;
         return ClusterUtils.getStartCommand(clusterConfig.getSupervisorJvmOptions(),
-            KubernetesSupervisorRunner.class, logFile, config, JOB_CLASSPATH);
+            KubernetesSupervisorRunner.class, logFile, config, classpath);
     }
 
     @Override

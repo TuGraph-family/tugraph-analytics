@@ -26,6 +26,7 @@ import com.antgroup.geaflow.common.utils.ThreadUtil;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
 import java.io.Serializable;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -41,6 +42,7 @@ public class HeartbeatSender implements Serializable {
     private final HeartbeatClient heartbeatClient;
     private final long initialDelayMs;
     private final long intervalMs;
+    private ScheduledFuture scheduledFuture;
 
     public HeartbeatSender(String masterId, Supplier<Heartbeat> heartbeatTrigger,
                            Configuration config, HeartbeatClient heartbeatClient) {
@@ -54,7 +56,7 @@ public class HeartbeatSender implements Serializable {
     }
 
     public void start() {
-        scheduledService.scheduleWithFixedDelay(() -> {
+        scheduledFuture = scheduledService.scheduleWithFixedDelay(() -> {
             Heartbeat message = null;
             try {
                 message = heartbeatTrigger.get();
@@ -82,8 +84,11 @@ public class HeartbeatSender implements Serializable {
     }
 
     public void close() {
+        LOGGER.info("Close heartbeat sender");
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
+        }
         if (scheduledService != null) {
-            LOGGER.info("shutdown heartbeat sender thread pool");
             ExecutorUtil.shutdown(scheduledService);
         }
     }

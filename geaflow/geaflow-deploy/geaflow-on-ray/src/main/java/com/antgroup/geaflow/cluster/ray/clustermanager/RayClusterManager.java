@@ -16,7 +16,6 @@ package com.antgroup.geaflow.cluster.ray.clustermanager;
 
 import static com.antgroup.geaflow.cluster.constants.ClusterConstants.AGENT_PROFILER_PATH;
 import static com.antgroup.geaflow.cluster.ray.config.RayConfig.RAY_AGENT_PROFILER_PATH;
-import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_WORK_PATH;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCESS_AUTO_RESTART;
 
 import com.antgroup.geaflow.cluster.clustermanager.ClusterContext;
@@ -36,7 +35,6 @@ import com.google.common.base.Preconditions;
 import io.ray.api.ActorHandle;
 import io.ray.api.Ray;
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
@@ -49,7 +47,6 @@ public class RayClusterManager extends GeaFlowClusterManager {
     private static final int MASTER_ACTOR_ID = 0;
     private static Map<Integer, ActorHandle> actors = new HashMap<>();
 
-    private String classpath;
     private String autoRestart;
     private String currentJobId;
 
@@ -63,7 +60,6 @@ public class RayClusterManager extends GeaFlowClusterManager {
         if (clusterContext.getHeartbeatManager() != null) {
             this.failFast = clusterConfig.getMaxRestarts() == 0;
             this.autoRestart = config.getString(PROCESS_AUTO_RESTART);
-            this.classpath = buildClasspath(config.getString(JOB_WORK_PATH));
             this.currentJobId = Ray.getRuntimeContext().getCurrentJobId().toString();
         }
         String profilerPath = config.getString(RAY_AGENT_PROFILER_PATH);
@@ -83,7 +79,7 @@ public class RayClusterManager extends GeaFlowClusterManager {
     public void createNewContainer(int containerId, boolean isRecover) {
         if (enableSupervisor) {
             String logFile = String.format("container-%s-%s.log", currentJobId, containerId);
-            String command = getContainerShellCommand(containerId, isRecover, classpath, logFile);
+            String command = getContainerShellCommand(containerId, isRecover, logFile);
             ActorHandle<RaySupervisorRunner> actor = createSupervisor(containerId, command,
                 autoRestart);
             actors.put(containerId, actor);
@@ -101,7 +97,7 @@ public class RayClusterManager extends GeaFlowClusterManager {
         LOGGER.info("create driver start, enable supervisor:{}", enableSupervisor);
         if (enableSupervisor) {
             String logFile = String.format("driver-%s-%s.log", currentJobId, driverId);
-            String command = getDriverShellCommand(driverId, driverIndex, classpath, logFile);
+            String command = getDriverShellCommand(driverId, driverIndex, logFile);
             ActorHandle<RaySupervisorRunner> actor = createSupervisor(driverId, command,
                 autoRestart);
             actors.put(driverId, actor);
@@ -133,10 +129,6 @@ public class RayClusterManager extends GeaFlowClusterManager {
     private ActorHandle<RaySupervisorRunner> createSupervisor(int containerId, String command, String autoStart) {
         Map<String, String> additionalEnvs = buildSupervisorEnvs(containerId, command, autoStart);
         return RayClient.createSupervisor(clusterConfig, additionalEnvs);
-    }
-
-    private String buildClasspath(String workDir) {
-        return Paths.get(workDir).resolve("*").toString();
     }
 
     @Override

@@ -55,7 +55,14 @@ public class DriverRunner {
         driver.waitTermination();
     }
 
+    public void close() {
+        if (driver != null) {
+            driver.close();
+        }
+    }
+
     public static void main(String[] args) throws Exception {
+        DriverRunner driverRunner = null;
         try {
             final long startTime = System.currentTimeMillis();
 
@@ -77,12 +84,15 @@ public class DriverRunner {
 
             DriverContext context = new DriverContext(Integer.parseInt(id),
                 Integer.parseInt(index), config);
-            DriverRunner driverRunner = new DriverRunner(context);
+            driverRunner = new DriverRunner(context);
             driverRunner.run();
             LOGGER.info("Completed driver init in {} ms", System.currentTimeMillis() - startTime);
             driverRunner.waitForTermination();
         } catch (Throwable e) {
-            LOGGER.error("FATAL: process {} exits", ProcessUtil.getProcessId(), e);
+            LOGGER.error("FATAL: driver {} exits", ProcessUtil.getProcessId(), e);
+            if (driverRunner != null) {
+                driverRunner.close();
+            }
             System.exit(EXIT_CODE);
         }
     }

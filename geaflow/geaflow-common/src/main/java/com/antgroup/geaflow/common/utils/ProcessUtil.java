@@ -20,9 +20,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.util.List;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,11 +114,6 @@ public class ProcessUtil {
 
     public static void killProcess(int pid) {
         execute("kill -9 " + pid);
-    }
-
-    public static void killProcesses(List<Integer> pidList) {
-        String pids = StringUtils.join(pidList, " ");
-        execute("kill -9 " + pids);
     }
 
     public static void execute(String cmd) {

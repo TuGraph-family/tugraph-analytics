@@ -19,8 +19,8 @@ import static com.antgroup.geaflow.cluster.k8s.config.K8SConstants.JOB_CLASSPATH
 import static com.antgroup.geaflow.cluster.k8s.config.KubernetesConfigKeys.POD_USER_LABELS;
 
 import com.antgroup.geaflow.cluster.config.ClusterConfig;
+import com.antgroup.geaflow.cluster.k8s.entrypoint.KubernetesContainerRunner;
 import com.antgroup.geaflow.cluster.k8s.utils.KubernetesUtils;
-import com.antgroup.geaflow.cluster.runner.entrypoint.ContainerRunner;
 import com.antgroup.geaflow.cluster.runner.util.ClusterUtils;
 import com.antgroup.geaflow.common.config.Configuration;
 import java.io.File;
@@ -62,7 +62,7 @@ public class KubernetesContainerParam extends AbstractKubernetesParam {
     public String getContainerShellCommand() {
         String logFilename = getLogDir() + File.separator + CONTAINER_LOG_SUFFIX;
         return ClusterUtils.getStartCommand(clusterConfig.getContainerJvmOptions(),
-            ContainerRunner.class, logFilename, config, JOB_CLASSPATH);
+            KubernetesContainerRunner.class, logFilename, config, JOB_CLASSPATH);
     }
 
     @Override

@@ -14,20 +14,25 @@
 
 package com.antgroup.geaflow.cluster.runner;
 
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.PROCESS_EXIT_WAIT_SECONDS;
+
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.common.utils.ProcessUtil;
 import com.antgroup.geaflow.stats.collector.StatsCollectorFactory;
 import com.antgroup.geaflow.stats.model.EventLabel;
 import com.antgroup.geaflow.stats.model.ExceptionLevel;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CommandRunner {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandRunner.class);
 
     private int pid;
@@ -36,6 +41,7 @@ public class CommandRunner {
     private final int maxRestarts;
     private final Map<String, String> env;
     private final Configuration configuration;
+    private final int exitWaitSecs;
 
     public CommandRunner(String command, int maxRestarts, Map<String, String> env,
                          Configuration config) {
@@ -43,6 +49,7 @@ public class CommandRunner {
         this.maxRestarts = maxRestarts;
         this.env = env;
         this.configuration = config;
+        this.exitWaitSecs = config.getInteger(PROCESS_EXIT_WAIT_SECONDS);
     }
 
     public void asyncStart() {
@@ -93,12 +100,14 @@ public class CommandRunner {
 
     private Process doStartProcess(String startCommand) throws IOException {
         LOGGER.info("Start process with command: {}", startCommand);
-        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", startCommand);
+        ProcessBuilder pb = new ProcessBuilder();
         //pb.redirectInput(Redirect.INHERIT);
         pb.redirectOutput(Redirect.INHERIT);
         if (env != null) {
             pb.environment().putAll(env);
         }
+        String[] cmds = startCommand.split("\\s+");
+        pb.command(cmds);
         Process childProcess = pb.start();
         this.process = childProcess;
         this.pid = ProcessUtil.getProcessPid(childProcess);
@@ -114,4 +123,34 @@ public class CommandRunner {
         return pid;
     }
 
+    public void stop() {
+        stop(pid);
+    }
+
+    public void stop(int oldPid) {
+        Preconditions.checkArgument(pid > 0, "pid should be larger than 0");
+        LOGGER.info("Stop old process if exists: {}", oldPid);
+
+        Process curProcess = process;
+        int curPid = pid;
+
+        // If bash process is alive, kill it, and it's child process is supposed to be killed.
+        if (curProcess.isAlive()) {
+            if (curPid <= 0) {
+                LOGGER.warn("Process is alive but pid not found: {}", curProcess);
+                return;
+            }
+            curProcess.destroy();
+            try {
+                boolean status = curProcess.waitFor(exitWaitSecs, TimeUnit.SECONDS);
+                LOGGER.info("Destroy current process {}: {}", curPid, status);
+            } catch (InterruptedException e) {
+                LOGGER.warn("Interrupted while waiting for process to exit: {}", pid);
+            }
+        }
+        if (curPid != oldPid) {
+            LOGGER.info("Kill old process: {}", oldPid);
+            ProcessUtil.killProcess(oldPid);
+        }
+    }
 }

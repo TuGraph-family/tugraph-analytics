@@ -29,7 +29,6 @@ import com.antgroup.geaflow.common.exception.GeaflowHeartbeatException;
 import com.antgroup.geaflow.common.heartbeat.Heartbeat;
 import com.antgroup.geaflow.common.utils.SleepUtils;
 import com.antgroup.geaflow.rpc.proto.Master.HeartbeatResponse;
-import com.antgroup.geaflow.stats.sink.IStatsWriter;
 import java.util.HashMap;
 import java.util.Map;
 import org.mockito.Mock;
@@ -43,9 +42,6 @@ public class HeartbeatManagerTest {
     @Mock
     private AbstractClusterManager clusterManager;
 
-    @Mock
-    private IStatsWriter statsWriter;
-
     private HeartbeatManager heartbeatManager;
 
     @BeforeMethod
@@ -55,6 +51,7 @@ public class HeartbeatManagerTest {
         config.put(ExecutionConfigKeys.HEARTBEAT_INITIAL_DELAY_MS, "60000");
         config.put(ExecutionConfigKeys.HEARTBEAT_INTERVAL_MS, "60000");
         config.put(ExecutionConfigKeys.HEARTBEAT_TIMEOUT_MS, "500");
+        config.put(ExecutionConfigKeys.SUPERVISOR_ENABLE, "true");
         heartbeatManager = new HeartbeatManager(config, clusterManager);
     }
 
@@ -98,6 +95,19 @@ public class HeartbeatManagerTest {
         heartbeatManager.receivedHeartbeat(heartbeat);
         SleepUtils.sleepMilliSecond(600);
         heartbeatManager.checkHeartBeat();
+
+        verify(clusterManager, times(1)).doFailover(eq(1), isA(GeaflowHeartbeatException.class));
+    }
+
+    @Test
+    public void checkWorkHealth_LogsWarningsAndErrors() {
+        Map<Integer, String> containerMap = new HashMap<>();
+        containerMap.put(1, "container1");
+        when(clusterManager.getContainerIds()).thenReturn(containerMap);
+        when(clusterManager.getDriverIds()).thenReturn(new HashMap<Integer, String>());
+
+        heartbeatManager.checkWorkerHealth();
+        heartbeatManager.close();
 
         verify(clusterManager, times(1)).doFailover(eq(1), isA(GeaflowHeartbeatException.class));
     }
