@@ -16,14 +16,13 @@ package com.antgroup.geaflow.operator.impl.graph.compute.dynamic.cache;
 
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TemporaryGraphCache<K, VV, EV> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TemporaryGraphCache.class);
 
     private final Set<K> vertexIds;
     private final Map<K, IVertex<K, VV>> vertices;

@@ -28,9 +28,11 @@ import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
+import com.antgroup.geaflow.dsl.connector.file.source.SourceConstants;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -70,7 +72,7 @@ public class ParquetFormat implements FileFormat<Row> {
 
     @Override
     public String getFormat() {
-        return "parquet";
+        return SourceConstants.PARQUET;
     }
 
     @Override
@@ -90,6 +92,12 @@ public class ParquetFormat implements FileFormat<Row> {
 
         JobContext jobContext = new JobContextImpl(job.getConfiguration(), new JobID());
         this.inputSplits = inputFormat.getSplits(jobContext);
+        if (split.getSplitStart() != -1L) {
+            this.inputSplits = this.inputSplits.stream().filter(
+                inputSplit -> ((org.apache.hadoop.mapred.FileSplit) inputSplit).getStart() == split.getSplitStart()
+                && ((org.apache.hadoop.mapred.FileSplit) inputSplit).getLength() == split.getSplitLength()
+            ).collect(Collectors.toList());
+        }
         this.taskAttemptContext = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID());
     }
 

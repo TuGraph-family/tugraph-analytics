@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -76,18 +77,24 @@ public class FileTableSource implements TableSource {
 
     @Override
     public List<Partition> listPartitions() {
-        List<Partition> allPartitions = fileReadHandler.listPartitions();
+        return listPartitions(1);
+    }
+
+    @Override
+    public List<Partition> listPartitions(int parallelism) {
+        List<Partition> allPartitions = fileReadHandler.listPartitions(parallelism);
         if (StringUtils.isNotEmpty(this.nameFilterRegex)) {
             List<Partition> filterPartitions = new ArrayList<>();
             for (Partition partition : allPartitions) {
                 if (!partition.getName().startsWith(".")
-                    && Pattern.matches(this.nameFilterRegex, partition.getName())) {
+                        && Pattern.matches(this.nameFilterRegex, partition.getName())) {
                     filterPartitions.add(partition);
                 }
             }
             return filterPartitions;
+        } else {
+            return allPartitions;
         }
-        return allPartitions;
     }
 
     @SuppressWarnings("unchecked")
@@ -126,13 +133,56 @@ public class FileTableSource implements TableSource {
 
     public static class FileSplit implements Partition {
 
+        private String name;
+
         private final String baseDir;
 
         private final String relativePath;
 
+        private long splitStart;
+
+        private long splitLength;
+
+        private int lineSplitSize;
+
+        private int index;
+
+        private int parallel;
+
         public FileSplit(String baseDir, String relativePath) {
             this.baseDir = baseDir;
             this.relativePath = relativePath;
+            this.lineSplitSize = 1;
+            this.splitStart = -1L;
+            this.splitLength = Long.MAX_VALUE;
+            this.name = relativePath;
+        }
+
+        public FileSplit(String baseDir, String relativePath, int lineSplitSize) {
+            this.baseDir = baseDir;
+            this.relativePath = relativePath;
+            this.lineSplitSize = lineSplitSize;
+            this.splitStart = -1L;
+            this.splitLength = Long.MAX_VALUE;
+            this.name = relativePath;
+        }
+
+        public FileSplit(String baseDir, String relativePath, int lineSplitSize, long splitStart, long splitLength) {
+            this.baseDir = baseDir;
+            this.relativePath = relativePath;
+            this.lineSplitSize = lineSplitSize;
+            this.splitStart = splitStart;
+            this.splitLength = splitLength;
+            this.name = relativePath;
+        }
+
+        public FileSplit(String baseDir, String relativePath, int index, int lineSplitSize, long splitStart, long splitLength) {
+            this.baseDir = baseDir;
+            this.relativePath = relativePath;
+            this.lineSplitSize = lineSplitSize;
+            this.splitStart = splitStart;
+            this.splitLength = splitLength;
+            this.name = relativePath + "_" + index;
         }
 
         public FileSplit(String file) {
@@ -142,11 +192,20 @@ public class FileTableSource implements TableSource {
             }
             this.baseDir = file.substring(0, index);
             this.relativePath = file.substring(index + 1);
+            this.splitStart = -1L;
+            this.splitLength = Long.MAX_VALUE;
+            this.name = relativePath;
+        }
+
+        @Override
+        public void setIndex(int index, int parallel) {
+            this.index = index;
+            this.parallel = parallel;
         }
 
         @Override
         public String getName() {
-            return relativePath;
+            return name;
         }
 
         public String getPath() {
@@ -154,6 +213,26 @@ public class FileTableSource implements TableSource {
                 return baseDir + relativePath;
             }
             return baseDir + "/" + relativePath;
+        }
+
+        public long getSplitStart() {
+            return splitStart;
+        }
+
+        public long getSplitLength() {
+            return splitLength;
+        }
+
+        public int getLineSplitSize() {
+            return lineSplitSize;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public int getParallel() {
+            return parallel;
         }
 
         @Override
@@ -170,7 +249,9 @@ public class FileTableSource implements TableSource {
                 return false;
             }
             FileSplit that = (FileSplit) o;
-            return Objects.equals(baseDir, that.baseDir) && Objects.equals(relativePath, that.relativePath);
+            return Objects.equals(baseDir, that.baseDir) && Objects.equals(relativePath, that.relativePath)
+                    && Objects.equals(name, that.name) && Objects.equals(splitStart, that.splitStart)
+                    && Objects.equals(splitLength, that.splitLength);
         }
 
         @Override
@@ -181,8 +262,23 @@ public class FileTableSource implements TableSource {
         public InputStream openStream(Configuration conf) throws IOException {
             FileSystem fs = FileConnectorUtil.getHdfsFileSystem(conf);
             Path path = new Path(baseDir, relativePath);
-            return fs.open(path);
+            FSDataInputStream inputStream = fs.open(path);
+            if (this.splitStart != -1L) {
+                inputStream.seek(this.splitStart);
+            }
+            return inputStream;
         }
+
+        public InputStream openStream(Configuration conf, long inputOffset) throws IOException {
+            FileSystem fs = FileConnectorUtil.getHdfsFileSystem(conf);
+            Path path = new Path(baseDir, relativePath);
+            FSDataInputStream inputStream = fs.open(path);
+            if (this.splitStart != -1L) {
+                inputStream.seek(this.splitStart + inputOffset);
+            }
+            return inputStream;
+        }
+
     }
 
     public static class FileOffset implements Offset {

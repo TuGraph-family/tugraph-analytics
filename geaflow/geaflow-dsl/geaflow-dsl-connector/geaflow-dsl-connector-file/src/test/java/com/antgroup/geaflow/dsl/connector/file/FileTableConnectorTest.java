@@ -98,7 +98,7 @@ public class FileTableConnectorTest {
 
         DfsFileReadHandler readHandler = new DfsFileReadHandler();
         readHandler.init(testConf, new TableSchema(), testDir);
-        List<Partition> partitions = readHandler.listPartitions();
+        List<Partition> partitions = readHandler.listPartitions(1);
         Assert.assertEquals(partitions.size(), 1);
         FetchData<String> fetchData =
             readHandler.readPartition((FileSplit) partitions.get(0), new FileOffset(0L), 10);

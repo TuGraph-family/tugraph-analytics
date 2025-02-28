@@ -20,6 +20,8 @@ import java.io.Serializable;
 
 public class FrameworkConfigKeys implements Serializable {
 
+    private static final long serialVersionUID = 0L;
+
     public static final ConfigKey ENABLE_EXTRA_OPTIMIZE = ConfigKeys
         .key("geaflow.extra.optimize.enable")
         .defaultValue(false)
@@ -150,6 +152,16 @@ public class FrameworkConfigKeys implements Serializable {
         .key("geaflow.iteration.asp.enable")
         .defaultValue(false)
         .description("whether enable iteration asp mode, disabled by default");
+
+    public static final ConfigKey ADD_INVOKE_VIDS_EACH_ITERATION = ConfigKeys
+            .key("geaflow.add.invoke.vids.each.iteration")
+            .defaultValue(true)
+            .description("");
+
+    public static final ConfigKey UDF_MATERIALIZE_GRAPH_IN_FINISH = ConfigKeys
+            .key("geaflow.udf.materialize.graph.in.finish")
+            .defaultValue(false)
+            .description("in dynmic graph, whether udf function materialize graph in finish");
 
 }
 

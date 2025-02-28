@@ -75,6 +75,11 @@ public class SocketTableSource implements TableSource, ISkipOpenAndClose {
     }
 
     @Override
+    public List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
+    @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
         return DeserializerFactory.loadTextDeserializer();
     }
@@ -116,6 +121,10 @@ public class SocketTableSource implements TableSource, ISkipOpenAndClose {
         @Override
         public String getName() {
             return String.valueOf(data.hashCode());
+        }
+
+        @Override
+        public void setIndex(int index, int parallel) {
         }
 
         @Override

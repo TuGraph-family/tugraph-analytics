@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.connector.file.source.format;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.connector.api.FetchData;
@@ -22,25 +23,46 @@ import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileOffset;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
+import com.antgroup.geaflow.dsl.connector.file.source.SourceConstants;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TextFormat implements FileFormat<String>, StreamFormat<String> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TextFormat.class);
+
     private BufferedReader reader;
+
+    private Configuration tableConf;
+    protected boolean singleFileModeRead = false;
+    private FileSplit fileSplit;
+    private long readCnt = 0L;
+    private long readSize = 0L;
+    private long expectReadSize = -1L;
+    private int lineSplitSize = 1;
+    private boolean firstRead = true;
 
     @Override
     public String getFormat() {
-        return "txt";
+        return SourceConstants.TXT;
     }
 
     @Override
     public void init(Configuration tableConf, TableSchema tableSchema, FileSplit split) throws IOException {
+        this.tableConf = tableConf;
+        this.fileSplit = split;
+        this.expectReadSize = split.getSplitLength();
+        this.lineSplitSize = split.getLineSplitSize();
         this.reader = new BufferedReader(new InputStreamReader(split.openStream(tableConf)));
+        this.expectReadSize = split.getSplitLength();
+        this.lineSplitSize = split.getLineSplitSize();
+        this.singleFileModeRead = tableConf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_SOURCE_FILE_PARALLEL_MOD);
     }
 
     @Override
@@ -51,7 +73,13 @@ public class TextFormat implements FileFormat<String>, StreamFormat<String> {
 
             @Override
             public boolean hasNext() {
+                if (singleFileModeRead) {
+                    throw new GeaFlowDSLException("Single file mode read is not supported in batch read");
+                }
                 try {
+                    if (expectReadSize != -1L && readSize >= expectReadSize) {
+                        return false;
+                    }
                     if (current == null) {
                         current = reader.readLine();
                     }
@@ -65,6 +93,7 @@ public class TextFormat implements FileFormat<String>, StreamFormat<String> {
             public String next() {
                 String next = current;
                 current = null;
+                readSize += next.length() + lineSplitSize;
                 return next;
             }
         };
@@ -72,16 +101,29 @@ public class TextFormat implements FileFormat<String>, StreamFormat<String> {
 
     @Override
     public FetchData<String> streamRead(FileOffset offset, int windowSize) throws IOException {
+        if (firstRead) {
+            firstRead = false;
+            close();
+            this.reader = new BufferedReader(new InputStreamReader(fileSplit.openStream(tableConf, offset.getOffset())));
+        }
+
         List<String> readContents = new ArrayList<>(windowSize);
         long nextOffset = offset.getOffset();
-        int i;
+        int i = 0;
         for (i = 0; i < windowSize; i++) {
             String line = reader.readLine();
             if (line == null) {
                 break;
             }
-            readContents.add(line);
-            nextOffset += line.length() + 1;
+            if (!singleFileModeRead || readCnt % this.fileSplit.getParallel() == this.fileSplit.getIndex()) {
+                readContents.add(line);
+            }
+            nextOffset += line.length() + lineSplitSize;
+            readSize += line.length() + lineSplitSize;
+            readCnt ++;
+            if (fileSplit.getSplitStart() != -1L && nextOffset >= fileSplit.getSplitLength()) {
+                break;
+            }
         }
         boolean isFinished = i < windowSize;
         return FetchData.createStreamFetch(readContents, new FileOffset(nextOffset), isFinished);

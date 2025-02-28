@@ -190,6 +190,11 @@ public class OdpsTableSource implements TableSource, EnablePartitionPushDown {
     }
 
     @Override
+    public List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
+    @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
         return (TableDeserializer<IN>) new OdpsRecordDeserializer();
     }
@@ -282,6 +287,10 @@ public class OdpsTableSource implements TableSource, EnablePartitionPushDown {
         @Override
         public String getName() {
             return prefix + singlePartitionSpec;
+        }
+
+        @Override
+        public void setIndex(int index, int parallel) {
         }
 
         @Override

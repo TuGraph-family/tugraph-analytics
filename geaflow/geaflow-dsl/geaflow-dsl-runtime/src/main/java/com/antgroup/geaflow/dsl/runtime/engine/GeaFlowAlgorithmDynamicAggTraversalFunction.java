@@ -19,6 +19,7 @@ import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
 
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricAggTraversalFunction;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmUserFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowVertex;
@@ -41,10 +42,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeaFlowAlgorithmDynamicAggTraversalFunction
     implements IncVertexCentricAggTraversalFunction<Object, Row, Row, Object, Row, ITraversalAgg,
         ITraversalAgg>, RichIteratorFunction {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GeaFlowAlgorithmDynamicAggTraversalFunction.class);
 
     private static final String STATE_SUFFIX = "UpdatedValueState";
 
@@ -64,6 +69,8 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
 
     private transient KeyValueState<Object, Row> vertexUpdateValues;
 
+    private boolean materializeInFinish;
+
     public GeaFlowAlgorithmDynamicAggTraversalFunction(GraphSchema graphSchema,
                                                        AlgorithmUserFunction<Object, Object> userFunction,
                                                        Object[] params) {
@@ -77,6 +84,7 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
     public void open(
         IncVertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> vertexCentricFuncContext) {
         this.traversalContext = vertexCentricFuncContext;
+        this.materializeInFinish = traversalContext.getRuntimeContext().getConfiguration().getBoolean(FrameworkConfigKeys.UDF_MATERIALIZE_GRAPH_IN_FINISH);
         this.algorithmCtx = new GeaFlowAlgorithmDynamicRuntimeContext(this, traversalContext,
             graphSchema);
         this.initVertices = new HashSet<>();
@@ -107,21 +115,22 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
 
     @Override
     public void init(ITraversalRequest<Object> traversalRequest) {
-        Object vertexId = traversalRequest.getVId();
-        algorithmCtx.setVertexId(vertexId);
-        // The set formed by the vertices and source/target vertices of the edges inserted into
-        // each window of the dynamic graph is taken as the trigger vertex for the first round of
-        // iteration in the algorithm. These vertices may be duplicated, and needInit() returns
-        // false when called after the first time to avoid redundant invocation.
-        if (vertexId != null && needInit(vertexId)) {
-            RowVertex vertex = (RowVertex) algorithmCtx.loadVertex();
-            if (vertex != null) {
-                algorithmCtx.setVertexId(vertex.getId());
-                Row newValue = getVertexNewValue(vertex.getId());
-                userFunction.process(vertex, Optional.ofNullable(newValue), Collections.emptyIterator());
+        if (!materializeInFinish) {
+            Object vertexId = traversalRequest.getVId();
+            algorithmCtx.setVertexId(vertexId);
+            // The set formed by the vertices and source/target vertices of the edges inserted into
+            // each window of the dynamic graph is taken as the trigger vertex for the first round of
+            // iteration in the algorithm. These vertices may be duplicated, and needInit() returns
+            // false when called after the first time to avoid redundant invocation.
+            if (vertexId != null && needInit(vertexId)) {
+                RowVertex vertex = (RowVertex) algorithmCtx.loadVertex();
+                if (vertex != null) {
+                    algorithmCtx.setVertexId(vertex.getId());
+                    Row newValue = getVertexNewValue(vertex.getId());
+                    userFunction.process(vertex, Optional.ofNullable(newValue), Collections.emptyIterator());
+                }
             }
         }
-
     }
 
     public void updateVertexValue(Object vertexId, Row value) {
@@ -134,11 +143,22 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
 
     @Override
     public void evolve(Object vertexId, TemporaryGraph<Object, Row, Row> temporaryGraph) {
-        IVertex<Object, Row> vertex = temporaryGraph.getVertex();
+        if (!materializeInFinish) {
+            IVertex<Object, Row> vertex = temporaryGraph.getVertex();
+            List<IEdge<Object, Row>> edges = temporaryGraph.getEdges();
+            materializeGraph(vertex, edges);
+        } else {
+            algorithmCtx.setVertexId(vertexId);
+            RowVertex vertex = (RowVertex) temporaryGraph.getVertex();
+            List<Object> emptyMessages = Collections.emptyList();
+            userFunction.process(vertex, Optional.ofNullable(null), emptyMessages.iterator());
+        }
+    }
+
+    private void materializeGraph(IVertex vertex, List<IEdge<Object, Row>> edges) {
         if (vertex != null) {
             mutableGraph.addVertex(GRAPH_VERSION, vertex);
         }
-        List<IEdge<Object, Row>> edges = temporaryGraph.getEdges();
         if (edges != null) {
             for (IEdge<Object, Row> edge : edges) {
                 mutableGraph.addEdge(GRAPH_VERSION, edge);
@@ -149,7 +169,15 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
     @Override
     public void compute(Object vertexId, Iterator<Object> messages) {
         algorithmCtx.setVertexId(vertexId);
-        RowVertex vertex = (RowVertex) algorithmCtx.loadVertex();
+        RowVertex vertex;
+        if (materializeInFinish) {
+            vertex = (RowVertex) algorithmCtx.getIncVCTraversalCtx().getTemporaryGraph().getVertex();
+            if (vertex == null) {
+                vertex = (RowVertex) algorithmCtx.loadVertex();
+            }
+        } else {
+            vertex = (RowVertex) algorithmCtx.loadVertex();
+        }
         if (vertex != null) {
             Row newValue = getVertexNewValue(vertex.getId());
             userFunction.process(vertex, Optional.ofNullable(newValue), messages);
@@ -163,6 +191,10 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
         if (graphVertex != null) {
             Row newValue = getVertexNewValue(graphVertex.getId());
             userFunction.finish(graphVertex, Optional.ofNullable(newValue));
+        }
+        if (materializeInFinish) {
+            IVertex vertex = algorithmCtx.getIncVCTraversalCtx().getTemporaryGraph().getVertex();
+            materializeGraph(vertex, traversalContext.getTemporaryGraph().getEdges());
         }
     }
 
@@ -179,6 +211,7 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
     public void finish() {
         algorithmCtx.finish();
         initVertices.clear();
+        userFunction.finish();
         long windowId = traversalContext.getRuntimeContext().getWindowId();
         this.vertexUpdateValues.manage().operate().setCheckpointId(windowId);
         this.vertexUpdateValues.manage().operate().finish();
@@ -197,6 +230,7 @@ public class GeaFlowAlgorithmDynamicAggTraversalFunction
 
     @Override
     public void finishIteration(long iterationId) {
+        userFunction.finishIteration(iterationId);
     }
 
     @Override

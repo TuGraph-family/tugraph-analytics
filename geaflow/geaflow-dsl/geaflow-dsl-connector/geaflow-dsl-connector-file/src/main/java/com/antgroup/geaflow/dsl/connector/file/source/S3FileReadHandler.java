@@ -68,7 +68,7 @@ public class S3FileReadHandler extends AbstractFileReadHandler {
     }
 
     @Override
-    public List<Partition> listPartitions() {
+    public List<Partition> listPartitions(int parallelism) {
         List<Partition> partitions = new ArrayList<>();
         try {
             ListObjectsV2Result result = s3.listObjectsV2(

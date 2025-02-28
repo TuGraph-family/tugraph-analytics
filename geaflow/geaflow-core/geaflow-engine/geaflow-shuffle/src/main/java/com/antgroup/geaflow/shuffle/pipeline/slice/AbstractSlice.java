@@ -59,7 +59,7 @@ public abstract class AbstractSlice implements IPipelineSlice {
                 throw new GeaflowRuntimeException("slice is already created:" + sliceId);
             }
 
-            LOGGER.info("creating reader for {} {} with startBatch:{}",
+            LOGGER.debug("creating reader for {} {} with startBatch:{}",
                 taskLogTag, sliceId, startBatchId);
 
             sliceReader = new DisposableSliceReader(this, startBatchId, listener);

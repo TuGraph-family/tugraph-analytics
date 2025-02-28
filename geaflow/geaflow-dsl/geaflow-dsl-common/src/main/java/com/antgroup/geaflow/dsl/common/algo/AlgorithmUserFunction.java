@@ -48,6 +48,16 @@ public interface AlgorithmUserFunction<K, M> extends Serializable {
     void finish(RowVertex graphVertex, Optional<Row> updatedValues);
 
     /**
+     * Finish method called after all vertices is processed.
+     */
+    default void finish() {}
+
+    /**
+     * Finish Iteration method called after each iteration finished.
+     */
+    default void finishIteration(long iterationId) {}
+
+    /**
      * Returns the output type for the function.
      */
     StructType getOutputType(GraphSchema graphSchema);

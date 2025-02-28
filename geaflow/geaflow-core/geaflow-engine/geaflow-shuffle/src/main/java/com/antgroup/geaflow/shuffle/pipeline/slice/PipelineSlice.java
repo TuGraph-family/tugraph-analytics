@@ -141,7 +141,7 @@ public class PipelineSlice extends AbstractSlice {
             isReleased = true;
         }
 
-        LOGGER.info("{}: released {} with bufferSize:{}", taskLogTag, sliceId, bufferSize);
+        LOGGER.debug("{}: released {} with bufferSize:{}", taskLogTag, sliceId, bufferSize);
         if (reader != null) {
             reader.release();
         }

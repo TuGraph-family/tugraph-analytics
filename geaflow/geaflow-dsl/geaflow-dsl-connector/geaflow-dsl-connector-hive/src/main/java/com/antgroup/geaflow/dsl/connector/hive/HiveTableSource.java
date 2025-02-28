@@ -140,6 +140,11 @@ public class HiveTableSource implements TableSource, EnablePartitionPushDown {
         return allPartitions;
     }
 
+    @Override
+    public List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
     /**
      * Align the hive partition values to the partition fields order defined in DSL ddl.
      */
@@ -250,6 +255,10 @@ public class HiveTableSource implements TableSource, EnablePartitionPushDown {
         @Override
         public String getName() {
             return StringUtils.join(new Object[]{dbName, tableName, split}, "-");
+        }
+
+        @Override
+        public void setIndex(int index, int parallel) {
         }
 
         @Override

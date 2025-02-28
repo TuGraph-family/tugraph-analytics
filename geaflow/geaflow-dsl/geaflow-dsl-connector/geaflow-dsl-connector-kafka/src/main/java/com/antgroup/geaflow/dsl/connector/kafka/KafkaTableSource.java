@@ -121,6 +121,11 @@ public class KafkaTableSource extends AbstractTableSource {
     }
 
     @Override
+    public List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
+    @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
         return DeserializerFactory.loadDeserializer(conf);
     }
@@ -278,6 +283,10 @@ public class KafkaTableSource extends AbstractTableSource {
         @Override
         public String getName() {
             return topic + "-" + partitionId;
+        }
+
+        @Override
+        public void setIndex(int index, int parallel) {
         }
 
         @Override

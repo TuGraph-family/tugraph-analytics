@@ -17,6 +17,8 @@ package com.antgroup.geaflow.dsl.connector.api.function;
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.api.function.RichWindowFunction;
 import com.antgroup.geaflow.api.function.io.SinkFunction;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.connector.api.TableSink;
@@ -41,6 +43,7 @@ public class GeaFlowTableSinkFunction extends RichWindowFunction implements Sink
 
     protected TableSink tableSink;
 
+    private boolean skipWrite;
     private Histogram writeRt;
     private Histogram flushRt;
     private Meter writeTps;
@@ -60,14 +63,18 @@ public class GeaFlowTableSinkFunction extends RichWindowFunction implements Sink
             .histogram(MetricNameFormatter.tableFlushTimeRtName(table.getName()));
         writeTps = MetricGroupRegistry.getInstance().getMetricGroup(MetricConstants.MODULE_DSL)
             .meter(MetricNameFormatter.tableOutputRowTpsName(table.getName()));
+        Configuration conf = table.getConfigWithGlobal(runtimeContext.getConfiguration());
+        skipWrite = conf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_SINK_ENABLE_SKIP);
     }
 
     @Override
     public void write(Row row) throws Exception {
-        long startTime = System.currentTimeMillis();
-        tableSink.write(row);
-        writeRt.update(System.currentTimeMillis() - startTime);
-        writeTps.mark();
+        if (!skipWrite) {
+            long startTime = System.currentTimeMillis();
+            tableSink.write(row);
+            writeRt.update(System.currentTimeMillis() - startTime);
+            writeTps.mark();
+        }
     }
 
     @Override

@@ -89,6 +89,32 @@ public class ConnectorConfigKeys implements Serializable {
         .key("geaflow.dsl.skip.header")
         .defaultValue(false)
         .description("Whether skip the header for csv format.");
+
+    public static final ConfigKey GEAFLOW_DSL_SOURCE_FILE_PARALLEL_MOD = ConfigKeys
+            .key("geaflow.dsl.source.file.parallel.mod")
+            .defaultValue(false)
+            .description("Whether read single file by index");
+
+    public static final ConfigKey GEAFLOW_DSL_SINK_FILE_COLLISION = ConfigKeys
+            .key("geaflow.dsl.sink.file.collision")
+            .defaultValue("newfile")
+            .description("Whether create new file when collision occurs.");
+
+    public static final ConfigKey GEAFLOW_DSL_FILE_LINE_SPLIT_SIZE = ConfigKeys
+            .key("geaflow.dsl.file.line.split.size")
+            .defaultValue(-1)
+            .description("file line split size set by user");
+
+    public static final ConfigKey GEAFLOW_DSL_SOURCE_ENABLE_UPLOAD_METRICS = ConfigKeys
+            .key("geaflow.dsl.source.enable.upload.metrics")
+            .defaultValue(true)
+            .description("source enable upload metrics");
+
+    public static final ConfigKey GEAFLOW_DSL_SINK_ENABLE_SKIP = ConfigKeys
+            .key("geaflow.dsl.sink.enable.skip")
+            .defaultValue(false)
+            .description("sink enable skip");
+
 }
 
 

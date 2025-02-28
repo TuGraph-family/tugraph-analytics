@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.runtime.engine;
 import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContextFunction.VertexCentricAggContext;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.VertexCentricTraversalFuncContext;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
@@ -78,6 +79,16 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
     }
 
     @Override
+    public List<RowEdge> loadStaticEdges(EdgeDirection direction) {
+        throw new RuntimeException("GeaFlowAlgorithmRuntimeContext not support loadStaticEdges");
+    }
+
+    @Override
+    public List<RowEdge> loadDynamicEdges(EdgeDirection direction) {
+        throw new RuntimeException("GeaFlowAlgorithmRuntimeContext not support loadDynamicEdges");
+    }
+
+    @Override
     public void sendMessage(Object vertexId, Object message) {
         traversalContext.sendMessage(vertexId, message);
         if (getCurrentIterationId() > lastSendAggMsgIterationId) {
@@ -107,6 +118,11 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
 
     public long getCurrentIterationId() {
         return traversalContext.getIterationId();
+    }
+
+    @Override
+    public Configuration getConfig() {
+        return traversalContext.getRuntimeContext().getConfiguration();
     }
 
     @Override

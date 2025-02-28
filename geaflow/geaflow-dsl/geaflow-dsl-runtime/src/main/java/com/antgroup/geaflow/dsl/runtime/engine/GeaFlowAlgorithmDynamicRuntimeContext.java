@@ -19,6 +19,7 @@ import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunct
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction.TraversalGraphSnapShot;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalVertexQuery;
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.data.Row;
@@ -27,6 +28,7 @@ import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.ITraversalAgg;
 import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
+import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
 import com.antgroup.geaflow.model.traversal.TraversalType.ResponseType;
@@ -79,6 +81,11 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
         return vertexQuery.loadIdIterator();
     }
 
+    @Override
+    public Configuration getConfig() {
+        return incVCTraversalCtx.getRuntimeContext().getConfiguration();
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public List<RowEdge> loadEdges(EdgeDirection direction) {
@@ -97,6 +104,66 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
         }
     }
 
+    public List<RowEdge> loadDynamicEdges(EdgeDirection direction) {
+        List<IEdge<Object, Row>> edges = incVCTraversalCtx.getTemporaryGraph().getEdges();
+        List<RowEdge> rowEdges = new ArrayList<>();
+        if (edges == null) {
+            return rowEdges;
+        }
+        switch (direction) {
+            case OUT:
+                for (IEdge<Object, Row> edge : edges) {
+                    if (edge.getDirect() == EdgeDirection.OUT) {
+                        rowEdges.add((RowEdge) edge);
+                    }
+                }
+                break;
+            case IN:
+                for (IEdge<Object, Row> edge : edges) {
+                    if (edge.getDirect() == EdgeDirection.IN) {
+                        rowEdges.add((RowEdge) edge);
+                    }
+                }
+                break;
+            case BOTH:
+                for (IEdge<Object, Row> edge : edges) {
+                    rowEdges.add((RowEdge) edge);
+                }
+                break;
+            default:
+                throw new GeaFlowDSLException("Illegal edge direction: " + direction);
+        }
+        return rowEdges;
+    }
+
+    public List<RowEdge> loadStaticEdges(EdgeDirection direction) {
+        List<IEdge<Object, Row>> edges;
+        switch (direction) {
+            case OUT:
+                edges = this.incVCTraversalCtx.getHistoricalGraph()
+                        .getSnapShot(0).edges().getOutEdges();
+                break;
+            case IN:
+                edges = this.incVCTraversalCtx.getHistoricalGraph()
+                        .getSnapShot(0).edges().getInEdges();
+                break;
+            case BOTH:
+                edges = this.incVCTraversalCtx.getHistoricalGraph()
+                        .getSnapShot(0).edges().getEdges();
+                break;
+            default:
+                throw new GeaFlowDSLException("Illegal edge direction: " + direction);
+        }
+        List<RowEdge> rowEdges = new ArrayList<>();
+        if (edges == null) {
+            return rowEdges;
+        }
+        for (IEdge<Object, Row> edge : edges) {
+            rowEdges.add((RowEdge) edge);
+        }
+        return rowEdges;
+    }
+
     @Override
     public void sendMessage(Object vertexId, Object message) {
         incVCTraversalCtx.sendMessage(vertexId, message);
@@ -105,7 +172,6 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
             aggContext.aggregate(GeaFlowKVAlgorithmAggregateFunction.getAlgorithmAgg(iterationId));
         }
     }
-
 
     @Override
     public void take(Row row) {
@@ -140,6 +206,10 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
 
     public void setAggContext(VertexCentricAggContext<ITraversalAgg, ITraversalAgg> aggContext) {
         this.aggContext = Objects.requireNonNull(aggContext);
+    }
+
+    public IncVertexCentricTraversalFuncContext<Object, Row, Row, Object, Row> getIncVCTraversalCtx() {
+        return incVCTraversalCtx;
     }
 
     private static class AlgorithmResponse implements ITraversalResponse<Row> {

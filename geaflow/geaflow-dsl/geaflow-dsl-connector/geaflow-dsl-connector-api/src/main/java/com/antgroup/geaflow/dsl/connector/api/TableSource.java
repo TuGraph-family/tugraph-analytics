@@ -46,6 +46,13 @@ public interface TableSource extends Serializable {
     List<Partition> listPartitions();
 
     /**
+     * List all the partitions for the source.
+     */
+    default List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
+    /**
      * Returns the {@link TableDeserializer} for the source to convert data read from
      * the source to {@link Row}.
      */

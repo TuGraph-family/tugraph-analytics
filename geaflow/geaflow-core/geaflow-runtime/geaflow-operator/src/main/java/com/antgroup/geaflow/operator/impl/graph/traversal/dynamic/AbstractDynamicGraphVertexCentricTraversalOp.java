@@ -20,6 +20,8 @@ import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunct
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction.IncVertexCentricTraversalFuncContext;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction.TraversalHistoricalGraph;
 import com.antgroup.geaflow.collector.ICollector;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.model.graph.message.DefaultGraphMessage;
 import com.antgroup.geaflow.model.graph.message.IGraphMessage;
 import com.antgroup.geaflow.model.record.RecordArgs.GraphRecordNames;
@@ -53,6 +55,7 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
     protected IncGraphVCTraversalCtxImpl graphVCTraversalCtx;
     protected IncVertexCentricTraversalFunction<K, VV, EV, M, R> incVcTraversalFunction;
 
+    protected boolean addInvokeVIdsEachIteration = false;
     protected Set<K> invokeVIds;
     protected List<ITraversalResponse<R>> responses;
 
@@ -76,6 +79,8 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
         this.graphVCTraversalCtx = new IncGraphVCTraversalCtxImpl(getIdentify(), messageCollector);
         this.incVcTraversalFunction.open(this.graphVCTraversalCtx);
 
+        this.addInvokeVIdsEachIteration = Configuration.getBoolean(FrameworkConfigKeys.ADD_INVOKE_VIDS_EACH_ITERATION,
+                opContext.getRuntimeContext().getConfiguration().getConfigMap());
         this.invokeVIds = new HashSet<>();
         this.responses = new ArrayList<>();
 
@@ -103,7 +108,9 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
             this.graphMsgBox.processInMessage(new MsgProcessFunc<K, M>() {
                 @Override
                 public void process(K vertexId, List<M> messages) {
-                    invokeVIds.add(vertexId);
+                    if (addInvokeVIdsEachIteration) {
+                        invokeVIds.add(vertexId);
+                    }
                     graphVCTraversalCtx.init(iterations, vertexId);
                     incVcTraversalFunction.compute(vertexId, messages.iterator());
                 }
