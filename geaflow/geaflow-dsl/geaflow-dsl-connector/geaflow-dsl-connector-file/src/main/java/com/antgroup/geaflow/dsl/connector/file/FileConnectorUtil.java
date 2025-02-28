@@ -67,6 +67,9 @@ public class FileConnectorUtil {
                 }
             }
         }
+        if (conf.contains("fs.defaultFS")) {
+            hadoopConf.set("fs.defaultFS", conf.getString("fs.defaultFS"));
+        }
         return hadoopConf;
     }
 

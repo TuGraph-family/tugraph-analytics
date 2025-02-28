@@ -103,6 +103,7 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
         try {
             return future.get();
         } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
             throw new GeaflowRuntimeException(e);
         }
     }

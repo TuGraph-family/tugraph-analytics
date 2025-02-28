@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.runtime.query;
 import com.antgroup.geaflow.cluster.system.ClusterMetaStore;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.connector.file.FileConstants;
 import com.antgroup.geaflow.dsl.runtime.QueryClient;
@@ -32,12 +33,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -57,6 +57,10 @@ public class QueryTester implements Serializable {
     private String graphDefinePath;
 
     private boolean hasCustomWindowConfig = false;
+
+    protected boolean dedupe = false;
+
+    private int workerNum = (int) ExecutionConfigKeys.CONTAINER_WORKER_NUM.getDefaultValue();
 
     private final Map<String, String> config = new HashMap<>();
 
@@ -83,6 +87,11 @@ public class QueryTester implements Serializable {
         return this;
     }
 
+    public QueryTester withDedupe(boolean dedupe) {
+        this.dedupe = dedupe;
+        return this;
+    }
+
     public QueryTester compareWithOrder() {
         this.compareWithOrder = true;
         return this;
@@ -103,6 +112,11 @@ public class QueryTester implements Serializable {
         return this;
     }
 
+    public QueryTester withWorkerNum(int workerNum) {
+        this.workerNum = workerNum;
+        return this;
+    }
+
     public QueryTester execute() throws Exception {
         if (queryPath == null) {
             throw new IllegalArgumentException("You should call withQueryPath() before execute().");
@@ -113,6 +127,7 @@ public class QueryTester implements Serializable {
         }
         config.put(FileConfigKeys.ROOT.getKey(), DSL_STATE_REMOTE_PATH);
         config.put(DSLConfigKeys.GEAFLOW_DSL_QUERY_PATH.getKey(), FileConstants.PREFIX_JAVA_RESOURCE + queryPath);
+        config.put(ExecutionConfigKeys.CONTAINER_WORKER_NUM.getKey(), String.valueOf(workerNum));
         config.putAll(this.config);
         initResultDirectory();
 
@@ -173,8 +188,14 @@ public class QueryTester implements Serializable {
             Assert.assertEquals(actualResult, expectResult);
         } else {
             String[] actualLines = actualResult.split("\n");
-            Arrays.sort(actualLines);
             String[] expectLines = expectResult.split("\n");
+            if (dedupe) {
+                List<String> actualLinesDedupe = Arrays.asList(actualLines).stream().distinct().collect(Collectors.toList());
+                actualLines = actualLinesDedupe.toArray(new String[0]);
+                List<String> expectLinesDedupe = Arrays.asList(expectLines).stream().distinct().collect(Collectors.toList());
+                expectLines = expectLinesDedupe.toArray(new String[0]);
+            }
+            Arrays.sort(actualLines);
             Arrays.sort(expectLines);
 
             String actualSort = StringUtils.join(actualLines, "\n");

@@ -35,10 +35,13 @@ import java.util.Map.Entry;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DynamicGraphManagerImpl<K, VV, EV> extends BaseShardManager<K,
     DynamicGraphTrait<K, VV, EV>> implements DynamicGraphTrait<K, VV, EV> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicGraphManagerImpl.class);
 
     public DynamicGraphManagerImpl(StateContext context, Map<Integer, IAccessor> accessorMap) {
         super(context, accessorMap);

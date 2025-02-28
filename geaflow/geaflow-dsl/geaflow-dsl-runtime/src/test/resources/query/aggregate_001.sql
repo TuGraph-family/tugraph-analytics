@@ -6,6 +6,7 @@ CREATE TABLE users (
 	age int
 ) WITH (
 	type='file',
+	geaflow.dsl.table.parallelism='3',
 	geaflow.dsl.file.path = 'resource:///data/users.txt'
 );
 

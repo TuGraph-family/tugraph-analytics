@@ -15,6 +15,7 @@
 package com.antgroup.geaflow.dsl.connector.file.sink;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.connector.file.FileConnectorUtil;
@@ -49,10 +50,19 @@ public class LocalFileWriteHandler implements FileWriteHandler {
                 dirPath.mkdirs();
             }
             if (filePath.exists()) {
-                String newPath = filePath + "_" + System.currentTimeMillis();
-                targetFile = newPath;
-                this.writer = new BufferedWriter(new FileWriter(newPath));
-                LOGGER.info("path {} exists, create new file path {}", filePath, newPath);
+                if (Configuration.getString(ConnectorConfigKeys.GEAFLOW_DSL_SINK_FILE_COLLISION,
+                        (String) ConnectorConfigKeys.GEAFLOW_DSL_SINK_FILE_COLLISION.getDefaultValue(),
+                        tableConf.getConfigMap()).equals(ConnectorConfigKeys.GEAFLOW_DSL_SINK_FILE_COLLISION.getDefaultValue())) {
+                    String newPath = filePath + "_" + System.currentTimeMillis();
+                    targetFile = newPath;
+                    this.writer = new BufferedWriter(new FileWriter(newPath));
+                    LOGGER.info("path {} exists, create new file path {}", filePath, newPath);
+                } else {
+                    filePath.delete();
+                    targetFile = filePath.getAbsolutePath();
+                    this.writer = new BufferedWriter(new FileWriter(filePath));
+                    LOGGER.info("path {} exists, replace it {}", filePath);
+                }
             } else {
                 targetFile = filePath.getAbsolutePath();
                 this.writer = new BufferedWriter(new FileWriter(filePath));

@@ -26,15 +26,20 @@ import com.antgroup.geaflow.dsl.connector.file.source.format.FileFormat;
 import com.antgroup.geaflow.dsl.connector.file.source.format.FileFormats;
 import com.antgroup.geaflow.dsl.connector.file.source.format.StreamFormat;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.io.InputStream;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractFileReadHandler implements FileReadHandler {
 
-    private String formatName;
-    private Configuration tableConf;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileReadHandler.class);
+
+    protected String formatName;
+    protected Configuration tableConf;
     private TableSchema tableSchema;
+    protected Path path;
 
     protected Map<FileSplit, FileFormat> fileFormats = new HashMap<>();
 
@@ -43,6 +48,7 @@ public abstract class AbstractFileReadHandler implements FileReadHandler {
         this.formatName = tableConf.getString(ConnectorConfigKeys.GEAFLOW_DSL_FILE_FORMAT);
         this.tableConf = tableConf;
         this.tableSchema = tableSchema;
+        this.path = new Path(path);
     }
 
     @Override
@@ -85,5 +91,55 @@ public abstract class AbstractFileReadHandler implements FileReadHandler {
     @Override
     public <T> TableDeserializer<T> getDeserializer() {
         return (TableDeserializer<T>) FileFormats.loadFileFormat(formatName).getDeserializer();
+    }
+
+    public int findLineSplitSize(InputStream inputStream) {
+        try {
+            if (this.formatName.equalsIgnoreCase(SourceConstants.PARQUET)) {
+                return 1;
+            } else {
+                int lineSplitSize = 1;
+                int c;
+                while (true) {
+                    c = inputStream.read();
+                    if (c == -1) {
+                        break;
+                    } else if (c == '\n') {
+                        break;
+                    } else if (c == '\r') {
+                        int c2 = inputStream.read();
+                        if (c2 == '\n') {
+                            lineSplitSize = 2;
+                            break;
+                        } else if (c2 == -1) {
+                            break;
+                        }
+                    }
+                }
+                return lineSplitSize;
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected long findNextStartPos(long expectPos, long totalLength, InputStream inputStream) throws Exception {
+        if (expectPos >= totalLength) {
+            return totalLength;
+        }
+        inputStream.skip(expectPos);
+        byte[] buffer = new byte[1];
+        int readSize = 0;
+        do {
+            readSize = inputStream.read(buffer);
+            if (readSize != -1) {
+                expectPos++;
+            }
+        } while (readSize != -1 && !"\n".equalsIgnoreCase(new String(buffer)));
+        if (expectPos >= totalLength) {
+            expectPos = totalLength;
+        }
+        return expectPos;
     }
 }

@@ -200,6 +200,48 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    public void testIncGraphAlgorithm_005() throws Exception {
+        QueryTester
+                .build()
+                .withWorkerNum(20)
+                .withDedupe(true)
+                .withQueryPath("/query/gql_algorithm_inc_005.sql")
+                .execute()
+                .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_006() throws Exception {
+        QueryTester
+                .build()
+                .withWorkerNum(20)
+                .withDedupe(true)
+                .withQueryPath("/query/gql_algorithm_inc_006.sql")
+                .execute()
+                .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_007() throws Exception {
+        QueryTester
+                .build()
+                .withWorkerNum(20)
+                .withDedupe(true)
+                .withQueryPath("/query/gql_algorithm_inc_007.sql")
+                .execute()
+                .checkSinkResult();
+    }
+
+    @Test
+    public void testIncGraphAlgorithm_008() throws Exception {
+        QueryTester
+                .build()
+                .withWorkerNum(20)
+                .withDedupe(true)
+                .withQueryPath("/query/gql_algorithm_inc_008.sql")
+                .execute()
+                .checkSinkResult();
+    }
 
     @Test
     public void testAlgorithmCommonNeighbors() throws Exception {

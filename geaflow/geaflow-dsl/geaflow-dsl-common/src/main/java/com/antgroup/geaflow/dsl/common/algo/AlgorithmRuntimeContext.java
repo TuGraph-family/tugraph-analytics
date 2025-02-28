@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl.common.algo;
 
+import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
@@ -24,6 +25,10 @@ public interface AlgorithmRuntimeContext<K, M> {
 
     List<RowEdge> loadEdges(EdgeDirection direction);
 
+    List<RowEdge> loadStaticEdges(EdgeDirection direction);
+
+    List<RowEdge> loadDynamicEdges(EdgeDirection direction);
+
     void sendMessage(K vertexId, M message);
 
     void updateVertexValue(Row value);
@@ -33,4 +38,6 @@ public interface AlgorithmRuntimeContext<K, M> {
     long getCurrentIterationId();
 
     GraphSchema getGraphSchema();
+
+    Configuration getConfig();
 }

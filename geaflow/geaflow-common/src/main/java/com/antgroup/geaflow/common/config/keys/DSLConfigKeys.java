@@ -45,6 +45,11 @@ public class DSLConfigKeys implements Serializable {
         .noDefaultValue()
         .description("The table type.");
 
+    public static final ConfigKey GEAFLOW_DSL_TABLE_PARALLELISM = ConfigKeys
+            .key("geaflow.dsl.table.parallelism")
+            .defaultValue(1)
+            .description("The table parallelism.");
+
     public static final ConfigKey GEAFLOW_DSL_MAX_TRAVERSAL = ConfigKeys
         .key("geaflow.dsl.max.traversal")
         .defaultValue(64)

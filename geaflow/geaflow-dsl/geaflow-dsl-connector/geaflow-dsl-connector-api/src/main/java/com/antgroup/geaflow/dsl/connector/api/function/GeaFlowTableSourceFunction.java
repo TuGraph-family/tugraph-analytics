@@ -19,6 +19,7 @@ import com.antgroup.geaflow.api.function.RichFunction;
 import com.antgroup.geaflow.api.function.io.SourceFunction;
 import com.antgroup.geaflow.api.window.IWindow;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
 import com.antgroup.geaflow.dsl.common.types.StructType;
@@ -40,6 +41,7 @@ import com.antgroup.geaflow.metrics.common.api.Histogram;
 import com.antgroup.geaflow.metrics.common.api.Meter;
 import com.antgroup.geaflow.utils.keygroup.KeyGroup;
 import com.antgroup.geaflow.utils.keygroup.KeyGroupAssignment;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +69,7 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
     private final TableSource tableSource;
     private RuntimeContext runtimeContext;
     private List<Partition> partitions;
+    private int parallelism;
 
     private OffsetStore offsetStore;
 
@@ -80,6 +83,7 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
 
     private transient ExecutorService singleThreadPool;
 
+    private boolean enableUploadMetrics;
     private Counter rowCounter;
     private Meter rowTps;
     private Meter blockTps;
@@ -116,15 +120,26 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
 
     @Override
     public void init(int parallel, int index) {
-
+        final long startTime = System.currentTimeMillis();
+        this.parallelism = parallel;
         tableSource.open(runtimeContext);
-
-        List<Partition> allPartitions = tableSource.listPartitions();
-        oldPartitions = tableSource.listPartitions();
+        List<Partition> allPartitions = tableSource.listPartitions(this.parallelism);
+        oldPartitions = new ArrayList<>(allPartitions);
         singleThreadPool = startPartitionCompareThread();
+        boolean isSingleFileModeRead = table.getConfigWithGlobal(runtimeContext.getConfiguration())
+                .getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_SOURCE_FILE_PARALLEL_MOD);
 
-        partitions = assignPartition(allPartitions,
-            runtimeContext.getTaskArgs().getMaxParallelism(), parallel, index);
+        if (isSingleFileModeRead) {
+            Preconditions.checkState(allPartitions.size() == 1,
+                    "geaflow.dsl.file.single.mod.read is ture only support single file");
+            partitions = allPartitions;
+        } else {
+            partitions = assignPartition(allPartitions,
+                    runtimeContext.getTaskArgs().getMaxParallelism(), parallel, index);
+        }
+        for (Partition partition : partitions) {
+            partition.setIndex(index, parallel);
+        }
 
         Configuration conf = table.getConfigWithGlobal(runtimeContext.getConfiguration());
         deserializer = tableSource.getDeserializer(conf);
@@ -133,8 +148,9 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
                 table.getRowType(GQLJavaTypeFactory.create()));
             deserializer.init(conf, schema);
         }
+        enableUploadMetrics = conf.getBoolean(ConnectorConfigKeys.GEAFLOW_DSL_SOURCE_ENABLE_UPLOAD_METRICS);
         LOGGER.info("open source table: {}, taskIndex:{}, parallel: {}, assigned "
-            + "partitions:{}", table.getName(), index, parallel, partitions);
+            + "partitions:{}, cost {}", table.getName(), index, parallel, partitions, System.currentTimeMillis() - startTime);
     }
 
     @SuppressWarnings("unchecked")
@@ -150,9 +166,9 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
         long batchId = window.windowId();
         boolean isFinish = true;
         for (Partition partition : partitions) {
+            long partitionStartTime = System.currentTimeMillis();
             Offset offset = offsetStore.readOffset(partition.getName(), batchId);
-            FetchData<Object> fetchData = tableSource.fetch(partition, Optional.ofNullable(offset),
-                fetchWindow);
+            FetchData<Object> fetchData = tableSource.fetch(partition, Optional.ofNullable(offset), fetchWindow);
             Iterator<Object> dataIterator = fetchData.getDataIterator();
             while (dataIterator.hasNext()) {
                 Object record = dataIterator.next();
@@ -164,22 +180,24 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
                     rows = Collections.singletonList((Row) record);
                 }
                 if (rows != null && rows.size() > 0) {
-                    parserRt.update((System.nanoTime() - startTime) / 1000L);
                     for (Row row : rows) {
                         ctx.collect(row);
                     }
-                    rowCounter.inc(rows.size());
-                    rowTps.mark(rows.size());
-                    blockTps.mark();
+                    if (enableUploadMetrics) {
+                        parserRt.update((System.nanoTime() - startTime) / 1000L);
+                        rowCounter.inc(rows.size());
+                        rowTps.mark(rows.size());
+                        blockTps.mark();
+                    }
                 }
             }
             // store the next offset.
             offsetStore.writeOffset(partition.getName(), batchId + 1, fetchData.getNextOffset());
 
             LOGGER.info("fetch data size: {}, isFinish: {}, table: {}, partition: {}, batchId: {},"
-                    + "nextOffset: {}",
+                    + "nextOffset: {}, cost {}",
                 fetchData.getDataSize(), fetchData.isFinish(), table.getName(), partition.getName(),
-                batchId, fetchData.getNextOffset().humanReadable());
+                batchId, fetchData.getNextOffset().humanReadable(), System.currentTimeMillis() - partitionStartTime);
 
             if (!fetchData.isFinish()) {
                 isFinish = false;
@@ -201,7 +219,7 @@ public class GeaFlowTableSourceFunction extends RichFunction implements SourceFu
                         "The partitions of the source table has modified!");
                 }
                 LOGGER.info("partitionCompareThread is running");
-                List<Partition> newPartitions = tableSource.listPartitions();
+                List<Partition> newPartitions = tableSource.listPartitions(parallelism);
                 if (oldPartitions == null || newPartitions == null
                     || oldPartitions.size() != newPartitions.size() || !oldPartitions.equals(
                     newPartitions)) {

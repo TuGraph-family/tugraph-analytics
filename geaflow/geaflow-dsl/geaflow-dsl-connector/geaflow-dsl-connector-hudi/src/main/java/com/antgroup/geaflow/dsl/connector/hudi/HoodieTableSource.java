@@ -80,6 +80,11 @@ public class HoodieTableSource implements TableSource {
     }
 
     @Override
+    public List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
+    @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
         // no op here as hoodie table source return row already, deserializer is no need.
         return null;

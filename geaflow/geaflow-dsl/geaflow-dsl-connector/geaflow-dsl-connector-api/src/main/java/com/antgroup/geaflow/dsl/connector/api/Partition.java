@@ -25,4 +25,6 @@ public interface Partition extends Serializable {
      * Returns the name of the partition.
      */
     String getName();
+
+    default void setIndex(int index, int parallel) {}
 }

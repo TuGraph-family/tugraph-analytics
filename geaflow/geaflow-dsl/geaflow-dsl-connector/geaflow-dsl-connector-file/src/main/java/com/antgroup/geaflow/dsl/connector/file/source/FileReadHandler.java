@@ -29,7 +29,7 @@ public interface FileReadHandler extends Serializable {
 
     void init(Configuration tableConf, TableSchema tableSchema, String path) throws IOException;
 
-    List<Partition> listPartitions();
+    List<Partition> listPartitions(int parallelism);
 
     <T> FetchData<T> readPartition(FileSplit split, FileOffset offset, int windowSize) throws IOException;
 

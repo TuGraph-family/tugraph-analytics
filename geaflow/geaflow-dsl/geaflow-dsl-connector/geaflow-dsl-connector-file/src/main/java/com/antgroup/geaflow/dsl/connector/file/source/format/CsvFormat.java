@@ -25,6 +25,7 @@ import com.antgroup.geaflow.dsl.common.types.TableSchema;
 import com.antgroup.geaflow.dsl.common.util.TypeCastUtil;
 import com.antgroup.geaflow.dsl.connector.api.serde.TableDeserializer;
 import com.antgroup.geaflow.dsl.connector.file.source.FileTableSource.FileSplit;
+import com.antgroup.geaflow.dsl.connector.file.source.SourceConstants;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class CsvFormat implements FileFormat<Row> {
 
     @Override
     public String getFormat() {
-        return "csv";
+        return SourceConstants.CSV;
     }
 
     @Override

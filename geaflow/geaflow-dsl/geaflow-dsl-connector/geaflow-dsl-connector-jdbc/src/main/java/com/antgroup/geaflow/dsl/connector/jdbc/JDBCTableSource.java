@@ -137,6 +137,11 @@ public class JDBCTableSource implements TableSource {
     }
 
     @Override
+    public List<Partition> listPartitions(int parallelism) {
+        return listPartitions();
+    }
+
+    @Override
     public <IN> TableDeserializer<IN> getDeserializer(Configuration conf) {
         return DeserializerFactory.loadRowTableDeserializer();
     }
@@ -244,6 +249,7 @@ public class JDBCTableSource implements TableSource {
             return Objects.equals(tableName, that.tableName) && Objects.equals(whereClause,
                 that.whereClause);
         }
+
     }
 
     public static class JDBCOffset implements Offset {

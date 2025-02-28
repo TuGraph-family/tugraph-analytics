@@ -107,7 +107,13 @@ public class GeaFlowQueryEngine implements QueryEngine {
         if (!(tableSource instanceof ISkipOpenAndClose)) {
             tableSource.open(new DefaultRuntimeContext(pipelineContext.getConfig()));
         }
-        int numPartitions = tableSource.listPartitions().size();
+        String opName = PhysicRelNodeName.TABLE_SCAN.getName(table.getName());
+        int parallelism = context.getConfigParallelisms(opName, -1);
+        if (parallelism == -1) {
+            parallelism = Configuration.getInteger(DSLConfigKeys.GEAFLOW_DSL_TABLE_PARALLELISM,
+                    (Integer) DSLConfigKeys.GEAFLOW_DSL_TABLE_PARALLELISM.getDefaultValue(), table.getConfig());
+        }
+        int numPartitions = tableSource.listPartitions(parallelism).size();
         int partitionsPerParallelism = conf.getInteger(
             ConnectorConfigKeys.GEAFLOW_DSL_PARTITIONS_PER_SOURCE_PARALLELISM);
         int sourceParallelism;
@@ -124,8 +130,10 @@ public class GeaFlowQueryEngine implements QueryEngine {
         if (!(tableSource instanceof ISkipOpenAndClose)) {
             tableSource.close();
         }
-        String opName = PhysicRelNodeName.TABLE_SCAN.getName(table.getName());
-        int parallelism = context.getConfigParallelisms(opName, sourceParallelism);
+        if (context.getConfigParallelisms(opName, sourceParallelism) == -1
+                && Configuration.getInteger(DSLConfigKeys.GEAFLOW_DSL_TABLE_PARALLELISM, -1, table.getConfig()) == -1) {
+            parallelism = sourceParallelism;
+        }
         GeaFlowTableSourceFunction sourceFunction;
         if (conf.contains(DSLConfigKeys.GEAFLOW_DSL_CUSTOM_SOURCE_FUNCTION)) {
             String customClassName = conf.getString(DSLConfigKeys.GEAFLOW_DSL_CUSTOM_SOURCE_FUNCTION);

@@ -36,7 +36,7 @@ public class SliceManager {
         if (this.slices.containsKey(sliceId)) {
             throw new GeaflowRuntimeException("slice already registered: " + sliceId);
         }
-        LOGGER.info("register slice {} {}", sliceId, slice.getClass().getSimpleName());
+        LOGGER.debug("register slice {} {}", sliceId, slice.getClass().getSimpleName());
         this.slices.put(sliceId, slice);
         synchronized (this.pipeline2slices) {
             long pipelineId = sliceId.getWriterId().getPipelineId();
