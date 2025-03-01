@@ -69,9 +69,10 @@ public class SliceOutputChannelHandler extends ChannelInboundHandlerAdapter {
      * availability, so there is no race condition here.
      */
     private void enqueueReader(final SequenceSliceReader reader) throws Exception {
-        if (reader.isRegistered() || !reader.hasNext()) {
+        if (reader.isRegistered() || !reader.isAvailable()) {
             return;
         }
+
         // Queue an available reader for consumption. If the queue is empty,
         // we try trigger the actual write. Otherwise, this will be handled by
         // the writeAndFlushNextMessageIfPossible calls.
@@ -102,7 +103,7 @@ public class SliceOutputChannelHandler extends ChannelInboundHandlerAdapter {
         allReaders.clear();
     }
 
-    void updateRequestedBatchId(ChannelId receiverId, Consumer<SequenceSliceReader> operation)
+    public void applyReaderOperation(ChannelId receiverId, Consumer<SequenceSliceReader> operation)
         throws Exception {
         if (fatalError) {
             return;

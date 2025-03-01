@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.shuffle.pipeline.fetcher;
+package com.antgroup.geaflow.shuffle.network.netty;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
@@ -20,90 +20,55 @@ import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
-import com.antgroup.geaflow.shuffle.pipeline.buffer.HeapBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeFetcherBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.channel.AbstractInputChannel;
-import com.antgroup.geaflow.shuffle.pipeline.channel.LocalInputChannel;
 import com.antgroup.geaflow.shuffle.pipeline.channel.RemoteInputChannel;
+import com.antgroup.geaflow.shuffle.pipeline.fetcher.MockedShardFetcher;
+import com.antgroup.geaflow.shuffle.pipeline.fetcher.OneShardFetcher;
 import com.antgroup.geaflow.shuffle.pipeline.slice.PipelineSlice;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SliceManager;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-public class OneShardFetcherTest {
+public class SliceRequestClientTest {
 
-    private Configuration configuration;
+    private boolean enableBackPressure;
 
-    @BeforeTest
-    public void setup() {
-        configuration = new Configuration();
+    public SliceRequestClientTest(boolean enableBackPressure) {
+        this.enableBackPressure = enableBackPressure;
+    }
+
+    @Test
+    public void testCreditBasedFetch() throws IOException,
+        InterruptedException {
+        Configuration configuration = new Configuration();
         configuration.put(ExecutionConfigKeys.JOB_APP_NAME, "default");
         configuration.put(ExecutionConfigKeys.CONTAINER_HEAP_SIZE_MB, String.valueOf(1024));
-    }
+        configuration.put(ExecutionConfigKeys.SHUFFLE_BACKPRESSURE_ENABLE, String.valueOf(enableBackPressure));
+        configuration.put(ExecutionConfigKeys.SHUFFLE_FETCH_CHANNEL_QUEUE_SIZE, "1");
+        configuration.put(ExecutionConfigKeys.SHUFFLE_WRITER_BUFFER_SIZE, "10");
+        configuration.put(ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_SIZE_BYTES, "5");
 
-    @Test
-    public void testCreate() {
+        ShuffleManager shuffleManager = ShuffleManager.init(configuration);
+        IConnectionManager connectionManager = shuffleManager.getConnectionManager();
+
         List<PipelineSliceMeta> inputSlices = new ArrayList<>();
-        IConnectionManager connectionManager = ShuffleManager.init(configuration).getConnectionManager();
         ShuffleAddress address = connectionManager.getShuffleAddress();
-        PipelineSliceMeta slice1 = new PipelineSliceMeta(0, 0, -1, 0, address);
-        PipelineSliceMeta slice2 = new PipelineSliceMeta(0, 2, -1, 0, address);
-        inputSlices.add(slice1);
-        inputSlices.add(slice2);
-
-        OneShardFetcher fetcher = new OneShardFetcher(1, "taskName", 0, inputSlices, 0,
-            connectionManager);
-        Map<SliceId, AbstractInputChannel> channelMap = fetcher.getInputChannels();
-        Assert.assertEquals(channelMap.size(), 2);
-
-        Set<SliceId> expectedSlices = new HashSet<>();
-        expectedSlices.add(new SliceId(-1, 0, 0, 0));
-        expectedSlices.add(new SliceId(-1, 0, 0, 2));
-
-        Set<Integer> expectedChannelIndices = new HashSet<>();
-        expectedChannelIndices.add(0);
-        expectedChannelIndices.add(1);
-
-        Set<Integer> channelIds = new HashSet<>();
-        for (Map.Entry<SliceId, AbstractInputChannel> entry : channelMap.entrySet()) {
-            Assert.assertTrue(expectedSlices.remove(entry.getKey()));
-            AbstractInputChannel channel = entry.getValue();
-            channelIds.add(channel.getChannelIndex());
-            Assert.assertTrue(channel instanceof LocalInputChannel);
-        }
-        Assert.assertEquals(expectedChannelIndices, channelIds);
-    }
-
-    @Test
-    public void testRemoteFetch() throws IOException, InterruptedException {
-        IConnectionManager connectionManager =
-            ShuffleManager.init(configuration).getConnectionManager();
-        ShuffleAddress address = connectionManager.getShuffleAddress();
-        final SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
-
-        long pipelineId = 1;
-        SliceId sliceId = new SliceId(pipelineId, 0, 0, 0);
+        SliceId sliceId = new SliceId(100, 0, 0, 0);
         PipelineSliceMeta slice1 = new PipelineSliceMeta(sliceId, 1, address);
-        List<PipelineSliceMeta> inputSlices = new ArrayList<>();
         inputSlices.add(slice1);
 
-        OneShardFetcher fetcher = new MockedShardFetcher(1, "taskName", 0, inputSlices, 0,
-            connectionManager);
-
-        PipeBuffer pipeBuffer = new PipeBuffer(new HeapBuffer("hello".getBytes(), false), 1);
+        PipeBuffer pipeBuffer = new PipeBuffer("hello".getBytes(), 1);
         PipeBuffer pipeBuffer2 = new PipeBuffer(1, 1, false);
-        PipeBuffer pipeBuffer3 = new PipeBuffer(new HeapBuffer("hello".getBytes(), false), 2);
+        PipeBuffer pipeBuffer3 = new PipeBuffer("hello".getBytes(), 2);
         PipeBuffer pipeBuffer4 = new PipeBuffer(2 , 1, true);
         PipelineSlice slice = new PipelineSlice("task", sliceId);
         slice.add(pipeBuffer);
@@ -111,8 +76,11 @@ public class OneShardFetcherTest {
         slice.add(pipeBuffer3);
         slice.add(pipeBuffer4);
 
-        sliceManager.register(sliceId, slice);
+        SliceManager shuffleDataManager = ShuffleManager.getInstance().getSliceManager();
+        shuffleDataManager.register(sliceId, slice);
 
+        OneShardFetcher fetcher = new MockedShardFetcher(1, "taskName", 0, inputSlices, 0,
+            connectionManager);
         List<Long> batchList = Arrays.asList(1L, 2L);
         List<String> result = new ArrayList<>();
         for (long batchId : batchList) {
@@ -140,8 +108,20 @@ public class OneShardFetcherTest {
                 Assert.assertTrue(remoteChannel.getSliceRequestClient().disposeIfNotUsed());
             }
         }
-        ShuffleManager.getInstance().release(pipelineId);
+
+        ShuffleManager.getInstance().release(sliceId.getPipelineId());
         ShuffleManager.getInstance().close();
+    }
+
+    public static class SimpleTestFactory {
+
+        @Factory
+        public Object[] factoryMethod() {
+            return new Object[]{
+                new SliceRequestClientTest(false),
+                new SliceRequestClientTest(true),
+            };
+        }
     }
 
 }

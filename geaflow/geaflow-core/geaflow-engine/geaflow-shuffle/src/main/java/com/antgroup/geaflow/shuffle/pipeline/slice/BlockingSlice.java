@@ -14,16 +14,20 @@
 
 package com.antgroup.geaflow.shuffle.pipeline.slice;
 
+import com.antgroup.geaflow.shuffle.api.writer.PipelineShardWriter;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.google.common.base.Preconditions;
 
-public class PipelineSlice extends AbstractSlice {
+public class BlockingSlice extends AbstractSlice {
 
+    private final PipelineShardWriter parentWriter;
     private boolean flushRequested;
 
-    public PipelineSlice(String taskLogTag, SliceId sliceId) {
+    public BlockingSlice(String taskLogTag, SliceId sliceId,
+                         PipelineShardWriter parentWriter) {
         super(taskLogTag, sliceId);
+        this.parentWriter = parentWriter;
     }
 
     // ------------------------------------------------------------------------
@@ -37,7 +41,6 @@ public class PipelineSlice extends AbstractSlice {
             if (isReleased) {
                 return false;
             }
-            totalBufferCount++;
             buffers.add(recordBuffer);
             notifyDataAvailable = shouldNotifyDataAvailable();
         }
@@ -93,9 +96,12 @@ public class PipelineSlice extends AbstractSlice {
             PipeBuffer buffer = null;
             if (!buffers.isEmpty()) {
                 buffer = buffers.pop();
-                if (buffers.size() == 0) {
+                if (buffers.isEmpty()) {
                     updateFlushRequested(false);
                 }
+            }
+            if (buffer != null && buffer.isData()) {
+                parentWriter.notifyBufferConsumed(buffer.getBufferSize());
             }
             return buffer;
         }

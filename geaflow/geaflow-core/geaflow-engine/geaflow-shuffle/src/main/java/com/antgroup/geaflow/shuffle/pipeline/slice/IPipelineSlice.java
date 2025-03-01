@@ -21,8 +21,6 @@ public interface IPipelineSlice {
 
     SliceId getSliceId();
 
-    int getTotalBufferCount();
-
     boolean isReleased();
 
     boolean canRelease();

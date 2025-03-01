@@ -17,10 +17,14 @@ package com.antgroup.geaflow.shuffle.api.writer;
 import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.shuffle.message.Shard;
 import com.antgroup.geaflow.shuffle.message.SliceId;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer.BufferBuilder;
+import com.antgroup.geaflow.shuffle.pipeline.slice.BlockingSlice;
+import com.antgroup.geaflow.shuffle.pipeline.slice.IPipelineSlice;
 import com.antgroup.geaflow.shuffle.pipeline.slice.PipelineSlice;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +35,12 @@ public class PipelineShardWriter<T> extends ShardWriter<T, Shard> {
 
     private OutputFlusher outputFlusher;
     private final AtomicReference<Throwable> throwable;
+    private final AtomicInteger curBufferBytes;
+    private int maxWriteBufferSize;
 
     public PipelineShardWriter() {
         this.throwable = new AtomicReference<>();
+        this.curBufferBytes = new AtomicInteger(0);
     }
 
     @Override
@@ -41,13 +48,18 @@ public class PipelineShardWriter<T> extends ShardWriter<T, Shard> {
         super.init(writerContext);
         String threadName = String.format("flusher-%s", writerContext.getTaskName());
         int flushTimeout = this.shuffleConfig.getFlushBufferTimeoutMs();
+        this.maxWriteBufferSize = shuffleConfig.getMaxWriteBufferSize();
         this.outputFlusher = new OutputFlusher(threadName, flushTimeout);
         this.outputFlusher.start();
     }
 
     @Override
-    protected PipelineSlice newSlice(String taskLogTag, SliceId sliceId) {
-        return new PipelineSlice(taskLogTag, sliceId);
+    protected IPipelineSlice newSlice(String taskLogTag, SliceId sliceId) {
+        if (enableBackPressure) {
+            return new BlockingSlice(taskLogTag, sliceId, this);
+        } else {
+            return new PipelineSlice(taskLogTag, sliceId);
+        }
     }
 
     @Override
@@ -66,6 +78,34 @@ public class PipelineShardWriter<T> extends ShardWriter<T, Shard> {
     public Optional<Shard> doFinish(long windowId) throws IOException {
         this.checkError();
         return Optional.empty();
+    }
+
+    @Override
+    protected void sendBuffer(int sliceIndex, BufferBuilder builder, long windowId) {
+        if (enableBackPressure) {
+            if (curBufferBytes.get() >= maxWriteBufferSize) {
+                synchronized (this) {
+                    while (curBufferBytes.get() >= maxWriteBufferSize) {
+                        try {
+                            this.wait();
+                        } catch (InterruptedException e) {
+                            throw new GeaflowRuntimeException(e);
+                        }
+                    }
+                }
+            }
+            curBufferBytes.addAndGet(builder.getBufferSize());
+        }
+        super.sendBuffer(sliceIndex, builder, windowId);
+    }
+
+    public void notifyBufferConsumed(int bufferBytes) {
+        int preBytes = curBufferBytes.getAndAdd(-bufferBytes);
+        if (preBytes >= maxWriteBufferSize && curBufferBytes.get() < maxWriteBufferSize) {
+            synchronized (this) {
+                this.notifyAll();
+            }
+        }
     }
 
     private void flushAll() {

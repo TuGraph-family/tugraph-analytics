@@ -20,15 +20,21 @@ import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeChannelBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.channel.ChannelId;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SequenceSliceReader implements PipelineSliceListener {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SequenceSliceReader.class);
     private final ChannelId inputChannelId;
     private final SliceOutputChannelHandler requestHandler;
 
     private SliceId sliceId;
     private PipelineSliceReader sliceReader;
     private int sequenceNumber = -1;
+    private int initialCredit;
+    private AtomicInteger availableCredit;
 
     private volatile boolean isRegistered = false;
     private volatile boolean isReleased = false;
@@ -38,11 +44,13 @@ public class SequenceSliceReader implements PipelineSliceListener {
         this.requestHandler = requestHandler;
     }
 
-    public void createSliceReader(SliceId sliceId, long startBatchId) throws IOException {
+    public void createSliceReader(SliceId sliceId, long startBatchId, int initCredit)
+        throws IOException {
         this.sliceId = sliceId;
-        ShuffleManager shuffleManager = ShuffleManager.getInstance();
-        this.sliceReader = shuffleManager.getSliceManager().createSliceReader(sliceId,
-            startBatchId, this);
+        SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
+        this.sliceReader = sliceManager.createSliceReader(sliceId, startBatchId, this);
+        this.initialCredit = initCredit;
+        this.availableCredit = new AtomicInteger(initCredit);
         notifyDataAvailable();
     }
 
@@ -55,8 +63,21 @@ public class SequenceSliceReader implements PipelineSliceListener {
         sliceReader.updateRequestedBatchId(batchId);
     }
 
+    public void addCredit(int credit) {
+        int avail = this.availableCredit.addAndGet(credit);
+        if (avail > initialCredit) {
+            LOGGER.warn("available credit {} > initial credit {}", avail, initialCredit);
+        }
+    }
+
     public boolean hasNext() {
         return sliceReader != null && sliceReader.hasNext();
+    }
+
+    public boolean isAvailable() {
+        // initial credit less than 0, means credit is unlimited.
+        return sliceReader != null && sliceReader.hasNext() && (initialCredit <= 0
+            || availableCredit.get() > 0);
     }
 
     public PipeChannelBuffer next() {
@@ -66,6 +87,9 @@ public class SequenceSliceReader implements PipelineSliceListener {
         PipeChannelBuffer next = sliceReader.next();
         if (next != null) {
             sequenceNumber++;
+            if (next.getBuffer().isData()) {
+                availableCredit.decrementAndGet();
+            }
             return next;
         }
         return null;

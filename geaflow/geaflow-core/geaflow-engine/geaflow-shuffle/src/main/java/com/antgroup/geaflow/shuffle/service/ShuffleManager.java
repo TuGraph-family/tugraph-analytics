@@ -90,7 +90,7 @@ public class ShuffleManager {
         sliceManager.release(pipelineId);
     }
 
-    public void close() {
+    public synchronized void close() {
         LOGGER.info("closing shuffle manager");
         try {
             connectionManager.close();

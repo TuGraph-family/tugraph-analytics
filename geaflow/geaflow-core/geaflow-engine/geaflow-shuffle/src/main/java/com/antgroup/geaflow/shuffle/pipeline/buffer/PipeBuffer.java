@@ -24,26 +24,22 @@ public class PipeBuffer implements Serializable {
     private final int count;
     private final boolean isFinish;
 
-    public PipeBuffer(byte[] buffer, long batchId, boolean isData) {
-        this.buffer = new HeapBuffer(buffer, true);
-        this.batchId = batchId;
-        this.isData = isData;
-        this.count = 0;
-        this.isFinish = false;
+    public PipeBuffer(byte[] buffer, long batchId) {
+        this(new HeapBuffer(buffer), batchId);
     }
 
-    public PipeBuffer(OutBuffer buffer, long batchId, boolean isData) {
+    public PipeBuffer(OutBuffer buffer, long batchId) {
         this.buffer = buffer;
         this.batchId = batchId;
-        this.isData = isData;
+        this.isData = true;
         this.count = 0;
         this.isFinish = false;
     }
 
-    public PipeBuffer(long batchId, int count, boolean isData, boolean isFinish) {
+    public PipeBuffer(long batchId, int count, boolean isFinish) {
         this.buffer = null;
         this.batchId = batchId;
-        this.isData = isData;
+        this.isData = false;
         this.count = count;
         this.isFinish = isFinish;
     }

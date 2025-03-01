@@ -243,7 +243,7 @@ public class SpillablePipelineSlice extends AbstractSlice {
                     long batchId = Encoders.LONG.decode(input);
                     if (size == 0) {
                         int count = Encoders.INTEGER.decode(input);
-                        this.next = new PipeBuffer(batchId, count, false, true);
+                        this.next = new PipeBuffer(batchId, count, true);
                         return true;
                     } else {
                         byte[] bytes = new byte[size];
@@ -253,7 +253,7 @@ public class SpillablePipelineSlice extends AbstractSlice {
                                 bytes.length, read);
                             throw new GeaflowRuntimeException(msg);
                         }
-                        this.next = new PipeBuffer(bytes, batchId, true);
+                        this.next = new PipeBuffer(bytes, batchId);
                         return true;
                     }
                 }

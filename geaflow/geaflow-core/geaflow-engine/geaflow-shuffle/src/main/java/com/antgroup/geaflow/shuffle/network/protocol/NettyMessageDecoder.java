@@ -57,6 +57,9 @@ public class NettyMessageDecoder extends MessageToMessageDecoder<ByteBuf> {
             case CANCEL_CONNECTION:
                 decodedMsg = CancelRequest.readFrom(msg);
                 break;
+            case ADD_CREDIT_REQUEST:
+                decodedMsg = AddCreditRequest.readFrom(msg);
+                break;
             default:
                 throw new ProtocolException("Received unknown message from producer: " + msg);
         }

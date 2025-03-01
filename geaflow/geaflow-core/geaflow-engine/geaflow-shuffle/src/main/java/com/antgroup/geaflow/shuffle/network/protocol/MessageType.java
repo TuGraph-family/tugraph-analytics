@@ -23,7 +23,8 @@ public enum MessageType {
     FETCH_SLICE_RESPONSE(3),
     FETCH_BATCH_REQUEST(4),
     CLOSE_CONNECTION(5),
-    CANCEL_CONNECTION(6);
+    CANCEL_CONNECTION(6),
+    ADD_CREDIT_REQUEST(7);
 
     private final byte id;
 
@@ -46,6 +47,8 @@ public enum MessageType {
                 return CLOSE_CONNECTION;
             case 6:
                 return CANCEL_CONNECTION;
+            case 7:
+                return ADD_CREDIT_REQUEST;
             default:
                 throw new IllegalArgumentException("unrecognized MessageType:" + id);
         }

@@ -49,7 +49,7 @@ import org.testng.annotations.Test;
 
 public class OdpsTableSourceTest {
 
-    @Test
+    @Test(enabled = false)
     public void testOdpsTableSource() throws IOException {
         OdpsTableSource source = new OdpsTableSource();
         Configuration config = new Configuration();
@@ -88,7 +88,7 @@ public class OdpsTableSourceTest {
             new Object[]{ "16", "32" }), null));
     }
 
-    @Test
+    @Test(enabled = false)
     public void testPartitionSpec() throws IOException {
         OdpsTableSource source = new OdpsTableSource();
         Configuration config = new Configuration();

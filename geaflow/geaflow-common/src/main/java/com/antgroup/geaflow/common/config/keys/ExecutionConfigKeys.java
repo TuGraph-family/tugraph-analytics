@@ -400,6 +400,11 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue("snappy")
         .description("codec of shuffle compression");
 
+    public static final ConfigKey SHUFFLE_BACKPRESSURE_ENABLE = ConfigKeys
+        .key("geaflow.shuffle.backpressure.enable")
+        .defaultValue(false)
+        .description("whether to enable shuffle backpressure");
+
     /** Shuffle network config. */
 
     public static final ConfigKey NETTY_SERVER_HOST = ConfigKeys
@@ -484,6 +489,11 @@ public class ExecutionConfigKeys implements Serializable {
         .defaultValue(1)
         .description("size of shuffle fetch queue");
 
+    public static final ConfigKey SHUFFLE_FETCH_CHANNEL_QUEUE_SIZE = ConfigKeys
+        .key("geaflow.shuffle.fetch.channel.queue.size")
+        .defaultValue(64)
+        .description("buffer number per channel");
+
     /** Shuffle write config. */
 
     public static final ConfigKey SHUFFLE_SPILL_RECORDS = ConfigKeys
@@ -500,6 +510,11 @@ public class ExecutionConfigKeys implements Serializable {
         .key("geaflow.shuffle.flush.buffer.size.bytes")
         .defaultValue(128 * 1024)
         .description("size of shuffle write buffer");
+
+    public static final ConfigKey SHUFFLE_WRITER_BUFFER_SIZE = ConfigKeys
+        .key("geaflow.shuffle.writer.buffer.size")
+        .defaultValue(64 * 1024 * 1024)
+        .description("max buffer size for the shuffle writer in bytes");
 
     public static final ConfigKey SHUFFLE_EMIT_BUFFER_SIZE = ConfigKeys
         .key("geaflow.shuffle.emit.buffer.size")

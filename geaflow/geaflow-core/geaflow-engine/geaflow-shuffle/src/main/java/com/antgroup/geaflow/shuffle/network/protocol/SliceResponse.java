@@ -94,11 +94,11 @@ public class SliceResponse extends NettyMessage {
         if (isData) {
             byte[] bytes = new byte[buf.readableBytes()];
             buf.readBytes(bytes);
-            recordBuffer = new PipeBuffer(bytes, batchId, true);
+            recordBuffer = new PipeBuffer(bytes, batchId);
         } else {
             int count = buf.readInt();
             boolean isFinish = buf.readBoolean();
-            recordBuffer = new PipeBuffer(batchId, count, false, isFinish);
+            recordBuffer = new PipeBuffer(batchId, count, isFinish);
         }
 
         return new SliceResponse(recordBuffer, sequenceNum, inputChannelId);

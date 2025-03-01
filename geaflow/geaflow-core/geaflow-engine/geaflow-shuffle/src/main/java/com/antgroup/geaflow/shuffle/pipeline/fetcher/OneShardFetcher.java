@@ -254,7 +254,7 @@ public class OneShardFetcher implements ShardFetcher {
 
         PipeFetcherBuffer fetcherBuffer = new PipeFetcherBuffer(inputWithData.data.getBuffer(),
             inputWithData.input.getChannelIndex(), inputWithData.moreAvailable,
-            inputWithData.data.getSliceId(), inputStream);
+            inputWithData.input.getInputSliceId(), inputStream);
         return Optional.of(fetcherBuffer);
     }
 
