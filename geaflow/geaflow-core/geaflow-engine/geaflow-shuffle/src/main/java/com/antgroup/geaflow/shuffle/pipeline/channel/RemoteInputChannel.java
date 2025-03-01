@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.pipeline.channel;
 
+import com.antgroup.geaflow.shuffle.config.ShuffleConfig;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.ConnectionId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
@@ -29,9 +30,10 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This class is an adaptation of Flink's org.apache.flink.runtime.io.network.partition.consumer.RemoteInputChannel.
+ * This class references the implementation of Flink's RemoteInputChannel.
  */
 public class RemoteInputChannel extends AbstractInputChannel {
 
@@ -58,12 +60,30 @@ public class RemoteInputChannel extends AbstractInputChannel {
     // I/O thread only.
     private int expectedSequenceNumber = 0;
 
+    private final boolean enableBackPressure;
+
+    // The initial credit for this channel.
+    private final int initialCredit;
+
+    // threshold to notify available credit for this channel.
+    private final int creditNotifyThreshold;
+
+    // available credit for this channel.
+    private final AtomicInteger availableCredit;
+
+
     public RemoteInputChannel(OneShardFetcher fetcher, SliceId inputSlice, int channelIndex,
                               ConnectionId connectionId, int initialBackoff, int maxBackoff,
                               long startBatchId, IConnectionManager connectionManager) {
         super(channelIndex, fetcher, inputSlice, initialBackoff, maxBackoff, startBatchId);
         this.connectionId = Preconditions.checkNotNull(connectionId);
         this.connectionManager = (ConnectionManager) connectionManager;
+        ShuffleConfig config = connectionManager.getShuffleConfig();
+        this.enableBackPressure = config.isBackpressureEnabled();
+        // initial credit -1 means no limit.
+        this.initialCredit = enableBackPressure ? config.getChannelQueueSize() : -1;
+        this.availableCredit = new AtomicInteger(0);
+        this.creditNotifyThreshold = initialCredit / 2;
     }
 
     // ------------------------------------------------------------------------
@@ -116,8 +136,11 @@ public class RemoteInputChannel extends AbstractInputChannel {
                     "There should always have queued buffers for unreleased channel.");
             }
         }
-
-        return Optional.of(new PipeChannelBuffer(next, moreAvailable, inputSliceId));
+        if (enableBackPressure && next.isData()
+            && availableCredit.incrementAndGet() >= creditNotifyThreshold) {
+            notifyCreditAvailable();
+        }
+        return Optional.of(new PipeChannelBuffer(next, moreAvailable));
     }
 
     @Override
@@ -156,6 +179,7 @@ public class RemoteInputChannel extends AbstractInputChannel {
 
     /**
      * Gets the current number of received buffers which have not been processed yet.
+     *
      * @return Buffers queued for processing.
      */
     public int getNumberOfQueuedBuffers() {
@@ -166,6 +190,24 @@ public class RemoteInputChannel extends AbstractInputChannel {
 
     public ChannelId getInputChannelId() {
         return id;
+    }
+
+    public int getInitialCredit() {
+        return initialCredit;
+    }
+
+    public int getAndResetAvailableCredit() {
+        return availableCredit.getAndSet(0);
+    }
+
+    /**
+     * Enqueue this input channel in the pipeline for notifying the producer of unannounced credit.
+     */
+    private void notifyCreditAvailable() throws IOException {
+        checkClientInitialized();
+        checkError();
+
+        sliceRequestClient.notifyCreditAvailable(this);
     }
 
     @VisibleForTesting

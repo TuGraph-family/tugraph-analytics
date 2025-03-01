@@ -50,7 +50,7 @@ public class SpillablePipelineSliceTest {
         int bufferCount = 10000;
         for (int i = 0; i < bufferCount; i++) {
             HeapBuffer outBuffer = new HeapBuffer(bytes1, memoryTracker);
-            PipeBuffer buffer = new PipeBuffer(outBuffer, 1, true);
+            PipeBuffer buffer = new PipeBuffer(outBuffer, 1);
             slice.add(buffer);
         }
         slice.flush();

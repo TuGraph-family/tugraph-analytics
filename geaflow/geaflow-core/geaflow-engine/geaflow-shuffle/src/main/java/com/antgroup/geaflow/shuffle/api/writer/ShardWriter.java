@@ -45,6 +45,7 @@ public abstract class ShardWriter<T, R> {
     protected int edgeId;
     protected int taskIndex;
     protected int targetChannels;
+    protected boolean enableBackPressure;
 
     protected String taskLogTag;
     protected long[] recordCounter;
@@ -72,7 +73,8 @@ public abstract class ShardWriter<T, R> {
         this.taskLogTag = writerContext.getTaskName();
         this.recordCounter = new long[this.targetChannels];
         this.bytesCounter = new long[this.targetChannels];
-        this.maxBufferSize = this.shuffleConfig.getFlushBufferSizeBytes();
+        this.maxBufferSize = this.shuffleConfig.getMaxBufferSizeBytes();
+        this.enableBackPressure = this.shuffleConfig.isBackpressureEnabled();
 
         this.buffers = this.buildBufferBuilder(this.targetChannels);
         this.resultSlices = this.buildResultSlices(this.targetChannels);
@@ -146,16 +148,16 @@ public abstract class ShardWriter<T, R> {
 
     protected abstract Optional<R> doFinish(long windowId) throws IOException;
 
-    private void sendBuffer(int sliceIndex, BufferBuilder builder, long windowId) {
+    protected void sendBuffer(int sliceIndex, BufferBuilder builder, long windowId) {
         this.recordCounter[sliceIndex] += builder.getRecordCount();
         this.bytesCounter[sliceIndex] += builder.getBufferSize();
         IPipelineSlice resultSlice = this.resultSlices[sliceIndex];
-        resultSlice.add(new PipeBuffer(builder.build(), windowId, true));
+        resultSlice.add(new PipeBuffer(builder.build(), windowId));
     }
 
     private void sendBarrier(int sliceIndex, long windowId, int count, boolean isFinish) {
         IPipelineSlice resultSlice = this.resultSlices[sliceIndex];
-        resultSlice.add(new PipeBuffer(windowId, count, false, isFinish));
+        resultSlice.add(new PipeBuffer(windowId, count, isFinish));
     }
 
     private void flushFloatingBuffers(long windowId) {

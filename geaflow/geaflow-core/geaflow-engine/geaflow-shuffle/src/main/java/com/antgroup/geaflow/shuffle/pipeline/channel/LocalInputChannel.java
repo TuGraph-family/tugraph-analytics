@@ -121,7 +121,6 @@ public class LocalInputChannel extends AbstractInputChannel implements PipelineS
             return Optional.empty();
         }
 
-        next.setSliceId(inputSliceId);
         return Optional.of(next);
     }
 

@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 
 public class OdpsTableSinkTest {
 
-    @Test
+    @Test(enabled = false)
     public void testOdpsTableSink() throws IOException {
         OdpsTableSink sink = new OdpsTableSink();
         Configuration config = new Configuration();

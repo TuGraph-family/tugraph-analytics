@@ -19,6 +19,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class SliceId implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public static final int SLICE_ID_BYTES = 20;
 
     private final WriterId writerId;
     private final int sliceIndex;

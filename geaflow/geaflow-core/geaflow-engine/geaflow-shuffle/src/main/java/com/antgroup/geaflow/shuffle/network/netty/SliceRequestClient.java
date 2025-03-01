@@ -16,8 +16,10 @@ package com.antgroup.geaflow.shuffle.network.netty;
 
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.ConnectionId;
+import com.antgroup.geaflow.shuffle.network.protocol.AddCreditRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.BatchRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.CloseRequest;
+import com.antgroup.geaflow.shuffle.network.protocol.NettyMessage;
 import com.antgroup.geaflow.shuffle.network.protocol.SliceRequest;
 import com.antgroup.geaflow.shuffle.pipeline.channel.RemoteInputChannel;
 import com.antgroup.geaflow.shuffle.util.AtomicReferenceCounter;
@@ -79,7 +81,7 @@ public class SliceRequestClient {
         clientHandler.addInputChannel(inputChannel);
 
         final SliceRequest request = new SliceRequest(sliceId, startBatchId,
-            inputChannel.getInputChannelId());
+            inputChannel.getInputChannelId(), inputChannel.getInitialCredit());
 
         final ChannelFutureListener listener = new ChannelFutureListener() {
             @Override
@@ -111,10 +113,23 @@ public class SliceRequestClient {
 
     public void requestNextBatch(long batchId, final RemoteInputChannel inputChannel)
         throws IOException {
+        checkNotClosed();
+        final BatchRequest request = new BatchRequest(batchId, inputChannel.getInputChannelId());
+        sendRequest(inputChannel, request);
+    }
 
+    public void notifyCreditAvailable(RemoteInputChannel inputChannel) throws IOException {
         checkNotClosed();
 
-        final BatchRequest request = new BatchRequest(batchId, inputChannel.getInputChannelId());
+        int credit = inputChannel.getAndResetAvailableCredit();
+        Preconditions.checkArgument(credit > 0, "Credit must be greater than zero.");
+        final AddCreditRequest request = new AddCreditRequest(credit,
+            inputChannel.getInputChannelId());
+        sendRequest(inputChannel, request);
+    }
+
+    private void sendRequest(RemoteInputChannel inputChannel, NettyMessage request) throws IOException {
+        checkNotClosed();
 
         final ChannelFutureListener listener = new ChannelFutureListener() {
             @Override

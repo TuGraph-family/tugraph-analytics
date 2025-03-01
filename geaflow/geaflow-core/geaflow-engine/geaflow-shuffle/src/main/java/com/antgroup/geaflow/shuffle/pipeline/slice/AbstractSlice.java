@@ -45,11 +45,6 @@ public abstract class AbstractSlice implements IPipelineSlice {
     }
 
     @Override
-    public int getTotalBufferCount() {
-        return totalBufferCount;
-    }
-
-    @Override
     public PipelineSliceReader createSliceReader(long startBatchId, PipelineSliceListener listener) {
         synchronized (buffers) {
             if (isReleased) {
@@ -75,6 +70,31 @@ public abstract class AbstractSlice implements IPipelineSlice {
     @Override
     public boolean isReleased() {
         return isReleased;
+    }
+
+    @Override
+    public void release() {
+        int bufferSize;
+        final PipelineSliceReader reader;
+
+        synchronized (buffers) {
+            if (isReleased) {
+                return;
+            }
+
+            // Release all available buffers
+            bufferSize = buffers.size();
+            buffers.clear();
+
+            reader = sliceReader;
+            sliceReader = null;
+            isReleased = true;
+        }
+
+        LOGGER.info("{}: released {} with bufferSize:{}", taskLogTag, sliceId, bufferSize);
+        if (reader != null) {
+            reader.release();
+        }
     }
 
 }

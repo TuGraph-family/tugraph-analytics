@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.shuffle.network.netty;
 
+import com.antgroup.geaflow.shuffle.network.protocol.AddCreditRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.BatchRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.CancelRequest;
 import com.antgroup.geaflow.shuffle.network.protocol.CloseRequest;
@@ -56,7 +57,8 @@ public class SliceRequestServerHandler extends SimpleChannelInboundHandler<Netty
                 try {
                     SequenceSliceReader reader = new SequenceSliceReader(
                         request.getReceiverId(), outboundQueue);
-                    reader.createSliceReader(request.getSliceId(), request.getStartBatchId());
+                    reader.createSliceReader(request.getSliceId(), request.getStartBatchId(),
+                        request.getInitialCredit());
 
                     outboundQueue.notifyReaderCreated(reader);
                 } catch (Throwable notFound) {
@@ -72,8 +74,13 @@ public class SliceRequestServerHandler extends SimpleChannelInboundHandler<Netty
             } else if (msgClazz == BatchRequest.class) {
                 BatchRequest request = (BatchRequest) msg;
 
-                outboundQueue.updateRequestedBatchId(request.receiverId(),
+                outboundQueue.applyReaderOperation(request.receiverId(),
                     reader -> reader.requestBatch(request.getNextBatchId()));
+            } else if (msgClazz == AddCreditRequest.class) {
+                AddCreditRequest request = (AddCreditRequest) msg;
+
+                outboundQueue.applyReaderOperation(request.receiverId(),
+                    reader -> reader.addCredit(request.getCredit()));
             } else {
                 LOGGER.warn("Received unexpected client request: {}", msg);
                 respondWithError(ctx, new IllegalArgumentException("unknown request:" + msg));

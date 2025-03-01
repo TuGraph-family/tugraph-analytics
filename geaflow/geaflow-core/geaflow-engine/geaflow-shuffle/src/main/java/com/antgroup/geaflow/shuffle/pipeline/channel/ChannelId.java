@@ -23,7 +23,7 @@ import java.util.UUID;
  * This class is an adaptation of Flink's org.apache.flink.util.AbstractID.
  */
 public class ChannelId implements Serializable {
-
+    public static final int CHANNEL_ID_BYTES = 16;
     private static final long serialVersionUID = 2L;
     // The upper part of the actual ID.
     private final long upperPart;

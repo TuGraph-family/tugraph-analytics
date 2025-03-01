@@ -14,7 +14,6 @@
 
 package com.antgroup.geaflow.shuffle.pipeline.buffer;
 
-import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.pipeline.channel.LocalInputChannel;
 import com.antgroup.geaflow.shuffle.pipeline.slice.SequenceSliceReader;
 
@@ -27,18 +26,10 @@ public class PipeChannelBuffer {
     private final PipeBuffer buffer;
     // Indicate the availability of message in PipeSlice.
     private final boolean moreAvailable;
-    // Input slice id.
-    private SliceId sliceId;
 
     public PipeChannelBuffer(PipeBuffer buffer, boolean moreAvailable) {
         this.buffer = buffer;
         this.moreAvailable = moreAvailable;
-    }
-
-    public PipeChannelBuffer(PipeBuffer buffer, boolean moreAvailable, SliceId sliceId) {
-        this.buffer = buffer;
-        this.moreAvailable = moreAvailable;
-        this.sliceId = sliceId;
     }
 
     public PipeBuffer getBuffer() {
@@ -47,14 +38,6 @@ public class PipeChannelBuffer {
 
     public boolean moreAvailable() {
         return moreAvailable;
-    }
-
-    public SliceId getSliceId() {
-        return sliceId;
-    }
-
-    public void setSliceId(SliceId sliceId) {
-        this.sliceId = sliceId;
     }
 
 }

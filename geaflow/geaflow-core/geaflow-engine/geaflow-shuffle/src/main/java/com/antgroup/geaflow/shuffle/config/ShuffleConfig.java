@@ -28,15 +28,18 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_SERVER_PORT;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_SERVER_THREADS_NUM;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.NETTY_THREAD_CACHE_ENABLE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_BACKPRESSURE_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_COMPRESSION_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_EMIT_BUFFER_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_EMIT_QUEUE_SIZE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_CHANNEL_QUEUE_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_QUEUE_SIZE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FETCH_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_SIZE_BYTES;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_STORAGE_TYPE;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_WRITER_BUFFER_SIZE;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.shuffle.StorageLevel;
@@ -69,6 +72,7 @@ public class ShuffleConfig {
     private final boolean threadCacheEnabled;
     private final boolean preferDirectBuffer;
     private final boolean customFrameDecoderEnable;
+    private final boolean enableBackpressure;
 
     //////////////////////////////
     // Read & Write
@@ -83,6 +87,8 @@ public class ShuffleConfig {
 
     private final int fetchTimeoutMs;
     private final int fetchQueueSize;
+    private final int channelQueueSize;
+
 
     //////////////////////////////
     // Write
@@ -90,7 +96,8 @@ public class ShuffleConfig {
 
     private final int emitQueueSize;
     private final int emitBufferSize;
-    private final int flushBufferSizeBytes;
+    private final int maxBufferSizeBytes;
+    private final int maxWriteBufferSize;
     private final int flushBufferTimeoutMs;
     private final StorageLevel storageLevel;
 
@@ -116,15 +123,18 @@ public class ShuffleConfig {
         // read & write
         this.memoryPoolEnable = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
         this.compressionEnabled = config.getBoolean(SHUFFLE_COMPRESSION_ENABLE);
+        this.enableBackpressure = config.getBoolean(SHUFFLE_BACKPRESSURE_ENABLE);
 
         // read
         this.fetchTimeoutMs = config.getInteger(SHUFFLE_FETCH_TIMEOUT_MS);
         this.fetchQueueSize = config.getInteger(SHUFFLE_FETCH_QUEUE_SIZE);
+        this.channelQueueSize = config.getInteger(SHUFFLE_FETCH_CHANNEL_QUEUE_SIZE);
 
         // write
         this.emitQueueSize = config.getInteger(SHUFFLE_EMIT_QUEUE_SIZE);
         this.emitBufferSize = config.getInteger(SHUFFLE_EMIT_BUFFER_SIZE);
-        this.flushBufferSizeBytes = config.getInteger(SHUFFLE_FLUSH_BUFFER_SIZE_BYTES);
+        this.maxBufferSizeBytes = config.getInteger(SHUFFLE_FLUSH_BUFFER_SIZE_BYTES);
+        this.maxWriteBufferSize = config.getInteger(SHUFFLE_WRITER_BUFFER_SIZE);
         this.flushBufferTimeoutMs = config.getInteger(SHUFFLE_FLUSH_BUFFER_TIMEOUT_MS);
         this.storageLevel = StorageLevel.valueOf(config.getString(SHUFFLE_STORAGE_TYPE));
 
@@ -221,6 +231,10 @@ public class ShuffleConfig {
         return this.fetchQueueSize;
     }
 
+    public int getChannelQueueSize() {
+        return channelQueueSize;
+    }
+
     public int getEmitQueueSize() {
         return this.emitQueueSize;
     }
@@ -229,8 +243,16 @@ public class ShuffleConfig {
         return this.emitBufferSize;
     }
 
-    public int getFlushBufferSizeBytes() {
-        return this.flushBufferSizeBytes;
+    public int getMaxBufferSizeBytes() {
+        return this.maxBufferSizeBytes;
+    }
+
+    public boolean isBackpressureEnabled() {
+        return enableBackpressure;
+    }
+
+    public int getMaxWriteBufferSize() {
+        return maxWriteBufferSize;
     }
 
     public int getFlushBufferTimeoutMs() {

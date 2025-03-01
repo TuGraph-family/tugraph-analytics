@@ -62,7 +62,7 @@ public class PrefetchMessageBuffer<T> implements IInputMessageBuffer<T> {
         AbstractMessageIterator<T> iterator = (AbstractMessageIterator<T>) message.getMessageIterator();
         OutBuffer outBuffer = iterator.getOutBuffer();
         long windowId = message.getRecordArgs().getWindowId();
-        this.slice.add(new PipeBuffer(outBuffer, windowId, true));
+        this.slice.add(new PipeBuffer(outBuffer, windowId));
     }
 
     @Override
@@ -70,7 +70,7 @@ public class PrefetchMessageBuffer<T> implements IInputMessageBuffer<T> {
         if (barrier.getEdgeId() != this.edgeId) {
             return;
         }
-        this.slice.add(new PipeBuffer(barrier.getWindowId(), (int) barrier.getCount(), false, true));
+        this.slice.add(new PipeBuffer(barrier.getWindowId(), (int) barrier.getCount(), true));
         this.slice.flush();
         this.latch.countDown();
     }
