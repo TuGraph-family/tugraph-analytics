@@ -16,7 +16,7 @@ package com.antgroup.geaflow.store.paimon;
 
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.state.serializer.IKVSerializer;
-import com.antgroup.geaflow.store.api.key.IKVStore;
+import com.antgroup.geaflow.store.api.key.IKVStatefulStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.paimon.iterator.PaimonIterator;
 import com.google.common.base.Preconditions;
@@ -29,7 +29,7 @@ import org.apache.paimon.reader.RecordReaderIterator;
 import org.apache.paimon.types.RowKind;
 import org.apache.paimon.utils.Filter;
 
-public class KVPaimonStore<K, V> extends BasePaimonStore implements IKVStore<K, V> {
+public class KVPaimonStore<K, V> extends BasePaimonStore implements IKVStatefulStore<K, V> {
 
     private static final String TABLE_NAME_PREFIX = "KVTable";
 

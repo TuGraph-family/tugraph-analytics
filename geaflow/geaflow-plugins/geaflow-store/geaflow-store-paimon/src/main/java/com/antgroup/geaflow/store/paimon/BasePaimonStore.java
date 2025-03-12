@@ -15,15 +15,15 @@
 package com.antgroup.geaflow.store.paimon;
 
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
-import com.antgroup.geaflow.store.IBaseStore;
-import com.antgroup.geaflow.store.ILocalStore;
+import com.antgroup.geaflow.store.IStatefulStore;
+import com.antgroup.geaflow.store.api.graph.BaseGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import org.apache.paimon.catalog.Identifier;
 import org.apache.paimon.schema.Schema;
 import org.apache.paimon.table.Table;
 import org.apache.paimon.types.DataTypes;
 
-public abstract class BasePaimonStore implements IBaseStore, ILocalStore {
+public abstract class BasePaimonStore extends BaseGraphStore implements IStatefulStore {
 
     protected static final String KEY_COLUMN_NAME = "key";
 
@@ -55,11 +55,6 @@ public abstract class BasePaimonStore implements IBaseStore, ILocalStore {
     @Override
     public void close() {
         this.client.close();
-    }
-
-    @Override
-    public void initShardId(int shardId) {
-        this.shardId = shardId;
     }
 
     protected PaimonTableRWHandle createKVTableHandle(Identifier identifier) {

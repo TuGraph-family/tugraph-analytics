@@ -24,7 +24,7 @@ import com.antgroup.geaflow.state.graph.encoder.EdgeAtom;
 import com.antgroup.geaflow.state.graph.encoder.GraphKVEncoderFactory;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
 import com.antgroup.geaflow.state.pushdown.IStatePushDown;
-import com.antgroup.geaflow.store.api.graph.IGraphStore;
+import com.antgroup.geaflow.store.api.graph.IStaticGraphStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.paimon.proxy.IGraphPaimonProxy;
 import com.antgroup.geaflow.store.paimon.proxy.PaimonProxyBuilder;
@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.paimon.catalog.Identifier;
 
-public class GraphPaimonStore<K, VV, EV> extends BasePaimonGraphStore implements
-    IGraphStore<K, VV, EV> {
+public class StaticGraphPaimonStoreBase<K, VV, EV> extends BasePaimonGraphStore implements
+    IStaticGraphStore<K, VV, EV> {
 
     private EdgeAtom sortAtom;
 
