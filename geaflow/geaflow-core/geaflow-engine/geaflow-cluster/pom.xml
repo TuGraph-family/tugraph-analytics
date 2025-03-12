@@ -78,6 +78,10 @@
        </dependency>
        <dependency>
            <groupId>com.antgroup.tugraph</groupId>
+           <artifactId>geaflow-store-paimon</artifactId>
+       </dependency>
+       <dependency>
+           <groupId>com.antgroup.tugraph</groupId>
            <artifactId>geaflow-highavailability</artifactId>
        </dependency>
        <dependency>
