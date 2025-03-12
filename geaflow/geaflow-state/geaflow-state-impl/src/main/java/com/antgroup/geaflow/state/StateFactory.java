@@ -33,8 +33,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class StateFactory implements Serializable {
 
+    private static final long serialVersionUID = 6070809556097701233L;
+
     private static final List<StoreType> SUPPORTED_KEY_STORE_TYPES =
-        Arrays.asList(StoreType.ROCKSDB, StoreType.MEMORY);
+        Arrays.asList(StoreType.ROCKSDB, StoreType.MEMORY, StoreType.PAIMON);
 
     private static final Map<String, GraphState> GRAPH_STATE_MAP = new ConcurrentHashMap<>();
 

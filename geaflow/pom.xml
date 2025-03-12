@@ -47,6 +47,7 @@
         <sqlite.version>3.40.0.0</sqlite.version>
         <zstd.version>1.4.3-1</zstd.version>
         <rocksdb.version>7.7.3</rocksdb.version>
+        <paimon.version>1.0.1</paimon.version>
         <snappy.version>1.1.8.4</snappy.version>
         <lz4.version>1.2.0</lz4.version>
         <grpc.version>1.15.1</grpc.version>
@@ -597,6 +598,11 @@
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-store-jdbc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-store-paimon</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

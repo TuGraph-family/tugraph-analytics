@@ -33,6 +33,7 @@
         <module>geaflow-store-redis</module>
         <module>geaflow-store-jdbc</module>
         <module>geaflow-store-cstore</module>
+        <module>geaflow-store-paimon</module>
     </modules>
 
     <dependencies>

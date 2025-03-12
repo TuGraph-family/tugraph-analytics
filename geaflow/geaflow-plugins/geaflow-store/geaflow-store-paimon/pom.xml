@@ -17,23 +17,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>geaflow-state</artifactId>
+        <artifactId>geaflow-store</artifactId>
         <groupId>com.antgroup.tugraph</groupId>
         <version>0.5.0-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>geaflow-state-strategy</artifactId>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>geaflow-store-paimon</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-utils</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-model</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-store-api</artifactId>
@@ -46,33 +38,21 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-state-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-store-memory</artifactId>
+            <artifactId>geaflow-file-common</artifactId>
         </dependency>
         <dependency>
             <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-store-rocksdb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-store-cstore</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-store-paimon</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
-            <artifactId>geaflow-view-meta</artifactId>
+            <artifactId>geaflow-file-dfs</artifactId>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.paimon/paimon-core -->
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.paimon</groupId>
+            <artifactId>paimon-bundle</artifactId>
+            <version>${paimon.version}</version>
         </dependency>
+
     </dependencies>
-
 </project>

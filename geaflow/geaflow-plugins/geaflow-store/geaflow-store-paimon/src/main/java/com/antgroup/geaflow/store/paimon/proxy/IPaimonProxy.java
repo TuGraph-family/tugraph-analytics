@@ -12,45 +12,35 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-package com.antgroup.geaflow.state;
+package com.antgroup.geaflow.store.paimon.proxy;
 
-public enum StoreType {
+public interface IPaimonProxy {
 
     /**
-     * MEMORY.
+     * Archive data with a specific checkpoint id.
+     * @param checkpointId checkpoint id.
      */
-    MEMORY,
-    /**
-     * ROCKSDB.
-     */
-    ROCKSDB,
-    /**
-     * CSTORE.
-     */
-    CSTORE,
-    /**
-     * HBASE.
-     */
-    HBASE,
-    /**
-     * REDIS.
-     */
-    REDIS,
-    /**
-     * JDBC.
-     */
-    JDBC,
-    /**
-     * PAIMON (Experimental).
-     */
-    PAIMON;
+    void archive(long checkpointId);
 
-    public static StoreType getEnum(String value) {
-        for (StoreType v : values()) {
-            if (v.name().equalsIgnoreCase(value)) {
-                return v;
-            }
-        }
-        return MEMORY;
-    }
+    /**
+     * Recovery data with a specific checkpoint id.
+     * @param checkpointId checkpoint id.
+     */
+    void recover(long checkpointId);
+
+    /**
+     * Recovery data to the latest checkpoint.
+     * @return checkpoint id.
+     */
+    long recoverLatest();
+
+    /**
+     * Flush data from memtable to disk.
+     */
+    void flush();
+
+    /**
+     * Close proxy.
+     */
+    void close();
 }
