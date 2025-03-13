@@ -28,7 +28,7 @@ import org.openjdk.jmh.annotations.State;
 @State(Scope.Benchmark)
 public class JMHParameter {
 
-    @Param({"cstore", "rocksdb"})
+    @Param({"rocksdb"})
     public String storeType;
 
     @Param({"1", "50"})
