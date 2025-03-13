@@ -59,8 +59,6 @@ public interface IViewDesc extends Serializable {
         RocksDB,
         // Memory backend.
         Memory,
-        // CStore backend.
-        CStore,
         // Custom backend.
         Custom
         ;

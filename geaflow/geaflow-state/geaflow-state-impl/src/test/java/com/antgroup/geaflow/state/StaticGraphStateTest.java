@@ -243,13 +243,6 @@ public class StaticGraphStateTest {
             .asList();
         Assert.assertEquals(list.size(), 270);
 
-        if (storeType == StoreType.CSTORE) {
-            // not support now.
-            graphState.manage().operate().close();
-            graphState.manage().operate().drop();
-            return;
-        }
-
         // sort keys
         long[] times = Longs.toArray(graphState.staticGraph().E().query("1", "2", "3").limit(3L, 3L)
             .orderBy(EdgeAtom.DESC_TIME).select(new TimeProjector<>()).asList());
@@ -271,11 +264,6 @@ public class StaticGraphStateTest {
 
     @Test
     public void testProjectAndAgg() {
-        if (storeType == StoreType.CSTORE) {
-            // not support now.
-            return;
-        }
-
         GraphStateDescriptor<String, String, String> desc = GraphStateDescriptor.build(
             "testProjectAndAgg", storeType.name());
         desc.withKeyGroup(new KeyGroup(0, 1)).withKeyGroupAssigner(new DefaultKeyGroupAssigner(2));

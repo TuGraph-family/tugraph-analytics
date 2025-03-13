@@ -20,7 +20,7 @@ Create Graph IF NOT EXISTS g (
     weight double
   )
 ) With (
-  storeType = 'cstore',
+  storeType = 'rocksdb',
   shardCount = 1024
 )
 ;
@@ -47,7 +47,7 @@ Create TEMPORARY Graph IF NOT EXISTS g2 (
     weight double
   )
 ) With (
-  storeType = 'cstore',
+  storeType = 'rocksdb',
   shardCount = 1024
 )
 ;

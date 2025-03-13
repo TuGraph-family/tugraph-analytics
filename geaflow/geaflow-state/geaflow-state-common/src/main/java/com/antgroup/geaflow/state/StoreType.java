@@ -25,10 +25,6 @@ public enum StoreType {
      */
     ROCKSDB,
     /**
-     * CSTORE.
-     */
-    CSTORE,
-    /**
      * HBASE.
      */
     HBASE,
