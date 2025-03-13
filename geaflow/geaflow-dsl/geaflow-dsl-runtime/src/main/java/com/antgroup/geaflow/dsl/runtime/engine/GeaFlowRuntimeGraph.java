@@ -60,6 +60,7 @@ import com.antgroup.geaflow.dsl.runtime.util.IDUtil;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
 import com.antgroup.geaflow.model.traversal.ITraversalResponse;
+import com.antgroup.geaflow.operator.impl.graph.traversal.dynamic.DynamicGraphHelper;
 import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.graph.PGraphView;
@@ -173,17 +174,26 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
             responsePWindow = staticGraphTraversal(staticGraph, parameterStartIds,
                 constantStartIds, executeDagGroup, maxTraversal, isAggTraversal, parallelism);
         } else { // traversal on dynamic graph
+            boolean enableIncrTraversal = DynamicGraphHelper.enableIncrTraversal(maxTraversal, startIds.size(),
+                context.getConfig());
+            if (maxTraversal != Integer.MAX_VALUE) {
+                if (enableIncrTraversal) {
+                    // Double the maxTraversal if is incrTraversal, need pre evolve subgraph.
+                    // the evolve phase is 1 smaller than the query Iteration
+                    maxTraversal = maxTraversal * 2 - 1;
+                }
+            }
             vertexStream = vertexStream != null ? vertexStream :
                            queryContext.getEngineContext().createRuntimeTable(queryContext, Collections.emptyList())
-                               .getPlan();
+                                       .getPlan();
             edgeStream = edgeStream != null ? edgeStream :
                          queryContext.getEngineContext().createRuntimeTable(queryContext, Collections.emptyList())
-                             .getPlan();
+                                     .getPlan();
 
             PIncGraphView<Object, Row, Row> dynamicGraph = graphView.appendGraph((PWindowStream) vertexStream,
                 (PWindowStream) edgeStream);
-            responsePWindow = dynamicGraphTraversal(dynamicGraph, parameterStartIds, constantStartIds,
-                executeDagGroup, maxTraversal, isAggTraversal, parallelism);
+            responsePWindow = dynamicGraphTraversal(dynamicGraph, parameterStartIds, constantStartIds, executeDagGroup,
+                maxTraversal, isAggTraversal, parallelism, enableIncrTraversal);
         }
         responsePWindow.withParallelism(parallelism);
         PWindowStream<Row> resultPWindow = responsePWindow.flatMap(new ResponseToRowFunction())
@@ -250,13 +260,9 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
     }
 
     private PWindowStream<ITraversalResponse<ITreePath>> dynamicGraphTraversal(
-        PIncGraphView<Object, Row, Row> dynamicGraph,
-        Set<ParameterStartId> parameterStartIds,
-        Set<Object> constantStartIds,
-        ExecuteDagGroup executeDagGroup,
-        int maxTraversal,
-        boolean isAggTraversal,
-        int parallelism) {
+        PIncGraphView<Object, Row, Row> dynamicGraph, Set<ParameterStartId> parameterStartIds,
+        Set<Object> constantStartIds, ExecuteDagGroup executeDagGroup, int maxTraversal, boolean isAggTraversal,
+        int parallelism, boolean enableIncrTraversal) {
         if (queryContext.getRequestTable() != null) { // dynamic traversal with request
             RuntimeTable requestTable = queryContext.getRequestTable();
             boolean isIdOnlyRequest = queryContext.isIdOnlyRequest();
@@ -273,37 +279,36 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
                     new RowToParameterRequestFunction(null, isIdOnlyRequest)).broadcast();
                 isTraversalAllWithRequest = true;
             }
-            return ((PGraphTraversal<Object, ITreePath>)getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup,
-                maxTraversal, isTraversalAllWithRequest, parallelism)).start((PWindowStream)parameterizedRequest);
+            return ((PGraphTraversal<Object, ITreePath>) getDynamicVCTraversal(isAggTraversal, dynamicGraph,
+                executeDagGroup, maxTraversal, isTraversalAllWithRequest, parallelism, enableIncrTraversal)).start(
+                (PWindowStream) parameterizedRequest);
         } else if (constantStartIds.size() > 0) { // request with constant ids.
-            return ((PGraphTraversal<Object, ITreePath>)getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup,
-                maxTraversal, false, parallelism)).start(new ArrayList<>(constantStartIds));
+            return ((PGraphTraversal<Object, ITreePath>) getDynamicVCTraversal(isAggTraversal, dynamicGraph,
+                executeDagGroup, maxTraversal, false, parallelism, enableIncrTraversal)).start(
+                new ArrayList<>(constantStartIds));
         } else { // dynamic traversal all
             boolean enableTraversalAllSplit = queryContext.getGlobalConf()
-                .getBoolean(DSLConfigKeys.GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE);
+                                                          .getBoolean(DSLConfigKeys.GEAFLOW_DSL_TRAVERSAL_SPLIT_ENABLE);
             if (enableTraversalAllSplit) {
-                DynamicGraphVertexScanSourceFunction<?> sourceFunction =
-                    new DynamicGraphVertexScanSourceFunction<>(graphViewDesc);
+                DynamicGraphVertexScanSourceFunction<?> sourceFunction = new DynamicGraphVertexScanSourceFunction<>(
+                    graphViewDesc);
                 PWindowSource<?> source = queryContext.getEngineContext()
-                    .createRuntimeTable(queryContext, sourceFunction)
-                    .withParallelism(graphViewDesc.getShardNum())
-                    .withName(queryContext.createOperatorName("VertexScanSource"));
-                return getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup,
-                    maxTraversal, false, parallelism)
-                    .start((PWindowStream) source);
+                                                      .createRuntimeTable(queryContext, sourceFunction)
+                                                      .withParallelism(graphViewDesc.getShardNum())
+                                                      .withName(queryContext.createOperatorName("VertexScanSource"));
+                return getDynamicVCTraversal(isAggTraversal, dynamicGraph, executeDagGroup, maxTraversal, false,
+                    parallelism, enableIncrTraversal).start((PWindowStream) source);
             }
             return ((PGraphTraversal<Object, ITreePath>) getDynamicVCTraversal(isAggTraversal, dynamicGraph,
-                executeDagGroup, maxTraversal, false, parallelism)).start();
+                executeDagGroup, maxTraversal, false, parallelism, enableIncrTraversal)).start();
 
         }
     }
 
     private PGraphTraversal<?, ?> getStaticVCTraversal(boolean isAggTraversal,
                                                        PGraphWindow<Object, Row, Row> staticGraph,
-                                                       ExecuteDagGroup executeDagGroup,
-                                                       int maxTraversal,
-                                                       boolean isTraversalAllWithRequest,
-                                                       int parallelism) {
+                                                       ExecuteDagGroup executeDagGroup, int maxTraversal,
+                                                       boolean isTraversalAllWithRequest, int parallelism) {
         if (isAggTraversal) {
             return staticGraph.traversal(
                 new GeaFlowStaticVCAggTraversal(executeDagGroup, maxTraversal, isTraversalAllWithRequest, parallelism));
@@ -315,16 +320,16 @@ public class GeaFlowRuntimeGraph implements RuntimeGraph {
 
     private PGraphTraversal<?, ?> getDynamicVCTraversal(boolean isAggTraversal,
                                                         PIncGraphView<Object, Row, Row> dynamicGraph,
-                                                        ExecuteDagGroup executeDagGroup,
-                                                        int maxTraversal,
-                                                        boolean isTraversalAllWithRequest,
-                                                        int parallelism) {
+                                                        ExecuteDagGroup executeDagGroup, int maxTraversal,
+                                                        boolean isTraversalAllWithRequest, int parallelism,
+                                                        boolean enableIncrTraversal) {
         if (isAggTraversal) {
             return dynamicGraph.incrementalTraversal(
                 new GeaFlowDynamicVCAggTraversal(executeDagGroup, maxTraversal, isTraversalAllWithRequest, parallelism));
         } else {
             return dynamicGraph.incrementalTraversal(
-                new GeaFlowDynamicVCTraversal(executeDagGroup, maxTraversal, isTraversalAllWithRequest));
+                new GeaFlowDynamicVCTraversal(executeDagGroup, maxTraversal, isTraversalAllWithRequest,
+                    enableIncrTraversal));
         }
     }
 

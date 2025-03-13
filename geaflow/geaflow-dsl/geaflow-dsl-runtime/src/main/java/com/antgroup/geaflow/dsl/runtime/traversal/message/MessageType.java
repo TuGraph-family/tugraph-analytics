@@ -42,7 +42,11 @@ public enum MessageType {
     /**
      * The message type for {@link ReturnMessage} which is the result returning from the sub-query calling.
      */
-    RETURN_VALUE;
+    RETURN_VALUE,
+    /**
+     * The message type for {@link EvolveVertexMessage} which is the message to evolve vertices in incrMatch.
+     */
+    EVOLVE_VERTEX;
 
     public SingleMessageBox createMessageBox() {
         switch (this) {
@@ -58,6 +62,8 @@ public enum MessageType {
                 return new KeyGroupMessageBox();
             case RETURN_VALUE:
                 return new ReturnMessageBox();
+            case EVOLVE_VERTEX:
+                return new EvolveVertexMessageBox();
             default:
                 throw new IllegalArgumentException("Failing to create message box for: " + this);
         }

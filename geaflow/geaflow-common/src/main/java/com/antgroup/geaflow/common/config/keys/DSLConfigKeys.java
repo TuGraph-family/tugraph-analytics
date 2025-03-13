@@ -20,6 +20,28 @@ import java.io.Serializable;
 
 public class DSLConfigKeys implements Serializable {
 
+    private static final long serialVersionUID = 3550044668482560581L;
+
+    public static final ConfigKey INCR_TRAVERSAL_ITERATION_THRESHOLD = ConfigKeys
+        .key("geaflow.dsl.incr.traversal.iteration.threshold")
+        .defaultValue(4)
+        .description("The max iteration to enable incr match");
+
+    public static final ConfigKey TABLE_SINK_SPLIT_LINE = ConfigKeys
+        .key("geaflow.dsl.table.sink.split.line")
+        .noDefaultValue()
+        .description("The file sink split line.");
+
+    public static final ConfigKey ENABLE_INCR_TRAVERSAL = ConfigKeys
+        .key("geaflow.dsl.graph.enable.incr.traversal")
+        .defaultValue(false)
+        .description("Enable incr match");
+
+    public static final ConfigKey INCR_TRAVERSAL_WINDOW = ConfigKeys
+        .key("geaflow.dsl.graph.incr.traversal.window")
+        .defaultValue(-1L)
+        .description("When window id is large than this parameter to enable incr match");
+
     public static final ConfigKey GEAFLOW_DSL_STORE_TYPE = ConfigKeys
         .key("geaflow.dsl.graph.store.type")
         .noDefaultValue()
