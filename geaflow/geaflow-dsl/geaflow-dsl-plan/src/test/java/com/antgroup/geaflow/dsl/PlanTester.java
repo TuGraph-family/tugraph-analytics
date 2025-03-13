@@ -16,12 +16,18 @@ package com.antgroup.geaflow.dsl;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
+import com.antgroup.geaflow.dsl.optimize.GQLOptimizer;
+import com.antgroup.geaflow.dsl.optimize.RuleGroup;
 import com.antgroup.geaflow.dsl.parser.GeaFlowDSLParser;
 import com.antgroup.geaflow.dsl.planner.GQLContext;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateGraph;
 import com.antgroup.geaflow.dsl.sqlnode.SqlCreateTable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -132,6 +138,18 @@ public class PlanTester {
         return this;
     }
 
+    public PlanTester opt(RelOptRule... rules) {
+        if (relNode == null) {
+            return this;
+        }
+        GQLOptimizer optimizer = new GQLOptimizer();
+        List<RelOptRule> useRuleList = new ArrayList<>(Arrays.asList(rules));
+        RuleGroup useRules = new RuleGroup(useRuleList);
+        optimizer.addRuleGroup(useRules);
+        this.relNode = optimizer.optimize(relNode);
+        return this;
+    }
+
     public void expectValidateType(String expectType) {
         if (validateException != null) {
             throw new GeaFlowDSLException(validateException);
@@ -145,12 +163,13 @@ public class PlanTester {
         Assert.assertEquals(validateException.getMessage(), expectErrorMsg);
     }
 
-    public void checkRelNode(String expectPlan) {
+    public PlanTester checkRelNode(String expectPlan) {
         if (validateException != null) {
             throw new GeaFlowDSLException(validateException);
         }
         String actualPlan = RelOptUtil.toString(relNode);
         Assert.assertEquals(actualPlan, expectPlan);
+        return this;
     }
 
     public String getDefaultGraphDDL() {

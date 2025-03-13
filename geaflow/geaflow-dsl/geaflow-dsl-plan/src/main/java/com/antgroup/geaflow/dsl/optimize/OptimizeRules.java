@@ -30,6 +30,7 @@ import com.antgroup.geaflow.dsl.optimize.rule.PushConsecutiveJoinConditionRule;
 import com.antgroup.geaflow.dsl.optimize.rule.PushJoinFilterConditionRule;
 import com.antgroup.geaflow.dsl.optimize.rule.TableJoinMatchToGraphMatchRule;
 import com.antgroup.geaflow.dsl.optimize.rule.TableJoinTableToGraphRule;
+import com.antgroup.geaflow.dsl.optimize.rule.TableScanToGraphRule;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.apache.calcite.plan.RelOptRule;
@@ -95,7 +96,8 @@ public class OptimizeRules {
         MatchJoinMatchMergeRule.INSTANCE,
         FilterToMatchRule.INSTANCE,
         FilterMatchNodeTransposeRule.INSTANCE,
-        MatchFilterMergeRule.INSTANCE
+        MatchFilterMergeRule.INSTANCE,
+        TableScanToGraphRule.INSTANCE
     );
 
     private static final List<RelOptRule> POST_OPTIMIZE_RULES = ImmutableList.of(

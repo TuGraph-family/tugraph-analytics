@@ -14,6 +14,7 @@
 
 package com.antgroup.geaflow.dsl;
 
+import com.antgroup.geaflow.dsl.optimize.rule.TableScanToGraphRule;
 import org.testng.annotations.Test;
 
 public class GQLToRelConverterTest {
@@ -108,6 +109,25 @@ public class GQLToRelConverterTest {
                     + "  LogicalGraphMatch(path=[(a:user|person) where =(a.id, 1) "
                     + "-[e:knows|follow]->(b:user)])\n"
                     + "    LogicalGraphScan(table=[default.g1])\n"
+            );
+    }
+
+    @Test
+    public void testVertexScan() {
+        PlanTester.build()
+            .gql("select id from user")
+            .toRel()
+            .checkRelNode(
+                "LogicalProject(id=[$0])\n"
+                    + "  LogicalTableScan(table=[[default, user]])\n"
+            )
+            .opt(new TableScanToGraphRule())
+            .checkRelNode(
+                "LogicalProject(id=[$0])\n"
+                    + "  LogicalProject(f0=[user.id], f1=[user.~label], f2=[user.name], f3=[user"
+                    + ".age])\n"
+                    + "    LogicalGraphMatch(path=[(user:user)])\n"
+                    + "      LogicalGraphScan(table=[null])\n"
             );
     }
 
