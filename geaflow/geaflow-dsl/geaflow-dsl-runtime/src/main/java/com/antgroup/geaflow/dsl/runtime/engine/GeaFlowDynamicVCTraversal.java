@@ -28,12 +28,16 @@ public class GeaFlowDynamicVCTraversal extends IncVertexCentricTraversal<Object,
 
     private final boolean isTraversalAllWithRequest;
 
+    private final boolean enableIncrTraversal;
+
     public GeaFlowDynamicVCTraversal(ExecuteDagGroup executeDagGroup,
                                      int maxTraversal,
-                                     boolean isTraversalAllWithRequest) {
+                                     boolean isTraversalAllWithRequest,
+                                     boolean enableIncrTraversal) {
         super(maxTraversal);
         this.executeDagGroup = executeDagGroup;
         this.isTraversalAllWithRequest = isTraversalAllWithRequest;
+        this.enableIncrTraversal = enableIncrTraversal;
     }
 
     @Override
@@ -43,6 +47,6 @@ public class GeaFlowDynamicVCTraversal extends IncVertexCentricTraversal<Object,
 
     @Override
     public IncVertexCentricTraversalFunction<Object, Row, Row, MessageBox, ITreePath> getIncTraversalFunction() {
-        return new GeaFlowDynamicVCTraversalFunction(executeDagGroup, isTraversalAllWithRequest);
+        return new GeaFlowDynamicVCTraversalFunction(executeDagGroup, isTraversalAllWithRequest, enableIncrTraversal);
     }
 }

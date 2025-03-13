@@ -169,12 +169,13 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
         this.responses.clear();
     }
 
-    class IncGraphVCTraversalCtxImpl extends IncGraphContextImpl<K, VV, EV, M>
+    public class IncGraphVCTraversalCtxImpl extends IncGraphContextImpl<K, VV, EV, M>
         implements IncVertexCentricTraversalFuncContext<K, VV, EV, M, R> {
 
         private final ICollector<IGraphMessage<K, M>> messageCollector;
         private final String opName;
         private final TraversalHistoricalGraph<K, VV, EV> traversalHistoricalGraph;
+        private boolean enableIncrMatch;
 
         protected IncGraphVCTraversalCtxImpl(String opName,
                                              ICollector<IGraphMessage<K, M>> messageCollector) {
@@ -183,6 +184,15 @@ public abstract class AbstractDynamicGraphVertexCentricTraversalOp<K, VV, EV, M,
             this.messageCollector = messageCollector;
             this.traversalHistoricalGraph = new TraversalIncHistoricalGraph<>(
                 (IncHistoricalGraph<K, VV, EV>) super.getHistoricalGraph());
+        }
+
+        public boolean isEnableIncrMatch() {
+            return enableIncrMatch;
+        }
+
+        public IncGraphVCTraversalCtxImpl setEnableIncrMatch(boolean enableIncrMatch) {
+            this.enableIncrMatch = enableIncrMatch;
+            return this;
         }
 
         @Override

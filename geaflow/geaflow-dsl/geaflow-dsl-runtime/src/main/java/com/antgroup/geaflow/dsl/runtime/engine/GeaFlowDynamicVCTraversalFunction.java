@@ -19,25 +19,60 @@ import static com.antgroup.geaflow.operator.Constants.GRAPH_VERSION;
 import com.antgroup.geaflow.api.function.iterator.RichIteratorFunction;
 import com.antgroup.geaflow.api.graph.function.vc.IncVertexCentricTraversalFunction;
 import com.antgroup.geaflow.dsl.common.data.Row;
+import com.antgroup.geaflow.dsl.common.data.RowEdge;
+import com.antgroup.geaflow.dsl.common.data.StepRecord;
 import com.antgroup.geaflow.dsl.runtime.traversal.ExecuteDagGroup;
 import com.antgroup.geaflow.dsl.runtime.traversal.TraversalRuntimeContext;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.BroadcastId;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.EdgeGroup;
+import com.antgroup.geaflow.dsl.runtime.traversal.data.IdOnlyVertex;
+import com.antgroup.geaflow.dsl.runtime.traversal.message.EvolveVertexMessage;
 import com.antgroup.geaflow.dsl.runtime.traversal.message.MessageBox;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.MatchEdgeOperator;
+import com.antgroup.geaflow.dsl.runtime.traversal.operator.StepOperator;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
+import com.antgroup.geaflow.dsl.sqlnode.SqlMatchEdge.EdgeDirection;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.model.traversal.ITraversalRequest;
+import com.antgroup.geaflow.operator.impl.graph.traversal.dynamic.AbstractDynamicGraphVertexCentricTraversalOp.IncGraphVCTraversalCtxImpl;
+import com.antgroup.geaflow.operator.impl.graph.traversal.dynamic.DynamicGraphHelper;
+import com.antgroup.geaflow.state.pushdown.filter.EmptyFilter;
+import com.antgroup.geaflow.state.pushdown.filter.IFilter;
+import com.antgroup.geaflow.state.pushdown.filter.InEdgeFilter;
+import com.antgroup.geaflow.state.pushdown.filter.OutEdgeFilter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeaFlowDynamicVCTraversalFunction implements
     IncVertexCentricTraversalFunction<Object, Row, Row, MessageBox, ITreePath>, RichIteratorFunction {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GeaFlowDynamicVCTraversalFunction.class);
 
     private final GeaFlowCommonTraversalFunction commonFunction;
 
     private MutableGraph<Object, Row, Row> mutableGraph;
 
-    public GeaFlowDynamicVCTraversalFunction(ExecuteDagGroup executeDagGroup, boolean isTraversalAllWithRequest) {
+    int queryMaxIteration = 0;
+
+    List<IFilter> incrMessageEdgeFilter = new ArrayList<>();
+
+    boolean enableIncrTraversal;
+
+    Set<Object> evolveIds;
+
+    public GeaFlowDynamicVCTraversalFunction(ExecuteDagGroup executeDagGroup, boolean isTraversalAllWithRequest,
+                                             boolean enableIncrTraversal) {
         this.commonFunction = new GeaFlowCommonTraversalFunction(executeDagGroup, isTraversalAllWithRequest);
+        this.queryMaxIteration = executeDagGroup.getMaxIterationCount();
+        this.enableIncrTraversal = enableIncrTraversal;
+        this.evolveIds = new HashSet<>();
     }
 
     @Override
@@ -46,7 +81,45 @@ public class GeaFlowDynamicVCTraversalFunction implements
         TraversalRuntimeContext traversalRuntimeContext = new GeaFlowDynamicTraversalRuntimeContext(
             vertexCentricFuncContext);
         this.mutableGraph = vertexCentricFuncContext.getMutableGraph();
+        ((IncGraphVCTraversalCtxImpl) vertexCentricFuncContext).setEnableIncrMatch(enableIncrTraversal);
         this.commonFunction.open(traversalRuntimeContext);
+
+        setEdgeFilters();
+        if (!incrMessageEdgeFilter.isEmpty()) {
+            // remove the last edgeFilter since 1 hop is already included in the incr edges.
+            incrMessageEdgeFilter.remove(incrMessageEdgeFilter.size() - 1);
+            Collections.reverse(incrMessageEdgeFilter);
+        }
+
+    }
+
+    void setEdgeFilters() {
+        StepOperator<?, ?> step = commonFunction.getExecuteDagGroup().getMainDag().getEntryOperator();
+        while (!step.getNextOperators().isEmpty()) {
+            List<? extends StepOperator<?, ?>> nextOperators = step.getNextOperators();
+            if (nextOperators.size() > 1) {
+                // ignore multi branch case
+                incrMessageEdgeFilter.clear();
+                break;
+            }
+
+            if (step.getClass() == MatchEdgeOperator.class) {
+                // set the evolveMessage edge directions according to the query.
+                EdgeDirection direction = ((MatchEdgeOperator) step).getFunction().getDirection();
+                switch (direction) {
+                    case OUT:
+                        incrMessageEdgeFilter.add(InEdgeFilter.instance());
+                        break;
+                    case IN:
+                        incrMessageEdgeFilter.add(OutEdgeFilter.instance());
+                        break;
+                    default:
+                        incrMessageEdgeFilter.add(EmptyFilter.of());
+                }
+            }
+
+            step = nextOperators.get(0);
+        }
     }
 
     @Override
@@ -61,6 +134,8 @@ public class GeaFlowDynamicVCTraversalFunction implements
                 mutableGraph.addEdge(GRAPH_VERSION, edge);
             }
         }
+
+        evolveIds.add(vertexId);
     }
 
     @Override
@@ -75,7 +150,7 @@ public class GeaFlowDynamicVCTraversalFunction implements
 
     @Override
     public void finish() {
-
+        evolveIds.clear();
     }
 
     @Override
@@ -83,18 +158,85 @@ public class GeaFlowDynamicVCTraversalFunction implements
 
     }
 
-    @Override
-    public void compute(Object vertexId, Iterator<MessageBox> messageIterator) {
-        commonFunction.compute(vertexId, messageIterator);
+    private void sendEvolveMessage(Object vertexId, TraversalRuntimeContext context) {
+        context.setVertex(IdOnlyVertex.of(vertexId));
+
+        IFilter edgeFilter = incrMessageEdgeFilter.isEmpty() ? EmptyFilter.of() : incrMessageEdgeFilter.get(
+            (int) (context.getIterationId() - 1));
+        EdgeGroup rowEdges = context.loadEdges(edgeFilter);
+        StepOperator<StepRecord, StepRecord> operator = commonFunction.getExecuteDagGroup()
+                                                                      .getMainDag()
+                                                                      .getEntryOperator();
+        for (RowEdge edge : rowEdges) {
+            context.sendMessage(edge.getTargetId(), new EvolveVertexMessage(), operator.getId());
+        }
+    }
+
+
+    private boolean needIncrTraversal() {
+        // if has initRequests, no need send EvolveMessage.
+        return enableIncrTraversal && DynamicGraphHelper.enableIncrTraversalRuntime(
+            commonFunction.getContext().getRuntimeContext());
     }
 
     @Override
-    public void finishIteration(long windowId) {
-        commonFunction.finish(windowId);
+    public void compute(Object vertexId, Iterator<MessageBox> messageIterator) {
+        TraversalRuntimeContext context = commonFunction.getContext();
+        if (needIncrTraversal() && !(vertexId instanceof BroadcastId)) {
+            long iterationId = context.getIterationId();
+            // sendEvolveMessage to evolve subGraphs when iterationId is less than the plan iteration
+            if (iterationId < queryMaxIteration - 1) {
+                evolveIds.add(vertexId);
+                sendEvolveMessage(vertexId, context);
+                return;
+            }
+
+            if (iterationId == queryMaxIteration - 1) {
+                // the current iteration is the end of evolve phase.
+                evolveIds.add(vertexId);
+                return;
+            }
+            // traversal
+            commonFunction.compute(vertexId, messageIterator);
+
+        } else {
+            commonFunction.compute(vertexId, messageIterator);
+        }
+    }
+
+
+    @Override
+    public void finishIteration(long iterationId) {
+        TraversalRuntimeContext context = commonFunction.getContext();
+        if (needIncrTraversal()) {
+            if (iterationId == 1) {
+                // begin evolve
+                for (ITraversalRequest<Object> request : commonFunction.getInitRequests()) {
+                    Object vertexId = request.getVId();
+                    sendEvolveMessage(vertexId, context);
+                }
+                commonFunction.getInitRequests().clear();
+            }
+
+            if (commonFunction.getContext().getIterationId() == queryMaxIteration - 1) {
+                // begin Traversal
+                LOGGER.info("StartEvolveIds: {}, {}, {}", evolveIds.size(), queryMaxIteration - 1,
+                    context.getRuntimeContext().getWindowId());
+                for (Object evolveId : evolveIds) {
+                    ExecuteDagGroup executeDagGroup = commonFunction.getExecuteDagGroup();
+                    executeDagGroup.execute(evolveId, executeDagGroup.getEntryOpId());
+                }
+
+            }
+
+        } else {
+            commonFunction.finish(iterationId);
+        }
+
     }
 
     @Override
     public void finish(Object vertexId, MutableGraph<Object, Row, Row> mutableGraph) {
-
     }
+
 }

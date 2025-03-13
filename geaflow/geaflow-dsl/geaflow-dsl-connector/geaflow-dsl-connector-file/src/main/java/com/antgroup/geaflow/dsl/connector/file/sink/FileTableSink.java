@@ -17,6 +17,7 @@ package com.antgroup.geaflow.dsl.connector.file.sink;
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
+import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.types.StructType;
 import com.antgroup.geaflow.dsl.connector.api.TableSink;
@@ -72,6 +73,11 @@ public class FileTableSink implements TableSink {
 
     @Override
     public void finish() throws IOException {
+        String split = tableConf.getString(DSLConfigKeys.TABLE_SINK_SPLIT_LINE.getKey(), null);
+        if (split != null) {
+            writer.write(split + "\n");
+        }
+
         writer.flush();
     }
 

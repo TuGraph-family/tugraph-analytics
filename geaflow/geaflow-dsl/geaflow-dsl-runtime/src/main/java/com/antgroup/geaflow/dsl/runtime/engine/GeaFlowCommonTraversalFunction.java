@@ -123,4 +123,16 @@ public class GeaFlowCommonTraversalFunction {
     public void close() {
         executeDagGroup.close();
     }
+
+    public ExecuteDagGroup getExecuteDagGroup() {
+        return executeDagGroup;
+    }
+
+    public TraversalRuntimeContext getContext() {
+        return context;
+    }
+
+    public List<ITraversalRequest<Object>> getInitRequests() {
+        return initRequests;
+    }
 }

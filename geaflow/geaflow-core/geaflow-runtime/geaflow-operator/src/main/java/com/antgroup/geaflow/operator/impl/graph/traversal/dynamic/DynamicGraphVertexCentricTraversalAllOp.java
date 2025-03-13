@@ -33,16 +33,36 @@ public class DynamicGraphVertexCentricTraversalAllOp<K, VV, EV, M, R,
         super(graphViewDesc, vcTraversal);
     }
 
+    private void traversalEvolveVIds() {
+        for (K vertexId : temporaryGraphCache.getAllEvolveVId()) {
+            ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest<>(vertexId);
+            this.graphVCTraversalCtx.init(iterations, vertexId);
+            this.incVcTraversalFunction.init(traversalRequest);
+        }
+    }
+
     @Override
     protected void traversalByRequest() {
-        if (!temporaryGraphCache.getAllEvolveVId().isEmpty()) {
-            try (CloseableIterator<K> idIterator =
-                     graphState.dynamicGraph().V().query(GRAPH_VERSION, keyGroup).idIterator()) {
-                while (idIterator.hasNext()) {
-                    K vertexId = idIterator.next();
-                    ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest<>(vertexId);
-                    this.graphVCTraversalCtx.init(iterations, vertexId);
-                    this.incVcTraversalFunction.init(traversalRequest);
+        if (graphVCTraversalCtx.isEnableIncrMatch() && DynamicGraphHelper.enableIncrTraversalRuntime(runtimeContext)) {
+            traversalEvolveVIds();
+
+        } else {
+            if (function.getMaxIterationCount() <= 2) {
+                // The evolved vertices/edges can cover the match pattern when iteration <= 2 (e.g match(a)->(b)).
+                traversalEvolveVIds();
+                return;
+            }
+
+            // Traversal all vertices.
+            if (!temporaryGraphCache.getAllEvolveVId().isEmpty()) {
+                try (CloseableIterator<K> idIterator =
+                    graphState.dynamicGraph().V().query(GRAPH_VERSION, keyGroup).idIterator()) {
+                    while (idIterator.hasNext()) {
+                        K vertexId = idIterator.next();
+                        ITraversalRequest<K> traversalRequest = new VertexBeginTraversalRequest<>(vertexId);
+                        this.graphVCTraversalCtx.init(iterations, vertexId);
+                        this.incVcTraversalFunction.init(traversalRequest);
+                    }
                 }
             }
         }
