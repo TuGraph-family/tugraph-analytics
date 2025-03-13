@@ -11,7 +11,7 @@
 <link rel="search" type="application/opensearchdescription+xml" title="TuGraph Analytics" href="/tugraph-analytics/opensearch.xml">
 
 <meta name="algolia-site-verification" content="4AB782AC2021573E"><link rel="stylesheet" href="/tugraph-analytics/assets/css/styles.58f3a227.css">
-<script src="/tugraph-analytics/assets/js/runtime~main.94a6e3a9.js" defer="defer"></script>
+<script src="/tugraph-analytics/assets/js/runtime~main.b49b261d.js" defer="defer"></script>
 <script src="/tugraph-analytics/assets/js/main.85c50c04.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -35,7 +35,8 @@
 <ul>
 <li><strong>State API</strong>: Provides an API for key-value storage operations, such as get/put/delete. It also provides APIs for graph storage, such as V/E/VE, and operations for adding/updating/deleting vertices and edges.</li>
 <li><strong>State Execution Layer</strong>: Implements data sharding and scalability through the design of KeyGroups. Accessor provides IO abstractions for different read/write strategies and data models. StateOperator abstracts the storage layer SPI, including operations like finish (flushing to disk), archive (checkpoint), compact (compression), recover (recovery), etc. Additionally, State provides various pushdown optimizations to accelerate IO access efficiency. Customized memory management and attribute-based secondary indexing are also provided for storage access optimization.</li>
-<li><strong>Store Layer</strong>: GeaFlow supports multiple types of storage systems and encapsulates schemas, serializers, and data version information through StoreContext. This layer deals with how in-memory data structures are mapped to storage structures. Currently, storage engines include Redis, Rocksdb, and CStore (GeaFlow&#x27;s proprietary storage system), which provide services through SPI. Depending on the characteristics of the storage engine, they may support different data models. For example, all data structures in Rocksdb need to be mapped to key-value pairs, while Redis inherently provides advanced data structures like lists/maps.</li>
+<li><strong>Store Layer</strong>: GeaFlow supports multiple types of storage systems and encapsulates schemas, serializers, and
+data version information through StoreContext. This layer deals with how in-memory data structures are mapped to storage structures. Currently, storage engines include Redis, Rocksdb (GeaFlow&#x27;s proprietary storage system), which provide services through SPI. Depending on the characteristics of the storage engine, they may support different data models. For example, all data structures in Rocksdb need to be mapped to key-value pairs, while Redis inherently provides advanced data structures like lists/maps.</li>
 <li><strong>Persistence Layer</strong>: GeaFlow State itself does not provide persistence capability. If a machine failure or disk corruption occurs, data loss may happen. Therefore, it relies on external components to provide persistence storage. These components are also pluggable and can support distributed file storage or object storage, such as HDFS/OSS/S3, etc.</li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="state-operational-process">State Operational Process<a href="#state-operational-process" class="hash-link" aria-label="Direct link to State Operational Process" title="Direct link to State Operational Process">​</a></h2>

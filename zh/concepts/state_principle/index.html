@@ -11,7 +11,7 @@
 <link rel="search" type="application/opensearchdescription+xml" title="TuGraph Analytics" href="/tugraph-analytics/opensearch.xml">
 
 <meta name="algolia-site-verification" content="4AB782AC2021573E"><link rel="stylesheet" href="/tugraph-analytics/assets/css/styles.58f3a227.css">
-<script src="/tugraph-analytics/assets/js/runtime~main.94a6e3a9.js" defer="defer"></script>
+<script src="/tugraph-analytics/assets/js/runtime~main.b49b261d.js" defer="defer"></script>
 <script src="/tugraph-analytics/assets/js/main.85c50c04.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -29,7 +29,7 @@
 <ul>
 <li><strong>State API</strong>：提供了面向KV存储API，如get/put/delete等。以及面向图存储的API，如V/E/VE，以及点/边的add/update/delete等。</li>
 <li><strong>State执行层</strong>：通过KeyGroup的设计实现数据的Sharding和扩缩容能力，Accessor提供了面向不同读写策略和数据模型的IO 抽象，StateOperator抽象了存储层SPI，如finish（刷盘）、archive（Checkpoint）、compact（压缩）、recover（恢复）等。另外，State提供了多种PushDown优化以加速IO访问效率。通过自定义内存管理和面向属性的二级索引也会提供大量的存储访问优化手段。</li>
-<li><strong>Store层</strong>：GeaFlow支持了多种存储系统类型，并通过StoreContext封装了Schema、序列化器，以及数据版本信息。这层涉及到内存数据结构如何真正映射到存储结构上。目前包括Redis、Rocksdb、CStore（GeaFlow自建存储系统）等存储引擎，各种不同的存储引擎通过SPI来提供服务，另外根据存储引擎的特点，他们可支持的数据模型可能不同，例如对Rocksdb所有的数据结构都需要映射到KV，而Redis天生就提供list/map等高阶的数据结构。</li>
+<li><strong>Store层</strong>：GeaFlow支持了多种存储系统类型，并通过StoreContext封装了Schema、序列化器，以及数据版本信息。这层涉及到内存数据结构如何真正映射到存储结构上。目前包括Redis、Rocksdb等存储引擎，各种不同的存储引擎通过SPI来提供服务，另外根据存储引擎的特点，他们可支持的数据模型可能不同，例如对Rocksdb所有的数据结构都需要映射到KV，而Redis天生就提供list/map等高阶的数据结构。</li>
 <li><strong>持久化层</strong>：GeaFlow State本身不提供持久化的能力，如果机器发生故障，磁盘损坏可能就会导致数据丢失。因此它需要依赖外部的组件来提供持久化存储，这里组件也是可插拔的，支持 HDFS/OSS/S3等分布式文件存储或对象存储。</li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="state-运行流程">State 运行流程<a href="#state-运行流程" class="hash-link" aria-label="Direct link to State 运行流程" title="Direct link to State 运行流程">​</a></h2>
@@ -37,7 +37,7 @@
 <p><img decoding="async" loading="lazy" alt="state_flow" src="/tugraph-analytics/assets/images/state_flow-1d20c7f8a4157ef55cc8ba4579ca9391.png" width="1429" height="487" class="img_ev3q"></p>
 <p>当FailOver的时候，会从最近一个持久化的数据恢复，以下是其详细流程。</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="state创建">State创建<a href="#state创建" class="hash-link" aria-label="Direct link to State创建" title="Direct link to State创建">​</a></h3>
-<p>State所处理的数据已经  是每个分区维度的，也就是已经经过框架层分好片了。</p>
+<p>State所处理的数据已经是每个分区维度的，也就是已经经过框架层分好片了。</p>
 <p>所有的State申请的入口都是StateFactory，可以根据不同的Descriptor申请不同的State。</p>
 <div class="language-java codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-java codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">buildGraphState(GraphStateDescriptor, Configuration):GraphState</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">buildKeyValueState(KeyValueStateDescriptor, Configuration):KeyValueState</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">buildKeyListState(KeyListDescriptor, Configuration):KeyListState</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">buildKeyMapState(KeyMapStateDescriptor, Configuration):KeyMapState</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
 <p>Descriptor 中需要申明基本的信息，包括State name，Store type等。不同的state name对应的 state 是相互隔离的，可以申请不同的 State 表示不同的场景，例如可以申请一个Memory Store State作为临时存储或者计算中介。</p>
