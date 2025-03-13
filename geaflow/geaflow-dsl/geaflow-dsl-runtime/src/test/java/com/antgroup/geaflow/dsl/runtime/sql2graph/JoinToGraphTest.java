@@ -442,4 +442,37 @@ public class JoinToGraphTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testTableScan_001() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/table_scan_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testTableScan_002() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/table_scan_002.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testTableScan_003() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/table_scan_003.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }
