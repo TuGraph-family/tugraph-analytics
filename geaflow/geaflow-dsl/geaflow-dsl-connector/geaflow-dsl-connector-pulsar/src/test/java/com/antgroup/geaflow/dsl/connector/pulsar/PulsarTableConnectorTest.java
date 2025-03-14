@@ -1,31 +1,30 @@
-package pulsar;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
-import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ConnectorConfigKeys;
-import com.antgroup.geaflow.common.type.primitive.IntegerType;
-import com.antgroup.geaflow.common.type.primitive.StringType;
-import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
-import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
-import com.antgroup.geaflow.dsl.common.types.TableField;
-import com.antgroup.geaflow.dsl.common.types.TableSchema;
-import com.antgroup.geaflow.dsl.connector.api.*;
-import com.antgroup.geaflow.dsl.connector.api.serde.impl.TextDeserializer;
-import com.antgroup.geaflow.dsl.connector.pulsar.PulsarConfigKeys;
-import com.antgroup.geaflow.dsl.connector.pulsar.PulsarTableConnector;
+package com.antgroup.geaflow.dsl.connector.pulsar;
+
 import com.antgroup.geaflow.dsl.connector.pulsar.PulsarTableSource.PulsarOffset;
 import com.antgroup.geaflow.dsl.connector.pulsar.PulsarTableSource.PulsarPartition;
-import com.antgroup.geaflow.runtime.core.context.DefaultRuntimeContext;
-import org.apache.pulsar.client.api.*;
+import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.internal.DefaultImplementation;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 public class PulsarTableConnectorTest {
     public static final String server = "pulsar://localhost:6650";
