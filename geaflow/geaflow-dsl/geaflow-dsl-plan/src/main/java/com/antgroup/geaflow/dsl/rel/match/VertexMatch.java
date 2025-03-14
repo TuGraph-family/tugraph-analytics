@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -59,6 +60,8 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
      */
     private RexNode pushDownFilter;
 
+    private Set<Object> idSet;
+
     public VertexMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
                        String label, Collection<String> vertexTypes, RelDataType nodeType,
                        PathRecordType pathType) {
@@ -68,6 +71,13 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
     public VertexMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
                        String label, Collection<String> vertexTypes, RelDataType nodeType,
                        PathRecordType pathType, RexNode pushDownFilter) {
+        this(cluster, traitSet, input, label, vertexTypes, nodeType, pathType, pushDownFilter,
+            new HashSet<>());
+    }
+
+    public VertexMatch(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
+                       String label, Collection<String> vertexTypes, RelDataType nodeType,
+                       PathRecordType pathType, RexNode pushDownFilter, Set<Object> idSet) {
         super(cluster, traitSet);
         this.input = input;
         this.label = label;
@@ -82,6 +92,7 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
         this.pathType = Objects.requireNonNull(pathType);
         this.nodeType = Objects.requireNonNull(nodeType);
         this.pushDownFilter = pushDownFilter;
+        this.idSet = idSet;
     }
 
     @Override
@@ -111,24 +122,33 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
         return pushDownFilter;
     }
 
+    public Set<Object> getIdSet() {
+        return idSet;
+    }
+
     @Override
     public SingleMatchNode copy(List<RelNode> inputs, PathRecordType pathSchema) {
         assert inputs.size() <= 1;
         RelNode input = inputs.isEmpty() ? null : inputs.get(0);
         return new VertexMatch(getCluster(), traitSet, input, label,
-            vertexTypes, nodeType, pathSchema, pushDownFilter);
+            vertexTypes, nodeType, pathSchema, pushDownFilter, idSet);
     }
 
     @Override
     public VertexMatch copy(RelTraitSet traitSet, List<RelNode> inputs) {
         RelNode input = GQLRelUtil.oneInput(inputs);
         return new VertexMatch(getCluster(), getTraitSet(), input,
-            label, vertexTypes, nodeType, pathType, pushDownFilter);
+            label, vertexTypes, nodeType, pathType, pushDownFilter, idSet);
     }
 
     public VertexMatch copy(RexNode pushDownFilter) {
         return new VertexMatch(getCluster(), getTraitSet(), input,
-            label, vertexTypes, nodeType, pathType, pushDownFilter);
+            label, vertexTypes, nodeType, pathType, pushDownFilter, idSet);
+    }
+
+    public VertexMatch copy(Set<Object> idSet) {
+        return new VertexMatch(getCluster(), getTraitSet(), input,
+            label, vertexTypes, nodeType, pathType, pushDownFilter, idSet);
     }
 
     @Override
@@ -136,7 +156,8 @@ public class VertexMatch extends AbstractRelNode implements SingleMatchNode, IMa
         return super.explainTerms(pw)
             .item("input", input)
             .item("label", label)
-            .item("vertexTypes", vertexTypes);
+            .item("vertexTypes", vertexTypes)
+            .item("idSet", idSet);
     }
 
     @Override

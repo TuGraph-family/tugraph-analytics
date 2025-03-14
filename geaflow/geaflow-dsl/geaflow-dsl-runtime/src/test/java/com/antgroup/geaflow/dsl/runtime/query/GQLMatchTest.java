@@ -138,4 +138,14 @@ public class GQLMatchTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testMatch_013() throws Exception {
+        QueryTester
+            .build()
+            .withGraphDefine("/query/modern_graph.sql")
+            .withQueryPath("/query/gql_match_013.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }

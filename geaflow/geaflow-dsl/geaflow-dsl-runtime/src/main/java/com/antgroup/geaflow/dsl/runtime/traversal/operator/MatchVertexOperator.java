@@ -36,6 +36,7 @@ import com.antgroup.geaflow.dsl.runtime.traversal.data.VertexRecord;
 import com.antgroup.geaflow.dsl.runtime.traversal.path.ITreePath;
 import com.antgroup.geaflow.metrics.common.MetricNameFormatter;
 import com.antgroup.geaflow.metrics.common.api.Histogram;
+import java.util.Set;
 
 public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunction, StepRecord,
     VertexRecord> implements LabeledStepOperator {
@@ -44,10 +45,16 @@ public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunctio
 
     private final boolean isOptionMatch;
 
+    private Set<Object> idSet;
+
     public MatchVertexOperator(long id, MatchVertexFunction function) {
         super(id, function);
-        isOptionMatch = function instanceof MatchVertexFunctionImpl
-            && ((MatchVertexFunctionImpl) function).isOptionalMatchVertex();
+        if (function instanceof MatchVertexFunctionImpl) {
+            isOptionMatch = ((MatchVertexFunctionImpl) function).isOptionalMatchVertex();
+            idSet = ((MatchVertexFunctionImpl) function).getIdSet();
+        } else {
+            isOptionMatch = false;
+        }
     }
 
     @Override
@@ -86,6 +93,9 @@ public class MatchVertexOperator extends AbstractStepOperator<MatchVertexFunctio
             if (!function.getVertexTypes().isEmpty()
                 && !function.getVertexTypes().contains(vertex.getBinaryLabel())) {
                 // filter by the vertex types.
+                return;
+            }
+            if (!idSet.isEmpty() && !idSet.contains(vertex.getId())) {
                 return;
             }
             vertex = alignToOutputSchema(vertex);

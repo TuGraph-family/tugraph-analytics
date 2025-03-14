@@ -19,6 +19,10 @@
 
 package com.antgroup.geaflow.dsl;
 
+import com.antgroup.geaflow.dsl.optimize.rule.FilterMatchNodeTransposeRule;
+import com.antgroup.geaflow.dsl.optimize.rule.FilterToMatchRule;
+import com.antgroup.geaflow.dsl.optimize.rule.MatchEdgeLabelFilterRemoveRule;
+import com.antgroup.geaflow.dsl.optimize.rule.MatchIdFilterSimplifyRule;
 import com.antgroup.geaflow.dsl.optimize.rule.TableScanToGraphRule;
 import org.testng.annotations.Test;
 
@@ -133,6 +137,47 @@ public class GQLToRelConverterTest {
                     + ".age])\n"
                     + "    LogicalGraphMatch(path=[(user:user)])\n"
                     + "      LogicalGraphScan(table=[null])\n"
+            );
+    }
+
+    @Test
+    public void testVertexIdFilterSimplify() {
+        PlanTester.build()
+            .gql("MATCH (a:user where id = 1)-[e:knows]-(b:user)\n"
+                + "RETURN a.id as a_id, e.weight as weight, b.id as b_id")
+            .toRel()
+            .checkRelNode(
+                "LogicalProject(a_id=[$0.id], weight=[$1.weight], b_id=[$2.id])\n"
+                    + "  LogicalGraphMatch(path=[(a:user) where =(a.id, 1) -[e:knows]-(b:user)])\n"
+                    + "    LogicalGraphScan(table=[default.g0])\n"
+            )
+            .opt(MatchIdFilterSimplifyRule.INSTANCE)
+            .checkRelNode(
+                "LogicalProject(a_id=[$0.id], weight=[$1.weight], b_id=[$2.id])\n"
+                    + "  LogicalGraphMatch(path=[(a:user)-[e:knows]-(b:user)])\n"
+                    + "    LogicalGraphScan(table=[default.g0])\n"
+            );
+    }
+
+    @Test
+    public void testMatchEdgeLabelRemove() {
+        PlanTester.build()
+            .gql("MATCH (a:user where id = 1)-[e:knows]-(b:user) WHERE e.~label = 'knows' "
+                + "or e.~label = 'created'\n"
+                + "RETURN a.id as a_id, e.weight as weight, b.id as b_id")
+            .toRel()
+            .checkRelNode(
+                "LogicalProject(a_id=[$0.id], weight=[$1.weight], b_id=[$2.id])\n"
+                    + "  LogicalGraphMatch(path=[(a:user) where =(a.id, 1) -[e:knows]-(b:user) "
+                    + "where OR(=($1.~label, _UTF-16LE'knows'), =($1.~label, _UTF-16LE'created'))"
+                    + " ])\n"
+                    + "    LogicalGraphScan(table=[default.g0])\n"
+            )
+            .opt(MatchEdgeLabelFilterRemoveRule.INSTANCE, FilterMatchNodeTransposeRule.INSTANCE, FilterToMatchRule.INSTANCE)
+            .checkRelNode(
+                "LogicalProject(a_id=[$0.id], weight=[$1.weight], b_id=[$2.id])\n"
+                    + "  LogicalGraphMatch(path=[(a:user) where =(a.id, 1) -[e:knows]-(b:user)])\n"
+                    + "    LogicalGraphScan(table=[default.g0])\n"
             );
     }
 
