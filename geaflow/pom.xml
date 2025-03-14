@@ -93,6 +93,7 @@
 
     <modules>
         <module>geaflow-common</module>
+        <module>geaflow-memory</module>
         <module>geaflow-model</module>
         <module>geaflow-state</module>
         <module>geaflow-core</module>
