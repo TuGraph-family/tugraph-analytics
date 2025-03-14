@@ -179,6 +179,9 @@ public class StepLogicalPlanTranslator {
             if (vertexMatch.getInput() == null && filter != null) {
                 Set<RexNode> ids = GQLRexUtil.findVertexIds(filter, (VertexRecordType) vertexMatch.getNodeType());
                 startIds = toStartIds(ids);
+            } else if (!vertexMatch.getIdSet().isEmpty()) {
+                startIds = vertexMatch.getIdSet().stream().map(id -> new ConstantStartId(id)).collect(
+                    Collectors.toSet());
             }
             Set<BinaryString> nodeTypes = vertexMatch.getTypes().stream()
                 .map(s -> (BinaryString) BinaryUtil.toBinaryForString(s))
@@ -224,7 +227,8 @@ public class StepLogicalPlanTranslator {
             PathType outputPath = (PathType) SqlTypeUtil.convertType(vertexMatch.getPathSchema());
             boolean isOptionalMatch = vertexMatch instanceof OptionalVertexMatch
                 && SqlTypeUtil.convertType(vertexMatch.getNodeType()) != null;
-            MatchVertexFunction mvf = new MatchVertexFunctionImpl(nodeTypes, isOptionalMatch, label);
+            MatchVertexFunction mvf = new MatchVertexFunctionImpl(nodeTypes, isOptionalMatch,
+                label, vertexMatch.getIdSet());
             StepLogicalPlan plan = input.vertexMatch(mvf)
                 .withModifyGraphSchema(input.getModifyGraphSchema())
                 .withOutputPathSchema(outputPath)

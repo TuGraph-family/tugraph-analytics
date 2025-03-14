@@ -28,6 +28,7 @@ import com.antgroup.geaflow.state.pushdown.filter.EmptyFilter;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.VertexLabelFilter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -43,6 +44,8 @@ public class MatchVertexFunctionImpl implements MatchVertexFunction {
 
     private final boolean isOptionalMatchVertex;
 
+    private Set<Object> idSet;
+
     public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, String label, IFilter<?> vertexFilter) {
         this(vertexTypes, false, label, vertexFilter);
     }
@@ -57,11 +60,11 @@ public class MatchVertexFunctionImpl implements MatchVertexFunction {
 
     public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, String label,
                                    IFilter ... pushDownFilters) {
-        this(vertexTypes, false, label, pushDownFilters);
+        this(vertexTypes, false, label, new HashSet<>(), pushDownFilters);
     }
 
     public MatchVertexFunctionImpl(Set<BinaryString> vertexTypes, boolean isOptionalMatchVertex,
-                                   String label, IFilter ... pushDownFilters) {
+                                   String label, Set<Object> idSet, IFilter ... pushDownFilters) {
         this.vertexTypes = Objects.requireNonNull(vertexTypes);
         this.isOptionalMatchVertex = isOptionalMatchVertex;
         this.label = label;
@@ -75,6 +78,7 @@ public class MatchVertexFunctionImpl implements MatchVertexFunction {
         for (IFilter filter : pushDownFilters) {
             this.vertexFilter = this.vertexFilter == null ? filter : this.vertexFilter.and(filter);
         }
+        this.idSet = idSet;
     }
 
     @Override
@@ -99,6 +103,10 @@ public class MatchVertexFunctionImpl implements MatchVertexFunction {
 
     public boolean isOptionalMatchVertex() {
         return isOptionalMatchVertex;
+    }
+
+    public Set<Object> getIdSet() {
+        return idSet;
     }
 
     @Override
