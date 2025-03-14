@@ -240,6 +240,23 @@
                             <consoleOutput>true</consoleOutput>
                             <excludeSubProjects>false</excludeSubProjects>
                             <numUnapprovedLicenses>0</numUnapprovedLicenses>
+                            <licenses>
+                                <license>
+                                    <family>AL2</family>
+                                    <notes></notes>
+                                    <text>Licensed to the Apache Software Foundation (ASF) under one</text>
+                                </license>
+                            </licenses>
+                            <families>
+                                <family>
+                                    <id>AL2</id>
+                                    <name>ApacheLicense 2.0</name>
+                                </family>
+                            </families>
+                            <approvedLicenses>
+                                <id>AL2</id>
+                            </approvedLicenses>
+                            <addDefaultLicenses>false</addDefaultLicenses>
                             <excludes>
                                 <!-- Docs related -->
                                 <exclude>docs/**/**</exclude>
@@ -268,6 +285,7 @@
                                 <exclude>**/**/Filter.template</exclude>
                                 <exclude>**/**/version.txt</exclude>
                                 <exclude>**/**/graph_data.fbs</exclude>
+                                <exclude>**/**/Cargo.lock</exclude>
                                 <exclude>**/**/*.toml</exclude>
                                 <exclude>**/**/.helmignore</exclude>
                                 <exclude>**/**/templates/NOTES.txt</exclude>
