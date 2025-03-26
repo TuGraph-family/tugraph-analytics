@@ -1,4 +1,4 @@
-# TuGraph Analytics 文档地图
+# GeaFlow 文档地图
 
 [![Star](https://shields.io/github/stars/tugraph-family/tugraph-analytics?logo=startrek&label=Star&color=yellow)](https://github.com/TuGraph-family/tugraph-analytics/stargazers)
 [![Fork](https://shields.io/github/forks/tugraph-family/tugraph-analytics?logo=forgejo&label=Fork&color=orange)](https://github.com/TuGraph-family/tugraph-analytics/forks)
@@ -15,7 +15,7 @@
 
 <!--intro-start-->
 ## 介绍
-**TuGraph Analytics** (别名：GeaFlow) 是蚂蚁集团开源的流图计算引擎，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
+GeaFlow 是蚂蚁集团开源的流图计算引擎，支持万亿级图存储、图表混合处理、实时图计算、交互式图分析等核心能力，目前广泛应用于数仓加速、金融风控、知识图谱以及社交网络等场景。
 
 关于GeaFlow更多介绍请参考：[GeaFlow介绍文档](docs/docs-cn/source/2.introduction.md)
 
@@ -38,7 +38,7 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 第一步 打包jar包并提交quick start任务
 
 1. 准备Git、JDK8、Maven、Docker环境。
-2. 下载源码：`git clone https://github.com/TuGraph-family/tugraph-analytics`
+2. 下载源码：`git clone https://github.com/TuGraph-family/tugraph-analytics geaflow`
 3. 项目构建：`./build.sh --module=geaflow --output=package`
 4. 测试任务：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection_file_demo.sql` 
 

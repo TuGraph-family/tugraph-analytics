@@ -23,7 +23,7 @@ import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 
 public class JDBCUtils {
 
-    public static final String DRIVER_URL_START = "jdbc:tugraph://";
+    public static final String DRIVER_URL_START = "jdbc:geaflow://";
 
     public static boolean acceptsURL(String url) {
         if (url.startsWith(JDBCUtils.DRIVER_URL_START)) {

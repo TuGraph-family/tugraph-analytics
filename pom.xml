@@ -49,8 +49,8 @@
 
     <developers>
         <developer>
-            <id>pengzhiwei2018</id>
-            <name>pengzhiwei</name>
+            <id>Loognqiang</id>
+            <name>zhouqiang</name>
             <roles>
                 <role>Developer</role>
             </roles>
@@ -277,6 +277,7 @@
                                 <exclude>**/resources/zip_test.txt</exclude>
                                 <exclude>**/resources/demo/demo_job_data.txt</exclude>
                                 <exclude>**/resources/input/**</exclude>
+                                <exclude>**/resources/i18n/**</exclude>
                                 <exclude>**/resources/public/**</exclude>
                                 <exclude>**/dependency-reduced-pom.xml</exclude>
                                 <exclude>**/*.log</exclude>
@@ -285,7 +286,6 @@
                                 <exclude>**/**/Filter.template</exclude>
                                 <exclude>**/**/version.txt</exclude>
                                 <exclude>**/**/graph_data.fbs</exclude>
-                                <exclude>**/**/Cargo.lock</exclude>
                                 <exclude>**/**/*.toml</exclude>
                                 <exclude>**/**/.helmignore</exclude>
                                 <exclude>**/**/templates/NOTES.txt</exclude>

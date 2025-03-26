@@ -30,7 +30,7 @@ public class AnalyticsDriverURITest {
 
     @Test
     public void testInvalidURI() {
-        assertInvalid("jdbc:tugraph://localhost/", "No port number specified:");
+        assertInvalid("jdbc:geaflow://localhost/", "No port number specified:");
     }
 
     private static void assertInvalid(String url, String prefix) {

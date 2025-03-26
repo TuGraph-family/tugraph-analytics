@@ -93,7 +93,7 @@ public class AnalyticsConnection implements Connection {
                     int port = Integer.parseInt(split[1]);
                     this.client = AnalyticsClient.builder()
                         .withHost(host).withPort(port).build();
-                    LOGGER.info("init tugraph analytics connection with host [{}] and port [{}]",
+                    LOGGER.info("init geaflow analytics connection with host [{}] and port [{}]",
                         host, port);
                 } else {
                     LOGGER.warn("illegal authority: [{}]", authority);

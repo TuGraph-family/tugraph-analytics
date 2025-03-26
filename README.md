@@ -15,7 +15,7 @@
 
 <!--intro-start-->
 ## Introduction
-**TuGraph Analytics** (alias: GeaFlow) is a distributed graph compute engine developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
+GeaFlow is a distributed graph compute engine developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
 
 For more information about GeaFlow: [GeaFlow Introduction](docs/docs-en/source/2.introduction.md)
 
@@ -38,7 +38,7 @@ For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow Sy
 Step 1: Package the JAR and submit the Quick Start task
 
 1. Prepare Git、JDK8、Maven、Docker environment。
-2. Download Code：`git clone https://github.com/TuGraph-family/tugraph-analytics`
+2. Download Code：`git clone https://github.com/TuGraph-family/tugraph-analytics geaflow`
 3. Build Project：`./build.sh --module=geaflow --output=package`
 4. Test Job：`./bin/gql_submit.sh --gql geaflow/geaflow-examples/gql/loop_detection_file_demo.sql`
 
