@@ -42,12 +42,14 @@ import com.antgroup.geaflow.pipeline.task.PipelineTask;
 import com.antgroup.geaflow.view.IViewDesc.BackendType;
 import com.antgroup.geaflow.view.graph.GraphViewDesc;
 import com.antgroup.geaflow.view.meta.ViewMetaBookKeeper;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,8 +96,13 @@ public class GQLPipeLine {
                 queryPath.substring(FileConstants.PREFIX_JAVA_RESOURCE.length()),
                 Charset.defaultCharset());
         } else {
-            script = IOUtils.resourceToString(queryPath, Charset.defaultCharset(),
-                GQLPipeLine.class.getClassLoader());
+            String pathType = configuration.getString(DSLConfigKeys.GEAFLOW_DSL_QUERY_PATH_TYPE, FileConstants.PREFIX_JAVA_RESOURCE);
+            if (pathType.equals(FileConstants.PREFIX_JAVA_RESOURCE)) {
+                script = IOUtils.resourceToString(queryPath, Charset.defaultCharset(),
+                    GQLPipeLine.class.getClassLoader());
+            } else {
+                script = FileUtils.readFileToString(new File(queryPath), Charset.defaultCharset());
+            }
         }
         LOGGER.info("queryPath:{}", queryPath);
 

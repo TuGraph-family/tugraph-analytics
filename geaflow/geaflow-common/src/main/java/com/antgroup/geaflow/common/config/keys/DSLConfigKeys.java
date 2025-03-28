@@ -97,6 +97,11 @@ public class DSLConfigKeys implements Serializable {
         .noDefaultValue()
         .description("The gql query path.");
 
+    public static final ConfigKey GEAFLOW_DSL_QUERY_PATH_TYPE = ConfigKeys
+        .key("geaflow.dsl.query.path.type")
+        .noDefaultValue()
+        .description("The gql query path type.");
+
     public static final ConfigKey GEAFLOW_DSL_PARALLELISM_CONFIG_PATH = ConfigKeys
         .key("geaflow.dsl.parallelism.config.path")
         .noDefaultValue()
