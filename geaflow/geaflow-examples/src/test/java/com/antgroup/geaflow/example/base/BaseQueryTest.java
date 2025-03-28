@@ -56,6 +56,8 @@ public class BaseQueryTest implements Serializable {
 
     private boolean compareWithOrder = false;
 
+    private boolean withOutPrefix = false;
+
     private String graphDefinePath;
 
     private final Map<String, String> config = new HashMap<>();
@@ -88,6 +90,11 @@ public class BaseQueryTest implements Serializable {
         return this;
     }
 
+    public BaseQueryTest withoutPrefix() {
+        this.withOutPrefix = true;
+        return this;
+    }
+
     public BaseQueryTest withConfig(Map<String, String> config) {
         this.config.putAll(config);
         return this;
@@ -105,7 +112,8 @@ public class BaseQueryTest implements Serializable {
         Map<String, String> config = new HashMap<>();
         config.put(DSLConfigKeys.GEAFLOW_DSL_WINDOW_SIZE.getKey(), String.valueOf(-1L));
         config.put(FileConfigKeys.ROOT.getKey(), DSL_STATE_REMOTE_PATH);
-        config.put(DSLConfigKeys.GEAFLOW_DSL_QUERY_PATH.getKey(), FileConstants.PREFIX_JAVA_RESOURCE + queryPath);
+        config.put(DSLConfigKeys.GEAFLOW_DSL_QUERY_PATH.getKey(),
+            withOutPrefix ? queryPath : FileConstants.PREFIX_JAVA_RESOURCE + queryPath);
         config.putAll(this.config);
         initResultDirectory();
 
@@ -146,11 +154,16 @@ public class BaseQueryTest implements Serializable {
         }
     }
 
-    public void checkSinkResult() throws Exception {
+    public void checkSinkResult(String ... path) throws Exception {
         String[] paths = queryPath.split("/");
         String lastPath = paths[paths.length - 1];
         String exceptPath = "/expect/" + lastPath.split("\\.")[0] + ".txt";
-        String targetPath = getTargetPath(queryPath);
+        String targetPath;
+        if (path != null && path.length > 0) {
+            targetPath = path[0];
+        } else {
+            targetPath = getTargetPath(queryPath);
+        }
         String expectResult = IOUtils.resourceToString(exceptPath, Charset.defaultCharset()).trim();
         String actualResult = readFile(targetPath);
         compareResult(actualResult, expectResult);
