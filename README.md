@@ -47,7 +47,7 @@ Step 2: Launch the console and experience submitting the Quick Start task throug
 5. Build console JAR and image (requires starting Docker)：`./build.sh --module=geaflow-console`
 6. Start Console：`docker run -d --name geaflow-console -p 8888:8888 geaflow-console:0.1`
 
-For more details：[Quick Start](docs/docs-cn/source/3.quick_start/1.quick_start.md)。
+For more details：[Quick Start](docs/docs-en/source/3.quick_start/1.quick_start.md)。
 
 ## Development Manual
 
