@@ -55,36 +55,34 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 * DSL application development: [DSL Application Development](docs/docs-en/source/5.application-development/2.dsl/1.overview.md)
 * API application development: [API Application Development](docs/docs-en/source/5.application-development/1.api/1.overview.md)
 
-## Real-time Capabilities
+## Performance
 
-Compared with traditional stream processing engines such as Flink and Storm, which use tables as their data model for real-time processing, GeaFlow's graph-based data model has significant performance advantages when handling join relationship operations, especially complex multi-hops relationship operations like those involving 3 or more hops of join and complex loop searches.
+### Dynamic Graph Computation Acceleration
 
-[![total_time](docs/static/img/vs_join_total_time_en.jpg)](docs/docs-en/source/reference/vs_join.md)
+GeaFlow supports incremental graph computation capabilities, allowing for continuous streaming incremental graph iterative computations or traversals on dynamic graphs (graphs that are constantly changing). When GeaFlow consumes messages from real-time middleware, the points associated with the real-time data in the current window are activated, triggering iterative graph computations. In each iteration, only the updated points need to notify their neighboring nodes, while unchanged points are not triggered for computation, significantly enhancing the timeliness of the calculations.
 
-[Why using graphs for relational operations is more appealing than table joins?](docs/docs-en/source/reference/vs_join.md)
+In the early days of the industry, there were systems for distributed offline graph computation using Spark GraphX. To support similar engine capabilities, Spark relied on the Spark Streaming framework. However, although this integrated approach can handle streaming consumption of point-edge data, it still requires full graph computations every time a calculation is triggered. This makes it challenging to meet the performance expectations of the business (this approach is also referred to as snapshot-based graph computation).
 
-Association Analysis Demo Based on GQL:
+Using the WCC (Weakly Connected Components) algorithm as an example, we compared the algorithmic execution time of GeaFlow and Spark solutions, with specific performance results as follows:
+![total_time](docs/static/img/vs_dynamic_graph_compute_perf_en.jpg)
 
-```roomsql
---GQL Style
-Match (s:student)-[sc:selectCource]->(c:cource)
-Return c.name
-;
-```
+Since GeaFlow only activates the vertex-edge relations involved in the current window for incremental computation, the computation time can be completed within seconds, and the computation time for each window remains fairly stable. As the data volume increases, Spark’s need to backtrack through historical data during computation also grows. While the machine capacity has not reached its limit, the computation delay shows a positive correlation with the data volume. In similar conditions, GeaFlow's computation time may slightly increase but can generally still be kept at the level of seconds.
 
-Association Analysis Demo Based on SQL:
 
-```roomsql
---SQL Style
-SELECT c.name
-FROM course c JOIN selectCourse sc 
-ON c.id = sc.targetId
-JOIN student s ON sc.srcId = s.id
-;
-```
+### Stream Computation Acceleration
+
+Compared to traditional stream processing engines (such as Flink and Storm, which are based on table models), GeaFlow utilizes a graph as its data model (using a vertex-edge storage format), offering significant performance advantages in handling Join operations, especially for complex multi-hop relationships (like joins exceeding 3 hops and complex cycle searches).
+
+To make a comparison, we analyzed the performance of Flink and GeaFlow using the K-Hop algorithm. K-Hop relationships refer to chains of relationships in which individuals can know each other through K intermediaries. For example, in social networks, K-Hop indicates user relationships connected through K intermediaries. In transaction analysis, K-Hop refers to the path of funds transferred consecutively K times.
+
+In comparing the time consumption of the K-Hop algorithm in Flink and GeaFlow:
+![total_time](docs/static/img/vs_multi_hops_en.jpg)
+
+As shown in the figure above, Flink performs slightly better than GeaFlow in one-hop and two-hop scenarios. This is because, in these cases, the data volume involved in the Join calculations is relatively small, and both the left and right tables are compact, resulting in shorter traversal times. Additionally, Flink's computation framework can cache the historical results of Join operations.
+
 
 ## Contribution
-Thank you very much for contributing to GeaFlow, whether bug reporting, documentation improvement, or major feature development, we warmly welcome all contributions. 
+Thank you very much for contributing to GeaFlow, whether bug reporting, documentation improvement, or major feature development, we warmly welcome all contributions.
 
 For more information: [Contribution](docs/docs-en/source/9.contribution.md).
 
