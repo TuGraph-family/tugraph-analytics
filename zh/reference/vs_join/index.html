@@ -11,7 +11,7 @@
 <link rel="search" type="application/opensearchdescription+xml" title="TuGraph Analytics" href="/tugraph-analytics/opensearch.xml">
 
 <meta name="algolia-site-verification" content="4AB782AC2021573E"><link rel="stylesheet" href="/tugraph-analytics/assets/css/styles.58f3a227.css">
-<script src="/tugraph-analytics/assets/js/runtime~main.36a13b98.js" defer="defer"></script>
+<script src="/tugraph-analytics/assets/js/runtime~main.7f116c5d.js" defer="defer"></script>
 <script src="/tugraph-analytics/assets/js/main.879e649b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -43,11 +43,11 @@
 <center>图3</center>
 <p>**在融合DSL中，图计算的结果与表查询等价，都可以像表数据一样做关系运 算处理。**这意味着图3中GQL和SQL两种描述都可以达到类似的效果，极大灵活了用户的查询表达能力。</p>
 <p>GeaFlow DSL引擎层还将支持SQL中的Join自动转化为GQL执行，用户可以自由混用SQL和GQL样式查询，同时做图匹配、图算法和表查询。</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="流图计算引擎tugraph-analytics">流图计算引擎TuGraph-Analytics<a href="#流图计算引擎tugraph-analytics" class="hash-link" aria-label="Direct link to 流图计算引擎TuGraph-Analytics" title="Direct link to 流图计算引擎TuGraph-Analytics">​</a></h2>
-<p>GeaFlow(品牌名TuGraph-Analytics)是蚂蚁集团开源的分布式流式图计算引擎。在蚂蚁内部，目前已广泛应用于数仓加速、金融风控、知识图谱以及社交网络等大量场景。</p>
-<p>TuGraph-Analytics已经于2023年6月正式对外开源，开放其以图为数据模型的流批一体计算核心能力。相比传统的流式计算引擎，如Flink、Storm这些以表为模型的实时处理系统，GeaFlow以自研图存储为底座，流批一体计算引擎为矛，融合GQL/SQL DSL语言为旗帜，在复杂多度的关系运算上具备极大的优势。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="流图计算引擎geaflow">流图计算引擎GeaFlow<a href="#流图计算引擎geaflow" class="hash-link" aria-label="Direct link to 流图计算引擎GeaFlow" title="Direct link to 流图计算引擎GeaFlow">​</a></h2>
+<p>GeaFlow是蚂蚁集团开源的分布式流式图计算引擎。在蚂蚁内部，目前已广泛应用于数仓加速、金融风控、知识图谱以及社交网络等大量场景。</p>
+<p>GeaFlow已经于2023年6月正式对外开源，开放其以图为数据模型的流批一体计算核心能力。相比传统的流式计算引擎，如Flink、Storm这些以表为模型的实时处理系统，GeaFlow以自研图存储为底座，流批一体计算引擎为矛，融合GQL/SQL DSL语言为旗帜，在复杂多度的关系运算上具备极大的优势。</p>
 <p><img decoding="async" loading="lazy" alt="insert_throuput" src="/tugraph-analytics/assets/images/query_throuput_cn-f2e21d9ec3ec13fca675642acf04d298.jpg" width="1022" height="1022" class="img_ev3q"></p>
 <center>图4</center>
-<p>图4展示了GeaFlow使用Match算子在图上进行多跳关联查询，相比Flink的Join算子带来的实时吞吐提升。在复杂多跳场景下，现有的流式计算引擎已经基本不能胜任实时处理。而图模型的存在，则突破这一限制，扩展了实时流计算的应用场景。</p></div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/tugraph-analytics/zh/thanks"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">致谢</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#关系模型并不适合处理关系" class="table-of-contents__link toc-highlight">关系模型并不适合处理关系</a><ul><li><a href="#痛点一关系运算成本高" class="table-of-contents__link toc-highlight">痛点一：关系运算成本高</a></li><li><a href="#痛点二数据冗余时效性低" class="table-of-contents__link toc-highlight">痛点二：数据冗余，时效性低</a></li><li><a href="#痛点三复杂关系查询难以描述" class="table-of-contents__link toc-highlight">痛点三：复杂关系查询难以描述</a></li></ul></li><li><a href="#流图计算引擎tugraph-analytics" class="table-of-contents__link toc-highlight">流图计算引擎TuGraph-Analytics</a></li></ul></div></div></div></div></main></div></div></div></div>
+<p>图4展示了GeaFlow使用Match算子在图上进行多跳关联查询，相比Flink的Join算子带来的实时吞吐提升。在复杂多跳场景下，现有的流式计算引擎已经基本不能胜任实时处理。而图模型的存在，则突破这一限制，扩展了实时流计算的应用场景。</p></div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/tugraph-analytics/zh/thanks"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">致谢</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#关系模型并不适合处理关系" class="table-of-contents__link toc-highlight">关系模型并不适合处理关系</a><ul><li><a href="#痛点一关系运算成本高" class="table-of-contents__link toc-highlight">痛点一：关系运算成本高</a></li><li><a href="#痛点二数据冗余时效性低" class="table-of-contents__link toc-highlight">痛点二：数据冗余，时效性低</a></li><li><a href="#痛点三复杂关系查询难以描述" class="table-of-contents__link toc-highlight">痛点三：复杂关系查询难以描述</a></li></ul></li><li><a href="#流图计算引擎geaflow" class="table-of-contents__link toc-highlight">流图计算引擎GeaFlow</a></li></ul></div></div></div></div></main></div></div></div></div>
 </body>
 </html>

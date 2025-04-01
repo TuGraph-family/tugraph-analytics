@@ -11,7 +11,7 @@
 <link rel="search" type="application/opensearchdescription+xml" title="TuGraph Analytics" href="/tugraph-analytics/opensearch.xml">
 
 <meta name="algolia-site-verification" content="4AB782AC2021573E"><link rel="stylesheet" href="/tugraph-analytics/assets/css/styles.58f3a227.css">
-<script src="/tugraph-analytics/assets/js/runtime~main.36a13b98.js" defer="defer"></script>
+<script src="/tugraph-analytics/assets/js/runtime~main.7f116c5d.js" defer="defer"></script>
 <script src="/tugraph-analytics/assets/js/main.879e649b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -21,7 +21,7 @@
 <p>参考 <a href="https://github.com/TuGraph-family/tugraph-analytics/blob/master/docs/docs-cn/quick_start.md" target="_blank" rel="noopener noreferrer">快速开始</a></p>
 <p>⚠️ 注意在 <code>启动SocketServer</code> 步骤使用下列命令代替</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">bin/socket.sh 9003 GI</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>输出下列内容时，即表示 Tugraph Analytics 准备好建立连接</p>
+<p>输出下列内容时，即表示 GeaFlow 准备好建立连接</p>
 <img decoding="async" loading="lazy" width="610" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/a25ed6ba-4fb9-4db1-9325-ee2f26a4337f" class="img_ev3q">
 <blockquote>
 <p>如启动服务过程中遇到问题，可见 <a href="https://github.com/TuGraph-family/tugraph-analytics/issues/1" target="_blank" rel="noopener noreferrer">https://github.com/TuGraph-family/tugraph-analytics/issues/1</a></p>
@@ -40,7 +40,7 @@
 <img decoding="async" loading="lazy" width="241" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/61316029-71ba-410f-94bf-47c6c65aec34" class="img_ev3q">
 <p>默认情况下，添加完<code>环路检测Demo</code>组件后，会自动建立连接。</p>
 <img decoding="async" loading="lazy" width="328" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/5246536b-ddb0-4c3c-91fb-e941101e272a" class="img_ev3q">
-<p>Tugraph Analytics 端建立连接后同样会输出以下内容：</p>
+<p>GeaFlow 端建立连接后同样会输出以下内容：</p>
 <img decoding="async" loading="lazy" width="616" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/46be1e88-9c93-430e-92cc-db8024691095" class="img_ev3q">
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="4-演示">4. 演示<a href="#4-演示" class="hash-link" aria-label="Direct link to 4. 演示" title="Direct link to 4. 演示">​</a></h3>
 <p>环路检测 Demo 提供了两种方式来进行交互：</p>
@@ -49,16 +49,16 @@
 <li>方式二 使用内置数据进行演示</li>
 </ul>
 <blockquote>
-<p>两种方式本质都是调用 Tugraph Analytics 进行实时计算，不过方式二省略了手动输入过程。</p>
+<p>两种方式本质都是调用 GeaFlow 进行实时计算，不过方式二省略了手动输入过程。</p>
 </blockquote>
 <p>这里我们使用内置数据进行快速演示，点击【选项】，选择<code>添加点</code>，画布中出现了 7 个点信息；接着选择<code>添加边</code>。我们可以在上方对话框中看到添加记录。</p>
 <img decoding="async" loading="lazy" width="332" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/7ca76607-41a1-4afe-9427-cf7599de6889" class="img_ev3q">
-<p>同样的，Tugraph Analytics 终端也会实时输出操作信息，并自动启动计算任务。</p>
+<p>同样的，GeaFlow 终端也会实时输出操作信息，并自动启动计算任务。</p>
 <img decoding="async" loading="lazy" width="611" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/d8d0d73a-4c07-4ecd-bcac-4633a742933a" class="img_ev3q">
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="5-结果展示">5. 结果展示<a href="#5-结果展示" class="hash-link" aria-label="Direct link to 5. 结果展示" title="Direct link to 5. 结果展示">​</a></h3>
-<p>Tugraph Analytics 完成环路检测计算任务后，会自动返回检测结果。</p>
+<p>GeaFlow 完成环路检测计算任务后，会自动返回检测结果。</p>
 <img decoding="async" loading="lazy" width="324" alt="image" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/ba343acf-812a-4df5-8da4-ff70e0b2531d" class="img_ev3q">
 <p>右侧画布中会动态显示出本次环路检测结果信息：</p>
-<p><img decoding="async" loading="lazy" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/f8595322-d477-4702-a52e-4f03092b7219" alt="Jun-12-2023 19-53-35" class="img_ev3q"></p></div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/tugraph-analytics/zh/deploy/dashboard"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">作业Dashboard监控</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/tugraph-analytics/zh/deploy/install_llm"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">LLM本地部署</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#仅需-5-步即可呈现-" class="table-of-contents__link toc-highlight">仅需 5 步，即可呈现 🎊</a><ul><li><a href="#1-启动-geaflow-流图作业和-socket-服务" class="table-of-contents__link toc-highlight">1. 启动 GeaFlow 流图作业和 Socket 服务</a></li><li><a href="#2-创建-g6vp-项目" class="table-of-contents__link toc-highlight">2. 创建 G6VP 项目</a></li><li><a href="#3-添加组件" class="table-of-contents__link toc-highlight">3. 添加组件</a></li><li><a href="#4-演示" class="table-of-contents__link toc-highlight">4. 演示</a></li><li><a href="#5-结果展示" class="table-of-contents__link toc-highlight">5. 结果展示</a></li></ul></li></ul></div></div></div></div></main></div></div></div></div>
+<p><img decoding="async" loading="lazy" src="https://github.com/TuGraph-family/tugraph-analytics/assets/25787943/f8595322-d477-4702-a52e-4f03092b7219" alt="Jun-12-2023 19-53-35" class="img_ev3q"></p></div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/tugraph-analytics/zh/deploy/dashboard"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">作业Dashboard监控</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/tugraph-analytics/zh/deploy/install_llm"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">LLM本地部署</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#仅需-5-步即可呈现-" class="table-of-contents__link toc-highlight">仅需 5 步，即可呈现 🎊</a><ul><li><a href="#1-启动-geaflow-流图作业和-socket-服务" class="table-of-contents__link toc-highlight">1. 启动 GeaFlow 流图作业和 Socket 服务</a></li><li><a href="#2-创建-g6vp-项目" class="table-of-contents__link toc-highlight">2. 创建 G6VP 项目</a></li><li><a href="#3-添加组件" class="table-of-contents__link toc-highlight">3. 添加组件</a></li><li><a href="#4-演示" class="table-of-contents__link toc-highlight">4. 演示</a></li><li><a href="#5-结果 展示" class="table-of-contents__link toc-highlight">5. 结果展示</a></li></ul></li></ul></div></div></div></div></main></div></div></div></div>
 </body>
 </html>
