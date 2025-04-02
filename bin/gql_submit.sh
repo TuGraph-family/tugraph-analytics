@@ -64,7 +64,49 @@ while [ "$1" ]; do
   shift
   done
 
-DEFAULT_JOB_ARGS='{"job": {"geaflow.log.dir": "/tmp/geaflow/logs", "geaflow.agent.http.port": "8088", "AGENT_PROFILER_PATH": "'${ASYNC_PROFILER_SHELL_PATH}'"}}'
+agent_port=8088
+master_port=8090
+
+if ! command -v lsof &> /dev/null; then
+    echo "lsof is not installed. Using default port numbers."
+else
+    check_port() {
+        local port=$1
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            return 0 # 端口被占用
+        else
+            return 1 # 端口未被占用
+        fi
+    }
+
+    find_available_port() {
+        local start_port=$1
+        while check_port $start_port; do
+            ((start_port++))
+        done
+        echo $start_port
+    }
+
+    while check_port $agent_port; do
+        agent_port=$(find_available_port $agent_port)
+    done
+    master_port=$((agent_port + 1))
+    while check_port $master_port; do
+        master_port=$(find_available_port $master_port)
+    done
+fi
+
+DEFAULT_JOB_ARGS=$(cat <<EOF
+{
+  "job": {
+    "geaflow.log.dir": "/tmp/geaflow/logs",
+    "geaflow.agent.http.port": "${agent_port}",
+    "geaflow.master.http.port": "${master_port}",
+    "AGENT_PROFILER_PATH": "${ASYNC_PROFILER_SHELL_PATH}"
+  }
+}
+EOF
+)
 JOB_ARGS=${JOB_ARGS:-${DEFAULT_JOB_ARGS}}
 echo "JOB_ARGS:  ${JOB_ARGS}"
 
@@ -75,8 +117,8 @@ cat $GQL_FILE > /tmp/geaflow/gql/user.gql
 CLASSPATH=$CLASSPATH:/tmp/geaflow/gql/
 
 echo "CLASSPATH:$CLASSPATH"
-echo -e "\033[32mView dashboard via http://localhost:8090.
-See logs via url http://localhost:8090/#/components/master/logs or at local path ${GEAFLOW_LOG_PATH}\033[32m"
+echo -e "\033[32mView dashboard via http://localhost:${master_port}.
+See logs via url http://localhost:${master_port}/#/components/master/logs or at local path ${GEAFLOW_LOG_PATH}\033[32m"
 
 $JAVACMD -cp "$CLASSPATH" \
   -DclusterType=LOCAL \
