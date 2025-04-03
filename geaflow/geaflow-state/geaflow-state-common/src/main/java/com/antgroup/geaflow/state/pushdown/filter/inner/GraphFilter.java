@@ -103,4 +103,9 @@ public class GraphFilter extends BaseGraphFilter {
     public FilterType getFilterType() {
         return filter.getFilterType();
     }
+
+    @Override
+    public IFilter getFilter() {
+        return filter;
+    }
 }

@@ -31,7 +31,10 @@ public class RocksdbConfigKeys {
     public static final String VERTEX_CF = "default";
     public static final String EDGE_CF = "e";
     public static final String VERTEX_INDEX_CF = "v_index";
-    public static final char   FILE_DOT = '.';
+    public static final char FILE_DOT = '.';
+    public static final String VERTEX_CF_PREFIX = "v_";
+    public static final String EDGE_CF_PREFIX = "e_";
+
 
     public static String getChkPath(String path, long checkpointId) {
         return path + CHK_SUFFIX + checkpointId;
@@ -95,4 +98,9 @@ public class RocksdbConfigKeys {
         .key("geaflow.store.rocksdb.persistent.clean.thread.size")
         .defaultValue(4)
         .description("rocksdb persistent clean thread size, default 4");
+
+    public static final ConfigKey ROCKSDB_GRAPH_STORE_PARTITION_TYPE = ConfigKeys
+        .key("geaflow.store.rocksdb.graph.store.partition.type")
+        .defaultValue("none")    // Default none partition
+        .description("rocksdb graph store partition type, default none");
 }

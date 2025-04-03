@@ -19,6 +19,8 @@
 
 package com.antgroup.geaflow.state.pushdown.filter.inner;
 
+import com.antgroup.geaflow.common.errorcode.RuntimeErrors;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
@@ -29,13 +31,11 @@ public interface IGraphFilter extends IFilter<Object> {
 
     /**
      * An edge will be filtered if return is false.
-     * @param edge
      */
     boolean filterEdge(IEdge edge);
 
     /**
      * A Vertex will be filtered if return is false.
-     * @param vertex
      */
     boolean filterVertex(IVertex vertex);
 
@@ -80,4 +80,12 @@ public interface IGraphFilter extends IFilter<Object> {
      * clone the filter.
      */
     IGraphFilter clone();
+
+    /**
+     * get the inner filter, only direct filter converter support.
+     * return inner filter.
+     */
+    default IFilter getFilter() {
+        throw new GeaflowRuntimeException(RuntimeErrors.INST.unsupportedError());
+    }
 }

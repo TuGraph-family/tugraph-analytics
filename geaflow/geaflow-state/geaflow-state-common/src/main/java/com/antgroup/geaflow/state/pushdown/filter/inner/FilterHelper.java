@@ -19,10 +19,14 @@
 
 package com.antgroup.geaflow.state.pushdown.filter.inner;
 
+import com.antgroup.geaflow.state.pushdown.filter.EdgeLabelFilter;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.OrFilter;
+import com.antgroup.geaflow.state.pushdown.filter.VertexLabelFilter;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FilterHelper {
 
@@ -40,5 +44,73 @@ public class FilterHelper {
         Preconditions.checkArgument(singleOrNumber == 0 || orNumber == singleOrNumber,
             "some or filter is not single");
         return singleOrNumber > 0;
+    }
+
+    /**
+     * Parse label from graph filter, only direct filter converter support.
+     *
+     * @param filter graph filter.
+     * @return list of labels to be filtered.
+     */
+    public static List<String> parseLabel(IGraphFilter filter, boolean isVertex) {
+        if (filter.getFilterType() == FilterType.OR) {
+            return parseLabelOr(filter, isVertex);
+        } else if (filter.getFilterType() == FilterType.AND) {
+            return parseLabelAnd(filter, isVertex);
+        } else {
+            return parseLabelNormal(filter, isVertex);
+        }
+    }
+
+    private static List<String> parseLabelOr(IGraphFilter filter, boolean isVertex) {
+        List<String> labels = new ArrayList<>();
+        OrGraphFilter orFilter = (OrGraphFilter) filter;
+
+        if (orFilter.getFilterList().isEmpty()) {
+            return labels;
+        }
+
+        for (IGraphFilter childFilter : orFilter.getFilterList()) {
+            List<String> tmpLabels = parseLabel(childFilter, isVertex);
+            if (tmpLabels.isEmpty()) {
+                labels.clear();
+                return labels;
+            } else {
+                labels.addAll(tmpLabels);
+            }
+        }
+
+        return labels;
+    }
+
+    private static List<String> parseLabelAnd(IGraphFilter filter, boolean isVertex) {
+        List<String> labels = new ArrayList<>();
+        AndGraphFilter andFilter = (AndGraphFilter) filter;
+
+        if (andFilter.getFilterList().isEmpty()) {
+            return labels;
+        }
+
+        for (IGraphFilter childFilter : andFilter.getFilterList()) {
+            labels.addAll(parseLabel(childFilter, isVertex));
+            if (labels.size() > 1) {
+                return new ArrayList<>();
+            }
+        }
+
+        return labels;
+    }
+
+    private static List<String> parseLabelNormal(IGraphFilter filter, boolean isVertex) {
+        List<String> labels = new ArrayList<>();
+        if (!isVertex && filter.getFilterType() == FilterType.EDGE_LABEL) {
+            EdgeLabelFilter labelFilter = (EdgeLabelFilter) filter.getFilter();
+            labels.addAll(labelFilter.getLabels());
+        } else if (isVertex && filter.getFilterType() == FilterType.VERTEX_LABEL) {
+            VertexLabelFilter labelFilter = (VertexLabelFilter) filter.getFilter();
+            labels.addAll(labelFilter.getLabels());
+        }
+
+        return labels;
     }
 }

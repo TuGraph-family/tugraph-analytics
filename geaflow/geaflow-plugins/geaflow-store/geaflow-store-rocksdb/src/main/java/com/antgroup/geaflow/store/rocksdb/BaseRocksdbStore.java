@@ -71,7 +71,11 @@ public abstract class BaseRocksdbStore extends BaseGraphStore implements IStatef
         this.keepChkNum = Math.max(
             this.config.getInteger(StateConfigKeys.STATE_ARCHIVED_VERSION_NUM), chkRate * 2);
 
-        this.rocksdbClient = new RocksdbClient(rocksdbPath, getCfList(), config);
+        boolean enableDynamicCreateColumnFamily = PartitionType.getEnum(
+                this.config.getString(RocksdbConfigKeys.ROCKSDB_GRAPH_STORE_PARTITION_TYPE))
+            .isPartition();
+        this.rocksdbClient = new RocksdbClient(rocksdbPath, getCfList(), config,
+            enableDynamicCreateColumnFamily);
         LOGGER.info("ThreadId {}, BaseRocksdbStore initDB", Thread.currentThread().getId());
         this.rocksdbClient.initDB();
     }

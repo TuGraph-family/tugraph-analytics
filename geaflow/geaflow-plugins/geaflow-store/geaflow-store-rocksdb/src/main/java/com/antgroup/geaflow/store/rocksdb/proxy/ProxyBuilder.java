@@ -21,18 +21,32 @@ package com.antgroup.geaflow.store.rocksdb.proxy;
 
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.StateConfigKeys;
+import com.antgroup.geaflow.common.exception.GeaflowRuntimeException;
 import com.antgroup.geaflow.state.graph.encoder.IGraphKVEncoder;
+import com.antgroup.geaflow.store.rocksdb.PartitionType;
 import com.antgroup.geaflow.store.rocksdb.RocksdbClient;
+import com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys;
 
 public class ProxyBuilder {
 
     public static <K, VV, EV> IGraphRocksdbProxy<K, VV, EV> build(
         Configuration config, RocksdbClient rocksdbClient,
         IGraphKVEncoder<K, VV, EV> encoder) {
-        if (config.getBoolean(StateConfigKeys.STATE_WRITE_ASYNC_ENABLE)) {
-            return new AsyncGraphRocksdbProxy<>(rocksdbClient, encoder, config);
+        PartitionType partitionType = PartitionType.getEnum(
+            config.getString(RocksdbConfigKeys.ROCKSDB_GRAPH_STORE_PARTITION_TYPE));
+        if (partitionType.isPartition()) {
+            if (partitionType == PartitionType.LABEL) {
+                // TODO: Support async graph proxy partitioned by label
+                return new SyncGraphLabelPartitionProxy<>(rocksdbClient, encoder, config);
+            }
+            throw new GeaflowRuntimeException("unexpected partition type: " + config.getString(
+                RocksdbConfigKeys.ROCKSDB_GRAPH_STORE_PARTITION_TYPE));
         } else {
-            return new SyncGraphRocksdbProxy<>(rocksdbClient, encoder, config);
+            if (config.getBoolean(StateConfigKeys.STATE_WRITE_ASYNC_ENABLE)) {
+                return new AsyncGraphRocksdbProxy<>(rocksdbClient, encoder, config);
+            } else {
+                return new SyncGraphRocksdbProxy<>(rocksdbClient, encoder, config);
+            }
         }
     }
 
