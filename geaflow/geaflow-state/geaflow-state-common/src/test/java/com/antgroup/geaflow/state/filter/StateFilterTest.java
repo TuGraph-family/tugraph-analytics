@@ -27,15 +27,18 @@ import com.antgroup.geaflow.model.graph.vertex.impl.IDVertex;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.data.TimeRange;
 import com.antgroup.geaflow.state.pushdown.filter.AndFilter;
+import com.antgroup.geaflow.state.pushdown.filter.EdgeLabelFilter;
 import com.antgroup.geaflow.state.pushdown.filter.EdgeTsFilter;
 import com.antgroup.geaflow.state.pushdown.filter.EdgeValueDropFilter;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.InEdgeFilter;
 import com.antgroup.geaflow.state.pushdown.filter.OutEdgeFilter;
+import com.antgroup.geaflow.state.pushdown.filter.VertexLabelFilter;
 import com.antgroup.geaflow.state.pushdown.filter.VertexTsFilter;
 import com.antgroup.geaflow.state.pushdown.filter.VertexValueDropFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.EmptyGraphFilter;
+import com.antgroup.geaflow.state.pushdown.filter.inner.FilterHelper;
 import com.antgroup.geaflow.state.pushdown.filter.inner.GraphFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
 import java.util.ArrayList;
@@ -50,7 +53,7 @@ import org.testng.annotations.Test;
 public class StateFilterTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateFilterTest.class);
-    
+
     @Test
     public void testValidate() {
         EdgeTsFilter tsFilter = new EdgeTsFilter(TimeRange.of(100, 200));
@@ -80,7 +83,8 @@ public class StateFilterTest {
 
         e = null;
         try {
-            IFilter filter = tsFilter.or(new EdgeTsFilter(TimeRange.of(100, 200)).and(new EdgeValueDropFilter()));
+            IFilter filter = tsFilter.or(
+                new EdgeTsFilter(TimeRange.of(100, 200)).and(new EdgeValueDropFilter()));
         } catch (Exception ex) {
             e = ex;
         }
@@ -96,18 +100,18 @@ public class StateFilterTest {
 
         e = null;
         try {
-            IFilter filter = tsFilter.and(new EdgeValueDropFilter()).or(new EdgeTsFilter(TimeRange.of(100, 200)));
+            IFilter filter = tsFilter.and(new EdgeValueDropFilter())
+                .or(new EdgeTsFilter(TimeRange.of(100, 200)));
         } catch (Exception ex) {
             e = ex;
         }
         Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
 
-
-        IFilter filter =
-            tsFilter.and(new EdgeValueDropFilter()).or(new EdgeTsFilter(TimeRange.of(100, 200)).and(new EdgeValueDropFilter()));
-        filter =
-            new EdgeValueDropFilter().and(new VertexValueDropFilter())
-                .or(new EdgeTsFilter(TimeRange.of(100, 200)).and(new EdgeValueDropFilter()).and(new VertexValueDropFilter()));
+        IFilter filter = tsFilter.and(new EdgeValueDropFilter())
+            .or(new EdgeTsFilter(TimeRange.of(100, 200)).and(new EdgeValueDropFilter()));
+        filter = new EdgeValueDropFilter().and(new VertexValueDropFilter())
+            .or(new EdgeTsFilter(TimeRange.of(100, 200)).and(new EdgeValueDropFilter())
+                .and(new VertexValueDropFilter()));
     }
 
     @Test
@@ -158,12 +162,9 @@ public class StateFilterTest {
         Assert.assertTrue(stateFilter.filterEdge(edge));
         Assert.assertFalse(stateFilter.dropAllRemaining());
 
-        List<IEdge<String, Object>> list = Arrays.asList(
-            new IDTimeEdge<>("hello", "world", 100),
-            new IDTimeEdge<>("hello", "world", 120),
-            new IDTimeEdge<>("hello", "world", 140),
-            new IDTimeEdge<>("hello", "world", 160),
-            new IDTimeEdge<>("hello", "world", 180));
+        List<IEdge<String, Object>> list = Arrays.asList(new IDTimeEdge<>("hello", "world", 100),
+            new IDTimeEdge<>("hello", "world", 120), new IDTimeEdge<>("hello", "world", 140),
+            new IDTimeEdge<>("hello", "world", 160), new IDTimeEdge<>("hello", "world", 180));
 
         list.get(0).setDirect(EdgeDirection.IN);
         list.get(2).setDirect(EdgeDirection.IN);
@@ -194,11 +195,8 @@ public class StateFilterTest {
         Assert.assertEquals(filter.getFilterType(), FilterType.OR);
         Assert.assertEquals(filter.or(EmptyGraphFilter.of()).toString(), filter.toString());
 
-        List<IEdge<String, Object>> list = Arrays.asList(
-            new IDTimeEdge<>("hello", "world", 1),
-            new IDTimeEdge<>("hello", "world", 3),
-            new IDTimeEdge<>("hello", "world", 5)
-        );
+        List<IEdge<String, Object>> list = Arrays.asList(new IDTimeEdge<>("hello", "world", 1),
+            new IDTimeEdge<>("hello", "world", 3), new IDTimeEdge<>("hello", "world", 5));
 
         IGraphFilter graphFilter = GraphFilter.of(filter);
         List<IEdge<String, Object>> res = new ArrayList<>();
@@ -222,5 +220,46 @@ public class StateFilterTest {
         graphFilter = GraphFilter.of(filter);
         Assert.assertTrue(graphFilter.filterVertex(new IDVertex("1")));
         Assert.assertTrue(graphFilter.filterOneDegreeGraph(new OneDegreeGraph<>("1", null, null)));
+    }
+
+    @Test
+    public void testParseLabelFilter() {
+        String label1 = "person";
+        String label2 = "trade";
+        String label3 = "relation";
+
+        IGraphFilter filter = GraphFilter.of(new EdgeLabelFilter(label1));
+        List<String> labels = FilterHelper.parseLabel(GraphFilter.of(filter), false);
+        Assert.assertEquals(labels.size(), 1);
+        Assert.assertEquals(labels.get(0), label1);
+
+        filter = GraphFilter.of(new EdgeLabelFilter(label1))
+            .or(GraphFilter.of(new EdgeTsFilter(TimeRange.of(5L, 6L))));
+        labels = FilterHelper.parseLabel(filter, false);
+        Assert.assertEquals(labels.size(), 0);
+
+        filter = GraphFilter.of(new EdgeLabelFilter(label1))
+            .or(GraphFilter.of(new EdgeLabelFilter(label2)));
+        labels = FilterHelper.parseLabel(filter, false);
+        Assert.assertEquals(labels.size(), 2);
+        Assert.assertEquals(labels.get(0), label1);
+        Assert.assertEquals(labels.get(1), label2);
+
+        filter = GraphFilter.of(new EdgeLabelFilter(label1))
+            .and(GraphFilter.of(new EdgeLabelFilter(label2)));
+        labels = FilterHelper.parseLabel(filter, false);
+        Assert.assertEquals(labels.size(), 0);
+
+        filter = GraphFilter.of(new VertexLabelFilter(label1))
+            .or(GraphFilter.of(new VertexLabelFilter(label2)))
+            .or(GraphFilter.of(new VertexLabelFilter(label3)));
+        labels = FilterHelper.parseLabel(filter, true);
+        Assert.assertEquals(labels.size(), 3);
+        Assert.assertEquals(labels.get(0), label1);
+        Assert.assertEquals(labels.get(1), label2);
+        Assert.assertEquals(labels.get(2), label3);
+
+        labels = FilterHelper.parseLabel(filter, false);
+        Assert.assertEquals(labels.size(), 0);
     }
 }

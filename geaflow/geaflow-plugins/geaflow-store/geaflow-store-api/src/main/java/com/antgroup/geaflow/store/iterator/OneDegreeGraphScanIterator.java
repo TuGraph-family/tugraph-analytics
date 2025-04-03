@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// TODO: Implement one degree graph scan iterator for graph proxy partitioned by label
 public class OneDegreeGraphScanIterator<K, VV, EV> implements
     IOneDegreeGraphIterator<K, VV, EV> {
 

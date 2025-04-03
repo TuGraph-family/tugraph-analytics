@@ -27,6 +27,7 @@ import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.data.DataType;
 import com.antgroup.geaflow.state.data.OneDegreeGraph;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
+import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.limit.IEdgeLimit;
 
 public class LimitFilter extends BaseGraphFilter {
@@ -106,5 +107,10 @@ public class LimitFilter extends BaseGraphFilter {
     @Override
     public IGraphFilter clone() {
         throw new GeaflowRuntimeException(RuntimeErrors.INST.unsupportedError());
+    }
+
+    @Override
+    public IFilter getFilter() {
+        return filter.getFilter();
     }
 }

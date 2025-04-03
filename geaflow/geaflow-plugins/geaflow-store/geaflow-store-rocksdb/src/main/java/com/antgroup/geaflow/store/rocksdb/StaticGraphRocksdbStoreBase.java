@@ -19,6 +19,7 @@
 
 package com.antgroup.geaflow.store.rocksdb;
 
+import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.DEFAULT_CF;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.EDGE_CF;
 import static com.antgroup.geaflow.store.rocksdb.RocksdbConfigKeys.VERTEX_CF;
 
@@ -37,6 +38,7 @@ import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.rocksdb.proxy.IGraphRocksdbProxy;
 import com.antgroup.geaflow.store.rocksdb.proxy.ProxyBuilder;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,9 +47,14 @@ public class StaticGraphRocksdbStoreBase<K, VV, EV> extends BaseRocksdbGraphStor
 
     private IGraphRocksdbProxy<K, VV, EV> proxy;
     private EdgeAtom sortAtom;
+    private PartitionType partitionType;
 
     @Override
     public void init(StoreContext storeContext) {
+        // Init partition type for rocksdb graph store
+        partitionType = PartitionType.getEnum(storeContext.getConfig()
+            .getString(RocksdbConfigKeys.ROCKSDB_GRAPH_STORE_PARTITION_TYPE));
+
         super.init(storeContext);
         IGraphKVEncoder<K, VV, EV> encoder = GraphKVEncoderFactory.build(config,
             storeContext.getGraphSchema());
@@ -57,7 +64,11 @@ public class StaticGraphRocksdbStoreBase<K, VV, EV> extends BaseRocksdbGraphStor
 
     @Override
     protected List<String> getCfList() {
-        return Arrays.asList(VERTEX_CF, EDGE_CF);
+        if (!partitionType.isPartition()) {
+            return Arrays.asList(VERTEX_CF, EDGE_CF);
+        }
+
+        return Collections.singletonList(DEFAULT_CF);
     }
 
     @Override

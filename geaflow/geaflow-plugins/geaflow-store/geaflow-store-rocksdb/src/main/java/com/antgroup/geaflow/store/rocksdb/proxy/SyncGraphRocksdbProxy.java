@@ -111,20 +111,26 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
     protected List<IEdge<K, EV>> getEdges(K sid, IGraphFilter filter) {
         List<IEdge<K, EV>> list = new ArrayList<>();
         byte[] prefix = edgeEncoder.getScanBytes(sid);
-        try (RocksdbIterator it =
-            new RocksdbIterator(this.rocksdbClient.getIterator(EDGE_CF), prefix)) {
-            while (it.hasNext()) {
-                Tuple<byte[], byte[]> pair = it.next();
-                IEdge<K, EV> edge = edgeEncoder.getEdge(pair.f0, pair.f1);
-                if (filter.filterEdge(edge)) {
-                    list.add(edge);
-                }
-                if (filter.dropAllRemaining()) {
-                    break;
-                }
+        try (RocksdbIterator it = new RocksdbIterator(this.rocksdbClient.getIterator(EDGE_CF),
+            prefix)) {
+            getEdgesFromRocksDBIterator(list, it, filter);
+        }
+
+        return list;
+    }
+
+    protected void getEdgesFromRocksDBIterator(List<IEdge<K, EV>> list, RocksdbIterator it,
+                                               IGraphFilter filter) {
+        while (it.hasNext()) {
+            Tuple<byte[], byte[]> pair = it.next();
+            IEdge<K, EV> edge = edgeEncoder.getEdge(pair.f0, pair.f1);
+            if (filter.filterEdge(edge)) {
+                list.add(edge);
+            }
+            if (filter.dropAllRemaining()) {
+                break;
             }
         }
-        return list;
     }
 
     @Override
@@ -145,16 +151,26 @@ public class SyncGraphRocksdbProxy<K, VV, EV> implements IGraphRocksdbProxy<K, V
     public CloseableIterator<K> vertexIDIterator() {
         flush();
         RocksdbIterator it = new RocksdbIterator(this.rocksdbClient.getIterator(VERTEX_CF));
+        return buildVertexIDIteratorFromRocksDBIter(it);
+    }
+
+    protected CloseableIterator<K> buildVertexIDIteratorFromRocksDBIter(
+        CloseableIterator<Tuple<byte[], byte[]>> it) {
         return new IteratorWithFnThenFilter<>(it, tuple2 -> vertexEncoder.getVertexID(tuple2.f0),
-            new Predicate<K>() {
-                K last = null;
-                @Override
-                public boolean test(K k) {
-                    boolean res = k.equals(last);
-                    last = k;
-                    return !res;
-                }
-            });
+            predicate());
+    }
+
+    private Predicate<K> predicate() {
+        return new Predicate<K>() {
+            K last = null;
+
+            @Override
+            public boolean test(K k) {
+                boolean res = k.equals(last);
+                last = k;
+                return !res;
+            }
+        };
     }
 
     @Override
