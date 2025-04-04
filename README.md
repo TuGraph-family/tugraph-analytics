@@ -15,7 +15,7 @@
 
 <!--intro-start-->
 ## Introduction
-GeaFlow is a distributed graph compute engine developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computation, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehousing acceleration, financial risk control, knowledge graph, and social networks.
+GeaFlow is a distributed streaming graph computing engine developed by Ant Group. It supports core capabilities such as trillion-level graph storage, hybrid graph and table processing, real-time graph computing, and interactive graph analysis. Currently, it is widely used in scenarios such as data warehouse acceleration, financial risk control, knowledge graph, and social networks etc.
 
 For more information about GeaFlow: [GeaFlow Introduction](docs/docs-en/source/2.introduction.md)
 
@@ -23,9 +23,9 @@ For GeaFlow design paper: [GeaFlow: A Graph Extended and Accelerated Dataflow Sy
 
 ## Features
 
-* Distributed streaming graph computation
+* Distributed streaming graph computing
 * Hybrid graph and table processing (SQL+GQL)
-* Unified stream/batch/graph computation
+* Unified stream/batch/graph computing
 * Trillion-level graph-native storage
 * Interactive graph analytics
 * High availability and exactly once semantics
@@ -57,19 +57,19 @@ GeaFlow supports two sets of programming interfaces: DSL and API. You can develo
 
 ## Performance
 
-### Dynamic Graph Computation Acceleration
+### Incremental Graph Computing
 
-GeaFlow supports incremental graph computation capabilities, allowing for continuous streaming incremental graph iterative computations or traversals on dynamic graphs (graphs that are constantly changing). When GeaFlow consumes messages from real-time middleware, the points associated with the real-time data in the current window are activated, triggering iterative graph computations. In each iteration, only the updated points need to notify their neighboring nodes, while unchanged points are not triggered for computation, significantly enhancing the timeliness of the calculations.
+GeaFlow supports incremental graph computing capabilities, allowing for continuous streaming incremental graph iterative computing or traversals on dynamic graphs (graphs that are constantly changing). When GeaFlow consumes messages from real-time middleware, the points associated with the real-time data in the current window are activated, triggering iterative graph computing. In each iteration, only the updated points need to notify their neighboring nodes, while unchanged points are not triggered for computing, significantly enhancing the timeliness of the calculations.
 
-In the early days of the industry, there were systems for distributed offline graph computation using Spark GraphX. To support similar engine capabilities, Spark relied on the Spark Streaming framework. However, although this integrated approach can handle streaming consumption of point-edge data, it still requires full graph computations every time a calculation is triggered. This makes it challenging to meet the performance expectations of the business (this approach is also referred to as snapshot-based graph computation).
+In the early days of the industry, there were systems for distributed offline graph computing using Spark GraphX. To support similar engine capabilities, Spark relied on the Spark Streaming framework. However, although this integrated approach can handle streaming consumption of point-edge data, it still requires full graph computings every time a calculation is triggered. This makes it challenging to meet the performance expectations of the business (this approach is also referred to as snapshot-based graph computing).
 
 Using the WCC (Weakly Connected Components) algorithm as an example, we compared the algorithmic execution time of GeaFlow and Spark solutions, with specific performance results as follows:
 ![total_time](docs/static/img/vs_dynamic_graph_compute_perf_en.jpg)
 
-Since GeaFlow only activates the vertex-edge relations involved in the current window for incremental computation, the computation time can be completed within seconds, and the computation time for each window remains fairly stable. As the data volume increases, Spark’s need to backtrack through historical data during computation also grows. While the machine capacity has not reached its limit, the computation delay shows a positive correlation with the data volume. In similar conditions, GeaFlow's computation time may slightly increase but can generally still be kept at the level of seconds.
+Since GeaFlow only activates the vertex-edge relations involved in the current window for incremental computing, the computing time can be completed within seconds, and the computing time for each window remains fairly stable. As the data volume increases, Spark’s need to backtrack through historical data during computing also grows. While the machine capacity has not reached its limit, the computing delay shows a positive correlation with the data volume. In similar conditions, GeaFlow's computing time may slightly increase but can generally still be kept at the level of seconds.
 
 
-### Stream Computation Acceleration
+### Stream Computing Acceleration
 
 Compared to traditional stream processing engines (such as Flink and Storm, which are based on table models), GeaFlow utilizes a graph as its data model (using a vertex-edge storage format), offering significant performance advantages in handling Join operations, especially for complex multi-hop relationships (like joins exceeding 3 hops and complex cycle searches).
 
@@ -78,7 +78,7 @@ To make a comparison, we analyzed the performance of Flink and GeaFlow using the
 In comparing the time consumption of the K-Hop algorithm in Flink and GeaFlow:
 ![total_time](docs/static/img/vs_multi_hops_en.jpg)
 
-As shown in the figure above, Flink performs slightly better than GeaFlow in one-hop and two-hop scenarios. This is because, in these cases, the data volume involved in the Join calculations is relatively small, and both the left and right tables are compact, resulting in shorter traversal times. Additionally, Flink's computation framework can cache the historical results of Join operations.
+As shown in the figure above, Flink performs slightly better than GeaFlow in one-hop and two-hop scenarios. This is because, in these cases, the data volume involved in the Join calculations is relatively small, and both the left and right tables are compact, resulting in shorter traversal times. Additionally, Flink's computing framework can cache the historical results of Join operations.
 
 
 ## Contribution
