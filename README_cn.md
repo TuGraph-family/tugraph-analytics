@@ -53,7 +53,7 @@ GeaFlow设计论文参考：[GeaFlow: A Graph Extended and Accelerated Dataflow 
 
 GeaFlow支持DSL和API两套编程接口，您既可以通过GeaFlow提供的类SQL扩展语言SQL+ISO/GQL进行流图计算作业的开发，也可以通过GeaFlow的高阶API编程接口通过Java语言进行应用开发。
 * DSL应用开发：[DSL开发文档](docs/docs-cn/source/5.application-development/2.dsl/1.overview.md)
-* API应用开发：[API开发文档](docs/docs-cn/source/5.application-development/1.api/guid.md)
+* API应用开发：[API开发文档](docs/docs-cn/source/5.application-development/1.api/1.overview.md)
 
 ## 性能优势
 
