@@ -20,7 +20,12 @@ const sidebars_zh = {
     {
       type: "category",
       label: "快速开始",
-      items: ["quick_start/quick_start", "quick_start/quick_start_docker"],
+      items: [
+        "quick_start/quick_start",
+        "quick_start/quick_start_docker",
+        "quick_start/quick_start_infer&UDF",
+        "quick_start/quick_start_sql_to_graph",
+         ],
     },
     {
       type: "category",
