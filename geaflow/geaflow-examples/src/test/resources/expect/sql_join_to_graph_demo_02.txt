@@ -1,0 +1,5 @@
+lucy,2
+jim,1
+kate,1
+lily,1
+jack,1

@@ -480,4 +480,26 @@ public class JoinToGraphTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testJoinEdgeWithFilter_001() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/match_join_edge_with_filter_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
+    public void testJoinEdgeWithGroup_001() throws Exception {
+        QueryTester
+            .build()
+            .withConfig(testConfig)
+            .withGraphDefine("/sql2graph/graph_student.sql")
+            .withQueryPath("/sql2graph/match_join_edge_with_group_001.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }

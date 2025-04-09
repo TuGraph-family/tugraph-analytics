@@ -71,4 +71,20 @@ public class DemoCaseTest {
             .checkSinkResult(resultPath);
     }
 
+    @Test
+    public void testQuickStartSqlJoinDemo_002() throws Exception {
+        String resultPath = "/tmp/geaflow/sql_join_to_graph_demo_02_result";
+        File file = new File(resultPath);
+        if (file.exists()) {
+            FileUtils.deleteDirectory(file);
+        }
+        BaseQueryTest
+            .build()
+            .withoutPrefix()
+            .withConfig(testConfig)
+            .withQueryPath(System.getProperty("user.dir") + "/gql/sql_join_to_graph_demo_02.sql")
+            .execute()
+            .checkSinkResult(resultPath);
+    }
+
 }
