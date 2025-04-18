@@ -14,7 +14,10 @@
 
 package com.antgroup.geaflow.dsl.connector.jdbc.util;
 
+import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.common.type.Types;
+import com.antgroup.geaflow.common.type.primitive.BinaryStringType;
+import com.antgroup.geaflow.common.type.primitive.StringType;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.impl.ObjectRow;
 import com.antgroup.geaflow.dsl.common.exception.GeaFlowDSLException;
@@ -67,14 +70,34 @@ public class JDBCUtils {
     public static void insertIntoTable(Statement statement, String tableName,
                                        List<TableField> fields, Row row) throws SQLException {
         Object[] values = new Object[fields.size()];
+        boolean isFirst = true;
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < fields.size(); i++) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                builder.append(",");
+            }
+            IType type = fields.get(i).getType();
+            Object value = row.getField(i, type);
+            if (value == null) {
+                if (fields.get(i).isNullable()) {
+                    builder.append("null");
+                } else {
+                    throw new RuntimeException("filed " + fields.get(i).getName() + " can not be null");
+                }
+            } else if (type.getClass() == BinaryStringType.class || type.getClass() == StringType.class) {
+                builder.append("'").append(value).append("'");
+            } else {
+                builder.append(value);
+            }
             values[i] = row.getField(i, fields.get(i).getType());
         }
-        String insertIntoValues = StringUtils.join(
-            Arrays.stream(values).map(value -> "'" + value + "'").collect(Collectors.toList()),
-            ",");
-        String insertIntoTableQuery = String.format("INSERT INTO %s VALUES (%s);", tableName,
-            insertIntoValues);
+        String insertIntoValues = builder.toString();
+        String insertColumns = StringUtils.join(fields.stream().map(
+                field -> field.getName()).collect(Collectors.toList()), ",");
+        String insertIntoTableQuery = String.format("INSERT INTO %s (%s) VALUES (%s);", tableName, insertColumns,
+                insertIntoValues);
         statement.execute(insertIntoTableQuery);
     }
 

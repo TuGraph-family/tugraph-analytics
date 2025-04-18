@@ -78,9 +78,20 @@ public class JDBCTableConnectorTest {
     public void testInsertIntoTable() throws SQLException {
         List<TableField> tableFieldList = new ArrayList<>();
         tableFieldList.add(new TableField("id", Types.INTEGER, false));
-        tableFieldList.add(new TableField("name", Types.BINARY_STRING, false));
-        Row row = ObjectRow.create(new Object[]{5, "Test5"});
+        tableFieldList.add(new TableField("name", Types.BINARY_STRING, true));
+        Row row = ObjectRow.create(new Object[]{5, null});
         JDBCUtils.insertIntoTable(statement, "test_table", tableFieldList, row);
+        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table", "", 2, 0, 20);
+        Row resultRow = null;
+        for (Row queryRow : rowList) {
+            if ((Integer) queryRow.getField(0, Types.INTEGER) == 5) {
+                resultRow = queryRow;
+                break;
+            }
+        }
+        assert resultRow != null;
+        assert resultRow.getField(1, Types.BINARY_STRING) == null;
+        System.out.println(rowList.size());
     }
 
     @Test
