@@ -84,27 +84,27 @@ public class JDBCTableConnectorTest {
         List<TableField> tableFieldList = new ArrayList<>();
         tableFieldList.add(new TableField("id", Types.INTEGER, false));
         tableFieldList.add(new TableField("name", Types.BINARY_STRING, false));
-        Row row = ObjectRow.create(new Object[]{5, "Test5"});
+        Row row = ObjectRow.create(5, "Test5");
         JDBCUtils.insertIntoTable(statement, "test_table", tableFieldList, row);
     }
 
     @Test
     public void testSelectRowsFromTable1() throws SQLException {
-        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table", "", 2, 0, 2);
+        List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table", "", 2, 0, 2, "id");
         assert rowList.size() == 2;
     }
 
     @Test
     public void testSelectRowsFromTable2() throws SQLException {
         List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table",
-            "WHERE id < 2", 2, 0, 3);
+            "WHERE id < 2", 2, 0, 3, "id");
         assert rowList.size() == 1;
     }
 
     @Test
     public void testSelectRowsFromTable3() throws SQLException {
         List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table",
-            "WHERE id < 4", 2, 0, 1);
+            "WHERE id < 4", 2, 0, 1, "id");
         assert rowList.size() == 1;
     }
 }
