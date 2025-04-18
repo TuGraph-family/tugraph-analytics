@@ -181,7 +181,7 @@ public class JDBCTableSource implements TableSource {
         List<Row> dataList;
         try {
             dataList = JDBCUtils.selectRowsFromTable(statement, this.tableName,
-                jdbcPartition.getWhereClause(), this.schema.size(), offset, windowInfo.windowSize());
+                jdbcPartition.getWhereClause(), this.schema.size(), offset, windowInfo.windowSize(), this.schema.getField(0).getName());
         } catch (SQLException e) {
             throw new GeaFlowDSLException("select rows form table failed.", e);
         }
