@@ -47,7 +47,7 @@ public class JDBCTest {
         dataSource.setPassword(password);
 
         Statement statement = dataSource.getConnection().createStatement();
-        statement.execute("CREATE TABLE test (name VARCHAR(255) primary key, count INT);");
+        statement.execute("CREATE TABLE test (user_name VARCHAR(255) primary key, count INT);");
         statement.execute("CREATE TABLE users (id INT primary key, name VARCHAR(255), age INT);");
     }
 
