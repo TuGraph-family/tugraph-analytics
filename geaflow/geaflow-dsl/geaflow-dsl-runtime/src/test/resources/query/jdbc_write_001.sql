@@ -19,7 +19,7 @@
 
 CREATE TABLE tbl_result (
 	user_name varchar,
-	user_count bigint
+	count bigint
 ) WITH (
 	type='jdbc',
 	geaflow.dsl.jdbc.driver = 'org.h2.Driver',
