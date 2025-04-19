@@ -87,7 +87,7 @@ public class JDBCTableConnectorTest {
         Row row = ObjectRow.create(new Object[]{5, null});
         JDBCUtils.insertIntoTable(statement, "test_table", tableFieldList, row);
         List<Row> rowList = JDBCUtils.selectRowsFromTable(statement, "test_table",
-                "", 0, 0, 20, "id");
+                "", 2, 0, 20, "id");
         Row resultRow = null;
         for (Row queryRow : rowList) {
             if ((Integer) queryRow.getField(0, Types.INTEGER) == 5) {
@@ -97,7 +97,6 @@ public class JDBCTableConnectorTest {
         }
         assert resultRow != null;
         assert resultRow.getField(1, Types.BINARY_STRING) == null;
-        System.out.println(rowList.size());
     }
 
     @Test
