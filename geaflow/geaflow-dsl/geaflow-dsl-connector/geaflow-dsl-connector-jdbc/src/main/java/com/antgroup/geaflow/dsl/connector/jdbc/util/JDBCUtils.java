@@ -97,6 +97,7 @@ public class JDBCUtils {
             }
             values[i] = row.getField(i, fields.get(i).getType());
         }
+
         String insertIntoValues = builder.toString();
         String insertColumns = StringUtils.join(fields.stream().map(
             field -> field.getName()).collect(Collectors.toList()), ",");
