@@ -31,21 +31,21 @@ import org.apache.paimon.types.DataTypes;
 public abstract class BasePaimonStore extends BaseGraphStore implements IStatefulStore {
 
     protected static final String KEY_COLUMN_NAME = "key";
-
     protected static final String VALUE_COLUMN_NAME = "value";
-
     protected static final int KEY_COLUMN_INDEX = 0;
-
     protected static final int VALUE_COLUMN_INDEX = 1;
 
+    // 新增的常量定义
+    protected static final String TARGET_ID_COLUMN_NAME = "target_id";
+    protected static final String SRC_ID_COLUMN_NAME = "src_id";
+    protected static final String TS_COLUMN_NAME = "ts";
+    protected static final String DIRECTION_COLUMN_NAME = "direction";
+    protected static final String LABEL_COLUMN_NAME = "label";
+
     protected PaimonTableCatalogClient client;
-
     protected int shardId;
-
     protected String jobName;
-
     protected String paimonStoreName;
-
     protected long lastCheckpointId;
 
     @Override
@@ -66,6 +66,36 @@ public abstract class BasePaimonStore extends BaseGraphStore implements IStatefu
         Schema.Builder schemaBuilder = Schema.newBuilder();
         schemaBuilder.primaryKey(KEY_COLUMN_NAME);
         schemaBuilder.column(KEY_COLUMN_NAME, DataTypes.BYTES());
+        schemaBuilder.column(VALUE_COLUMN_NAME, DataTypes.BYTES());
+        Schema schema = schemaBuilder.build();
+        Table vertexTable = this.client.createTable(schema, identifier);
+        return new PaimonTableRWHandle(identifier, vertexTable);
+    }
+
+    protected PaimonTableRWHandle createEdgeTableHandle(Identifier identifier) {
+        Schema.Builder schemaBuilder = Schema.newBuilder();
+        schemaBuilder.primaryKey(SRC_ID_COLUMN_NAME);
+        schemaBuilder.primaryKey(TARGET_ID_COLUMN_NAME);
+        schemaBuilder.primaryKey(TS_COLUMN_NAME);
+        schemaBuilder.primaryKey(DIRECTION_COLUMN_NAME);
+        schemaBuilder.primaryKey(LABEL_COLUMN_NAME);
+        schemaBuilder.column(SRC_ID_COLUMN_NAME, DataTypes.BYTES());
+        schemaBuilder.column(TARGET_ID_COLUMN_NAME, DataTypes.BYTES());
+        schemaBuilder.column(TS_COLUMN_NAME, DataTypes.BIGINT());
+        schemaBuilder.column(DIRECTION_COLUMN_NAME, DataTypes.SMALLINT());
+        schemaBuilder.column(LABEL_COLUMN_NAME, DataTypes.BYTES());
+        schemaBuilder.column(VALUE_COLUMN_NAME, DataTypes.BYTES());
+        Schema schema = schemaBuilder.build();
+        Table vertexTable = this.client.createTable(schema, identifier);
+        return new PaimonTableRWHandle(identifier, vertexTable);
+    }
+
+    protected PaimonTableRWHandle createVertexTableHandle(Identifier identifier) {
+        Schema.Builder schemaBuilder = Schema.newBuilder();
+        schemaBuilder.primaryKey(SRC_ID_COLUMN_NAME);
+        schemaBuilder.column(SRC_ID_COLUMN_NAME, DataTypes.BYTES());
+        schemaBuilder.column(TS_COLUMN_NAME, DataTypes.BIGINT());
+        schemaBuilder.column(LABEL_COLUMN_NAME, DataTypes.SMALLINT());
         schemaBuilder.column(VALUE_COLUMN_NAME, DataTypes.BYTES());
         Schema schema = schemaBuilder.build();
         Table vertexTable = this.client.createTable(schema, identifier);
