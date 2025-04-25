@@ -28,6 +28,7 @@ public class KafkaConstants {
     public static final String KAFKA_VALUE_DESERIALIZER = "value.deserializer";
     public static final String KAFKA_MAX_POLL_RECORDS = "max.poll.records";
     public static final String KAFKA_GROUP_ID = "group.id";
+    public static final String KAFKA_CLIENT_ID = "client.id";
     public static final String KAFKA_VALUE_SERIALIZER_CLASS = 
         "org.apache.kafka.common.serialization.StringSerializer";
     public static final String KAFKA_VALUE_DESERIALIZER_CLASS =
