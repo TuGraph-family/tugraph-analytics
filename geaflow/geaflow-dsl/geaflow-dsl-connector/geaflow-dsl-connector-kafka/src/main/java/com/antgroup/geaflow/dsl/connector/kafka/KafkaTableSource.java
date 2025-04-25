@@ -105,6 +105,10 @@ public class KafkaTableSource extends AbstractTableSource {
         props.setProperty(KafkaConstants.KAFKA_MAX_POLL_RECORDS,
             String.valueOf(pullSize));
         props.setProperty(KafkaConstants.KAFKA_GROUP_ID, groupId);
+        if (conf.contains(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_CLIENT_ID)) {
+            String useClientId = conf.getString(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_CLIENT_ID);
+            props.put(KafkaConstants.KAFKA_CLIENT_ID, useClientId);
+        }
         LOGGER.info("open kafka, servers is: {}, topic is:{}, config is:{}, schema is: {}",
             servers, topic, conf, tableSchema);
     }

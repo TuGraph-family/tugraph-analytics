@@ -48,4 +48,9 @@ public class KafkaConfigKeys {
         .key("geaflow.dsl.kafka.data.operation.timeout.seconds")
         .defaultValue(30)
         .description("The kafka pool/write data timeout");
+
+    public static final ConfigKey GEAFLOW_DSL_KAFKA_CLIENT_ID = ConfigKeys
+        .key("geaflow.dsl.kafka.client.id")
+        .defaultValue(null)
+        .description("The kafka client id");
 }

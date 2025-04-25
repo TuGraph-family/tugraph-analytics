@@ -73,6 +73,12 @@ public class KafkaTableSink implements TableSink {
         props.setProperty(KafkaConstants.KAFKA_BOOTSTRAP_SERVERS, servers);
         props.setProperty(KafkaConstants.KAFKA_KEY_SERIALIZER, valueSerializerClass);
         props.setProperty(KafkaConstants.KAFKA_VALUE_SERIALIZER, valueSerializerClass);
+        if (context.getConfiguration().contains(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_CLIENT_ID)) {
+            String useClientId = context.getConfiguration()
+                .getString(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_CLIENT_ID);
+            props.put(KafkaConstants.KAFKA_CLIENT_ID, useClientId);
+        }
+
         writeTimeout = context.getConfiguration()
             .getInteger(KafkaConfigKeys.GEAFLOW_DSL_KAFKA_DATA_OPERATION_TIMEOUT);
 
