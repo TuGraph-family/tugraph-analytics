@@ -107,7 +107,7 @@ public abstract class PaimonBaseGraphProxy<K, VV, EV> implements IGraphPaimonPro
     @Override
     public CloseableIterator<K> vertexIDIterator() {
         flush();
-        RecordReaderIterator<InternalRow> iterator = this.vertexHandle.getIterator(null,
+        RecordReaderIterator<InternalRow> iterator = this.vertexHandle.getIterator(null, null,
             projection);
         PaimonIterator it = new PaimonIterator(iterator);
         return new IteratorWithFnThenFilter<>(it,
@@ -136,7 +136,7 @@ public abstract class PaimonBaseGraphProxy<K, VV, EV> implements IGraphPaimonPro
     @Override
     public CloseableIterator<IVertex<K, VV>> getVertexIterator(IStatePushDown pushdown) {
         flush();
-        RecordReaderIterator<InternalRow> iterator = this.vertexHandle.getIterator(null,
+        RecordReaderIterator<InternalRow> iterator = this.vertexHandle.getIterator(null, null,
             projection);
         PaimonIterator it = new PaimonIterator(iterator);
         return new VertexScanIterator<>(it, pushdown, encoder.getVertexEncoder()::getVertex);
@@ -151,7 +151,8 @@ public abstract class PaimonBaseGraphProxy<K, VV, EV> implements IGraphPaimonPro
     @Override
     public CloseableIterator<IEdge<K, EV>> getEdgeIterator(IStatePushDown pushdown) {
         flush();
-        RecordReaderIterator<InternalRow> iterator = this.edgeHandle.getIterator(null, projection);
+        RecordReaderIterator<InternalRow> iterator = this.edgeHandle.getIterator(null,
+            null, projection);
         PaimonIterator it = new PaimonIterator(iterator);
         return new EdgeScanIterator<>(it, pushdown, encoder.getEdgeEncoder()::getEdge);
     }

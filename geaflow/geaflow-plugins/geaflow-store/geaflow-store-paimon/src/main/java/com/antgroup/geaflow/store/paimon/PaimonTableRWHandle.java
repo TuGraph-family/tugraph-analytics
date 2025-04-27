@@ -26,6 +26,7 @@ import java.util.OptionalLong;
 import org.apache.paimon.catalog.Identifier;
 import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.data.InternalRow;
+import org.apache.paimon.predicate.Predicate;
 import org.apache.paimon.reader.RecordReader;
 import org.apache.paimon.reader.RecordReaderIterator;
 import org.apache.paimon.table.Table;
@@ -84,12 +85,18 @@ public class PaimonTableRWHandle {
         return latestSnapshotId;
     }
 
-    public RecordReaderIterator<InternalRow> getIterator(Filter<InternalRow> filter,
+    public RecordReaderIterator<InternalRow> getIterator(Predicate predicate, Filter filter,
                                                          int[] projection) {
         try {
             ReadBuilder readBuilder = table.newReadBuilder().withProjection(projection);
+            if (predicate != null) {
+                readBuilder.withFilter(predicate);
+            }
             List<Split> splits = readBuilder.newScan().plan().splits();
             TableRead tableRead = readBuilder.newRead();
+            if (predicate != null) {
+                tableRead.executeFilter();
+            }
             RecordReader<InternalRow> reader = tableRead.createReader(splits);
             if (filter != null) {
                 reader = reader.filter(filter);

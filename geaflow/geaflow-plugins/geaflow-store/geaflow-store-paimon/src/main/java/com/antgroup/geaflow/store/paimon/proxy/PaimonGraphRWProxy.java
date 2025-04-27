@@ -19,6 +19,8 @@
 
 package com.antgroup.geaflow.store.paimon.proxy;
 
+import static java.util.Collections.singletonList;
+
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
@@ -28,19 +30,20 @@ import com.antgroup.geaflow.state.pushdown.filter.inner.GraphFilter;
 import com.antgroup.geaflow.state.pushdown.filter.inner.IGraphFilter;
 import com.antgroup.geaflow.store.paimon.PaimonTableRWHandle;
 import com.antgroup.geaflow.store.paimon.iterator.PaimonIterator;
+import com.antgroup.geaflow.store.paimon.predicate.BytesStartsWith;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import org.apache.paimon.data.BinaryString;
 import org.apache.paimon.data.InternalRow;
+import org.apache.paimon.predicate.Equal;
+import org.apache.paimon.predicate.LeafPredicate;
+import org.apache.paimon.predicate.Predicate;
 import org.apache.paimon.reader.RecordReaderIterator;
-import org.apache.paimon.utils.Filter;
+import org.apache.paimon.types.RowType;
 
 public class PaimonGraphRWProxy<K, VV, EV> extends PaimonBaseGraphProxy<K, VV, EV> {
 
     public PaimonGraphRWProxy(PaimonTableRWHandle vertexHandle, PaimonTableRWHandle edgeHandle,
-                              int[] projection,
-                              IGraphKVEncoder<K, VV, EV> encoder) {
+                              int[] projection, IGraphKVEncoder<K, VV, EV> encoder) {
         super(vertexHandle, edgeHandle, projection, encoder);
     }
 
@@ -64,8 +67,10 @@ public class PaimonGraphRWProxy<K, VV, EV> extends PaimonBaseGraphProxy<K, VV, E
     @Override
     public IVertex<K, VV> getVertex(K sid, IStatePushDown pushdown) {
         byte[] key = encoder.getKeyType().serialize(sid);
-        Filter<InternalRow> filter = row -> Arrays.equals(row.getBinary(KEY_COLUMN_INDEX), key);
-        RecordReaderIterator<InternalRow> iterator = this.vertexHandle.getIterator(filter,
+        RowType rowType = vertexHandle.getTable().rowType();
+        Predicate predicate = new LeafPredicate(Equal.INSTANCE, rowType.getTypeAt(0), 0,
+            rowType.getField(0).name(), singletonList(key));
+        RecordReaderIterator<InternalRow> iterator = this.vertexHandle.getIterator(predicate, null,
             projection);
         try (PaimonIterator paimonIterator = new PaimonIterator(iterator)) {
             if (paimonIterator.hasNext()) {
@@ -84,12 +89,10 @@ public class PaimonGraphRWProxy<K, VV, EV> extends PaimonBaseGraphProxy<K, VV, E
     @Override
     public List<IEdge<K, EV>> getEdges(K sid, IStatePushDown pushdown) {
         byte[] prefixBytes = encoder.getEdgeEncoder().getScanBytes(sid);
-        BinaryString prefix = BinaryString.fromBytes(prefixBytes);
-        Filter<InternalRow> filter = row -> {
-            BinaryString key = row.getString(KEY_COLUMN_INDEX);
-            return key.startsWith(prefix);
-        };
-        RecordReaderIterator<InternalRow> iterator = this.edgeHandle.getIterator(filter,
+        RowType rowType = edgeHandle.getTable().rowType();
+        Predicate predicate = new LeafPredicate(BytesStartsWith.INSTANCE, rowType.getTypeAt(0), 0,
+            rowType.getField(0).name(), singletonList(prefixBytes));
+        RecordReaderIterator<InternalRow> iterator = this.edgeHandle.getIterator(predicate, null,
             projection);
         List<IEdge<K, EV>> edges = new ArrayList<>();
         try (PaimonIterator paimonIterator = new PaimonIterator(iterator)) {

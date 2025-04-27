@@ -19,20 +19,23 @@
 
 package com.antgroup.geaflow.store.paimon;
 
+import static java.util.Collections.singletonList;
+
 import com.antgroup.geaflow.common.tuple.Tuple;
 import com.antgroup.geaflow.state.serializer.IKVSerializer;
 import com.antgroup.geaflow.store.api.key.IKVStatefulStore;
 import com.antgroup.geaflow.store.context.StoreContext;
 import com.antgroup.geaflow.store.paimon.iterator.PaimonIterator;
 import com.google.common.base.Preconditions;
-import java.util.Arrays;
 import org.apache.paimon.catalog.Identifier;
-import org.apache.paimon.data.BinaryString;
 import org.apache.paimon.data.GenericRow;
 import org.apache.paimon.data.InternalRow;
+import org.apache.paimon.predicate.Equal;
+import org.apache.paimon.predicate.LeafPredicate;
+import org.apache.paimon.predicate.Predicate;
 import org.apache.paimon.reader.RecordReaderIterator;
 import org.apache.paimon.types.RowKind;
-import org.apache.paimon.utils.Filter;
+import org.apache.paimon.types.RowType;
 
 public class KVPaimonStore<K, V> extends BasePaimonStore implements IKVStatefulStore<K, V> {
 
@@ -80,9 +83,10 @@ public class KVPaimonStore<K, V> extends BasePaimonStore implements IKVStatefulS
     @Override
     public V get(K key) {
         byte[] binaryKey = this.kvSerializer.serializeKey(key);
-        Filter<InternalRow> filter = row -> Arrays.equals(row.getBinary(KEY_COLUMN_INDEX),
-            binaryKey);
-        RecordReaderIterator<InternalRow> iterator = this.tableHandle.getIterator(filter,
+        RowType rowType = this.tableHandle.getTable().rowType();
+        Predicate predicate = new LeafPredicate(Equal.INSTANCE, rowType.getTypeAt(0), 0,
+            rowType.getField(0).name(), singletonList(binaryKey));
+        RecordReaderIterator<InternalRow> iterator = this.tableHandle.getIterator(predicate, null,
             projection);
         try (PaimonIterator paimonIterator = new PaimonIterator(iterator)) {
             if (paimonIterator.hasNext()) {
@@ -104,8 +108,7 @@ public class KVPaimonStore<K, V> extends BasePaimonStore implements IKVStatefulS
     @Override
     public void remove(K key) {
         byte[] keyArray = this.kvSerializer.serializeKey(key);
-        GenericRow record = GenericRow.ofKind(RowKind.DELETE, BinaryString.fromBytes(keyArray),
-            null);
+        GenericRow record = GenericRow.ofKind(RowKind.DELETE, keyArray, null);
         this.tableHandle.write(record, 0);
     }
 

@@ -102,7 +102,7 @@ public class PaimonRWHandleTest {
 
         // 读取数据并断言 - 使用所有列的投影
         int[] projection = new int[]{0, 1, 2, 3, 4, 5}; // 所有列
-        RecordReaderIterator<InternalRow> iterator = edgeHandle.getIterator(null, projection);
+        RecordReaderIterator<InternalRow> iterator = edgeHandle.getIterator(null, null, projection);
         boolean found = false;
         while (iterator.hasNext()) {
             InternalRow internalRow = iterator.next();

@@ -76,7 +76,10 @@ public class PaimonKeyStateTest {
 
         // set chk = 2
         mapState.manage().operate().setCheckpointId(2L);
-        mapState.put("hello2", conf);
+
+        Map<String, String> conf2 = new HashMap<>(config);
+        conf2.put("conf2", "test");
+        mapState.put("hello2", conf2);
         // cannot read data with chk = 2 since chk2 not committed.
         Assert.assertEquals(mapState.get("hello").size(), 4);
         Assert.assertEquals(mapState.get("hello2").size(), 0);
@@ -87,7 +90,10 @@ public class PaimonKeyStateTest {
 
         // now be able to read data
         Assert.assertEquals(mapState.get("hello").size(), 4);
-        Assert.assertEquals(mapState.get("hello2").size(), 4);
+        Assert.assertEquals(mapState.get("hello2").size(), 5);
+
+        // read data which not exists
+        Assert.assertEquals(mapState.get("hello3").size(), 0);
 
         // TODO. recover to chk = 1, then be not able to read data with chk = 2.
         // mapState = StateFactory.buildKeyMapState(desc,
