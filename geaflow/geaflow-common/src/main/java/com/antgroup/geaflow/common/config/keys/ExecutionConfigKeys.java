@@ -392,7 +392,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey SHUFFLE_MEMORY_POOL_ENABLE = ConfigKeys
         .key("geaflow.shuffle.memory.pool.enable")
-        .defaultValue(true)
+        .defaultValue(false)
         .description("whether to enable shuffle memory pool");
 
     public static final ConfigKey SHUFFLE_COMPRESSION_ENABLE = ConfigKeys
@@ -542,6 +542,11 @@ public class ExecutionConfigKeys implements Serializable {
         .key("geaflow.shuffle.storage.type")
         .defaultValue(StorageLevel.MEMORY_AND_DISK)
         .description("type of shuffle storage");
+
+    public static final ConfigKey SHUFFLE_OFFHEAP_MEMORY_FRACTION = ConfigKeys
+        .key("geaflow.shuffle.offheap.fraction")
+        .defaultValue(0.2)
+        .description("fraction of shuffle offheap memory");
 
     public static final ConfigKey SHUFFLE_HEAP_MEMORY_FRACTION = ConfigKeys
         .key("geaflow.shuffle.heap.memory.fraction")

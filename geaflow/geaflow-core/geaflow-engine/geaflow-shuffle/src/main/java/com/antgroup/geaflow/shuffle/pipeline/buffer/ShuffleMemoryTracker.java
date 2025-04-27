@@ -23,8 +23,10 @@ import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.CONTAI
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_HEAP_MEMORY_FRACTION;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE;
 import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_MEMORY_SAFETY_FRACTION;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.SHUFFLE_OFFHEAP_MEMORY_FRACTION;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.memory.MemoryManager;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -36,16 +38,24 @@ public class ShuffleMemoryTracker {
 
     private final long maxShuffleSize;
     private final AtomicLong usedMemory;
+    private MemoryManager memoryPoolManager;
 
     public ShuffleMemoryTracker(Configuration config) {
         boolean memoryPool = config.getBoolean(SHUFFLE_MEMORY_POOL_ENABLE);
-
-        // Set offHeap 0 or not enable memory pool.
         double safetyFraction = config.getDouble(SHUFFLE_MEMORY_SAFETY_FRACTION);
-        long maxHeapSize = config.getInteger(CONTAINER_HEAP_SIZE_MB) * FileUtils.ONE_MB;
-        long maxMemorySize = (long) (maxHeapSize * safetyFraction);
-        double fraction = config.getDouble(SHUFFLE_HEAP_MEMORY_FRACTION);
-        maxShuffleSize = (long) (maxMemorySize * fraction);
+
+        long maxMemorySize;
+        if (memoryPool) {
+            memoryPoolManager = MemoryManager.build(config);
+            maxMemorySize = (long) (memoryPoolManager.maxMemory() * safetyFraction);
+            double fraction = config.getDouble(SHUFFLE_OFFHEAP_MEMORY_FRACTION);
+            maxShuffleSize = (long) (maxMemorySize * fraction);
+        } else {
+            long maxHeapSize = config.getInteger(CONTAINER_HEAP_SIZE_MB) * FileUtils.ONE_MB;
+            maxMemorySize = (long) (maxHeapSize * safetyFraction);
+            double fraction = config.getDouble(SHUFFLE_HEAP_MEMORY_FRACTION);
+            maxShuffleSize = (long) (maxMemorySize * fraction);
+        }
 
         usedMemory = new AtomicLong(0);
         LOGGER.info("memoryPool:{} maxMemory:{}mb shuffleMax:{}mb", memoryPool,
@@ -82,6 +92,9 @@ public class ShuffleMemoryTracker {
     }
 
     public void release() {
+        if (memoryPoolManager != null) {
+            memoryPoolManager.dispose();
+        }
     }
 
 }

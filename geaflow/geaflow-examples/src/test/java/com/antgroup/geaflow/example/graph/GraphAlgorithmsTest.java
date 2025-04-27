@@ -20,6 +20,7 @@
 package com.antgroup.geaflow.example.graph;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.env.EnvironmentFactory;
 import com.antgroup.geaflow.example.base.BaseTest;
 import com.antgroup.geaflow.example.config.ExampleConfigKeys;
@@ -43,8 +44,10 @@ import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+@Test(singleThreaded = true)
 public class GraphAlgorithmsTest extends BaseTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphAlgorithmsTest.class);
@@ -57,11 +60,29 @@ public class GraphAlgorithmsTest extends BaseTest {
         TEST_CONFIG.put(ExampleConfigKeys.GEAFLOW_SINK_TYPE.getKey(), SinkType.FILE_SINK.name());
     }
 
+    public static class GraphAlgorithmTestFactory {
+        @Factory
+        public Object[] factoryMethod() {
+            return new Object[]{
+                new GraphAlgorithmsTest(true),
+                new GraphAlgorithmsTest(false),
+            };
+        }
+    }
+
+    private final boolean memoryPool;
+
+    public GraphAlgorithmsTest(boolean memoryPool) {
+        this.memoryPool = memoryPool;
+    }
+
     @Test
     public void weakConnectedComponentsTest() throws Exception {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = WeakConnectedComponents.submit(environment);
         if (!result.isSuccess()) {
@@ -76,6 +97,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = AllShortestPath.submit(environment);
         if (!result.isSuccess()) {
@@ -89,6 +112,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = ClosenessCentrality.submit(environment);
         if (!result.isSuccess()) {
@@ -102,6 +127,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = ClusterCoefficient.submit(environment);
         if (!result.isSuccess()) {
@@ -115,6 +142,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = CommonNeighbors.submit(environment);
         if (!result.isSuccess()) {
@@ -128,6 +157,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = KCore.submit(environment);
         if (!result.isSuccess()) {
@@ -141,6 +172,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = LabelPropagation.submit(environment);
         if (!result.isSuccess()) {
@@ -155,6 +188,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = LinkPrediction.submit(environment);
         if (!result.isSuccess()) {
@@ -168,6 +203,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = NPaths.submit(environment);
         if (!result.isSuccess()) {
@@ -181,6 +218,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = PageRank.submit(environment);
         if (!result.isSuccess()) {
@@ -194,6 +233,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = PersonalRank.submit(environment);
         if (!result.isSuccess()) {
@@ -207,6 +248,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = ShortestPath.submit(environment);
         if (!result.isSuccess()) {
@@ -220,6 +263,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = ShortestPathOfVertexSet.submit(environment);
         if (!result.isSuccess()) {
@@ -233,6 +278,8 @@ public class GraphAlgorithmsTest extends BaseTest {
         environment = EnvironmentFactory.onLocalEnvironment();
         Configuration config = environment.getEnvironmentContext().getConfig();
         config.putAll(TEST_CONFIG);
+        config.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE.getKey(),
+            Boolean.toString(memoryPool));
 
         IPipelineResult result = SSSP.submit(environment);
         if (!result.isSuccess()) {

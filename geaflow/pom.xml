@@ -624,7 +624,13 @@
                 <version>${project.version}</version>
             </dependency>
             <!-- end -->
+
             <!-- state -->
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-memory</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-state-common</artifactId>

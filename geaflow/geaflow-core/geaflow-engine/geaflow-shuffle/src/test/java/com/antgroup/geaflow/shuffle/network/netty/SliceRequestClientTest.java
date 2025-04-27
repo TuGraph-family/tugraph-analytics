@@ -22,9 +22,13 @@ package com.antgroup.geaflow.shuffle.network.netty;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.shuffle.ShuffleAddress;
+import com.antgroup.geaflow.memory.MemoryGroupManger;
+import com.antgroup.geaflow.memory.MemoryManager;
+import com.antgroup.geaflow.memory.MemoryView;
 import com.antgroup.geaflow.shuffle.message.PipelineSliceMeta;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.network.IConnectionManager;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.MemoryViewBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeFetcherBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.channel.AbstractInputChannel;
@@ -43,6 +47,7 @@ import org.testng.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+@Test(singleThreaded = true)
 public class SliceRequestClientTest {
 
     private boolean enableBackPressure;
@@ -52,7 +57,16 @@ public class SliceRequestClientTest {
     }
 
     @Test
-    public void testCreditBasedFetch() throws IOException,
+    public void testFetchWithoutMemoryPool() throws IOException, InterruptedException {
+        testCreditBasedFetch(false);
+    }
+
+    @Test
+    public void testFetchWithMemoryPool() throws IOException, InterruptedException {
+        testCreditBasedFetch(true);
+    }
+
+    private void testCreditBasedFetch(boolean enableMemoryPool) throws IOException,
         InterruptedException {
         Configuration configuration = new Configuration();
         configuration.put(ExecutionConfigKeys.JOB_APP_NAME, "default");
@@ -61,6 +75,7 @@ public class SliceRequestClientTest {
         configuration.put(ExecutionConfigKeys.SHUFFLE_FETCH_CHANNEL_QUEUE_SIZE, "1");
         configuration.put(ExecutionConfigKeys.SHUFFLE_WRITER_BUFFER_SIZE, "10");
         configuration.put(ExecutionConfigKeys.SHUFFLE_FLUSH_BUFFER_SIZE_BYTES, "5");
+        configuration.put(ExecutionConfigKeys.SHUFFLE_MEMORY_POOL_ENABLE, String.valueOf(enableMemoryPool));
 
         ShuffleManager shuffleManager = ShuffleManager.init(configuration);
         IConnectionManager connectionManager = shuffleManager.getConnectionManager();
@@ -71,9 +86,9 @@ public class SliceRequestClientTest {
         PipelineSliceMeta slice1 = new PipelineSliceMeta(sliceId, 1, address);
         inputSlices.add(slice1);
 
-        PipeBuffer pipeBuffer = new PipeBuffer("hello".getBytes(), 1);
+        PipeBuffer pipeBuffer = buildPipeBuffer(enableMemoryPool, "hello".getBytes(), 1);
         PipeBuffer pipeBuffer2 = new PipeBuffer(1, 1, false);
-        PipeBuffer pipeBuffer3 = new PipeBuffer("hello".getBytes(), 2);
+        PipeBuffer pipeBuffer3 = buildPipeBuffer(enableMemoryPool, "hello".getBytes(), 2);
         PipeBuffer pipeBuffer4 = new PipeBuffer(2 , 1, true);
         PipelineSlice slice = new PipelineSlice("task", sliceId);
         slice.add(pipeBuffer);
@@ -116,6 +131,17 @@ public class SliceRequestClientTest {
 
         ShuffleManager.getInstance().release(sliceId.getPipelineId());
         ShuffleManager.getInstance().close();
+    }
+
+    private PipeBuffer buildPipeBuffer(boolean enableMemoryPool, byte[] content, long batchId) {
+        if (enableMemoryPool) {
+            MemoryView view = MemoryManager.getInstance()
+                .requireMemory(content.length, MemoryGroupManger.SHUFFLE);
+            view.getWriter().write(content);
+            return new PipeBuffer(new MemoryViewBuffer(view, false), batchId);
+        } else {
+            return new PipeBuffer(content, batchId);
+        }
     }
 
     public static class SimpleTestFactory {

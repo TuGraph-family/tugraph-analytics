@@ -58,6 +58,10 @@
             <groupId>com.antgroup.tugraph</groupId>
             <artifactId>geaflow-model</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.antgroup.tugraph</groupId>
+            <artifactId>geaflow-memory</artifactId>
+        </dependency>
 
         <dependency>
             <artifactId>netty-all</artifactId>

@@ -54,6 +54,26 @@ public class ShuffleMemoryTrackerTest {
     }
 
     @Test
+    public void testOffheapRequireAndRelease() {
+        Configuration configuration = new Configuration();
+        configuration.put(SHUFFLE_MEMORY_POOL_ENABLE, "true");
+        ShuffleMemoryTracker tracker = new ShuffleMemoryTracker(configuration);
+
+        byte[] bytes1 = new byte[100];
+        HeapBuffer buffer1 = new HeapBuffer(bytes1, false);
+        Assert.assertEquals(tracker.getUsedMemory(), 0);
+
+        byte[] bytes2 = new byte[200];
+        HeapBuffer buffer2 = new HeapBuffer(bytes2, tracker);
+        Assert.assertEquals(tracker.getUsedMemory(), 200);
+
+        buffer1.release();
+        Assert.assertEquals(tracker.getUsedMemory(), 200);
+        buffer2.release();
+        Assert.assertEquals(tracker.getUsedMemory(), 0);
+    }
+
+    @Test
     public void testConcurrency() throws InterruptedException {
         Map<String, String> config = new HashMap<>();
         config.put(CONTAINER_HEAP_SIZE_MB.getKey(), "1000");
