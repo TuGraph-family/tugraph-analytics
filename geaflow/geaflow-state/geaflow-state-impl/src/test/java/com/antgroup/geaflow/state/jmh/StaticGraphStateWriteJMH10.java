@@ -94,7 +94,7 @@ public class StaticGraphStateWriteJMH10 extends JMHParameter {
         graphState.manage().operate().finish();
         graphState.manage().operate().close();
         graphState.manage().operate().drop();
-        FileUtils.deleteQuietly(new File("/tmp/geaflow_cstore_local"));
+        FileUtils.deleteQuietly(new File("/tmp/geaflow_store_local"));
     }
 
 }
