@@ -26,6 +26,7 @@ import com.antgroup.geaflow.shuffle.message.PipelineBarrier;
 import com.antgroup.geaflow.shuffle.message.SliceId;
 import com.antgroup.geaflow.shuffle.message.WriterId;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.HeapBuffer.HeapBufferBuilder;
+import com.antgroup.geaflow.shuffle.pipeline.buffer.MemoryViewBuffer.MemoryViewBufferBuilder;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.OutBuffer.BufferBuilder;
 import com.antgroup.geaflow.shuffle.pipeline.buffer.PipeBuffer;
 import com.antgroup.geaflow.shuffle.pipeline.slice.IPipelineSlice;
@@ -81,15 +82,18 @@ public abstract class ShardWriter<T, R> {
         this.maxBufferSize = this.shuffleConfig.getMaxBufferSizeBytes();
         this.enableBackPressure = this.shuffleConfig.isBackpressureEnabled();
 
-        this.buffers = this.buildBufferBuilder(this.targetChannels);
+        this.buffers = this.buildBufferBuilder(this.targetChannels,
+            this.shuffleConfig.isMemoryPoolEnable());
         this.resultSlices = this.buildResultSlices(this.targetChannels);
         this.recordSerializer = this.getRecordSerializer();
     }
 
-    private BufferBuilder[] buildBufferBuilder(int channels) {
+    private BufferBuilder[] buildBufferBuilder(int channels, boolean enableMemoryPool) {
         BufferBuilder[] buffers = new BufferBuilder[channels];
         for (int i = 0; i < channels; i++) {
-            BufferBuilder bufferBuilder = new HeapBufferBuilder();
+            BufferBuilder bufferBuilder = enableMemoryPool
+                                          ? new MemoryViewBufferBuilder()
+                                          : new HeapBufferBuilder();
             bufferBuilder.enableMemoryTrack();
             buffers[i] = bufferBuilder;
         }
