@@ -19,11 +19,14 @@
 
 package com.antgroup.geaflow.state.pushdown.filter.inner;
 
+import com.antgroup.geaflow.state.data.TimeRange;
 import com.antgroup.geaflow.state.pushdown.filter.EdgeLabelFilter;
+import com.antgroup.geaflow.state.pushdown.filter.EdgeTsFilter;
 import com.antgroup.geaflow.state.pushdown.filter.FilterType;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
 import com.antgroup.geaflow.state.pushdown.filter.OrFilter;
 import com.antgroup.geaflow.state.pushdown.filter.VertexLabelFilter;
+import com.antgroup.geaflow.state.pushdown.filter.VertexTsFilter;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +36,10 @@ public class FilterHelper {
     public static boolean isSingleLimit(IFilter[] filters) {
         int orNumber = 0;
         int singleOrNumber = 0;
-        for (IFilter filter: filters) {
+        for (IFilter filter : filters) {
             if (filter.getFilterType() == FilterType.OR) {
                 orNumber++;
-                if (((OrFilter)filter).isSingleLimit()) {
+                if (((OrFilter) filter).isSingleLimit()) {
                     singleOrNumber++;
                 }
             }
@@ -112,5 +115,56 @@ public class FilterHelper {
         }
 
         return labels;
+    }
+
+    /**
+     * Parse dt from graph filter, only direct filter converter support.
+     *
+     * @param filter graph filter.
+     * @return time range
+     */
+    public static TimeRange parseDt(IGraphFilter filter, boolean isVertex) {
+        if (filter.getFilterType() == FilterType.OR || filter.getFilterType() == FilterType.AND) {
+            return parseDtCompose(filter, isVertex);
+        } else {
+            return parseDtNormal(filter, isVertex);
+        }
+    }
+
+    private static TimeRange parseDtCompose(IGraphFilter filter, boolean isVertex) {
+        BaseComposeGraphFilter composeFilter = (BaseComposeGraphFilter) filter;
+        if (composeFilter.getFilterList().isEmpty()) {
+            return null;
+        }
+
+        TimeRange range = null;
+        for (IGraphFilter childFilter : composeFilter.getFilterList()) {
+            range = parseDtNormal(childFilter, isVertex);
+            if (range != null) {
+                return range;
+            }
+        }
+
+        return null;
+    }
+
+    private static TimeRange parseDtNormal(IGraphFilter filter, boolean isVertex) {
+        if (isVertex) {
+            if (filter.contains(FilterType.VERTEX_TS)) {
+                VertexTsFilter tsFilter = (VertexTsFilter) (filter.retrieve(FilterType.VERTEX_TS)
+                    .getFilter());
+
+                return tsFilter.getTimeRange();
+            }
+        } else {
+            if (filter.contains(FilterType.EDGE_TS)) {
+                EdgeTsFilter tsFilter = (EdgeTsFilter) (filter.retrieve(FilterType.EDGE_TS)
+                    .getFilter());
+
+                return tsFilter.getTimeRange();
+            }
+        }
+
+        return null;
     }
 }

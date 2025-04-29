@@ -38,6 +38,8 @@ public class ProxyBuilder {
             if (partitionType == PartitionType.LABEL) {
                 // TODO: Support async graph proxy partitioned by label
                 return new SyncGraphLabelPartitionProxy<>(rocksdbClient, encoder, config);
+            } else if (partitionType == PartitionType.DT) {
+                return new SyncGraphDtPartitionProxy<>(rocksdbClient, encoder, config);
             }
             throw new GeaflowRuntimeException("unexpected partition type: " + config.getString(
                 RocksdbConfigKeys.ROCKSDB_GRAPH_STORE_PARTITION_TYPE));
