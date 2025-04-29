@@ -103,4 +103,14 @@ public class RocksdbConfigKeys {
         .key("geaflow.store.rocksdb.graph.store.partition.type")
         .defaultValue("none")    // Default none partition
         .description("rocksdb graph store partition type, default none");
+
+    public static final ConfigKey ROCKSDB_GRAPH_STORE_DT_START = ConfigKeys
+        .key("geaflow.store.rocksdb.graph.store.dt.start")
+        .defaultValue("1735660800")    // Default start timestamp 2025-01-01 00:00:00
+        .description("rocksdb graph store start timestamp for dt partition");
+
+    public static final ConfigKey ROCKSDB_GRAPH_STORE_DT_CYCLE = ConfigKeys
+        .key("geaflow.store.rocksdb.graph.store.dt.cycle")
+        .defaultValue("2592000")    // Default timestamp cycle 30 days
+        .description("rocksdb graph store start timestamp for dt partition");
 }

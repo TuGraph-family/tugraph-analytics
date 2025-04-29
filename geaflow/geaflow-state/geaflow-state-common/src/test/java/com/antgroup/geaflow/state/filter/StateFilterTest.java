@@ -262,4 +262,30 @@ public class StateFilterTest {
         labels = FilterHelper.parseLabel(filter, false);
         Assert.assertEquals(labels.size(), 0);
     }
+
+    @Test
+    public void testParseDtFilter() {
+        TimeRange range = TimeRange.of(1735660800, 1740758400);
+        IGraphFilter filter = GraphFilter.of(new EdgeTsFilter(range));
+        TimeRange parse_range = FilterHelper.parseDt(filter, false);
+        Assert.assertEquals(parse_range, range);
+        parse_range = FilterHelper.parseDt(filter, true);
+        Assert.assertNull(parse_range);
+
+        filter = GraphFilter.of(new EdgeLabelFilter("person").or(
+                new EdgeLabelFilter("trade").or(new EdgeTsFilter(range)))
+            .or(new EdgeLabelFilter("foo")));
+        parse_range = FilterHelper.parseDt(filter, false);
+        Assert.assertEquals(parse_range, range);
+        parse_range = FilterHelper.parseDt(filter, true);
+        Assert.assertNull(parse_range);
+
+        filter = GraphFilter.of(new VertexLabelFilter("person").or(
+                new VertexLabelFilter("trade").or(new VertexTsFilter(range)))
+            .or(new VertexLabelFilter("foo")));
+        parse_range = FilterHelper.parseDt(filter, true);
+        Assert.assertEquals(parse_range, range);
+        parse_range = FilterHelper.parseDt(filter, false);
+        Assert.assertNull(parse_range);
+    }
 }
