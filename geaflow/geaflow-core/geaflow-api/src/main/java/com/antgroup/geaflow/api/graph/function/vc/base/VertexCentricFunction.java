@@ -21,6 +21,7 @@ package com.antgroup.geaflow.api.graph.function.vc.base;
 
 import com.antgroup.geaflow.api.context.RuntimeContext;
 import com.antgroup.geaflow.api.function.Function;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.model.graph.vertex.IVertex;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
@@ -94,14 +95,29 @@ public interface VertexCentricFunction<K, VV, EV, M> extends Function {
         List<IEdge<K, EV>> getEdges();
 
         /**
+         * Returns the both edges iterator.
+         */
+        CloseableIterator<IEdge<K, EV>> getEdgesIterator();
+
+        /**
          * Returns the out edges.
          */
         List<IEdge<K, EV>> getOutEdges();
 
         /**
+         * Returns the out edges iterator.
+         */
+        CloseableIterator<IEdge<K, EV>> getOutEdgesIterator();
+
+        /**
          * Returns the in edges.
          */
         List<IEdge<K, EV>> getInEdges();
+
+        /**
+         * Returns the in edges iterator.
+         */
+        CloseableIterator<IEdge<K, EV>> getInEdgesIterator();
 
         /**
          * Get the edges which satisfies filter condition.

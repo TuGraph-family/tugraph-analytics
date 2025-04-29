@@ -258,6 +258,15 @@ public class GQLAlgorithmTest {
             .checkSinkResult();
     }
 
+    @Test
+    public void testEdgeIterator() throws Exception {
+        QueryTester
+                .build()
+                .withQueryPath("/query/gql_edge_iterator_test.sql")
+                .execute()
+                .checkSinkResult();
+    }
+
     private void clearGraph() throws IOException {
         File file = new File(TEST_GRAPH_PATH);
         if (file.exists()) {

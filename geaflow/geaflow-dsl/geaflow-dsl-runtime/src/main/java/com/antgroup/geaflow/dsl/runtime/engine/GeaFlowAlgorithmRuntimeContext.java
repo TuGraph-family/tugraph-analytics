@@ -23,6 +23,7 @@ import com.antgroup.geaflow.api.graph.function.aggregate.VertexCentricAggContext
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.TraversalEdgeQuery;
 import com.antgroup.geaflow.api.graph.function.vc.VertexCentricTraversalFunction.VertexCentricTraversalFuncContext;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.dsl.common.algo.AlgorithmRuntimeContext;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
@@ -91,6 +92,20 @@ public class GeaFlowAlgorithmRuntimeContext implements AlgorithmRuntimeContext<O
     @Override
     public List<RowEdge> loadDynamicEdges(EdgeDirection direction) {
         throw new RuntimeException("GeaFlowAlgorithmRuntimeContext not support loadDynamicEdges");
+    }
+
+    @Override
+    public CloseableIterator<RowEdge> loadStaticEdgesIterator(EdgeDirection direction) {
+        switch (direction) {
+            case OUT:
+                return (CloseableIterator) edgeQuery.getOutEdgesIterator();
+            case IN:
+                return (CloseableIterator) edgeQuery.getInEdgesIterator();
+            case BOTH:
+                return (CloseableIterator) edgeQuery.getEdgesIterator();
+            default:
+                throw new GeaFlowDSLException("Illegal edge direction: " + direction);
+        }
     }
 
     @Override
