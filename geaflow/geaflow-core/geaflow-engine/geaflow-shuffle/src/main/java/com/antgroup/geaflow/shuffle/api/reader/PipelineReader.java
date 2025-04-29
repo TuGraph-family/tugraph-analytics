@@ -40,6 +40,7 @@ import com.antgroup.geaflow.shuffle.serialize.EncoderMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.IMessageIterator;
 import com.antgroup.geaflow.shuffle.serialize.MessageIterator;
 import com.antgroup.geaflow.shuffle.service.ShuffleManager;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,7 +77,8 @@ public class PipelineReader implements IShuffleReader {
     public void init(IReaderContext context) {
         this.readerContext = (ReaderContext) context;
         this.encoders = new HashMap<>();
-        for (Map.Entry<Integer, ShardInputDesc> entry : this.readerContext.getInputShardMap().entrySet()) {
+        for (Map.Entry<Integer, ShardInputDesc> entry : this.readerContext.getInputShardMap()
+            .entrySet()) {
             this.encoders.put(entry.getKey(), entry.getValue().getEncoder());
         }
         this.taskName = this.readerContext.getTaskName();
@@ -86,13 +88,14 @@ public class PipelineReader implements IShuffleReader {
 
     @Override
     public void fetch(long windowId) {
+        Preconditions.checkArgument(windowId > 0, "window should be larger than 0");
         if (windowId <= this.targetWindowId) {
             return;
         }
-        if (windowId > 0) {
-            this.totalSliceNum = this.channels * (int) windowId;
-        }
+
+        this.totalSliceNum = this.channels;
         this.targetWindowId = windowId;
+        this.processedNum = 0;
 
         try {
             if (this.inputFetcher == null) {
@@ -124,10 +127,9 @@ public class PipelineReader implements IShuffleReader {
             if (next.isPresent()) {
                 PipeFetcherBuffer buffer = next.get();
                 if (buffer.isBarrier()) {
-                    if (this.targetWindowId != Long.MAX_VALUE) {
-                        if (buffer.getBatchId() <= this.targetWindowId || buffer.isFinish()) {
-                            this.processedNum++;
-                        }
+                    if (this.targetWindowId != Long.MAX_VALUE && (
+                        buffer.getBatchId() == this.targetWindowId || buffer.isFinish())) {
+                        this.processedNum++;
                     }
 
                     SliceId sliceId = buffer.getSliceId();
@@ -139,8 +141,10 @@ public class PipelineReader implements IShuffleReader {
                 } else {
                     int edgeId = buffer.getSliceId().getEdgeId();
                     this.readMetrics.increaseDecodeBytes(buffer.getBufferSize());
-                    IMessageIterator<?> msgIterator = this.getMessageIterator(edgeId, buffer.getBuffer());
-                    return new PipelineMessage<>(edgeId, buffer.getBatchId(), buffer.getStreamName(), msgIterator);
+                    IMessageIterator<?> msgIterator = this.getMessageIterator(edgeId,
+                        buffer.getBuffer());
+                    return new PipelineMessage<>(edgeId, buffer.getBatchId(),
+                        buffer.getStreamName(), msgIterator);
                 }
             } else {
                 return null;
@@ -160,9 +164,19 @@ public class PipelineReader implements IShuffleReader {
 
     @Override
     public void close() {
+        checkIfCloseable();
+
         this.isRunning = false;
         if (this.inputFetcher != null) {
             this.inputFetcher.close();
+        }
+    }
+
+    private void checkIfCloseable() {
+        boolean longTerm = this.targetWindowId == Long.MAX_VALUE;
+        boolean moreAvailable = this.processedNum < this.totalSliceNum;
+        if (!longTerm && moreAvailable) {
+            throw new GeaflowRuntimeException("shuffle reader has unfinished messages");
         }
     }
 
@@ -203,13 +217,16 @@ public class PipelineReader implements IShuffleReader {
     private List<PipelineSliceMeta> buildPrefetchSlice(List<PipelineSliceMeta> slices) {
         PipelineSliceMeta slice = slices.get(0);
         SliceId tmp = slice.getSliceId();
-        SliceId sliceId = new SliceId(tmp.getPipelineId(), tmp.getEdgeId(), -1, tmp.getSliceIndex());
+        SliceId sliceId = new SliceId(tmp.getPipelineId(), tmp.getEdgeId(), -1,
+            tmp.getSliceIndex());
         SliceManager sliceManager = ShuffleManager.getInstance().getSliceManager();
-        SpillablePipelineSlice resultSlice = (SpillablePipelineSlice) sliceManager.getSlice(sliceId);
+        SpillablePipelineSlice resultSlice = (SpillablePipelineSlice) sliceManager.getSlice(
+            sliceId);
         if (resultSlice == null || !resultSlice.isReady2read() || resultSlice.isReleased()) {
             throw new GeaflowRuntimeException("illegal slice: " + sliceId);
         }
-        PipelineSliceMeta newSlice = new PipelineSliceMeta(sliceId, slice.getWindowId(), this.connectionManager.getShuffleAddress());
+        PipelineSliceMeta newSlice = new PipelineSliceMeta(sliceId, slice.getWindowId(),
+            this.connectionManager.getShuffleAddress());
         return Collections.singletonList(newSlice);
     }
 

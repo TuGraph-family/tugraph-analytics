@@ -46,7 +46,8 @@ public class PipelineInputFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineInputFetcher.class);
 
     private static final ExecutorService FETCH_EXECUTOR = Executors.getUnboundedExecutorService(
-        PipelineInputFetcher.class.getSimpleName(), 60, TimeUnit.SECONDS, null, ComponentUncaughtExceptionHandler.INSTANCE);
+        PipelineInputFetcher.class.getSimpleName(), 60, TimeUnit.SECONDS, null,
+        ComponentUncaughtExceptionHandler.INSTANCE);
 
     private final Map<Integer, FetcherTask> taskId2fetchTask = new HashMap<>();
     private final Configuration config;
@@ -97,7 +98,8 @@ public class PipelineInputFetcher {
         FetcherTask task = this.taskId2fetchTask.remove(taskId);
         if (task != null) {
             task.close();
-            LOGGER.info("close fetcher task {} {}", task.initFetchRequest.getTaskName(), task.initFetchRequest.getShufflePhases());
+            LOGGER.info("close fetcher task {} {}", task.initFetchRequest.getTaskName(),
+                task.initFetchRequest.getShufflePhases());
         }
     }
 
@@ -136,9 +138,11 @@ public class PipelineInputFetcher {
             this.initFetchRequest = request;
             this.shuffleReader = (PipelineReader) ShuffleManager.getInstance().loadShuffleReader();
             this.shuffleReader.init(this.buildReaderContext());
-            this.fetchListeners = request.getFetchListeners().toArray(new IInputMessageBuffer<?>[]{});
+            this.fetchListeners = request.getFetchListeners()
+                .toArray(new IInputMessageBuffer<?>[]{});
             this.barrierHandler = new BarrierHandler(request.getTaskId(), request.getInputShards());
-            this.name = String.format(READER_NAME_PATTERN, request.getTaskId(), request.getTaskIndex(), request.getTaskParallelism());
+            this.name = String.format(READER_NAME_PATTERN, request.getTaskId(),
+                request.getTaskIndex(), request.getTaskParallelism());
         }
 
         public void start() {
@@ -164,10 +168,12 @@ public class PipelineInputFetcher {
             try {
                 this.fetch();
             } catch (GeaflowRuntimeException e) {
-                LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId, this.name, e);
+                LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId,
+                    this.name, e);
                 throw e;
             } catch (Throwable e) {
-                LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId, this.name, e);
+                LOGGER.error("fetcher task err with window id {} {}", this.targetWindowId,
+                    this.name, e);
                 throw new GeaflowRuntimeException(e.getMessage(), e);
             }
         }
