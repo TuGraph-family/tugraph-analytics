@@ -59,6 +59,7 @@ public class MultiShardFetcher implements ShardFetcher, ShardFetcherListener {
     private final Map<ShardFetcher, Integer> inputFetcherToIndexOffsetMap;
 
     private final int totalNumberOfInputChannels;
+    private volatile boolean isReleased;
 
     public MultiShardFetcher(OneShardFetcher... inputFetchers) {
         this.shardFetchers = inputFetchers;
@@ -90,6 +91,7 @@ public class MultiShardFetcher implements ShardFetcher, ShardFetcherListener {
         }
 
         this.totalNumberOfInputChannels = currentNumberOfInputChannels;
+        this.isReleased = false;
     }
 
     @Override
@@ -249,8 +251,14 @@ public class MultiShardFetcher implements ShardFetcher, ShardFetcherListener {
 
     @Override
     public void close() {
-        for (ShardFetcher fetcher : shardFetchers) {
-            fetcher.close();
+        if (!isReleased) {
+            for (ShardFetcher fetcher : shardFetchers) {
+                fetcher.close();
+            }
+            synchronized (inputFetchersWithData) {
+                inputFetchersWithData.notifyAll();
+            }
+            isReleased = true;
         }
     }
 
