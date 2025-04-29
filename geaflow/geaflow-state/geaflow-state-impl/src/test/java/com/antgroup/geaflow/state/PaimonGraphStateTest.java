@@ -96,9 +96,9 @@ public class PaimonGraphStateTest
 
         // set chk = 1
         graphState.manage().operate().setCheckpointId(1L);
-        // write 1 vertex and 390 edges.
+        // write 1 vertex and 100 edges.
         graphState.staticGraph().V().add(new ValueVertex<>("1", "vertex_hello"));
-        for (int i = 0; i < 390; i++) {
+        for (int i = 0; i < 100; i++) {
             String id = Integer.toString(i);
             graphState.staticGraph().E().add(new ValueEdge<>("1", id, "edge_hello"));
         }
@@ -108,27 +108,30 @@ public class PaimonGraphStateTest
         // commit chk = 1, now be able to read data
         graphState.manage().operate().archive();
         Assert.assertNotNull(graphState.staticGraph().V().query("1").get());
-        Assert.assertEquals(graphState.staticGraph().E().query("1").asList().size(), 390);
+        Assert.assertEquals(graphState.staticGraph().E().query("1").asList().size(), 100);
 
         // set chk = 2
         graphState.manage().operate().setCheckpointId(2L);
         // write 1 new vertex and 390 new edges.
         graphState.staticGraph().V().add(new ValueVertex<>("2", "vertex_hello"));
-        for (int i = 0; i < 390; i++) {
+        for (int i = 0; i < 200; i++) {
             String id = Integer.toString(i);
             graphState.staticGraph().E().add(new ValueEdge<>("2", id, "edge_hello"));
         }
         // be not able to read data with chk = 2 since not committed.
         Assert.assertNotNull(graphState.staticGraph().V().query("1").get());
-        Assert.assertEquals(graphState.staticGraph().E().query("1").asList().size(), 390);
+        Assert.assertEquals(graphState.staticGraph().E().query("1").asList().size(), 100);
         Assert.assertNull(graphState.staticGraph().V().query("2").get());
         Assert.assertEquals(graphState.staticGraph().E().query("2").asList().size(), 0);
         // commit chk = 2, now be able to read data
         graphState.manage().operate().archive();
         Assert.assertNotNull(graphState.staticGraph().V().query("1").get());
-        Assert.assertEquals(graphState.staticGraph().E().query("1").asList().size(), 390);
+        Assert.assertEquals(graphState.staticGraph().E().query("1").asList().size(), 100);
         Assert.assertNotNull(graphState.staticGraph().V().query("2").get());
-        Assert.assertEquals(graphState.staticGraph().E().query("2").asList().size(), 390);
+        Assert.assertEquals(graphState.staticGraph().E().query("2").asList().size(), 200);
+        // Read data which not exists.
+        Assert.assertEquals(graphState.staticGraph().E().query("3").asList().size(), 0);
+        Assert.assertEquals(graphState.staticGraph().E().query("").asList().size(), 0);
 
         // TODO. Rollback to chk = 1, then be not able to read data with chk = 2.
         // graphState.manage().operate().setCheckpointId(1);
