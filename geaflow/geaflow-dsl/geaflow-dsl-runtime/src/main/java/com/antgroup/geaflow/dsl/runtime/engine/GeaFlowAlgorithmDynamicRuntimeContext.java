@@ -170,6 +170,20 @@ public class GeaFlowAlgorithmDynamicRuntimeContext implements AlgorithmRuntimeCo
     }
 
     @Override
+    public CloseableIterator<RowEdge> loadStaticEdgesIterator(EdgeDirection direction) {
+        switch (direction) {
+            case OUT:
+                return (CloseableIterator) edgeQuery.getOutEdgesIterator();
+            case IN:
+                return (CloseableIterator) edgeQuery.getInEdgesIterator();
+            case BOTH:
+                return (CloseableIterator) edgeQuery.getEdgesIterator();
+            default:
+                throw new GeaFlowDSLException("Illegal edge direction: " + direction);
+        }
+    }
+
+    @Override
     public void sendMessage(Object vertexId, Object message) {
         incVCTraversalCtx.sendMessage(vertexId, message);
         if (getCurrentIterationId() > iterationId) {

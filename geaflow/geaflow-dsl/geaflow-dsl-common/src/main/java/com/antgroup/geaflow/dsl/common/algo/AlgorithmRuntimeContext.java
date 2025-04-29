@@ -20,6 +20,7 @@
 package com.antgroup.geaflow.dsl.common.algo;
 
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.types.GraphSchema;
@@ -33,6 +34,8 @@ public interface AlgorithmRuntimeContext<K, M> {
     List<RowEdge> loadStaticEdges(EdgeDirection direction);
 
     List<RowEdge> loadDynamicEdges(EdgeDirection direction);
+
+    CloseableIterator<RowEdge> loadStaticEdgesIterator(EdgeDirection direction);
 
     void sendMessage(K vertexId, M message);
 
