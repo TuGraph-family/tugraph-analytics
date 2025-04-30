@@ -21,6 +21,7 @@ package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.dynamic;
 
 
 import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction.EdgeQuery;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.state.DynamicEdgeState;
 import com.antgroup.geaflow.state.GraphState;
@@ -58,15 +59,33 @@ public class DynamicEdgeQueryImpl<K, VV, EV> implements EdgeQuery<K, EV> {
     }
 
     @Override
+    public CloseableIterator<IEdge<K, EV>> getEdgesIterator() {
+        DynamicEdgeState<K, VV, EV> edgeState = graphState.dynamicGraph().E();
+        return edgeState.query(versionId, vId).iterator();
+    }
+
+    @Override
     public List<IEdge<K, EV>> getOutEdges() {
         DynamicEdgeState<K, VV, EV> edgeState = graphState.dynamicGraph().E();
         return edgeState.query(versionId, vId).by(OutEdgeFilter.instance()).asList();
     }
 
     @Override
+    public CloseableIterator<IEdge<K, EV>> getOutEdgesIterator() {
+        DynamicEdgeState<K, VV, EV> edgeState = graphState.dynamicGraph().E();
+        return edgeState.query(versionId, vId).by(OutEdgeFilter.instance()).iterator();
+    }
+
+    @Override
     public List<IEdge<K, EV>> getInEdges() {
         DynamicEdgeState<K, VV, EV> edgeState = graphState.dynamicGraph().E();
         return edgeState.query(versionId, vId).by(InEdgeFilter.instance()).asList();
+    }
+
+    @Override
+    public CloseableIterator<IEdge<K, EV>> getInEdgesIterator() {
+        DynamicEdgeState<K, VV, EV> edgeState = graphState.dynamicGraph().E();
+        return edgeState.query(versionId, vId).by(InEdgeFilter.instance()).iterator();
     }
 
     @Override

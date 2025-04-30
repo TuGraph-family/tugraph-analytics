@@ -20,6 +20,7 @@
 package com.antgroup.geaflow.operator.impl.graph.algo.vc.context.statical;
 
 import com.antgroup.geaflow.api.graph.function.vc.base.VertexCentricFunction.EdgeQuery;
+import com.antgroup.geaflow.common.iterator.CloseableIterator;
 import com.antgroup.geaflow.model.graph.edge.IEdge;
 import com.antgroup.geaflow.state.GraphState;
 import com.antgroup.geaflow.state.pushdown.filter.IFilter;
@@ -51,13 +52,28 @@ public class StaticEdgeQueryImpl<K, VV, EV> implements EdgeQuery<K, EV> {
     }
 
     @Override
+    public CloseableIterator<IEdge<K, EV>> getEdgesIterator() {
+        return graphState.staticGraph().E().query(vId).iterator();
+    }
+
+    @Override
     public List<IEdge<K, EV>> getOutEdges() {
         return graphState.staticGraph().E().query(vId).by(OutEdgeFilter.instance()).asList();
     }
 
     @Override
+    public CloseableIterator<IEdge<K, EV>> getOutEdgesIterator() {
+        return graphState.staticGraph().E().query(vId).by(OutEdgeFilter.instance()).iterator();
+    }
+
+    @Override
     public List<IEdge<K, EV>> getInEdges() {
         return graphState.staticGraph().E().query(vId).by(InEdgeFilter.instance()).asList();
+    }
+
+    @Override
+    public CloseableIterator<IEdge<K, EV>> getInEdgesIterator() {
+        return graphState.staticGraph().E().query(vId).by(InEdgeFilter.instance()).iterator();
     }
 
     @Override
