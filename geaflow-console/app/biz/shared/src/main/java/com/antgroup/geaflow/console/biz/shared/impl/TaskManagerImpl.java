@@ -20,10 +20,12 @@
 package com.antgroup.geaflow.console.biz.shared.impl;
 
 import static com.antgroup.geaflow.console.common.util.type.GeaflowOperationType.DELETE;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowOperationType.FINISH;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowOperationType.STARTUP_NOTIFY;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowOperationType.STOP;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.DELETED;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.FAILED;
+import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.FINISHED;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.RUNNING;
 import static com.antgroup.geaflow.console.common.util.type.GeaflowTaskStatus.STOPPED;
 
@@ -121,7 +123,10 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
                 start(task);
                 break;
             case STOP:
-                stop(task);
+                stop(task, false);
+                break;
+            case FINISH:
+                stop(task, true);
                 break;
             case REFRESH:
                 taskOperator.refreshStatus(task);
@@ -151,14 +156,21 @@ public class TaskManagerImpl extends IdManagerImpl<GeaflowTask, TaskView, TaskSe
         auditService.create(new GeaflowAudit(task.getId(), GeaflowOperationType.START));
     }
 
-    protected void stop(GeaflowTask task) {
+    protected void stop(GeaflowTask task, boolean isFinish) {
         GeaflowTaskStatus status = task.getStatus();
         if (status == RUNNING) {
             taskOperator.stop(task);
         }
 
-        taskService.updateStatus(task.getId(), status, STOPPED);
-        auditService.create(new GeaflowAudit(task.getId(), STOP));
+        if (isFinish) {
+            taskService.updateStatus(task.getId(), status, FINISHED);
+            auditService.create(new GeaflowAudit(task.getId(), FINISH));
+            log.info("Task {} is finished by {}", task.getId(), task.getModifierId());
+        } else {
+            taskService.updateStatus(task.getId(), status, STOPPED);
+            auditService.create(new GeaflowAudit(task.getId(), STOP));
+            log.info("Task {} is stopped by {}", task.getId(), task.getModifierId());
+        }
     }
 
     protected void clean(GeaflowTask task) {

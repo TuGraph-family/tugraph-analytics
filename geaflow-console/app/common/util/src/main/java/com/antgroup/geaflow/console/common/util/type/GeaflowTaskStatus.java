@@ -20,19 +20,17 @@
 package com.antgroup.geaflow.console.common.util.type;
 
 import com.antgroup.geaflow.console.common.util.exception.GeaflowException;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public enum GeaflowTaskStatus {
 
     CREATED,
 
-    /**
-     * submitting, but not scheduled to the engine.
-     */
     WAITING,
 
-    /**
-     * submitting, scheduled to the engine.
-     */
     STARTING,
 
     FAILED,
@@ -45,44 +43,25 @@ public enum GeaflowTaskStatus {
 
     DELETED;
 
+    private static final Map<GeaflowOperationType, Set<GeaflowTaskStatus>> allowedOperations = new HashMap<>();
+
+    static {
+        allowedOperations.put(GeaflowOperationType.START, EnumSet.of(CREATED, FAILED, STOPPED));
+        allowedOperations.put(GeaflowOperationType.STOP, EnumSet.of(RUNNING, WAITING));
+        allowedOperations.put(GeaflowOperationType.REFRESH, EnumSet.allOf(GeaflowTaskStatus.class));
+
+        Set<GeaflowTaskStatus> unRunningStatus = EnumSet.of(CREATED, FAILED, STOPPED, FINISHED);
+        allowedOperations.put(GeaflowOperationType.PUBLISH, unRunningStatus);
+        allowedOperations.put(GeaflowOperationType.RESET, unRunningStatus);
+        allowedOperations.put(GeaflowOperationType.DELETE, unRunningStatus);
+        allowedOperations.put(GeaflowOperationType.FINISH, EnumSet.of(RUNNING, FINISHED));
+    }
+
+
     public void checkOperation(GeaflowOperationType operationType) {
-        switch (operationType) {
-            case START:
-                switch (this) {
-                    case CREATED:
-                    case FAILED:
-                    case STOPPED:
-                        break;
-                    default:
-                        throw new GeaflowException("Task {} status can't {}", this, operationType);
-                }
-                break;
-            case STOP:
-                switch (this) {
-                    case RUNNING:
-                    case WAITING:
-                        break;
-                    default:
-                        throw new GeaflowException("Task {} status can't {}", this, operationType);
-                }
-                break;
-            case REFRESH:
-                break;
-            case PUBLISH:
-            case RESET:
-            case DELETE:
-                switch (this) {
-                    case CREATED:
-                    case FAILED:
-                    case STOPPED:
-                    case FINISHED:
-                        break;
-                    default:
-                        throw new GeaflowException("Task {} status can't {}", this, operationType);
-                }
-                break;
-            default:
-                throw new GeaflowException("Unsupported operation {} on task", operationType);
+        Set<GeaflowTaskStatus> allowedStatuses = allowedOperations.get(operationType);
+        if (allowedStatuses == null || !allowedStatuses.contains(this)) {
+            throw new GeaflowException("Task {} status can't {}", this, operationType);
         }
     }
 }

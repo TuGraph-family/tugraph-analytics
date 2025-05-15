@@ -40,6 +40,8 @@ public enum GeaflowOperationType {
 
     RESET,
 
-    STARTUP_NOTIFY
+    STARTUP_NOTIFY,
+
+    FINISH,
 
 }
