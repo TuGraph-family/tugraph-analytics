@@ -30,12 +30,15 @@ CREATE TABLE users (
 );
 
 CREATE TABLE tbl_result (
-	user_name varchar,
+	name_group DOUBLE,
 	count_id bigint,
 	sum_id bigint,
 	max_id bigint,
 	min_id bigint,
 	avg_id DOUBLE,
+	stddev_long DOUBLE,
+	stddev_int DOUBLE,
+	stddev_double DOUBLE,
 	distinct_id bigint
 ) WITH (
 	type='file',
@@ -44,12 +47,15 @@ CREATE TABLE tbl_result (
 
 INSERT INTO tbl_result
 SELECT
-  concat(o.name, '-' , concat(o.name, '-', o.name)) as _name,
+  Hash(concat(o.name, '-' , concat(o.name, '-', o.name))) % 2 as _group,
   mycount(o.name, o.id) AS count_id,
   SUM(o.id) AS sum_id,
   MAX(o.id) AS max_id,
   MIN(o.id) AS min_id,
   AVG(o.id) AS avg_id,
+  STDDEV_SAMP(o.id) AS stddev_long_id,
+  STDDEV_SAMP(cast(o.id as int)) AS stddev_int_id,
+  STDDEV_SAMP(cast(o.id as double)) AS stddev_double_id,
   COUNT(DISTINCT o.id) AS distinct_id
 FROM users o
-GROUP BY _name;
+GROUP BY _group;
