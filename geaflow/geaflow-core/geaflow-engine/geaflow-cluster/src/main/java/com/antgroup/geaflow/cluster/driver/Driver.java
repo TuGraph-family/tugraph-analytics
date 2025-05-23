@@ -19,6 +19,8 @@
 
 package com.antgroup.geaflow.cluster.driver;
 
+import com.antgroup.geaflow.cluster.client.callback.JobOperatorCallback;
+import com.antgroup.geaflow.cluster.client.callback.JobOperatorCallbackFactory;
 import com.antgroup.geaflow.cluster.common.AbstractContainer;
 import com.antgroup.geaflow.cluster.common.ExecutionIdGenerator;
 import com.antgroup.geaflow.cluster.constants.ClusterConstants;
@@ -62,6 +64,7 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
     private DriverContext driverContext;
     private ExecutorService executorService;
     private Map<PipelineService, IPipelineExecutor> pipelineExecutorMap;
+    private JobOperatorCallback jobOperatorCallback;
 
     public Driver() {
         this(0);
@@ -81,6 +84,7 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
             1,
             ThreadUtil.namedThreadFactory(true, DRIVER_EXECUTOR, ComponentUncaughtExceptionHandler.INSTANCE));
         this.pipelineExecutorMap = new HashMap<>();
+        this.jobOperatorCallback = JobOperatorCallbackFactory.createJobOperatorCallback(configuration);
 
         ExecutionIdGenerator.init(id);
         if (driverContext.getPipeline() != null) {
@@ -142,6 +146,8 @@ public class Driver extends AbstractContainer implements IDriver<IEvent, Boolean
                 pipelineExecutorMap.put(pipelineService, pipelineExecutor);
                 pipelineExecutor.startPipelineService(pipelineService);
             }
+
+            this.jobOperatorCallback.onFinish();
             LOGGER.info("finish execute pipeline {}", pipeline);
             return true;
         } catch (Throwable e) {
