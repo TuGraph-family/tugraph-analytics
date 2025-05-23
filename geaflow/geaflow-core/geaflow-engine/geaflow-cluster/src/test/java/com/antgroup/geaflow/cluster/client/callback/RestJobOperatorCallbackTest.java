@@ -19,25 +19,26 @@
 
 package com.antgroup.geaflow.cluster.client.callback;
 
-import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
-import com.antgroup.geaflow.cluster.client.callback.RestClusterStartedCallback.HttpRequest;
+import static com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys.JOB_UNIQUE_ID;
+
 import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.google.gson.Gson;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class RestClusterStartedCallbackTest {
+public class RestJobOperatorCallbackTest {
 
     static MockWebServer server;
     static String baseUrl;
@@ -47,8 +48,8 @@ public class RestClusterStartedCallbackTest {
         // Create a MockWebServer.
         server = new MockWebServer();
         // Schedule some responses.
-        server.enqueue(new MockResponse().setBody("{key:value}"));
-        server.enqueue(new MockResponse().setBody("{success:false}"));
+        server.enqueue(new MockResponse().setBody("{key:value,success:true}"));
+        server.enqueue(new MockResponse().setBody("{success:true}"));
         // Start the server.
         server.start();
         baseUrl = "http://" + server.getHostName() + ":" + server.getPort();
@@ -64,25 +65,18 @@ public class RestClusterStartedCallbackTest {
     public void test() throws InterruptedException {
         // Ask the server for its URL. You'll need this to make HTTP requests.
         Configuration configuration = new Configuration();
-        String url = URI.create(baseUrl).resolve("/v1/cluster").toString();
-        RestClusterStartedCallback callback = new RestClusterStartedCallback(configuration, url);
+        configuration.put(JOB_UNIQUE_ID, String.valueOf(0L));
+        RestJobOperatorCallback callback = new RestJobOperatorCallback(configuration, baseUrl);
         Map<String, ConnectAddress> addressList = new HashMap<>();
         addressList.put("1", new ConnectAddress());
-        ClusterMeta clusterMeta = new ClusterMeta(addressList, "master1");
-        callback.onSuccess(clusterMeta);
+        callback.onFinish();
 
         // confirm that your app made the HTTP requests you were expecting.
         RecordedRequest request1 = server.takeRequest();
-        Assertions.assertEquals("/v1/cluster", request1.getPath());
+        Assertions.assertEquals("/api/tasks/0/operations", request1.getPath());
         HttpRequest result1 = new Gson()
-            .fromJson(request1.getBody().readString(StandardCharsets.UTF_8), HttpRequest.class);
+                .fromJson(request1.getBody().readString(StandardCharsets.UTF_8), HttpRequest.class);
         Assertions.assertTrue(result1.isSuccess());
-
-        callback.onFailure(new RuntimeException("error"));
-        RecordedRequest request2 = server.takeRequest();
-        HttpRequest result2 = new Gson()
-            .fromJson(request2.getBody().readString(StandardCharsets.UTF_8), HttpRequest.class);
-        Assertions.assertFalse(result2.isSuccess());
     }
 
 }

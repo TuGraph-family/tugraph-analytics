@@ -23,7 +23,7 @@ import com.antgroup.geaflow.common.config.Configuration;
 import com.antgroup.geaflow.common.config.keys.DSLConfigKeys;
 import com.antgroup.geaflow.utils.HttpUtil;
 import com.google.gson.Gson;
-import java.io.Serializable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,36 +55,6 @@ public class RestClusterStartedCallback implements ClusterStartedCallback {
         request.setSuccess(false);
         request.setMessage(e.getMessage());
         HttpUtil.post(callbackUrl, new Gson().toJson(request), headers);
-    }
-
-    static class HttpRequest implements Serializable {
-        private boolean success;
-        private String message;
-        private Object data;
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public void setSuccess(boolean success) {
-            this.success = success;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
-        public Object getData() {
-            return data;
-        }
-
-        public void setData(Object data) {
-            this.data = data;
-        }
     }
 
 }
