@@ -31,20 +31,18 @@ import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 public class RestJobOperatorCallbackTest {
 
-    static MockWebServer server;
-    static String baseUrl;
+    MockWebServer server;
+    String baseUrl;
 
-    @BeforeAll
-    public static void prepare() throws IOException {
+    @BeforeClass
+    public void prepare() throws IOException {
         // Create a MockWebServer.
         server = new MockWebServer();
         // Schedule some responses.
@@ -55,8 +53,8 @@ public class RestJobOperatorCallbackTest {
         baseUrl = "http://" + server.getHostName() + ":" + server.getPort();
     }
 
-    @AfterAll
-    public static void tearUp() throws IOException {
+    @AfterClass
+    public void tearUp() throws IOException {
         // Shut down the server. Instances cannot be reused.
         server.shutdown();
     }
@@ -73,10 +71,10 @@ public class RestJobOperatorCallbackTest {
 
         // confirm that your app made the HTTP requests you were expecting.
         RecordedRequest request1 = server.takeRequest();
-        Assertions.assertEquals("/api/tasks/0/operations", request1.getPath());
+        Assert.assertEquals("/api/tasks/0/operations", request1.getPath());
         HttpRequest result1 = new Gson()
                 .fromJson(request1.getBody().readString(StandardCharsets.UTF_8), HttpRequest.class);
-        Assertions.assertTrue(result1.isSuccess());
+        Assert.assertTrue(result1.isSuccess());
     }
 
 }

@@ -20,7 +20,6 @@
 package com.antgroup.geaflow.cluster.client.callback;
 
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
-import com.antgroup.geaflow.cluster.client.callback.RestClusterStartedCallback.HttpRequest;
 import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.google.gson.Gson;
@@ -32,18 +31,19 @@ import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 
 public class RestClusterStartedCallbackTest {
 
-    static MockWebServer server;
-    static String baseUrl;
+    MockWebServer server;
+    String baseUrl;
 
-    @BeforeAll
-    public static void prepare() throws IOException {
+    @BeforeClass
+    public void prepare() throws IOException {
         // Create a MockWebServer.
         server = new MockWebServer();
         // Schedule some responses.
@@ -54,8 +54,8 @@ public class RestClusterStartedCallbackTest {
         baseUrl = "http://" + server.getHostName() + ":" + server.getPort();
     }
 
-    @AfterAll
-    public static void tearUp() throws IOException {
+    @AfterClass
+    public void tearUp() throws IOException {
         // Shut down the server. Instances cannot be reused.
         server.shutdown();
     }
@@ -73,16 +73,16 @@ public class RestClusterStartedCallbackTest {
 
         // confirm that your app made the HTTP requests you were expecting.
         RecordedRequest request1 = server.takeRequest();
-        Assertions.assertEquals("/v1/cluster", request1.getPath());
+        Assert.assertEquals("/v1/cluster", request1.getPath());
         HttpRequest result1 = new Gson()
             .fromJson(request1.getBody().readString(StandardCharsets.UTF_8), HttpRequest.class);
-        Assertions.assertTrue(result1.isSuccess());
+        Assert.assertTrue(result1.isSuccess());
 
         callback.onFailure(new RuntimeException("error"));
         RecordedRequest request2 = server.takeRequest();
         HttpRequest result2 = new Gson()
             .fromJson(request2.getBody().readString(StandardCharsets.UTF_8), HttpRequest.class);
-        Assertions.assertFalse(result2.isSuccess());
+        Assert.assertFalse(result2.isSuccess());
     }
 
 }
