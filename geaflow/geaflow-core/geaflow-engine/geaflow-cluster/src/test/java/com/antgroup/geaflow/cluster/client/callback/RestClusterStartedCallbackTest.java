@@ -20,7 +20,6 @@
 package com.antgroup.geaflow.cluster.client.callback;
 
 import com.antgroup.geaflow.cluster.client.callback.ClusterStartedCallback.ClusterMeta;
-import com.antgroup.geaflow.cluster.client.callback.RestClusterStartedCallback.HttpRequest;
 import com.antgroup.geaflow.cluster.rpc.ConnectAddress;
 import com.antgroup.geaflow.common.config.Configuration;
 import com.google.gson.Gson;
@@ -37,6 +36,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+
 public class RestClusterStartedCallbackTest {
 
     MockWebServer server;
@@ -47,8 +47,8 @@ public class RestClusterStartedCallbackTest {
         // Create a MockWebServer.
         server = new MockWebServer();
         // Schedule some responses.
-        server.enqueue(new MockResponse().setBody("{key:value,success:true}"));
-        server.enqueue(new MockResponse().setBody("{success:true}"));
+        server.enqueue(new MockResponse().setBody("{key:value}"));
+        server.enqueue(new MockResponse().setBody("{success:false}"));
         // Start the server.
         server.start();
         baseUrl = "http://" + server.getHostName() + ":" + server.getPort();
