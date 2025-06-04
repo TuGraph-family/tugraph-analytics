@@ -123,6 +123,15 @@ public class AggregateTest {
     }
 
     @Test
+    public void testAggregate_012() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/aggregate_012.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+    @Test
     public void testStreamAggregate_001() throws Exception {
         QueryTester
             .build()

@@ -52,6 +52,9 @@ import com.antgroup.geaflow.dsl.udf.table.agg.MinBinaryString;
 import com.antgroup.geaflow.dsl.udf.table.agg.MinDouble;
 import com.antgroup.geaflow.dsl.udf.table.agg.MinInteger;
 import com.antgroup.geaflow.dsl.udf.table.agg.MinLong;
+import com.antgroup.geaflow.dsl.udf.table.agg.PercentileDouble;
+import com.antgroup.geaflow.dsl.udf.table.agg.PercentileInteger;
+import com.antgroup.geaflow.dsl.udf.table.agg.PercentileLong;
 import com.antgroup.geaflow.dsl.udf.table.agg.StdDevSampDouble;
 import com.antgroup.geaflow.dsl.udf.table.agg.StdDevSampInteger;
 import com.antgroup.geaflow.dsl.udf.table.agg.StdDevSampLong;
@@ -96,6 +99,9 @@ public class PhysicAggregateRelNode extends Aggregate implements PhysicRelNode<R
     public static final String UDAF_MIN = "MIN";
 
     public static final String UDAF_STDDEV_SAMP = "STDDEV_SAMP";
+
+    public static final String UDAF_PERCENTILE = "PERCENTILE";
+
 
     public PhysicAggregateRelNode(
         RelOptCluster cluster,
@@ -444,6 +450,11 @@ public class PhysicAggregateRelNode extends Aggregate implements PhysicRelNode<R
                     aggClasses.add(StdDevSampLong.class);
                     aggClasses.add(StdDevSampDouble.class);
                     aggClasses.add(StdDevSampInteger.class);
+                    break;
+                case UDAF_PERCENTILE:
+                    aggClasses.add(PercentileLong.class);
+                    aggClasses.add(PercentileInteger.class);
+                    aggClasses.add(PercentileDouble.class);
                     break;
                 default:
                     throw new GeaFlowDSLException("Not support aggregate function " + aggName);

@@ -34,6 +34,9 @@ import com.antgroup.geaflow.dsl.udf.graph.PageRank;
 import com.antgroup.geaflow.dsl.udf.graph.SingleSourceShortestPath;
 import com.antgroup.geaflow.dsl.udf.graph.TriangleCount;
 import com.antgroup.geaflow.dsl.udf.graph.WeakConnectedComponents;
+import com.antgroup.geaflow.dsl.udf.table.agg.PercentileDouble;
+import com.antgroup.geaflow.dsl.udf.table.agg.PercentileInteger;
+import com.antgroup.geaflow.dsl.udf.table.agg.PercentileLong;
 import com.antgroup.geaflow.dsl.udf.table.date.AddMonths;
 import com.antgroup.geaflow.dsl.udf.table.date.DateAdd;
 import com.antgroup.geaflow.dsl.udf.table.date.DateDiff;
@@ -182,6 +185,10 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             .add(GeaFlowFunction.of(EdgeTargetId.class))
             .add(GeaFlowFunction.of(EdgeTimestamp.class))
             .add(GeaFlowFunction.of(IsDecimal.class))
+            // UDAF
+            .add(GeaFlowFunction.of(PercentileLong.class))
+            .add(GeaFlowFunction.of(PercentileInteger.class))
+            .add(GeaFlowFunction.of(PercentileDouble.class))
             // UDGA
             .add(GeaFlowFunction.of(SingleSourceShortestPath.class))
             .add(GeaFlowFunction.of(AllSourceShortestPath.class))
