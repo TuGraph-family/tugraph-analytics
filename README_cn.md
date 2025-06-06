@@ -92,7 +92,7 @@ GeaFlow支持增量图计算的能力，即在动态图（图是不断变化的�
 ## 联系我们
 您可以通过以下方式联系我们。
 
-![contacts](docs/static/img/contacts.png)
+![contacts](https://github.com/TuGraph-family/community/blob/master/assets/contacts-cn.png)
 
 ## 致谢
 GeaFlow 开发过程中部分模块参考了一些业界优秀的开源项目，包括 Apache Flink、Apache Spark 以及 Apache Calcite 等, 这里表示特别的感谢。也感谢对 GeaFlow 做过贡献的个人开发者，名单如下：
