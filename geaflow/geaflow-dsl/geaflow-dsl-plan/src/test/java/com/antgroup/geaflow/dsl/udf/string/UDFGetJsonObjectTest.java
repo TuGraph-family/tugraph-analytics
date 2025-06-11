@@ -19,10 +19,10 @@
 
 package com.antgroup.geaflow.dsl.udf.string;
 
+import static org.testng.Assert.assertEquals;
+
 import com.antgroup.geaflow.dsl.udf.table.string.GetJsonObject;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 public class UDFGetJsonObjectTest {
 

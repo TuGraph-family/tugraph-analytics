@@ -22,11 +22,6 @@ package com.antgroup.geaflow.dsl.udf.table.string;
 import com.antgroup.geaflow.dsl.common.function.Description;
 import com.antgroup.geaflow.dsl.common.function.UDF;
 import com.google.common.collect.Iterators;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.type.TypeFactory;
-import org.codehaus.jackson.type.JavaType;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -34,20 +29,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.type.TypeFactory;
+import org.codehaus.jackson.type.JavaType;
 
 @Description(name = "get_json_object", description = "parse string from json string.")
 public class GetJsonObject extends UDF {
 
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
+    private static final JavaType MAP_TYPE = TypeFactory.fromClass(Map.class);
+    private static final JavaType LIST_TYPE = TypeFactory.fromClass(List.class);
+
     static {
         JSON_FACTORY.enable(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS);
     }
 
     private final Pattern patternKey = Pattern.compile("^([a-zA-Z0-9_\\-\\:\\s]+).*");
     private final Pattern patternIndex = Pattern.compile("\\[([0-9]+|\\*)\\]");
-    private final ObjectMapper MAPPER = new ObjectMapper(JSON_FACTORY);
-    private final JavaType MAP_TYPE = TypeFactory.fromClass(Map.class);
-    private final JavaType LIST_TYPE = TypeFactory.fromClass(List.class);
+    private final ObjectMapper mapper = new ObjectMapper(JSON_FACTORY);
 
     private Map<String, Object> extractObjectCache = new HashCache<String, Object>();
     private Map<String, String[]> pathExprCache = new HashCache<String, String[]>();
@@ -109,7 +110,7 @@ public class GetJsonObject extends UDF {
         if (extractObject == null) {
             JavaType javaType = isRootArray ? LIST_TYPE : MAP_TYPE;
             try {
-                extractObject = MAPPER.readValue(jsonString, javaType);
+                extractObject = mapper.readValue(jsonString, javaType);
             } catch (Exception e) {
                 return null;
             }
@@ -124,7 +125,7 @@ public class GetJsonObject extends UDF {
         String result = null;
         if (extractObject instanceof Map || extractObject instanceof List) {
             try {
-                result = MAPPER.writeValueAsString(extractObject);
+                result = mapper.writeValueAsString(extractObject);
             } catch (Exception e) {
                 return null;
             }
@@ -239,19 +240,19 @@ public class GetJsonObject extends UDF {
         if (json instanceof List) {
             List<Object> jsonList = new ArrayList<Object>();
             for (int i = 0; i < ((List<Object>) json).size(); i++) {
-                Object json_elem = ((List<Object>) json).get(i);
-                Object json_obj = null;
-                if (json_elem instanceof Map) {
-                    json_obj = ((Map<String, Object>) json_elem).get(path);
+                Object jsonElem = ((List<Object>) json).get(i);
+                Object jsonObj = null;
+                if (jsonElem instanceof Map) {
+                    jsonObj = ((Map<String, Object>) jsonElem).get(path);
                 } else {
                     continue;
                 }
-                if (json_obj instanceof List) {
-                    for (int j = 0; j < ((List<Object>) json_obj).size(); j++) {
-                        jsonList.add(((List<Object>) json_obj).get(j));
+                if (jsonObj instanceof List) {
+                    for (int j = 0; j < ((List<Object>) jsonObj).size(); j++) {
+                        jsonList.add(((List<Object>) jsonObj).get(j));
                     }
-                } else if (json_obj != null) {
-                    jsonList.add(json_obj);
+                } else if (jsonObj != null) {
+                    jsonList.add(jsonObj);
                 }
             }
             return (jsonList.isEmpty()) ? null : jsonList;
