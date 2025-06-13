@@ -1,0 +1,5 @@
+1|jim|15|{"name": "Bob", "age": 30, "address": {"city": "Los Angeles", "zip": "90001"},"items": ["word", "size", "metrics"]}
+2|kate|16|{"name": "Alen", "age": 20, "address": {"city": "Zhe Jiang", "zip": "310005"},"items": ["red", "green", "yellow"]}
+3|same|20|{"name": "John", "age": 25,"items": ["round", "triangle"]}
+4|lucy|21|{"name": "Bush", "age": 11, "address": {"city": "Zhe Jiang", "zip": "310006"}}
+5|brown|22|{"name": "Ray"}

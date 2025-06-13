@@ -75,6 +75,7 @@ import com.antgroup.geaflow.dsl.udf.table.string.Base64Decode;
 import com.antgroup.geaflow.dsl.udf.table.string.Base64Encode;
 import com.antgroup.geaflow.dsl.udf.table.string.Concat;
 import com.antgroup.geaflow.dsl.udf.table.string.ConcatWS;
+import com.antgroup.geaflow.dsl.udf.table.string.GetJsonObject;
 import com.antgroup.geaflow.dsl.udf.table.string.Hash;
 import com.antgroup.geaflow.dsl.udf.table.string.IndexOf;
 import com.antgroup.geaflow.dsl.udf.table.string.Instr;
@@ -176,6 +177,7 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             .add(GeaFlowFunction.of(Substr.class))
             .add(GeaFlowFunction.of(UrlDecode.class))
             .add(GeaFlowFunction.of(UrlEncode.class))
+            .add(GeaFlowFunction.of(GetJsonObject.class))
 
             // udf.table.other
             .add(GeaFlowFunction.of(If.class))
