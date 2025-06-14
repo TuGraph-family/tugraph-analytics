@@ -37,6 +37,10 @@ import com.antgroup.geaflow.dsl.udf.graph.WeakConnectedComponents;
 import com.antgroup.geaflow.dsl.udf.table.agg.PercentileDouble;
 import com.antgroup.geaflow.dsl.udf.table.agg.PercentileInteger;
 import com.antgroup.geaflow.dsl.udf.table.agg.PercentileLong;
+import com.antgroup.geaflow.dsl.udf.table.array.ArrayAppend;
+import com.antgroup.geaflow.dsl.udf.table.array.ArrayContains;
+import com.antgroup.geaflow.dsl.udf.table.array.ArrayDistinct;
+import com.antgroup.geaflow.dsl.udf.table.array.ArrayUnion;
 import com.antgroup.geaflow.dsl.udf.table.date.AddMonths;
 import com.antgroup.geaflow.dsl.udf.table.date.DateAdd;
 import com.antgroup.geaflow.dsl.udf.table.date.DateDiff;
@@ -144,6 +148,12 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             .add(GeaFlowFunction.of(WeekDay.class))
             .add(GeaFlowFunction.of(WeekOfYear.class))
             .add(GeaFlowFunction.of(Year.class))
+
+            // udf.table.array
+            .add(GeaFlowFunction.of(ArrayAppend.class))
+            .add(GeaFlowFunction.of(ArrayContains.class))
+            .add(GeaFlowFunction.of(ArrayDistinct.class))
+            .add(GeaFlowFunction.of(ArrayUnion.class))
 
             // udf.table.math
             .add(GeaFlowFunction.of(E.class))
