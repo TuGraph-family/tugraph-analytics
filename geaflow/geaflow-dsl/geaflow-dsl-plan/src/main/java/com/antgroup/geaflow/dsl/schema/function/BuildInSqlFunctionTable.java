@@ -26,6 +26,7 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowFunction;
 import com.antgroup.geaflow.dsl.udf.graph.AllSourceShortestPath;
 import com.antgroup.geaflow.dsl.udf.graph.ClosenessCentrality;
 import com.antgroup.geaflow.dsl.udf.graph.CommonNeighbors;
+import com.antgroup.geaflow.dsl.udf.graph.CommonNeighborsForVertexSet;
 import com.antgroup.geaflow.dsl.udf.graph.IncKHopAlgorithm;
 import com.antgroup.geaflow.dsl.udf.graph.IncWeakConnectedComponents;
 import com.antgroup.geaflow.dsl.udf.graph.KCore;
@@ -193,6 +194,7 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             .add(GeaFlowFunction.of(SingleSourceShortestPath.class))
             .add(GeaFlowFunction.of(AllSourceShortestPath.class))
             .add(GeaFlowFunction.of(PageRank.class))
+            .add(GeaFlowFunction.of(CommonNeighborsForVertexSet.class))
             .add(GeaFlowFunction.of(KHop.class))
             .add(GeaFlowFunction.of(KCore.class))
             .add(GeaFlowFunction.of(ClosenessCentrality.class))
