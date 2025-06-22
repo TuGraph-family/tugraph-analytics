@@ -31,6 +31,9 @@ import com.antgroup.geaflow.dsl.udf.graph.IncWeakConnectedComponents;
 import com.antgroup.geaflow.dsl.udf.graph.KCore;
 import com.antgroup.geaflow.dsl.udf.graph.KHop;
 import com.antgroup.geaflow.dsl.udf.graph.PageRank;
+
+import com.antgroup.geaflow.dsl.udf.graph.PathCycleDetection;
+
 import com.antgroup.geaflow.dsl.udf.graph.SingleSourceShortestPath;
 import com.antgroup.geaflow.dsl.udf.graph.TriangleCount;
 import com.antgroup.geaflow.dsl.udf.graph.WeakConnectedComponents;
@@ -105,6 +108,12 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.util.ListSqlOperatorTable;
+
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
+
+
+
 
 /**
  * SQL build-in {@link SqlFunction}s.
@@ -194,6 +203,9 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             .add(GeaFlowFunction.of(IncWeakConnectedComponents.class))
             .add(GeaFlowFunction.of(CommonNeighbors.class))
             .add(GeaFlowFunction.of(IncKHopAlgorithm.class))
+
+            .add(GeaFlowFunction.of(PathCycleDetection.class))
+
             .build();
 
     public BuildInSqlFunctionTable(GQLJavaTypeFactory typeFactory) {
@@ -213,6 +225,36 @@ public class BuildInSqlFunctionTable extends ListSqlOperatorTable {
             super.add(sqlFunction);
         }
     }
+
+    // private void register() {
+    //     LOGGER.info("BuildInSqlFunctionTable: Starting registration of functions."); // 新增日志
+    //     for (GeaFlowFunction function : functions()) {
+    //         SqlFunction sqlFunction;
+    //         try {
+    //             // 在调用 FunctionUtil.createSqlFunction 之前打印信息
+    //             LOGGER.info("BuildInSqlFunctionTable: Attempting to create SqlFunction for GeaFlowFunction name: '{}', class(es): {}",
+    //                         function.getName(), function.getClazz()); // 新增日志
+
+    //             sqlFunction = FunctionUtil.createSqlFunction(function, typeFactory);
+
+    //             // 在添加 sqlFunction 之后打印信息
+    //             if (sqlFunction != null) {
+    //                 LOGGER.info("BuildInSqlFunctionTable: Successfully created and adding SqlFunction: '{}', Kind: '{}', ImplClass: {}",
+    //                             sqlFunction.getName(), sqlFunction.getKind(), function.getClazz()); // 新增日志
+    //             } else {
+    //                 LOGGER.warn("BuildInSqlFunctionTable: FunctionUtil.createSqlFunction returned null for GeaFlowFunction name: '{}'", function.getName()); // 新增日志
+    //             }
+    //             super.add(sqlFunction);
+    //         } catch (GeaFlowDSLException e) {
+    //              // 已经有异常抛出，也可以在这里加日志记录 function 的信息
+    //             LOGGER.error("BuildInSqlFunctionTable: Error registering SqlFunction for GeaFlowFunction name: '{}', class(es): {}",
+    //                          function.getName(), function.getClazz(), e); // 新增日志
+    //             throw new GeaFlowDSLException(
+    //                 "Error in register SqlFunction " + function, e);
+    //         }
+    //     }
+    //     LOGGER.info("BuildInSqlFunctionTable: Finished registration of functions."); // 新增日志
+    // }
 
     public void registerFunction(Class<?> functionClass) {
         try {

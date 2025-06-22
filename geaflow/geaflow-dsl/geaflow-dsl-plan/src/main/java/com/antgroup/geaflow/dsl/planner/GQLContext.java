@@ -149,6 +149,8 @@ public class GQLContext {
 
     private static final Map<String, String> shortKeyMapping = new HashMap<>();
 
+    private static final Logger logger = LoggerFactory.getLogger(GQLContext.class);
+
     static {
         shortKeyMapping.put("storeType", DSLConfigKeys.GEAFLOW_DSL_STORE_TYPE.getKey());
         shortKeyMapping.put("shardCount", DSLConfigKeys.GEAFLOW_DSL_STORE_SHARD_COUNT.getKey());
@@ -164,27 +166,27 @@ public class GQLContext {
         }
         this.defaultSchema = new GeaFlowRootCalciteSchema(this.catalog).plus();
         this.sqlOperatorTable = new GQLOperatorTable(
-            catalog,
-            typeFactory,
-            this,
-            new BuildInSqlOperatorTable(),
-            new BuildInSqlFunctionTable(typeFactory));
+                catalog,
+                typeFactory,
+                this,
+                new BuildInSqlOperatorTable(),
+                new BuildInSqlFunctionTable(typeFactory));
 
         GQLCostFactory costFactory = new GQLCostFactory();
         this.frameworkConfig = Frameworks
-            .newConfigBuilder()
-            .defaultSchema(this.defaultSchema)
-            .parserConfig(GeaFlowDSLParser.PARSER_CONFIG)
-            .costFactory(costFactory)
-            .typeSystem(this.typeSystem)
-            .operatorTable(this.sqlOperatorTable)
-            .build();
+                .newConfigBuilder()
+                .defaultSchema(this.defaultSchema)
+                .parserConfig(GeaFlowDSLParser.PARSER_CONFIG)
+                .costFactory(costFactory)
+                .typeSystem(this.typeSystem)
+                .operatorTable(this.sqlOperatorTable)
+                .build();
 
         this.relBuilder = GQLRelBuilder.create(frameworkConfig, createRexBuilder());
         CalciteCatalogReader calciteCatalogReader = createCatalogReader();
 
         this.validator = new GQLValidatorImpl(this, sqlOperatorTable,
-            calciteCatalogReader, this.typeFactory, CONFORMANCE);
+                calciteCatalogReader, this.typeFactory, CONFORMANCE);
         this.validator.setIdentifierExpansion(true);
         this.convertLetTable = frameworkConfig.getConvertletTable();
         this.validatedRelNode = new HashSet<>();
@@ -219,7 +221,7 @@ public class GQLContext {
         List<String> partitionFields = Lists.newArrayList();
         if (table.getPartitionFields() != null) {
             List<String> fieldNames = fields.stream()
-                .map(TableField::getName).collect(Collectors.toList());
+                    .map(TableField::getName).collect(Collectors.toList());
 
             for (SqlNode node : table.getPartitionFields()) {
                 SqlIdentifier partitionField = (SqlIdentifier) node;
@@ -227,11 +229,11 @@ public class GQLContext {
                 int partitionIndex = fieldNames.indexOf(partitionField.getSimple());
                 if (partitionIndex == -1) {
                     throw new GeaFlowDSLException(node.getParserPosition(),
-                        "Partition field: {} is not exists in field list.", node);
+                            "Partition field: {} is not exists in field list.", node);
                 }
                 if (partitionIndex < fieldNames.size() - partitionFields.size()) {
                     throw new GeaFlowDSLException(node.getParserPosition(),
-                        "Partition field should be the last fields in the field list");
+                            "Partition field should be the last fields in the field list");
                 }
             }
         }
@@ -246,7 +248,7 @@ public class GQLContext {
         }
         String tableName = getCatalogObjName(table.getName());
         return new GeaFlowTable(currentInstance, tableName, fields, primaryFields, partitionFields,
-            config, table.ifNotExists(), table.isTemporary());
+                config, table.ifNotExists(), table.isTemporary());
     }
 
     public static String getCatalogObjName(SqlIdentifier name) {
@@ -258,6 +260,7 @@ public class GQLContext {
 
     /**
      * Complete the catalog object name.
+     * 
      * @param name catalog object identifier.
      * @return completed catalog object identifier with instance name.
      */
@@ -265,7 +268,8 @@ public class GQLContext {
         String firstName = name.names.get(0);
         if (!catalog.isInstanceExists(firstName)) {
             // if the first name is not an instance, append the current instance name.
-            // e.g. table "user" in "select * from user" will complete to "${currentInstance}.user"
+            // e.g. table "user" in "select * from user" will complete to
+            // "${currentInstance}.user"
             List<String> newNames = new ArrayList<>();
             newNames.add(currentInstance);
             newNames.addAll(name.names);
@@ -284,9 +288,9 @@ public class GQLContext {
 
         RelRecordType recordType = (RelRecordType) validator.getValidatedNodeType(view.getSubQuery());
         Preconditions.checkArgument(recordType.getFieldCount() == view.getFields().size(),
-            "The column size of view " + viewName + " is " + view.getFields().size()
-                + " ,but the output column size of the sub query is " + recordType.getFieldCount()
-                + " at " + view.getParserPosition());
+                "The column size of view " + viewName + " is " + view.getFields().size()
+                        + " ,but the output column size of the sub query is " + recordType.getFieldCount()
+                        + " at " + view.getParserPosition());
 
         List<String> fields = new ArrayList<>();
         List<RelDataType> types = new ArrayList<>();
@@ -302,7 +306,7 @@ public class GQLContext {
         String viewSql = view.getSubQuerySql();
 
         return new GeaFlowView(currentInstance, viewName, fields, rowType, viewSql,
-            view.ifNotExists());
+                view.ifNotExists());
     }
 
     /**
@@ -313,7 +317,7 @@ public class GQLContext {
     }
 
     public GeaFlowGraph convertToGraph(SqlCreateGraph graph,
-                                       Collection<GeaFlowTable> createTablesInScript) {
+            Collection<GeaFlowTable> createTablesInScript) {
         List<VertexTable> vertexTables = new ArrayList<>();
         SqlNodeList vertices = graph.getVertices();
         Map<String, String> vertexEdgeName2UsingTableNameMap = new HashMap<>();
@@ -336,13 +340,13 @@ public class GQLContext {
                             break;
                         default:
                             throw new GeaFlowDSLException("Illegal column category: " + tableColumn.getCategory()
-                                + " at " + tableColumn.getParserPosition());
+                                    + " at " + tableColumn.getParserPosition());
                     }
                 }
                 vertexTables.add(new VertexTable(currentInstance, vertex.getName().getSimple(),
-                    vertexFields, idFieldName));
+                        vertexFields, idFieldName));
                 desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
-                    vertex.getName().getSimple()));
+                        vertex.getName().getSimple()));
             } else if (node instanceof SqlVertexUsing) {
                 SqlVertexUsing vertexUsing = (SqlVertexUsing) node;
                 List<String> names = vertexUsing.getUsingTableName().names;
@@ -360,7 +364,7 @@ public class GQLContext {
                 }
                 if (usingTable == null) {
                     throw new GeaFlowDSLException(node.getParserPosition(),
-                        "Cannot found using table: {}, check statement order.", tableName);
+                            "Cannot found using table: {}, check statement order.", tableName);
                 }
                 idFieldName = vertexUsing.getId().getSimple();
 
@@ -368,7 +372,7 @@ public class GQLContext {
                 Set<String> fieldNames = new HashSet<>();
                 for (RelDataTypeField column : usingTable.getRowType(this.typeFactory).getFieldList()) {
                     TableField tableField = new TableField(column.getName(),
-                        SqlTypeUtil.convertType(column.getType()), column.getType().isNullable());
+                            SqlTypeUtil.convertType(column.getType()), column.getType().isNullable());
                     if (fieldNames.contains(tableField.getName())) {
                         throw new GeaFlowDSLException("Column already exists: {}", tableField.getName());
                     }
@@ -380,14 +384,14 @@ public class GQLContext {
                 }
                 if (idField == null) {
                     throw new GeaFlowDSLException("Cannot found srcIdFieldName: {} in vertex {}",
-                        idFieldName, vertexUsing.getName().getSimple());
+                            idFieldName, vertexUsing.getName().getSimple());
                 }
                 vertexEdgeName2UsingTableNameMap.put(vertexUsing.getName().getSimple(),
-                    vertexUsing.getUsingTableName().getSimple());
+                        vertexUsing.getUsingTableName().getSimple());
                 vertexTables.add(new VertexTable(currentInstance, vertexUsing.getName().getSimple(),
-                    vertexFields, idFieldName));
+                        vertexFields, idFieldName));
                 desc.addNode(new NodeDescriptor(desc.getIdName(graph.getName().toString()),
-                    vertexUsing.getName().getSimple()));
+                        vertexUsing.getName().getSimple()));
             } else {
                 throw new GeaFlowDSLException("vertex not support: " + node);
             }
@@ -435,15 +439,15 @@ public class GQLContext {
                             break;
                         default:
                             throw new GeaFlowDSLException("Illegal column category: " + tableColumn.getCategory()
-                                + " at " + tableColumn.getParserPosition());
+                                    + " at " + tableColumn.getParserPosition());
                     }
                 }
                 String tableName = edge.getName().getSimple();
                 edgeTables.add(new EdgeTable(currentInstance, tableName, edgeFields, srcIdFieldName,
-                    targetIdFieldName, tsFieldName));
+                        targetIdFieldName, tsFieldName));
                 desc.addEdge(GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edge));
             } else if (node instanceof SqlEdgeUsing) {
-                SqlEdgeUsing edgeUsing = (SqlEdgeUsing)  node;
+                SqlEdgeUsing edgeUsing = (SqlEdgeUsing) node;
                 List<String> names = edgeUsing.getUsingTableName().names;
                 String tableName = edgeUsing.getUsingTableName().getSimple();
 
@@ -459,7 +463,7 @@ public class GQLContext {
                 }
                 if (usingTable == null) {
                     throw new GeaFlowDSLException(node.getParserPosition(),
-                        "Cannot found using table: {}, check statement order.", tableName);
+                            "Cannot found using table: {}, check statement order.", tableName);
                 }
 
                 srcIdFieldName = edgeUsing.getSourceId().getSimple();
@@ -471,7 +475,7 @@ public class GQLContext {
                 Set<String> fieldNames = new HashSet<>();
                 for (RelDataTypeField column : usingTable.getRowType(this.typeFactory).getFieldList()) {
                     TableField tableField = new TableField(column.getName(),
-                        SqlTypeUtil.convertType(column.getType()), column.getType().isNullable());
+                            SqlTypeUtil.convertType(column.getType()), column.getType().isNullable());
                     if (fieldNames.contains(tableField.getName())) {
                         throw new GeaFlowDSLException("Column already exists: {}", tableField.getName());
                     }
@@ -487,22 +491,22 @@ public class GQLContext {
                 }
                 if (srcIdField == null) {
                     throw new GeaFlowDSLException("Cannot found srcIdFieldName: {} in edge {}",
-                        srcIdFieldName, edgeUsing.getName().getSimple());
+                            srcIdFieldName, edgeUsing.getName().getSimple());
                 }
                 if (targetIdField == null) {
                     throw new GeaFlowDSLException("Cannot found targetIdFieldName: {} in edge {}",
-                        targetIdFieldName, edgeUsing.getName().getSimple());
+                            targetIdFieldName, edgeUsing.getName().getSimple());
                 }
                 if (tsFieldName != null && tsField == null) {
                     throw new GeaFlowDSLException("Cannot found tsFieldName: {} in edge {}",
-                        tsFieldName, edgeUsing.getName().getSimple());
+                            tsFieldName, edgeUsing.getName().getSimple());
                 }
                 vertexEdgeName2UsingTableNameMap.put(edgeUsing.getName().getSimple(),
-                    edgeUsing.getUsingTableName().getSimple());
+                        edgeUsing.getUsingTableName().getSimple());
                 edgeTables.add(new EdgeTable(currentInstance, edgeUsing.getName().getSimple(), edgeFields,
-                    srcIdFieldName, targetIdFieldName, tsFieldName));
+                        srcIdFieldName, targetIdFieldName, tsFieldName));
                 desc.addEdge(
-                    GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edgeUsing));
+                        GraphDescriptorUtil.getEdgeDescriptor(desc, graph.getName().getSimple(), edgeUsing));
             }
         }
 
@@ -516,15 +520,15 @@ public class GQLContext {
             }
         }
         GeaFlowGraph geaFlowGraph = new GeaFlowGraph(currentInstance, graph.getName().getSimple(),
-            vertexTables, edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(),
-            graph.isTemporary(), desc);
+                vertexTables, edgeTables, config, vertexEdgeName2UsingTableNameMap, graph.ifNotExists(),
+                graph.isTemporary(), desc);
         GraphDescriptor graphStats = geaFlowGraph.getValidDescriptorInGraph(desc);
         if (graphStats.nodes.size() != desc.nodes.size()
-            || graphStats.edges.size() != desc.edges.size()
-            || graphStats.relations.size() != desc.relations.size()) {
+                || graphStats.edges.size() != desc.edges.size()
+                || graphStats.relations.size() != desc.relations.size()) {
             throw new GeaFlowDSLException("Error occurred while generating desc as partially "
-                + "constraints are invalid. \n desc: {} \n valid: {}",
-                desc, graphStats);
+                    + "constraints are invalid. \n desc: {} \n valid: {}",
+                    desc, graphStats);
         }
         geaFlowGraph.setDescriptor(graphStats);
         return geaFlowGraph;
@@ -588,7 +592,50 @@ public class GQLContext {
         return sqlOperatorTable.getSqlFunction(instance == null ? currentInstance : instance, name);
     }
 
-    // ~ convert SqlNode to RelNode ----------------------------------------------------------
+    // // ~ convert SqlNode to RelNode
+    // // ----------------------------------------------------------
+
+    // /**
+    // * Return the RelRoot of SqlNode.
+    // *
+    // * @param sqlNode the sql node.
+    // * @return the rel root.
+    // */
+    // public RelNode toRelNode(SqlNode sqlNode) {
+    // RexBuilder rexBuilder = createRexBuilder();
+    // RelOptCluster cluster = RelOptCluster.create(relBuilder.getPlanner(),
+    // rexBuilder);
+
+    // SqlToRelConverter.Config config = SqlToRelConverter.configBuilder()
+    // .withTrimUnusedFields(false)
+    // .withInSubQueryThreshold(10000)
+    // .withConvertTableAccess(false)
+    // .build();
+
+    // GQLToRelConverter sqlToRelConverter = new GQLToRelConverter(
+    // new ViewExpanderImpl(),
+    // validator,
+    // createCatalogReader(),
+    // cluster,
+    // convertLetTable,
+    // config);
+
+    // RelRoot root = sqlToRelConverter.convertQuery(sqlNode, false, true);
+    // root = root.withRel(RelDecorrelator.decorrelateQuery(root.rel));
+
+    // // =================================================================
+    // // FIX: 在“诞生地”加入探针
+    // System.out.println("\n################# LOGICAL PLAN CREATED (in toRelNode)
+    // #################");
+    // System.out.println(RelOptUtil.toString(root.rel));
+    // System.out.println("#####################################################################\n");
+    // // =================================================================
+
+    // return root.rel;
+    // }
+
+    // ~ convert SqlNode to RelNode
+    // ----------------------------------------------------------
 
     /**
      * Return the RelRoot of SqlNode.
@@ -601,21 +648,29 @@ public class GQLContext {
         RelOptCluster cluster = RelOptCluster.create(relBuilder.getPlanner(), rexBuilder);
 
         SqlToRelConverter.Config config = SqlToRelConverter.configBuilder()
-            .withTrimUnusedFields(false)
-            .withInSubQueryThreshold(10000)
-            .withConvertTableAccess(false)
-            .build();
+                .withTrimUnusedFields(false)
+                .withInSubQueryThreshold(10000)
+                .withConvertTableAccess(false)
+                .build();
 
         GQLToRelConverter sqlToRelConverter = new GQLToRelConverter(
-            new ViewExpanderImpl(),
-            validator,
-            createCatalogReader(),
-            cluster,
-            convertLetTable,
-            config);
+                new ViewExpanderImpl(),
+                validator,
+                createCatalogReader(),
+                cluster,
+                convertLetTable,
+                config);
 
         RelRoot root = sqlToRelConverter.convertQuery(sqlNode, false, true);
         root = root.withRel(RelDecorrelator.decorrelateQuery(root.rel));
+
+        // =================================================================
+        // FIX: 在“诞生地”加入探针
+        logger.info("\n################# LOGICAL PLAN CREATED (in toRelNode) #################");
+        logger.info("\n{}", RelOptUtil.toString(root.rel));
+        logger.info("#####################################################################\n");
+        // =================================================================
+
         return root.rel;
     }
 
@@ -624,7 +679,7 @@ public class GQLContext {
         List<String> defaultSchemaName = ImmutableList.of(defaultSchema.getName());
         Properties properties = new Properties();
         properties.put(CalciteConnectionProperty.CASE_SENSITIVE.camelName(),
-            frameworkConfig.getParserConfig().caseSensitive());
+                frameworkConfig.getParserConfig().caseSensitive());
         CalciteConnectionConfig config = new CalciteConnectionConfigImpl(properties);
         return new CalciteCatalogReader(CalciteSchema.from(rootSchema), defaultSchemaName, typeFactory, config);
     }
@@ -641,8 +696,32 @@ public class GQLContext {
         return new RexBuilder(typeFactory);
     }
 
+    // // RBO optimizer.
+    // public RelNode optimize(List<RuleGroup> ruleGroups, RelNode input) {
+    // // =================================================================
+    // // FIX: 在“优化前”加入探针
+    // System.out.println("\n################# LOGICAL PLAN BEFORE OPTIMIZE
+    // #################");
+    // System.out.println(RelOptUtil.toString(input));
+    // System.out.println("############################################################\n");
+    // // =================================================================
+
+    // GQLOptimizer optimizer = new GQLOptimizer(frameworkConfig.getContext());
+    // for (RuleGroup ruleGroup : ruleGroups) {
+    // optimizer.addRuleGroup(ruleGroup);
+    // }
+    // return optimizer.optimize(input);
+    // }
+
     // RBO optimizer.
     public RelNode optimize(List<RuleGroup> ruleGroups, RelNode input) {
+        // =================================================================
+        // FIX: 在“优化前”加入探针
+        logger.info("\n################# LOGICAL PLAN BEFORE OPTIMIZE #################");
+        logger.info("\n{}", RelOptUtil.toString(input));
+        logger.info("############################################################\n");
+        // =================================================================
+
         GQLOptimizer optimizer = new GQLOptimizer(frameworkConfig.getContext());
         for (RuleGroup ruleGroup : ruleGroups) {
             optimizer.addRuleGroup(ruleGroup);
@@ -650,24 +729,73 @@ public class GQLContext {
         return optimizer.optimize(input);
     }
 
+    // // ~ CBO optimizer
+
+    // // Run VolcanoPlanner, transform by convention
+    // public RelNode transform(List<ConverterRule> ruleSet, RelNode relNode,
+    // RelTraitSet relTraitSet) {
+
+    // // =================================================================
+    // // FIX: 在这里加入我们的“X光机”，打印逻辑执行计划
+    // System.out.println();
+    // System.out.println("############################################################");
+    // System.out.println("########## INCOMING LOGICAL PLAN FOR TRANSFORMATION
+    // ##########");
+    // // 打印详细的计划树结构
+    // System.out.println(RelOptUtil.toString(relNode));
+    // System.out.println("############################################################");
+    // System.out.println();
+    // // =================================================================
+
+    // Program optProgram = Programs.ofRules(ruleSet);
+    // RelNode transformed;
+    // try {
+    // transformed = optProgram.run(relBuilder.getPlanner(),
+    // relNode,
+    // relTraitSet,
+    // Lists.newArrayList(),
+    // Lists.newArrayList());
+    // } catch (RelOptPlanner.CannotPlanException e) {
+    // throw new GeaFlowDSLException(
+    // "Cannot generate a valid execution plan for the given query: \n\n" +
+    // RelOptUtil.toString(relNode)
+    // + "This exception indicates that the query uses an unsupported SQL
+    // feature.\n"
+    // + "Please check the documentation for the set create currently supported SQL
+    // features.",
+    // e);
+    // }
+    // return transformed;
+    // }
+
     // ~ CBO optimizer
 
     // Run VolcanoPlanner, transform by convention
     public RelNode transform(List<ConverterRule> ruleSet, RelNode relNode,
-                             RelTraitSet relTraitSet) {
+            RelTraitSet relTraitSet) {
+
+        // =================================================================
+        // FIX: 在这里加入我们的“X光机”，打印逻辑执行计划
+        logger.info("\n############################################################");
+        logger.info("########## INCOMING LOGICAL PLAN FOR TRANSFORMATION ##########");
+        logger.info("\n{}", RelOptUtil.toString(relNode));
+        logger.info("############################################################\n");
+        // =================================================================
+
         Program optProgram = Programs.ofRules(ruleSet);
         RelNode transformed;
         try {
             transformed = optProgram.run(relBuilder.getPlanner(),
-                relNode,
-                relTraitSet,
-                Lists.newArrayList(),
-                Lists.newArrayList());
+                    relNode,
+                    relTraitSet,
+                    Lists.newArrayList(),
+                    Lists.newArrayList());
         } catch (RelOptPlanner.CannotPlanException e) {
             throw new GeaFlowDSLException(
-                "Cannot generate a valid execution plan for the given query: \n\n" + RelOptUtil.toString(relNode)
-                    + "This exception indicates that the query uses an unsupported SQL feature.\n"
-                    + "Please check the documentation for the set create currently supported SQL features.", e);
+                    "Cannot generate a valid execution plan for the given query: \n\n" + RelOptUtil.toString(relNode)
+                            + "This exception indicates that the query uses an unsupported SQL feature.\n"
+                            + "Please check the documentation for the set create currently supported SQL features.",
+                    e);
         }
         return transformed;
     }
@@ -695,15 +823,15 @@ public class GQLContext {
     }
 
     private class ViewExpanderImpl implements RelOptTable.ViewExpander,
-        Serializable {
+            Serializable {
 
         private static final long serialVersionUID = 42L;
 
         @Override
         public RelRoot expandView(RelDataType rowType,
-                                  String queryString,
-                                  List<String> schemaPath,
-                                  List<String> viewPath) {
+                String queryString,
+                List<String> schemaPath,
+                List<String> viewPath) {
 
             SqlParser parser = SqlParser.create(queryString, GeaFlowDSLParser.PARSER_CONFIG);
             SqlNode sqlNode;
@@ -713,19 +841,19 @@ public class GQLContext {
                 throw new RuntimeException("parse failed", e);
             }
             CalciteCatalogReader reader = createCatalogReader()
-                .withSchemaPath(schemaPath);
+                    .withSchemaPath(schemaPath);
             SqlValidator validator = new GQLValidatorImpl(GQLContext.this, sqlOperatorTable,
-                reader, typeFactory, CONFORMANCE);
+                    reader, typeFactory, CONFORMANCE);
             validator.setIdentifierExpansion(true);
             SqlNode validatedSqlNode = validator.validate(sqlNode);
             RexBuilder rexBuilder = createRexBuilder();
             RelOptCluster cluster = RelOptCluster.create(relBuilder.getPlanner(), rexBuilder);
             SqlToRelConverter.Config config = SqlToRelConverter.configBuilder()
-                .withTrimUnusedFields(false)
-                .withConvertTableAccess(false)
-                .build();
+                    .withTrimUnusedFields(false)
+                    .withConvertTableAccess(false)
+                    .build();
             SqlToRelConverter converter = new SqlToRelConverter(
-                new ViewExpanderImpl(), validator, reader, cluster, convertLetTable, config);
+                    new ViewExpanderImpl(), validator, reader, cluster, convertLetTable, config);
             RelRoot root = converter.convertQuery(validatedSqlNode, true, false);
             root = root.withRel(converter.flattenTypes(root.rel, true));
             root = root.withRel(RelDecorrelator.decorrelateQuery(root.rel));

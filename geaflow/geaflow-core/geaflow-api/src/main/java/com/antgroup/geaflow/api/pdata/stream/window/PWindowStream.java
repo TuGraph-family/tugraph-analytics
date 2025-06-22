@@ -21,13 +21,22 @@ package com.antgroup.geaflow.api.pdata.stream.window;
 
 import com.antgroup.geaflow.api.function.base.FilterFunction;
 import com.antgroup.geaflow.api.function.base.FlatMapFunction;
+
+// import com.antgroup.geaflow.api.function.base.JoinFunction;
+
 import com.antgroup.geaflow.api.function.base.KeySelector;
 import com.antgroup.geaflow.api.function.base.MapFunction;
+
+// import com.antgroup.geaflow.api.function.internal.IKeySelector;
+
 import com.antgroup.geaflow.api.function.io.SinkFunction;
 import com.antgroup.geaflow.api.pdata.PStreamSink;
 import com.antgroup.geaflow.api.pdata.PWindowCollect;
 import com.antgroup.geaflow.api.pdata.stream.PStream;
 import com.antgroup.geaflow.common.encoder.IEncoder;
+
+// import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
+
 import java.util.Map;
 
 public interface PWindowStream<T> extends PStream<T> {
@@ -55,6 +64,28 @@ public interface PWindowStream<T> extends PStream<T> {
      */
     @Override
     PWindowStream<T> union(PStream<T> uStream);
+
+    // PWindowStream<T> optionalMatch(IMatchNode pathPattern, boolean isCaseSensitive);
+
+    // /**
+    // * Performs an optional match operation with another stream of Paths.
+    // * This operation is designed to work with streams of {@link Path} objects,
+    // * using KeySelectors to extract join keys and a {@link StepJoinFunction}
+    // * to merge matching paths.
+    // *
+    // * @param other the other PWindowStream of Paths to join with.
+    // * @param leftKeySelector Key selector for this stream (must be a stream of
+    // * Paths).
+    // * @param rightKeySelector Key selector for the other stream.
+    // * @param joinFunction The function to combine the matched Path records.
+    // * @param <K> The type of the key to join on.
+    // * @return A new PWindowStream containing the result of the optional match,
+    // * which are also Paths.
+    // */
+    // <K> PWindowStream<Path> optionalMatch(PWindowStream<Path> other,
+    // KeySelector<Path, K> leftKeySelector,
+    // KeySelector<Path, K> rightKeySelector,
+    // StepJoinFunction joinFunction);
 
     /**
      * Broadcast records to downstream.

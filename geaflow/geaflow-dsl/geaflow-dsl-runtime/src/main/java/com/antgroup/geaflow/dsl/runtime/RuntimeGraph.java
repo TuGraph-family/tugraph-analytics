@@ -19,11 +19,20 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+// import com.antgroup.geaflow.api.function.base.KeySelector;
+
 import com.antgroup.geaflow.common.type.IType;
 import com.antgroup.geaflow.dsl.common.data.Path;
 import com.antgroup.geaflow.dsl.rel.GraphAlgorithm;
 import com.antgroup.geaflow.dsl.rel.GraphMatch;
+// import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
+
+// import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunction;
+// import com.antgroup.geaflow.dsl.sqlnode.SqlMatchPattern;
+
+
 import java.util.List;
+// import org.apache.calcite.rex.RexBuilder;
 
 /**
  * The runtime graph view which mapping logical graph operator to the runtime
@@ -38,6 +47,24 @@ public interface RuntimeGraph extends RDataView {
     RuntimeTable getPathTable();
 
     RuntimeTable runAlgorithm(GraphAlgorithm graphAlgorithm);
+
+    // /**
+    // * Performs an optional match (left join) operation between two tables of
+    // Paths.
+    // *
+    // * @param other The right-hand side table for the join.
+    // * @param leftKeySelector The key selector for the left table (this table).
+    // * @param rightKeySelector The key selector for the right table.
+    // * @param joinFunction The function to merge two matched paths.
+    // * @param <K> The type of the join key.
+    // * @return A new RuntimeTable containing the result of the optional match.
+    // */
+    // <K> RuntimeGraph optionalMatch(RuntimeGraph other,
+    // KeySelector<Path, K> leftKeySelector,
+    // KeySelector<Path, K> rightKeySelector,
+    // StepJoinFunction joinFunction);
+
+    // RuntimeTable optionalMatch(IMatchNode pathPattern, boolean isCaseSensitive);
 
     default ViewType getType() {
         return ViewType.GRAPH;

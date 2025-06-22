@@ -51,12 +51,21 @@ import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
+
+import org.apache.calcite.rex.RexCall;
+
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+
+
+
 import org.apache.calcite.sql.type.SqlTypeName;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 public class GQLRelUtil {
 
@@ -66,6 +75,48 @@ public class GQLRelUtil {
             return (IMatchNode) node;
         }
         throw new IllegalArgumentException("Node must be IMatchNode");
+    }
+
+    /**
+     * 从 Join 的 RexNode 条件中解析出左右两边的 key 字段索引。
+     * 
+     * @param condition      Join 条件表达式，如 a.id = b.id
+     * @param leftFieldCount 左输入表的字段数量
+     * @return 一个 Pair，左边是左表的 key 索引数组，右边是右表的 key 索引数组
+     */
+    public static Pair<int[], int[]> getJoinKey(RexNode condition, int leftFieldCount) {
+        if (condition.getKind() != SqlKind.EQUALS) {
+            throw new IllegalArgumentException("Only support EQUALS join condition, but got: " + condition.getKind());
+        }
+        RexCall call = (RexCall) condition;
+        RexNode left = call.getOperands().get(0);
+        RexNode right = call.getOperands().get(1);
+
+        if (!(left instanceof RexInputRef) || !(right instanceof RexInputRef)) {
+            throw new IllegalArgumentException("Only support join on column, but got: "
+                    + left.getKind() + ", " + right.getKind());
+        }
+
+        RexInputRef leftRef = (RexInputRef) left;
+        RexInputRef rightRef = (RexInputRef) right;
+
+        // RexInputRef 的 index 是相对于 Join 节点总输入的（左右表字段合并后）
+        // 我们需要将它转换成相对于各自表的索引
+        int leftKeyIndex;
+        int rightKeyIndex;
+
+        if (leftRef.getIndex() < leftFieldCount) {
+            // leftRef 指向左表, rightRef 指向右表
+            leftKeyIndex = leftRef.getIndex();
+            rightKeyIndex = rightRef.getIndex() - leftFieldCount;
+        } else {
+            // leftRef 指向右表, rightRef 指向左表
+            leftKeyIndex = rightRef.getIndex();
+            rightKeyIndex = leftRef.getIndex() - leftFieldCount;
+        }
+
+        // 当前只支持单字段 key
+        return Pair.of(new int[] { leftKeyIndex }, new int[] { rightKeyIndex });
     }
 
     public static IMatchNode addSubQueryStartNode(IMatchNode root, SubQueryStart queryStart) {
@@ -87,7 +138,7 @@ public class GQLRelUtil {
     }
 
     public static SingleMatchNode replaceInput(SingleMatchNode root, SingleMatchNode replacedNode,
-                                               IMatchNode newInputNode) {
+            IMatchNode newInputNode) {
         if (root == replacedNode) {
             return (SingleMatchNode) root.copy(root.getTraitSet(), Collections.singletonList(newInputNode));
         } else {
@@ -98,11 +149,11 @@ public class GQLRelUtil {
 
     public static List<RelNode> collect(RelNode root, Predicate<RelNode> predicate) {
         List<RelNode> childVisit = root.getInputs()
-            .stream()
-            .flatMap(input -> collect(input, predicate).stream())
-            .collect(Collectors.toList());
+                .stream()
+                .flatMap(input -> collect(input, predicate).stream())
+                .collect(Collectors.toList());
         if (root instanceof LoopUntilMatch) {
-            childVisit.addAll(collect(((LoopUntilMatch)root).getLoopBody(), predicate));
+            childVisit.addAll(collect(((LoopUntilMatch) root).getLoopBody(), predicate));
         }
         List<RelNode> results = new ArrayList<>(childVisit);
         if (predicate.test(root)) {
@@ -140,7 +191,8 @@ public class GQLRelUtil {
     }
 
     /**
-     * Concat single path pattern "p0" to the start of path pattern "p1" if they can merge.
+     * Concat single path pattern "p0" to the start of path pattern "p1" if they can
+     * merge.
      * e.g. "a" is "(m) - (n) -(f)", "b" is "(f) - (p) - (q)"
      * Then we can concat them to "(m) - (n) - (f) - (p) - (q).
      */
@@ -152,7 +204,8 @@ public class GQLRelUtil {
             assert Objects.equals(((IMatchLabel) p1).getLabel(), getLatestMatchNode(p0).getLabel());
             IMatchLabel matchNode = (IMatchLabel) p1;
             Set<String> filterTypes = matchNode.getTypes();
-            // since p1's label is same with p0, we can remove the duplicate label node p1 and only keep the
+            // since p1's label is same with p0, we can remove the duplicate label node p1
+            // and only keep the
             // node type filters of p1.
             if (filterTypes.isEmpty()) {
                 return p0;
@@ -198,12 +251,12 @@ public class GQLRelUtil {
         if (typeName == SqlTypeName.VERTEX) {
             nodeTypeRef = rexBuilder.makeInputRef(input.getNodeType().getFieldList()
                     .get(VertexType.LABEL_FIELD_POSITION).getType(),
-                VertexType.LABEL_FIELD_POSITION);
+                    VertexType.LABEL_FIELD_POSITION);
         } else {
             assert typeName == SqlTypeName.EDGE;
             nodeTypeRef = rexBuilder.makeInputRef(input.getNodeType().getFieldList()
                     .get(EdgeType.LABEL_FIELD_POSITION).getType(),
-                EdgeType.LABEL_FIELD_POSITION);
+                    EdgeType.LABEL_FIELD_POSITION);
         }
         assert input.getPathSchema().lastField().isPresent();
         RelDataTypeField pathField = input.getPathSchema().lastField().get();
@@ -212,7 +265,7 @@ public class GQLRelUtil {
         RexNode condition = null;
         for (String nodeType : nodeTypes) {
             RexNode eq = rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, nodeTypeRef,
-                GQLRexUtil.createString(nodeType));
+                    GQLRexUtil.createString(nodeType));
             if (condition == null) {
                 condition = eq;
             } else {
@@ -227,8 +280,8 @@ public class GQLRelUtil {
 
     public static Set<String> getLabels(RelNode node) {
         return collect(node, n -> n instanceof IMatchLabel)
-            .stream().map(matchNode -> ((IMatchLabel) matchNode).getLabel())
-            .collect(Collectors.toSet());
+                .stream().map(matchNode -> ((IMatchLabel) matchNode).getLabel())
+                .collect(Collectors.toSet());
     }
 
     public static Set<String> getCommonLabels(RelNode node1, RelNode node2) {
@@ -295,7 +348,7 @@ public class GQLRelUtil {
     }
 
     public static RexNode createPathJoinCondition(IMatchNode left, IMatchNode right,
-                                                  boolean caseSensitive, RexBuilder rexBuilder) {
+            boolean caseSensitive, RexBuilder rexBuilder) {
         Set<String> commonLabels = GQLRelUtil.getCommonLabels(left, right);
         List<RexNode> joinConditions = new ArrayList<>();
 
@@ -303,15 +356,15 @@ public class GQLRelUtil {
             RelDataTypeField leftField = left.getRowType().getField(label, caseSensitive, false);
             RelDataTypeField rightField = right.getRowType().getField(label, caseSensitive, false);
             RexInputRef leftRef = rexBuilder.makeInputRef(
-                left.getPathSchema().getFieldList().get(leftField.getIndex()).getType(),
-                leftField.getIndex());
+                    left.getPathSchema().getFieldList().get(leftField.getIndex()).getType(),
+                    leftField.getIndex());
             RexNode leftRefId = rexBuilder.makeFieldAccess(leftRef,
-                VertexType.ID_FIELD_POSITION);
+                    VertexType.ID_FIELD_POSITION);
             RexInputRef rightRef = rexBuilder.makeInputRef(
-                right.getPathSchema().getFieldList().get(rightField.getIndex()).getType(),
-                rightField.getIndex() + left.getRowType().getFieldCount());
+                    right.getPathSchema().getFieldList().get(rightField.getIndex()).getType(),
+                    rightField.getIndex() + left.getRowType().getFieldCount());
             RexNode rightRefId = rexBuilder.makeFieldAccess(rightRef,
-                VertexType.ID_FIELD_POSITION);
+                    VertexType.ID_FIELD_POSITION);
             // create expression of "leftLabel.id = rightLabel.id".
             RexNode eq = rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, leftRefId, rightRefId);
             joinConditions.add(eq);
@@ -347,8 +400,10 @@ public class GQLRelUtil {
 
     /**
      * Reverse the traversal order for {@link SingleMatchNode}.
+     * 
      * @param matchNode The match node to reverse.
-     * @param input If input is not null, we make it as the input node of the reversed match node.
+     * @param input     If input is not null, we make it as the input node of the
+     *                  reversed match node.
      */
     public static SingleMatchNode reverse(SingleMatchNode matchNode, IMatchNode input) {
         IMatchNode concatNode = input;
@@ -363,12 +418,11 @@ public class GQLRelUtil {
 
             RelDataTypeField field = endNode.getPathSchema().lastField().get();
             if (concatNode != null) {
-                PathRecordType pathRecordType = concatNode.getPathSchema().addField(field.getName()
-                    , field.getType(), false);
+                PathRecordType pathRecordType = concatNode.getPathSchema().addField(field.getName(), field.getType(),
+                        false);
                 concatNode = node.copy(Collections.singletonList(concatNode), pathRecordType);
             } else {
-                PathRecordType pathRecordType = PathRecordType.EMPTY.addField(field.getName()
-                    , field.getType(), false);
+                PathRecordType pathRecordType = PathRecordType.EMPTY.addField(field.getName(), field.getType(), false);
                 concatNode = node.copy(Collections.emptyList(), pathRecordType);
             }
             node = (SingleMatchNode) node.getInput();

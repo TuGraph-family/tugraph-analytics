@@ -19,8 +19,16 @@
 
 package com.antgroup.geaflow.dsl.runtime;
 
+// import com.antgroup.geaflow.api.function.base.KeySelector;
+
 import com.antgroup.geaflow.common.type.IType;
+
+// import com.antgroup.geaflow.dsl.common.data.Path;
+
 import com.antgroup.geaflow.dsl.common.data.Row;
+
+// import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunction;
+
 import com.antgroup.geaflow.dsl.runtime.function.table.AggFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.GroupByFunction;
@@ -32,8 +40,11 @@ import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
 import java.util.List;
 
+// import org.apache.calcite.rel.type.RelDataType;
+// import org.apache.calcite.rex.RexNode;
+
 /**
- * The runtime table view which  mapping SQL function to the runtime
+ * The runtime table view which mapping SQL function to the runtime
  * representation of the underlying engine.
  */
 public interface RuntimeTable extends RDataView {
@@ -51,6 +62,24 @@ public interface RuntimeTable extends RDataView {
     RuntimeTable orderBy(OrderByFunction function);
 
     RuntimeTable correlate(CorrelateFunction function);
+
+    // /**
+    //  * 对两个 RuntimeTable 执行 Left Outer Join 操作.
+    //  * 
+    //  * @param other            右表
+    //  * @param function         Join 逻辑函数
+    //  * @param leftKeySelector  左表的 Key 提取器
+    //  * @param rightKeySelector 右表的 Key 提取器
+    //  * @return Join 后的新 RuntimeTable
+    //  */
+    // RuntimeTable leftOuterJoin(RuntimeTable other, JoinTableFunction function,
+    //         KeySelector<Row, ?> leftKeySelector,
+    //         KeySelector<Row, ?> rightKeySelector);
+
+    // <K> RuntimeTable optionalMatch(RuntimeTable other,
+    //                                KeySelector<Path, K> leftKeySelector,
+    //                                KeySelector<Path, K> rightKeySelector,
+    //                                StepJoinFunction joinFunction);
 
     SinkDataView write(GeaFlowTable table);
 

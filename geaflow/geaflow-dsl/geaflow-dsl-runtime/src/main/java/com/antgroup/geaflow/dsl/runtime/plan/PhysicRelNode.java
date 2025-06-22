@@ -30,6 +30,12 @@ public interface PhysicRelNode<D extends RDataView> extends RelNode {
     String showSQL();
 
     enum PhysicRelNodeName {
+
+        /**
+         * Name for OptionalMatch node.
+         */
+        OPTIONAL_MATCH("OptionalMatch"),
+
         /**
          * Name for table scan node.
          */

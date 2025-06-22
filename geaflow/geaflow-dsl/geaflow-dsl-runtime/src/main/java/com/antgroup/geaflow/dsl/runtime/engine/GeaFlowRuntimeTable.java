@@ -26,6 +26,9 @@ import com.antgroup.geaflow.api.function.RichWindowFunction;
 import com.antgroup.geaflow.api.function.base.AggregateFunction;
 import com.antgroup.geaflow.api.function.base.FilterFunction;
 import com.antgroup.geaflow.api.function.base.FlatMapFunction;
+
+// import com.antgroup.geaflow.api.function.base.JoinFunction;
+
 import com.antgroup.geaflow.api.function.base.KeySelector;
 import com.antgroup.geaflow.api.function.base.MapFunction;
 import com.antgroup.geaflow.api.pdata.PStreamSink;
@@ -42,6 +45,9 @@ import com.antgroup.geaflow.dsl.common.binary.decoder.RowDecoder;
 import com.antgroup.geaflow.dsl.common.binary.encoder.EdgeEncoder;
 import com.antgroup.geaflow.dsl.common.binary.encoder.IBinaryEncoder;
 import com.antgroup.geaflow.dsl.common.binary.encoder.VertexEncoder;
+
+// import com.antgroup.geaflow.dsl.common.data.Path;
+
 import com.antgroup.geaflow.dsl.common.data.Row;
 import com.antgroup.geaflow.dsl.common.data.RowEdge;
 import com.antgroup.geaflow.dsl.common.data.RowKey;
@@ -64,6 +70,9 @@ import com.antgroup.geaflow.dsl.planner.GQLJavaTypeFactory;
 import com.antgroup.geaflow.dsl.runtime.QueryContext;
 import com.antgroup.geaflow.dsl.runtime.RuntimeTable;
 import com.antgroup.geaflow.dsl.runtime.SinkDataView;
+
+// import com.antgroup.geaflow.dsl.runtime.function.graph.StepJoinFunction;
+
 import com.antgroup.geaflow.dsl.runtime.function.table.AggFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.CorrelateFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.GroupByFunction;
@@ -72,10 +81,22 @@ import com.antgroup.geaflow.dsl.runtime.function.table.JoinTableFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.OrderByFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.ProjectFunction;
 import com.antgroup.geaflow.dsl.runtime.function.table.WhereFunction;
+
+// import com.antgroup.geaflow.dsl.runtime.key.FieldKeySelector;
+
 import com.antgroup.geaflow.dsl.runtime.plan.PhysicRelNode.PhysicRelNodeName;
 import com.antgroup.geaflow.dsl.schema.GeaFlowGraph;
 import com.antgroup.geaflow.dsl.schema.GeaFlowTable;
+
+// import com.antgroup.geaflow.dsl.util.GQLRelUtil;
+
 import com.antgroup.geaflow.dsl.util.SqlTypeUtil;
+
+// import com.antgroup.geaflow.model.row.GenericRow;
+
+// import com.antgroup.geaflow.pdata.stream.window.WindowDataStream;
+// import com.antgroup.geaflow.pdata.stream.window.WindowOptionalMatchStream;
+
 import com.antgroup.geaflow.pipeline.job.IPipelineJobContext;
 import com.google.common.collect.Lists;
 import java.io.Serializable;
@@ -86,6 +107,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+// import org.apache.calcite.rel.type.RelDataType;
+// import org.apache.calcite.rex.RexNode;
+
+// import org.apache.commons.lang3.tuple.Pair;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +125,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     private final PWindowStream<Row> pStream;
 
     public GeaFlowRuntimeTable(QueryContext queryContext, IPipelineJobContext context,
-                               PWindowStream<Row> pStream) {
+            PWindowStream<Row> pStream) {
         this.queryContext = Objects.requireNonNull(queryContext);
         this.context = Objects.requireNonNull(context);
         this.pStream = Objects.requireNonNull(pStream);
@@ -108,6 +135,42 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         pStream = pStream.withConfig(queryContext.getSetOptions());
         return new GeaFlowRuntimeTable(queryContext, context, pStream);
     }
+
+    // @Override
+    // public RuntimeTable leftOuterJoin(RuntimeTable other, RexNode condition,
+    // RelDataType outputRowType) {
+    // // ------------------------------------------------------------------
+    // // 这是一个临时的“占位”实现，目的是让整个项目能够编译通过。
+    // // 当你的代码编译成功后，再次运行测试，你就会看到这个 "not implemented yet!" 的报错。
+    // // 到那时，你的任务就是将这里的代码替换成真正的 Left Outer Join 逻辑。
+    // // ------------------------------------------------------------------
+    // throw new UnsupportedOperationException("LeftOuterJoin is not implemented
+    // yet!");
+    // }
+
+    // @Override
+    // public <K> RuntimeTable optionalMatch(RuntimeTable other,
+    //         KeySelector<Path, K> leftKeySelector,
+    //         KeySelector<Path, K> rightKeySelector,
+    //         StepJoinFunction joinFunction) {
+    //     String opName = PhysicRelNodeName.JOIN.getName(queryContext.getOpNameCount());
+    //     int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
+
+    //     // 修正：确保类型转换正确
+    //     PWindowStream<Path> leftPStream = (PWindowStream<Path>) this.pStream;
+    //     PWindowStream<Path> rightPStream = (PWindowStream<Path>) other.getPlan();
+
+    //     // 修正：调用 PWindowStream 上的 optionalMatch 方法
+    //     PWindowStream<Path> optionalMatchStream = leftPStream.optionalMatch(
+    //             rightPStream,
+    //             leftKeySelector,
+    //             rightKeySelector,
+    //             joinFunction);
+
+    //     optionalMatchStream.withName(opName).withParallelism(parallelism);
+    //     // 修正：确保返回的类型正确
+    //     return copyWithSetOptions(optionalMatchStream);
+    // }
 
     @Override
     public <T> T getPlan() {
@@ -130,7 +193,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
 
         PWindowStream<Row> map = pStream.map(new TableProjectFunction(function))
-            .withName(opName).withParallelism(parallelism);
+                .withName(opName).withParallelism(parallelism);
         return copyWithSetOptions(map);
     }
 
@@ -139,7 +202,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         String opName = PhysicRelNodeName.FILTER.getName(queryContext.getOpNameCount());
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
         PWindowStream<Row> filter = pStream.filter(new TableFilterFunction(function))
-            .withName(opName).withParallelism(parallelism);
+                .withName(opName).withParallelism(parallelism);
         return copyWithSetOptions(filter);
     }
 
@@ -153,9 +216,9 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         String opName = PhysicRelNodeName.AGGREGATE.getName(queryContext.getOpNameCount());
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
         boolean isGlobalDistinct = aggFunction.getValueTypes().length == 0;
-        PWindowStream<Row> aggregate =
-            pStream.flatMap(isGlobalDistinct ? new TableLocalDistinctFunction(groupByFunction)
-                                             : new TableLocalAggregateFunction(groupByFunction, aggFunction))
+        PWindowStream<Row> aggregate = pStream
+                .flatMap(isGlobalDistinct ? new TableLocalDistinctFunction(groupByFunction)
+                        : new TableLocalAggregateFunction(groupByFunction, aggFunction))
                 .withName(opName + "-local")
                 .withParallelism(pStream.getParallelism())
                 .keyBy(new GroupKeySelectorFunction(groupByFunction))
@@ -163,7 +226,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
                 .withParallelism(pStream.getParallelism())
                 .materialize()
                 .aggregate(isGlobalDistinct ? new TableGlobalDistinctFunction(groupByFunction)
-                                            : new TableGlobalAggregateFunction(groupByFunction, aggFunction))
+                        : new TableGlobalAggregateFunction(groupByFunction, aggFunction))
                 .withName(opName + "-global")
                 .withParallelism(parallelism);
         return copyWithSetOptions(aggregate);
@@ -174,7 +237,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         String opName = PhysicRelNodeName.UNION.getName(queryContext.getOpNameCount());
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
         PWindowStream<Row> union = pStream.union(other.getPlan())
-            .withName(opName).withParallelism(parallelism);
+                .withName(opName).withParallelism(parallelism);
         return copyWithSetOptions(union);
     }
 
@@ -182,10 +245,10 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     public RuntimeTable orderBy(OrderByFunction function) {
         String opName = PhysicRelNodeName.SORT.getName(queryContext.getOpNameCount());
         PWindowStream<Row> order = pStream.flatMap(new TableOrderByFunction(function))
-            .withName(opName + "-local").withParallelism(pStream.getParallelism())
-            .flatMap(new TableOrderByFunction(function))
-            .withName(opName + "-global")
-            .withParallelism(1);
+                .withName(opName + "-local").withParallelism(pStream.getParallelism())
+                .flatMap(new TableOrderByFunction(function))
+                .withName(opName + "-global")
+                .withParallelism(1);
         return copyWithSetOptions(order);
     }
 
@@ -194,7 +257,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         String opName = PhysicRelNodeName.CORRELATE.getName(queryContext.getOpNameCount());
         int parallelism = queryContext.getConfigParallelisms(opName, pStream.getParallelism());
         PWindowStream<Row> correlate = pStream.flatMap(new CorrelateFlatMapFunction(function))
-            .withName(opName).withParallelism(parallelism);
+                .withName(opName).withParallelism(parallelism);
         return copyWithSetOptions(correlate);
     }
 
@@ -217,11 +280,11 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             String customClassName = conf.getString(DSLConfigKeys.GEAFLOW_DSL_CUSTOM_SINK_FUNCTION);
             try {
                 sinkFunction = (GeaFlowTableSinkFunction) ClassUtil.classForName(customClassName)
-                    .getConstructor(GeaFlowTable.class, TableSink.class)
-                    .newInstance(table, tableSink);
+                        .getConstructor(GeaFlowTable.class, TableSink.class)
+                        .newInstance(table, tableSink);
             } catch (Exception e) {
                 throw new GeaFlowDSLException("Cannot create sink function: {}.",
-                    customClassName, e);
+                        customClassName, e);
             }
         } else {
             sinkFunction = new GeaFlowTableSinkFunction(table, tableSink);
@@ -229,19 +292,19 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         PWindowStream<Row> inputStream = pStream;
         if (table.getPrimaryFields().size() > 0) {
             int[] primaryKeyIndices = ArrayUtil.toIntArray(table.getPrimaryFields()
-                .stream().map(name -> table.getTableSchema().indexOf(name))
-                .collect(Collectors.toList()));
+                    .stream().map(name -> table.getTableSchema().indexOf(name))
+                    .collect(Collectors.toList()));
             IType<?>[] primaryKeyTypes = table.getPrimaryFields()
-                .stream().map(name -> table.getTableSchema().getField(name).getType())
-                .collect(Collectors.toList()).toArray(new IType[]{});
+                    .stream().map(name -> table.getTableSchema().getField(name).getType())
+                    .collect(Collectors.toList()).toArray(new IType[] {});
 
             inputStream = pStream.keyBy(new GroupKeySelectorFunction(
-                new GroupByFunctionImpl(primaryKeyIndices, primaryKeyTypes)));
+                    new GroupByFunctionImpl(primaryKeyIndices, primaryKeyTypes)));
         }
         PStreamSink<Row> sink = inputStream.sink(sinkFunction)
-            .withConfig(queryContext.getSetOptions())
-            .withName(opName)
-            .withParallelism(parallelism);
+                .withConfig(queryContext.getSetOptions())
+                .withName(opName)
+                .withParallelism(parallelism);
         return new GeaFlowSinkDataView(context, sink);
     }
 
@@ -261,7 +324,6 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         queryContext.updateVertexAndEdgeToGraph(graph.getName(), graph, vertexStream, edgeStream);
         return new GeaFlowSinkIncGraphView(context);
     }
-
 
     private static class TableProjectFunction implements MapFunction<Row, Row>, Serializable {
 
@@ -308,7 +370,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     private static class TableLocalDistinctFunction extends RichWindowFunction implements
-        FlatMapFunction<Row, Row> {
+            FlatMapFunction<Row, Row> {
 
         private final GroupByFunction groupByFunction;
         private final Map<RowKey, Row> aggregatingState;
@@ -335,7 +397,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
 
         @Override
         public void flatMap(Row value, Collector<Row> collector) {
-            //local distinct
+            // local distinct
             RowKey groupKey = groupByFunction.getRowKey(value);
             Row acc = aggregatingState.get(groupKey);
             if (acc == null) {
@@ -357,7 +419,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     private static class TableLocalAggregateFunction extends RichWindowFunction implements
-        FlatMapFunction<Row, Row> {
+            FlatMapFunction<Row, Row> {
 
         private final AggFunction localAggFunction;
         private final GroupByFunction groupByFunction;
@@ -374,15 +436,14 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             for (int i = 0; i < fieldTypes.length; i++) {
                 tableFields[i] = new TableField(String.valueOf(i), fieldTypes[i], false);
             }
-            tableFields[fieldTypes.length] = new TableField(String.valueOf(fieldTypes.length)
-                , ObjectType.INSTANCE, false);
+            tableFields[fieldTypes.length] = new TableField(String.valueOf(fieldTypes.length), ObjectType.INSTANCE,
+                    false);
             this.encoder = EncoderFactory.createEncoder(new StructType(tableFields));
         }
 
         @Override
         public void open(RuntimeContext runtimeContext) {
-            FunctionContext context =
-                FunctionContext.of(runtimeContext.getConfiguration());
+            FunctionContext context = FunctionContext.of(runtimeContext.getConfiguration());
             localAggFunction.open(context);
         }
 
@@ -393,7 +454,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         @Override
         public void flatMap(Row value, Collector<Row> collector) {
             this.collector = collector;
-            //local aggregate
+            // local aggregate
             RowKey groupKey = groupByFunction.getRowKey(value);
             Object acc = aggregatingState.get(groupKey);
             if (acc == null) {
@@ -408,7 +469,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             for (Entry<RowKey, Object> rowKeyObjectEntry : aggregatingState.entrySet()) {
                 assert collector != null : "collector is null";
                 IType<?>[] keyTypes = groupByFunction.getFieldTypes();
-                //The last offset of ObjectRow is accumulator
+                // The last offset of ObjectRow is accumulator
                 Object[] fields = new Object[keyTypes.length + 1];
                 for (int i = 0; i < keyTypes.length; i++) {
                     fields[i] = rowKeyObjectEntry.getKey().getField(i, keyTypes[i]);
@@ -421,7 +482,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     private static class TableGlobalDistinctFunction extends RichFunction implements
-        AggregateFunction<Row, Object, Row> {
+            AggregateFunction<Row, Object, Row> {
 
         private final GroupByFunction groupByFunction;
 
@@ -473,7 +534,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         @Override
         public Object merge(Object a, Object b) {
             assert Objects.equals(((DistinctAccumulator) a).getKey(),
-                ((DistinctAccumulator) b).getKey());
+                    ((DistinctAccumulator) b).getKey());
             return a;
         }
 
@@ -507,7 +568,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     private static class TableGlobalAggregateFunction extends RichFunction implements
-        AggregateFunction<Row, Object, Row> {
+            AggregateFunction<Row, Object, Row> {
 
         private final AggFunction aggFunction;
         private final GroupByFunction groupByFunction;
@@ -519,8 +580,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
 
         @Override
         public void open(RuntimeContext runtimeContext) {
-            FunctionContext context =
-                FunctionContext.of(runtimeContext.getConfiguration());
+            FunctionContext context = FunctionContext.of(runtimeContext.getConfiguration());
             aggFunction.open(context);
         }
 
@@ -624,7 +684,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
     }
 
     private static class TableOrderByFunction extends RichWindowFunction implements
-        FlatMapFunction<Row, Row> {
+            FlatMapFunction<Row, Row> {
 
         private final OrderByFunction orderByFunction;
         private Collector<Row> collector;
@@ -635,8 +695,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
 
         @Override
         public void open(RuntimeContext runtimeContext) {
-            FunctionContext context =
-                FunctionContext.of(runtimeContext.getConfiguration());
+            FunctionContext context = FunctionContext.of(runtimeContext.getConfiguration());
             orderByFunction.open(context);
         }
 
@@ -660,7 +719,6 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
         }
     }
 
-
     private static class CorrelateFlatMapFunction extends RichFunction implements FlatMapFunction<Row, Row> {
 
         private final CorrelateFunction correlateFunction;
@@ -671,8 +729,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
 
         @Override
         public void open(RuntimeContext runtimeContext) {
-            FunctionContext context =
-                FunctionContext.of(runtimeContext.getConfiguration());
+            FunctionContext context = FunctionContext.of(runtimeContext.getConfiguration());
             correlateFunction.open(context);
         }
 
@@ -699,7 +756,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             List<Row> rows = Lists.newArrayList();
             for (Row line : table) {
                 Object[] values = new Object[correlateFunction.getLeftOutputTypes().size()
-                    + correlateFunction.getRightOutputTypes().size()];
+                        + correlateFunction.getRightOutputTypes().size()];
                 int idx = 0;
                 for (int i = 0; i < correlateFunction.getLeftOutputTypes().size(); i++) {
                     values[idx++] = value.getField(i, correlateFunction.getLeftOutputTypes().get(i));
@@ -733,7 +790,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             GQLJavaTypeFactory typeFactory = GQLJavaTypeFactory.create();
             for (int i = 0; i < numVertex; i++) {
                 vertexTypes[i] = SqlTypeUtil.convertType(
-                    graph.getVertexTables().get(i).getRowType(typeFactory));
+                        graph.getVertexTables().get(i).getRowType(typeFactory));
                 vertexEncoders[i] = EncoderFactory.createVertexEncoder((VertexType) vertexTypes[i]);
             }
         }
@@ -770,7 +827,7 @@ public class GeaFlowRuntimeTable implements RuntimeTable {
             GQLJavaTypeFactory typeFactory = GQLJavaTypeFactory.create();
             for (int i = 0; i < numEdge; i++) {
                 edgeTypes[i] = SqlTypeUtil.convertType(
-                    graph.getEdgeTables().get(i).getRowType(typeFactory));
+                        graph.getEdgeTables().get(i).getRowType(typeFactory));
                 edgeEncoders[i] = EncoderFactory.createEdgeEncoder((EdgeType) edgeTypes[i]);
             }
         }
