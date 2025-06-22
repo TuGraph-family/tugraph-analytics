@@ -27,6 +27,9 @@ public enum TransformType {
     StreamCombine,
     WindowCombine,
     StreamUnion,
+
+    // OptionalMatch,
+    
     WindowGraphCompute,
     WindowGraphTraversal,
     ContinueGraphCompute,

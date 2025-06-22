@@ -1,0 +1,6 @@
+josh,ripple
+marko,josh
+marko,vadas
+peter,null
+ripple,null
+vadas,null
