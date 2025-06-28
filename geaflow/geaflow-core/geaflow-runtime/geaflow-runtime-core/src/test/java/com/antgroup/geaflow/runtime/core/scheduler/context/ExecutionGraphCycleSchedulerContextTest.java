@@ -40,7 +40,7 @@ public class ExecutionGraphCycleSchedulerContextTest extends BaseCycleSchedulerC
         parentContext.init(1);
 
         ExecutionNodeCycle iterationCycle = buildPipelineCycle(false, finishIterationId);
-        graph.addCycle(iterationCycle);
+        graph.addCycle(iterationCycle, false);
         CheckpointSchedulerContext iterationContext = new CheckpointSchedulerContext(iterationCycle, parentContext);
         iterationContext.init();
 
