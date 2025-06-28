@@ -106,11 +106,13 @@ public class PipelineRunner {
 
             Map<Integer, List<ExecutionTask>> vertex2Tasks = ExecutionCycleTaskAssigner.assign(graph);
 
+            // Skip checkpoint if it's a PipelineServiceExecutorContext
+            boolean skipCheckpoint = pipelineExecutorContext instanceof PipelineServiceExecutorContext;
             IExecutionCycle cycle = ExecutionCycleBuilder.buildExecutionCycle(graph, vertex2Tasks,
                 pipelineContext.getConfig(), ExecutionIdGenerator.getInstance().generateId(),
                 pipelineExecutorContext.getPipelineTaskId(), pipelineExecutorContext.getPipelineTaskName(),
                 ExecutionIdGenerator.getInstance().generateId(), pipelineExecutorContext.getDriverId(),
-                pipelineExecutorContext.getDriverIndex());
+                pipelineExecutorContext.getDriverIndex(), skipCheckpoint);
             return CycleSchedulerContextFactory.create(cycle, null);
         });
         return context;

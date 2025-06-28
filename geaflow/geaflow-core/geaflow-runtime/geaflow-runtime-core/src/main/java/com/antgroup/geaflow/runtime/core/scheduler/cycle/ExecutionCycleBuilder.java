@@ -45,7 +45,8 @@ public class ExecutionCycleBuilder {
                                                       String name,
                                                       long schedulerId,
                                                       String driverId,
-                                                      int driverIndex) {
+                                                      int driverIndex,
+                                                      boolean skipCheckpoint) {
 
         int flyingCount = executionGraph.getCycleGroupMeta().getFlyingCount();
         long iterationCount = executionGraph.getCycleGroupMeta().getIterationCount();
@@ -54,7 +55,7 @@ public class ExecutionCycleBuilder {
         for (ExecutionVertexGroup vertexGroup : executionGraph.getVertexGroupMap().values()) {
             ExecutionNodeCycle nodeCycle = buildExecutionCycle(vertexGroup,
                 vertex2Tasks, config, pipelineId, pipelineTaskId, name, schedulerId, driverId, driverIndex);
-            graphCycle.addCycle(nodeCycle);
+            graphCycle.addCycle(nodeCycle, skipCheckpoint);
         }
         return graphCycle;
     }

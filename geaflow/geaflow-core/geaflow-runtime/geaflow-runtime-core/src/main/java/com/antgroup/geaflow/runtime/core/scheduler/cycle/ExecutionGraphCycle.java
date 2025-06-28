@@ -68,7 +68,7 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
         return haLevel;
     }
 
-    public void addCycle(IExecutionCycle cycle) {
+    public void addCycle(IExecutionCycle cycle, boolean skipCheckpoint) {
         if (cycleMap.containsKey(cycle.getCycleId())) {
             throw new GeaflowRuntimeException(String.format("cycle %d already added", cycle.getCycleId()));
         }
@@ -80,8 +80,8 @@ public class ExecutionGraphCycle extends AbstractExecutionCycle {
         cycleParents.get(cycle.getCycleId()).addAll(nodeCycle.getVertexGroup().getParentVertexGroupIds());
         cycleChildren.get(cycle.getCycleId()).addAll(nodeCycle.getVertexGroup().getChildrenVertexGroupIds());
 
-        if (iterationCount > 1 && haLevel != HighAvailableLevel.CHECKPOINT
-            && (cycle.getType() == ExecutionCycleType.ITERATION || cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG)) {
+        if (!skipCheckpoint && (iterationCount > 1 && haLevel != HighAvailableLevel.CHECKPOINT
+            && (cycle.getType() == ExecutionCycleType.ITERATION || cycle.getType() == ExecutionCycleType.ITERATION_WITH_AGG))) {
             haLevel = HighAvailableLevel.CHECKPOINT;
         }
     }
