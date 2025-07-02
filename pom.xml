@@ -37,6 +37,7 @@
     <modules>
         <module>geaflow</module>
         <module>geaflow-console</module>
+        <module>geaflow-mcp</module>
     </modules>
 
     <licenses>
