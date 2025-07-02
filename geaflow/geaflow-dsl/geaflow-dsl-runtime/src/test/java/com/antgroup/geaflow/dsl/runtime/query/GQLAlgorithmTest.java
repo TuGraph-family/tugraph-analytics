@@ -24,6 +24,9 @@ import com.antgroup.geaflow.common.config.keys.FrameworkConfigKeys;
 import com.antgroup.geaflow.file.FileConfigKeys;
 import java.io.File;
 import java.io.IOException;
+
+
+
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
@@ -92,6 +95,7 @@ public class GQLAlgorithmTest {
     public void testAlgorithm_008() throws Exception {
         QueryTester
             .build()
+            .withWorkerNum(8)
             .withQueryPath("/query/find_loop.sql")
             .execute()
             .checkSinkResult();
@@ -105,6 +109,21 @@ public class GQLAlgorithmTest {
             .execute()
             .checkSinkResult();
     }
+
+
+    
+    @Test
+    public void testAlgorithm_009() throws Exception {
+        
+        QueryTester
+            .build()
+            .withWorkerNum(8)
+            .withQueryPath("/query/gql_algorithm_009.sql")
+            .execute()
+            .checkSinkResult();
+    }
+
+
 
     @Test
     public void testAlgorithmKCore() throws Exception {

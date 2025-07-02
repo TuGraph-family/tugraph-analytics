@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -43,16 +43,30 @@ public class SqlMatchPattern extends SqlCall {
     private SqlNodeList orderBy;
 
     private SqlNode limit;
-    
+
+    private final boolean isOptional;
+
     public SqlMatchPattern(SqlParserPos pos, SqlNode from, SqlNodeList pathPatterns,
-                           SqlNode where, SqlNodeList orderBy, SqlNode limit) {
+                           SqlNode where, SqlNodeList orderBy, SqlNode limit, boolean isOptional) {
         super(pos);
         this.from = from;
         this.pathPatterns = pathPatterns;
         this.where = where;
         this.orderBy = orderBy;
         this.limit = limit;
+        this.isOptional = isOptional;
     }
+
+    /**
+     * This constructor is retained for compatibility with code that does not yet know about the
+     * isOptional flag, and defaults it to false.
+     */
+    public SqlMatchPattern(SqlParserPos pos, SqlNode from, SqlNodeList pathPatterns,
+                           SqlNode where, SqlNodeList orderBy, SqlNode limit) {
+        // Calls the new constructor, providing a default value of 'false' for isOptional.
+        this(pos, from, pathPatterns, where, orderBy, limit, false);
+    }
+
 
     @Override
     public SqlOperator getOperator() {
@@ -73,6 +87,10 @@ public class SqlMatchPattern extends SqlCall {
     @Override
     public void validate(SqlValidator validator, SqlValidatorScope scope) {
         validator.validateQuery(this, scope, validator.getUnknownType());
+    }
+
+    public boolean isOptional() {
+        return isOptional;
     }
 
     public SqlNode getFrom() {
@@ -123,35 +141,47 @@ public class SqlMatchPattern extends SqlCall {
         }
     }
 
+    /**
+     * The unparse method is modified to recursively unparse the query chain.
+     */
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.keyword("Match");
-        if (pathPatterns != null) {
-            for (int i = 0; i < pathPatterns.size(); i++) {
-                if (i > 0) {
-                    writer.print(", ");
-                }
-                pathPatterns.get(i).unparse(writer, leftPrec, rightPrec);
-                writer.newlineAndIndent();
-            }
-        }
-        if (where != null) {
-            writer.keyword("WHERE");
-            where.unparse(writer, 0, 0);
-        }
-        if (orderBy != null && orderBy.size() > 0) {
-            writer.keyword("ORDER BY");
-            for (int i = 0; i < orderBy.size(); i++) {
-                SqlNode label = orderBy.get(i);
-                if (i > 0) {
-                    writer.print(",");
-                }
-                label.unparse(writer, leftPrec, rightPrec);
-            }
+        // First, recursively unparse the preceding part of the query (the 'from' chain).
+        if (from != null) {
+            from.unparse(writer, 0, 0);
             writer.newlineAndIndent();
         }
+
+        // Now, unparse this specific MATCH clause.
+        if (isOptional) {
+            writer.keyword("OPTIONAL");
+            writer.print(" ");
+        }
+        writer.keyword("MATCH");
+        
+        if (pathPatterns != null) {
+            writer.print(" ");
+            pathPatterns.unparse(writer, 0, 0);
+        }
+
+        if (where != null) {
+            writer.newlineAndIndent();
+            writer.keyword("WHERE");
+            writer.print(" ");
+            where.unparse(writer, 0, 0);
+        }
+        
+        if (orderBy != null && orderBy.size() > 0) {
+            writer.newlineAndIndent();
+            writer.keyword("ORDER BY");
+            writer.print(" ");
+            orderBy.unparse(writer, leftPrec, rightPrec);
+        }
+
         if (limit != null) {
+            writer.newlineAndIndent();
             writer.keyword("LIMIT");
+            writer.print(" ");
             limit.unparse(writer, leftPrec, rightPrec);
         }
     }
@@ -173,6 +203,6 @@ public class SqlMatchPattern extends SqlCall {
     }
 
     public boolean isSinglePattern() {
-        return pathPatterns.size() == 1 && pathPatterns.get(0) instanceof SqlPathPattern;
+        return pathPatterns != null && pathPatterns.size() == 1 && pathPatterns.get(0) instanceof SqlPathPattern;
     }
 }

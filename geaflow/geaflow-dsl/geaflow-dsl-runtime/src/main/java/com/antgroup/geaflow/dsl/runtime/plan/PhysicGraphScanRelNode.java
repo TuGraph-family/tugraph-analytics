@@ -30,8 +30,8 @@ import org.apache.calcite.plan.RelTraitSet;
 public class PhysicGraphScanRelNode extends GraphScan implements PhysicRelNode<RuntimeGraph> {
 
     public PhysicGraphScanRelNode(RelOptCluster cluster,
-                                  RelTraitSet traitSet,
-                                  RelOptTable table) {
+            RelTraitSet traitSet,
+            RelOptTable table) {
         super(cluster, traitSet, table);
     }
 

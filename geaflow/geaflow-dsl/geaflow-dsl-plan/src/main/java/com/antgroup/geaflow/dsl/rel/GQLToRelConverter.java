@@ -34,15 +34,14 @@ import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphAlgorithm;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphMatch;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphModify;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalGraphScan;
+import com.antgroup.geaflow.dsl.rel.logical.LogicalOptionalMatch;
 import com.antgroup.geaflow.dsl.rel.logical.LogicalParameterizedRelNode;
 import com.antgroup.geaflow.dsl.rel.match.EdgeMatch;
 import com.antgroup.geaflow.dsl.rel.match.IMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.LoopUntilMatch;
-import com.antgroup.geaflow.dsl.rel.match.MatchDistinct;
 import com.antgroup.geaflow.dsl.rel.match.MatchFilter;
 import com.antgroup.geaflow.dsl.rel.match.MatchJoin;
 import com.antgroup.geaflow.dsl.rel.match.MatchPathModify;
-import com.antgroup.geaflow.dsl.rel.match.MatchPathSort;
 import com.antgroup.geaflow.dsl.rel.match.MatchUnion;
 import com.antgroup.geaflow.dsl.rel.match.SingleMatchNode;
 import com.antgroup.geaflow.dsl.rel.match.SubQueryStart;
@@ -158,20 +157,20 @@ public class GQLToRelConverter extends SqlToRelConverter {
     private long queryIdCounter = 0;
 
     public GQLToRelConverter(ViewExpander viewExpander, SqlValidator validator,
-                             CatalogReader catalogReader, RelOptCluster cluster,
-                             SqlRexConvertletTable convertLetTable,
-                             Config config) {
+            CatalogReader catalogReader, RelOptCluster cluster,
+            SqlRexConvertletTable convertLetTable,
+            Config config) {
         super(viewExpander, validator, catalogReader, cluster, convertLetTable, config);
     }
 
     @Override
     protected RelRoot convertQueryRecursive(SqlNode query, boolean top,
-                                            RelDataType targetRowType) {
+            RelDataType targetRowType) {
         return RelRoot.of(convertQueryRecursive(query, top, targetRowType, null), query.getKind());
     }
 
     private RelNode convertQueryRecursive(SqlNode query, boolean top,
-                                          RelDataType targetRowType, Blackboard withBb) {
+            RelDataType targetRowType, Blackboard withBb) {
         SqlKind kind = query.getKind();
         switch (kind) {
             case GQL_FILTER:
@@ -195,7 +194,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
         if (containMatch) {
             if (with.withList.size() > 1) {
                 throw new GeaFlowDSLException("Multi-with list is not support for match at "
-                    + with.getParserPosition());
+                        + with.getParserPosition());
             }
             SqlWithItem withItem = (SqlWithItem) with.withList.get(0);
             RelNode parameterNode = convertQueryRecursive(withItem.query, false, null).rel;
@@ -204,7 +203,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
             RelNode queryNode = convertQueryRecursive(with.body, false, null, withBb);
             RelNode parameterizedNode = LogicalParameterizedRelNode.create(getCluster(), getCluster().traitSet(),
-                parameterNode, queryNode);
+                    parameterNode, queryNode);
             return RelRoot.of(parameterizedNode, with.getKind());
         }
         return super.convertWith(with, top);
@@ -230,32 +229,31 @@ public class GQLToRelConverter extends SqlToRelConverter {
         if (returnStatement.getOrderBy() != null) {
             for (SqlNode orderItem : returnStatement.getOrderList()) {
                 collationList.add(convertOrderItem(returnStatement, orderItem, orderExprList, Direction.ASCENDING,
-                    UNSPECIFIED));
+                        UNSPECIFIED));
             }
         }
         RelCollation collation = cluster.traitSet().canonize(RelCollations.of(collationList));
 
         SqlNodeList groupBy = returnStatement.getGroupBy();
         if (((GQLValidatorImpl) validator).getAggregate(returnStatement.getReturnList()) != null
-            || groupBy != null) {
+                || groupBy != null) {
             convertAgg(bb, returnStatement, orderExprList);
         } else {
             convertReturnList(bb, returnStatement, orderExprList);
         }
-        SqlValidatorScope orderByScope =
-            getValidator().getScopes(returnStatement.getOrderBy());
+        SqlValidatorScope orderByScope = getValidator().getScopes(returnStatement.getOrderBy());
         Blackboard orderByBb = createBlackboard(orderByScope, null, false).setWithBb(withBb);
         orderByBb.setRoot(bb.root, false);
         convertOrder(getValidator().asSqlSelect(returnStatement), orderByBb,
-            collation, orderExprList, returnStatement.getOffset(), returnStatement.getFetch());
+                collation, orderExprList, returnStatement.getOffset(), returnStatement.getFetch());
         bb.setRoot(orderByBb.root, false);
         return bb.root;
     }
 
     private void convertReturnList(Blackboard bb,
-                                   SqlReturnStatement returnStmt, List<SqlNode> orderList) {
+            SqlReturnStatement returnStmt, List<SqlNode> orderList) {
         SqlNodeList returnList = returnStmt.getReturnList();
-        //Return Star & SubQueries are not support.
+        // Return Star & SubQueries are not support.
         List<String> fieldNames = new ArrayList<>();
         List<RexNode> exprs = new ArrayList<>();
         Collection<String> aliases = new TreeSet<>();
@@ -265,18 +263,16 @@ public class GQLToRelConverter extends SqlToRelConverter {
             fieldNames.add(deriveAlias(node, aliases, ++i));
         }
 
-        SqlValidatorScope orderScope =
-            getValidator().getScopes(returnStmt.getOrderBy());
+        SqlValidatorScope orderScope = getValidator().getScopes(returnStmt.getOrderBy());
         for (SqlNode node2 : orderList) {
-            SqlNode expandExpr =
-                ((GQLValidatorImpl) validator).expandReturnGroupOrderExpr(returnStmt,
+            SqlNode expandExpr = ((GQLValidatorImpl) validator).expandReturnGroupOrderExpr(returnStmt,
                     orderScope, node2);
             exprs.add(bb.convertExpression(expandExpr));
             fieldNames.add(deriveAlias(node2, aliases, ++i));
         }
         fieldNames = SqlValidatorUtil.uniquify(fieldNames, this.catalogReader.nameMatcher().isCaseSensitive());
         RelDataType rowType = RexUtil.createStructType(this.cluster.getTypeFactory(), exprs, fieldNames,
-            SqlValidatorUtil.F_SUGGESTER);
+                SqlValidatorUtil.F_SUGGESTER);
         bb.setRoot(LogicalProject.create(bb.root, exprs, rowType), true);
 
         if (returnStmt.isDistinct()) {
@@ -285,7 +281,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
     }
 
     private void convertAgg(Blackboard bb,
-                            SqlReturnStatement returnStmt, List<SqlNode> orderList) {
+            SqlReturnStatement returnStmt, List<SqlNode> orderList) {
         assert bb.root != null : "precondition: child != null when converting AGG";
 
         SqlNodeList returnList = returnStmt.getReturnList();
@@ -317,14 +313,15 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
             // Project the expressions required by agg and having.
             bb.setRoot(
-                getRelBuilder().push(inputRel)
-                    .projectNamed(Pair.left(preExprs), Pair.right(preExprs), true)
-                    .build(),
-                false);
+                    getRelBuilder().push(inputRel)
+                            .projectNamed(Pair.left(preExprs), Pair.right(preExprs), true)
+                            .build(),
+                    false);
             // Add the aggregator
             bb.setRoot(
-                createAggregate(bb, r.groupSet, r.groupSets,
-                    aggConverter.getAggCalls()), false);
+                    createAggregate(bb, r.groupSet, r.groupSets,
+                            aggConverter.getAggCalls()),
+                    false);
 
             // Now sub-queries in the entire select list have been converted.
             // Convert the select expressions to get the final list to be
@@ -348,22 +345,20 @@ public class GQLToRelConverter extends SqlToRelConverter {
             }
             assert returnScope != null;
 
-            final SqlValidatorNamespace returnNamespace =
-                validator.getNamespace(returnScope.getNode());
-            final List<String> names =
-                returnNamespace.getRowType().getFieldNames();
+            final SqlValidatorNamespace returnNamespace = validator.getNamespace(returnScope.getNode());
+            final List<String> names = returnNamespace.getRowType().getFieldNames();
             int sysFieldCount = returnList.size() - names.size();
             for (SqlNode expr : returnList) {
                 projects.add(
-                    Pair.of(bb.convertExpression(expr),
-                        k < sysFieldCount
-                        ? validator.deriveAlias(expr, k++)
-                        : names.get(k++ - sysFieldCount)));
+                        Pair.of(bb.convertExpression(expr),
+                                k < sysFieldCount
+                                        ? validator.deriveAlias(expr, k++)
+                                        : names.get(k++ - sysFieldCount)));
             }
             for (SqlNode expr : orderList) {
                 projects.add(
-                    Pair.of(bb.convertExpression(expr),
-                        validator.deriveAlias(expr, k++)));
+                        Pair.of(bb.convertExpression(expr),
+                                validator.deriveAlias(expr, k++)));
             }
         } finally {
             bb.setAgg(null);
@@ -372,143 +367,374 @@ public class GQLToRelConverter extends SqlToRelConverter {
         getRelBuilder().push(bb.root);
         // implement the SELECT list
         getRelBuilder().project(Pair.left(projects), Pair.right(projects))
-            .rename(Pair.right(projects));
+                .rename(Pair.right(projects));
         bb.setRoot(getRelBuilder().build(), true);
     }
 
+    // private RelNode convertGQLMatchPattern(SqlMatchPattern matchPattern, boolean
+    // top, Blackboard withBb) {
+    // SqlValidatorScope scope = getValidator().getScopes(matchPattern);
+    // Blackboard bb = createBlackboard(scope, null, top).setWithBb(withBb);
+    // convertGQLFrom(bb, matchPattern.getFrom(), withBb);
+
+    // SqlNodeList pathPatterns = matchPattern.getPathPatterns();
+
+    // List<IMatchNode> relPathPatterns = new ArrayList<>();
+    // List<PathRecordType> pathPatternTypes = new ArrayList<>();
+    // // concat path pattern
+    // for (SqlNode pathPattern : pathPatterns) {
+    // IMatchNode relPathPattern = convertPathPattern(pathPattern, withBb);
+    // PathRecordType pathType =
+    // pathPattern instanceof SqlUnionPathPattern
+    // ? (PathRecordType) getValidator().getNamespace(pathPattern).getRowType() :
+    // (PathRecordType) getValidator().getValidatedNodeType(pathPattern);
+    // // concat path pattern and type if then can connect in a line.
+    // concatPathPatterns(relPathPatterns, pathPatternTypes, relPathPattern,
+    // pathType);
+    // }
+
+    // IMatchNode joinPattern = null;
+    // for (IMatchNode relPathPattern : relPathPatterns) {
+    // if (joinPattern == null) {
+    // joinPattern = relPathPattern;
+    // } else {
+    // IMatchNode left = joinPattern;
+    // IMatchNode right = relPathPattern;
+    // RexNode condition = GQLRelUtil.createPathJoinCondition(left, right,
+    // isCaseSensitive(), rexBuilder);
+    // joinPattern = MatchJoin.create(left.getCluster(), left.getTraitSet(),
+    // left, right, condition, JoinRelType.INNER);
+    // }
+    // }
+
+    // if (matchPattern.isDistinct()) {
+    // joinPattern = MatchDistinct.create(joinPattern);
+    // }
+
+    // RelDataType graphType = getValidator().getValidatedNodeType(matchPattern);
+    // GraphMatch graphMatch;
+    // if (bb.root instanceof GraphMatch) { // merge with pre graph match.
+    // GraphMatch input = (GraphMatch) bb.root;
+    // graphMatch = input.merge(joinPattern);
+    // } else {
+    // graphMatch = LogicalGraphMatch.create(getCluster(), bb.root, joinPattern,
+    // graphType);
+    // }
+    // if (matchPattern.getWhere() != null) {
+    // SqlNode where = matchPattern.getWhere();
+    // SqlValidatorScope whereScope = getValidator().getScopes(where);
+    // GQLBlackboard whereBb = createBlackboard(whereScope, null, false)
+    // .setWithBb(withBb);
+    // whereBb.setRoot(graphMatch, true);
+    // replaceSubQueries(whereBb, where, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
+    // RexNode condition = whereBb.convertExpression(where);
+
+    // IMatchNode newPathPattern = MatchFilter.create(graphMatch.getPathPattern(),
+    // condition, graphMatch.getPathPattern().getPathSchema());
+    // graphMatch = graphMatch.copy(newPathPattern);
+    // }
+
+    // List<RexNode> orderByExpList = new ArrayList<>();
+    // if (matchPattern.getOrderBy() != null) {
+    // SqlValidatorScope orderScope =
+    // getValidator().getScopes(matchPattern.getOrderBy());
+    // Blackboard orderBb = createBlackboard(orderScope, null, top)
+    // .setWithBb(withBb);
+    // orderBb.setRoot(graphMatch, true);
+    // for (SqlNode orderItem : matchPattern.getOrderBy()) {
+    // orderByExpList.add(orderBb.convertExpression(orderItem));
+    // }
+    // }
+    // // convert match order
+    // SqlNode limit = matchPattern.getLimit();
+    // if (limit != null || orderByExpList.size() > 0) {
+    // MatchPathSort newPathPattern =
+    // MatchPathSort.create(graphMatch.getPathPattern(),
+    // orderByExpList, limit == null ? null : convertExpression(limit),
+    // graphMatch.getPathPattern().getPathSchema());
+
+    // graphMatch = graphMatch.copy(newPathPattern);
+    // }
+    // return graphMatch;
+    // }
+
+    /**
+     * 将 SqlMatchPattern (代表一个 MATCH/OPTIONAL MATCH 子句) 转换为关系表达式 (RelNode).
+     *
+     * @param matchPattern 要转换的 AST 节点
+     * @param top          是否为顶层查询
+     * @param withBb       用于 with 子句转换的上下文
+     * @return 转换后的 RelNode
+     */
     private RelNode convertGQLMatchPattern(SqlMatchPattern matchPattern, boolean top, Blackboard withBb) {
-        SqlValidatorScope scope = getValidator().getScopes(matchPattern);
-        Blackboard bb = createBlackboard(scope, null, top).setWithBb(withBb);
-        convertGQLFrom(bb, matchPattern.getFrom(), withBb);
 
-        SqlNodeList pathPatterns = matchPattern.getPathPatterns();
+        SqlNode from = matchPattern.getFrom();
+        SqlPathPattern currentPathPattern = (SqlPathPattern) matchPattern.getPathPatterns().get(0);
 
-        List<IMatchNode> relPathPatterns = new ArrayList<>();
-        List<PathRecordType> pathPatternTypes = new ArrayList<>();
-        // concat path pattern
-        for (SqlNode pathPattern : pathPatterns) {
-            IMatchNode relPathPattern = convertPathPattern(pathPattern, withBb);
-            PathRecordType pathType =
-                pathPattern instanceof SqlUnionPathPattern
-                ? (PathRecordType) getValidator().getNamespace(pathPattern).getRowType() :
-                (PathRecordType) getValidator().getValidatedNodeType(pathPattern);
-            // concat path pattern and type if then can connect in a line.
-            concatPathPatterns(relPathPatterns, pathPatternTypes, relPathPattern, pathType);
-        }
+        // **********************************************************************
+        // Case 1: Base Case - 匹配链的第一个子句 
+        // **********************************************************************
+        if (from == null || from.getKind() != SqlKind.GQL_MATCH_PATTERN) {
+            SqlValidatorScope scope = getValidator().getScopes(matchPattern);
+            Blackboard bb = createBlackboard(scope, null, top).setWithBb(withBb);
 
-        IMatchNode joinPattern = null;
-        for (IMatchNode relPathPattern : relPathPatterns) {
-            if (joinPattern == null) {
-                joinPattern = relPathPattern;
+            // 初始化图扫描节点, bb.root 会被设置为 LogicalGraphScan
+            convertGQLFrom(bb, from, withBb);
+            RelNode inputNode = bb.root;
+
+            // 将当前路径转换为 IMatchNode 树
+            IMatchNode path = convertPathPattern(currentPathPattern, withBb);
+            RelDataType rowType = getValidator().getValidatedNodeType(matchPattern);
+
+            // 根据是否为 OPTIONAL，创建不同的逻辑节点
+            if (currentPathPattern.isOptional()) {
+                // 清晰、直接地创建 LogicalOptionalMatch 节点
+                return LogicalOptionalMatch.create(cluster, inputNode, path, rowType,
+                        this.isCaseSensitive());
             } else {
-                IMatchNode left = joinPattern;
-                IMatchNode right = relPathPattern;
-                RexNode condition = GQLRelUtil.createPathJoinCondition(left, right, isCaseSensitive(), rexBuilder);
-                joinPattern = MatchJoin.create(left.getCluster(), left.getTraitSet(),
-                    left, right, condition, JoinRelType.INNER);
+                // 创建标准的 LogicalGraphMatch 节点
+                return LogicalGraphMatch.create(cluster, inputNode, path, rowType);
             }
-        }
-
-        if (matchPattern.isDistinct()) {
-            joinPattern = MatchDistinct.create(joinPattern);
-        }
-
-        RelDataType graphType = getValidator().getValidatedNodeType(matchPattern);
-        GraphMatch graphMatch;
-        if (bb.root instanceof GraphMatch) { // merge with pre graph match.
-            GraphMatch input = (GraphMatch) bb.root;
-            graphMatch = input.merge(joinPattern);
         } else {
-            graphMatch = LogicalGraphMatch.create(getCluster(), bb.root, joinPattern, graphType);
-        }
-        if (matchPattern.getWhere() != null) {
-            SqlNode where = matchPattern.getWhere();
-            SqlValidatorScope whereScope = getValidator().getScopes(where);
-            GQLBlackboard whereBb = createBlackboard(whereScope, null, false)
-                .setWithBb(withBb);
-            whereBb.setRoot(graphMatch, true);
-            replaceSubQueries(whereBb, where, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
-            RexNode condition = whereBb.convertExpression(where);
+            // **********************************************************************
+            // Case 2: Join Case - 一个后续的 MATCH 或 OPTIONAL MATCH 子句
+            // **********************************************************************
+            // 1. 递归调用，将 FROM 子句 (即内层的 MATCH/OPTIONAL MATCH) 转换为一个 RelNode。
+            RelNode leftNode = convertGQLMatchPattern((SqlMatchPattern) from, false,
+                    withBb);
 
-            IMatchNode newPathPattern = MatchFilter.create(graphMatch.getPathPattern(),
-                condition, graphMatch.getPathPattern().getPathSchema());
-            graphMatch = graphMatch.copy(newPathPattern);
-        }
+            // 2. 将当前节点的路径模式转换为一个新的 IMatchNode 树。
+            IMatchNode rightPath = convertPathPattern(currentPathPattern, withBb);
+            RelDataType finalRowType = getValidator().getValidatedNodeType(matchPattern);
 
-        List<RexNode> orderByExpList = new ArrayList<>();
-        if (matchPattern.getOrderBy() != null) {
-            SqlValidatorScope orderScope = getValidator().getScopes(matchPattern.getOrderBy());
-            Blackboard orderBb = createBlackboard(orderScope, null, top)
-                .setWithBb(withBb);
-            orderBb.setRoot(graphMatch, true);
-            for (SqlNode orderItem : matchPattern.getOrderBy()) {
-                orderByExpList.add(orderBb.convertExpression(orderItem));
-            }
-        }
-        // convert match order
-        SqlNode limit = matchPattern.getLimit();
-        if (limit != null || orderByExpList.size() > 0) {
-            MatchPathSort newPathPattern = MatchPathSort.create(graphMatch.getPathPattern(),
-                orderByExpList, limit == null ? null : convertExpression(limit),
-                graphMatch.getPathPattern().getPathSchema());
+            // 3. 根据当前子句是否为 OPTIONAL，创建不同的逻辑节点
+            if (currentPathPattern.isOptional()) {
+                // 如果当前是 OPTIONAL MATCH，则以前一个匹配的结果(leftNode)为输入，
+                // 创建一个新的 LogicalOptionalMatch 节点。
+                return LogicalOptionalMatch.create(cluster, leftNode, rightPath,
+                        finalRowType, this.isCaseSensitive());
 
-            graphMatch = graphMatch.copy(newPathPattern);
-        }
-        return graphMatch;
-    }
-
-    private void concatPathPatterns(List<IMatchNode> concatPatterns, List<PathRecordType> concatPathTypes,
-                                    IMatchNode pathPattern, PathRecordType pathType) {
-        if (concatPatterns.isEmpty() || !(pathPattern instanceof SingleMatchNode)) {
-            concatPatterns.add(pathPattern);
-            concatPathTypes.add(pathType);
-            return;
-        }
-        SingleMatchNode singlePathPattern = (SingleMatchNode) pathPattern;
-        String firstLabel = GQLRelUtil.getFirstMatchNode(singlePathPattern).getLabel();
-        String latestLabel = GQLRelUtil.getLatestMatchNode(singlePathPattern).getLabel();
-        int i;
-        for (i = 0; i < concatPatterns.size(); i++) {
-            IMatchNode pathPattern2 = concatPatterns.get(i);
-            if (pathPattern2 instanceof SingleMatchNode) {
-                String latestLabel2 = GQLRelUtil.getLatestMatchNode((SingleMatchNode) pathPattern2).getLabel();
-                // pathPattern2 is "(a) - (b) - (c)", where singlePathPattern is "(c) - (d)"
-                // Then concat pathPattern2 with singlePathPattern and return "(a) - (b) - (c) - (d)"
-                if (getValidator().nameMatcher().matches(firstLabel, latestLabel2)) {
-                    IMatchNode concatPattern = GQLRelUtil.concatPathPattern((SingleMatchNode) pathPattern2,
-                        singlePathPattern, isCaseSensitive());
-                    concatPatterns.set(i, concatPattern);
-
-                    PathRecordType pathType2 = concatPathTypes.get(i);
-                    PathRecordType concatPathType = pathType2.concat(pathType, isCaseSensitive());
-                    concatPathTypes.set(i, concatPathType);
-                    break;
-                } else {
-                    String firstLabel2 = GQLRelUtil.getFirstMatchNode((SingleMatchNode) pathPattern2).getLabel();
-                    // singlePathPattern is "(a) - (b) - (c)", where pathPattern2 is "(c) - (d)"
-                    // Then concat singlePathPattern with pathPattern2 and return "(a) - (b) - (c) - (d)"
-                    if (getValidator().nameMatcher().matches(firstLabel2, latestLabel)) {
-                        IMatchNode concatPattern = GQLRelUtil.concatPathPattern(singlePathPattern,
-                            (SingleMatchNode) pathPattern2, isCaseSensitive());
-                        concatPatterns.set(i, concatPattern);
-
-                        PathRecordType pathType2 = concatPathTypes.get(i);
-                        PathRecordType concatPathType = pathType.concat(pathType2, isCaseSensitive());
-                        concatPathTypes.set(i, concatPathType);
-                        break;
-                    }
+            } else {
+                // 如果当前是普通的 MATCH，这意味着需要将前后的路径合并（INNER JOIN）。
+                // 检查前一个节点是否为 GraphMatch 类型
+                if (!(leftNode instanceof GraphMatch)) {
+                    throw new GeaFlowDSLException("Expected input to a chained MATCH to be a GraphMatch, but was "
+                            + leftNode.getClass().getSimpleName());
                 }
+                GraphMatch leftMatch = (GraphMatch) leftNode;
+                IMatchNode leftPath = leftMatch.getPathPattern();
+
+                // 创建连接条件
+                RexNode condition = GQLRelUtil.createPathJoinCondition(leftPath, rightPath,
+                        isCaseSensitive(),
+                        rexBuilder);
+
+                // 创建一个新的 IMatchNode 来代表 Join 操作
+                IMatchNode newJoinedPath = MatchJoin.create(leftPath.getCluster(),
+                        leftPath.getTraitSet(),
+                        leftPath, rightPath, condition, JoinRelType.INNER);
+
+                //  创建一个全新的、包裹了完整连接路径的 LogicalGraphMatch。
+                // 它的输入是最初的图扫描节点（从 leftMatch 中获取）。
+                RelNode finalGraphMatch = LogicalGraphMatch.create(cluster,
+                        leftMatch.getInput(), newJoinedPath,
+                        finalRowType);
+
+                // 后续处理 (WHERE, DISTINCT 等)
+                Blackboard bb = createBlackboard(getValidator().getScopes(matchPattern),
+                        null, top).setWithBb(withBb);
+                bb.setRoot(finalGraphMatch, true);
+                if (matchPattern.getWhere() != null) {
+                    bb.setRoot(LogicalFilter.create(bb.root,
+                            bb.convertExpression(matchPattern.getWhere())), true);
+                }
+                if (matchPattern.isDistinct()) {
+                    convertDistinct(bb, true);
+                }
+                return bb.root;
             }
         }
-        // If merge not happen, just add it.
-        if (i == concatPatterns.size()) {
-            concatPatterns.add(pathPattern);
-            concatPathTypes.add(pathType);
-        }
     }
+
+    // ===================================================================================
+    // OPTIONAL MATCH 的核心实现区域
+    // ===================================================================================
+
+    // /**
+    // * 将 SqlMatchPattern (代表整个 MATCH...OPTIONAL MATCH... 查询) 转换为
+    // * RelNode逻辑计划.
+    // * 构建一个内部包含 LEFT JOIN 语义的 MatchJoin 节点的、单一的 LogicalGraphMatch 来实现：
+    // * 1. 识别出由解析器生成的嵌套 SqlMatchPattern 结构。
+    // * 2. 递归地处理内层的 MATCH 子句，得到一个包含路径树（IMatchNode）的 LogicalGraphMatch。
+    // * 3. 将当前（外层）的 OPTIONAL MATCH 路径转换为一个新的路径树（IMatchNode）。
+    // * 4. 创建一个类型为 LEFT 的 MatchJoin 节点，将新旧两个路径树连接起来。
+    // * 5. 最后，创建一个新的、包裹了完整连接路径树的 LogicalGraphMatch 作为最终结果。
+    // *
+    // * @param matchPattern 待转换的 SqlMatchPattern 节点。
+    // * @param top 是否为顶层查询。
+    // * @param withBb With 子句的上下文信息。
+    // * @return 转换后的 RelNode 逻辑计划。
+    // */
+    // private RelNode convertGQLMatchPattern(SqlMatchPattern matchPattern, boolean
+    // top,
+    // Blackboard withBb) {
+
+    // SqlNode from = matchPattern.getFrom();
+
+    // // Base Case: 第一个 MATCH 子句，其 'from' 是图的标识符。
+    // if (from == null || from.getKind() != SqlKind.GQL_MATCH_PATTERN) {
+    // SqlValidatorScope scope = getValidator().getScopes(matchPattern);
+    // Blackboard bb = createBlackboard(scope, null, top).setWithBb(withBb);
+    // // 设置 bb.root 为 LogicalGraphScan（对应图来源）。
+    // convertGQLFrom(bb, from, withBb);
+
+    // SqlNode pathNodeSql = matchPattern.getPathPatterns().get(0);
+    // if (!(pathNodeSql instanceof SqlPathPattern)) {
+    // throw new GeaFlowDSLException(
+    // "Expected SqlPathPattern but got " + pathNodeSql.getClass().getSimpleName());
+    // }
+    // SqlPathPattern currentPathPattern = (SqlPathPattern) pathNodeSql;
+    // IMatchNode rightPath = convertPathPattern(currentPathPattern, withBb);
+    // RelDataType graphType = getValidator().getValidatedNodeType(matchPattern);
+
+    // if (currentPathPattern.isOptional()) {
+    // // 用图扫描节点作为左侧路径
+    // if (!(bb.root instanceof IMatchNode)) {
+    // throw new GeaFlowDSLException(
+    // "Expected bb.root to be IMatchNode but was "
+    // + bb.root.getClass().getSimpleName());
+    // }
+    // IMatchNode leftPath = (IMatchNode) bb.root;
+    // RexNode condition = GQLRelUtil.createPathJoinCondition(leftPath, rightPath,
+    // isCaseSensitive(),
+    // rexBuilder);
+    // IMatchNode joined = MatchJoin.create(cluster, rightPath.getTraitSet(),
+    // leftPath, rightPath, condition,
+    // JoinRelType.LEFT);
+    // return LogicalGraphMatch.create(cluster, bb.root, joined, graphType);
+    // } else {
+    // // 普通的 MATCH 情况
+    // return LogicalGraphMatch.create(cluster, bb.root, rightPath, graphType);
+    // }
+    // }
+
+    // // Join Case: 一个后续的 MATCH 或 OPTIONAL MATCH 子句。
+    // // 1. 递归调用，将 FROM 子句 (即内层的 MATCH) 转换为一个 LogicalGraphMatch。
+    // RelNode leftNode = convertGQLMatchPattern((SqlMatchPattern) from, false,
+    // withBb);
+    // if (!(leftNode instanceof LogicalGraphMatch)) {
+    // throw new GeaFlowDSLException("Expected input to a chained MATCH to be a
+    // LogicalGraphMatch, but was "
+    // + leftNode.getClass().getSimpleName());
+    // }
+    // LogicalGraphMatch leftMatch = (LogicalGraphMatch) leftNode;
+    // IMatchNode leftPath = leftMatch.getPathPattern();
+
+    // // 2. 将当前节点的路径模式转换为一个新的 IMatchNode 树。
+    // SqlPathPattern currentPathPattern = (SqlPathPattern)
+    // matchPattern.getPathPatterns().get(0);
+    // IMatchNode rightPath = convertPathPattern(currentPathPattern, withBb);
+
+    // // 3. 确定连接类型。
+    // boolean isOptional = currentPathPattern.isOptional();
+    // JoinRelType joinType = isOptional ? JoinRelType.LEFT : JoinRelType.INNER;
+
+    // // 4. 创建连接条件，这是 GeaFlow IMatchNode 树内部的连接。
+    // RexNode condition = GQLRelUtil.createPathJoinCondition(leftPath, rightPath,
+    // isCaseSensitive(), rexBuilder);
+
+    // // 5. 创建一个新的 IMatchNode 来代表这个 Join 操作。
+    // IMatchNode newJoinedPath = MatchJoin.create(leftPath.getCluster(),
+    // leftPath.getTraitSet(),
+    // leftPath, rightPath, condition, joinType);
+
+    // // 6. 创建一个全新的、包裹了完整连接路径的 LogicalGraphMatch。
+    // // 输入是最初的图扫描节点（从 leftMatch 中获取）。
+    // // 输出类型是当前最外层 matchPattern 验证后的类型。
+    // RelDataType finalGraphType =
+    // getValidator().getValidatedNodeType(matchPattern);
+    // RelNode finalGraphMatch = LogicalGraphMatch.create(cluster,
+    // leftMatch.getInput(), newJoinedPath,
+    // finalGraphType);
+
+    // // 7. 对最终的 Match 结果进行后续处理。
+    // Blackboard bb = createBlackboard(getValidator().getScopes(matchPattern),
+    // null, top).setWithBb(withBb);
+    // bb.setRoot(finalGraphMatch, true);
+    // if (matchPattern.getWhere() != null) {
+    // bb.setRoot(LogicalFilter.create(bb.root,
+    // bb.convertExpression(matchPattern.getWhere())), true);
+    // }
+    // if (matchPattern.isDistinct()) {
+    // convertDistinct(bb, true);
+    // }
+    // return bb.root;
+    // }
+
+    // private void concatPathPatterns(List<IMatchNode> concatPatterns,
+    // List<PathRecordType> concatPathTypes,
+    // IMatchNode pathPattern, PathRecordType pathType) {
+    // if (concatPatterns.isEmpty() || !(pathPattern instanceof SingleMatchNode)) {
+    // concatPatterns.add(pathPattern);
+    // concatPathTypes.add(pathType);
+    // return;
+    // }
+    // SingleMatchNode singlePathPattern = (SingleMatchNode) pathPattern;
+    // String firstLabel =
+    // GQLRelUtil.getFirstMatchNode(singlePathPattern).getLabel();
+    // String latestLabel =
+    // GQLRelUtil.getLatestMatchNode(singlePathPattern).getLabel();
+    // int i;
+    // for (i = 0; i < concatPatterns.size(); i++) {
+    // IMatchNode pathPattern2 = concatPatterns.get(i);
+    // if (pathPattern2 instanceof SingleMatchNode) {
+    // String latestLabel2 = GQLRelUtil.getLatestMatchNode((SingleMatchNode)
+    // pathPattern2).getLabel();
+    // // pathPattern2 is "(a) - (b) - (c)", where singlePathPattern is "(c) - (d)"
+    // // Then concat pathPattern2 with singlePathPattern and return "(a) - (b) -
+    // (c) -
+    // // (d)"
+    // if (getValidator().nameMatcher().matches(firstLabel, latestLabel2)) {
+    // IMatchNode concatPattern = GQLRelUtil.concatPathPattern((SingleMatchNode)
+    // pathPattern2,
+    // singlePathPattern, isCaseSensitive());
+    // concatPatterns.set(i, concatPattern);
+
+    // PathRecordType pathType2 = concatPathTypes.get(i);
+    // PathRecordType concatPathType = pathType2.concat(pathType,
+    // isCaseSensitive());
+    // concatPathTypes.set(i, concatPathType);
+    // break;
+    // } else {
+    // String firstLabel2 = GQLRelUtil.getFirstMatchNode((SingleMatchNode)
+    // pathPattern2).getLabel();
+    // // singlePathPattern is "(a) - (b) - (c)", where pathPattern2 is "(c) - (d)"
+    // // Then concat singlePathPattern with pathPattern2 and return "(a) - (b) -(c)
+    // -
+    // // (d)"
+    // if (getValidator().nameMatcher().matches(firstLabel2, latestLabel)) {
+    // IMatchNode concatPattern = GQLRelUtil.concatPathPattern(singlePathPattern,
+    // (SingleMatchNode) pathPattern2, isCaseSensitive());
+    // concatPatterns.set(i, concatPattern);
+
+    // PathRecordType pathType2 = concatPathTypes.get(i);
+    // PathRecordType concatPathType = pathType.concat(pathType2,
+    // isCaseSensitive());
+    // concatPathTypes.set(i, concatPathType);
+    // break;
+    // }
+    // }
+    // }
+    // }
+    // // If merge not happen, just add it.
+    // if (i == concatPatterns.size()) {
+    // concatPatterns.add(pathPattern);
+    // concatPathTypes.add(pathType);
+    // }
+    // }
 
     private SingleMatchNode convertMatchNodeWhere(SqlMatchNode matchNode, SqlNode matchWhere,
-                                                  IMatchNode input, Blackboard withBb) {
+            IMatchNode input, Blackboard withBb) {
         assert input != null;
         SqlValidatorScope whereScope = getValidator().getScopes(matchWhere);
         Blackboard nodeBb = createBlackboard(whereScope, null, false).setWithBb(withBb);
@@ -539,7 +765,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
             IMatchNode left = convertPathPattern(unionPathPattern.getLeft(), withBb);
             IMatchNode right = convertPathPattern(unionPathPattern.getRight(), withBb);
             return MatchUnion.create(getCluster(), getCluster().traitSet(),
-                Lists.newArrayList(left, right), unionPathPattern.isUnionAll());
+                    Lists.newArrayList(left, right), unionPathPattern.isUnionAll());
         }
         SqlPathPattern pathPattern = (SqlPathPattern) sqlNode;
         SingleMatchNode relPathPattern = null;
@@ -552,10 +778,10 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     RelDataType nodeType = getValidator().getMatchNodeType(matchNode);
 
                     SingleMatchNode vertexMatch = VertexMatch.create(getCluster(), relPathPattern,
-                        matchNode.getName(), matchNode.getLabelNames(), nodeType, pathType);
+                            matchNode.getName(), matchNode.getLabelNames(), nodeType, pathType);
                     if (matchNode.getWhere() != null) {
                         vertexMatch = convertMatchNodeWhere(matchNode, matchNode.getWhere(),
-                            vertexMatch, withBb);
+                                vertexMatch, withBb);
                     }
                     // generate for regex match
                     if (preMatchNode instanceof SqlMatchEdge && ((SqlMatchEdge) preMatchNode).isRegexMatch()) {
@@ -574,13 +800,13 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     RelDataType edgeType = getValidator().getMatchNodeType(matchEdge);
 
                     EdgeMatch edgeMatch = EdgeMatch.create(
-                        getCluster(), relPathPattern,
-                        matchEdge.getName(), matchEdge.getLabelNames(),
-                        matchEdge.getDirection(), edgeType, pathType);
+                            getCluster(), relPathPattern,
+                            matchEdge.getName(), matchEdge.getLabelNames(),
+                            matchEdge.getDirection(), edgeType, pathType);
 
                     if (matchEdge.getWhere() != null) {
                         relPathPattern = convertMatchNodeWhere(matchEdge, matchEdge.getWhere(),
-                            edgeMatch, withBb);
+                                edgeMatch, withBb);
                     } else {
                         relPathPattern = edgeMatch;
                     }
@@ -596,49 +822,48 @@ public class GQLToRelConverter extends SqlToRelConverter {
     private SingleMatchNode translateCycleMatchNode(SingleMatchNode relPathPattern, SqlNode pathNode) {
         PathRecordType pathRecordType = relPathPattern.getPathSchema();
         int rightIndex = pathRecordType.getField(((SqlMatchNode) pathNode).getName(),
-            isCaseSensitive(), false).getIndex();
+                isCaseSensitive(), false).getIndex();
         int leftIndex = pathRecordType.getField(getValidator()
                 .getStartCycleMatchNode((SqlMatchNode) pathNode).getName(),
-            isCaseSensitive(), false).getIndex();
+                isCaseSensitive(), false).getIndex();
         assert leftIndex >= 0 && rightIndex >= 0;
         RexNode condition = getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
-            getRexBuilder().makeInputRef(pathRecordType, leftIndex),
-            getRexBuilder().makeInputRef(pathRecordType, rightIndex)
-        );
+                getRexBuilder().makeInputRef(pathRecordType, leftIndex),
+                getRexBuilder().makeInputRef(pathRecordType, rightIndex));
         return MatchFilter.create(relPathPattern, condition,
-            relPathPattern.getPathSchema());
+                relPathPattern.getPathSchema());
     }
 
     private SingleMatchNode convertRegexMatch(SqlMatchEdge regexEdge, EdgeMatch regexEdgeMatch,
-                                              SingleMatchNode vertexMatch) {
+            SingleMatchNode vertexMatch) {
         IMatchNode loopStart = (IMatchNode) regexEdgeMatch.getInput();
         SubQueryStart queryStart = SubQueryStart.create(getCluster(),
-            loopStart.getTraitSet(), generateSubQueryName(), loopStart.getPathSchema(),
-            (VertexRecordType) loopStart.getNodeType());
+                loopStart.getTraitSet(), generateSubQueryName(), loopStart.getPathSchema(),
+                (VertexRecordType) loopStart.getNodeType());
         // replace the input of regexEdgeMatch to queryStart and clone vertexMatch
         SingleMatchNode loopBody = GQLRelUtil.replaceInput(vertexMatch, regexEdgeMatch, queryStart);
 
         RexNode utilCondition = getRexBuilder().makeLiteral(true);
         return LoopUntilMatch.create(getCluster(), vertexMatch.getTraitSet(), loopStart,
-            loopBody, utilCondition, regexEdge.getMinHop(), regexEdge.getMaxHop(),
-            vertexMatch.getPathSchema());
+                loopBody, utilCondition, regexEdge.getMinHop(), regexEdge.getMaxHop(),
+                vertexMatch.getPathSchema());
     }
 
     private RelNode convertGQLAlgorithm(SqlGraphAlgorithmCall algorithmCall, boolean top,
-                                        Blackboard withBb) {
+            Blackboard withBb) {
 
         SqlValidatorScope scope = getValidator().getScopes(algorithmCall);
         Blackboard bb = createBlackboard(scope, null, top).setWithBb(withBb);
         convertGQLFrom(bb, algorithmCall.getFrom(), withBb);
 
-        Object[] params =
-            algorithmCall.getParameters() == null ? new Object[0] : algorithmCall.getParameters().getList()
-                .stream().map(sqlNode -> GQLRexUtil.getLiteralValue(bb.convertExpression(sqlNode)))
-                .toArray();
+        Object[] params = algorithmCall.getParameters() == null ? new Object[0]
+                : algorithmCall.getParameters().getList()
+                        .stream().map(sqlNode -> GQLRexUtil.getLiteralValue(bb.convertExpression(sqlNode)))
+                        .toArray();
         return LogicalGraphAlgorithm.create(cluster, getCluster().traitSet(),
-            bb.root,
-            ((GeaFlowUserDefinedGraphAlgorithm) algorithmCall.getOperator()).getImplementClass(),
-            params);
+                bb.root,
+                ((GeaFlowUserDefinedGraphAlgorithm) algorithmCall.getOperator()).getImplementClass(),
+                params);
     }
 
     private RelNode convertGQLLet(SqlLetStatement letStatement, boolean top, Blackboard withBb) {
@@ -683,7 +908,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
         assert input instanceof GraphMatch;
         GraphMatch graphMatch = (GraphMatch) input;
         MatchPathModify newPathPattern = MatchPathModify.create(graphMatch.getPathPattern(),
-            Collections.singletonList(modifyExpression), letType, modifyGraphType);
+                Collections.singletonList(modifyExpression), letType, modifyGraphType);
         return graphMatch.copy(newPathPattern);
     }
 
@@ -710,7 +935,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
             case IDENTIFIER:
                 SqlIdentifier identifier = (SqlIdentifier) from;
                 SqlIdentifier completeIdentifier = getValidator().getGQLContext()
-                    .completeCatalogObjName(identifier);
+                        .completeCatalogObjName(identifier);
                 RelOptTable table = catalogReader.getTable(completeIdentifier.names);
                 node = LogicalGraphScan.create(getCluster(), table);
                 bb.setRoot(node, true);
@@ -735,8 +960,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
     protected RelNode convertInsert(SqlInsert call) {
         RelOptTable targetTable = getTargetTable(call);
         Table table = targetTable.unwrap(Table.class);
-        final RelDataType targetRowType =
-            validator.getValidatedNodeType(call);
+        final RelDataType targetRowType = validator.getValidatedNodeType(call);
         assert targetRowType != null;
 
         RelNode sourceRel = convertQueryRecursive(call.getSource(), false, targetRowType).project();
@@ -745,8 +969,8 @@ public class GQLToRelConverter extends SqlToRelConverter {
             List<String> targetColumns;
             if (call.getTargetColumnList() != null) {
                 targetColumns = call.getTargetColumnList().getList()
-                    .stream().map(id -> ((SqlIdentifier) id).getSimple())
-                    .collect(Collectors.toList());
+                        .stream().map(id -> ((SqlIdentifier) id).getSimple())
+                        .collect(Collectors.toList());
             } else {
                 targetColumns = new ArrayList<>();
                 for (RelDataTypeField field : targetRowType.getFieldList()) {
@@ -772,9 +996,9 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 }
             }
             RexObjectConstruct objConstruct = createObjectConstruct(tableRowType, sourceRel,
-                graphElementTable, targetColumnIndices);
-            return createGraphModify(graph, new String[]{graphElementTable.getTypeName()},
-                new RexNode[]{objConstruct}, sourceRel);
+                    graphElementTable, targetColumnIndices);
+            return createGraphModify(graph, new String[] { graphElementTable.getTypeName() },
+                    new RexNode[] { objConstruct }, sourceRel);
         } else if (table instanceof GeaFlowGraph) {
             GeaFlowGraph graph = (GeaFlowGraph) table;
             Map<String, List<String>> vertexEdgeType2RefFields = new HashMap<>();
@@ -820,7 +1044,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 int[] targetColumnExpIndices = vertexEdgeType2ExpIndices.get(typeName);
                 if (targetColumnExpIndices != null) {
                     RexObjectConstruct objConstruct = createObjectConstruct(tableRowType, sourceRel,
-                        vertexEdgeTable, targetColumnExpIndices);
+                            vertexEdgeTable, targetColumnExpIndices);
                     typeNames[c] = typeName;
                     constructs[c] = objConstruct;
                     c++;
@@ -832,7 +1056,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
     }
 
     private RexObjectConstruct createObjectConstruct(RelDataType tableRowType, RelNode sourceRel,
-                                                     GraphElementTable table, int[] targetColumnExpIndices) {
+            GraphElementTable table, int[] targetColumnExpIndices) {
         List<RexNode> columnExpressions = new ArrayList<>();
         List<RelDataTypeField> fields = tableRowType.getFieldList();
 
@@ -843,14 +1067,14 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 RelDataType sourceFieldType = sourceRel.getRowType().getFieldList().get(fieldExpIndex).getType();
                 RelDataType targetFieldType = field.getType();
                 RexNode inputRef = getRexBuilder().makeCast(targetFieldType,
-                    getRexBuilder().makeInputRef(sourceFieldType, fieldExpIndex));
+                        getRexBuilder().makeInputRef(sourceFieldType, fieldExpIndex));
                 columnExpressions.add(inputRef);
             } else if (field.getType() instanceof MetaFieldType
-                && ((MetaFieldType) field.getType()).getMetaField() == MetaField.VERTEX_TYPE) {
+                    && ((MetaFieldType) field.getType()).getMetaField() == MetaField.VERTEX_TYPE) {
                 RexLiteral vertexLabel = getRexBuilder().makeLiteral(table.getTypeName());
                 columnExpressions.add(getRexBuilder().makeCast(field.getType(), vertexLabel));
             } else if (field.getType() instanceof MetaFieldType
-                && ((MetaFieldType) field.getType()).getMetaField() == MetaField.EDGE_TYPE) {
+                    && ((MetaFieldType) field.getType()).getMetaField() == MetaField.EDGE_TYPE) {
                 RexLiteral edgeLabel = getRexBuilder().makeLiteral(table.getTypeName());
                 columnExpressions.add(getRexBuilder().makeCast(field.getType(), edgeLabel));
             } else {
@@ -867,7 +1091,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
     }
 
     private GraphModify createGraphModify(GeaFlowGraph graph, String[] typeNames,
-                                          RexNode[] constructs, RelNode sourceRel) {
+            RexNode[] constructs, RelNode sourceRel) {
         GraphRecordType graphType = (GraphRecordType) graph.getRowType(validator.getTypeFactory());
         List<RexNode> projects = new ArrayList<>();
         for (RelDataTypeField field : graphType.getFieldList()) {
@@ -889,8 +1113,8 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
     @Override
     protected void convertFrom(
-        Blackboard bb,
-        SqlNode from) {
+            Blackboard bb,
+            SqlNode from) {
         RelNode relNode;
         if (from == null) {
             super.convertFrom(bb, null);
@@ -945,30 +1169,30 @@ public class GQLToRelConverter extends SqlToRelConverter {
     }
 
     protected RelFieldCollation convertOrderItem(SqlReturnStatement returnStmt, SqlNode orderItem,
-                                                 List<SqlNode> extraExprs, Direction direction,
-                                                 NullDirection nullDirection) {
+            List<SqlNode> extraExprs, Direction direction,
+            NullDirection nullDirection) {
         assert returnStmt != null;
 
         switch (orderItem.getKind()) {
             case DESCENDING:
                 return this.convertOrderItem(returnStmt, ((SqlCall) orderItem).operand(0), extraExprs,
-                    Direction.DESCENDING, nullDirection);
+                        Direction.DESCENDING, nullDirection);
             case NULLS_FIRST:
                 return this.convertOrderItem(returnStmt, ((SqlCall) orderItem).operand(0), extraExprs, direction,
-                    NullDirection.FIRST);
+                        NullDirection.FIRST);
             case NULLS_LAST:
                 return this.convertOrderItem(returnStmt, ((SqlCall) orderItem).operand(0), extraExprs, direction,
-                    NullDirection.LAST);
+                        NullDirection.LAST);
             default:
                 SqlValidatorScope orderScope = getValidator().getScopes(returnStmt.getOrderBy());
                 SqlNode converted = ((GQLValidatorImpl) validator).expandReturnGroupOrderExpr(returnStmt, orderScope,
-                    orderItem);
+                        orderItem);
                 if (nullDirection == UNSPECIFIED) {
                     nullDirection = this.validator.getDefaultNullCollation().last(desc(direction))
-                                    ? NullDirection.LAST : NullDirection.FIRST;
+                            ? NullDirection.LAST
+                            : NullDirection.FIRST;
                 }
-                GQLReturnScope returnScope =
-                    (GQLReturnScope) getValidator().getScopes(returnStmt);
+                GQLReturnScope returnScope = (GQLReturnScope) getValidator().getScopes(returnStmt);
                 int ordinal = -1;
                 Iterator<SqlNode> returnListItr = returnScope.getExpandedReturnList().iterator();
 
@@ -1046,8 +1270,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     newProjects.add(RexInputRef.of2(i, fields));
                 }
             }
-            rel =
-                LogicalProject.create(rel, Pair.left(newProjects),
+            rel = LogicalProject.create(rel, Pair.left(newProjects),
                     Pair.right(newProjects));
             bb.root = rel;
             convertDistinct(bb, false);
@@ -1060,28 +1283,26 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 final int origin = origins.get(i);
                 RelDataTypeField field = fields.get(i);
                 undoProjects.add(Pair.of(
-                    new RexInputRef(squished.get(origin), field.getType()), field.getName()));
+                        new RexInputRef(squished.get(origin), field.getType()), field.getName()));
             }
 
-            rel =
-                LogicalProject.create(rel, Pair.left(undoProjects),
+            rel = LogicalProject.create(rel, Pair.left(undoProjects),
                     Pair.right(undoProjects));
             bb.setRoot(
-                rel,
-                false);
+                    rel,
+                    false);
             return;
         }
 
         // Usual case: all of the expressions in the SELECT clause are
         // different.
-        final ImmutableBitSet groupSet =
-            ImmutableBitSet.range(rel.getRowType().getFieldCount());
+        final ImmutableBitSet groupSet = ImmutableBitSet.range(rel.getRowType().getFieldCount());
         rel = createAggregate(bb, groupSet, ImmutableList.of(groupSet),
-            ImmutableList.of());
+                ImmutableList.of());
 
         bb.setRoot(
-            rel,
-            false);
+                rel,
+                false);
     }
 
     public class GQLAggConverter extends AggConverter implements SqlVisitor<Void> {
@@ -1094,14 +1315,12 @@ public class GQLToRelConverter extends SqlToRelConverter {
         /**
          * The group-by expressions, in {@link SqlNode} format.
          */
-        private final SqlNodeList groupExprs =
-            new SqlNodeList(SqlParserPos.ZERO);
+        private final SqlNodeList groupExprs = new SqlNodeList(SqlParserPos.ZERO);
 
         /**
          * The auxiliary group-by expressions.
          */
-        private final Map<SqlNode, Ord<AuxiliaryConverter>> auxiliaryGroupExprs =
-            new HashMap<>();
+        private final Map<SqlNode, Ord<AuxiliaryConverter>> auxiliaryGroupExprs = new HashMap<>();
 
         /**
          * Input expressions for the group columns and aggregates, in
@@ -1110,8 +1329,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
          * aggregates. The right field of each pair is the name of the expression,
          * where the expressions are simple mappings to input fields.
          */
-        private final List<Pair<RexNode, String>> convertedInputExprs =
-            new ArrayList<>();
+        private final List<Pair<RexNode, String>> convertedInputExprs = new ArrayList<>();
 
         /**
          * Expressions to be evaluated as rows are being placed into the
@@ -1121,8 +1339,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
         private final List<AggregateCall> aggCalls = new ArrayList<>();
         private final Map<SqlNode, RexNode> aggMapping = new HashMap<>();
-        private final Map<AggregateCall, RexNode> aggCallMapping =
-            new HashMap<>();
+        private final Map<AggregateCall, RexNode> aggCallMapping = new HashMap<>();
 
         private boolean inOver = false;
 
@@ -1138,8 +1355,8 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 SqlNode returnItem = returnList.get(i);
                 String name = null;
                 if (SqlUtil.isCallTo(
-                    returnItem,
-                    SqlStdOperatorTable.AS)) {
+                        returnItem,
+                        SqlStdOperatorTable.AS)) {
                     final SqlCall call = (SqlCall) returnItem;
                     returnItem = call.operand(0);
                     name = call.operand(1).toString();
@@ -1164,8 +1381,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
             if (expr instanceof SqlCall) {
                 SqlCall call = (SqlCall) expr;
-                for (Pair<SqlNode, AuxiliaryConverter> p
-                    : SqlStdOperatorTable.convertGroupToAuxiliaryCalls(call)) {
+                for (Pair<SqlNode, AuxiliaryConverter> p : SqlStdOperatorTable.convertGroupToAuxiliaryCalls(call)) {
                     addAuxiliaryGroupExpr(p.left, index, p.right);
                 }
             }
@@ -1174,7 +1390,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
         }
 
         void addAuxiliaryGroupExpr(SqlNode node, int index,
-                                   AuxiliaryConverter converter) {
+                AuxiliaryConverter converter) {
             for (SqlNode node2 : auxiliaryGroupExprs.keySet()) {
                 if (node2.equalsDeep(node, Litmus.IGNORE)) {
                     return;
@@ -1288,7 +1504,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
         }
 
         private void translateAgg(SqlCall call, SqlNode filter,
-                                  SqlNodeList orderList, SqlCall outerCall) {
+                SqlNodeList orderList, SqlCall outerCall) {
             assert bb.getAgg() == this;
             assert outerCall != null;
             switch (call.getKind()) {
@@ -1304,16 +1520,15 @@ public class GQLToRelConverter extends SqlToRelConverter {
             }
             final List<Integer> args = new ArrayList<>();
             int filterArg = -1;
-            final List<RelDataType> argTypes =
-                call.getOperator() instanceof SqlCountAggFunction
-                ? new ArrayList<>(call.getOperandList().size())
-                : null;
+            final List<RelDataType> argTypes = call.getOperator() instanceof SqlCountAggFunction
+                    ? new ArrayList<>(call.getOperandList().size())
+                    : null;
             try {
                 // switch out of agg mode
                 bb.setAgg(null);
                 for (SqlNode operand : call.getOperandList()) {
 
-                    // special case for COUNT(*):  delete the *
+                    // special case for COUNT(*): delete the *
                     if (operand instanceof SqlIdentifier) {
                         SqlIdentifier id = (SqlIdentifier) operand;
                         if (id.isStar()) {
@@ -1334,8 +1549,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     RexNode convertedExpr = bb.convertExpression(filter);
                     assert convertedExpr != null;
                     if (convertedExpr.getType().isNullable()) {
-                        convertedExpr =
-                            rexBuilder.makeCall(SqlStdOperatorTable.IS_TRUE, convertedExpr);
+                        convertedExpr = rexBuilder.makeCall(SqlStdOperatorTable.IS_TRUE, convertedExpr);
                     }
                     filterArg = lookupOrCreateGroupExpr(convertedExpr);
                 }
@@ -1344,13 +1558,12 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 bb.setAgg(this);
             }
 
-            SqlAggFunction aggFunction =
-                (SqlAggFunction) call.getOperator();
+            SqlAggFunction aggFunction = (SqlAggFunction) call.getOperator();
             final RelDataType type = validator.deriveType(bb.scope, call);
             boolean distinct = false;
             SqlLiteral quantifier = call.getFunctionQuantifier();
             if ((null != quantifier)
-                && (quantifier.getValue() == SqlSelectKeyword.DISTINCT)) {
+                    && (quantifier.getValue() == SqlSelectKeyword.DISTINCT)) {
                 distinct = true;
             }
             boolean approximate = false;
@@ -1364,21 +1577,18 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 collation = RelCollations.EMPTY;
             } else {
                 collation = RelCollations.of(
-                    orderList.getList()
-                        .stream()
-                        .map(order ->
-                            bb.convertSortExpression(order,
-                                RelFieldCollation.Direction.ASCENDING,
-                                RelFieldCollation.NullDirection.UNSPECIFIED))
-                        .map(fieldCollation ->
-                            new RelFieldCollation(
-                                lookupOrCreateGroupExpr(fieldCollation.left),
-                                fieldCollation.getDirection(),
-                                fieldCollation.getNullDirection()))
-                        .collect(Collectors.toList()));
+                        orderList.getList()
+                                .stream()
+                                .map(order -> bb.convertSortExpression(order,
+                                        RelFieldCollation.Direction.ASCENDING,
+                                        RelFieldCollation.NullDirection.UNSPECIFIED))
+                                .map(fieldCollation -> new RelFieldCollation(
+                                        lookupOrCreateGroupExpr(fieldCollation.left),
+                                        fieldCollation.getDirection(),
+                                        fieldCollation.getNullDirection()))
+                                .collect(Collectors.toList()));
             }
-            final AggregateCall aggCall =
-                AggregateCall.create(
+            final AggregateCall aggCall = AggregateCall.create(
                     aggFunction,
                     distinct,
                     approximate,
@@ -1389,8 +1599,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     nameMap.get(outerCall.toString()));
 
             gqlReturnScope.resolved.get();
-            RexNode rex =
-                rexBuilder.addAggCall(
+            RexNode rex = rexBuilder.addAggCall(
                     aggCall,
                     groupExprs.size(),
                     false,
@@ -1433,14 +1642,13 @@ public class GQLToRelConverter extends SqlToRelConverter {
             // assert call.getOperator().isAggregator();
             assert bb.getAgg() == this;
 
-            for (Map.Entry<SqlNode, Ord<AuxiliaryConverter>> e
-                : auxiliaryGroupExprs.entrySet()) {
+            for (Map.Entry<SqlNode, Ord<AuxiliaryConverter>> e : auxiliaryGroupExprs.entrySet()) {
                 if (call.equalsDeep(e.getKey(), Litmus.IGNORE)) {
                     AuxiliaryConverter converter = e.getValue().e;
                     final int groupOrdinal = e.getValue().i;
                     return converter.convert(rexBuilder,
-                        convertedInputExprs.get(groupOrdinal).left,
-                        rexBuilder.makeInputRef(bb.root, groupOrdinal));
+                            convertedInputExprs.get(groupOrdinal).left,
+                            rexBuilder.makeInputRef(bb.root, groupOrdinal));
                 }
             }
 
@@ -1462,7 +1670,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
     }
 
     public static class GQLAggChecker extends SqlBasicVisitor<Void> {
-        //~ Instance fields --------------------------------------------------------
+        // ~ Instance fields --------------------------------------------------------
 
         private final Deque<SqlValidatorScope> scopes = new ArrayDeque<>();
         private final List<SqlNode> extraExprs;
@@ -1470,22 +1678,24 @@ public class GQLToRelConverter extends SqlToRelConverter {
         private final boolean distinct;
         private final SqlValidatorImpl validator;
 
-        //~ Constructors -----------------------------------------------------------
+        // ~ Constructors -----------------------------------------------------------
 
         /**
          * Creates an AggChecker.
          *
-         * @param validator Validator
-         * @param scope Scope
-         * @param groupExprs Expressions in GROUP BY (or SELECT DISTINCT) clause, that are therefore available
-         * @param distinct Whether aggregation checking is because of a SELECT DISTINCT clause
+         * @param validator  Validator
+         * @param scope      Scope
+         * @param groupExprs Expressions in GROUP BY (or SELECT DISTINCT) clause, that
+         *                   are therefore available
+         * @param distinct   Whether aggregation checking is because of a SELECT
+         *                   DISTINCT clause
          */
         public GQLAggChecker(
-            SqlValidatorImpl validator,
-            SqlValidatorScope scope,
-            List<SqlNode> extraExprs,
-            List<SqlNode> groupExprs,
-            boolean distinct) {
+                SqlValidatorImpl validator,
+                SqlValidatorScope scope,
+                List<SqlNode> extraExprs,
+                List<SqlNode> groupExprs,
+                boolean distinct) {
             this.validator = validator;
             this.extraExprs = extraExprs;
             this.groupExprs = groupExprs;
@@ -1493,7 +1703,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
             this.scopes.push(scope);
         }
 
-        //~ Methods ----------------------------------------------------------------
+        // ~ Methods ----------------------------------------------------------------
 
         public boolean isGroupExpr(SqlNode expr) {
             for (SqlNode groupExpr : groupExprs) {
@@ -1517,8 +1727,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
             }
 
             // Is it a call to a parentheses-free function?
-            SqlCall call =
-                SqlUtil.makeCall(
+            SqlCall call = SqlUtil.makeCall(
                     validator.getOperatorTable(),
                     id);
             if (call != null) {
@@ -1537,9 +1746,9 @@ public class GQLToRelConverter extends SqlToRelConverter {
             SqlNode originalExpr = validator.getOriginal(id);
             final String exprString = originalExpr.toString();
             throw validator.newValidationError(originalExpr,
-                distinct
-                ? RESOURCE.notSelectDistinctExpr(exprString)
-                : RESOURCE.notGroupExpr(exprString));
+                    distinct
+                            ? RESOURCE.notSelectDistinctExpr(exprString)
+                            : RESOURCE.notGroupExpr(exprString));
         }
 
         public Void visit(SqlCall call) {
@@ -1553,8 +1762,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
                 return null;
             }
 
-            final SqlCall groupCall =
-                SqlStdOperatorTable.convertAuxiliaryToGroupCall(call);
+            final SqlCall groupCall = SqlStdOperatorTable.convertAuxiliaryToGroupCall(call);
             if (groupCall != null) {
                 if (isGroupExpr(groupCall)) {
                     // This call is an auxiliary function that matches a group call in the
@@ -1562,14 +1770,14 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     //
                     // For example TUMBLE_START is an auxiliary of the TUMBLE
                     // group function, and
-                    //   TUMBLE_START(rowtime, INTERVAL '1' HOUR)
+                    // TUMBLE_START(rowtime, INTERVAL '1' HOUR)
                     // matches
-                    //   TUMBLE(rowtime, INTERVAL '1' HOUR')
+                    // TUMBLE(rowtime, INTERVAL '1' HOUR')
                     return null;
                 }
                 throw validator.newValidationError(groupCall,
-                    RESOURCE.auxiliaryWithoutMatchingGroupCall(
-                        call.getOperator().getName(), groupCall.getOperator().getName()));
+                        RESOURCE.auxiliaryWithoutMatchingGroupCall(
+                                call.getOperator().getName(), groupCall.getOperator().getName()));
             }
 
             if (call.isA(SqlKind.QUERY)) {
@@ -1584,7 +1792,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
             // Visit the operands (only expressions).
             call.getOperator()
-                .acceptCall(this, call, true, ArgHandlerImpl.instance());
+                    .acceptCall(this, call, true, ArgHandlerImpl.instance());
 
             // Restore scope.
             scopes.pop();
@@ -1601,7 +1809,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
         private Blackboard withBb;
 
         protected GQLBlackboard(SqlValidatorScope scope,
-                                Map<String, RexNode> nameToNodeMap, boolean top) {
+                Map<String, RexNode> nameToNodeMap, boolean top) {
             super(scope, nameToNodeMap, top);
         }
 
@@ -1647,23 +1855,24 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
                     assert pathRecordType.firstField().isPresent() : "Path type is empty";
                     VertexRecordType firstFieldType = (VertexRecordType) pathRecordType.firstField().get().getType();
-                    // SubQueryStart's path schema is the same with the first match node in the suq-query.
+                    // SubQueryStart's path schema is the same with the first match node in the
+                    // suq-query.
                     SubQueryStart subQueryStart = SubQueryStart.create(matchNode.getCluster(), matchNode.getTraitSet(),
-                        generateSubQueryName(), firstNode.getPathSchema(), firstFieldType);
+                            generateSubQueryName(), firstNode.getPathSchema(), firstFieldType);
                     // add sub query start node to the head of the match node.
                     matchNode = GQLRelUtil.addSubQueryStartNode(matchNode, subQueryStart);
 
                     SqlNode returnValue = subQuery.getReturnValue();
                     SqlNode originReturnValue = GQLToRelConverter.this.getValidator().getOriginal(returnValue);
                     GQLScope returnValueScope = (GQLScope) GQLToRelConverter.this.getValidator()
-                        .getScopes(originReturnValue);
+                            .getScopes(originReturnValue);
 
                     GQLBlackboard bb = new GQLBlackboard(returnValueScope, null, true);
                     bb.setRoot(matchNode, true);
                     RexNode returnValueNode = bb.convertExpression(returnValue);
 
                     RexSubQuery pathPatternSubQuery = RexSubQuery.create(matchNode.getPathSchema(),
-                        SqlPathPatternOperator.INSTANCE, ImmutableList.of(), matchNode);
+                            SqlPathPatternOperator.INSTANCE, ImmutableList.of(), matchNode);
                     rexNode = new RexLambdaCall(pathPatternSubQuery, returnValueNode);
                     break;
                 default:
@@ -1676,7 +1885,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
     private RexNode convertRexParameterRef(SqlValidatorScope scope, RexNode rexNode) {
         if (scope instanceof ListScope
-            && ((ListScope) scope).getParent() instanceof GQLWithBodyScope) {
+                && ((ListScope) scope).getParent() instanceof GQLWithBodyScope) {
             GQLWithBodyScope withScope = (GQLWithBodyScope) ((ListScope) scope).getParent();
 
             return rexNode.accept(new RexShuttle() {
@@ -1686,7 +1895,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
                     if (fieldAccess.getReferenceExpr() instanceof RexCorrelVariable) {
                         SqlValidatorNamespace withItemNs = withScope.children.get(0).getNamespace();
                         return new RexParameterRef(fieldAccess.getField().getIndex(),
-                            fieldAccess.getType(), withItemNs.getType());
+                                fieldAccess.getType(), withItemNs.getType());
                     }
                     return fieldAccess;
                 }
@@ -1697,7 +1906,7 @@ public class GQLToRelConverter extends SqlToRelConverter {
 
     @Override
     protected GQLBlackboard createBlackboard(SqlValidatorScope scope,
-                                             Map<String, RexNode> nameToNodeMap, boolean top) {
+            Map<String, RexNode> nameToNodeMap, boolean top) {
         return new GQLBlackboard(scope, nameToNodeMap, top);
     }
 

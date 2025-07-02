@@ -1,23 +1,42 @@
+/**
+ * =================================================================
+ * 1. GQLMatchStatement (最顶层) - 确保这部分修改正确
+ * =================================================================
+ */
 SqlCall GQLMatchStatement() :
 {
       SqlCall statement = null;
+      boolean isOptional = false;
 }
 {
-      <MATCH> statement = SqlMatchPattern(statement)
+    // ==========================================================
+    // **核心修改点**：
+    // 将原来写死的 <MATCH> ... 替换成下面的灵活逻辑。
+    // 这套逻辑和后面链式匹配的逻辑完全一样，从而统一了规则。
+    // ==========================================================
+    { isOptional = false; } [<OPTIONAL> { isOptional = true; }]
+    <MATCH>
+    statement = SqlMatchPattern(statement, isOptional) // 第一个 MATCH，但其 isOptional 标志是动态设置的
+
+    // 后续的链式匹配规则保持不变
+    (
       (
-        (
-          statement = SqlLetStatement(statement) (<COMMA> statement = SqlLetStatement(statement))*
-          [
-            [ <NEXT> ] <MATCH>
-            statement = SqlMatchPattern(statement)
-          ]
-        )
-        |
-        (
-           [ <NEXT> ] <MATCH>
-           statement = SqlMatchPattern(statement)
-        )
-      )*
+        statement = SqlLetStatement(statement) (<COMMA> statement = SqlLetStatement(statement))*
+        [
+          [ <NEXT> ]
+          { isOptional = false; } [<OPTIONAL> { isOptional = true; }]
+          <MATCH>
+          statement = SqlMatchPattern(statement, isOptional)
+        ]
+      )
+      |
+      (
+         [ <NEXT> ]
+         { isOptional = false; } [<OPTIONAL> { isOptional = true; }]
+         <MATCH>
+         statement = SqlMatchPattern(statement, isOptional)
+      )
+    )*
       (
           statement = SqlReturn(statement)
           [
@@ -296,7 +315,12 @@ SqlCall SqlMatchEdge() :
     }
 }
 
-SqlPathPattern SqlPathPatternWithAlias() :
+/**
+ * =================================================================
+ * 4. SqlPathPatternWithAlias (第四层) - 确保修改正确
+ * =================================================================
+ */
+SqlPathPattern SqlPathPatternWithAlias(boolean isOptional) :
 {
    SqlIdentifier pathAlias = null;
    SqlPathPattern pathPattern;
@@ -304,13 +328,23 @@ SqlPathPattern SqlPathPatternWithAlias() :
 }
 {
   [ pathAlias = SimpleIdentifier() <EQ> ]
-  pathPattern = SqlPathPattern()
+  // 【关键】: 调用下一层时，传递 isOptional
+  pathPattern = SqlPathPattern(isOptional)
   {
-    return new SqlPathPattern(s.end(this), pathPattern.getPathNodes(), pathAlias);
+    // 直接返回下层创建好的对象，只设置别名
+    if (pathAlias != null) {
+        pathPattern.setPathAlias(pathAlias);
+    }
+    return pathPattern;
   }
 }
 
-SqlPathPattern SqlPathPattern() :
+/**
+ * =================================================================
+ * 5. SqlPathPattern (最底层) - 确保修改正确
+ * =================================================================
+ */
+SqlPathPattern SqlPathPattern(boolean isOptional) :
 {
     Span s = Span.of();
     List<SqlNode> nodeList = new ArrayList<SqlNode>();
@@ -318,7 +352,6 @@ SqlPathPattern SqlPathPattern() :
     SqlNode nodeOrEdge = null;
 }
 {
-
     nodeOrEdge = SqlMatchNode()  { nodeList.add(nodeOrEdge); }
     (
         nodeOrEdge = SqlMatchEdge()  { nodeList.add(nodeOrEdge); }
@@ -326,11 +359,17 @@ SqlPathPattern SqlPathPattern() :
     )*
     {
         pathNodes = new SqlNodeList(nodeList, s.addAll(nodeList).pos());
-        return new SqlPathPattern(s.end(this), pathNodes, null);
+        // 【关键】: 调用带有 isOptional 的 Java 构造函数
+        return new SqlPathPattern(s.end(this), pathNodes, null, isOptional);
     }
 }
 
-SqlCall SqlUnionPathPattern() :
+/**
+ * =================================================================
+ * 3. SqlUnionPathPattern (第三层) - 确保修改正确
+ * =================================================================
+ */
+SqlCall SqlUnionPathPattern(boolean isOptional) :
 {
     Span s = Span.of();
     SqlCall left = null;
@@ -339,14 +378,15 @@ SqlCall SqlUnionPathPattern() :
     boolean distinct = true;
 }
 {
-    left = SqlPathPatternWithAlias()
+    // 【关键】: 调用下一层时，传递 isOptional
+    left = SqlPathPatternWithAlias(isOptional)
     (
         (
             ( <VERTICAL_BAR> <PLUS> <VERTICAL_BAR> { distinct = false; } )
             |
             ( <VERTICAL_BAR> { distinct = true; } )
         )
-        right = SqlPathPatternWithAlias()
+        right = SqlPathPatternWithAlias(isOptional)
         {
             union = new SqlUnionPathPattern(s.end(this), left, right, distinct);
             left = union;
@@ -357,7 +397,12 @@ SqlCall SqlUnionPathPattern() :
     }
 }
 
-SqlMatchPattern SqlMatchPattern(SqlNode preMatch) :
+/**
+ * =================================================================
+ * 2. SqlMatchPattern (第二层) - 确保修改正确
+ * =================================================================
+ */
+SqlMatchPattern SqlMatchPattern(SqlNode preMatch, boolean isOptional) :
 {
     Span s = Span.of();
     List<SqlNode> pathList = new ArrayList<SqlNode>();
@@ -368,26 +413,16 @@ SqlMatchPattern SqlMatchPattern(SqlNode preMatch) :
     SqlNode count = null;
 }
 {
-    pathPattern = SqlUnionPathPattern()  { pathList.add(pathPattern); }
-    ( <COMMA> pathPattern = SqlUnionPathPattern()  { pathList.add(pathPattern); } )*
+    // 【关键】: 调用下一层时，传递 isOptional
+    pathPattern = SqlUnionPathPattern(isOptional)  { pathList.add(pathPattern); }
+    ( <COMMA> pathPattern = SqlUnionPathPattern(isOptional)  { pathList.add(pathPattern); } )*
 
-    [
-        <WHERE>
-        condition = Expression(ExprContext.ACCEPT_SUB_QUERY)
-    ]
-
+    [ <WHERE> condition = Expression(ExprContext.ACCEPT_SUB_QUERY) ]
     [ orderBy = OrderBy(true) ]
-    [
-        <LIMIT>
-        (
-            count = UnsignedNumericLiteralOrParam()
-        |
-            <ALL>
-        )
-    ]
+    [ <LIMIT> ( count = UnsignedNumericLiteralOrParam() | <ALL> ) ]
     {
         graphPattern = new SqlNodeList(pathList, s.addAll(pathList).pos());
-        return new SqlMatchPattern(s.end(this), preMatch, graphPattern, condition, orderBy, count);
+        return new SqlMatchPattern(s.end(this), preMatch, graphPattern, condition, orderBy, count, isOptional);
     }
 }
 
