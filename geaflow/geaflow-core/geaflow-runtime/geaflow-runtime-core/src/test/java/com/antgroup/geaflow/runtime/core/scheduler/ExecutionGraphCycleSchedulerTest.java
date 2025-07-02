@@ -206,7 +206,7 @@ public class ExecutionGraphCycleSchedulerTest extends BaseCycleSchedulerTest {
             1, 10, configuration, "driver_id", 0);
         ExecutionNodeCycle nodeCycle = buildMockIterationNodeCycle(configuration);
 
-        graphCycle.addCycle(nodeCycle);
+        graphCycle.addCycle(nodeCycle, false);
         try {
             ReflectionUtil.setField(graphCycle, "haLevel", CHECKPOINT);
         } catch (Exception e) {
