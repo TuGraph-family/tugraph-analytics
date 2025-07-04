@@ -72,7 +72,9 @@ public class LocalClusterClient extends AbstractClusterClient {
     @Override
     public void shutdown() {
         LOGGER.info("shutdown cluster");
-        localClusterManager.close();
+        if (localClusterManager != null) {
+            localClusterManager.close();
+        }
     }
 
 }
