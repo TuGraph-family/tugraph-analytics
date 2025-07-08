@@ -268,7 +268,7 @@ public class ExecutionConfigKeys implements Serializable {
 
     public static final ConfigKey CONTAINER_WORKER_NUM = ConfigKeys
         .key("geaflow.container.worker.num")
-        .defaultValue(16)
+        .defaultValue(8)
         .description("max worker num in container");
 
     public static final ConfigKey CONTAINER_JVM_OPTION = ConfigKeys

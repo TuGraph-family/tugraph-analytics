@@ -39,6 +39,9 @@ public class ConvertRules {
         ConvertExchangeRule.INSTANCE,
         ConvertGraphScanRule.INSTANCE,
         ConvertGraphMatchRule.INSTANCE,
+
+        ConvertOptionalMatchRule.INSTANCE,
+
         ConvertConstructGraphRule.INSTANCE,
         ConvertParameterizedRelNodeRule.INSTANCE,
         ConvertGraphModifyRule.INSTANCE,
