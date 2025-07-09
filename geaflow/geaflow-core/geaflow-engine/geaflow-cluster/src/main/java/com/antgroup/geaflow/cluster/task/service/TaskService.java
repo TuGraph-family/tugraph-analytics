@@ -25,7 +25,6 @@ import com.antgroup.geaflow.cluster.protocol.ICommand;
 import com.antgroup.geaflow.cluster.task.runner.TaskRunner;
 import com.antgroup.geaflow.cluster.task.runner.TaskRunnerContext;
 import com.antgroup.geaflow.common.config.Configuration;
-import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
