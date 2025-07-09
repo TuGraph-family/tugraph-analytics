@@ -96,6 +96,7 @@ public abstract class AbstractClusterManager implements IClusterManager {
     }
 
     protected void startContainers(int containerNum) {
+        validateContainerNum(containerNum);
         Map<Integer, String> containerIds = new HashMap<>();
         for (int i = 0; i < containerNum; i++) {
             int containerId = generateNextComponentId();
@@ -172,6 +173,9 @@ public abstract class AbstractClusterManager implements IClusterManager {
     protected abstract void createNewContainer(int containerId, boolean isRecover);
 
     protected abstract IFailoverStrategy buildFailoverStrategy();
+
+    protected void validateContainerNum(int containerNum) {
+    }
 
     @Override
     public void doFailover(int componentId, Throwable cause) {

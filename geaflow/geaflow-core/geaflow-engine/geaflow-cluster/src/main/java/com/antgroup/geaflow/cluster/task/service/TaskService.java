@@ -25,6 +25,7 @@ import com.antgroup.geaflow.cluster.protocol.ICommand;
 import com.antgroup.geaflow.cluster.task.runner.TaskRunner;
 import com.antgroup.geaflow.cluster.task.runner.TaskRunnerContext;
 import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.metrics.common.api.MetricGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,17 +38,15 @@ public class TaskService extends AbstractTaskService<ICommand, TaskRunner> {
 
     private int containerId;
     private int taskNum;
-    private Configuration configuration;
     private MetricGroup metricGroup;
     private FetcherService fetcherService;
     private EmitterService emitterService;
 
     public TaskService(int containerId, int taskNum, Configuration configuration,
                        MetricGroup metricGroup, FetcherService fetcherService, EmitterService emitterService) {
-        super(WORKER_FORMAT);
+        super(configuration, WORKER_FORMAT);
         this.containerId = containerId;
         this.taskNum = taskNum;
-        this.configuration = configuration;
         this.metricGroup = metricGroup;
         this.fetcherService = fetcherService;
         this.emitterService = emitterService;

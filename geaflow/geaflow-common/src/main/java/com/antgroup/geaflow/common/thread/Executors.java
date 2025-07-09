@@ -35,6 +35,7 @@ public class Executors {
     private static final int DEFAULT_KEEP_ALIVE_MINUTES = 30;
     private static final int DEFAULT_QUEUE_CAPACITY = 1024;
     private static final int DEFAULT_MAGNIFICATION = 2;
+    public static final int DEFAULT_MAX_MULTIPLE = 10;
 
     private static final Map<String, ExecutorService> BOUNDED_EXECUTORS = new HashMap<>();
     private static final Map<String, ExecutorService> UNBOUNDED_EXECUTORS = new HashMap<>();
@@ -90,38 +91,43 @@ public class Executors {
             TimeUnit.MINUTES);
     }
 
-    public static synchronized ExecutorService getExecutorService(int coreNumber,
-                                                                  String threadFormat) {
-        int maxThreads = 10 * CORE_NUM;
-        Preconditions.checkArgument(coreNumber > 0 && coreNumber <= maxThreads,
-            "executor threads should be smaller than " + maxThreads);
-        Preconditions.checkArgument(StringUtils.isNotEmpty(threadFormat),
-            "thread format couldn't" + " be empty");
-        return getNamedService(coreNumber, Integer.MAX_VALUE, DEFAULT_KEEP_ALIVE_MINUTES,
-            TimeUnit.MINUTES, threadFormat, null);
+    public static ExecutorService getExecutorService(int coreNumber,
+                                                     String threadFormat) {
+        return getExecutorService(DEFAULT_MAX_MULTIPLE, coreNumber, threadFormat, null);
     }
 
-    public static synchronized ExecutorService getExecutorService(int coreNumber,
+    public static ExecutorService getExecutorService(int coreNumber,
+                                                     String threadFormat,
+                                                     Thread.UncaughtExceptionHandler handler) {
+        return getExecutorService(DEFAULT_MAX_MULTIPLE, coreNumber, threadFormat, handler);
+    }
+
+    public static ExecutorService getExecutorService(int maxMultiple,
+                                                     int coreNumber,
+                                                     String threadFormat) {
+        return getExecutorService(maxMultiple, coreNumber, threadFormat, null);
+    }
+
+    /**
+     * Creates an ExecutorService with following params
+     *
+     * @param maxMultiple Maximum threads multiplier
+     * @param coreNumber Number of core threads
+     * @param threadFormat Thread name format
+     * @param handler Uncaught exception handler
+     * @return Configured ExecutorService
+     */
+    public static synchronized ExecutorService getExecutorService(int maxMultiple,
+                                                                  int coreNumber,
                                                                   String threadFormat,
                                                                   Thread.UncaughtExceptionHandler handler) {
-        int maxThreads = 10 * CORE_NUM;
-        Preconditions.checkArgument(coreNumber > 0 && coreNumber <= maxThreads,
-            "executor threads should be smaller than " + maxThreads);
-        Preconditions.checkArgument(StringUtils.isNotEmpty(threadFormat),
-            "thread format couldn't" + " be empty");
-        return getNamedService(coreNumber, Integer.MAX_VALUE, DEFAULT_KEEP_ALIVE_MINUTES,
-            TimeUnit.MINUTES, threadFormat, handler);
-    }
-
-    public static synchronized ExecutorService getExecutorService(int maxMultiple, int coreNumber,
-                                                                  String threadFormat) {
         int maxThreads = maxMultiple * CORE_NUM;
         Preconditions.checkArgument(coreNumber > 0 && coreNumber <= maxThreads,
             "executor threads should be smaller than " + maxThreads);
         Preconditions.checkArgument(StringUtils.isNotEmpty(threadFormat),
             "thread format couldn't" + " be empty");
         return getNamedService(coreNumber, Integer.MAX_VALUE, DEFAULT_KEEP_ALIVE_MINUTES,
-            TimeUnit.MINUTES, threadFormat, null);
+            TimeUnit.MINUTES, threadFormat, handler);
     }
 
     private static synchronized ExecutorService getNamedService(int bound, int capacity,

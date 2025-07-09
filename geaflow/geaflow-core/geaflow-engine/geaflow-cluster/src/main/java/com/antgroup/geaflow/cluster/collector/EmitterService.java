@@ -29,12 +29,10 @@ public class EmitterService extends AbstractTaskService<IEmitterRequest, Emitter
     private static final String EMITTER_FORMAT = "geaflow-emitter-%d";
 
     private final int slots;
-    private final Configuration configuration;
 
     public EmitterService(int slots, Configuration configuration) {
-        super(EMITTER_FORMAT);
+        super(configuration, EMITTER_FORMAT);
         this.slots = slots;
-        this.configuration = configuration;
     }
 
     protected EmitterRunner[] buildTaskRunner() {

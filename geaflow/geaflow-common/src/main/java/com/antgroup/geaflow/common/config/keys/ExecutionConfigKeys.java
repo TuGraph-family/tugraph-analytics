@@ -281,6 +281,11 @@ public class ExecutionConfigKeys implements Serializable {
         .noDefaultValue()
         .description("container max heap size in mb");
 
+    public static final ConfigKey EXECUTOR_MAX_MULTIPLE = ConfigKeys
+            .key("geaflow.executor.thread.max.multiple")
+            .defaultValue(10)
+            .description("Maximum thread pool size multiplier (maxThreads = multiple * available cores)");
+
     public static final ConfigKey FO_ENABLE = ConfigKeys
         .key("geaflow.fo.enable")
         .defaultValue(true)
