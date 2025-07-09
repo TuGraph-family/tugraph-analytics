@@ -35,7 +35,7 @@ public class Executors {
     private static final int DEFAULT_KEEP_ALIVE_MINUTES = 30;
     private static final int DEFAULT_QUEUE_CAPACITY = 1024;
     private static final int DEFAULT_MAGNIFICATION = 2;
-    public static final int DEFAULT_MAX_MULTIPLE = 10;
+    private static final int DEFAULT_MAX_MULTIPLE = 10;
 
     private static final Map<String, ExecutorService> BOUNDED_EXECUTORS = new HashMap<>();
     private static final Map<String, ExecutorService> UNBOUNDED_EXECUTORS = new HashMap<>();
