@@ -55,7 +55,7 @@ public abstract class AbstractTaskService<TASK, R extends ITaskRunner<TASK>> imp
     }
 
     /**
-     * Provides the maximum thread multiplier value
+     * Provides the maximum thread multiplier value.
      *
      * @return the maximum thread multiplier
      */

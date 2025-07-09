@@ -109,7 +109,7 @@ public class Executors {
     }
 
     /**
-     * Creates an ExecutorService with following params
+     * Creates an ExecutorService with following params.
      *
      * @param maxMultiple Maximum threads multiplier
      * @param coreNumber Number of core threads
