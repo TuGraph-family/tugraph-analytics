@@ -105,4 +105,13 @@ public class GQLInsertTest {
             .execute()
             .checkSinkResult();
     }
+
+    @Test
+    public void testInsertAndQuery_005() throws Exception {
+        QueryTester
+            .build()
+            .withQueryPath("/query/gql_insert_and_graph_005.sql")
+            .execute()
+            .checkSinkResult();
+    }
 }
