@@ -21,6 +21,8 @@ package com.antgroup.geaflow.cluster.task.service;
 
 import com.antgroup.geaflow.cluster.exception.ComponentUncaughtExceptionHandler;
 import com.antgroup.geaflow.cluster.task.runner.ITaskRunner;
+import com.antgroup.geaflow.common.config.Configuration;
+import com.antgroup.geaflow.common.config.keys.ExecutionConfigKeys;
 import com.antgroup.geaflow.common.thread.Executors;
 import com.antgroup.geaflow.common.utils.ExecutorUtil;
 import com.google.common.base.Preconditions;
@@ -35,19 +37,30 @@ public abstract class AbstractTaskService<TASK, R extends ITaskRunner<TASK>> imp
     protected ExecutorService executorService;
     private R[] tasks;
     private String threadFormat;
+    protected final Configuration configuration;
 
-    public AbstractTaskService(String threadFormat) {
+    public AbstractTaskService(Configuration configuration, String threadFormat) {
         this.threadFormat = threadFormat;
+        this.configuration = configuration;
     }
 
     public void start() {
         this.tasks = buildTaskRunner();
         Preconditions.checkArgument(tasks != null && tasks.length != 0, "must specify at least one task");
-        this.executorService = Executors.getExecutorService(tasks.length, threadFormat,
+        this.executorService = Executors.getExecutorService(getMaxMultiple(), tasks.length, threadFormat,
             ComponentUncaughtExceptionHandler.INSTANCE);
         for (int i = 0; i < tasks.length; i++) {
             executorService.execute(tasks[i]);
         }
+    }
+
+    /**
+     * Provides the maximum thread multiplier value.
+     *
+     * @return the maximum thread multiplier
+     */
+    protected int getMaxMultiple() {
+        return configuration.getInteger(ExecutionConfigKeys.EXECUTOR_MAX_MULTIPLE);
     }
 
     public void process(int workerId, TASK task) {

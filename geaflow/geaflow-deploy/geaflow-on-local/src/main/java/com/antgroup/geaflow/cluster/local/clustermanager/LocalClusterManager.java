@@ -85,6 +85,11 @@ public class LocalClusterManager extends AbstractClusterManager {
     }
 
     @Override
+    protected void validateContainerNum(int containerNum) {
+        Preconditions.checkArgument(containerNum == 1, "local mode containerNum must equal with 1");
+    }
+
+    @Override
     public void close() {
         super.close();
         if (appPath != null) {

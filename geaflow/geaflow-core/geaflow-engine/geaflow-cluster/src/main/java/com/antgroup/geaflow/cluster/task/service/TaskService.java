@@ -37,17 +37,15 @@ public class TaskService extends AbstractTaskService<ICommand, TaskRunner> {
 
     private int containerId;
     private int taskNum;
-    private Configuration configuration;
     private MetricGroup metricGroup;
     private FetcherService fetcherService;
     private EmitterService emitterService;
 
     public TaskService(int containerId, int taskNum, Configuration configuration,
                        MetricGroup metricGroup, FetcherService fetcherService, EmitterService emitterService) {
-        super(WORKER_FORMAT);
+        super(configuration, WORKER_FORMAT);
         this.containerId = containerId;
         this.taskNum = taskNum;
-        this.configuration = configuration;
         this.metricGroup = metricGroup;
         this.fetcherService = fetcherService;
         this.emitterService = emitterService;

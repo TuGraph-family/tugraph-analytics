@@ -21,6 +21,7 @@ package com.antgroup.geaflow.cluster.worker;
 
 import com.antgroup.geaflow.cluster.protocol.ICommand;
 import com.antgroup.geaflow.cluster.task.service.AbstractTaskService;
+import com.antgroup.geaflow.common.config.Configuration;
 
 public class DispatcherService extends AbstractTaskService<ICommand, Dispatcher> {
 
@@ -28,8 +29,8 @@ public class DispatcherService extends AbstractTaskService<ICommand, Dispatcher>
 
     private Dispatcher dispatcher;
 
-    public DispatcherService(Dispatcher dispatcher) {
-        super(MESSAGE_FORMAT);
+    public DispatcherService(Dispatcher dispatcher, Configuration configuration) {
+        super(configuration, MESSAGE_FORMAT);
         this.dispatcher = dispatcher;
     }
 

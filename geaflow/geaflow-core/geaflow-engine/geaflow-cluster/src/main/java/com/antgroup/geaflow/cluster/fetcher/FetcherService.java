@@ -33,12 +33,10 @@ public class FetcherService extends AbstractTaskService<IFetchRequest, FetcherRu
     private static final String FETCHER_FORMAT = "geaflow-fetcher-%d";
 
     private int slots;
-    private Configuration configuration;
 
     public FetcherService(int slots, Configuration configuration) {
-        super(FETCHER_FORMAT);
+        super(configuration, FETCHER_FORMAT);
         this.slots = slots;
-        this.configuration = configuration;
     }
 
     @Override

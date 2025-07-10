@@ -97,7 +97,7 @@ public class Container extends AbstractContainer implements IContainer<IEvent, I
                 this.workerService = new TaskService(id, num,
                     configuration, metricGroup, fetcherService, emitterService);
                 this.dispatcher = new Dispatcher(workerService);
-                this.dispatcherService = new DispatcherService(dispatcher);
+                this.dispatcherService = new DispatcherService(dispatcher, configuration);
 
                 // start task service
                 this.fetcherService.start();
