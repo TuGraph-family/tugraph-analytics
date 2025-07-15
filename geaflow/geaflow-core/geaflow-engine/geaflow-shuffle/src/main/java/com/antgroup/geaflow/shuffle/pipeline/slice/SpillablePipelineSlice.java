@@ -213,7 +213,6 @@ public class SpillablePipelineSlice extends AbstractSlice {
             return;
         }
         this.buffers.clear();
-        this.buffers = null;
         try {
             if (streamBufferIterator != null) {
                 streamBufferIterator.close();
