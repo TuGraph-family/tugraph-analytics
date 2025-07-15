@@ -119,6 +119,12 @@
 
             <dependency>
                 <groupId>com.antgroup.tugraph</groupId>
+                <artifactId>geaflow-dsl-connector-random</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.antgroup.tugraph</groupId>
                 <artifactId>geaflow-dsl-connector-file</artifactId>
                 <version>${project.version}</version>
             </dependency>
