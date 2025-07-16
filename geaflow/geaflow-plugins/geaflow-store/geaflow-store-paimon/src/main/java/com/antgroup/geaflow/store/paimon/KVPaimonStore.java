@@ -115,7 +115,7 @@ public class KVPaimonStore<K, V> extends BasePaimonStore implements IKVStatefulS
     @Override
     public void drop() {
         this.client.dropTable(tableHandle.getIdentifier());
-        this.client.dropDatabase(paimonStoreName);
+        super.drop();
     }
 
     @Override

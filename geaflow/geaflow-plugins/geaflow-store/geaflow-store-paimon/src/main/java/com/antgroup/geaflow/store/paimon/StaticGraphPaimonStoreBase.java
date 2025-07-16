@@ -186,13 +186,13 @@ public class StaticGraphPaimonStoreBase<K, VV, EV> extends BasePaimonGraphStore 
 
     @Override
     public void drop() {
-        this.client.dropDatabase(paimonStoreName);
+        super.drop();
     }
 
     @Override
     public void close() {
-        this.proxy.close();
-        this.client.close();
+        proxy.close();
+        super.close();
     }
 
     private void checkOrderField(List<EdgeAtom> orderFields) {
