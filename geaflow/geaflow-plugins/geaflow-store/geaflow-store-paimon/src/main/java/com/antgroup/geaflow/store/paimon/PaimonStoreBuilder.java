@@ -41,6 +41,8 @@ public class PaimonStoreBuilder implements IStoreBuilder {
                 return new KVPaimonStore();
             case STATIC_GRAPH:
                 return new StaticGraphPaimonStoreBase();
+            case DYNAMIC_GRAPH:
+                return new DynamicGraphPaimonStoreBase<>();
             default:
                 throw new GeaflowRuntimeException(RuntimeErrors.INST.typeSysError("not support " + type));
         }

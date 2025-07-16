@@ -25,12 +25,21 @@ import com.antgroup.geaflow.store.paimon.PaimonTableRWHandle;
 
 public class PaimonProxyBuilder {
 
-    public static <K, VV, EV> IGraphPaimonProxy<K, VV, EV> build(
-        Configuration config, PaimonTableRWHandle vertexRWHandle,
-        PaimonTableRWHandle edgeRWHandle, int[] projection,
-        IGraphKVEncoder<K, VV, EV> encoder) {
+    public static <K, VV, EV> IGraphPaimonProxy<K, VV, EV> build(Configuration config,
+                                                                 PaimonTableRWHandle vertexRWHandle,
+                                                                 PaimonTableRWHandle edgeRWHandle,
+                                                                 int[] projection,
+                                                                 IGraphKVEncoder<K, VV, EV> encoder) {
         // TODO: add readonly proxy.
-        return new PaimonGraphRWProxy(vertexRWHandle, edgeRWHandle, projection, encoder);
+        return new PaimonGraphRWProxy<>(vertexRWHandle, edgeRWHandle, projection, encoder);
+    }
+
+    public static <K, VV, EV> IGraphMultiVersionedPaimonProxy<K, VV, EV> buildMultiVersioned(
+        Configuration config, PaimonTableRWHandle vertexRWHandle,
+        PaimonTableRWHandle vertexIndexRWHandle, PaimonTableRWHandle edgeRWHandle, int[] projection,
+        IGraphKVEncoder<K, VV, EV> encoder) {
+        return new PaimonGraphMultiVersionedProxy<>(vertexRWHandle, vertexIndexRWHandle,
+            edgeRWHandle, projection, encoder, config);
     }
 
 }

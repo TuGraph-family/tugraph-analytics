@@ -43,9 +43,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PaimonGraphStateTest
-{
-
+public class PaimonGraphStateTest {
 
     static Map<String, String> config = new HashMap<>();
 
@@ -59,7 +57,8 @@ public class PaimonGraphStateTest
         config.put(FileConfigKeys.PERSISTENT_TYPE.getKey(), "LOCAL");
         config.put(FileConfigKeys.ROOT.getKey(), "/tmp/geaflow/chk/");
         config.put(FileConfigKeys.JSON_CONFIG.getKey(), GsonUtil.toJson(persistConfig));
-        config.put(PaimonConfigKeys.PAIMON_OPTIONS_WAREHOUSE.getKey(), "file:///tmp/PaimonGraphStateTest/");
+        config.put(PaimonConfigKeys.PAIMON_OPTIONS_WAREHOUSE.getKey(),
+            "file:///tmp/PaimonGraphStateTest/");
     }
 
     @AfterClass
@@ -80,8 +79,7 @@ public class PaimonGraphStateTest
             type.getTypeClass(), ValueEdge.class, ValueEdge::new, type.getTypeClass());
 
         GraphStateDescriptor desc = GraphStateDescriptor.build(name, StoreType.PAIMON.name());
-        desc.withKeyGroup(keyGroup)
-            .withKeyGroupAssigner(new DefaultKeyGroupAssigner(maxPara));
+        desc.withKeyGroup(keyGroup).withKeyGroupAssigner(new DefaultKeyGroupAssigner(maxPara));
         desc.withGraphMeta(new GraphMeta(tag));
         GraphState<T, T, T> graphState = StateFactory.buildGraphState(desc,
             new Configuration(conf));
@@ -91,8 +89,8 @@ public class PaimonGraphStateTest
     @Test
     public void testWriteRead() {
         Map<String, String> conf = new HashMap<>(config);
-        GraphState<String, String, String> graphState = getGraphState(StringType.INSTANCE, "write_read",
-            conf);
+        GraphState<String, String, String> graphState = getGraphState(StringType.INSTANCE,
+            "write_read", conf);
 
         // set chk = 1
         graphState.manage().operate().setCheckpointId(1L);

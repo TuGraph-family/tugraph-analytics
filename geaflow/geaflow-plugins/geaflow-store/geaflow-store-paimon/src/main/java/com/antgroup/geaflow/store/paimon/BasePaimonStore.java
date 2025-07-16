@@ -62,6 +62,11 @@ public abstract class BasePaimonStore extends BaseGraphStore implements IStatefu
         this.client.close();
     }
 
+    @Override
+    public void drop() {
+        this.client.dropDatabase(paimonStoreName);
+    }
+
     protected PaimonTableRWHandle createKVTableHandle(Identifier identifier) {
         Schema.Builder schemaBuilder = Schema.newBuilder();
         schemaBuilder.primaryKey(KEY_COLUMN_NAME);
