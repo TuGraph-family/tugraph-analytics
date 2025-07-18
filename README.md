@@ -89,7 +89,7 @@ For more information: [Contribution](docs/docs-en/source/9.contribution.md).
 **If you are interested in GeaFlow, please give our project a [ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics).**
 
 ## Contact Us
-You can contact with us through Discord and WeChat directly.
+You can contact us through Discord and WeChat directly.
 
 - Discord：https://discord.gg/MHSR8K5r
 - WeChat：![](https://github.com/TuGraph-family/community/blob/master/assets/contacts.png)
