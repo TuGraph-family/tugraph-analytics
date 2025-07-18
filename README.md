@@ -86,12 +86,14 @@ Thank you very much for contributing to GeaFlow, whether bug reporting, document
 
 For more information: [Contribution](docs/docs-en/source/9.contribution.md).
 
-## Contact Us
-You can contact us through the following methods:
-
-![contacts](https://github.com/TuGraph-family/community/blob/master/assets/contacts.png)
-
 **If you are interested in GeaFlow, please give our project a [ ⭐️ ](https://github.com/TuGraph-family/tugraph-analytics).**
+
+## Contact Us
+You can contact with us through Discord and WeChat directly.
+
+- Discord：https://discord.gg/MHSR8K5r
+- WeChat：![](https://github.com/TuGraph-family/community/blob/master/assets/contacts.png)
+
 
 ## Acknowledgement
 Thanks to some outstanding open-source projects in the industry such as Apache Flink, Apache Spark, and Apache Calcite, some modules of GeaFlow were developed with their references. We would like to express our special gratitude for their contributions. Also, thanks to all the individual developers who have contributed to this repository, which are listed below.
