@@ -1,17 +1,17 @@
-package com.antgroup.geaflow.state.pushdown.filter.inner;
+package org.apache.geaflow.state.pushdown.filter.inner;
 
-import com.antgroup.geaflow.model.graph.edge.EdgeDirection;
-import com.antgroup.geaflow.model.graph.edge.IEdge;
-import com.antgroup.geaflow.model.graph.vertex.IVertex;
-import com.antgroup.geaflow.model.graph.IGraphElementWithTimeField;
-import com.antgroup.geaflow.model.graph.IGraphElementWithLabelField;
-import com.antgroup.geaflow.state.data.DataType;
-import com.antgroup.geaflow.state.data.OneDegreeGraph;
-import com.antgroup.geaflow.state.pushdown.filter.FilterType;
-import com.antgroup.geaflow.state.pushdown.filter.IFilter;
-import com.antgroup.geaflow.state.pushdown.filter.AndFilter;
-import com.antgroup.geaflow.state.pushdown.filter.OrFilter;
-import com.antgroup.geaflow.state.pushdown.filter.inner.GeneratedQueryFilter;
+import edge.graph.model.org.apache.geaflow.EdgeDirection;
+import edge.graph.model.org.apache.geaflow.IEdge;
+import vertex.graph.model.org.apache.geaflow.IVertex;
+import graph.model.org.apache.geaflow.IGraphElementWithTimeField;
+import graph.model.org.apache.geaflow.IGraphElementWithLabelField;
+import data.org.apache.geaflow.state.DataType;
+import data.org.apache.geaflow.state.OneDegreeGraph;
+import filter.pushdown.org.apache.geaflow.state.FilterType;
+import filter.pushdown.org.apache.geaflow.state.IFilter;
+import filter.pushdown.org.apache.geaflow.state.AndFilter;
+import filter.pushdown.org.apache.geaflow.state.OrFilter;
+import inner.filter.pushdown.org.apache.geaflow.state.GeneratedQueryFilter;
 import java.util.List;
 import java.util.Set;
 

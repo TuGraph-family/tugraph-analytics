@@ -23,7 +23,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>geaflow-runtime</artifactId>
-        <groupId>com.antgroup.tugraph</groupId>
+        <groupId>org.apache.geaflow</groupId>
         <version>0.6.4-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -31,15 +31,15 @@
     <artifactId>geaflow-pipeline</artifactId>
     <dependencies>
         <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
+            <groupId>org.apache.geaflow</groupId>
             <artifactId>geaflow-pdata</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
+            <groupId>org.apache.geaflow</groupId>
             <artifactId>geaflow-plan</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
+            <groupId>org.apache.geaflow</groupId>
             <artifactId>geaflow-runtime-core</artifactId>
         </dependency>
     </dependencies>

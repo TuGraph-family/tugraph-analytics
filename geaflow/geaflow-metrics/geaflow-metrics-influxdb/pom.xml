@@ -24,7 +24,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>geaflow-metrics</artifactId>
-        <groupId>com.antgroup.tugraph</groupId>
+        <groupId>org.apache.geaflow</groupId>
         <version>0.6.4-SNAPSHOT</version>
     </parent>
 
@@ -36,7 +36,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.antgroup.tugraph</groupId>
+            <groupId>org.apache.geaflow</groupId>
             <artifactId>geaflow-metrics-reporter</artifactId>
         </dependency>
         <dependency>
