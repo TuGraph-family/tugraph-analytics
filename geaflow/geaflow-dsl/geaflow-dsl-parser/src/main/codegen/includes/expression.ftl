@@ -63,7 +63,7 @@ SqlPathPatternSubQuery SqlPathPatternSubQuery():
   Span s = Span.of();
 }
 {
-  pathPattern = SqlPathPattern()
+  pathPattern = SqlPathPattern(false)
   [
     <NAMED_ARGUMENT_ASSIGNMENT> returnValue = Expression(ExprContext.ACCEPT_NON_QUERY)
   ]

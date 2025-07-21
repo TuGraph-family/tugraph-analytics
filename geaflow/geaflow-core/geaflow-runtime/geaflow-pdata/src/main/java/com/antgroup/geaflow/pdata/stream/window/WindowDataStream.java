@@ -21,6 +21,9 @@ package com.antgroup.geaflow.pdata.stream.window;
 
 import com.antgroup.geaflow.api.function.base.FilterFunction;
 import com.antgroup.geaflow.api.function.base.FlatMapFunction;
+
+// import com.antgroup.geaflow.api.function.base.JoinFunction;
+
 import com.antgroup.geaflow.api.function.base.KeySelector;
 import com.antgroup.geaflow.api.function.base.MapFunction;
 import com.antgroup.geaflow.api.function.io.SinkFunction;
@@ -47,14 +50,12 @@ import java.util.Map;
 
 public class WindowDataStream<T> extends Stream<T> implements PWindowStream<T> {
 
-
     public WindowDataStream() {
     }
 
     public WindowDataStream(Stream<T> input, Operator operator) {
         super(input, operator);
     }
-
 
     public WindowDataStream(IPipelineContext pipelineContext) {
         super(pipelineContext);
@@ -65,12 +66,39 @@ public class WindowDataStream<T> extends Stream<T> implements PWindowStream<T> {
     }
 
     public WindowDataStream(IPipelineContext pipelineContext, PWindowStream<T> input,
-                            Operator operator) {
+            Operator operator) {
         this(pipelineContext, operator);
         this.input = (Stream) input;
         this.parallelism = input.getParallelism();
         this.opArgs.setParallelism(input.getParallelism());
     }
+
+    // @Override
+    // public PWindowStream<T> optionalMatch(IMatchNode pathPattern, boolean isCaseSensitive) {
+    //     System.out.println("\n--- 步骤 5/8: WindowDataStream.optionalMatch() 已被调用 ---\n");
+    //     // 传递 isCaseSensitive
+    //     return new WindowOptionalMatchStream<>(this, pathPattern, isCaseSensitive);
+    // }
+
+    // @Override
+    // public <K> PWindowStream<Path> optionalMatch(PWindowStream<Path> other,
+    // KeySelector<Path, K> leftKeySelector,
+    // KeySelector<Path, K> rightKeySelector,
+    // StepJoinFunction joinFunction) {
+    // // This is an unsafe cast, but it's necessary because this specific join
+    // // implementation requires the input stream to be of type Path.
+    // // The caller must ensure that this method is only called on a
+    // // WindowDataStream<Path>.
+    // WindowDataStream<Path> leftStream = (WindowDataStream<Path>) this;
+
+    // // We use MapOperator as a placeholder since we are not implementing the
+    // actual
+    // // operator logic yet.
+    // Operator dummyOperator = new MapOperator<>(null);
+    // return new WindowOptionalMatchStream(leftStream, (WindowDataStream<Path>)
+    // other,
+    // leftKeySelector, rightKeySelector, joinFunction, dummyOperator);
+    // }
 
     @Override
     public <R> WindowDataStream<R> map(MapFunction<T, R> mapFunction) {
@@ -89,7 +117,8 @@ public class WindowDataStream<T> extends Stream<T> implements PWindowStream<T> {
     public <R> PWindowStream<R> flatMap(FlatMapFunction<T, R> flatMapFunction) {
         Preconditions.checkArgument(flatMapFunction != null, " FlatMap Function must not be null");
         IEncoder<?> resultEncoder = EncoderResolver.resolveFunction(FlatMapFunction.class, flatMapFunction, 1);
-        return new WindowDataStream(this.context, this, new FlatMapOperator(flatMapFunction)).withEncoder(resultEncoder);
+        return new WindowDataStream(this.context, this, new FlatMapOperator(flatMapFunction))
+                .withEncoder(resultEncoder);
     }
 
     @Override
@@ -99,7 +128,7 @@ public class WindowDataStream<T> extends Stream<T> implements PWindowStream<T> {
             return this;
         } else {
             return new WindowUnionStream(this, (WindowDataStream<T>) uStream,
-                new UnionOperator()).withEncoder(this.encoder);
+                    new UnionOperator()).withEncoder(this.encoder);
         }
     }
 
@@ -112,7 +141,7 @@ public class WindowDataStream<T> extends Stream<T> implements PWindowStream<T> {
     public <KEY> PWindowKeyStream<KEY, T> keyBy(KeySelector<T, KEY> selectorFunction) {
         Preconditions.checkArgument(selectorFunction != null, " KeySelector Function must not be null");
         return new WindowKeyDataStream<KEY, T>(context, this,
-            new KeySelectorOperator(selectorFunction), selectorFunction).withEncoder(this.encoder);
+                new KeySelectorOperator(selectorFunction), selectorFunction).withEncoder(this.encoder);
     }
 
     @Override

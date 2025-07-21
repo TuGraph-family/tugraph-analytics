@@ -80,4 +80,12 @@ public class MatchReturnSyntaxTest extends BaseDslTest {
         String unParseStmts = parseStmtsAndUnParse(parseStmtsAndUnParse(unParseSql));
         Assert.assertEquals(unParseStmts, unParseSql);
     }
+
+    // 添加到 MatchReturnSyntaxTest.java 文件中
+    @Test
+    public void testGQLOptionalMatch() throws Exception {
+        String unParseSql = parseSqlAndUnParse("GQLOptionalMatch.sql");
+        String unParseStmts = parseStmtsAndUnParse(parseStmtsAndUnParse(unParseSql));
+        Assert.assertEquals(unParseStmts, unParseSql);
+    }
 }
