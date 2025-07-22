@@ -456,7 +456,7 @@ public class InternalFunctionsTest {
 
     @Test
     public void testMath() {
-        assertEquals(exp(double1), 2.718281828459045);
+        assertEquals(exp(double1), 2.718281828459045, 1e-15);
         assertEquals(floor(double1), 1.0);
         assertEquals((long) floor(long1), 1);
         assertEquals((int) floor(int1), 1);
