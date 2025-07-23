@@ -135,5 +135,4 @@ public abstract class AbstractHAService implements IHAService {
         } while (true);
         return resourceData;
     }
-
 }
