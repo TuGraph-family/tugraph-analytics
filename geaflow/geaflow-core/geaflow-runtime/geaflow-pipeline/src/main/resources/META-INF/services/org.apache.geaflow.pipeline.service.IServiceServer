@@ -17,5 +17,5 @@
 # under the License.
 #
 
-rpc.server.org.apache.geaflow.analytics.service.RpcAnalyticsServiceServer
-http.server.org.apache.geaflow.analytics.service.HttpAnalyticsServiceServer
+org.apache.geaflow.analytics.service.server.rpc.RpcAnalyticsServiceServer
+org.apache.geaflow.analytics.service.server.http.HttpAnalyticsServiceServer
