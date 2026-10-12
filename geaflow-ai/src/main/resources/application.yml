@@ -28,3 +28,17 @@ logging:
   level:
     root: INFO
     org.apache.geaflow.ai: DEBUG
+
+retrieval:
+  config-version: v1
+  ready-graph-name: Confucius
+  default-mode: KEYWORD
+  default-execution-mode: SEQUENTIAL
+  default-top-k: 10
+  max-top-k: 100
+  default-timeout-ms: 3000
+  max-timeout-ms: 10000
+  default-max-candidates: 100
+  max-candidates: 1000
+  default-token-budget: 4096
+  max-token-budget: 16384

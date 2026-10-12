@@ -212,9 +212,17 @@ public class EmbeddingIndexStore implements IndexStore {
             batchEntitiesBuffer.clear();
         }
 
+        // Count entries that actually carry vectors, not entities that were queued: an entity with
+        // no embeddable text is registered with an empty list and must not be reported as indexed.
+        long withVectors = 0;
+        for (List<EmbeddingService.EmbeddingResult> vectors : loading.values()) {
+            if (vectors != null && !vectors.isEmpty()) {
+                withVectors++;
+            }
+        }
         this.indexStoreMap = loading;
-        LOGGER.info("Successfully added {} new index items. Total indexed: {}",
-                addedCount, loading.size());
+        LOGGER.info("Successfully added {} new index items. Entities holding vectors: {} of {}",
+                addedCount, withVectors, loading.size());
     }
 
     /**
@@ -247,13 +255,24 @@ public class EmbeddingIndexStore implements IndexStore {
         List<String> pendingTexts = new ArrayList<>(pendingEntities.size());
         Map<GraphEntity, Pair<Integer, Integer>> entity2StartEndPair = new HashMap<>();
         Map<GraphEntity, String> entity2Fingerprint = new HashMap<>();
+        List<GraphEntity> withoutText = new ArrayList<>();
         for (GraphEntity e : pendingEntities) {
             Integer start = pendingTexts.size();
             List<String> chunks = embeddedChunks(verbFunc, e);
             pendingTexts.addAll(chunks);
             Integer end = pendingTexts.size();
+            if (start.equals(end)) {
+                withoutText.add(e);
+            }
             entity2StartEndPair.put(e, Pair.of(start, end));
             entity2Fingerprint.put(e, ModelUtils.getEmbeddedTextFingerprint(chunks));
+        }
+        if (!withoutText.isEmpty()) {
+            // Say so rather than reporting these as indexed. An entity whose values are all
+            // ignorable yields no text, so it gets an empty vector list and can never be recalled.
+            LOGGER.warn("{} of {} entities have no embeddable text and will hold no vectors, "
+                    + "for example {}", withoutText.size(), pendingEntities.size(),
+                ModelUtils.getGraphEntityKey(withoutText.get(0)));
         }
 
         Gson gson = new Gson();
@@ -310,19 +329,26 @@ public class EmbeddingIndexStore implements IndexStore {
 
     @Override
     public List<IVector> getEntityIndex(GraphEntity entity) {
-        if (entity != null) {
-            // Read once: the field is replaced wholesale when an index is built.
-            List<EmbeddingService.EmbeddingResult> resultList =
-                    indexStoreMap.get(ModelUtils.getGraphEntityKey(entity));
-            if (resultList != null) {
-                List<IVector> result = new ArrayList<>();
-                for (EmbeddingService.EmbeddingResult res : resultList) {
-                    double[] embedding = res.embedding;
-                    result.add(new EmbeddingVector(embedding));
-                }
-                return result;
-            }
+        if (entity == null) {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+        // Read once: the field is replaced wholesale when an index is built.
+        List<EmbeddingService.EmbeddingResult> resultList =
+                indexStoreMap.get(ModelUtils.getGraphEntityKey(entity));
+        if (resultList == null) {
+            return Collections.emptyList();
+        }
+        if (resultList.isEmpty()) {
+            // An entity that was looked at but held no embeddable text is indistinguishable from an
+            // entity nobody has looked at yet, since both give an empty result. Say which it was.
+            LOGGER.debug("Entity {} was checked and holds no embeddable text",
+                    ModelUtils.getGraphEntityKey(entity));
+            return Collections.emptyList();
+        }
+        List<IVector> result = new ArrayList<>(resultList.size());
+        for (EmbeddingService.EmbeddingResult res : resultList) {
+            result.add(new EmbeddingVector(res.embedding));
+        }
+        return result;
     }
 }
