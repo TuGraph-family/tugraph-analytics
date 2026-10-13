@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.geaflow.ai.common.ErrorCode;
 import org.apache.geaflow.ai.common.util.SeDeUtil;
 import org.apache.geaflow.ai.graph.*;
 import org.apache.geaflow.ai.graph.io.*;
@@ -153,20 +154,29 @@ public class GeaFlowMemoryServer {
         MemoryMutableGraph memoryMutableGraph = new MemoryMutableGraph((MemoryGraph) graph);
         List<GraphEntity> graphEntities = SeDeUtil.deserializeEntities(input);
 
+        int inserted = 0;
         for (GraphEntity entity : graphEntities) {
             if (entity instanceof GraphVertex) {
-                memoryMutableGraph.addVertex(((GraphVertex) entity).getVertex());
+                if (memoryMutableGraph.addVertex(((GraphVertex) entity).getVertex())
+                    == ErrorCode.SUCCESS) {
+                    inserted++;
+                }
             } else {
-                memoryMutableGraph.addEdge(((GraphEdge) entity).getEdge());
+                if (memoryMutableGraph.addEdge(((GraphEdge) entity).getEdge())
+                    == ErrorCode.SUCCESS) {
+                    inserted++;
+                }
             }
         }
-        GraphMemoryServer insertServer = CACHE.getServerByName(graphName);
-        if (insertServer == null || insertServer.getGraphAccessors().isEmpty()) {
-            throw new RuntimeException("Server or graph accessor not available for graph: " + graphName);
+        if (inserted > 0) {
+            GraphMemoryServer insertServer = CACHE.getServerByName(graphName);
+            if (insertServer == null || insertServer.getGraphAccessors().isEmpty()) {
+                throw new RuntimeException("Server or graph accessor not available for graph: " + graphName);
+            }
+            CACHE.getConsolidateServer().executeConsolidateTask(
+                insertServer.getGraphAccessors().get(0), memoryMutableGraph);
         }
-        CACHE.getConsolidateServer().executeConsolidateTask(
-            insertServer.getGraphAccessors().get(0), memoryMutableGraph);
-        return "Success to add entities, num: " + graphEntities.size();
+        return "Success to add entities, num: " + inserted;
     }
 
     @Post

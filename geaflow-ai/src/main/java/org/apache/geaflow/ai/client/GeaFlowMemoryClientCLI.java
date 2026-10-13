@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.geaflow.ai.common.config.Constants;
+import org.apache.geaflow.ai.common.id.IdempotencyKeys;
 import org.apache.geaflow.ai.graph.io.*;
 
 public class GeaFlowMemoryClientCLI {
@@ -47,6 +48,7 @@ public class GeaFlowMemoryClientCLI {
     private static final String DEFAULT_GRAPH_NAME = "memory_graph";
     private static final String VERTEX_LABEL = "chunk";
     private static final String EDGE_LABEL = "relation";
+    private static final String CHUNK_SCHEMA_VERSION = "1";
     private final Scanner scanner = new Scanner(System.in);
     private final Gson gson = new Gson();
     private String currentGraphName = DEFAULT_GRAPH_NAME;
@@ -169,6 +171,10 @@ public class GeaFlowMemoryClientCLI {
             System.out.println("No graph selected. Please create a graph first.");
             return;
         }
+        if (content.isEmpty()) {
+            System.out.println("No content to remember.");
+            return;
+        }
 
         if (content.trim().toLowerCase(Locale.ROOT).startsWith("doc")) {
             String path = content.trim().substring(3).trim();
@@ -178,21 +184,24 @@ public class GeaFlowMemoryClientCLI {
             List<String> chunks = IntStream.range(0, textFileReader.getRowCount())
                 .mapToObj(textFileReader::getRow)
                 .map(String::trim).collect(Collectors.toList());
-            for (String chunk : chunks) {
-                String response = rememberChunk(chunk);
+            for (int i = 0; i < chunks.size(); i++) {
+                String response = rememberChunk(chunks.get(i), "doc:" + path, i, i + 1);
                 System.out.println("✓ Content remembered: " + response);
             }
+            return;
         }
 
         System.out.println("Remembering content...");
-        String response = rememberChunk(content);
+        String response = rememberChunk(content, "cli:direct", 0, content.length());
         System.out.println("✓ Content remembered: " + response);
 
     }
 
 
-    private String rememberChunk(String content) throws IOException {
-        String vertexId = "chunk_" + System.currentTimeMillis() + "_" + Math.abs(content.hashCode());
+    private String rememberChunk(String content, String documentId, long start, long end)
+        throws IOException {
+        String vertexId = IdempotencyKeys.chunk(CHUNK_SCHEMA_VERSION, documentId,
+            start, end, content);
         Vertex chunkVertex = new Vertex("chunk", vertexId, Collections.singletonList(content));
         String vertexJson = gson.toJson(chunkVertex);
 

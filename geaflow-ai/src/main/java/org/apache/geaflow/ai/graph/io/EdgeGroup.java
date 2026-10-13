@@ -22,6 +22,7 @@ package org.apache.geaflow.ai.graph.io;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.geaflow.ai.common.ErrorCode;
+import org.apache.geaflow.ai.common.id.IdempotencyKeys;
 
 public class EdgeGroup implements EntityGroup {
 
@@ -29,18 +30,21 @@ public class EdgeGroup implements EntityGroup {
     private final List<Edge> edges;
     private final Map<String, List<Integer>> index;
     private final Map<String, List<Integer>> pointIndices;
+    private final Set<String> factKeys;
 
     public EdgeGroup(EdgeSchema edgeSchema, List<Edge> edges) {
         this.edgeSchema = edgeSchema;
         this.edges = edges;
         this.index = new HashMap<>(edges.size());
         this.pointIndices = new HashMap<>(10000);
+        this.factKeys = new HashSet<>(edges.size());
         buildIndex();
     }
 
     private void buildIndex() {
         int index = 0;
         for (Edge e : edges) {
+            factKeys.add(factKey(e));
             String key = makeKey(e.getSrcId(), e.getDstId());
             this.index.computeIfAbsent(key, k -> new ArrayList<>()).add(index);
             this.pointIndices.computeIfAbsent(e.getSrcId(), k -> new ArrayList<>()).add(index);
@@ -88,7 +92,12 @@ public class EdgeGroup implements EntityGroup {
     }
 
     public int addEdge(Edge newEdge) {
-        if (newEdge == null) {
+        if (newEdge == null || newEdge.getLabel() == null || newEdge.getSrcId() == null
+            || newEdge.getDstId() == null) {
+            return ErrorCode.GRAPH_ENTITY_GROUP_INSERT_FAILED;
+        }
+        String factKey = factKey(newEdge);
+        if (!factKeys.add(factKey)) {
             return ErrorCode.GRAPH_ENTITY_GROUP_INSERT_FAILED;
         }
         this.edges.add(newEdge);
@@ -101,7 +110,8 @@ public class EdgeGroup implements EntityGroup {
     }
 
     public int removeEdge(Edge edge) {
-        if (edge == null) {
+        if (edge == null || edge.getLabel() == null || edge.getSrcId() == null
+            || edge.getDstId() == null) {
             return ErrorCode.GRAPH_ENTITY_GROUP_REMOVE_FAILED;
         }
         String key = makeKey(edge.getSrcId(), edge.getDstId());
@@ -114,19 +124,26 @@ public class EdgeGroup implements EntityGroup {
             Edge existsEdge = this.edges.get(offset);
             boolean needDelete = existsEdge.equals(edge);
             if (needDelete) {
+                factKeys.remove(factKey(existsEdge));
                 edges.set(offset, null);
                 deleteOffset.add(offset);
             }
         }
         for (int del : deleteOffset) {
-            this.index.get(key).remove(del);
-            this.pointIndices.get(edge.getSrcId()).remove(del);
-            this.pointIndices.get(edge.getDstId()).remove(del);
+            Integer offset = del;
+            this.index.get(key).remove(offset);
+            this.pointIndices.get(edge.getSrcId()).remove(offset);
+            this.pointIndices.get(edge.getDstId()).remove(offset);
         }
         return ErrorCode.SUCCESS;
     }
 
     private String makeKey(String src, String dst) {
         return src + "-" + dst;
+    }
+
+    private String factKey(Edge edge) {
+        return IdempotencyKeys.edgeFact("legacy-graph-v1", edge.getLabel(), edge.getSrcId(),
+            edge.getDstId(), Collections.singletonMap("values", edge.getValues()));
     }
 }
