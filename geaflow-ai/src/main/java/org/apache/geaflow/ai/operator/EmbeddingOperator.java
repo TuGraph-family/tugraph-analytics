@@ -26,6 +26,7 @@ import org.apache.geaflow.ai.graph.GraphAccessor;
 import org.apache.geaflow.ai.graph.GraphEntity;
 import org.apache.geaflow.ai.graph.GraphVertex;
 import org.apache.geaflow.ai.index.IndexStore;
+import org.apache.geaflow.ai.index.entity.EntityVectorIndex;
 import org.apache.geaflow.ai.index.vector.EmbeddingVector;
 import org.apache.geaflow.ai.index.vector.IVector;
 import org.apache.geaflow.ai.index.vector.VectorType;
@@ -54,6 +55,10 @@ public class EmbeddingOperator implements SearchOperator {
                 return new ArrayList<>();
             }
             return new ArrayList<>(subGraphList);
+        }
+        if (indexStore instanceof EntityVectorIndex) {
+            ((EntityVectorIndex) indexStore).validateSearch(
+                graphAccessor, search.getEmbeddingModel(), queryEmbeddingVectors);
         }
         List<GraphEntity> globalResults = searchWithGlobalGraph(queryEmbeddingVectors);
         if (subGraphList == null || subGraphList.isEmpty()) {

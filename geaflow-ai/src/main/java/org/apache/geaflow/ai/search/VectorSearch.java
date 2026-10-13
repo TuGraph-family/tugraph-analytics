@@ -29,6 +29,8 @@ public class VectorSearch {
 
     public final String sessionId;
 
+    private String embeddingModel;
+
     public final Map<VectorType, List<IVector>> vectorList = new LinkedHashMap<>();
 
     public VectorSearch(String memoryId, String sessionId) {
@@ -67,6 +69,15 @@ public class VectorSearch {
 
     public String getSessionId() {
         return sessionId;
+    }
+
+    /** Model that produced the query embeddings, required by a metadata-bound entity index. */
+    public String getEmbeddingModel() {
+        return embeddingModel;
+    }
+
+    public void setEmbeddingModel(String embeddingModel) {
+        this.embeddingModel = embeddingModel;
     }
 
     public Map<VectorType, List<IVector>> getVectorMap() {

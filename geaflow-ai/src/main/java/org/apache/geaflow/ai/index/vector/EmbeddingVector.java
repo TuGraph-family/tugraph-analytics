@@ -31,6 +31,11 @@ public class EmbeddingVector implements IVector {
         this.vec = Objects.requireNonNull(vec);
     }
 
+    /** Returns a copy for adapters that need to validate or export an embedding. */
+    public double[] getValues() {
+        return Arrays.copyOf(vec, vec.length);
+    }
+
     @Override
     public double match(IVector other) {
         // Type check: must be same implementation class

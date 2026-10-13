@@ -29,6 +29,7 @@ import org.apache.geaflow.ai.graph.GraphEntity;
 import org.apache.geaflow.ai.index.EmbeddingIndexStore;
 import org.apache.geaflow.ai.index.EntityAttributeIndexStore;
 import org.apache.geaflow.ai.index.IndexStore;
+import org.apache.geaflow.ai.index.entity.EntityVectorIndex;
 import org.apache.geaflow.ai.operator.EmbeddingOperator;
 import org.apache.geaflow.ai.operator.SearchOperator;
 import org.apache.geaflow.ai.operator.SessionOperator;
@@ -89,7 +90,7 @@ public class GraphMemoryServer {
                 SessionOperator searchOperator = new SessionOperator(graphAccessors.get(0), indexStore);
                 applySearch(sessionId, searchOperator, search);
             }
-            if (indexStore instanceof EmbeddingIndexStore) {
+            if (indexStore instanceof EmbeddingIndexStore || indexStore instanceof EntityVectorIndex) {
                 EmbeddingOperator embeddingOperator = new EmbeddingOperator(graphAccessors.get(0), indexStore);
                 applySearch(sessionId, embeddingOperator, search);
             }
