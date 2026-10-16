@@ -43,7 +43,10 @@ import org.apache.geaflow.ai.temporal.model.VersionRelationType;
 import org.apache.geaflow.ai.temporal.semantics.EventLedger;
 import org.apache.geaflow.ai.temporal.semantics.EventLedgerDecision;
 import org.apache.geaflow.ai.temporal.semantics.NormalizedMemoryEvent;
+import org.apache.geaflow.ai.temporal.semantics.TemporalErrorCode;
 import org.apache.geaflow.ai.temporal.semantics.TemporalState;
+import org.apache.geaflow.ai.temporal.semantics.TemporalValidationException;
+import org.apache.geaflow.ai.temporal.semantics.VersionIdentity;
 
 /**
  * Recomputes temporal memory versions from a complete event collection.
@@ -133,6 +136,10 @@ public final class FullReplayOracle {
         }
         Collections.sort(orderedEvents, NORMALIZED_EVENT_ORDER);
 
+        EventLedger validationLedger = new EventLedger();
+        for (NormalizedMemoryEvent event : orderedEvents) {
+            validationLedger.commit(event);
+        }
         EventLedger ledger = new EventLedger();
         Map<FactKey, List<MemoryFactVersion>> versionsByFactKey =
             new HashMap<>();
@@ -145,7 +152,8 @@ public final class FullReplayOracle {
             }
             if (decision
                 == EventLedgerDecision.REJECT_EVENT_ID_REUSE) {
-                throw new IllegalArgumentException(
+                throw new TemporalValidationException(
+                    TemporalErrorCode.REJECT_EVENT_ID_REUSE,
                     "Event id reused with a different payload: "
                         + event.getEventId());
             }
@@ -225,7 +233,12 @@ public final class FullReplayOracle {
         List<Evidence> evidence =
             new ArrayList<>(event.getEvidence());
         versions.removeAll(duplicates);
-        String newVersionId = versionId(event, 0);
+        String newVersionId = VersionIdentity.create(
+            event,
+            event.getEvent().getFact().get(),
+            MemoryFactVersionStatus.ACTIVE,
+            mergedValidTime,
+            null);
         for (MemoryFactVersion duplicate : duplicates) {
             evidence.addAll(duplicate.getEvidence());
             if (closeVersion(
@@ -265,91 +278,74 @@ public final class FullReplayOracle {
         NormalizedMemoryEvent event,
         List<MemoryFactVersion> versions,
         Set<VersionRelation> relations) {
-        List<MemoryFactVersion> affected = new ArrayList<>();
+        String targetId = event.getTargetVersionId().orElseThrow(
+            () -> new TemporalValidationException(
+                TemporalErrorCode.REJECT_TARGET_REQUIRED,
+                "Change event requires a target version"));
+        MemoryFactVersion target = null;
         for (MemoryFactVersion version : versions) {
-            if (isCurrentActive(version)
-                && version.getValidTime().overlaps(
-                    event.getValidTime())) {
-                affected.add(version);
+            if (version.getId().equals(targetId)) {
+                target = version;
+                break;
             }
         }
-        Collections.sort(affected, VALID_TIME_ORDER);
-        if (!isFullyCovered(event.getValidTime(), affected)) {
-            throw new IllegalArgumentException(
-                "Event interval is not fully covered for fact key: "
-                    + event.getFactKey());
+        if (target == null) {
+            throw new TemporalValidationException(
+                TemporalErrorCode.REJECT_TARGET_NOT_FOUND,
+                "Target version not found for fact key: " + targetId);
+        }
+        if (!isCurrentActive(target)) {
+            throw new TemporalValidationException(
+                TemporalErrorCode.REJECT_TARGET_INACTIVE,
+                "Target version is not current and active: " + targetId);
+        }
+        if (!target.getValidTime().overlaps(event.getValidTime())) {
+            throw new TemporalValidationException(
+                TemporalErrorCode.REJECT_TARGET_NO_OVERLAP,
+                "Target version does not overlap the change interval: "
+                    + targetId);
         }
 
-        versions.removeAll(affected);
-        Set<String> materializedSourceIds = new TreeSet<>();
-        for (MemoryFactVersion version : affected) {
-            if (closeVersion(
-                version,
-                event.getRecordedAt(),
-                versions,
-                relations)) {
-                materializedSourceIds.add(version.getId());
-            }
-        }
+        TimeInterval changedTime = target.getValidTime()
+            .intersection(event.getValidTime()).get();
+        versions.remove(target);
+        boolean sourceMaterialized = closeVersion(
+            target, event.getRecordedAt(), versions, relations);
+        boolean correction =
+            event.getOperation() == MemoryEventOperation.CORRECT;
+        MemoryFact changedFact = correction
+            ? event.getEvent().getFact().get() : target.getFact();
+        MemoryFactVersionStatus changedStatus = correction
+            ? MemoryFactVersionStatus.ACTIVE
+            : MemoryFactVersionStatus.RETRACTED;
+        String changedId = VersionIdentity.create(
+            event, changedFact, changedStatus, changedTime, targetId);
+        versions.add(new MemoryFactVersion(
+            changedId,
+            changedFact,
+            changedStatus,
+            changedTime,
+            TimeInterval.unboundedFrom(event.getRecordedAt()),
+            event.getEvidence()));
+        addSupersedes(changedId, targetId, sourceMaterialized, relations);
 
-        int fragmentIndex;
-        if (event.getOperation() == MemoryEventOperation.CORRECT) {
-            MemoryFactVersion corrected = new MemoryFactVersion(
-                versionId(event, 0),
-                event.getEvent().getFact().get(),
+        for (TimeInterval remaining
+            : target.getValidTime().subtract(changedTime)) {
+            String fragmentId = VersionIdentity.create(
+                event,
+                target.getFact(),
                 MemoryFactVersionStatus.ACTIVE,
-                event.getValidTime(),
+                remaining,
+                targetId);
+            versions.add(new MemoryFactVersion(
+                fragmentId,
+                target.getFact(),
+                MemoryFactVersionStatus.ACTIVE,
+                remaining,
                 TimeInterval.unboundedFrom(event.getRecordedAt()),
-                event.getEvidence());
-            versions.add(corrected);
+                target.getEvidence()));
             addSupersedes(
-                corrected.getId(),
-                affected,
-                materializedSourceIds,
-                relations);
-            fragmentIndex = 1;
-        } else {
-            fragmentIndex = 0;
-            for (MemoryFactVersion source : affected) {
-                MemoryFactVersion tombstone = new MemoryFactVersion(
-                    versionId(event, fragmentIndex++),
-                    source.getFact(),
-                    MemoryFactVersionStatus.RETRACTED,
-                    source.getValidTime().intersection(
-                        event.getValidTime()).get(),
-                    TimeInterval.unboundedFrom(
-                        event.getRecordedAt()),
-                    event.getEvidence());
-                versions.add(tombstone);
-                addSupersedes(
-                    tombstone.getId(),
-                    source,
-                    materializedSourceIds,
-                    relations);
-            }
-        }
-
-        for (MemoryFactVersion version : affected) {
-            for (TimeInterval remaining
-                : version.getValidTime().subtract(
-                    event.getValidTime())) {
-                String fragmentId = versionId(
-                    event,
-                    fragmentIndex++);
-                versions.add(new MemoryFactVersion(
-                    fragmentId,
-                    version.getFact(),
-                    MemoryFactVersionStatus.ACTIVE,
-                    remaining,
-                    TimeInterval.unboundedFrom(
-                        event.getRecordedAt()),
-                    version.getEvidence()));
-                addSupersedes(
-                    fragmentId,
-                    version,
-                    materializedSourceIds,
-                    relations);
-            }
+                fragmentId, targetId, sourceMaterialized, relations);
         }
 
         addCurrentConflicts(versions, relations);
@@ -383,28 +379,14 @@ public final class FullReplayOracle {
 
     private static void addSupersedes(
         String replacementId,
-        List<MemoryFactVersion> sources,
-        Set<String> materializedSourceIds,
+        String sourceId,
+        boolean sourceMaterialized,
         Set<VersionRelation> relations) {
-        for (MemoryFactVersion source : sources) {
-            addSupersedes(
-                replacementId,
-                source,
-                materializedSourceIds,
-                relations);
-        }
-    }
-
-    private static void addSupersedes(
-        String replacementId,
-        MemoryFactVersion source,
-        Set<String> materializedSourceIds,
-        Set<VersionRelation> relations) {
-        if (materializedSourceIds.contains(source.getId())) {
+        if (sourceMaterialized) {
             relations.add(new VersionRelation(
                 VersionRelationType.SUPERSEDES,
                 replacementId,
-                source.getId()));
+                sourceId));
         }
     }
 
@@ -478,12 +460,6 @@ public final class FullReplayOracle {
             }
         }
         return unique;
-    }
-
-    private static String versionId(
-        NormalizedMemoryEvent event,
-        int index) {
-        return event.getEventId() + ":version:" + index;
     }
 
     private static boolean isCurrentActive(

@@ -38,6 +38,7 @@ public final class MemoryEvent {
     private final TimeInterval validTime;
     private final Instant transactionTime;
     private final List<Evidence> evidence;
+    private final String targetVersionId;
 
     private MemoryEvent(
         String id,
@@ -47,6 +48,19 @@ public final class MemoryEvent {
         TimeInterval validTime,
         Instant transactionTime,
         List<Evidence> evidence) {
+        this(id, operation, factId, fact, validTime, transactionTime,
+            evidence, null);
+    }
+
+    private MemoryEvent(
+        String id,
+        MemoryEventOperation operation,
+        String factId,
+        MemoryFact fact,
+        TimeInterval validTime,
+        Instant transactionTime,
+        List<Evidence> evidence,
+        String targetVersionId) {
         this.id = requireText(id, "id");
         this.operation =
             Objects.requireNonNull(operation, "operation");
@@ -57,6 +71,7 @@ public final class MemoryEvent {
         this.transactionTime =
             Objects.requireNonNull(transactionTime, "transactionTime");
         this.evidence = copyEvidence(evidence);
+        this.targetVersionId = targetVersionId;
     }
 
     public static MemoryEvent add(
@@ -111,6 +126,18 @@ public final class MemoryEvent {
 
     public String getId() {
         return id;
+    }
+
+    public MemoryEvent targeting(String versionId) {
+        if (operation == MemoryEventOperation.ADD) {
+            throw new IllegalArgumentException("An ADD event cannot have a target");
+        }
+        return new MemoryEvent(id, operation, factId, fact, validTime,
+            transactionTime, evidence, requireText(versionId, "target version id"));
+    }
+
+    public Optional<String> getTargetVersionId() {
+        return Optional.ofNullable(targetVersionId);
     }
 
     public MemoryEventOperation getOperation() {
@@ -177,6 +204,7 @@ public final class MemoryEvent {
             && Objects.equals(fact, that.fact)
             && validTime.equals(that.validTime)
             && transactionTime.equals(that.transactionTime)
+            && Objects.equals(targetVersionId, that.targetVersionId)
             && evidence.equals(that.evidence);
     }
 
@@ -189,6 +217,7 @@ public final class MemoryEvent {
             fact,
             validTime,
             transactionTime,
+            targetVersionId,
             evidence);
     }
 }

@@ -110,6 +110,7 @@ public final class MemoryGraphAdapter {
         "validStart",
         "validEnd",
         "recordedAt",
+        "targetVersionId",
         "payloadHash");
     private static final List<String> EVIDENCE_FIELDS = fields("content");
     private static final List<String> SOURCE_FIELDS = fields("name");
@@ -472,6 +473,7 @@ public final class MemoryGraphAdapter {
             instant(event.getValidTime().getStart()),
             optionalInstant(event.getValidTime()),
             instant(event.getRecordedAt()),
+            event.getTargetVersionId().orElse(EMPTY),
             event.getPayloadHash());
     }
 
@@ -756,7 +758,7 @@ public final class MemoryGraphAdapter {
             String factId = value(vertex, EVENT_FIELDS, "factId");
             String subjectId = value(vertex, EVENT_FIELDS, "subjectId");
             String predicate = value(vertex, EVENT_FIELDS, "predicate");
-            FactKey key = new FactKey(
+            final FactKey key = new FactKey(
                 subjectId,
                 predicate,
                 value(vertex, EVENT_FIELDS, "scope"));
@@ -808,6 +810,10 @@ public final class MemoryGraphAdapter {
                 }
             }
 
+            String targetVersionId = value(vertex, EVENT_FIELDS, "targetVersionId");
+            if (!targetVersionId.isEmpty()) {
+                event = event.targeting(targetVersionId);
+            }
             NormalizedMemoryEvent normalized = normalizer.normalize(event, key);
             require(eventId(normalized.getEventId()).equals(vertex.getId()),
                 "Event id is not canonical: " + rawEventId);

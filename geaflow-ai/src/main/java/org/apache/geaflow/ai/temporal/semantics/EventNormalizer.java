@@ -60,6 +60,13 @@ public final class EventNormalizer {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(factKey, "factKey");
 
+        if (event.getOperation() != MemoryEventOperation.ADD
+            && !event.getTargetVersionId().isPresent()) {
+            throw new TemporalValidationException(
+                TemporalErrorCode.REJECT_TARGET_REQUIRED,
+                "CORRECT/RETRACT requires a target version");
+        }
+
         FactKey normalizedKey = new FactKey(
             normalizeText(factKey.getSubjectId()),
             normalizeText(factKey.getPredicate()),
@@ -83,6 +90,10 @@ public final class EventNormalizer {
             validTime,
             recordedAt,
             evidence);
+        if (event.getTargetVersionId().isPresent()) {
+            normalizedEvent = normalizedEvent.targeting(
+                normalizeText(event.getTargetVersionId().get()));
+        }
         FactValue factValue = createFactValue(fact);
         String payloadHash = payloadHash(
             normalizedEvent,
@@ -241,6 +252,7 @@ public final class EventNormalizer {
         MessageDigest digest = sha256();
         updateText(digest, event.getOperation().name());
         updateText(digest, event.getFactId());
+        updateText(digest, event.getTargetVersionId().orElse(null));
         updateText(digest, factKey.getSubjectId());
         updateText(digest, factKey.getPredicate());
         updateText(digest, factKey.getScope());

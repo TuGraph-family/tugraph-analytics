@@ -31,6 +31,13 @@ public final class EventLedger {
 
     private final Map<String, String> payloadHashes = new HashMap<>();
 
+    public EventLedger() {
+    }
+
+    public EventLedger(EventLedger existing) {
+        payloadHashes.putAll(Objects.requireNonNull(existing, "existing").payloadHashes);
+    }
+
     public EventLedgerDecision check(NormalizedMemoryEvent event) {
         Objects.requireNonNull(event, "event");
         String existing = payloadHashes.get(event.getEventId());
@@ -46,7 +53,8 @@ public final class EventLedger {
     public EventLedgerDecision commit(NormalizedMemoryEvent event) {
         EventLedgerDecision decision = check(event);
         if (decision == EventLedgerDecision.REJECT_EVENT_ID_REUSE) {
-            throw new IllegalArgumentException(
+            throw new TemporalValidationException(
+                TemporalErrorCode.REJECT_EVENT_ID_REUSE,
                 "Event id reused with a different payload: "
                     + event.getEventId());
         }

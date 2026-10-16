@@ -172,7 +172,8 @@ public class CanonicalSnapshotTest {
             relationshipKey);
         NormalizedMemoryEvent retract = normalizer.normalize(
             MemoryEvent.retract("event-b", "fact-city", VALID, FIRST,
-                Collections.singletonList(evidence("evidence-retract"))),
+                Collections.singletonList(evidence("evidence-retract")))
+                .targeting("original-version"),
             relationshipKey);
         MemoryFactVersion tombstone = new MemoryFactVersion(
             "opaque-tombstone", relationship, MemoryFactVersionStatus.RETRACTED,
@@ -183,6 +184,8 @@ public class CanonicalSnapshotTest {
             Collections.singletonMap("opaque-tombstone", "event-b"));
 
         Assertions.assertEquals(Arrays.asList(add, retract), snapshot.getEvents());
+        Assertions.assertEquals("original-version",
+            snapshot.getEvents().get(1).getTargetVersionId().get());
         Assertions.assertEquals(
             Arrays.asList(proof, proof), snapshot.getEvents().get(0).getEvidence());
         Assertions.assertEquals(

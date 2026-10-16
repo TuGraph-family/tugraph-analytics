@@ -42,6 +42,7 @@ import org.apache.geaflow.ai.temporal.semantics.CanonicalSnapshot;
 import org.apache.geaflow.ai.temporal.semantics.EventNormalizer;
 import org.apache.geaflow.ai.temporal.semantics.NormalizedMemoryEvent;
 import org.apache.geaflow.ai.temporal.semantics.TemporalState;
+import org.apache.geaflow.ai.temporal.semantics.VersionIdentity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -194,7 +195,8 @@ public class BaselineReplayTest {
             PROFILE_KEY,
             "Shanghai",
             interval(400, 500),
-            Instant.ofEpochMilli(3000));
+            Instant.ofEpochMilli(3000),
+            targetVersionId(first));
         List<NormalizedMemoryEvent> chronological =
             Arrays.asList(first, conflict, correction);
         List<NormalizedMemoryEvent> arrivalOrder =
@@ -235,7 +237,8 @@ public class BaselineReplayTest {
             "fact-b",
             PROFILE_KEY,
             interval(450, 460),
-            Instant.ofEpochMilli(3000));
+            Instant.ofEpochMilli(3000),
+            targetVersionId(second));
         NormalizedMemoryEvent recovery = add(
             "event-recover",
             "fact-c",
@@ -260,13 +263,15 @@ public class BaselineReplayTest {
             PROFILE_KEY,
             "London",
             interval(100, 200),
-            Instant.ofEpochMilli(1000));
+            Instant.ofEpochMilli(1000),
+            "unknown-target-version");
         NormalizedMemoryEvent retractWithoutCurrent = retract(
             "event-orphan-retract",
             "fact-a",
             PROFILE_KEY,
             interval(100, 200),
-            Instant.ofEpochMilli(1000));
+            Instant.ofEpochMilli(1000),
+            "unknown-target-version");
 
         for (ReplayMethod method : methods()) {
             Assertions.assertEquals(
@@ -310,7 +315,8 @@ public class BaselineReplayTest {
             "fact-a",
             PROFILE_KEY,
             interval(200, 300),
-            Instant.ofEpochMilli(2000));
+            Instant.ofEpochMilli(2000),
+            targetVersionId(original));
         CanonicalSnapshot expected = snapshot(
             Collections.singletonList(original),
             versions(PROFILE_KEY, version(original)),
@@ -402,14 +408,15 @@ public class BaselineReplayTest {
         FactKey key,
         String value,
         TimeInterval validTime,
-        Instant recordedAt) {
+        Instant recordedAt,
+        String targetVersionId) {
         return normalizer.normalize(
             MemoryEvent.correct(
                 eventId,
                 fact(factId, key, value),
                 validTime,
                 recordedAt,
-                evidence(eventId)),
+                evidence(eventId)).targeting(targetVersionId),
             key);
     }
 
@@ -418,14 +425,15 @@ public class BaselineReplayTest {
         String factId,
         FactKey key,
         TimeInterval validTime,
-        Instant recordedAt) {
+        Instant recordedAt,
+        String targetVersionId) {
         return normalizer.normalize(
             MemoryEvent.retract(
                 eventId,
                 factId,
                 validTime,
                 recordedAt,
-                evidence(eventId)),
+                evidence(eventId)).targeting(targetVersionId),
             key);
     }
 
@@ -466,6 +474,11 @@ public class BaselineReplayTest {
 
     private static String versionId(NormalizedMemoryEvent event) {
         return event.getEventId() + ":version:0";
+    }
+
+    private static String targetVersionId(NormalizedMemoryEvent event) {
+        return VersionIdentity.create(event, event.getEvent().getFact().get(),
+            MemoryFactVersionStatus.ACTIVE, event.getValidTime(), null);
     }
 
     private static List<String> versionIds(CanonicalSnapshot snapshot) {

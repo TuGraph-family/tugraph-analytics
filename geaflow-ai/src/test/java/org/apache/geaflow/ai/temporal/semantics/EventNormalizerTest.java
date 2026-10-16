@@ -202,7 +202,7 @@ public class EventNormalizerTest {
                 "evidence-a",
                 "source-a",
                 "registry-a",
-                "withdrawn")));
+                "withdrawn"))).targeting("target-location");
 
         NormalizedMemoryEvent normalized =
             normalizer.normalize(retract, key);

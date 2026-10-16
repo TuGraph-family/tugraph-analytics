@@ -120,6 +120,15 @@ public class MemoryGraphAdapterTest {
             new MemoryGraphAdapter().fromGraph(graph);
 
         Assertions.assertEquals(expected, actual);
+        Assertions.assertEquals(CITY_VERSION,
+            event(actual, CITY_RETRACT_EVENT).getTargetVersionId().get());
+        Assertions.assertEquals(BOB_VERSION,
+            event(actual, BOB_CORRECT_EVENT).getTargetVersionId().get());
+        Assertions.assertFalse(event(actual, CITY_ADD_EVENT).getTargetVersionId().isPresent());
+        Assertions.assertEquals(CITY_VERSION, vertexProperty(graph,
+            "memory_event", eventId(CITY_RETRACT_EVENT), "targetVersionId"));
+        Assertions.assertEquals(BOB_VERSION, vertexProperty(graph,
+            "memory_event", eventId(BOB_CORRECT_EVENT), "targetVersionId"));
         Assertions.assertNotNull(graph.getVertex(
             "entity", "entity:person:alice"));
         Assertions.assertNotNull(graph.getVertex(
@@ -253,6 +262,25 @@ public class MemoryGraphAdapterTest {
         Assertions.assertThrows(
             NullPointerException.class,
             () -> adapter.fromGraph(null));
+    }
+
+    @Test
+    public void testChangedTargetReferenceFailsPayloadHashValidation() {
+        MemoryGraphAdapter adapter = new MemoryGraphAdapter();
+        MemoryGraph graph = adapter.toGraph(completeSnapshot());
+        VertexGroup events = (VertexGroup) graph.entities.get("memory_event");
+        Vertex original = events.getVertex(eventId(CITY_RETRACT_EVENT));
+        List<String> changedValues = new ArrayList<>(original.getValues());
+        int targetIndex = events.getVertexSchema().getFields().indexOf("targetVersionId");
+        Assertions.assertTrue(targetIndex >= 0);
+        changedValues.set(targetIndex, BOB_VERSION);
+        graph.updateVertex(new Vertex(original.getLabel(), original.getId(), changedValues));
+
+        IllegalArgumentException error = Assertions.assertThrows(
+            IllegalArgumentException.class, () -> adapter.fromGraph(graph));
+
+        Assertions.assertEquals("Event payload hash does not match: " + CITY_RETRACT_EVENT,
+            error.getMessage());
     }
 
     @Test
@@ -515,7 +543,7 @@ public class MemoryGraphAdapterTest {
                 fact,
                 validTime,
                 Instant.parse(recordedAt),
-                Arrays.asList(evidence)),
+                Arrays.asList(evidence)).targeting(BOB_VERSION),
             key);
     }
 
@@ -532,7 +560,7 @@ public class MemoryGraphAdapterTest {
                 factId,
                 validTime,
                 Instant.parse(recordedAt),
-                Arrays.asList(evidence)),
+                Arrays.asList(evidence)).targeting(CITY_VERSION),
             key);
     }
 
@@ -564,7 +592,7 @@ public class MemoryGraphAdapterTest {
                 + "transactionStart, transactionEnd]",
             "memory_event|id|[operation, factId, subjectId, predicate, "
                 + "scope, valueKind, value, validStart, validEnd, "
-                + "recordedAt, payloadHash]",
+                + "recordedAt, targetVersionId, payloadHash]",
             "evidence|id|[content]",
             "source|id|[name]");
     }

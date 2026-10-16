@@ -67,7 +67,8 @@ public class FullReplayOracleTemporalStateTest {
             interval(
                 "2024-04-01T00:00:00Z",
                 "2024-09-01T00:00:00Z"),
-            "2024-06-01T00:00:00Z");
+            "2024-06-01T00:00:00Z",
+            addedVersionId(add));
 
         TemporalState state = oracle.replayNormalized(
             Arrays.asList(retract, add));
@@ -79,7 +80,7 @@ public class FullReplayOracleTemporalStateTest {
 
         MemoryFactVersion old = version(
             state,
-            "event-add:version:0");
+            addedVersionId(add));
         Assertions.assertEquals(
             MemoryFactVersionStatus.ACTIVE,
             old.getStatus());
@@ -89,9 +90,9 @@ public class FullReplayOracleTemporalStateTest {
                 "2024-06-01T00:00:00Z"),
             old.getTransactionTime());
 
-        MemoryFactVersion tombstone = version(
-            state,
-            "event-retract:version:0");
+        MemoryFactVersion tombstone = generatedVersion(
+            state, retract, MemoryFactVersionStatus.RETRACTED,
+            retract.getValidTime());
         Assertions.assertEquals(
             MemoryFactVersionStatus.RETRACTED,
             tombstone.getStatus());
@@ -102,12 +103,12 @@ public class FullReplayOracleTemporalStateTest {
             TimeInterval.unboundedFrom(retract.getRecordedAt()),
             tombstone.getTransactionTime());
 
-        MemoryFactVersion left = version(
-            state,
-            "event-retract:version:1");
-        MemoryFactVersion right = version(
-            state,
-            "event-retract:version:2");
+        MemoryFactVersion left = generatedVersion(
+            state, retract, MemoryFactVersionStatus.ACTIVE,
+            interval("2024-01-01T00:00:00Z", "2024-04-01T00:00:00Z"));
+        MemoryFactVersion right = generatedVersion(
+            state, retract, MemoryFactVersionStatus.ACTIVE,
+            TimeInterval.unboundedFrom(time("2024-09-01T00:00:00Z")));
         Assertions.assertEquals(
             MemoryFactVersionStatus.ACTIVE,
             left.getStatus());
@@ -125,7 +126,7 @@ public class FullReplayOracleTemporalStateTest {
             right.getValidTime());
 
         Assertions.assertEquals(
-            Arrays.asList(
+            sortedRelations(
                 relation(
                     VersionRelationType.SUPERSEDES,
                     tombstone.getId(),
@@ -165,7 +166,8 @@ public class FullReplayOracleTemporalStateTest {
             KEY,
             "Beijing",
             validTime,
-            "2024-06-01T00:00:00Z");
+            "2024-06-01T00:00:00Z",
+            addedVersionId(add));
 
         TemporalState state = oracle.replayNormalized(
             Arrays.asList(correction, add));
@@ -174,8 +176,9 @@ public class FullReplayOracleTemporalStateTest {
         Assertions.assertEquals(
             Collections.singletonList(relation(
                 VersionRelationType.SUPERSEDES,
-                "event-correct:version:0",
-                "event-add:version:0")),
+                generatedVersion(state, correction,
+                    MemoryFactVersionStatus.ACTIVE, validTime).getId(),
+                addedVersionId(add))),
             state.getRelations());
     }
 
@@ -202,10 +205,10 @@ public class FullReplayOracleTemporalStateTest {
 
         MemoryFactVersion old = version(
             state,
-            "event-first:version:0");
+            addedVersionId(first));
         MemoryFactVersion current = version(
             state,
-            "event-duplicate:version:0");
+            addedVersionId(duplicate));
         Assertions.assertEquals(
             time("2024-04-01T00:00:00Z"),
             old.getTransactionTime().getEnd().get());
@@ -270,8 +273,8 @@ public class FullReplayOracleTemporalStateTest {
         Assertions.assertEquals(
             Collections.singletonList(relation(
                 VersionRelationType.CONFLICTS_WITH,
-                "event-conflict:version:0",
-                "event-first:version:0")),
+                addedVersionId(conflict),
+                addedVersionId(first))),
             shuffled.getRelations());
     }
 
@@ -299,33 +302,41 @@ public class FullReplayOracleTemporalStateTest {
             interval(
                 "2024-01-01T00:00:00Z",
                 "2024-05-01T00:00:00Z"),
-            "2024-06-01T00:00:00Z");
+            "2024-06-01T00:00:00Z",
+            addedVersionId(first));
         NormalizedMemoryEvent correction = correct(
             "event-correct",
             KEY,
             "Rome",
             retraction.getValidTime(),
-            "2024-06-01T00:00:00Z");
+            "2024-06-01T00:00:00Z",
+            addedVersionId(first));
 
         TemporalState state = oracle.replayNormalized(
             Arrays.asList(retraction, conflict, first));
 
         Assertions.assertTrue(state.getRelations().contains(relation(
             VersionRelationType.CONFLICTS_WITH,
-            "event-conflict:version:0",
-            "event-first:version:0")));
+            addedVersionId(conflict),
+            addedVersionId(first))));
         Assertions.assertTrue(state.getRelations().contains(relation(
             VersionRelationType.CONFLICTS_WITH,
-            "event-conflict:version:0",
-            "event-retract:version:1")));
+            addedVersionId(conflict),
+            generatedVersion(state, retraction,
+                MemoryFactVersionStatus.ACTIVE,
+                interval("2024-05-01T00:00:00Z",
+                    "2024-10-01T00:00:00Z")).getId())));
 
         TemporalState correctedState = oracle.replayNormalized(
             Arrays.asList(correction, conflict, first));
         Assertions.assertTrue(correctedState.getRelations().contains(
             relation(
                 VersionRelationType.CONFLICTS_WITH,
-                "event-conflict:version:0",
-                "event-correct:version:1")));
+                addedVersionId(conflict),
+                generatedVersion(correctedState, correction,
+                    MemoryFactVersionStatus.ACTIVE,
+                    interval("2024-05-01T00:00:00Z",
+                        "2024-10-01T00:00:00Z")).getId())));
     }
 
     @Test
@@ -374,15 +385,17 @@ public class FullReplayOracleTemporalStateTest {
             KEY,
             "Shanghai",
             validTime,
-            "2024-03-01T00:00:00Z");
+            "2024-03-01T00:00:00Z",
+            addedVersionId(add));
 
         TemporalState state = oracle.replayNormalized(
             Arrays.asList(correction, add));
 
         Assertions.assertEquals(1, state.getVersions().size());
-        Assertions.assertEquals(
-            "event-b-correct:version:0",
-            state.getVersions().get(0).getId());
+        Assertions.assertEquals("Shanghai", state.getVersions().get(0)
+            .getFact().getLiteralValue().get());
+        Assertions.assertNotEquals(
+            addedVersionId(add), state.getVersions().get(0).getId());
         Assertions.assertTrue(state.getRelations().isEmpty());
     }
 
@@ -407,14 +420,15 @@ public class FullReplayOracleTemporalStateTest {
         FactKey key,
         String value,
         TimeInterval validTime,
-        String recordedAt) {
+        String recordedAt,
+        String targetVersionId) {
         return normalizer.normalize(
             MemoryEvent.correct(
                 eventId,
                 fact(key, value),
                 validTime,
                 time(recordedAt),
-                evidence(eventId)),
+                evidence(eventId)).targeting(targetVersionId),
             key);
     }
 
@@ -422,14 +436,15 @@ public class FullReplayOracleTemporalStateTest {
         String eventId,
         FactKey key,
         TimeInterval validTime,
-        String recordedAt) {
+        String recordedAt,
+        String targetVersionId) {
         return normalizer.normalize(
             MemoryEvent.retract(
                 eventId,
                 factId(key),
                 validTime,
                 time(recordedAt),
-                evidence(eventId)),
+                evidence(eventId)).targeting(targetVersionId),
             key);
     }
 
@@ -459,6 +474,33 @@ public class FullReplayOracleTemporalStateTest {
         String from,
         String to) {
         return new VersionRelation(type, from, to);
+    }
+
+    private static List<VersionRelation> sortedRelations(
+        VersionRelation... relations) {
+        List<VersionRelation> ordered = Arrays.asList(relations);
+        Collections.sort(ordered);
+        return ordered;
+    }
+
+    private String addedVersionId(NormalizedMemoryEvent event) {
+        return oracle.replayNormalized(Collections.singletonList(event))
+            .getVersions().get(0).getId();
+    }
+
+    private static MemoryFactVersion generatedVersion(
+        TemporalState state,
+        NormalizedMemoryEvent event,
+        MemoryFactVersionStatus status,
+        TimeInterval validTime) {
+        return state.getVersions().stream()
+            .filter(version -> version.getTransactionTime().getStart()
+                .equals(event.getRecordedAt()))
+            .filter(version -> version.getStatus() == status)
+            .filter(version -> version.getValidTime().equals(validTime))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError(
+                "Missing generated version for " + event.getEventId()));
     }
 
     private static MemoryFactVersion version(

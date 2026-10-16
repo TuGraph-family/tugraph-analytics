@@ -66,23 +66,33 @@ public class TemporalCoreAcceptanceTest {
             TimeInterval.unboundedFrom(time("2024-01-01T00:00:00Z")),
             time("2024-02-01T00:00:00Z"),
             evidence("evidence-1", "Alice lived in Beijing.")));
+        FullReplayOracle oracle = new FullReplayOracle();
+        String originalId = oracle.replayNormalized(
+            Collections.singletonList(added)).getVersions().get(0).getId();
         NormalizedMemoryEvent corrected = normalize(MemoryEvent.correct(
             "event-2",
             cityFact("fact-shanghai", "Shanghai"),
             interval("2024-04-01T00:00:00Z", "2024-07-01T00:00:00Z"),
             time("2024-05-01T00:00:00Z"),
-            evidence("evidence-2", "Alice moved to Shanghai.")));
+            evidence("evidence-2", "Alice moved to Shanghai."))
+            .targeting(originalId));
+        String correctedId = oracle.replayNormalized(
+            Arrays.asList(added, corrected)).getVersions().stream()
+            .filter(version -> version.getFact().getLiteralValue().get()
+                .equals("Shanghai"))
+            .findFirst().get().getId();
         NormalizedMemoryEvent retracted = normalize(MemoryEvent.retract(
             "event-3",
             "fact-shanghai",
             interval("2024-06-01T00:00:00Z", "2024-07-01T00:00:00Z"),
             time("2024-06-15T00:00:00Z"),
-            evidence("evidence-3", "The later Shanghai claim was withdrawn.")));
+            evidence("evidence-3", "The later Shanghai claim was withdrawn."))
+            .targeting(correctedId));
         List<NormalizedMemoryEvent> events =
             Arrays.asList(added, corrected, retracted);
 
         TemporalState oracleState =
-            new FullReplayOracle().replayNormalized(events);
+            oracle.replayNormalized(events);
         IncrementalTemporalIntegrator incremental =
             new IncrementalTemporalIntegrator();
         for (NormalizedMemoryEvent event : events) {
@@ -149,7 +159,8 @@ public class TemporalCoreAcceptanceTest {
             cityFact("fact-tianjin", "Tianjin"),
             interval("2024-04-01T00:00:00Z", "2024-07-01T00:00:00Z"),
             time("2024-05-01T00:00:00Z"),
-            evidence("evidence-2", "Alice moved to Tianjin.")));
+            evidence("evidence-2", "Alice moved to Tianjin."))
+            .targeting(originalId));
         Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> incremental.apply(reusedId));

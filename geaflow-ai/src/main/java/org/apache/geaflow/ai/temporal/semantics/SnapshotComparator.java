@@ -108,6 +108,15 @@ public final class SnapshotComparator {
             if (difference != null) {
                 return difference;
             }
+            difference = difference(
+                prefix + ".targetVersionId",
+                expectedEvent.getTargetVersionId().orElse(null),
+                actualEvent.getTargetVersionId().orElse(null),
+                contextKey,
+                eventId);
+            if (difference != null) {
+                return difference;
+            }
             difference = compareOptionalFact(
                 prefix + ".fact",
                 expectedEvent.getEvent().getFact().orElse(null),

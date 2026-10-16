@@ -35,6 +35,8 @@ import org.apache.geaflow.ai.temporal.model.TimeInterval;
  */
 public final class NormalizedMemoryEvent {
 
+    public static final int SCHEMA_VERSION = 2;
+
     private final MemoryEvent event;
     private final FactKey factKey;
     private final FactValue factValue;
@@ -67,6 +69,10 @@ public final class NormalizedMemoryEvent {
 
     public String getFactId() {
         return event.getFactId();
+    }
+
+    public Optional<String> getTargetVersionId() {
+        return event.getTargetVersionId();
     }
 
     public FactKey getFactKey() {
