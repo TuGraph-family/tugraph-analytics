@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import org.apache.geaflow.ai.temporal.adapter.MemoryGraphAdapter;
 import org.apache.geaflow.ai.temporal.model.Evidence;
 import org.apache.geaflow.ai.temporal.model.FactKey;
 import org.apache.geaflow.ai.temporal.model.FactValue;
@@ -40,6 +41,7 @@ import org.apache.geaflow.ai.temporal.model.MemoryFactVersionStatus;
 import org.apache.geaflow.ai.temporal.model.TimeInterval;
 import org.apache.geaflow.ai.temporal.model.VersionRelation;
 import org.apache.geaflow.ai.temporal.model.VersionRelationType;
+import org.apache.geaflow.ai.temporal.semantics.CanonicalSnapshot;
 import org.apache.geaflow.ai.temporal.semantics.EventLedger;
 import org.apache.geaflow.ai.temporal.semantics.EventLedgerDecision;
 import org.apache.geaflow.ai.temporal.semantics.NormalizedMemoryEvent;
@@ -51,7 +53,7 @@ import org.apache.geaflow.ai.temporal.semantics.VersionIdentity;
 /**
  * Recomputes temporal memory versions from a complete event collection.
  */
-public final class FullReplayOracle {
+public final class FullReplayOracle implements ReplayMethod {
 
     private static final Comparator<MemoryEvent> EVENT_ORDER =
         Comparator.comparing(MemoryEvent::getTransactionTime)
@@ -127,6 +129,24 @@ public final class FullReplayOracle {
      */
     public TemporalState replayNormalized(
         List<NormalizedMemoryEvent> events) {
+        return replayNormalized(events, new HashMap<>());
+    }
+
+    /** Returns the formal oracle result after writing and reading MemoryGraph. */
+    @Override
+    public CanonicalSnapshot replayToSnapshot(
+        List<NormalizedMemoryEvent> events) {
+        Map<String, String> generatingEventIds = new HashMap<>();
+        TemporalState state = replayNormalized(events, generatingEventIds);
+        CanonicalSnapshot snapshot = new CanonicalSnapshot(
+            state, events, generatingEventIds);
+        MemoryGraphAdapter adapter = new MemoryGraphAdapter();
+        return adapter.fromGraph(adapter.toGraph(snapshot));
+    }
+
+    private TemporalState replayNormalized(
+        List<NormalizedMemoryEvent> events,
+        Map<String, String> generatingEventIds) {
         Objects.requireNonNull(events, "events");
 
         List<NormalizedMemoryEvent> orderedEvents =
@@ -167,7 +187,8 @@ public final class FullReplayOracle {
             replayNormalizedEvent(
                 event,
                 nextVersions,
-                nextRelations);
+                nextRelations,
+                generatingEventIds);
 
             ledger.commit(event);
             versionsByFactKey.put(
@@ -188,14 +209,15 @@ public final class FullReplayOracle {
     private static void replayNormalizedEvent(
         NormalizedMemoryEvent event,
         List<MemoryFactVersion> versions,
-        Set<VersionRelation> relations) {
+        Set<VersionRelation> relations,
+        Map<String, String> generatingEventIds) {
         if (event.getOperation() == MemoryEventOperation.ADD) {
-            replayNormalizedAdd(event, versions, relations);
+            replayNormalizedAdd(event, versions, relations, generatingEventIds);
             return;
         }
         if (event.getOperation() == MemoryEventOperation.CORRECT
             || event.getOperation() == MemoryEventOperation.RETRACT) {
-            replayNormalizedChange(event, versions, relations);
+            replayNormalizedChange(event, versions, relations, generatingEventIds);
             return;
         }
         throw new UnsupportedOperationException(
@@ -206,7 +228,8 @@ public final class FullReplayOracle {
     private static void replayNormalizedAdd(
         NormalizedMemoryEvent event,
         List<MemoryFactVersion> versions,
-        Set<VersionRelation> relations) {
+        Set<VersionRelation> relations,
+        Map<String, String> generatingEventIds) {
         FactValue newValue = event.getFactValue().get();
         TimeInterval mergedValidTime = event.getValidTime();
         List<MemoryFactVersion> duplicates = new ArrayList<>();
@@ -245,7 +268,8 @@ public final class FullReplayOracle {
                 duplicate,
                 event.getRecordedAt(),
                 versions,
-                relations)) {
+                relations,
+                generatingEventIds)) {
                 relations.add(new VersionRelation(
                     VersionRelationType.DUPLICATE_OF,
                     newVersionId,
@@ -272,12 +296,14 @@ public final class FullReplayOracle {
             }
         }
         versions.add(added);
+        generatingEventIds.put(added.getId(), event.getEventId());
     }
 
     private static void replayNormalizedChange(
         NormalizedMemoryEvent event,
         List<MemoryFactVersion> versions,
-        Set<VersionRelation> relations) {
+        Set<VersionRelation> relations,
+        Map<String, String> generatingEventIds) {
         String targetId = event.getTargetVersionId().orElseThrow(
             () -> new TemporalValidationException(
                 TemporalErrorCode.REJECT_TARGET_REQUIRED,
@@ -310,7 +336,7 @@ public final class FullReplayOracle {
             .intersection(event.getValidTime()).get();
         versions.remove(target);
         boolean sourceMaterialized = closeVersion(
-            target, event.getRecordedAt(), versions, relations);
+            target, event.getRecordedAt(), versions, relations, generatingEventIds);
         boolean correction =
             event.getOperation() == MemoryEventOperation.CORRECT;
         MemoryFact changedFact = correction
@@ -327,6 +353,7 @@ public final class FullReplayOracle {
             changedTime,
             TimeInterval.unboundedFrom(event.getRecordedAt()),
             event.getEvidence()));
+        generatingEventIds.put(changedId, event.getEventId());
         addSupersedes(changedId, targetId, sourceMaterialized, relations);
 
         for (TimeInterval remaining
@@ -344,6 +371,7 @@ public final class FullReplayOracle {
                 remaining,
                 TimeInterval.unboundedFrom(event.getRecordedAt()),
                 target.getEvidence()));
+            generatingEventIds.put(fragmentId, event.getEventId());
             addSupersedes(
                 fragmentId, targetId, sourceMaterialized, relations);
         }
@@ -394,7 +422,8 @@ public final class FullReplayOracle {
         MemoryFactVersion version,
         Instant recordedAt,
         List<MemoryFactVersion> versions,
-        Set<VersionRelation> relations) {
+        Set<VersionRelation> relations,
+        Map<String, String> generatingEventIds) {
         Instant startedAt =
             version.getTransactionTime().getStart();
         if (startedAt.isAfter(recordedAt)) {
@@ -404,6 +433,7 @@ public final class FullReplayOracle {
         if (startedAt.equals(recordedAt)) {
             relations.removeIf(relation ->
                 references(relation, version.getId()));
+            generatingEventIds.remove(version.getId());
             return false;
         }
         versions.add(new MemoryFactVersion(

@@ -21,6 +21,9 @@ package org.apache.geaflow.ai.temporal.semantics;
 
 /** Stable validation failures for normalized temporal events. */
 public enum TemporalErrorCode {
+    REJECT_INPUT,
+    REJECT_SCHEMA_VERSION,
+    REJECT_REFERENCE_INTEGRITY,
     REJECT_TARGET_REQUIRED,
     REJECT_TARGET_NOT_FOUND,
     REJECT_TARGET_INACTIVE,

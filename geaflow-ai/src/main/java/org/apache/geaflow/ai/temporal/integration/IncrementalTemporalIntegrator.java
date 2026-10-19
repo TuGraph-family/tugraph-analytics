@@ -19,7 +19,6 @@
 
 package org.apache.geaflow.ai.temporal.integration;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,26 +26,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.TreeMap;
-import org.apache.geaflow.ai.temporal.model.Evidence;
 import org.apache.geaflow.ai.temporal.model.FactKey;
-import org.apache.geaflow.ai.temporal.model.FactValue;
 import org.apache.geaflow.ai.temporal.model.MemoryEvent;
 import org.apache.geaflow.ai.temporal.model.MemoryEventOperation;
-import org.apache.geaflow.ai.temporal.model.MemoryFact;
 import org.apache.geaflow.ai.temporal.model.MemoryFactVersion;
-import org.apache.geaflow.ai.temporal.model.MemoryFactVersionStatus;
 import org.apache.geaflow.ai.temporal.model.TimeInterval;
 import org.apache.geaflow.ai.temporal.model.VersionRelation;
-import org.apache.geaflow.ai.temporal.model.VersionRelationType;
+import org.apache.geaflow.ai.temporal.semantics.CanonicalSnapshot;
 import org.apache.geaflow.ai.temporal.semantics.EventLedger;
 import org.apache.geaflow.ai.temporal.semantics.EventLedgerDecision;
 import org.apache.geaflow.ai.temporal.semantics.NormalizedMemoryEvent;
 import org.apache.geaflow.ai.temporal.semantics.TemporalErrorCode;
 import org.apache.geaflow.ai.temporal.semantics.TemporalState;
 import org.apache.geaflow.ai.temporal.semantics.TemporalValidationException;
-import org.apache.geaflow.ai.temporal.semantics.VersionIdentity;
 
 /**
  * Incrementally integrates legacy events by fact id and normalized events by
@@ -77,12 +70,6 @@ public final class IncrementalTemporalIntegrator {
                 version.getValidTime().getStart())
             .thenComparing(MemoryFactVersion::getId);
 
-    private static final Comparator<Evidence> EVIDENCE_ORDER =
-        Comparator.comparing(Evidence::getId)
-            .thenComparing(evidence -> evidence.getSource().getId())
-            .thenComparing(evidence -> evidence.getSource().getName())
-            .thenComparing(Evidence::getContent);
-
     private final Map<String, MemoryEvent> eventsById = new HashMap<>();
     private final Map<String, List<MemoryEvent>> eventsByFactId =
         new HashMap<>();
@@ -96,6 +83,8 @@ public final class IncrementalTemporalIntegrator {
         normalizedVersionsByFactKey = new HashMap<>();
     private Map<FactKey, List<VersionRelation>>
         normalizedRelationsByFactKey = new HashMap<>();
+    private Map<FactKey, Map<String, String>>
+        normalizedGeneratingEventIdsByFactKey = new HashMap<>();
 
     public void apply(MemoryEvent event) {
         Objects.requireNonNull(event, "event");
@@ -176,6 +165,7 @@ public final class IncrementalTemporalIntegrator {
 
         List<MemoryFactVersion> updatedVersions;
         List<VersionRelation> updatedRelations;
+        Map<String, String> updatedGeneratingEventIds;
         if (appended) {
             List<MemoryFactVersion> existingVersions =
                 normalizedVersionsByFactKey.get(factKey);
@@ -187,18 +177,24 @@ public final class IncrementalTemporalIntegrator {
             updatedRelations = existingRelations == null
                 ? new ArrayList<>()
                 : new ArrayList<>(existingRelations);
+            updatedGeneratingEventIds = new HashMap<>(
+                normalizedGeneratingEventIdsByFactKey.getOrDefault(
+                    factKey, Collections.emptyMap()));
             applyNormalizedOrderedEvent(
                 event,
                 updatedVersions,
-                updatedRelations);
+                updatedRelations,
+                updatedGeneratingEventIds);
         } else {
             updatedVersions = new ArrayList<>();
             updatedRelations = new ArrayList<>();
+            updatedGeneratingEventIds = new HashMap<>();
             for (NormalizedMemoryEvent orderedEvent : updatedEvents) {
                 applyNormalizedOrderedEvent(
                     orderedEvent,
                     updatedVersions,
-                    updatedRelations);
+                    updatedRelations,
+                    updatedGeneratingEventIds);
             }
         }
 
@@ -214,6 +210,8 @@ public final class IncrementalTemporalIntegrator {
         normalizedRelationsByFactKey.put(
             factKey,
             Collections.unmodifiableList(updatedRelations));
+        normalizedGeneratingEventIdsByFactKey.put(
+            factKey, Collections.unmodifiableMap(updatedGeneratingEventIds));
     }
 
     /** Applies a finite batch in event order, publishing only after all events succeed. */
@@ -229,6 +227,8 @@ public final class IncrementalTemporalIntegrator {
         staged.normalizedEventsByFactKey.putAll(normalizedEventsByFactKey);
         staged.normalizedVersionsByFactKey.putAll(normalizedVersionsByFactKey);
         staged.normalizedRelationsByFactKey.putAll(normalizedRelationsByFactKey);
+        staged.normalizedGeneratingEventIdsByFactKey.putAll(
+            normalizedGeneratingEventIdsByFactKey);
         List<EventLedgerDecision> decisions = new ArrayList<>();
         Map<FactKey, List<NormalizedMemoryEvent>> updatedTimelines = new TreeMap<>();
         for (NormalizedMemoryEvent event : ordered) {
@@ -249,10 +249,12 @@ public final class IncrementalTemporalIntegrator {
         Collections.sort(replayEvents, NORMALIZED_EVENT_ORDER);
         Map<FactKey, List<MemoryFactVersion>> replayVersions = new HashMap<>();
         Map<FactKey, List<VersionRelation>> replayRelations = new HashMap<>();
+        Map<FactKey, Map<String, String>> replayGeneratingEventIds = new HashMap<>();
         for (NormalizedMemoryEvent event : replayEvents) {
             applyNormalizedOrderedEvent(event,
                 replayVersions.computeIfAbsent(event.getFactKey(), key -> new ArrayList<>()),
-                replayRelations.computeIfAbsent(event.getFactKey(), key -> new ArrayList<>()));
+                replayRelations.computeIfAbsent(event.getFactKey(), key -> new ArrayList<>()),
+                replayGeneratingEventIds.computeIfAbsent(event.getFactKey(), key -> new HashMap<>()));
         }
         for (Map.Entry<FactKey, List<NormalizedMemoryEvent>> entry
             : updatedTimelines.entrySet()) {
@@ -267,11 +269,14 @@ public final class IncrementalTemporalIntegrator {
                 Collections.unmodifiableList(versions));
             staged.normalizedRelationsByFactKey.put(entry.getKey(),
                 Collections.unmodifiableList(relations));
+            staged.normalizedGeneratingEventIdsByFactKey.put(entry.getKey(),
+                Collections.unmodifiableMap(replayGeneratingEventIds.get(entry.getKey())));
         }
         normalizedEventLedger = staged.normalizedEventLedger;
         normalizedEventsByFactKey = staged.normalizedEventsByFactKey;
         normalizedVersionsByFactKey = staged.normalizedVersionsByFactKey;
         normalizedRelationsByFactKey = staged.normalizedRelationsByFactKey;
+        normalizedGeneratingEventIdsByFactKey = staged.normalizedGeneratingEventIdsByFactKey;
         return Collections.unmodifiableList(decisions);
     }
 
@@ -282,6 +287,17 @@ public final class IncrementalTemporalIntegrator {
         }
         Collections.sort(events, NORMALIZED_EVENT_ORDER);
         return Collections.unmodifiableList(events);
+    }
+
+    /** Returns normalized state, accepted events and explicit version provenance. */
+    public CanonicalSnapshot canonicalSnapshot() {
+        Map<String, String> generatingEventIds = new TreeMap<>();
+        for (Map<String, String> keyGeneratingEventIds
+            : normalizedGeneratingEventIdsByFactKey.values()) {
+            generatingEventIds.putAll(keyGeneratingEventIds);
+        }
+        return new CanonicalSnapshot(
+            stateSnapshot(), normalizedEventSnapshot(), generatingEventIds);
     }
 
     public List<MemoryFactVersion> snapshot() {
@@ -322,284 +338,9 @@ public final class IncrementalTemporalIntegrator {
     private static void applyNormalizedOrderedEvent(
         NormalizedMemoryEvent event,
         List<MemoryFactVersion> versions,
-        List<VersionRelation> relations) {
-        MemoryEventOperation operation = event.getOperation();
-        if (operation == MemoryEventOperation.ADD) {
-            applyNormalizedAdd(event, versions, relations);
-        } else if (operation == MemoryEventOperation.CORRECT
-            || operation == MemoryEventOperation.RETRACT) {
-            applyNormalizedChange(event, versions, relations);
-        } else {
-            throw new UnsupportedOperationException(
-                "Unsupported memory event operation: "
-                    + operation);
-        }
-    }
-
-    private static void applyNormalizedAdd(
-        NormalizedMemoryEvent event,
-        List<MemoryFactVersion> versions,
-        List<VersionRelation> relations) {
-        List<MemoryFactVersion> duplicates = new ArrayList<>();
-        TimeInterval validTime = event.getValidTime();
-        boolean expanded;
-        do {
-            expanded = false;
-            for (MemoryFactVersion version : versions) {
-                if (isCurrentActive(version)
-                    && !duplicates.contains(version)
-                    && version.getValidTime().overlaps(validTime)
-                    && hasSameValue(event, version)) {
-                    duplicates.add(version);
-                    validTime = span(validTime, version.getValidTime());
-                    expanded = true;
-                }
-            }
-        } while (expanded);
-        Collections.sort(duplicates, VALID_TIME_ORDER);
-
-        List<Evidence> evidence = new ArrayList<>();
-        mergeEvidence(evidence, event.getEvidence());
-        Map<String, Boolean> materializedDuplicates = new HashMap<>();
-        for (MemoryFactVersion duplicate : duplicates) {
-            versions.remove(duplicate);
-            boolean materialized = materializeClosedVersion(
-                duplicate,
-                event.getRecordedAt(),
-                versions,
-                relations);
-            materializedDuplicates.put(duplicate.getId(), materialized);
-            mergeEvidence(evidence, duplicate.getEvidence());
-        }
-
-        MemoryFactVersion added = new MemoryFactVersion(
-            VersionIdentity.create(event, event.getEvent().getFact().get(),
-                MemoryFactVersionStatus.ACTIVE, validTime, null),
-            event.getEvent().getFact().get(),
-            MemoryFactVersionStatus.ACTIVE,
-            validTime,
-            TimeInterval.unboundedFrom(event.getRecordedAt()),
-            evidence);
-        versions.add(added);
-
-        for (MemoryFactVersion duplicate : duplicates) {
-            if (Boolean.TRUE.equals(
-                materializedDuplicates.get(duplicate.getId()))) {
-                addRelation(
-                    relations,
-                    new VersionRelation(
-                        VersionRelationType.DUPLICATE_OF,
-                        added.getId(),
-                        duplicate.getId()));
-            }
-        }
-
-        for (MemoryFactVersion version : versions) {
-            if (version != added
-                && isCurrentActive(version)
-                && version.getValidTime().overlaps(validTime)
-                && !hasSameValue(event, version)) {
-                addRelation(
-                    relations,
-                    new VersionRelation(
-                        VersionRelationType.CONFLICTS_WITH,
-                        added.getId(),
-                        version.getId()));
-            }
-        }
-    }
-
-    private static void applyNormalizedChange(
-        NormalizedMemoryEvent event,
-        List<MemoryFactVersion> versions,
-        List<VersionRelation> relations) {
-        String targetId = event.getTargetVersionId().orElseThrow(() ->
-            new TemporalValidationException(TemporalErrorCode.REJECT_TARGET_REQUIRED,
-                "CORRECT/RETRACT requires a target version"));
-        MemoryFactVersion target = null;
-        for (MemoryFactVersion candidate : versions) {
-            if (candidate.getId().equals(targetId)) {
-                target = candidate;
-                break;
-            }
-        }
-        if (target == null) {
-            throw new TemporalValidationException(TemporalErrorCode.REJECT_TARGET_NOT_FOUND,
-                "Target is not in this fact key: " + targetId);
-        }
-        if (!isCurrentActive(target)) {
-            throw new TemporalValidationException(TemporalErrorCode.REJECT_TARGET_INACTIVE,
-                "Target is not current and active: " + targetId);
-        }
-        if (!target.getValidTime().overlaps(event.getValidTime())) {
-            throw new TemporalValidationException(TemporalErrorCode.REJECT_TARGET_NO_OVERLAP,
-                "Target and requested valid intervals do not overlap");
-        }
-        TimeInterval intersection = target.getValidTime()
-            .intersection(event.getValidTime()).get();
-        versions.remove(target);
-        Map<String, Boolean> materialized = new HashMap<>();
-        materialized.put(targetId, materializeClosedVersion(target,
-            event.getRecordedAt(), versions, relations));
-        boolean correcting = event.getOperation() == MemoryEventOperation.CORRECT;
-        MemoryFact replacementFact = correcting
-            ? event.getEvent().getFact().get() : target.getFact();
-        MemoryFactVersionStatus replacementStatus = correcting
-            ? MemoryFactVersionStatus.ACTIVE : MemoryFactVersionStatus.RETRACTED;
-        MemoryFactVersion replacement = new MemoryFactVersion(
-            VersionIdentity.create(event, replacementFact, replacementStatus,
-                intersection, targetId),
-            replacementFact, replacementStatus, intersection,
-            TimeInterval.unboundedFrom(event.getRecordedAt()), event.getEvidence());
-        versions.add(replacement);
-        addSupersedesIfMaterialized(replacement, target, materialized, relations);
-        for (TimeInterval remainder : target.getValidTime().subtract(intersection)) {
-            MemoryFactVersion residual = new MemoryFactVersion(
-                VersionIdentity.create(event, target.getFact(),
-                    MemoryFactVersionStatus.ACTIVE, remainder, targetId),
-                target.getFact(), MemoryFactVersionStatus.ACTIVE, remainder,
-                TimeInterval.unboundedFrom(event.getRecordedAt()), target.getEvidence());
-            versions.add(residual);
-            addSupersedesIfMaterialized(residual, target, materialized, relations);
-        }
-        addCurrentConflicts(versions, relations);
-    }
-
-    private static void addCurrentConflicts(
-        List<MemoryFactVersion> versions,
-        List<VersionRelation> relations) {
-        for (int leftIndex = 0;
-            leftIndex < versions.size(); leftIndex++) {
-            MemoryFactVersion left = versions.get(leftIndex);
-            if (!isCurrentActive(left)) {
-                continue;
-            }
-            for (int rightIndex = leftIndex + 1;
-                rightIndex < versions.size(); rightIndex++) {
-                MemoryFactVersion right = versions.get(rightIndex);
-                if (isCurrentActive(right)
-                    && left.getValidTime().overlaps(
-                        right.getValidTime())
-                    && !factValue(left.getFact()).equals(
-                        factValue(right.getFact()))) {
-                    addRelation(
-                        relations,
-                        new VersionRelation(
-                            VersionRelationType.CONFLICTS_WITH,
-                            left.getId(),
-                            right.getId()));
-                }
-            }
-        }
-    }
-
-    private static boolean materializeClosedVersion(
-        MemoryFactVersion version,
-        Instant recordedAt,
-        List<MemoryFactVersion> versions,
-        List<VersionRelation> relations) {
-        if (!version.getTransactionTime().getStart()
-            .isBefore(recordedAt)) {
-            removeRelationsFor(version.getId(), relations);
-            return false;
-        }
-
-        versions.add(new MemoryFactVersion(
-            version.getId(),
-            version.getFact(),
-            version.getStatus(),
-            version.getValidTime(),
-            new TimeInterval(
-                version.getTransactionTime().getStart(),
-                recordedAt),
-            version.getEvidence()));
-        return true;
-    }
-
-    private static void addSupersedesIfMaterialized(
-        MemoryFactVersion replacement,
-        MemoryFactVersion source,
-        Map<String, Boolean> materializedSources,
-        List<VersionRelation> relations) {
-        if (Boolean.TRUE.equals(
-            materializedSources.get(source.getId()))) {
-            addRelation(
-                relations,
-                new VersionRelation(
-                    VersionRelationType.SUPERSEDES,
-                    replacement.getId(),
-                    source.getId()));
-        }
-    }
-
-    private static void addRelation(
         List<VersionRelation> relations,
-        VersionRelation relation) {
-        if (!relations.contains(relation)) {
-            relations.add(relation);
-        }
-    }
-
-    private static void removeRelationsFor(
-        String versionId,
-        List<VersionRelation> relations) {
-        for (int index = relations.size() - 1; index >= 0; index--) {
-            VersionRelation relation = relations.get(index);
-            if (relation.getFromVersionId().equals(versionId)
-                || relation.getToVersionId().equals(versionId)) {
-                relations.remove(index);
-            }
-        }
-    }
-
-    private static boolean hasSameValue(
-        NormalizedMemoryEvent event,
-        MemoryFactVersion version) {
-        Optional<FactValue> eventValue = event.getFactValue();
-        return eventValue.isPresent()
-            && eventValue.get().equals(factValue(version.getFact()));
-    }
-
-    private static FactValue factValue(MemoryFact fact) {
-        if (fact.isRelationship()) {
-            return FactValue.entityReference(
-                fact.getTarget().get().getId());
-        }
-        return FactValue.literal(fact.getLiteralValue().get());
-    }
-
-    private static TimeInterval span(
-        TimeInterval left,
-        TimeInterval right) {
-        Instant start = left.getStart().isBefore(right.getStart())
-            ? left.getStart() : right.getStart();
-        Instant end;
-        if (!left.getEnd().isPresent()
-            || !right.getEnd().isPresent()) {
-            end = null;
-        } else {
-            Instant leftEnd = left.getEnd().get();
-            Instant rightEnd = right.getEnd().get();
-            end = leftEnd.isAfter(rightEnd) ? leftEnd : rightEnd;
-        }
-        return new TimeInterval(start, end);
-    }
-
-    private static void mergeEvidence(
-        List<Evidence> target,
-        List<Evidence> additions) {
-        for (Evidence evidence : additions) {
-            if (!target.contains(evidence)) {
-                target.add(evidence);
-            }
-        }
-        Collections.sort(target, EVIDENCE_ORDER);
-    }
-
-    private static boolean isCurrentActive(
-        MemoryFactVersion version) {
-        return version.getStatus() == MemoryFactVersionStatus.ACTIVE
-            && isCurrent(version);
+        Map<String, String> generatingEventIds) {
+        new ConflictResolver().apply(event, versions, relations, generatingEventIds);
     }
 
     private static List<MemoryFactVersion> replayFact(
